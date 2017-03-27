@@ -633,6 +633,28 @@
       (is (= 2 (count (:hosted (refresh sch)))) "Can't host non-program")
       (is (= 1 (count (:hand (get-runner))))))))
 
+(deftest self-modifying-code
+  ;; Trash & pay 2 to search deck for a program and install it. Shuffle.
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Self-modifying Code" 3) (qty "Reaver" 1)]))
+    (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
+    (core/gain state :runner :credit 5)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (play-from-hand state :runner "Self-modifying Code")
+    (let [smc1 (get-in @state [:runner :rig :program 0])
+          smc2 (get-in @state [:runner :rig :program 1])]
+      (card-ability state :runner smc1 0)
+      (prompt-card :runner (find-card "Reaver" (:deck (get-runner))))
+      (is (= 6 (:credit (get-runner))) "Paid 2 for SMC, 2 for install - 6 credits left")
+      (is (= 1 (:memory (get-runner))) "SMC MU refunded")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner smc2 0)
+      (= 1 (count (:hand (get-runner))) "1 card drawn due to Reaver before SMC program selection")
+      (= 0 (count (:deck (get-runner))) "Deck empty"))))
+
 (deftest sneakdoor-nerve-agent
   ;; Sneakdoor Beta - Allow Nerve Agent to gain counters. Issue #1158/#955
   (do-game

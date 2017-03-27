@@ -59,7 +59,8 @@
                 401 (om/set-state! owner :flash-message "Invalid login or password")
                 421 (om/set-state! owner :flash-message "No account with that email address exists")
                 422 (om/set-state! owner :flash-message "Username taken")
-                423 (om/set-state! owner :flash-message "Username too short/too long")
+                423 (om/set-state! owner :flash-message "Username too long")
+                424 (om/set-state! owner :flash-message "Email already used")
                 (-> js/document .-location (.reload true))))))))
 
 (defn check-username [event owner]
@@ -75,6 +76,10 @@
           (om/set-state! owner :flash-message "No account with that email address exists")
           (om/set-state! owner :flash-message "")))))
 
+(defn valid-email? [email]
+  (let [pattern #"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"]
+    (and (string? email) (re-matches pattern (.toLowerCase email)))))
+
 (defn register [event owner]
   (.preventDefault event)
   (let [username (.-value (om/get-node owner "username"))
@@ -83,8 +88,8 @@
     (cond
       (empty? email) (om/set-state! owner :flash-message "Email can't be empty")
       (empty? username) (om/set-state! owner :flash-message "Username can't be empty")
-      (> 4 (count username)) (om/set-state! owner :flash-message "Username must be 4 characters or longer")
-      (< 16 (count username)) (om/set-state! owner :flash-message "Username must be 16 characters or shorter")
+      (not (valid-email? email)) (om/set-state! owner :flash-message "Please enter a valid email address")
+      (< 20 (count username)) (om/set-state! owner :flash-message "Username must be 20 characters or shorter")
       (empty? password) (om/set-state! owner :flash-message "Password can't be empty")
       :else (handle-post event owner "/register" "register-form"))))
 
@@ -101,7 +106,9 @@
          [:h3 "Create an account"]
          [:p.flash-message (:flash-message state)]
          [:form {:on-submit #(register % owner)}
-          [:p [:input {:type "text" :placeholder "Email" :name "email" :ref "email"}]]
+          [:p [:input {:type "text" :placeholder "Email" :name "email" :ref "email"
+                       :on-blur #(when-not (valid-email? (.. % -target -value))
+                                   (om/set-state! owner :flash-message "Please enter a valid email address"))}]]
           [:p [:input {:type "text" :placeholder "Username" :name "username" :ref "username"
                        :on-blur #(check-username % owner) :maxLength "16"}]]
           [:p [:input {:type "password" :placeholder "Password" :name "password" :ref "password"}]]

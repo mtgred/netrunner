@@ -129,6 +129,7 @@
                                           :choices {:req #(and (<= (:cost %) (get-in c [:counter :power] 0))
                                                                (#{"Hardware" "Program" "Resource"} (:type %))
                                                                (in-hand? %))}
+                                          :req (req (not (install-locked? state side)))
                                           :msg (msg "install " (:title target) " at no cost")
                                           :effect (effect (trash card {:cause :ability-cost})
                                                           (runner-install target {:no-cost true}))}
@@ -406,11 +407,15 @@
                           :effect (effect (update! (assoc card
                                                           :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
                                           (lose :memory (:memoryunits target)))}}}
-
    "LLDS Energy Regulator"
    {:prevent {:trash [:hardware]}
-    :abilities [{:cost [:credit 3] :msg "prevent a hardware from being trashed"}
-                {:effect (effect (trash card {:cause :ability-cost})) :msg "prevent a hardware from being trashed"}]}
+    :abilities [{:cost [:credit 3]
+                 :msg "prevent a hardware from being trashed"
+                 :effect (effect (trash-prevent :hardware 1))}
+                {:label "[Trash]: Prevent a hardware from being trashed"
+                 :msg "prevent a hardware from being trashed"
+                 :effect (effect (trash-prevent :hardware 1)
+                                 (trash card {:cause :ability-cost}))}]}
 
    "Magnum Opus"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
@@ -595,10 +600,10 @@
                                           (lose :memory (:memoryunits target)))}}}
 
    "Reaver"
-   {:events {:runner-trash {:req (req (and (first-event state :runner :runner-trash) (installed? target)))
+   {:events {:runner-trash {:req (req (and (= 1 (get-in @state [:runner :register :trashed-installed])) (installed? target)))
                             :effect (effect (draw :runner 1))
                             :msg "draw 1 card"}}}
-   
+
    "Rook"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [r (get-card state card)
@@ -629,6 +634,7 @@
    "Savoir-faire"
    {:abilities [{:cost [:credit 2]
                  :once :per-turn
+                 :req (req (not (install-locked? state side)))
                  :msg (msg "install " (:title target))
                  :prompt "Choose a program to install from your grip"
                  :choices {:req #(and (is-type? % "Program")
@@ -655,19 +661,24 @@
                                 (gain state side :credit 1)))}]}
 
    "Self-modifying Code"
-   {:abilities [{:prompt "Choose a program to install"
-                 :msg (req (if (not= target "No install")
-                             (str "install " (:title target))
-                             (str "shuffle their Stack")))
-                 :priority true
-                 :choices (req (cancellable
-                                 (conj (vec (sort-by :title (filter #(is-type? % "Program") (:deck runner))))
-                                       "No install")))
-                 :cost [:credit 2]
-                 :effect (req (trigger-event state side :searched-stack nil)
-                              (trash state side card {:cause :ability-cost})
-                              (shuffle! state side :deck)
-                              (when (not= target "No install") (runner-install state side target)))}]}
+   {:abilities  [{:req (req (not (install-locked? state side)))
+                  :effect (req (when-completed (trash state side card {:cause :ability-cost})
+                                               (continue-ability state side
+                                                                  {:prompt "Choose a program to install"
+                                                                   :msg (req (if (not= target "No install")
+                                                                               (str "install " (:title target))
+                                                                               (str "shuffle their Stack")))
+                                                                   :priority true
+                                                                   :choices (req (cancellable
+                                                                                   (conj (vec (sort-by :title (filter #(is-type? % "Program")
+                                                                                                                      (:deck runner))))
+                                                                                         "No install")))
+                                                                   :cost [:credit 2]
+                                                                   :effect (req (trigger-event state side :searched-stack nil)
+                                                                                (trash state side card {:cause :ability-cost})
+                                                                                (shuffle! state side :deck)
+                                                                                (when (not= target "No install")
+                                                                                  (runner-install state side target)))} card nil)))}]}
 
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1]
@@ -721,6 +732,30 @@
                                   (has-subtype? current-ice "Barrier")))
                    :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
                    :effect (effect (resolve-ability (surf state current-ice) card nil))}]})
+
+   "Tapwrm"
+   (let [ability {:label "Gain [Credits] (start of turn)"
+                  :msg (msg "gain " (quot (:credit corp) 5) " [Credits]")
+                  :once :per-turn
+                  :req (req (:runner-phase-12 @state))
+                  :effect (effect (gain :credit (quot (:credit corp) 5)))}]
+     {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+      :flags {:drip-economy true}
+      :abilities [ability]
+      :events {:runner-turn-begins ability
+               :purge {:effect (effect (trash card))}}})
+
+   "Tracker"
+   (let [ability {:prompt "Choose a server for Tracker" :choices (req servers)
+                  :msg (msg "target " target)
+                  :req (req (not (:server-target card)))
+                  :effect (effect (update! (assoc card :server-target target)))}]
+     {:abilities [{:label "Make a run on targeted server" :cost [:click 1 :credit 2]
+                   :req (req (:server-target card))
+                   :msg (msg "make a run on " (:server-target card) ". Prevent the first subroutine that would resolve from resolving")
+                   :effect (effect (run (:server-target card) nil card))}]
+      :events {:runner-turn-begins ability
+               :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}})
 
    "Trope"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :power 1))}}

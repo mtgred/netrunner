@@ -354,6 +354,35 @@
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
+(deftest manta-grid
+  ;; If the Runner has fewer than 6 or no unspent clicks on successful run, corp gains a click next turn.
+  (do-game
+    (new-game (default-corp [(qty "Manta Grid" 1)])
+              (default-runner))
+    (starting-hand state :runner [])
+    (is (= 3 (:click (get-corp))) "Corp has 3 clicks")
+    (play-from-hand state :corp "Manta Grid" "HQ")
+    (core/rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (core/click-draw state :runner nil)
+    (core/click-draw state :runner nil)
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "No") ; don't trash Manta Grid
+    (is (= 1 (:click (get-runner))) "Running last click")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "No") ; don't trash Manta Grid
+    (take-credits state :runner)
+    (is (= 5 (:click (get-corp))) "Corp gained 2 clicks due to 2 runs with < 6 Runner credits")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 3 (:click (get-corp))) "Corp back to 3 clicks")
+    (take-credits state :corp)
+    (take-credits state :runner 3)
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "No") ; don't trash Manta Grid
+    (take-credits state :runner)
+    (is (= 4 (:click (get-corp))) "Corp gained a click due to running last click")))
+
 (deftest marcus-batty-security-nexus
   ;; Marcus Batty - Simultaneous Interaction with Security Nexus
   (do-game
@@ -801,6 +830,29 @@
       (is (= 1 (:current-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
       (core/derez state :corp sg)
       (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
+
+(deftest signal-jamming
+  ;; Trash to stop installs for the rest of the run
+  (do-game
+    (new-game (default-corp [(qty "Signal Jamming" 3)])
+              (default-runner [(qty "Self-modifying Code" 3) (qty "Reaver" 1)]))
+    (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
+    (play-from-hand state :corp "Signal Jamming" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (play-from-hand state :runner "Self-modifying Code")
+    (let [smc1 (get-in @state [:runner :rig :program 0])
+          smc2 (get-in @state [:runner :rig :program 1])
+          sj (get-content state :hq 0)]
+      (core/rez state :corp sj)
+      (run-on state "HQ")
+      (run-continue state)
+      (card-ability state :corp sj 0)
+      (card-ability state :runner smc1 0)
+      (is (empty? (:prompt (get-runner))) "SJ blocking SMC")
+      (run-jack-out state)
+      (card-ability state :runner smc2 0)
+      (prompt-card :runner (find-card "Reaver" (:deck (get-runner)))))))
 
 (deftest strongbox
   ;; Strongbox - Ability

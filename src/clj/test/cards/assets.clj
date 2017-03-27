@@ -77,6 +77,21 @@
       (card-ability state :corp alix 0)
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
 
+(deftest blacklist-steal
+  ;; Blacklist - #2426.  Need to allow steal.
+  (do-game
+    (new-game (default-corp [(qty "Fetal AI" 3) (qty "Blacklist" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Fetal AI")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (= 1 (count (get-in @state [:corp :discard])))
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
+    (= 1 (count (get-in @state [:runner :scored])))))
+
 (deftest bio-ethics-multiple
   ;; Bio-Ethics Association: preventing damage from multiple copies
   (do-game
@@ -169,11 +184,63 @@
       (prompt-choice :runner "Pay 1 [Credits]")
       (is (= 4 (:credit (get-runner))) "Runner paid 1 credit")
       (is (= 0 (:tag (get-runner))) "Runner didn't take a tag")
+      (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")
       (take-credits state :runner)
       (take-credits state :corp)
       (prompt-choice :runner "Take 1 tag")
       (is (= 8 (:credit (get-runner))) "Runner paid no credits")
-      (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))))
+      (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))
+      (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")))
+
+(deftest clyde-van-rite
+  ;; Clyde Van Rite - Multiple scenarios involving Runner not having credits/cards to trash
+  (do-game
+    (new-game (default-corp [(qty "Clyde Van Rite" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Restructure" 2) (qty "John Masanori" 2)]))
+    (play-from-hand state :corp "Clyde Van Rite" "New remote")
+    (let [clyde (get-content state :remote1 0)]
+      (core/rez state :corp clyde)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      ;; Runner chooses to pay - has 1+ credit so pays 1 credit
+      (card-ability state :corp clyde 0)
+      (is (= 9 (:credit (get-runner))))
+      (is (= 2 (count (:deck (get-runner)))))
+      (prompt-choice :runner "Pay 1 [Credits]")
+      (is (= 8 (:credit (get-runner))))
+      (is (= 2 (count (:deck (get-runner)))))
+      (core/end-phase-12 state :corp nil)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      ;; Runner chooses to pay - can't pay 1 credit so trash top card
+      (core/lose state :runner :credit 12)
+      (card-ability state :corp clyde 0)
+      (is (= 0 (:credit (get-runner))))
+      (is (= 2 (count (:deck (get-runner)))))
+      (prompt-choice :runner "Pay 1 [Credits]")
+      (is (= 0 (:credit (get-runner))))
+      (is (= 1 (count (:deck (get-runner)))))
+      (core/end-phase-12 state :corp nil)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      ;; Runner chooses to trash - has 1+ card in Stack so trash 1 card
+      (card-ability state :corp clyde 0)
+      (is (= 4 (:credit (get-runner))))
+      (is (= 1 (count (:deck (get-runner)))))
+      (prompt-choice :runner "Trash top card")
+      (is (= 4 (:credit (get-runner))))
+      (is (= 0 (count (:deck (get-runner)))))
+      (core/end-phase-12 state :corp nil)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      ;; Runner chooses to trash - no cards in Stack so pays 1 credit
+      (card-ability state :corp clyde 0)
+      (is (= 8 (:credit (get-runner))))
+      (is (= 0 (count (:deck (get-runner)))))
+      (prompt-choice :runner "Trash top card")
+      (is (= 7 (:credit (get-runner))))
+      (is (= 0 (count (:deck (get-runner))))))))
 
 (deftest daily-business-show
   ;; Daily Business Show - Full test
@@ -582,6 +649,22 @@
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
 
+(deftest hostile-infrastructure
+  ;; Hostile Infrastructure - do 1 net damage when runner trashes a corp card
+  (do-game
+    (new-game (default-corp [(qty "Hostile Infrastructure" 3)])
+              (default-runner))
+    (core/gain state :runner :credit 50)
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "Yes")
+    (is (= 1 (count (:discard (get-runner)))) "Took 1 net damage")
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (count (:discard (get-runner)))) "Took 1 net damage")))
+
 (deftest hyoubu-research-facility
   (do-game
     (new-game (default-corp [(qty "Hyoubu Research Facility" 1) (qty "Snowflake" 1)])
@@ -657,6 +740,81 @@
       (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")
       (is (= 1 (:click (get-corp)))))))
 
+(deftest jeeves-model-bioroids
+  (do-game
+    (new-game (default-corp [(qty "Jeeves Model Bioroids" 1) (qty "TGTBT" 1)
+                             (qty "Melange Mining Corp." 2)])
+              (default-runner [(qty "Ghost Runner" 3)]))
+    (play-from-hand state :corp "Jeeves Model Bioroids" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ghost Runner")
+    (play-from-hand state :runner "Ghost Runner")
+    (play-from-hand state :runner "Ghost Runner")
+    (take-credits state :runner)
+    ; install 3 things
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (play-from-hand state :corp "Melange Mining Corp." "New remote")
+    (play-from-hand state :corp "Melange Mining Corp." "New remote")
+    (is (= 1 (:click (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    ;;click for credits
+    (take-credits state :corp 3)
+    (is (= 1 (:click (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    ;;click to purge
+    (core/do-purge state :corp 3)
+    (is (= 1 (:click (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    ;;click to advance
+    (core/advance state :corp (get-content state :remote2 0))
+    (core/advance state :corp (get-content state :remote2 0))
+    (core/advance state :corp (get-content state :remote2 0))
+    (is (= 1 (:click (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    ;; use 3 clicks on card ability - Melange
+    (core/rez state :corp (get-content state :remote3 0))
+    (card-ability state :corp (get-content state :remote3 0) 0)
+    (is (= 1 (:click (get-corp))))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    ;; trash 3 resources
+    (core/gain state :runner :tag 1)
+    (core/trash-resource state :corp nil)
+    (prompt-select :corp (get-resource state 0))
+    (is (= 1 (count (:discard (get-runner)))))
+    (core/trash-resource state :corp nil)
+    (prompt-select :corp (get-resource state 0))
+    (is (= 2 (count (:discard (get-runner)))))
+    (core/trash-resource state :corp nil)
+    (prompt-select :corp (get-resource state 0))
+    (is (= 3 (count (:discard (get-runner)))))
+    (is (= 1 (:click (get-corp))))))
+
+(deftest kala-ghoda
+  ; Kala Ghoda Real TV
+  (do-game
+    (new-game (default-corp [(qty "Kala Ghoda Real TV" 1)])
+              (default-runner) [(qty "Sure Gamble" 3)])
+    (starting-hand state :runner ["Sure Gamble"])
+    (play-from-hand state :corp "Kala Ghoda Real TV" "New remote")
+    (let [tv (get-content state :remote1 0)]
+      (core/rez state :corp tv)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+      (card-ability state :corp tv 0)
+      (prompt-choice :corp "Done")
+      (card-ability state :corp tv 1)
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (last-log-contains? state "Sure Gamble")
+          "Kala Ghoda did log trashed card names"))))
+
 (deftest launch-campaign
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 1)])
@@ -716,6 +874,58 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
+
+(deftest news-team
+  ;; News Team - on access take 2 tags or take as agenda worth -1
+  (do-game
+    (new-game (default-corp [(qty "News Team" 3) (qty "Blacklist" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "News Team")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Take 2 tags")
+    (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Add News Team to score area")
+    (is (= 1 (count (:scored (get-runner)))) "News Team added to Runner score area")
+    (trash-from-hand state :corp "News Team")
+    (core/rez state :corp (get-content state :remote1 0))
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Add News Team to score area")
+    (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
+
+(deftest net-analytics
+  ;; Draw a card when runner avoids or removes 1 or more tags
+  (do-game
+    (new-game (default-corp [(qty "Ghost Branch" 3) (qty "Net Analytics" 3)])
+              (default-runner [(qty "New Angeles City Hall" 3)]))
+    (starting-hand state :corp ["Net Analytics" "Ghost Branch"])
+    (play-from-hand state :corp "Ghost Branch" "New remote")
+    (play-from-hand state :corp "Net Analytics" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "New Angeles City Hall")
+    (take-credits state :runner)
+    (let [gb (get-content state :remote1 0)
+          net (get-content state :remote2 0)
+          nach (get-in @state [:runner :rig :resource 0])]
+      (core/rez state :corp (refresh net))
+      (core/advance state :corp {:card (refresh gb)})
+      (is (= 1 (get-in (refresh gb) [:advance-counter])))
+      (take-credits state :corp)
+      (is (= 1 (count (:hand (get-corp)))) "Corp hand size is 1 before run")
+      (run-empty-server state "Server 1")
+      (prompt-choice :corp "Yes") ; choose to do the optional ability
+      (card-ability state :runner nach 0)
+      (prompt-choice :runner "Done")
+      (prompt-choice :runner "No")
+      (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
+      (is (= 0 (:tag (get-runner))) "Avoided 1 Ghost Branch tag")
+      (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
+      ; tag removal
+      (core/tag-runner state :runner 1)
+      (core/remove-tag state :runner 1)
+      (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
 
 (deftest net-police
   ;; Net Police - Recurring credits equal to Runner's link
@@ -922,6 +1132,39 @@
         (is (= "Public Support" (:title scored-pub)))
         (is (= 1 (:agendapoints scored-pub)))))))
 
+(deftest quarantine-system
+  ;; Forfeit agenda to rez up to 3 ICE with 2 credit discount per agenda point
+  (do-game
+    (new-game
+      (default-corp [(qty "Chiyashi" 3) (qty "Quarantine System" 1) (qty "Project Beale" 1)])
+      (default-runner))
+    (core/gain state :corp :credit 100)
+    (core/gain state :corp :click 100)
+    (play-from-hand state :corp "Chiyashi" "HQ")
+    (play-from-hand state :corp "Chiyashi" "HQ")
+    (play-from-hand state :corp "Chiyashi" "HQ")
+    (play-from-hand state :corp "Quarantine System" "New remote")
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (is (= 102 (:credit (get-corp))) "Corp has 102 creds")
+    (let [ch1 (get-ice state :hq 0)
+          ch2 (get-ice state :hq 1)
+          ch3 (get-ice state :hq 2)
+          qs (get-content state :remote1 0)
+          beale (get-content state :remote2 0)]
+      (core/rez state :corp qs)
+      (card-ability state :corp qs 0)
+      (is (empty? (:prompt (get-corp))) "No prompt to rez ICE")
+      (score-agenda state :corp beale)
+      ; 1 on rez
+      (is (= 101 (:credit (get-corp))) "Corp has 101 creds")
+      (card-ability state :corp qs 0)
+      (prompt-select :corp ch1)
+      (prompt-select :corp ch2)
+      (prompt-select :corp ch3)
+      ; pay 8 per Chiyashi - 24 total
+      (is (= 77 (:credit (get-corp))) "Corp has 77 creds")
+      (is (empty? (:prompt (get-corp))) "No prompt to rez ICE"))))
+
 (deftest reality-threedee
   ;; Reality Threedee - Take 1 bad pub on rez; gain 1c at turn start (2c if Runner tagged)
   (do-game
@@ -1072,6 +1315,50 @@
     (is (= 5 (:credit (get-corp))) "Gained 2c at start of turn")
     (play-from-hand state :corp "Pup" "HQ")
     (is (= 1 (count (:discard (get-corp)))) "Server Diagnostics trashed by ICE install")))
+
+(deftest shock
+  ;; do 1 net damage on access
+  (do-game
+    (new-game (default-corp [(qty "Shock!" 3)])
+              (default-runner))
+    (trash-from-hand state :corp "Shock!")
+    (play-from-hand state :corp "Shock!" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage")
+    (run-empty-server state "Archives")
+    (is (= 1 (count (:hand (get-runner)))) "Runner took 1 net damage")))
+
+(deftest shock-chairman-hiro
+  ;; issue #2319 - ensure :access flag is cleared on run end
+  (do-game
+    (new-game (default-corp [(qty "Shock!" 3) (qty "Chairman Hiro" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Shock!")
+    (play-from-hand state :corp "Shock!" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage")
+    (is (not (:run @state)) "Run is complete")
+    (trash-from-hand state :corp "Chairman Hiro")
+    (is (= 2 (count (:discard (get-corp)))) "Hiro and Shock still in archives")
+    (is (= 0 (count (:scored (get-runner)))) "Hiro not scored by Runner")))
+
+(deftest snare
+  ;; pay 4 on access, and do 3 net damage and give 1 tag
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+        "Runner has prompt to wait for Snare!")
+    (prompt-choice :corp "Yes")
+    (is (= 3 (:credit (get-corp))) "Corp had 7 and paid 4 for Snare! 1 left")
+    (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
+    (is (= 0 (count (:hand (get-runner)))) "Runner took 3 net damage")
+    ))
 
 (deftest snare-cant-afford
   ;; Snare! - Can't afford

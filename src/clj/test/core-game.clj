@@ -306,6 +306,24 @@
             (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
             (is (empty (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
 
+(deftest log-accessed-names
+  ;; Check that accessed card names are logged - except those on R&D, and no logs on archives
+  (do-game
+    (new-game
+      (default-corp [(qty "PAD Campaign" 7)])
+      (default-runner))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (trash-from-hand state :corp "PAD Campaign")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "No") ; Dismiss trash prompt
+    (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")
+    (run-empty-server state :rd)
+    (is (last-log-contains? state "an unseen card") "Accessed card name was not logged")
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "No") ; Dismiss trash prompt
+    (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")))
+
 (deftest counter-manipulation-commands
   ;; Test interactions of various cards with /counter and /adv-counter commands
   (do-game
@@ -418,6 +436,24 @@
     (prompt-choice :corp "No")
     (prompt-choice :runner "Yes")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))
+
+(deftest run-psi-bad-publicity-credits
+  ;; Should pay from Bad Pub for Psi games during run #2374
+  (do-game
+    (new-game (default-corp [(qty "Caprice Nisei" 3)])
+              (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
+    (is (= 1 (:bad-publicity (get-corp))) "Corp starts with 1 BP")
+    (play-from-hand state :corp "Caprice Nisei" "New remote")
+    (take-credits state :corp)
+    (let [caprice (get-content state :remote1 0)]
+      (core/rez state :corp caprice)
+      (run-on state "Server 1")
+      (is (prompt-is-card? :corp caprice) "Caprice prompt even with no ice, once runner makes run")
+      (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
+      (prompt-choice :corp "2 [Credits]")
+      (prompt-choice :runner "1 [Credits]")
+      (is (= 5 (:credit (get-runner))) "Runner spend bad pub credit on psi game")
+      (is (= 3 (:credit (get-corp))) "Corp spent 2 on psi game"))))
 
 (deftest purge-nested
   ;; Purge nested-hosted virus counters

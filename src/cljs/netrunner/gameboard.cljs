@@ -14,13 +14,13 @@
 (defonce last-state (atom {}))
 (defonce lock (atom false))
 
-(defn image-url
-  [{:keys [side code] :as card} player]
-  (let [version (if (and (not= (:side @game-state) (keyword (lower-case side)))
-                         (not (get-in @app-state [:options :opponent-alt-art])))
-                  "default"
-                  (get-in @game-state [player :user :options :alt-arts (keyword (:code card))] "default"))]
-    (str "/img/cards/" (:code card) (when-not (= version "default") (str "-" version)) ".png")))
+(defn image-url [{:keys [side code] :as card}]
+  (let [alt-art (get-in @app-state [:alt-arts code])
+        version (when (and (get-in @game-state [(keyword (lower-case side)) :user :special])
+                           (get-in @app-state [:options :show-alt-art])
+                           alt-art)
+                  (first (:versions alt-art)))]
+    (str "/img/cards/" code (when version (str "-" version)) ".png")))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
@@ -314,11 +314,12 @@
 
 (defn card-preview-mouse-over [e]
   (when-let [code (get-card-code e)]
-    (when-not (js/isNaN code)
-      (put! zoom-channel {:code (str code) :implementation :full}))))
+    (when-let [card (some #(when (= (:code %) code) %) (:cards @app-state))]
+     (put! zoom-channel (assoc card :implementation :full)))))
 
 (defn card-preview-mouse-out [e]
-  (when-let [code (get-card-code e)] (put! zoom-channel false)))
+  (when-let [code (get-card-code e)]
+    (put! zoom-channel false)))
 
 (defn log-pane [messages owner]
   (reify
@@ -488,7 +489,7 @@
       [:div.card-frame
        [:div.blue-shade.card {:on-mouse-enter #(put! zoom-channel cursor)
                               :on-mouse-leave #(put! zoom-channel false)}
-        (when-let [url (image-url cursor (keyword (lower-case (:side cursor))))]
+        (when-let [url (image-url cursor)]
           [:div
            [:span.cardname title]
            [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]])]]))))
@@ -501,6 +502,42 @@
          (not rezzed)
          (not= (:side host) "Runner"))
     facedown))
+
+(defn card-zoom [card owner]
+  (om/component
+   (sab/html
+    [:div.card-preview.blue-shade
+     [:h4 (:title card)]
+     (when-let [memory (:memoryunits card)]
+       (if (< memory 3)
+         [:div.anr-icon {:class (str "mu" memory)} ""]
+         [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
+     (when-let [cost (:cost card)]
+       [:div.heading (str "Cost: " cost)])
+     (when-let [trash-cost (:trash card)]
+       [:div.heading (str "Trash cost: " trash-cost)])
+     (when-let [strength (:strength card)]
+       [:div.heading (str "Strength: " strength)])
+     (when-let [requirement (:advancementcost card)]
+       [:div.heading (str "Advancement requirement: " requirement)])
+     (when-let [agenda-point (:agendatpoints card)]
+       [:div.heading (str "Agenda points: " agenda-point)])
+     (when-let [min-deck-size (:minimumdecksize card)]
+       [:div.heading (str "Minimum deck size: " min-deck-size)])
+     (when-let [influence-limit (:influencelimit card)]
+       [:div.heading (str "Influence limit: " influence-limit)])
+     (when-let [influence (:factioncost card)]
+       (when-let [faction (:faction card)]
+        [:div.heading "Influence "
+         [:span.influence
+          {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
+           :class                   (-> faction .toLowerCase (.replace " " "-"))}]]))
+     [:div.text
+      [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
+                                            "" (str ": " (:subtype card)))]
+      [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
+     (when-let [url (image-url card)]
+       [:img {:src url :onLoad #(-> % .-target js/$ .show)}])])))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
@@ -522,7 +559,7 @@
                                                (put! zoom-channel cursor))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(handle-card-click @cursor owner)}
-      (when-let [url (image-url cursor (keyword (lower-case (:side cursor))))]
+      (when-let [url (image-url cursor)]
         (if (or (not code) flipped facedown)
           [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
           [:div
@@ -715,7 +752,7 @@
   (om/component
    (sab/html
     [:div.blue-shade.discard
-     (drop-area :runner "Heap" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
+     (drop-area :runner "Heap" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeToggle)})
      (when-not (empty? discard)
        (om/build card-view (last discard)))
      (om/build label discard {:opts {:name "Heap"}})
@@ -729,7 +766,7 @@
    (sab/html
     (let [faceup? #(or (:seen %) (:rezzed %))]
       [:div.blue-shade.discard
-       (drop-area :corp "Archives" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeIn)})
+       (drop-area :corp "Archives" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeToggle)})
 
        (when-not (empty? discard)
          (let [c (last discard)]
@@ -1134,12 +1171,11 @@
          (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
-            [:div.gameboard-bg {:class (:background (:options @app-state))}]
-
+            [:div {:class (:background (:options @app-state))}]
             [:div.rightpane
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]
-                (om/build cb/card-view card))]
+                (om/build card-zoom card))]
              ;; card implementation info
              (when-let [card (om/get-state owner :zoom)]
                (let [implemented (:implementation card)]

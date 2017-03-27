@@ -222,7 +222,7 @@
              (or (not advance-counter-cost)
                  (<= advance-counter-cost (or advance-counter 0))))
     ;; Ensure that any costs can be paid.
-    (when-let [cost-str (apply pay (concat [state side card] cost))]
+    (when-let [cost-str (apply pay (concat [state side card] cost [{:action (:cid card)}]))]
       (let [c (if counter-cost
                 (update-in card [:counter (first counter-cost)]
                            #(- (or % 0) (or (second counter-cost) 0)))
@@ -424,9 +424,9 @@
   (let [opponent (if (= side :corp) :runner :corp)]
     (if-let [opponent-bet (get-in @state [:psi opponent])]
       (do (clear-wait-prompt state opponent)
-          (gain state opponent :credit (- opponent-bet))
+          (deduce state opponent [:credit opponent-bet])
           (system-msg state opponent (str "spends " opponent-bet " [Credits]"))
-          (gain state side :credit (- bet))
+          (deduce state side [:credit bet])
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
           (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
@@ -470,7 +470,7 @@
           which-ability (assoc (if succesful ability (:unsuccessful ability)) :eid (make-eid state))]
       (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
                                        card [strength (+ (:link runner) boost)])
-                      (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace))
+                      (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace) {:runner-spent boost})
                           (when-let [kicker (:kicker ability)]
                             (when (>= strength (:min kicker))
                               (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))

@@ -7,21 +7,23 @@
    "Archives Interface"
    {:events
     {:successful-run
-     {:silent (req true)
-      :delayed-completion true
-      :req (req (and (= target :archives) (not-empty (:discard corp))))
+     {:delayed-completion true
+      :req (req (and (= target :archives)
+                     (not= (:max-access run) 0)
+                     (not-empty (:discard corp))))
       :effect (effect (continue-ability
                         {:optional
-                         {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
+                         {:delayed-completion true
+                          :prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
                           :yes-ability
                           {:delayed-completion true
                            :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                                        (continue-ability
-                                          state side
+                                        (continue-ability state side
                                           {:prompt "Choose a card in Archives to remove from the game instead of accessing"
                                            :choices (req (:discard corp))
                                            :msg (msg "remove " (:title target) " from the game")
-                                           :effect (effect (move :corp target :rfg))} card nil))}}} card nil))}}}
+                                           :effect (effect (move :corp target :rfg))} card nil))}
+                          :no-ability {:effect (req (effect-completed state side eid))}}} card nil))}}}
 
    "Astrolabe"
    {:in-play [:memory 1]
@@ -142,14 +144,15 @@
    "Clone Chip"
    {:abilities [{:prompt "Choose a program to install from your Heap" :msg (msg "install " (:title target))
                  :priority true :show-discard true
-                 :req (req (not (seq (get-in @state [:runner :locked :discard]))))
+                 :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
+                               (not (install-locked? state side))))
                  :choices {:req #(and (is-type? % "Program")
                                       (= (:zone %) [:discard]))}
                  :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
 
    "Comet"
    {:in-play [:memory 1]
-    :events {:play-event {:req (req (first-event state side :play-event))
+    :events {:play-event {:req (req (first-event? state side :play-event))
                           :effect (req (system-msg state :runner
                                                    (str "can play another event without spending a [Click] by clicking on Comet"))
                                        (update! state side (assoc card :comet-event true)))}}
@@ -388,6 +391,18 @@
                               (shuffle! :deck)
                               (move target :hand))}}}
 
+   "Maw"
+   (let [manual {:optional
+                 {:label "Trash a card from HQ"
+                  :req (req (not (used-this-turn? (:cid card) state)))
+                  :prompt "Use Maw to trash a card from HQ?"
+                  :yes-ability {:msg "force the Corp to trash a random card from HQ"
+                                :once :per-turn
+                                :effect (req (trash state :corp (first (shuffle (:hand corp)))))}}}]
+     {:in-play [:memory 2]
+      :implementation "Manual - click card to fire the trash"
+      :abilities [manual]})
+
    "Maya"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn
@@ -567,9 +582,10 @@
    {:recurring 1}
 
    "Q-Coherence Chip"
-   {:effect (effect (gain :memory 1)) :leave-play (effect (lose :memory 1))
-    :events (let [e {:msg "trash itself" :req (req (= (last (:zone target)) :program))
-                     :effect (effect (trash card))}]
+   {:in-play [:memory 1]
+    :events (let [e {:req (req (= (last (:zone target)) :program))
+                     :effect (effect (trash card)
+                                     (system-msg (str "trashes Q-Coherence Chip")))}]
               {:runner-trash e :corp-trash e})}
 
    "Qianju PT"
@@ -610,11 +626,29 @@
                                   {:prompt "Choose how much damage to prevent"
                                    :priority 50
                                    :choices {:number (req (min n (count (:deck runner))))}
-                                   :msg (msg "trash " target " cards from their Stack and prevent " target " damage")
+                                   :msg (msg "trash " (join ", " (map :title (take target (:deck runner))))
+                                             " from their Stack and prevent " target " damage")
                                    :effect (effect (damage-prevent :net target)
                                                    (damage-prevent :brain target)
                                                    (mill :runner target)
                                                    (trash card {:cause :ability-cost}))} card nil)))}]}
+
+   "Recon Drone"
+   ; eventmap uses reverse so we get the most recent event of each kind into map
+   (let [eventmap (fn [s] (into {} (reverse (get s :turn-events))))]
+     {:abilities [{:req (req (and (true? (:access @state)) (= (:cid (second (:pre-damage (eventmap @state))))
+                                                              (:cid (first (:post-access-card (eventmap @state)))))))
+                :effect (effect (resolve-ability
+                                  {:prompt "Choose how much damage to prevent"
+                                   :priority 50
+                                   :choices {:number (req (min (last (:pre-damage (eventmap @state)))
+                                                               (:credit runner)))}
+                                   :msg (msg "prevent " target " damage")
+                                   :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) target)
+                                                   (lose :credit target)
+                                                   (trash card {:cause :ability-cost}))} card nil))}]
+     :events    {:pre-access {:effect (req (doseq [dtype [:net :brain :meat]] (swap! state update-in [:prevent :damage dtype] #(conj % card))))}
+                 :run-ends   {:effect (req (doseq [dtype [:net :brain :meat]] (swap! state update-in [:prevent :damage dtype] #(drop 1 %))))}}})
 
    "Record Reconstructor"
    {:events
@@ -678,6 +712,22 @@
                  :trace {:once :per-turn :base 5 :msg "give the Runner 1 tag and end the run"
                          :effect (effect (tag-runner :runner eid 1) (end-run))
                          :unsuccessful {:msg "bypass the current ICE"}}}]}
+
+   "Şifr"
+   {:in-play [:memory 2]
+    :abilities [{:once :per-turn
+                 :req (req (rezzed? current-ice))
+                 :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
+                 :effect (effect (lose :runner :hand-size-modification 1)
+                                 (update! (assoc card :sifr-target current-ice :sifr-used true))
+                                 (update-ice-strength current-ice))}]
+    :events {:runner-turn-begins {:req (req (:sifr-used card))
+                                  :effect (effect (gain :runner :hand-size-modification 1)
+                                                  (update! (dissoc card :sifr-used)))}
+             :pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
+                                :effect (req (let [ice-str (:current-strength target)]
+                                               (ice-strength-bonus state side (- ice-str) target)))}
+             :run-ends {:effect (effect (update! (dissoc card :sifr-target)))}}}
 
    "Silencer"
    {:recurring 1}

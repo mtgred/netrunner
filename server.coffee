@@ -381,32 +381,37 @@ app.get '/logout', (req, res) ->
   res.redirect('/')
 
 app.post '/register', (req, res) ->
-  db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
-    if user
-      res.status(422).send({message: 'Username taken'})
-    else if req.body.username.length < 4 or req.body.username.length > 16
-      res.status(423).send({message: 'Username too short/too long'})
-    else
-      email = req.body.email.trim().toLowerCase()
-      req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
-      req.body.registrationDate = new Date()
-      req.body.lastConnection = new Date()
-      hashPassword req.body.password, (err, hash) ->
-        req.body.password = hash
-        db.collection('users').insert req.body, (err) ->
-          res.send("error: #{err}") if err
-          req.login req.body, (err) -> next(err) if err
-          db.collection('decks').find({username: '__demo__'}).toArray (err, demoDecks) ->
-            throw err if err
-            for deck in demoDecks
-              delete deck._id
-              deck.username = req.body.username
-            if demoDecks.length > 0
-              db.collection('decks').insert demoDecks, (err, newDecks) ->
-                throw err if err
-                res.status(200).json({user: req.user, decks: newDecks})
-            else
-              res.status(200).json({user: req.user, decks: []})
+  if req.body.username.length > 20
+    res.status(423).send({message: 'Usernames are limited to 20 characters'})
+  else
+    db.collection('users').findOne username: new RegExp("^#{req.body.username}$", "i"), (err, user) ->
+      if user
+        res.status(422).send({message: 'Username taken'})
+      else
+        email = req.body.email.trim().toLowerCase()
+        db.collection('users').findOne email: new RegExp("^#{email}$", "i"), (err, user) ->
+          if user
+            res.status(424).send({message: 'Email already used'})
+          else
+            req.body.emailhash = crypto.createHash('md5').update(email).digest('hex')
+            req.body.registrationDate = new Date()
+            req.body.lastConnection = new Date()
+            hashPassword req.body.password, (err, hash) ->
+              req.body.password = hash
+              db.collection('users').insert req.body, (err) ->
+                res.send("error: #{err}") if err
+                req.login req.body, (err) -> next(err) if err
+                db.collection('decks').find({username: '__demo__'}).toArray (err, demoDecks) ->
+                  throw err if err
+                  for deck in demoDecks
+                    delete deck._id
+                    deck.username = req.body.username
+                  if demoDecks.length > 0
+                    db.collection('decks').insert demoDecks, (err, newDecks) ->
+                      throw err if err
+                      res.status(200).json({user: req.user, decks: newDecks})
+                  else
+                    res.status(200).json({user: req.user, decks: []})
 
 app.post '/forgot', (req, res) ->
   async.waterfall [
@@ -512,7 +517,7 @@ app.post '/reset/:token', (req, res) ->
 app.post '/update-profile', (req, res) ->
   if req.user
     db.collection('users').update {username: req.user.username}, {$set: {options: {background: req.body.background,\
-      'alt-arts': req.body['alt-arts'], 'opponent-alt-art': req.body['opponent-alt-art']}}}, \
+      'show-alt-art': req.body['show-alt-art']}}}, \
       (err) ->
         console.log(err) if err
         res.status(200).send({message: 'OK', background: req.body.background, altarts: req.body['alt-arts']})

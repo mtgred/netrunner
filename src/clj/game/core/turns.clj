@@ -158,7 +158,8 @@
   "End phase 1.2 and trigger appropriate events for the player."
   [state side args]
   (turn-message state side true)
-  (gain state side :click (get-in @state [side :click-per-turn]))
+  (gain state side :click (+ (get-in @state [side :click-per-turn]) (or (get-in @state [side :extra-click-temp]) 0)))
+  (swap! state dissoc-in [side :extra-click-temp])
   (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
                   (do (when (= side :corp)
                         (draw state side))
@@ -215,4 +216,7 @@
       (swap! state update-in [side :register] dissoc :cannot-draw)
       (swap! state update-in [side :register] dissoc :drawn-this-turn)
       (clear-turn-register! state)
-      (swap! state dissoc :turn-events))))
+      (swap! state dissoc :turn-events)
+      (when (some? (get-in @state [side :extra-turn]))
+        (start-turn state side nil)
+        (swap! state dissoc-in [side :extra-turn])))))

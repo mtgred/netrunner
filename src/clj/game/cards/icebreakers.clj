@@ -145,11 +145,16 @@
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
-                                       (not (some #(= title (:title %)) (all-installed state :runner)))))
+                                       (not (install-locked? state side))
+                                       (not (some #(= title (:title %)) (all-installed state :runner)))
+                                       (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
                         :optional {:player :runner
                                    :prompt (str "Install " title "?")
                                    :yes-ability {:effect (effect (unregister-events card)
-                                                                 (runner-install :runner card))}}}
+                                                                 (runner-install :runner card))}
+                                   :no-ability {:effect (req  ;; Add a register to note that the player was already asked about installing,
+                                                              ;; to prevent multiple copies from prompting multiple times.
+                                                              (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
         heap-event (req (when (= (:zone card) [:discard])
                           (unregister-events state side card)
                           (register-events state side
@@ -229,7 +234,8 @@
                     :choices {:req #(and (has-subtype? % "Icebreaker")
                                          (not (has-subtype? % "AI"))
                                          (installed? %))}
-                    :effect (effect (runner-install target {:host-card card}))}
+                    :effect (req (when (host state side card target)
+                                   (gain :memory (:memoryunits target))))}
          gain-abis (req (let [new-abis (mapcat (fn [c] (map-indexed #(assoc %2 :dynamic :copy, :source (:title c)
                                                                                :index %1, :label (make-label %2))
                                                                     (filter #(not= :manual-state (:ability-type %))
@@ -402,6 +408,15 @@
                  :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and add 2 strength")
                  :effect (effect (trash target {:unpreventable true}) (pump card 2))}]}
+
+   "Fawkes"
+   {:implementation "Stealth credit restriction not enforced"
+    :abilities [(break-sub 1 1 "sentry")
+                {:label (str "X [Credits]: +X strength for the remainder of the run (using at least 1 stealth [Credits])")
+                 :choices :credit
+                 :prompt "How many credits?"
+                 :effect (effect (pump card target :all-run))
+                 :msg (msg "increase strength by " target " for the remainder of the run")}]}
 
    "Femme Fatale"
    (auto-icebreaker ["Sentry"]
@@ -633,6 +648,16 @@
                                  (update-breaker-strength card))}]
     :strength-bonus (req (get-in card [:counter :power] 0))}
 
+   "Sūnya"
+   {:implementation "Adding power counter is manual"
+    :abilities [{:label "Place 1 power counter on Sūnya"
+                 :ability-type :manual-state
+                 :effect (effect (add-counter card :power 1)
+                                 (system-msg (str "places 1 power counter on Sūnya"))
+                                 (update-breaker-strength card))}
+                (break-sub 2 1 "sentry")]
+    :strength-bonus (req (get-in card [:counter :power] 0))}
+
    "Switchblade"
    (auto-icebreaker ["Sentry"]
                     {:implementation "Stealth credit restriction not enforced"
@@ -652,20 +677,21 @@
                     {:abilities [{:cost [:credit 3]
                                   :msg "break 1 subroutine on ICE with 0 or less strength"}
                                  {:cost [:credit 1]
-                                  :label "Give -1 strength to current ice"
-                                  :req (req current-ice)
+                                  :label "Give -1 strength to current ICE"
+                                  :req (req (rezzed? current-ice))
                                   :msg (msg "give -1 strength to " (:title current-ice))
-                                  :effect (effect (update! (update-in card [:wyrm-count] (fnil inc 0)))
-                                                  (update-ice-strength current-ice))}
+                                  :effect (req (update! state side (update-in card [:wyrm-count] (fnil #(+ % 1) 0)))
+                                               (update-ice-strength state side current-ice))}
                                  (strength-pump 1 1)]
                      :events (let [auto-pump (fn [state side eid card targets]
                                                ((:effect breaker-auto-pump) state side eid card targets))
                                    wy {:effect (effect (update! (dissoc card :wyrm-count))
-                                                       (auto-pump eid card targets))}]
+                                                       (auto-pump eid (get-card state card) targets))}]
                                {:pre-ice-strength {:req (req (and (= (:cid target) (:cid current-ice))
                                                                   (:wyrm-count card)))
-                                                   :effect (effect (ice-strength-bonus (- (:wyrm-count (get-card state card))) target)
-                                                                   (auto-pump eid card targets))}
+                                                   :effect (req (let [c (:wyrm-count (get-card state card))]
+                                                                  (ice-strength-bonus state side (- c) target)
+                                                                  (auto-pump state side eid card targets)))}
                                 :pass-ice wy
                                 :run-ends wy})})
 

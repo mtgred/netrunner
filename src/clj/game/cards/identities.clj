@@ -52,6 +52,18 @@
                                                              (clear-wait-prompt state :corp))}
                                                card nil)))}}}
 
+   "AgInfusion: New Miracles for a New World"
+   {:abilities [{:once :per-turn
+                 :req (req (and (:run @state) (not (rezzed? current-ice))))
+                 :prompt "Choose another server and redirect the run to its outermost position"
+                 :choices (req (cancellable servers))
+                 :msg (msg "trash the approached ICE. The Runner is now running on " target)
+                 :effect (req (let [dest (server->zone state target)]
+                                (trash state side current-ice)
+                                (swap! state update-in [:run]
+                                       #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                 :server (rest dest)))))}]}
+
    "Andromeda: Dispossessed Ristie"
    {:events {:pre-start-game {:req (req (= side :runner))
                               :effect (effect (draw 4 {:suppress-event true}))}}
@@ -124,11 +136,11 @@
     {:corp-phase-12 {:effect (effect (enable-corp-damage-choice))}
      :runner-phase-12 {:effect (effect (enable-corp-damage-choice))}
      :pre-resolve-damage
-     {:once :per-turn
-      :delayed-completion true
+     {:delayed-completion true
       :req (req (and (= target :net)
                      (corp-can-choose-damage? state)
-                     (> (last targets) 0)))
+                     (> (last targets) 0)
+                     (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))))
       :effect (req (damage-defer state side :net (last targets))
                    (if (= 0 (count (:hand runner)))
                      (do (swap! state update-in [:damage] dissoc :damage-choose-corp)
@@ -157,6 +169,8 @@
                              :no-ability {:effect (req (clear-wait-prompt state :runner)
                                                        (swap! state update-in [:damage] dissoc :damage-choose-corp))}}}
                            card nil))))}}
+    :req (req (empty? (filter #(= :net (first %)) (turn-events state :runner :damage))))
+    :effect (effect (enable-corp-damage-choice))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
@@ -201,8 +215,10 @@
 
    "Gabriel Santiago: Consummate Professional"
    {:events {:successful-run {:silent (req true)
-                              :msg "gain 2 [Credits]" :once :per-turn
-                              :effect (effect (gain :credit 2)) :req (req (= target :hq))}}}
+                              :req (req (and (= target :hq)
+                                             (first-successful-run-on-server? state :hq)))
+                              :msg "gain 2 [Credits]"
+                              :effect (effect (gain :credit 2)) }}}
 
    "Gagarin Deep Space: Expanding the Horizon"
    {:flags {:slow-remote-access (req (not (:disabled card)))}
@@ -224,16 +240,16 @@
                    true))]
      {:events {:agenda-stolen
                {:effect (effect (register-turn-flag! card :can-steal haarp))}}
-      :effect (req (when-not (first-event state side :agenda-stolen)
+      :effect (req (when-not (first-event? state side :agenda-stolen)
                      (register-turn-flag! state side card :can-steal haarp)))
       :leave-play (effect (clear-turn-flag! card :can-steal))})
 
    "Haas-Bioroid: Architects of Tomorrow"
    {:events {:pass-ice
-             {:once :per-turn
-              :delayed-completion true
+             {:delayed-completion true
               :req (req (and (rezzed? target)
-                             (has-subtype? target "Bioroid")))
+                             (has-subtype? target "Bioroid")
+                             (first-event? state :corp :pass-ice)))
               :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                               (continue-ability
                                 {:prompt "Choose a bioroid to rez" :player :corp
@@ -246,7 +262,8 @@
                                card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"
-   {:events {:corp-install {:once :per-turn :msg "gain 1 [Credits]"
+   {:events {:corp-install {:req (req (first-event? state corp :corp-install))
+                            :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
 
    "Haas-Bioroid: Stronger Together"
@@ -274,9 +291,9 @@
 
    "Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
-             {:silent (req (not (and (first-event state side :runner-install)
+             {:silent (req (not (and (first-event? state side :runner-install)
                                      (some #(is-type? % (:type target)) (:hand runner)))))
-              :req (req (and (first-event state side :runner-install)
+              :req (req (and (first-event? state side :runner-install)
                              (some #(is-type? % (:type target)) (:hand runner))))
               :once :per-turn
               :delayed-completion true
@@ -320,10 +337,24 @@
    {:events {:pre-start-game {:effect draft-points-target}
              :pre-install {:req (req (and (has-most-faction? state :runner "Shaper")
                                           (pos? (count (:deck runner)))
-                                          (first-event state side :pre-install)))
+                                          (first-event? state side :pre-install)))
                            :msg "draw 1 card"
                            :once :per-turn
                            :effect (effect (draw 1))}}}
+
+   "Jemison Astronautics: Sacrifice. Audacity. Success."
+   {:events {:corp-forfeit-agenda
+             {:delayed-completion true
+              :effect (req (show-wait-prompt state :runner "Corp to place advancement tokens")
+                           (let [p (inc (get-agenda-points state :corp target))]
+                             (continue-ability state side
+                               {:prompt "Choose a card to place advancement tokens on with Jemison Astronautics: Sacrifice. Audacity. Success."
+                                :choices {:req #(and (installed? %) (= (:side %) "Corp"))}
+                                :msg (msg "place " p " advancement tokens on " (card-str state target))
+                                :cancel-effect (effect (clear-wait-prompt :runner))
+                                :effect (effect (add-prop :corp target :advance-counter p {:placed true})
+                                                (clear-wait-prompt :runner))}
+                              card nil)))}}}
 
    "Jesminder Sareen: Girl Behind the Curtain"
    {:events {:pre-tag {:once :per-run
@@ -354,6 +385,9 @@
            :req (req (is-central? (:server run)))
            :effect (req (apply enable-run-on-server
                                state card (map first (get-remotes @state))))}}
+    :req (req (empty? (let [successes (turn-events state side :successful-run)]
+                        (filter #(is-central? %) successes))))
+    :effect (req (apply prevent-run-on-server state card (map first (get-remotes @state))))
     :leave-play (req (apply enable-run-on-server state card (map first (get-remotes @state))))}
 
    "Jinteki Biotech: Life Imagined"
@@ -405,12 +439,17 @@
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Ken \"Express\" Tenma: Disappeared Clone"
-   {:events {:play-event {:req (req (has-subtype? target "Run")) :once :per-turn
-                          :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+   {:events {:play-event {:req (req (and (has-subtype? target "Run")
+                                         (empty? (filter #(has-subtype? % "Run")
+                                                         ;; have to flatten because each element is a list containing
+                                                         ;; the Event card that was played
+                                                         (flatten (turn-events state :runner :play-event))))))
+                          :msg "gain 1 [Credits]"
+                          :effect (effect (gain :credit 1))}}}
 
    "Khan: Savvy Skiptracer"
    {:events {:pass-ice
-             {:once :per-turn
+             {:req (req (first-event? state :corp :pass-ice))
               :delayed-completion true
               :effect (req (if (some #(has-subtype? % "Icebreaker") (:hand runner))
                              (continue-ability state side
@@ -449,8 +488,17 @@
       :events {:agenda-scored leela
                :agenda-stolen leela}})
 
+   "Los: Data Hijacker"
+   {:events {:rez {:once :per-turn
+                   :req (req (ice? target))
+                   :msg "gain 2 [Credits]"
+                   :effect (effect (gain :runner :credit 2))}}}
+
    "MaxX: Maximum Punk Rock"
-   (let [ability {:msg "trash the top 2 cards from Stack and draw 1 card"
+   (let [ability {:msg (msg (let [deck (:deck runner)]
+                              (if (pos? (count deck))
+                                (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
+                                "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
                   :effect (effect (mill 2) (draw))}]
      {:flags {:runner-turn-draw true
@@ -477,13 +525,16 @@
                                   (swap! state update-in [:bonus] dissoc :cost))))}]}
 
    "NBN: Controlling the Message"
-   {:events {:runner-trash
+   (let [cleanup (effect (update! :corp (dissoc card :saw-trash)))]
+   {:events {:corp-turn-ends {:effect cleanup}
+             :runner-turn-ends {:effect cleanup}
+             :runner-trash
              {:delayed-completion true
-              :req (req (and (let [trashes (flatten (turn-events state side :runner-trash))]
-                               (empty? (filter #(card-is? % :side :corp) trashes)))
+              :req (req (and (not (:saw-trash card))
                              (card-is? target :side :corp)
                              (installed? target)))
               :effect (req (show-wait-prompt state :runner "Corp to use NBN: Controlling the Message")
+                           (update! state :corp (assoc card :saw-trash true))
                            (continue-ability
                              state :corp
                              {:optional
@@ -495,7 +546,7 @@
                                                                      (clear-wait-prompt :runner))
                                                      :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
                                :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                             card nil))}}}
+                             card nil))}}})
 
    "NBN: Making News"
    {:recurring 2}
@@ -505,7 +556,9 @@
     :leave-play (effect (lose :hand-size-modification 1))}
 
    "Near-Earth Hub: Broadcast Center"
-   {:events {:server-created {:msg "draw 1 card" :once :per-turn :effect (effect (draw 1))}}}
+   {:events {:server-created {:req (req (first-event? state :corp :server-created))
+                              :msg "draw 1 card"
+                              :effect (effect (draw 1))}}}
 
    "Nero Severn: Information Broker"
    {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
@@ -593,9 +646,9 @@
              :run-ends {:effect (req (swap! state dissoc-in [:runner :identity :omar-run-activated]))}}}
 
    "Pālanā Foods: Sustainable Growth"
-   {:events {:runner-draw {:req (req (pos? target))
+   {:events {:runner-draw {:req (req (and (first-event? state :corp :runner-draw)
+                                          (pos? target)))
                            :msg "gain 1 [Credits]"
-                           :once :per-turn
                            :effect (effect (gain :corp :credit 1))}}}
 
    "Quetzal: Free Spirit"
@@ -625,15 +678,18 @@
    {:events {:successful-run
              {:interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
               :delayed-completion true
-              :req (req (= target :hq)) :once :per-turn
+              :req (req (and (= target :hq)
+                             (first-successful-run-on-server? state :hq)))
               :effect (effect (continue-ability {:choices {:req #(and installed? (not (rezzed? %)))}
-                                                 :effect (effect (expose target)) :msg "expose 1 card"}
+                                                 :effect (effect (expose eid target)) :msg "expose 1 card"
+                                                 :delayed-completion true }
                                                 card nil))}}}
 
    "Spark Agency: Worldswide Reach"
    {:events
-    {:rez {:req (req (has-subtype? target "Advertisement"))
-           :once :per-turn
+    {:rez {:req (req (and (has-subtype? target "Advertisement")
+                          (empty? (filter #(has-subtype? % "Advertisement")
+                                          (flatten (turn-events state :corp :rez))))))
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an advertisement")}}}
 
@@ -738,9 +794,13 @@
    "Weyland Consortium: Builder of Nations"
    {:implementation "Damage triggered manually"
     :abilities [{:label "Do 1 meat damage"
+                 :once :per-turn
+                 :prompt "Do a meat damage from identity ability?"
+                 :choices (cancellable ["Yes"])
                  :delayed-completion true
-                 :msg "do 1 meat damage"
-                 :effect (effect (damage eid :meat 1 {:card card}))}]}
+                 :effect (req (when (= target "Yes")
+                                (damage state :runner eid :meat 1 {:card card})
+                                (system-msg state side "uses Weyland Consortium: Builder of Nations to do 1 meat damage")))}]}
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]"

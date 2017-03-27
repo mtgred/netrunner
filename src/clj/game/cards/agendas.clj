@@ -62,7 +62,7 @@
    "Advanced Concept Hopper"
    {:events
     {:run
-     {:req (req (first-event state side :run))
+     {:req (req (first-event? state side :run))
       :effect (effect (show-wait-prompt :runner "Corp to use Advanced Concept Hopper")
                       (continue-ability
                         {:player :corp
@@ -105,7 +105,8 @@
                                                  state side
                                                  {:choices {:req can-be-advanced?}
                                                   :msg (msg "place " c " advancement tokens on " (card-str state target))
-                                                  :cancel-effect (effect (clear-wait-prompt :runner))
+                                                  :cancel-effect (req (clear-wait-prompt state :runner)
+                                                                      (effect-completed state side eid))
                                                   :effect (effect (add-prop :corp target :advance-counter c {:placed true})
                                                                   (clear-wait-prompt :runner))} card nil)))}
                               card nil))}}
@@ -182,17 +183,7 @@
       :abilities [ability]})
 
    "Dedicated Neural Net"
-   (letfn [(access-hq [cards]
-             {:prompt "Select a card to access."
-              :player :runner
-              :choices [(str "Card from HQ")]
-              :effect (req (system-msg state side (str "accesses " (:title (first cards))))
-                           (when-completed
-                             (handle-access state side [(first cards)])
-                             (do (if (< 1 (count cards))
-                                   (continue-ability state side (access-hq (next cards)) card nil)
-                                   (effect-completed state side eid card)))))})]
-     (let [psi-effect
+    (let [psi-effect
            {:delayed-completion true
             :mandatory true
             :effect (req (if (not-empty (:hand corp))
@@ -203,7 +194,14 @@
                                   :choices {:req #(and (in-hand? %) (card-is? % :side :corp))
                                             :max (req (access-count state side :hq-access))}
                                   :effect (effect (clear-wait-prompt :runner)
-                                                  (continue-ability :runner (access-hq (shuffle targets)) card nil))}
+                                                  (continue-ability :runner
+                                                                    (access-helper-hq
+                                                                      state (access-count state side :hq-access)
+                                                                      ; access-helper-hq uses a set to keep track of which cards have already
+                                                                      ; been accessed. Using the set difference we make the runner unable to
+                                                                      ; access non-selected cards from the corp prompt
+                                                                      (clojure.set/difference (set (:hand corp)) (set targets)))
+                                                                    card nil))}
                                  card nil))
                            (effect-completed state side eid card)))}]
        {:events {:successful-run {:interactive (req true)
@@ -212,7 +210,7 @@
                                         :not-equal {:effect (req (when-not (:replace-access (get-in @state [:run :run-effect]))
                                                                    (swap! state update-in [:run :run-effect]
                                                                           #(assoc % :replace-access psi-effect)))
-                                                                 (effect-completed state side eid))}}}}}))
+                                                                 (effect-completed state side eid))}}}}})
 
    "Director Haas Pet Project"
    (let [dhelper (fn dpp [n] {:prompt "Select a card to install"
@@ -498,6 +496,35 @@
                                                 (trigger-event state side :rez target))
                                             (corp-install state side target "New remote")))}}}}}
 
+   "Net Quarantine"
+   (let [nq  {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
+                             (when (pos? extra) (gain state side :credit extra)
+                                                (system-msg state :corp (str "uses Net Quarantine to gain " extra " [Credits]")))
+                             (when (some? (get-in @state [:runner :temp-link]))
+                               (swap! state assoc-in [:runner :link] (:temp-link runner))
+                               (swap! state dissoc-in [:runner :temp-link]))))}]
+   {:events
+    {:trace     {:once :per-turn
+                 :silent (req true)
+                 :effect (req
+                           (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
+                           (swap! state assoc-in [:runner :temp-link] (:link runner))
+                           (swap! state assoc-in [:runner :link] 0))}
+    :successful-trace nq
+    :unsuccessful-trace nq}})
+
+   "NEXT Wave 2"
+   {:delayed-completion true
+    :effect (req (if (some #(and (rezzed? %) (ice? %) (has-subtype? % "NEXT")) (all-installed state :corp))
+                   (continue-ability state side
+                     {:optional
+                      {:prompt "Do 1 brain damage with NEXT Wave 2?"
+                       :yes-ability {:msg "do 1 brain damage"
+                                     :effect (effect (damage eid :brain 1 {:card card}))}
+                       :no-ability {:effect (req (effect-completed state side eid))}}}
+                    card nil)
+                   (effect-completed state side eid)))}
+
    "Nisei MK II"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 1))
@@ -515,8 +542,8 @@
 
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
-             :msg "force the Runner to trash 1 card from their Grip at random"
-             :effect (effect (trash (first (shuffle (:hand runner)))))}]
+             :effect (effect (trash (first (shuffle (:hand runner)))))
+             :msg (msg "force the Runner to trash " (:title (first (:discard runner))) " from their Grip at random")}]
      {:events {:searched-stack pp
                :runner-install (assoc pp :req (req (and (some #{:discard} (:previous-zone target))
                                                         (pos? (count (:hand runner))))))}})
@@ -691,6 +718,23 @@
               :effect (effect (lose :runner :hand-size-modification 1))}
     :leave-play (effect (gain :runner :hand-size-modification 1))}
 
+   "Sensor Net Activation"
+   {:effect (effect (add-counter card :agenda 1))
+    :silent (req true)
+    :abilities [{:counter-cost [:agenda 1]
+                 :req (req (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp)))
+                 :prompt "Choose a bioroid to rez, ignoring all costs"
+                 :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                 :msg (msg "rez " (card-str state target) ", ignoring all costs")
+                 :effect (req (let [c target]
+                                (rez state side c {:ignore-cost :all-costs})
+                                (register-events state side
+                                  {:corp-turn-ends {:effect (effect (derez c)
+                                                                    (unregister-events card))}
+                                   :runner-turn-ends {:effect (effect (derez c)
+                                                                      (unregister-events card))}} card)))}]
+      :events {:corp-turn-ends nil :runner-turn-ends nil}}
+
    "Sentinel Defense Program"
    {:events {:pre-resolve-damage {:req (req (and (= target :brain) (> (last targets) 0)))
                                   :msg "to do 1 net damage"
@@ -743,11 +787,22 @@
 
    "Underway Renovation"
    {:install-state :face-up
-    :events {:advance {:req (req (= (:cid card) (:cid target)))
-                       :msg (msg "trash the top " (if (>= (:advance-counter (get-card state card)) 4) "2 cards" "card")
-                                 " of the Runner's Stack")
+    :events {:advance {:req (req (= (:cid card) (:cid target))) 
+                       :msg (msg (let [deck (:deck runner)
+                                       anydeck? (pos? (count deck)) 
+                                       adv4? (>= (:advance-counter (get-card state card)) 4)] 
+                         (cond
+                           (and anydeck? adv4?)
+                           (str "trash " (join ", " (map :title (take 2 deck))) " from the Runner's stack")
+
+                           (and anydeck? (not adv4?) )
+                           (str "trash " (:title (first deck)) " from the Runner's stack")
+
+                           (false? anydeck?)  
+                           "trash from the Runner's stack but it is empty")))
+
                        :effect (effect (mill :runner
-                                             (if (>= (:advance-counter (get-card state card)) 4) 2 1)))}}}
+                                             (if (>= (:advance-counter (get-card state card)) 4)  2 1)))}}}
 
    "Unorthodox Predictions"
    {:implementation "Prevention of subroutine breaking is not enforced"

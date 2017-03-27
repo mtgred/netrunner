@@ -147,6 +147,30 @@
         (is (empty? (:prompt (get-corp))) "No choice after declining on first damage")
         (is (= 3 (count (:discard (get-runner)))))))))
 
+(deftest chronos-protocol-employee-strike
+  ;; Chronos Protocol - Issue #1958 also affects Chronos Protocol
+  (do-game
+    (new-game
+      (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1)])
+      (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 3) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Pup" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (run-on state :hq)
+    (let [pup (get-ice state :hq 0)]
+      (core/rez state :corp pup)
+      (card-subroutine state :corp pup 0)
+      (is (empty? (:prompt (get-corp))) "No choice because of Employee Strike")
+      (card-subroutine state :corp pup 0)
+      (is (= 2 (count (:discard (get-runner)))))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Scrubbed")
+      (run-on state :hq)
+      (card-subroutine state :corp pup 0)
+      (is (not (empty? (:prompt (get-corp)))) "Employee Strike out of play - Ability turned on correctly"))))
+
 (deftest edward-kim
   ;; Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives
   (do-game
@@ -191,6 +215,30 @@
     (is (= 7 (:credit (get-runner))) "Gained 2c")
     (run-empty-server state :hq)
     (is (= 7 (:credit (get-runner))) "No credits gained")))
+
+(deftest gagarin
+  ;; Gagarin - pay 1c to access each card in remote
+  (do-game
+    (new-game
+      (make-deck "Gagarin Deep Space: Expanding the Horizon" [(qty "PAD Campaign" 1) (qty "Caprice Nisei" 1)])
+      (default-runner))
+    (core/lose state :runner :credit 4)
+    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-select :runner (get-content state :remote1 0))
+    (is (= 0 (:credit (get-runner))) "Paid 1 credit to access")
+    (prompt-choice :runner "No") ; Dismiss trash prompt
+    (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")
+    (run-empty-server state :remote1)
+    (prompt-select :runner (get-content state :remote1 0))
+    (prompt-choice :runner "OK") ; Could not afford message dismissed
+    (is (empty? (:prompt (get-runner))) "Runner cannot access so no trash prompt")
+    (is (not (last-log-contains? state "PAD Campaign")) "No card name was logged")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "No") ; Dismiss trash prompt
+    (is (last-log-contains? state "Caprice") "Accessed card name was logged")))
 
 (deftest grndl-power-unleashed
   ;; GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub.
@@ -251,6 +299,42 @@
     (prompt-choice :runner "Steal")
     (is (= 2 (:agenda-point (get-runner))) "Third steal prevented")))
 
+(deftest haas-bioroid-architects-of-tomorrow
+  ;; Architects of Tomorrow - prompt to rez after passing bioroid
+  (do-game
+    (new-game
+      (make-deck "Haas-Bioroid: Architects of Tomorrow" [(qty "Eli 1.0" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Eli 1.0" "Archives")
+    (play-from-hand state :corp "Eli 1.0" "HQ")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (core/rez state :corp (get-ice state :archives 0))
+    (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rezzing Eli 1.0")
+    (run-continue state)
+    (prompt-select :corp (get-ice state :hq 0))
+    (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")))
+
+(deftest haas-bioroid-engineering-the-future-employee-strike
+  ;; EtF - interaction with Employee Strike
+  (do-game
+    (new-game
+      (make-deck "Haas-Bioroid: Engineering the Future" [(qty "Eli 1.0" 3) (qty "Paywall Implementation" 1)])
+      (default-runner [(qty "Employee Strike" 1)]))
+    (take-credits state :corp)
+    (is (= 8 (:credit (get-corp))) "Corp has 8 credits at turn end")
+    (play-from-hand state :runner "Employee Strike")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 8 (:credit (get-corp))) "Corp did not gain 1cr from EtF")
+    (play-from-hand state :corp "Paywall Implementation")
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 8 (:credit (get-corp))) "Corp did not gain 1cr from EtF")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Eli 1.0" "New remote")
+    (is (= 9 (:credit (get-corp))) "Corp gained 1cr from EtF")))
+
 (deftest haas-bioroid-stronger-together
   ;; Stronger Together - +1 strength for Bioroid ice
   (do-game
@@ -295,6 +379,32 @@
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (is (= 8 (core/trash-cost state :runner (refresh pad)))))))
+
+(deftest jemison-astronautics
+  ;; Jemison Astronautics - Place advancements when forfeiting agendas
+  (do-game
+    (new-game
+      (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success." [(qty "Enforcer 1.0" 1) (qty "Hostile Takeover" 1)
+                                                                        (qty "Ice Wall" 1) (qty "Global Food Initiative" 1)])
+      (default-runner [(qty "Data Dealer" 1)]))
+    (play-from-hand state :corp "Enforcer 1.0" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [enf (get-ice state :hq 0)
+          iwall (get-ice state :rd 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Data Dealer")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Steal")
+      (let [dd (get-resource state 0)]
+        (card-ability state :runner dd 0)
+        (is (empty? (:prompt (get-corp))) "No Jemison prompt for Runner forfeit")
+        (take-credits state :runner)
+        (play-from-hand state :corp "Global Food Initiative" "New remote")
+        (score-agenda state :corp (get-content state :remote2 0))
+        (core/rez state :corp enf)
+        (prompt-select :corp iwall)
+        (is (= 4 (:advance-counter (refresh iwall))) "Jemison placed 4 advancements")))))
 
 (deftest jesminder-sareen-ability
   ;; Jesminder Sareen - avoid tags only during a run
@@ -369,7 +479,7 @@
     (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
 
 (deftest jinteki-replicating-perfection-employee-strike
-  ;; Replicating Perfection - interaction with Employee Strike. Issue #1313.
+  ;; Replicating Perfection - interaction with Employee Strike. Issue #1313 and #1956.
   (do-game
     (new-game
       (make-deck "Jinteki: Replicating Perfection" [(qty "Mental Health Clinic" 3)])
@@ -378,7 +488,9 @@
     (take-credits state :corp)
     (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")
     (play-from-hand state :runner "Employee Strike")
-    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")))
+    (is (boolean (core/can-run-server? state "Server 1")) "Runner can run on remotes")
+    (play-from-hand state :runner "Scrubbed")
+    (is (not (core/can-run-server? state "Server 1")) "Runner can only run on centrals")))
 
 (deftest kate-mac-mccaffrey-discount
   ;; Kate 'Mac' McCaffrey - Install discount
@@ -544,6 +656,17 @@
     (is (not (get-content state :archives 0)) "Upgrade returned to hand")
     (is (not (:run @state)) "Run ended, no more accesses")))
 
+(deftest maxx
+  (do-game
+    (new-game (default-corp)
+              (make-deck "MaxX: Maximum Punk Rock" [(qty "Wyldside" 3)
+                                                    (qty "Eater" 1)]))
+    (starting-hand state :runner ["Eater"])
+    (take-credits state :corp)
+    (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
+    (is (last-log-contains? state "Wyldside, Wyldside")
+        "Maxx did log trashed card names")))
+
 (deftest maxx-wyldside-start-of-turn
   ;; MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click
   (do-game
@@ -612,12 +735,15 @@
   ;; NBN: Controlling the Message - Trace to tag Runner when first installed Corp card is trashed
   (do-game
     (new-game
-      (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 2)])
+      (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 3)])
       (default-runner [(qty "Forger" 1)]))
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Forger")
+    ; trash from HQ first - #2321
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Yes")
     (run-empty-server state "Server 1")
     (prompt-choice :runner "Yes")
     (prompt-choice :corp "Yes")
@@ -935,6 +1061,41 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate"))))
 
+(deftest silhouette-expose-trigger-before-access
+  ;; Silhouette - Expose trigger ability resolves completely before access. Issue #2173.
+  (do-game
+    (new-game
+      (default-corp [(qty "Psychic Field" 1) (qty "Fetal AI" 3)])
+      (make-deck "Silhouette: Stealth Operative" [(qty "Feedback Filter" 1) (qty "Inside Job" 1)]))
+    (starting-hand state :corp ["Psychic Field" "Fetal AI"])
+    (play-from-hand state :corp "Psychic Field" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
+    (let [psychic (get-content state :remote1 0)
+          ff (get-hardware state 0)]
+      (run-empty-server state :hq)
+      (is (:run @state) "On successful run trigger effects")
+      (prompt-select :runner psychic)
+      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+      (prompt-choice :corp "2 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (card-ability state :runner ff 0)
+      (prompt-choice :runner "Done")
+      (is (= 0 (:credit (get-runner))) "Runner has no more credits left")
+      (is (= 1 (count (:hand (get-runner)))) "Prevented 1 net damage")
+      (is (empty? (:discard (get-runner))) "No cards discarded")
+      (is (:run @state) "On run access phase")
+      (prompt-choice :runner "Access")
+      (prompt-choice :runner "Done")
+      (is (empty? (:hand (get-runner))) "Suffered 1 net damage due to accessing Fetal AI")
+      (is (= 1 (count (:discard (get-runner)))) "Discarded 1 card due to net damage")
+      (is (:run @state) "Resolving access triggers")
+      (prompt-choice :runner "Yes")
+      (is (= 0 (count (:scored (get-runner)))) "Runner has no credits to be able to steal Fetal AI")
+      (is (not (:run @state)) "Run has now ended")
+      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+
 (deftest silhouette-temujin-weirdness
   ;; Silhouette - broken interaction with other successful-run triggers. Issue #1968.
   (do-game
@@ -967,15 +1128,20 @@
   ;; Spark Agency - Rezzing advertisements
   (do-game
     (new-game
-      (make-deck "Spark Agency: Worldswide Reach" [(qty "Launch Campaign" 2)])
+      (make-deck "Spark Agency: Worldswide Reach" [(qty "Launch Campaign" 3)])
       (default-runner))
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
+    (play-from-hand state :corp "Launch Campaign" "New remote")
     (let [lc1 (get-content state :remote1 0)
-          lc2 (get-content state :remote2 0)]
+          lc2 (get-content state :remote2 0)
+          lc3 (get-content state :remote3 0)]
       (core/rez state :corp lc1)
       (is (= 4 (:credit (get-runner)))
           "Runner lost 1 credit from rez of advertisement (Corp turn)")
+      (core/rez state :corp lc3)
+      (is (= 4 (:credit (get-runner)))
+          "Runner did not lose credit from second Spark rez")
       (take-credits state :corp)
       (run-on state "Server 1")
       (core/rez state :corp lc2)
@@ -1068,6 +1234,23 @@
         (prompt-select :corp (refresh scored))
         (is (= 0 (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
         (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")))))
+
+(deftest weyland-builder
+  ;; Builder of Nations - 1 meat damage per turn at most
+  (do-game
+    (new-game
+      (make-deck "Weyland Consortium: Builder of Nations" [(qty "Hedge Fund" 3)])
+      (default-runner))
+      (let [bon (get-in @state [:corp :identity])]
+        (card-ability state :corp bon 0)
+        (prompt-choice :corp "Cancel")
+        (is (= 0 (count (:discard (get-runner)))) "Runner took no meat damage from BoN")
+        (card-ability state :corp bon 0)
+        (prompt-choice :corp "Yes")
+        (is (= 1 (count (:discard (get-runner)))) "Runner took 1 meat damage from BoN")
+        (card-ability state :corp bon 0)
+        (is (= 1 (count (:discard (get-runner)))) "Runner took only 1 meat damage from BoN total")
+        (is (= 0 (count (:prompt (get-corp))))))))
 
 (deftest whizzard
   ;; Whizzard - Recurring credits

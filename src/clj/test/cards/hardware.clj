@@ -5,6 +5,14 @@
             [test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(deftest akamatsu-mem
+  ;; Akamatsu Mem Chip - Gain 1 memory
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Akamatsu Mem Chip" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Akamatsu Mem Chip")
+    (is (= 5 (:memory (get-runner))) "Gain 1 memory")))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
@@ -139,6 +147,26 @@
       (core/rez state :corp quan)
       (is (= 4 (:credit (get-corp))) "Paid 3c instead of 1c to rez Quandary"))))
 
+(deftest cybersolutions-mem-chip
+  ;; CyberSolutions Mem Chip- Gain 2 memory
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "CyberSolutions Mem Chip" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "CyberSolutions Mem Chip")
+    (is (= 6 (:memory (get-runner))) "Gain 2 memory")))
+
+(deftest desperado
+  ;; Desperado - Gain 1 MU and gain 1 credit on successful run
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Desperado" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Desperado")
+    (run-empty-server state :archives)
+    (is (= 5 (:memory (get-runner))) "Gain 1 memory")
+    (is (= 3 (:credit (get-runner))) "Got 1c for successful run on Desperado")))
+
 (deftest dinosaurus-strength-boost-mu-savings
   ;; Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker
   (do-game
@@ -176,6 +204,26 @@
     (is (:run @state) "New run started")
     (is (= [:rd] (:server (:run @state))) "Running on R&D")
     (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+
+(deftest dorm-computer
+  ;; make a run and avoid all tags for the remainder of the run
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1)])
+              (default-runner [(qty "Dorm Computer" 1)]))
+    (play-from-hand state :corp "Snare!" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dorm Computer")
+    (let [dorm (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner dorm 0)
+      (prompt-choice :runner "Server 1")
+      (run-empty-server state "Server 1")
+      (is (:run @state) "New run started")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
+      (is (= 3 (get-counters (refresh dorm) :power))))
+      ))
 
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
@@ -389,6 +437,142 @@
     (is (= 3 (count (get-in @state [:runner :rig :hardware]))))
     (is (= 2 (:click (get-runner))) "Clickless installs of extra 2 copies")
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
+
+(deftest recon-drone
+  ;; trash and pay X to prevent that much damage from a card you are accessing
+  (do-game
+    (new-game (default-corp [(qty "Snare!" 1) (qty "House of Knives" 1)
+                             (qty "Prisec" 1) (qty "Cerebral Overwriter" 1)])
+              (default-runner [(qty "Recon Drone" 10)]))
+    (core/gain state :corp :click 10)
+    (core/gain state :corp :credit 100)
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (play-from-hand state :corp "Snare!" "New remote")
+    (play-from-hand state :corp "Prisec" "New remote")
+    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (core/advance state :corp (get-content state :remote4 0))
+    (take-credits state :corp)
+    (core/gain state :runner :click 100)
+    (core/gain state :runner :credit 100)
+    (core/draw state :runner)
+    (core/draw state :runner)
+    (core/draw state :runner)
+    (core/draw state :runner)
+    (play-from-hand state :runner "Recon Drone")
+    (play-from-hand state :runner "Recon Drone")
+    (play-from-hand state :runner "Recon Drone")
+    (play-from-hand state :runner "Recon Drone")
+    (let [rd1 (get-in @state [:runner :rig :hardware 0])
+          rd2 (get-in @state [:runner :rig :hardware 1])
+          rd3 (get-in @state [:runner :rig :hardware 2])
+          rd4 (get-in @state [:runner :rig :hardware 3])
+          hok (get-in @state [:corp :scored 0])]
+      (run-empty-server state "Server 2")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+        "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (card-ability state :runner rd1 0)
+      (prompt-choice :runner 3)
+      (prompt-choice :runner "Done")
+      (is (= 5 (count (:hand (get-runner)))) "Runner took no net damage")
+      ; fire HOK while accessing Snare!
+      (run-empty-server state "Server 2")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Snare!")
+      (card-ability state :corp hok 0)
+      ; Recon Drone ability won't fire as we are not accessing HOK
+      (card-ability state :runner rd2 0)
+      (is (nil? (:number (:choices (first (:prompt (get-runner)))))) "No choice to prevent damage from HOK")
+      (prompt-choice :runner "Done")
+      (is (= 4 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
+      (prompt-choice :corp "No")
+      (core/lose state :runner :credit 100)
+      ; can only stop 1 damage due to credits
+      (core/gain state :runner :credit 1)
+      (run-empty-server state "Server 2")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Snare!")
+      (prompt-choice :corp "Yes")
+      (card-ability state :runner rd2 0)
+      (is (= 1 (:number (:choices (first (:prompt (get-runner)))))) "Recon Drone choice limited to runner credits")
+      (prompt-choice :runner 1)
+      (prompt-choice :runner "Done")
+      (is (= 2 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
+      (core/gain state :runner :credit 100)
+      (run-empty-server state "Server 3")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Prisec")
+      (prompt-choice :corp "Yes")
+      (card-ability state :runner rd3 0)
+      (is (= 1 (:number (:choices (first (:prompt (get-runner)))))) "Recon Drone choice limited to 1 meat")
+      (prompt-choice :runner 1)
+      (prompt-choice :runner "Done")
+      (is (= 2 (count (:hand (get-runner)))) "Runner took no meat damage")
+      (run-empty-server state "Server 4")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+          "Runner has prompt to wait for Cerebral Overwriter")
+      (prompt-choice :corp "Yes")
+      (card-ability state :runner rd4 0)
+      (prompt-choice :runner 1)
+      (prompt-choice :runner "Done")
+      (is (= 2 (count (:hand (get-runner)))) "Runner took no brain damage"))))
+
+(deftest ramujan-reliant
+  ;; Prevent up to X net or brain damage.
+  (do-game
+    (new-game (default-corp [(qty "Data Mine" 1)
+                             (qty "Snare!" 1)])
+              (default-runner [(qty "Ramujan-reliant 550 BMI" 4) (qty "Sure Gamble" 6)]))
+    (starting-hand state :runner
+                   ["Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Sure Gamble"])
+    (play-from-hand state :corp "Data Mine" "Server 1")
+    (play-from-hand state :corp "Snare!" "Server 1")
+    (let [sn (get-content state :remote1 0)
+          dm (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (let [rr1 (get-in @state [:runner :rig :hardware 0])
+            rr2 (get-in @state [:runner :rig :hardware 1])
+            rr3 (get-in @state [:runner :rig :hardware 2])]
+        (run-on state "Server 1")
+        (core/rez state :corp dm)
+        (card-subroutine state :corp dm 0)
+        (card-ability state :runner rr1 0)
+        (prompt-choice :runner 1)
+        (is (last-log-contains? state "Sure Gamble")
+            "Ramujan did log trashed card names")
+        (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
+        (run-successful state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+        (run-empty-server state "Server 1")
+        (prompt-choice :corp "Yes")
+        (card-ability state :runner rr2 0)
+        (prompt-choice :runner 3)
+        (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble")
+            "Ramujan did log trashed card names")
+        (is (= 1 (count (:hand (get-runner)))) "3 net damage prevented")))))
+
+(deftest ramujan-reliant-empty
+  ;; Prevent up to X net or brain damage. Empty stack
+  (do-game
+    (new-game (default-corp [(qty "Data Mine" 1)])
+              (default-runner [(qty "Ramujan-reliant 550 BMI" 1) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Data Mine" "Server 1")
+    (let [dm (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (let [rr1 (get-in @state [:runner :rig :hardware 0])]
+        (run-on state "Server 1")
+        (core/rez state :corp dm)
+        (card-subroutine state :corp dm 0)
+        (card-ability state :runner rr1 0)
+        (prompt-choice :runner 1)
+        (is (= 0 (count (:hand (get-runner)))) "Not enough cards in Stack for Ramujan to work")))))
 
 (deftest replicator-bazaar
   ;; Replicator - interaction with Bazaar. Issue #1511.
