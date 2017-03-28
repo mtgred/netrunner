@@ -834,11 +834,11 @@
                                      (doseq [c targets]
                                        (trash state side c {:cause dtype :unpreventable true}))
                                      (trigger-event state side :damage-chosen)
-                                     (damage-defer state side :meat 0)
+                                     (damage-defer state side dtype 0)
                                      (effect-completed state side eid card))}
                       card nil)
                       (trigger-event state side :damage dtype nil)))}
-     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
+    :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
     :delayed-completion true
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
