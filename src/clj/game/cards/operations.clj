@@ -615,7 +615,18 @@
                               :trace {:base 2 :msg "give the Runner 1 tag"
                                       :delayed-completion true
                                       :effect (effect (tag-runner :runner eid 1))}}}}
-
+   
+   "MCA Informant"
+   {:req (req (some #(has-subtype? % "Connection") (all-installed state %))) 
+    :prompt "Choose a connection to host MCA Informant" 
+    :choices {:req #(and (has-subtype? % "Connection") (installed? %))} 
+    :effect (effect (host target (assoc card :zone [:discard]))
+            (system-msg (str "hosts MCA Informant on " (:title target))) 
+            (swap! state update-in [:runner :tag] inc)) 
+    :abilities [{:label "[Click], 2 [Credits]: Trash this card."
+                 :effect (effect (trash card {:cause :ability cost}))}] 
+    :leave-play (req (swap! state-update-in [:runner :tag] dec))}
+   
    "Medical Research Fundraiser"
    {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
     :effect (effect (gain :credit 8) (gain :runner :credit 3))}
