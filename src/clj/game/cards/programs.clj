@@ -113,6 +113,31 @@
                  :msg (msg "derez " (:title current-ice))
                  :effect (effect (trash card {:cause :ability-cost}) (derez current-ice))}]}
 
+   "Customized Secretary"
+   (letfn [(custsec-host [cards]
+             {:prompt "Choose a program to host on Customized Secretary"
+              :choices (cons "None" cards)
+              :delayed-completion true
+              :effect (req (if (or (= target "None") (not (is-type? target "Program")))
+                             (do (clear-wait-prompt state :corp)
+                                 (effect-completed state side eid card))
+                             (do (host state side (get-card state card) target)
+                                 (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
+                                 (continue-ability state side (custsec-host (remove-once #(not= % target) cards))
+                                                   card nil))))})]
+     {:delayed-completion true
+      :msg (msg "reveal the top 5 cards of their Stack: " (join ", " (map :title (take 5 (:deck runner)))))
+      :effect (req (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
+                   (let [from (take 5 (:deck runner))]
+                     (continue-ability state side (custsec-host from) card nil)))
+      :abilities [{:cost [:click 1]
+                   :prompt "Choose a program hosted on Customized Secretary to install"
+                   :choices (req (cancellable (filter #(can-pay? state side nil :credit (:cost %))
+                                                      (:hosted card))))
+                   :msg (msg "install " (:title target))
+                   :effect (req (when (can-pay? state side nil :credit (:cost target))
+                                  (runner-install state side target)))}]})
+
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
     :data {:counter {:power 3}}

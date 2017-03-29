@@ -483,6 +483,20 @@
                     {:abilities [(break-sub 1 1 "barrier")
                                  (strength-pump 2 1 :all-run)]})
 
+   "Inversificator"
+   (auto-icebreaker ["Code Gate"]
+                    {:implementation "No restriction on which pieces of ICE are chosen"
+                     :abilities [{:label "Swap the code gate you just passed with another ICE"
+                                  :once :per-turn
+                                  :req (req (:run @state))
+                                  :prompt "Select the code gate you just passed and another piece of ICE to swap positions"
+                                  :choices {:req #(and (installed? %) (ice? %)) :max 2}
+                                  :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
+                                  :effect (req (when (= (count targets) 2)
+                                                 (swap-ice state side (first targets) (second targets))))}
+                                 (break-sub 1 1 "code gate")
+                                 (strength-pump 1 1)]})
+
    "Knight"
    {:abilities [{:cost [:click 1] :label "Host Knight on a piece of ICE"
                  :effect (req (let [k (get-card state card)

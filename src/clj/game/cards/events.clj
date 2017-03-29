@@ -830,7 +830,8 @@
                                          (register-events state side {:successful-run
                                                                       {:req (req (= target :rd))
                                                                        :msg "gain 4 [Credits]"
-                                                                       :effect (effect (gain :credit 4))}}
+                                                                       :effect (effect (gain :credit 4)
+                                                                                       (unregister-events card))}}
                                                                      (assoc card :zone '(:discard))))
                                      (effect-completed state side eid))
                                    (update! state side (dissoc card :run-again)))))
