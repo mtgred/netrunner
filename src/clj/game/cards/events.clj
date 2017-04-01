@@ -70,7 +70,7 @@
                                       :effect (effect (run target nil card))} card nil))}
 
    "Build Script"
-   {:msg (msg "gain 1 [Credits] and draw 2 cards")
+   {:msg "gain 1 [Credits] and draw 2 cards"
     :effect (effect (gain :credit 1) (draw 2))}
    
    "Calling in Favors"
@@ -822,8 +822,10 @@
                      (continue-ability state side (entrance-trash from) card nil)))})
    
    "Mars for Martians"
-   {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource")) (all-installed state :runner))) " card(s) and gain " (:tag runner) " [Credits]")
-    :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource")) (all-installed state :runner)))) (gain :credit (:tag runner)))}
+   {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan")
+                                           (is-type? % "Resource")) (all-installed state :runner))) " card(s) and gain " (:tag runner) " [Credits]")
+    :effect (effect (draw (count (filter #(and (has-subtype? % "Clan")
+                                               (is-type? % "Resource")) (all-installed state :runner)))) (gain :credit (:tag runner)))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
