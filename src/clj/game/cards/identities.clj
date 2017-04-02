@@ -264,9 +264,11 @@
    "Haas-Bioroid: Architects of Tomorrow"
    {:events {:pass-ice
              {:delayed-completion true
+              :once :per-turn
               :req (req (and (rezzed? target)
                              (has-subtype? target "Bioroid")
-                             (first-event? state :corp :pass-ice)))
+                             (empty? (filter #(and (rezzed? %) (has-subtype? % "Bioroid"))
+                                             (turn-events state side :pass-ice)))))
               :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                               (continue-ability
                                 {:prompt "Choose a bioroid to rez" :player :corp
