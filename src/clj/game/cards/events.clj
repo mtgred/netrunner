@@ -822,10 +822,10 @@
                      (continue-ability state side (entrance-trash from) card nil)))})
    
    "Mars for Martians"
-   {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan")
-                                           (is-type? % "Resource")) (all-installed state :runner))) " card(s) and gain " (:tag runner) " [Credits]")
-    :effect (effect (draw (count (filter #(and (has-subtype? % "Clan")
-                                               (is-type? % "Resource")) (all-installed state :runner)))) (gain :credit (:tag runner)))}
+   (let [n (count (filter #(and (has-subtype? % "Clan")
+                                (is-type? % "Resource")) (all-installed state :runner)))]
+     {:msg (msg "draw " n (if (= n 1) " card" " cards") " and gain " (:tag runner) " [Credits]")
+      :effect (effect (draw n) (gain :credit (:tag runner)))} )
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
