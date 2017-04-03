@@ -725,13 +725,14 @@
                                              " and access " (quot (count targets) 2) " additional cards")
                                    :effect (req (let [bonus (quot (count targets) 2)]
                                                    (trash-cards state side targets)
+                                                   (game.core/run state side srv nil card)
                                                    (register-events state side
                                                      {:successful-run
                                                       {:silent (req true)
                                                        :effect (effect (access-bonus bonus))}
-                                                      :run-ends {:effect (effect (unregister-events card))}} card)
-                                                   (game.core/run state side srv nil card)))}
-                                 card nil)))}]}
+                                                      :run-ends {:effect (effect (unregister-events card))}} card)))}
+                                 card nil)))}]
+    :events {:successful-run nil :run-ends nil}}
 
    "Şifr"
    {:in-play [:memory 2]

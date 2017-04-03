@@ -303,12 +303,16 @@
   ;; Architects of Tomorrow - prompt to rez after passing bioroid
   (do-game
     (new-game
-      (make-deck "Haas-Bioroid: Architects of Tomorrow" [(qty "Eli 1.0" 3)])
+      (make-deck "Haas-Bioroid: Architects of Tomorrow" [(qty "Eli 1.0" 2) (qty "Pup" 1)])
       (default-runner))
+    (core/gain state :corp :credit 3)
     (play-from-hand state :corp "Eli 1.0" "Archives")
+    (play-from-hand state :corp "Pup" "Archives")
     (play-from-hand state :corp "Eli 1.0" "HQ")
     (take-credits state :corp)
     (run-on state "Archives")
+    (core/rez state :corp (get-ice state :archives 1))
+    (run-continue state)
     (core/rez state :corp (get-ice state :archives 0))
     (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rezzing Eli 1.0")
     (run-continue state)

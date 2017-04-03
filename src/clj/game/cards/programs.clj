@@ -120,6 +120,8 @@
               :delayed-completion true
               :effect (req (if (or (= target "None") (not (is-type? target "Program")))
                              (do (clear-wait-prompt state :corp)
+                                 (shuffle! state side :deck)
+                                 (system-msg state side (str "shuffles their Stack"))
                                  (effect-completed state side eid card))
                              (do (host state side (get-card state card) target)
                                  (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
