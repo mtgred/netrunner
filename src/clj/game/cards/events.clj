@@ -623,8 +623,7 @@
    (letfn [(access-pile [cards pile]
              {:prompt "Select a card to access. You must access all cards."
               :choices [(str "Card from pile " pile)]
-              :effect (req (system-msg state side (str "accesses " (:title (first cards))))
-                           (when-completed
+              :effect (req (when-completed
                              (handle-access state side [(first cards)])
                              (do (if (< 1 (count cards))
                                    (continue-ability state side (access-pile (next cards) pile) card nil)
@@ -835,7 +834,8 @@
                                                                      (assoc card :zone '(:discard))))
                                      (effect-completed state side eid))
                                    (update! state side (dissoc card :run-again)))))
-    :events {:successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
+    :events {:successful-run nil
+             :successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
 
