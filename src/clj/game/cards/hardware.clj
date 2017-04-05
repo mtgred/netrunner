@@ -852,7 +852,8 @@
               :mandatory true
               :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
               :choices (take n ["1" "2" "3" "4" "5"])
-              :effect (effect (handle-access eid [(nth (:deck corp) (dec (Integer/parseInt target)))]))})]
+              :effect (effect (system-msg (str "accesses the card at position " (Integer/parseInt target) " of R&D"))
+                              (handle-access eid [(nth (:deck corp) (dec (Integer/parseInt target)))]))})]
      {:events {:successful-run
                {:req (req (= target :rd))
                 :interactive (req true)
