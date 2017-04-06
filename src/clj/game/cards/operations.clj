@@ -553,6 +553,9 @@
                              (continue-ability state side (iop (dec x)) card nil)))
               :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}})
 
+   "IPO"
+   {:msg "gain 13 [Credits]" :effect (effect (gain :credit 13))}
+
    "Lag Time"
    {:effect (effect (update-all-ice))
     :events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1 target))}}
