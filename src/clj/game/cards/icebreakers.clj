@@ -179,7 +179,16 @@
 
 ;;; Icebreaker definitions
 (def cards-icebreakers
-  {"Aghora"
+  {"Abagnale"
+   (auto-icebreaker "Code Gate"
+                    {:abilities [(break-sub 1 1 "code gate")
+                                 (strength-pump 2 2)
+                                 {:label "Bypass code gate being encountered"
+                                  :req (req (has-subtype? current-ice "Code Gate"))
+                                  :msg (msg "trash it and bypass " (:title current-ice))
+                                  :effect (effect (trash card {:cause :ability-cost}))}]})
+
+   "Aghora"
    (deva "Aghora")
 
    "Alpha"
@@ -522,6 +531,15 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 3 3 "code gate")
                                  (strength-pump 3 5)]})
+
+   "Lustig"
+   (auto-icebreaker "Sentry"
+                    {:abilities [(break-sub 1 1 "sentry")
+                                 (strength-pump 3 5)
+                                 {:label "Bypass sentry being encountered"
+                                  :req (req (has-subtype? current-ice "Sentry"))
+                                  :msg (msg "trash it and bypass " (:title current-ice))
+                                  :effect (effect (trash card {:cause :ability-cost}))}]})
 
    "Morning Star"
    {:abilities [(break-sub 1 0 "barrier")]}

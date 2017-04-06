@@ -80,6 +80,17 @@
                          (in-hand? %))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
+   "Careful Planning"
+   {:prompt "Choose a card in or protecting a remote server"
+    :choices {:req #(is-remote? (second (:zone %)))}
+    :effect (effect (register-turn-flag!
+                      card :can-rez
+                      (fn [state side card]
+                        (if (= (:cid card) (:cid target))
+                          ((constantly false)
+                           (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
+                          true))))}
+
    "CBI Raid"
    (letfn [(cbi-final [chosen original]
              {:prompt (str "The top cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")
