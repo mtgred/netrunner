@@ -140,6 +140,32 @@
                       :effect (effect (trash target))}
                     card nil)))}
 
+   "Biased Reporting"
+   {:delayed-completion true
+    :req (req (not-empty (all-installed state :runner)))
+    :prompt "Choose a card type"
+    :choices ["Resource" "Hardware" "Program"]
+    :effect (req (let [t target
+                       num (count (filter #(is-type? % t) (all-installed state :runner)))]
+                   (show-wait-prompt state :corp "Runner to choose cards to trash")
+                   (when-completed
+                     (resolve-ability state :runner
+                       {:prompt (msg "Choose any number of cards of type " t " to trash")
+                        :choices {:max num :req #(and (installed? %) (is-type? % t))}
+                        :cancel-effect (final-effect (clear-wait-prompt :corp))
+                        :effect (req (doseq [c targets]
+                                       (trash state :runner c {:unpreventable true}))
+                                     (gain state :runner :credit (count targets))
+                                     (system-msg state :runner (str "trashes " (join ", " (map :title targets))
+                                                                    " and gains " (count targets) " [Credits]"))
+                                     (clear-wait-prompt state :corp))}
+                      card nil)
+                     (do (let [n (* 2 (count (filter #(is-type? % t) (all-installed state :runner))))]
+                           (when (pos? n)
+                             (gain state :corp :credit n)
+                             (system-msg state :corp (str "uses Biased Reporting to gain " n " [Credits]")))
+                           (effect-completed state side eid))))))}
+
    "Big Brother"
    {:req (req tagged)
     :msg "give the Runner 2 tags"
@@ -680,6 +706,24 @@
    {:req (req (:made-run runner-reg))
     :msg "do 1 net damage"
     :effect (effect (damage eid :net 1 {:card card}))}
+
+   "O₂ Shortage"
+   {:delayed-completion true
+    :effect (req (if (empty? (:hand runner))
+                   (do (gain state :corp :click 2)
+                       (system-msg state side (str "uses O₂ Shortage to gain [Click][Click]"))
+                       (effect-completed state side eid))
+                   (do (show-wait-prompt state :corp "Runner to decide whether or not to trash a card from their Grip")
+                       (continue-ability state side
+                         {:optional
+                          {:prompt "Trash 1 random card from your Grip?"
+                           :player :runner
+                           :yes-ability {:effect (effect (trash-cards :runner (take 1 (shuffle (:hand runner))))
+                                                         (clear-wait-prompt :corp))}
+                           :no-ability {:msg "gain [Click][Click]"
+                                        :effect (effect (gain :corp :click 2)
+                                                        (clear-wait-prompt :corp))}}}
+                        card nil))))}
 
    "Observe and Destroy"
    {:req (req (and (pos? (:tag runner))

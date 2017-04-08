@@ -219,6 +219,17 @@
                                                     (shuffle! :deck))}
                                   card nil))}]}
 
+   "Bloo Moose"
+   {:flags {:runner-phase-12 (req true)}
+    :abilities [{:req (req (:runner-phase-12 @state))
+                 :once :per-turn
+                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
+                 :show-discard true
+                 :choices {:req #(and (in-discard? %) (= (:side %) "Runner"))}
+                 :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
+                 :effect (effect (gain :credit 2)
+                                 (move target :rfg))}]}
+
    "Borrowed Satellite"
    {:in-play [:hand-size-modification 1 :link 1]}
 
