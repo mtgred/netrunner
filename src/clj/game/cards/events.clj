@@ -819,12 +819,6 @@
       :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their stack")
                    (let [from (take 6 (:deck runner))]
                      (continue-ability state side (entrance-trash from) card nil)))})
-   
-   "Mars for Martians"
-   (let [n (count (filter #(and (has-subtype? % "Clan")
-                                (is-type? % "Resource")) (all-installed state :runner)))]
-     {:msg (msg "draw " n (if (= n 1) " card" " cards") " and gain " (:tag runner) " [Credits]")
-      :effect (effect (draw n) (gain :credit (:tag runner)))} )
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
