@@ -520,6 +520,14 @@
                               :msg (msg "force the Runner to trash " (:title target) " from their Grip")
                               :effect (effect (trash target {:unpreventable true}))}}}
 
+   "Hunter Seeker"
+   {:req (req (:stole-agenda runner-reg))
+    :delayed-completion true
+    :prompt "Choose a card to trash"
+    :choices {:req installed?}
+    :msg (msg "trash " (card-str state target))
+    :effect (effect (trash target))}
+
    "Interns"
    {:prompt "Choose a card to install from Archives or HQ"
     :show-discard true
