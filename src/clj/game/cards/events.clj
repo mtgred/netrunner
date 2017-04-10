@@ -400,16 +400,16 @@
                        {:replace-access
                         {:prompt "Advancements to remove from a card in or protecting this server?"
                          :choices ["0", "1", "2", "3"]
+                         :delayed-completion true
                          :effect (req (let [c (Integer/parseInt target)]
-                                        (resolve-ability
-                                          state side
+                                        (show-wait-prompt state :corp "Runner to remove advancements")
+                                        (continue-ability state side
                                           {:choices {:req #(and (contains? % :advance-counter)
-                                                                (= (:server run) (vec (rest (butlast (:zone %))))))}
-                                          :msg (msg "remove " c " advancements from "
-                                                (card-str state target))
-                                          :effect (req (add-prop state :corp target :advance-counter (- c))
-                                                       (swap! state update-in [:runner :prompt] rest)
-                                                       (handle-end-run state side))}
+                                                                (= (first (:server run)) (second (:zone %))))}
+                                           :msg (msg "remove " c " advancement" (when (> c 1) "s") " from " (card-str state target))
+                                           :effect (req (add-prop state :corp target :advance-counter (- c))
+                                                        (clear-wait-prompt state :corp)
+                                                        (effect-completed state side eid))}
                                          card nil)))}} card))}
 
    "Express Delivery"
@@ -634,8 +634,7 @@
    (letfn [(access-pile [cards pile]
              {:prompt "Select a card to access. You must access all cards."
               :choices [(str "Card from pile " pile)]
-              :effect (req (system-msg state side (str "accesses " (:title (first cards))))
-                           (when-completed
+              :effect (req (when-completed
                              (handle-access state side [(first cards)])
                              (do (if (< 1 (count cards))
                                    (continue-ability state side (access-pile (next cards) pile) card nil)
@@ -846,7 +845,8 @@
                                                                      (assoc card :zone '(:discard))))
                                      (effect-completed state side eid))
                                    (update! state side (dissoc card :run-again)))))
-    :events {:successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
+    :events {:successful-run nil
+             :successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
 
