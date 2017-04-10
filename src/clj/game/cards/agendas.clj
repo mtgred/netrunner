@@ -839,4 +839,10 @@
     :msg "do 2 meat damage"
     :effect (effect (damage eid :meat 2 {:card card}))
     :stolen {:msg "force the Corp to take 1 bad publicity"
-             :effect (effect (gain :corp :bad-publicity 1))}}})
+             :effect (effect (gain :corp :bad-publicity 1))}}
+
+   "Water Monopoly"
+   {:events {:pre-install {:req (req (and (is-type? target "Resource")
+                                          (not (has-subtype? target "Virtual"))
+                                          (not (second targets)))) ; not facedown
+                           :effect (effect (install-cost-bonus [:credit 1]))}}}})
