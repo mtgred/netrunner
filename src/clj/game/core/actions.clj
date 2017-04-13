@@ -171,7 +171,9 @@
 (defn- do-play-ability [state side card ability targets]
   (let [cost (:cost ability)]
     (when (or (nil? cost)
-              (apply can-pay? state side (:title card) cost (get-in @state [:bonus :run-cost])))
+              (if (has-subtype? card "Run")
+                (apply can-pay? state side (:title card) cost (get-in @state [:bonus :run-cost]))
+                (apply can-pay? state side (:title card) cost)))
       (when-let [activatemsg (:activatemsg ability)]
         (system-msg state side activatemsg))
       (resolve-ability state side ability card targets))))
