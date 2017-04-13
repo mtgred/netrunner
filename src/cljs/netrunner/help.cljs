@@ -45,7 +45,7 @@
                        [:ul
                         [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only). Deprecated in favor of " [:code "/counter ad n"]]
                         [:li [:code "/bp n"] " - Set your bad publicity to n"]
-                        [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]]]}
+                        [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]
                         [:li [:code "/click n"] " - Set your clicks to n"]
                         [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
                         [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."]
@@ -69,7 +69,7 @@
                         [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
                         [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
                         [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
-                        [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
+                        [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
              :content [:p "Read the "
