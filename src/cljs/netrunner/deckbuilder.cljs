@@ -48,6 +48,16 @@
        keyword
        (contains? (:cards mwl-map))))
 
+(defn- get-mwl-value
+  "Get universal influence for card"
+  ([card] (get-mwl-value (first (filter :active (:mwl @app-state))) card))
+  ([mwl-map card]
+   (->> card
+        not-alternate
+        :code
+        keyword
+        (get (:cards mwl-map)))))
+
 (defn mostwanted?
   "Returns true if card is on Most Wanted NAPD list."
   ([card]
@@ -209,6 +219,18 @@
                         currmap)))]
     (reduce mwlhelper {} cards)))
 
+(defn mostwantedval
+  "Returns a map of faction keywords to number of MWL universal influence spent from the faction's cards."
+  [deck]
+  (let [cards (:cards deck)
+        mwlhelper (fn [currmap line]
+                    (let [card (:card line)]
+                      (if (mostwanted? card)
+                        (update-in currmap [(keyword (faction-label card))]
+                                   (fnil (fn [curmwl] (+ curmwl (* (get-mwl-value card) (:qty line)))) 0))
+                        currmap)))]
+    (reduce mwlhelper {} cards)))
+
 ;;; Helpers for Alliance cards
 (defn is-alliance?
   "Checks if the card is an alliance card"
@@ -294,6 +316,11 @@
   [deck]
   (apply + (vals (mostwanted deck))))
 
+(defn universalinf-count
+  "Returns total number univeral influence in a deck."
+  [deck]
+  (apply + (vals (mostwantedval deck))))
+
 (defn influence-count
   "Returns sum of influence count used by a deck."
   [deck]
@@ -302,6 +329,12 @@
 (defn deck-inf-limit [deck]
   (let [originf (id-inf-limit (:identity deck))
         postmwlinf (- originf (mostwanted-count deck))]
+    (if (= originf INFINITY) ; FIXME this ugly 'if' could get cut when we get a proper nonreducible infinity in CLJS
+      INFINITY (if (> 1 postmwlinf) 1 postmwlinf))))
+
+(defn deck-inf-limit-ui [deck]
+  (let [originf (id-inf-limit (:identity deck))
+        postmwlinf (- originf (universalinf-count deck))]
     (if (= originf INFINITY) ; FIXME this ugly 'if' could get cut when we get a proper nonreducible infinity in CLJS
       INFINITY (if (> 1 postmwlinf) 1 postmwlinf))))
 
@@ -345,6 +378,11 @@
   "Returns true if the deck's influence fits within NAPD MWL restrictions."
   [deck]
   (<= (influence-count deck) (deck-inf-limit deck)))
+
+(defn mwl-legal-ui?
+  "Returns true if the deck's influence fits within NAPD MWL universal influence restrictions."
+  [deck]
+  (<= (influence-count deck) (deck-inf-limit-ui deck)))
 
 (defn only-in-rotation?
   "Returns true if the deck doesn't contain any cards outside of current rotation."
@@ -461,12 +499,12 @@
 (defn restricted-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's MWL restricted cards."
   [deck]
-  (dots-html mwl-dot (mostwanted deck)))
+  (dots-html mwl-dot (mostwantedval deck)))
 
 (defn deck-status-label
   [sets deck]
   (cond
-    (and (mwl-legal? deck) (valid? deck) (only-in-rotation? sets deck)) "legal"
+    (and (mwl-legal-ui? deck) (valid? deck) (only-in-rotation? sets deck)) "legal"
     (valid? deck) "casual"
     :else "invalid"))
 
@@ -476,7 +514,7 @@
   ([sets deck tooltip?]
    (let [status (deck-status-label sets deck)
          valid (valid? deck)
-         mwl (mwl-legal? deck)
+         mwl (mwl-legal-ui? deck)
          rotation (only-in-rotation? sets deck)
          message (case status
                    "legal" "Tournament legal"
@@ -605,7 +643,7 @@
                            ;; satisfies alliance criterion
                            (when allied (alliance-dots influence))
                            ;; on mwl
-                           (when wanted (restricted-dots qty)))}}])))])
+                           (when wanted (restricted-dots (* (get-mwl-value card) qty))))}}])))])
      card)])
 
 (defn deck-builder
@@ -691,7 +729,7 @@
                  (let [inf (influence-count deck)
                        limit (deck-inf-limit deck)
                        id-limit (id-inf-limit identity)
-                       mwl (mostwanted-count deck)]
+                       mwl (universalinf-count deck)]
                    [:div "Influence: "
                     ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
                     [:span {:class (if (> inf limit) (if (> inf id-limit) "invalid" "casual") "legal")} inf]
