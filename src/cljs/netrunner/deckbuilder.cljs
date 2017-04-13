@@ -324,7 +324,7 @@
 (defn influence-count
   "Returns sum of influence count used by a deck."
   [deck]
-  (apply + (vals (influence-map deck))))
+  (+ (universalinf-count deck) (apply + (vals (influence-map deck)))))
 
 (defn deck-inf-limit [deck]
   (let [originf (id-inf-limit (:identity deck))
@@ -334,7 +334,7 @@
 
 (defn deck-inf-limit-ui [deck]
   (let [originf (id-inf-limit (:identity deck))
-        postmwlinf (- originf (universalinf-count deck))]
+        postmwlinf originf]
     (if (= originf INFINITY) ; FIXME this ugly 'if' could get cut when we get a proper nonreducible infinity in CLJS
       INFINITY (if (> 1 postmwlinf) 1 postmwlinf))))
 
@@ -727,7 +727,7 @@
                     (when (< count min-count)
                       [:span.invalid (str " (minimum " min-count ")")])])
                  (let [inf (influence-count deck)
-                       limit (deck-inf-limit deck)
+                       limit (deck-inf-limit-ui deck)
                        id-limit (id-inf-limit identity)
                        mwl (universalinf-count deck)]
                    [:div "Influence: "
