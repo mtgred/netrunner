@@ -180,7 +180,7 @@
 ;;; Icebreaker definitions
 (def cards-icebreakers
   {"Abagnale"
-   (auto-icebreaker "Code Gate"
+   (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "code gate")
                                  (strength-pump 2 2)
                                  {:label "Bypass code gate being encountered"
@@ -545,7 +545,7 @@
                                  (strength-pump 3 5)]})
 
    "Lustig"
-   (auto-icebreaker "Sentry"
+   (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 3 5)
                                  {:label "Bypass sentry being encountered"
