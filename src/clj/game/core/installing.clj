@@ -215,7 +215,7 @@
                                (not (ignore-install-cost? state side)))
                         (count dest-zone) 0)
              all-cost (concat extra-cost [:credit ice-cost])
-             end-cost (install-cost state side card all-cost)
+             end-cost (if no-install-cost 0 (install-cost state side card all-cost))
              install-state (or install-state (:install-state cdef))]
          (when (and (corp-can-install? state side card dest-zone) (not (install-locked? state :corp)))
            (if-let [cost-str (pay state side card end-cost {:action :corp-click-install})]

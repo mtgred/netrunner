@@ -846,6 +846,25 @@
     (play-from-hand state :corp "Paper Wall" "HQ")
     (is (= 3 (:credit (get-corp))) "Paid 1 extra  to install Paper Wall")))
 
+(deftest network-exchange-architect
+  ;; Architect 1st sub should ignore additional install cose
+  (do-game
+    (new-game (default-corp [(qty "Architect" 3)])
+              (default-runner [(qty "Network Exchange" 1)]))
+    (play-from-hand state :corp "Architect" "HQ")
+    (take-credits state :corp) ; corp has 7 credits
+    (play-from-hand state :runner "Network Exchange")
+    (take-credits state :runner)
+    (let [architect (get-ice state :hq 0)]
+      (core/rez state :corp architect)
+      (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rez")
+      (core/move state :corp (find-card "Architect" (:hand (get-corp))) :deck)
+      (card-subroutine state :corp architect 0)
+      (prompt-choice :corp (find-card "Architect" (:deck (get-corp))))
+     ; (prompt-choice :corp "Architect")
+      (prompt-choice :corp "HQ")
+      (is (= 3 (:credit (get-corp))) "Corp has 7 credits"))))
+
 (deftest new-angeles-city-hall
   ;; New Angeles City Hall - Avoid tags; trash when agenda is stolen
   (do-game
