@@ -440,6 +440,28 @@
    "Cobra"
    {:subroutines [trash-program (do-net-damage 2)]}
 
+   "Colossus"
+   {:advanceable :always
+    :subroutines [{:label "Give the Runner 1 tag (Give the Runner 2 tags)"
+                   :delayed-completion true
+                   :msg (msg "give the Runner " (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) "1 tag" "2 tags"))
+                   :effect (effect (tag-runner :runner eid (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 2)))}
+                  {:label "Trash 1 program (Trash 1 program and 1 resource)"
+                   :delayed-completion true
+                   :msg (msg "trash 1 program" (when (< 2 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) " and 1 resource"))
+                   :effect (req (when-completed (resolve-ability state side trash-program card nil)
+                                                (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0)))
+                                                  (effect-completed state side eid)
+                                                  (continue-ability state side
+                                                    {:prompt "Choose a resource to trash"
+                                                     :msg (msg "trash " (:title target))
+                                                     :choices {:req #(and (installed? %)
+                                                                          (is-type? % "Resource"))}
+                                                     :cancel-effect (req (effect-completed state side eid))
+                                                     :effect (effect (trash target {:cause :subroutine}))}
+                                                   card nil))))}]
+    :strength-bonus advance-counters}
+
    "Cortex Lock"
    {:subroutines [{:label "Do 1 net damage for each unused memory unit the Runner has"
                    :msg (msg "do " (:memory runner) " net damage")
@@ -551,6 +573,11 @@
    "Eli 1.0"
    {:subroutines [end-the-run]
     :runner-abilities [(runner-break [:click 1] 1)]}
+
+   "Eli 2.0"
+   {:subroutines [{:msg "draw 1 card" :effect (effect (draw))}
+                  end-the-run]
+    :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -884,7 +911,19 @@
                    :choices {:req in-hand?}
                    :label "Force the Runner to access a card in HQ"
                    :msg (msg "force the Runner to access " (:title target))
-                   :effect (effect (handle-access targets) (trash card))}]}
+                   :effect (req (trash state side card)
+                                (when-completed (handle-access state side targets)
+                                  (when-completed (trigger-event-sync state side :pre-access :hq)
+                                    (let [from-hq (dec (access-count state side :hq-access))]
+                                      (continue-ability
+                                        state :runner
+                                        (access-helper-hq
+                                          state from-hq
+                                          ; access-helper-hq uses a set to keep track of which cards have already
+                                          ; been accessed. by adding HQ root's contents to this set, we make the runner
+                                          ; unable to access those cards, as Kitsune intends.
+                                          (conj (set (get-in @state [:corp :servers :hq :content])) target))
+                                       card nil)))))}]}
 
    "Komainu"
    {:abilities [{:label "Gain subroutines"
@@ -1207,9 +1246,21 @@
                            :effect (effect (tag-runner :runner eid 1))
                            :msg "give the Runner 1 tag"}}]}
 
-    "Self-Adapting Code Wall"
-    {:subroutines [end-the-run]
-     :flags {:cannot-lower-strength true}}
+   "Seidr Adaptive Barrier"
+   {:effect (req (let [srv (second (:zone card))]
+                   (add-watch state (keyword (str "sab" (:cid card)))
+                              (fn [k ref old new]
+                                (let [ices (count (get-in new [:corp :servers srv :ices]))]
+                                  (when (not= (count (get-in old [:corp :servers srv :ices])) ices)
+                                    (update! ref side (assoc (get-card ref card) :strength-bonus ices))
+                                    (update-ice-strength ref side (get-card ref card))))))))
+    :strength-bonus (req (count (:ices (card->server state card))))
+    :leave-play (req (remove-watch state (keyword (str "sab" (:cid card)))))
+    :subroutines [end-the-run]}
+
+   "Self-Adapting Code Wall"
+   {:subroutines [end-the-run]
+    :flags {:cannot-lower-strength true}}
 
    "Sensei"
    {:subroutines [{:label "Give each other ICE encountered \"End the run\" for the remainder of the run"

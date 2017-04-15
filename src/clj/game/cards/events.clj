@@ -68,6 +68,10 @@
     :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req runnable-servers)
                                       :effect (effect (run target nil card))} card nil))}
 
+   "Build Script"
+   {:msg "gain 1 [Credits] and draw 2 cards"
+    :effect (effect (gain :credit 1) (draw 2))}
+   
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(has-subtype? % "Connection") (all-installed state :runner)))
               " [Credits]")
@@ -79,6 +83,17 @@
     :choices {:req #(and (is-type? % "Resource")
                          (in-hand? %))}
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
+
+   "Careful Planning"
+   {:prompt "Choose a card in or protecting a remote server"
+    :choices {:req #(is-remote? (second (:zone %)))}
+    :effect (effect (register-turn-flag!
+                      card :can-rez
+                      (fn [state side card]
+                        (if (= (:cid card) (:cid target))
+                          ((constantly false)
+                           (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
+                          true))))}
 
    "CBI Raid"
    (letfn [(cbi-final [chosen original]
@@ -225,6 +240,13 @@
                                                      (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
                                      :effect (effect (move target :hand))} card nil)))}
 
+   "Deep Data Mining"
+   {:effect (effect (run :rd nil card)
+                    (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+    :events {:successful-run {:silent (req true)
+                              :effect (effect (access-bonus (min 4 (:memory runner))))}
+             :run-ends {:effect (effect (unregister-events card))}}}
+   
    "Demolition Run"
    {:prompt "Choose a server" :choices ["HQ" "R&D"]
     :abilities [{:msg (msg "trash " (:title (:card (first (get-in @state [side :prompt])))) " at no cost")
@@ -389,16 +411,16 @@
                        {:replace-access
                         {:prompt "Advancements to remove from a card in or protecting this server?"
                          :choices ["0", "1", "2", "3"]
+                         :delayed-completion true
                          :effect (req (let [c (Integer/parseInt target)]
-                                        (resolve-ability
-                                          state side
+                                        (show-wait-prompt state :corp "Runner to remove advancements")
+                                        (continue-ability state side
                                           {:choices {:req #(and (contains? % :advance-counter)
-                                                                (= (:server run) (vec (rest (butlast (:zone %))))))}
-                                          :msg (msg "remove " c " advancements from "
-                                                (card-str state target))
-                                          :effect (req (add-prop state :corp target :advance-counter (- c))
-                                                       (swap! state update-in [:runner :prompt] rest)
-                                                       (handle-end-run state side))}
+                                                                (= (first (:server run)) (second (:zone %))))}
+                                           :msg (msg "remove " c " advancement" (when (> c 1) "s") " from " (card-str state target))
+                                           :effect (req (add-prop state :corp target :advance-counter (- c))
+                                                        (clear-wait-prompt state :corp)
+                                                        (effect-completed state side eid))}
                                          card nil)))}} card))}
 
    "Express Delivery"
@@ -623,8 +645,7 @@
    (letfn [(access-pile [cards pile]
              {:prompt "Select a card to access. You must access all cards."
               :choices [(str "Card from pile " pile)]
-              :effect (req (system-msg state side (str "accesses " (:title (first cards))))
-                           (when-completed
+              :effect (req (when-completed
                              (handle-access state side [(first cards)])
                              (do (if (< 1 (count cards))
                                    (continue-ability state side (access-pile (next cards) pile) card nil)
@@ -830,11 +851,13 @@
                                          (register-events state side {:successful-run
                                                                       {:req (req (= target :rd))
                                                                        :msg "gain 4 [Credits]"
-                                                                       :effect (effect (gain :credit 4))}}
+                                                                       :effect (effect (gain :credit 4)
+                                                                                       (unregister-events card))}}
                                                                      (assoc card :zone '(:discard))))
                                      (effect-completed state side eid))
                                    (update! state side (dissoc card :run-again)))))
-    :events {:successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
+    :events {:successful-run nil
+             :successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
 
@@ -1218,6 +1241,12 @@
     :events {:pre-rez-cost nil}
     :end-turn {:effect (effect (unregister-events card))}}
 
+   "Spear Phishing"
+   {:implementation "Bypass is manual"
+    :prompt "Choose a server"
+    :choices (req runnable-servers)
+    :effect (effect (run target nil card))}
+   
    "Special Order"
    {:prompt "Choose an Icebreaker"
     :effect (effect (trigger-event :searched-stack nil)

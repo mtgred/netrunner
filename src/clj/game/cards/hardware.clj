@@ -713,6 +713,27 @@
                          :effect (effect (tag-runner :runner eid 1) (end-run))
                          :unsuccessful {:msg "bypass the current ICE"}}}]}
 
+   "Severnius Stim Implant"
+   {:abilities [{:cost [:click 1]
+                 :prompt "Choose a server to run with Severnius Stim Implant" :choices ["HQ" "R&D"]
+                 :effect (req (let [n (count (:hand runner))
+                                    srv target]
+                                (resolve-ability state side
+                                  {:prompt "Choose at least 2 cards in your Grip to trash with Severnius Stim Implant"
+                                   :choices {:max n :req #(and (= (:side %) "Runner") (in-hand? %))}
+                                   :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
+                                             " and access " (quot (count targets) 2) " additional cards")
+                                   :effect (req (let [bonus (quot (count targets) 2)]
+                                                   (trash-cards state side targets)
+                                                   (game.core/run state side srv nil card)
+                                                   (register-events state side
+                                                     {:successful-run
+                                                      {:silent (req true)
+                                                       :effect (effect (access-bonus bonus))}
+                                                      :run-ends {:effect (effect (unregister-events card))}} card)))}
+                                 card nil)))}]
+    :events {:successful-run nil :run-ends nil}}
+
    "Şifr"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn
@@ -814,11 +835,11 @@
                                      (doseq [c targets]
                                        (trash state side c {:cause dtype :unpreventable true}))
                                      (trigger-event state side :damage-chosen)
-                                     (damage-defer state side :meat 0)
+                                     (damage-defer state side dtype 0)
                                      (effect-completed state side eid card))}
                       card nil)
                       (trigger-event state side :damage dtype nil)))}
-     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
+    :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
     :delayed-completion true
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
@@ -831,7 +852,8 @@
               :mandatory true
               :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
               :choices (take n ["1" "2" "3" "4" "5"])
-              :effect (effect (handle-access eid [(nth (:deck corp) (dec (Integer/parseInt target)))]))})]
+              :effect (effect (system-msg (str "accesses the card at position " (Integer/parseInt target) " of R&D"))
+                              (handle-access eid [(nth (:deck corp) (dec (Integer/parseInt target)))]))})]
      {:events {:successful-run
                {:req (req (= target :rd))
                 :interactive (req true)
@@ -865,6 +887,20 @@
                                                            (effect-completed state side eid card)))}
                                            card targets))}}}
                             card targets)))}}}
+
+   "Ubax"
+   (let [ability {:req (req (:runner-phase-12 @state))
+                  :msg "draw 1 card"
+                  :label "Draw 1 card (start of turn)"
+                  :once :per-turn
+                  :effect (effect (draw 1))}]
+     {:in-play [:memory 1]
+      :flags {:runner-turn-draw true
+              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
+                                                        (cons (get-in @state [:runner :identity])
+                                                              (all-installed state :runner))))))}
+      :events {:runner-turn-begins ability}
+      :abilities [ability]})
 
    "Unregistered S&W 35"
    {:abilities

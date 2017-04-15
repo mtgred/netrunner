@@ -435,6 +435,17 @@
    {:events {:pre-trash {:req (req (installed? target))
                          :effect (effect (trash-cost-bonus 1))}}}
 
+   "Estelle Moon"
+   {:events {:corp-install {:req (req (#{"Asset" "Agenda" "Upgrade"} (:type target)))
+                            :effect (effect (add-counter card :power 1)
+                                            (system-msg (str "places 1 power counter on Estelle Moon")))}}
+    :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
+                 :effect (req (let [n (get-in card [:counter :power] 0)]
+                                (draw state side n)
+                                (gain state side :credit (* 2 n))
+                                (system-msg state side (str "uses Estelle Moon to draw " n " cards and gain " (* 2 n) " [Credits]"))
+                                (trash state side card {:cause :ability-cost})))}]}
+
    "Eve Campaign"
    (campaign 16 2)
 
@@ -533,6 +544,10 @@
    {:advanceable :while-unrezzed
     :abilities [{:label "Gain [Click]" :once :per-turn :msg "gain [Click]"
                  :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
+
+   "Honeyfarm"
+   {:access {:msg "force the Runner to lose 1 [Credits]"
+             :effect (effect (lose :runner :credit 1))}}
 
    "Hostile Infrastructure"
    {:events {:runner-trash {:delayed-completion true
@@ -732,6 +747,11 @@
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
+
+   "Mr. Stone"
+   {:events {:runner-gain-tag {:delayed-completion true
+                               :msg "do 1 meat damage"
+                               :effect (effect (damage eid :meat 1 {:card card}))}}}
 
    "Mumba Temple"
    {:recurring 2}
@@ -1324,6 +1344,28 @@
                        :effect (effect (rez-cost-bonus (- (:tag runner))))}
              :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
+
+   "Whampoa Reclamation"
+   {:abilities [{:label "Trash 1 card from HQ: Add 1 card from Archives to the bottom of R&D"
+                 :once :per-turn
+                 :req (req (and (pos? (count (:hand corp)))
+                                (pos? (count (:discard corp)))))
+                 :delayed-completion true
+                 :effect (req (show-wait-prompt state :runner "Corp to use Whampoa Reclamation")
+                              (when-completed (resolve-ability state side
+                                                {:prompt "Choose a card in HQ to trash"
+                                                 :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                                 :effect (effect (trash target))}
+                                               card nil)
+                                              (continue-ability state side
+                                                {:prompt "Choose a card in Archives to add to the bottom of R&D"
+                                                 :show-discard true
+                                                 :choices {:req #(and (in-discard? %) (= (:side %) "Corp"))}
+                                                 :msg (msg "trash 1 card from HQ and add "
+                                                           (if (:seen target) (:title target) "a card") " from Archives to the bottom of R&D")
+                                                 :effect (effect (move target :deck)
+                                                                 (clear-wait-prompt :runner))}
+                                               card nil)))}]}
 
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"

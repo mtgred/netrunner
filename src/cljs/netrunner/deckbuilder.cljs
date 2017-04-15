@@ -48,6 +48,16 @@
        keyword
        (contains? (:cards mwl-map))))
 
+(defn- get-mwl-value
+  "Get universal influence for card"
+  ([card] (get-mwl-value (first (filter :active (:mwl @app-state))) card))
+  ([mwl-map card]
+   (->> card
+        not-alternate
+        :code
+        keyword
+        (get (:cards mwl-map)))))
+
 (defn mostwanted?
   "Returns true if card is on Most Wanted NAPD list."
   ([card]
@@ -197,15 +207,15 @@
         str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards)]
     (om/set-state! owner :deck-edit str)))
 
-(defn mostwanted
-  "Returns a map of faction keywords to number of MWL restricted cards from the faction's cards."
+(defn mostwantedval
+  "Returns a map of faction keywords to number of MWL universal influence spent from the faction's cards."
   [deck]
   (let [cards (:cards deck)
         mwlhelper (fn [currmap line]
                     (let [card (:card line)]
                       (if (mostwanted? card)
                         (update-in currmap [(keyword (faction-label card))]
-                                   (fnil (fn [curmwl] (+ curmwl (:qty line))) 0))
+                                   (fnil (fn [curmwl] (+ curmwl (* (get-mwl-value card) (:qty line)))) 0))
                         currmap)))]
     (reduce mwlhelper {} cards)))
 
@@ -289,21 +299,15 @@
               (update infmap faction #(+ (or % 0) inf-cost))))]
     (reduce infhelper {} (:cards deck))))
 
-(defn mostwanted-count
-  "Returns total number of MWL restricted cards in a deck."
+(defn universalinf-count
+  "Returns total number univeral influence in a deck."
   [deck]
-  (apply + (vals (mostwanted deck))))
+  (apply + (vals (mostwantedval deck))))
 
 (defn influence-count
   "Returns sum of influence count used by a deck."
   [deck]
-  (apply + (vals (influence-map deck))))
-
-(defn deck-inf-limit [deck]
-  (let [originf (id-inf-limit (:identity deck))
-        postmwlinf (- originf (mostwanted-count deck))]
-    (if (= originf INFINITY) ; FIXME this ugly 'if' could get cut when we get a proper nonreducible infinity in CLJS
-      INFINITY (if (> 1 postmwlinf) 1 postmwlinf))))
+  (+ (universalinf-count deck) (apply + (vals (influence-map deck)))))
 
 (defn min-deck-size
   "Contains implementation-specific decksize adjustments, if they need to be different from printed ones."
@@ -342,9 +346,9 @@
          (< date (.toJSON (js/Date.))))))
 
 (defn mwl-legal?
-  "Returns true if the deck's influence fits within NAPD MWL restrictions."
+  "Returns true if the deck's influence fits within NAPD MWL universal influence restrictions."
   [deck]
-  (<= (influence-count deck) (deck-inf-limit deck)))
+  (<= (influence-count deck) (id-inf-limit (:identity deck))))
 
 (defn only-in-rotation?
   "Returns true if the deck doesn't contain any cards outside of current rotation."
@@ -418,6 +422,30 @@
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
+;; Legacy MWL code
+(defn mostwanted
+  "Returns a map of faction keywords to number of MWL restricted cards from the faction's cards."
+  [deck]
+  (let [cards (:cards deck)
+        mwlhelper (fn [currmap line]
+                    (let [card (:card line)]
+                      (if (mostwanted? card)
+                        (update-in currmap [(keyword (faction-label card))]
+                                   (fnil (fn [curmwl] (+ curmwl (:qty line))) 0))
+                        currmap)))]
+    (reduce mwlhelper {} cards)))
+
+(defn mostwanted-count
+  "Returns total number of MWL restricted cards in a deck."
+  [deck]
+  (apply + (vals (mostwanted deck))))
+
+(defn deck-inf-limit [deck]
+  (let [originf (id-inf-limit (:identity deck))
+        postmwlinf (- originf (mostwanted-count deck))]
+    (if (= originf INFINITY) ; FIXME this ugly 'if' could get cut when we get a proper nonreducible infinity in CLJS
+      INFINITY (if (> 1 postmwlinf) 1 postmwlinf))))
+
 ;; Dot definitions
 (def zws "&#8203;")                                         ; zero-width space for wrapping dots
 (def influence-dot (str "&#9679;" zws))                     ; normal influence dot
@@ -461,7 +489,7 @@
 (defn restricted-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's MWL restricted cards."
   [deck]
-  (dots-html mwl-dot (mostwanted deck)))
+  (dots-html mwl-dot (mostwantedval deck)))
 
 (defn deck-status-label
   [sets deck]
@@ -605,7 +633,7 @@
                            ;; satisfies alliance criterion
                            (when allied (alliance-dots influence))
                            ;; on mwl
-                           (when wanted (restricted-dots qty)))}}])))])
+                           (when wanted (restricted-dots (* (get-mwl-value card) qty))))}}])))])
      card)])
 
 (defn deck-builder
@@ -689,13 +717,12 @@
                     (when (< count min-count)
                       [:span.invalid (str " (minimum " min-count ")")])])
                  (let [inf (influence-count deck)
-                       limit (deck-inf-limit deck)
                        id-limit (id-inf-limit identity)
-                       mwl (mostwanted-count deck)]
+                       mwl (universalinf-count deck)]
                    [:div "Influence: "
                     ;; we don't use valid? and mwl-legal? functions here, since it concerns influence only
-                    [:span {:class (if (> inf limit) (if (> inf id-limit) "invalid" "casual") "legal")} inf]
-                    "/" (if (= INFINITY id-limit) "∞" limit)
+                    [:span {:class (if (if (> inf id-limit) "invalid") "legal")} inf]
+                    "/" (if (= INFINITY id-limit) "∞" id-limit)
                     (if (pos? (+ inf mwl))
                       (list " " (influence-html deck) (restricted-html deck)))])
                  (when (= (:side identity) "Corp")

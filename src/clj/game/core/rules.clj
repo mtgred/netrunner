@@ -311,7 +311,9 @@
 (defn- resolve-trash
   [state side eid {:keys [zone type] :as card}
    {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
-  (when (installed? card) (swap! state update-in [side :register :trashed-installed] (fnil inc 0)))
+  (when (installed? card)
+    (if (= :runner (:active-player @state)) (swap! state update-in [side :register :trashed-installed-runner] (fnil inc 0))
+                                            (swap! state update-in [side :register :trashed-installed-corp] (fnil inc 0))))
   (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
                     (apply resolve-trash-end state side eid card args targets))

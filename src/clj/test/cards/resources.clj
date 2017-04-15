@@ -1742,7 +1742,7 @@
     (new-game (default-corp)
               (default-runner [(qty "Wasteland" 1) (qty "Faust" 1) (qty "Fall Guy" 4)]))
     (take-credits state :corp)
-    (core/gain state :runner :click 2)
+    (core/gain state :runner :click 1)
     (core/draw state :runner)
     (play-from-hand state :runner "Faust")
     (play-from-hand state :runner "Wasteland")

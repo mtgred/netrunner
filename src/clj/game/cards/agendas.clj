@@ -122,6 +122,26 @@
                              :msg (msg "trigger the \"when scored\" ability of " (:title target))
                              :effect (effect (continue-ability (card-def target) target nil))}}}
 
+   "Brain Rewiring"
+   {:effect (effect (show-wait-prompt :runner "Corp to use Brain Rewiring")
+                    (resolve-ability
+                      {:optional
+                       {:prompt "Pay credits to add random cards from Runner's Grip to the bottom of their Stack?"
+                        :yes-ability {:prompt "How many credits?"
+                                      :choices {:number (req (min (:credit corp) (count (:hand runner))))}
+                                      :effect (req (when (pos? target)
+                                                     (pay state :corp card :credit target)
+                                                     (let [from (take target (shuffle (:hand runner)))]
+                                                       (doseq [c from]
+                                                         (move state :runner c :deck))
+                                                       (system-msg state side (str "uses Brain Rewiring to pay " target " [Credits] and add " target
+                                                                                   " cards from the Runner's Grip to the bottom of their Stack. "
+                                                                                   "The Runner draws 1 card"))
+                                                       (draw state :runner)
+                                                       (clear-wait-prompt state :runner))))}
+                        :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                     card nil))}
+
    "Braintrust"
    {:effect (effect (add-counter card :agenda (quot (- (:advance-counter card) 3) 2)))
     :silent (req true)
@@ -157,10 +177,10 @@
              :effect (effect (gain :corp :bad-publicity 1))}}
 
    "Corporate Sales Team"
-   (let [e {:msg "gain 1 [Credit]"  :counter-cost [:credit 1]
-            :effect (req (gain state :corp :credit 1)
-                         (when (zero? (:credit (:counter card)))
-                           (unregister-events state :corp card)))}]
+   (let [e {:effect (req (when (pos? (get-in card [:counter :credit] 0))
+                           (gain state :corp :credit 1)
+                           (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
+                           (add-counter state side card :credit -1)))}]
      {:effect (effect (add-counter card :credit 10))
       :silent (req true)
       :events {:runner-turn-begins e
@@ -839,4 +859,10 @@
     :msg "do 2 meat damage"
     :effect (effect (damage eid :meat 2 {:card card}))
     :stolen {:msg "force the Corp to take 1 bad publicity"
-             :effect (effect (gain :corp :bad-publicity 1))}}})
+             :effect (effect (gain :corp :bad-publicity 1))}}
+
+   "Water Monopoly"
+   {:events {:pre-install {:req (req (and (is-type? target "Resource")
+                                          (not (has-subtype? target "Virtual"))
+                                          (not (second targets)))) ; not facedown
+                           :effect (effect (install-cost-bonus [:credit 1]))}}}})

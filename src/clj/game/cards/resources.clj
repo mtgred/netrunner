@@ -219,8 +219,32 @@
                                                     (shuffle! :deck))}
                                   card nil))}]}
 
+   "Bloo Moose"
+   {:flags {:runner-phase-12 (req true)}
+    :abilities [{:req (req (:runner-phase-12 @state))
+                 :once :per-turn
+                 :prompt "Choose a card in the Heap to remove from the game and gain 2 [Credits]"
+                 :show-discard true
+                 :choices {:req #(and (in-discard? %) (= (:side %) "Runner"))}
+                 :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
+                 :effect (effect (gain :credit 2)
+                                 (move target :rfg))}]}
+
    "Borrowed Satellite"
    {:in-play [:hand-size-modification 1 :link 1]}
+
+   "Charlatan"
+   {:abilities [{:cost [:click 2]
+                 :label "Make a run"
+                 :prompt "Choose a server"
+                 :choices (req runnable-servers)
+                 :msg (msg "make a run on " target)
+                 :effect (effect (run target nil card))}
+                {:label "Pay credits equal to strength of approached rezzed ICE to bypass it"
+                 :once :per-run
+                 :req (req (and (:run @state) (rezzed? current-ice)))
+                 :msg (msg "pay " (:current-strength current-ice) " [Credits] and bypass " (:title current-ice))
+                 :effect (effect (pay :runner card :credit (:current-strength current-ice)))}]}
 
    "Chatterjee University"
    {:abilities [{:cost [:click 1]
@@ -355,6 +379,24 @@
                                  true)))
                            (trash card {:cause :ability-cost}))}]}
 
+   "Dean Lister"
+   {:abilities [{:req (req (:run @state))
+                 :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
+                 :choices {:req #(and (has-subtype? % "Icebreaker")
+                                      (installed? %))}
+                 :effect (effect (update! (assoc card :dean-target target))
+                                 (trash (get-card state card) {:cause :ability-cost})
+                                 (update-breaker-strength target))}]
+    :events {:run-ends nil :pre-breaker-strength nil}
+    :trash-effect {:effect
+                   (effect (register-events
+                             (let [dean {:effect (effect (unregister-events card)
+                                                         (update! (dissoc card :dean-target))
+                                                         (update-breaker-strength (:dean-target card)))}]
+                               {:run-ends dean
+                                :pre-breaker-strength {:req (req (= (:cid target)(:cid (:dean-target card))))
+                                                       :effect (effect (breaker-strength-bonus (count (:hand runner))))}}) card))}}
+
    "Decoy"
    {:prevent {:tag [:all]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
@@ -483,7 +525,7 @@
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
-                 :req (req (not-empty (turn-events state side :damage)))
+                 :req (req (some #(= (:side %) "Corp") (map second (turn-events state :runner :damage))))
                  :msg "draw 1 card"
                  :effect (effect (draw))}]}
 
@@ -670,6 +712,9 @@
                  :effect (req (gain state side :credit (get-in card [:counter :credit] 0))
                               (add-counter state side card :credit (- (get-in card [:counter :credit] 0))))}]}
 
+   "Laguna Velasco District"
+   {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
+
    "Liberated Account"
    {:data {:counter {:credit 16}}
     :abilities [{:cost [:click 1]
@@ -827,6 +872,13 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target) " and draw 1 card")
                  :effect (effect (host card target) (draw))}]}
+
+   "Officer Frank"
+   {:abilities [{:cost [:credit 1]
+                 :req (req (some #(= :meat %) (map first (turn-events state :runner :damage))))
+                 :msg "force the Corp to trash 2 random cards from HQ"
+                 :effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
+                                 (trash card {:cause :ability-cost}))}]}
 
    "Oracle May"
    {:abilities [{:cost [:click 1]
@@ -1289,6 +1341,15 @@
                                 :pre-breaker-strength {:req (req (= (:cid target)(:cid (:hai-target card))))
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
+   "The Shadow Net"
+   {:abilities [{:cost [:click 1 :forfeit]
+                 :req (req (< 0 (count (filter #(is-type? % "Event") (:discard runner)))))
+                 :label "Play an event from your Heap, ignoring all costs"
+                 :prompt "Choose an event to play"
+                 :msg (msg "play " (:title target) " from the Heap, ignoring all costs")
+                 :choices (req (cancellable (filter #(is-type? % "Event") (:discard runner)) :sorted))
+                 :effect (effect (play-instant nil target {:ignore-cost true}))}]}
+
    "The Supplier"
    (let [ability  {:label "Install a hosted card (start of turn)"
                    :prompt "Choose a card hosted on The Supplier to install"
@@ -1403,7 +1464,9 @@
                                 (add-counter state side target :virus 1)))}]}
 
    "Wasteland"
-   {:events {:runner-trash {:req (req (and (= 1 (get-in @state [:runner :register :trashed-installed])) (:installed target)))
+   {:events {:runner-trash {:req (req (if (= :runner (:active-player @state))
+                                        (and (= 1 (get-in @state [:runner :register :trashed-installed-runner])) (installed? target))
+                                        (and (= 1 (get-in @state [:runner :register :trashed-installed-corp])) (installed? target))))
                      :effect (effect (gain :credit 1))
                      :msg "to gain 1[Credit]"}}}
 

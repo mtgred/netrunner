@@ -179,7 +179,28 @@
 
 ;;; Icebreaker definitions
 (def cards-icebreakers
-  {"Aghora"
+  {"Abagnale"
+   (auto-icebreaker ["Code Gate"]
+                    {:abilities [(break-sub 1 1 "code gate")
+                                 (strength-pump 2 2)
+                                 {:label "Bypass code gate being encountered"
+                                  :req (req (has-subtype? current-ice "Code Gate"))
+                                  :msg (msg "trash it and bypass " (:title current-ice))
+                                  :effect (effect (trash card {:cause :ability-cost}))}]})
+
+   "Adept"
+   {:abilities [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
+                                                 (has-subtype? current-ice "Sentry")))
+                 :msg "break 1 sentry or barrier subroutine"}]
+    :effect (req (add-watch state (keyword (str "adept" (:cid card)))
+                            (fn [k ref old new]
+                              (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
+                                (update-breaker-strength ref side card))))
+                 (update-breaker-strength state side card))
+    :leave-play (req (remove-watch state (keyword (str "adept" (:cid card)))))
+    :strength-bonus (req (:memory runner))}
+
+   "Aghora"
    (deva "Aghora")
 
    "Alpha"
@@ -483,6 +504,20 @@
                     {:abilities [(break-sub 1 1 "barrier")
                                  (strength-pump 2 1 :all-run)]})
 
+   "Inversificator"
+   (auto-icebreaker ["Code Gate"]
+                    {:implementation "No restriction on which pieces of ICE are chosen"
+                     :abilities [{:label "Swap the code gate you just passed with another ICE"
+                                  :once :per-turn
+                                  :req (req (:run @state))
+                                  :prompt "Select the code gate you just passed and another piece of ICE to swap positions"
+                                  :choices {:req #(and (installed? %) (ice? %)) :max 2}
+                                  :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
+                                  :effect (req (when (= (count targets) 2)
+                                                 (swap-ice state side (first targets) (second targets))))}
+                                 (break-sub 1 1 "code gate")
+                                 (strength-pump 1 1)]})
+
    "Knight"
    {:abilities [{:cost [:click 1] :label "Host Knight on a piece of ICE"
                  :effect (req (let [k (get-card state card)
@@ -508,6 +543,31 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 3 3 "code gate")
                                  (strength-pump 3 5)]})
+
+   "Lustig"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(break-sub 1 1 "sentry")
+                                 (strength-pump 3 5)
+                                 {:label "Bypass sentry being encountered"
+                                  :req (req (has-subtype? current-ice "Sentry"))
+                                  :msg (msg "trash it and bypass " (:title current-ice))
+                                  :effect (effect (trash card {:cause :ability-cost}))}]})
+
+   "Mammon"
+   (auto-icebreaker ["All"]
+                    {:flags {:runner-phase-12 (req (> (:credit runner) 0))}
+                     :abilities [{:label "X [Credits]: Place X power counters"
+                                  :prompt "How many power counters to place on Mammon?" :once :per-turn
+                                  :choices {:number (req (:credit runner))}
+                                  :req (req (:runner-phase-12 @state))
+                                  :effect (effect (lose :credit target)
+                                                  (add-counter card :power target))
+                                  :msg (msg "place " target " power counters on it")}
+                                 {:counter-cost [:power 1]
+                                  :label "Hosted power counter: Break ICE subroutine"
+                                  :msg "break 1 ICE subroutine"}
+                                 (strength-pump 2 2)]
+                     :events {:runner-turn-ends {:effect (effect (update! (assoc-in card [:counter :power] 0)))}}})
 
    "Morning Star"
    {:abilities [(break-sub 1 0 "barrier")]}
