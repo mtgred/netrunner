@@ -71,7 +71,7 @@
    "Build Script"
    {:msg "gain 1 [Credits] and draw 2 cards"
     :effect (effect (gain :credit 1) (draw 2))}
-   
+
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(has-subtype? % "Connection") (all-installed state :runner)))
               " [Credits]")
@@ -246,7 +246,7 @@
     :events {:successful-run {:silent (req true)
                               :effect (effect (access-bonus (min 4 (:memory runner))))}
              :run-ends {:effect (effect (unregister-events card))}}}
-   
+
    "Demolition Run"
    {:prompt "Choose a server" :choices ["HQ" "R&D"]
     :abilities [{:msg (msg "trash " (:title (:card (first (get-in @state [side :prompt])))) " at no cost")
@@ -1246,7 +1246,7 @@
     :prompt "Choose a server"
     :choices (req runnable-servers)
     :effect (effect (run target nil card))}
-   
+
    "Special Order"
    {:prompt "Choose an Icebreaker"
     :effect (effect (trigger-event :searched-stack nil)
@@ -1408,6 +1408,17 @@
                          (#{"Program" "Hardware"} (:type %)))}
     :msg (msg "move " (:title target) " to their Grip")
     :effect (effect (move target :hand))}
+
+   "Unscheduled Maintenance"
+   {:events {:corp-install {:req (req (ice? target))
+                            :effect (effect (register-turn-flag!
+                                              card :can-install-ice
+                                              (fn [state side card]
+                                                (if (ice? card)
+                                                  ((constantly false)
+                                                   (toast state :corp "Cannot install ICE the rest of this turn due to Unscheduled Maintenance"))
+                                                  true))))}}
+    :leave-play (effect (clear-turn-flag! card :can-install-ice))}
 
    "Vamp"
    {:effect (effect (run :hq {:req (req (= target :hq))

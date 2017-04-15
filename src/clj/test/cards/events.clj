@@ -1606,6 +1606,24 @@
       (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have code gate")
       (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have sentry"))))
 
+(deftest unscheduled-maintenance
+  ;; Unscheduled Maintenance - prevent Corp from installing more than 1 ICE per turn
+  (do-game
+    (new-game
+      (default-corp [(qty "Vanilla" 2) (qty "Breaking News" 1)])
+      (default-runner [(qty "Unscheduled Maintenance" 1)]))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Unscheduled Maintenance")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "First ICE install of turn allowed")
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (is (empty? (get-in @state [:corp :servers :rd :ices])) "Second ICE install of turn blocked")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Current trashed; second ICE install of turn allowed")))
+
 (deftest vamp
   ;; Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp
   (do-game

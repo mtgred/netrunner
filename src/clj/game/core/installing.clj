@@ -113,11 +113,45 @@
 
 
 ;;; Intalling a corp card
+(defn- corp-can-install-reason
+  "Checks if the specified card can be installed.
+   Returns true if there are no problems
+   Returns :region if Region check fails
+   Returns :ice if ICE check fails
+   !! NB: This should only be used in a check with `true?` as all return values are truthy"
+  [state side card dest-zone]
+  (cond
+    ;; Region check
+    (and (has-subtype? card "Region")
+         (some #(has-subtype? % "Region") dest-zone))
+    :region
+    ;; ICE install prevented by Unscheduled Maintenance
+    (and (ice? card)
+         (not (turn-flag? state side card :can-install-ice)))
+    :ice
+    ;; Installing not locked
+    (install-locked? state side) :lock-install
+    ;; no restrictions
+    :default true))
+
 (defn- corp-can-install?
-  "Checks region restrictions"
-  [card dest-zone]
-  (not (and (has-subtype? card "Region")
-            (some #(has-subtype? % "Region") dest-zone))))
+  "Checks `corp-can-install-reason` if not true, toasts reason and returns false"
+  [state side card dest-zone]
+  (let [reason (corp-can-install-reason state side card dest-zone)
+        reason-toast #(do (toast state side % "warning") false)
+        title (:title card)]
+    (case reason
+      ;; pass on true value
+      true true
+      ;; failed region check
+      :region
+      (reason-toast (str "Cannot install " (:title card) ", limit of one Region per server"))
+      ;; failed install lock check
+      :lock-install
+      (reason-toast (str "Unable to install " title ", installing is currently locked"))
+      ;; failed ICE check
+      :ice
+      (reason-toast (str "Unable to install " title ": can only install 1 piece of ICE per turn")))))
 
 (defn- corp-install-asset-agenda
   "Takes care of installing an asset or agenda in a server"
@@ -183,7 +217,7 @@
              all-cost (concat extra-cost [:credit ice-cost])
              end-cost (install-cost state side card all-cost)
              install-state (or install-state (:install-state cdef))]
-         (if (and (corp-can-install? card dest-zone) (not (install-locked? state :corp)))
+         (when (and (corp-can-install? state side card dest-zone) (not (install-locked? state :corp)))
            (if-let [cost-str (pay state side card end-cost {:action :corp-click-install})]
              (do (let [c (-> card
                              (assoc :advanceable (:advanceable cdef) :new true)
@@ -226,12 +260,7 @@
 
                      (when-let [dre (:derezzed-events cdef)]
                        (when-not (:rezzed (get-card state moved-card))
-                         (register-events state side dre moved-card)))))))
-           (if (install-locked? state :corp)
-             (toast state side (str "Unable to install " (:title card) " since installing is currently locked"))
-             ;; Cannot install due to region restriction - toast
-             (toast state side (str "Cannot install " (:title card) " in " server
-                                  ", limited to one Region per server"))))
+                         (register-events state side dre moved-card))))))))
          (clear-install-cost-bonus state side))))))
 
 
