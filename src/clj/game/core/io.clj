@@ -196,6 +196,12 @@
                                              :effect (effect (move target :deck))
                                              :choices {:req (fn [t] (and (card-is? t :side %2) (in-hand? t)))}}
                                             {:title "/move-bottom command"} nil)
+          "/move-hand"  #(resolve-ability %1 %2
+                                          {:prompt "Select a card to move to your hand"
+                                           :effect (req (let [c (deactivate %1 %2 target)]
+                                                          (move %1 %2 c :hand)))
+                                           :choices {:req (fn [t] (card-is? t :side %2))}}
+                                          {:title "/move-hand command"} nil)
           "/psi"        #(when (= %2 :corp) (psi-game %1 %2
                                                       {:title "/psi command" :side %2}
                                                       {:equal  {:msg "resolve equal bets effect"}
