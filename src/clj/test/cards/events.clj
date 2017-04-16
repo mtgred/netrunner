@@ -499,6 +499,26 @@
     (take-credits state :runner)
     (is (= 9 (:credit (get-runner))))))
 
+(deftest encore-stacking
+  ;; Encore - 2 encores in a 5 click turn results in 2 extra turns
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1)])
+              (default-runner [(qty "Encore" 2)]))
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Encore")
+    (play-from-hand state :runner "Encore")
+    (is (= 2 (count (:rfg (get-runner)))) "2 Encores removed from game")
+    (take-credits state :runner)
+    (take-credits state :runner)
+    ;; Two extra turns
+    (take-credits state :runner)
+    (is (= 13 (:credit (get-runner))))))
+
 (deftest eureka!
   ;; Eureka! - Install the program but trash the event
   (do-game

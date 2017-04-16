@@ -217,6 +217,9 @@
       (swap! state update-in [side :register] dissoc :drawn-this-turn)
       (clear-turn-register! state)
       (swap! state dissoc :turn-events)
-      (when (some? (get-in @state [side :extra-turn]))
-        (start-turn state side nil)
-        (swap! state dissoc-in [side :extra-turn])))))
+      (when-let [extra-turns (get-in @state [side :extra-turns])]
+        (when (> extra-turns 0)
+          (start-turn state side nil)
+          (swap! state update-in [side :extra-turns] dec)
+          (let [turns (if (= 1 extra-turns) "turn" "turns")]
+            (system-msg state side (clojure.string/join ["will have " extra-turns " extra " turns " remaining."]))))))))
