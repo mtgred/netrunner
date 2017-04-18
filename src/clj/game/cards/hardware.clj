@@ -415,8 +415,8 @@
                                 (when (is-type? c "Agenda") ; trashing before the :access events actually fire; fire them manually
                                   (resolve-steal-events state side c))
                                 (move state :corp c :deck)
-                                (close-access-prompt state side)
-                                (tag-runner state :runner eid 1)))}
+                                (tag-runner state :runner eid 1)
+                                (close-access-prompt state side)))}
                 {:once :per-turn
                  :label "Move a previously accessed card to bottom of R&D"
                  :effect (effect (resolve-ability
