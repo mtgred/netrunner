@@ -812,8 +812,7 @@
                   :label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
                   :effect (effect (gain :credit 1))}]
-     {:implementation "Ability to place power counters is manually triggered"
-      :derezzed-events {:runner-turn-ends corp-rez-toast}
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability
                   {:label "Place 1 power counter" :cost [:credit 1]
