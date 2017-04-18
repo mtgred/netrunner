@@ -107,6 +107,31 @@
     (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "2nd console installed facedown")))
 
+(deftest ayla
+  ;; Ayla - choose & use cards for NVRAM
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Ayla \"Bios\" Rahim: Simulant Specialist" [(qty "Sure Gamble" 1) (qty "Desperado" 1)
+                                                             (qty "Security Testing" 1) (qty "Bank Job" 1)
+                                                             (qty "Heartbeat" 1) (qty "Eater" 1)])
+      {:dont-start-game true})
+    (is (= 6 (count (get-in @state [:runner :play-area]))) "Deck cards are in play area")
+    (is (= 0 (count (get-in @state [:runner :hand]))))
+    (prompt-select :runner (find-card "Sure Gamble" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Desperado" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Bank Job" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Eater" (get-in @state [:runner :play-area])))
+    (is (= 4 (count (:hosted (:identity (get-runner))))) "4 cards in NVRAM")
+    (is (= 0 (count (get-in @state [:runner :play-area]))) "The play area is empty")
+    (prompt-choice :corp "Keep")
+    (prompt-choice :runner "Keep")
+    (take-credits state :corp)
+    (is (= 2 (count (get-in @state [:runner :hand]))) "HQ has 2 cards")
+    (card-ability state :runner (:identity (get-runner)) 0)
+    (prompt-card :runner (find-card "Bank Job" (:hosted (:identity (get-runner)))))
+    (is (= 3 (count (get-in @state [:runner :hand]))) "HQ has 3 cards")))
+
 (deftest cerebral-imaging-max-hand-size
   ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game
