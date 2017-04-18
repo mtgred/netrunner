@@ -842,11 +842,12 @@
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
     :events {:pre-access {:req (req (and (= target :archives)
-                                         (seq (filter #(not (nil? (:trash %))) (:discard corp)))))
+                                         (seq (filter #(:trash %) (:discard corp)))))
                           :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
              :access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
              :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
-                                     (empty? (filter #(not (nil? (:trash %))) cards))))
+                                     (and (empty? (filter #(:trash %) cards))
+                                          (number? (:trash target)))))
                          :once :per-turn
                          :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
 
