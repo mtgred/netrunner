@@ -1085,7 +1085,7 @@
                                                         (get-in runner [:rig :resource]))
                                                 (:hand runner))]
                                 (trash state side c {:cause :ability-cost}))
-                              (lose state side :credit :all :tag :all)
+                              (lose state side :credit :all :tag :all :run-credit :all)
                               (damage-prevent state side :net Integer/MAX_VALUE)
                               (damage-prevent state side :meat Integer/MAX_VALUE)
                               (damage-prevent state side :brain Integer/MAX_VALUE))}]}
@@ -1410,7 +1410,7 @@
                  :effect (effect (update! (update-in card [:counters-spent] #(inc (or % 0)))))}]}
 
    "Theophilius Bagbiter"
-   {:effect (req (lose state :runner :credit :all)
+   {:effect (req (lose state :runner :credit :all :run-credit :all)
                  (add-watch state :theophilius-bagbiter
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
