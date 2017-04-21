@@ -887,7 +887,7 @@
                  :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
                  :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                                (system-msg state side (str "uses Oracle May, names " target
+                                (system-msg state side (str "spends [Click] to use Oracle May, names " target
                                                             " and reveals " (:title c)))
                                 (if (is-type? c target)
                                   (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
