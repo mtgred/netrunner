@@ -615,14 +615,13 @@
                      :abilities [{:counter-cost [:power 1]
                                   :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
-
    "Paperclip"
    (conspiracy "Paperclip" "Barrier"
                [{:label (str "X [Credits]: +X strength, break X subroutines")
                  :choices :credit
                  :prompt "How many credits?"
                  :effect (effect (pump card target))
-                 :msg (msg "increase strength by " target " and break " target " barrier subroutine"
+                 :msg (msg "spend " target " [Credits], increase strength by " target ", and break " target " barrier subroutine"
                            (when (not= target 1) "s"))}])
 
    "Passport"
