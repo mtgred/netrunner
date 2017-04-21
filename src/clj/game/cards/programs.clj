@@ -509,7 +509,8 @@
                               state :runner
                               {:prompt (msg "Choose a subtype")
                                :choices ["Sentry" "Code Gate" "Barrier"]
-                               :msg (msg "make " (card-str state ice) " gain " (.toLowerCase target) " until the end of the next run this turn")
+                               :msg (msg "spend [Click] and make " (card-str state ice) " gain " (.toLowerCase target)
+                                         " until the end of the next run this turn")
                                :effect (effect (update! (assoc ice :subtype (combine-subtypes true stypes target)))
                                                (update-ice-strength (get-card state ice))
                                                (register-events {:run-ends
