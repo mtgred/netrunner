@@ -454,7 +454,7 @@
    {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
                  :msg "force the Corp to draw 2 cards"}]
     :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (zero? (:position run)))
-                               [:credit -7 :click -1] nil))
+                               [:credit -15 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:rd]) (zero? (:position run)))
                    (when-completed (register-successful-run state side (:server run))
                                    (do (swap! state update-in [:runner :prompt] rest)
@@ -608,7 +608,7 @@
                                 (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0)))
                               (resolve-ability state :runner (choose-access (get-in @state [:corp :discard]) '(:archives)) card nil))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
-                               [:credit -7 :click -1] nil))
+                               [:credit -15 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
                    (when-completed (register-successful-run state side (:server run))
                                    (do (swap! state update-in [:runner :prompt] rest)
@@ -1447,7 +1447,7 @@
                                  (trash card {:cause :ability-cost}))
                  :msg "force the Corp to discard 2 cards from HQ at random"}]
     :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (zero? (:position run)))
-                               [:credit -7 :click -1] nil))
+                               [:credit -15 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:hq]) (zero? (:position run)))
                    (when-completed (register-successful-run state side (:server run))
                                    (do (swap! state update-in [:runner :prompt] rest)
