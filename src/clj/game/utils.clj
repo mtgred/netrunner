@@ -11,7 +11,7 @@
 (defn clean-forfeit [costs]
   "Takes a flat :forfeit in costs and adds a cost of 1.
   Does not yet handle input of [:forfeit n] and will barf it it gets one
-  Delete this once costs are converted in code (or could i use a macro?)"
+  Delete this once costs are converted in code"
   (replace {[:forfeit] [:forfeit 1],
             :forfeit [:forfeit 1]} (flatten costs)))
 
@@ -131,6 +131,7 @@
     (case attr
       :credit (str value " [$]")
       :click  (->> "[Click]" repeat (take value) (apply str))
+      :forfeit (str value " Agenda" (when (> value 1) "s"))
       nil)))
 
 (defn build-cost-str

@@ -561,7 +561,7 @@
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
 
    "Obokata Protocol"
-   {:steal-cost-bonus (req [:net-damage 4 :credit 1])}
+   {:steal-cost-bonus (req [:net-damage 4])}
 
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))

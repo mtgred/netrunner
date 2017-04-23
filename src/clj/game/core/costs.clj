@@ -19,13 +19,11 @@
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
   [state side cost]
-  ;(prn "toast: " cost)
   (let [type (first cost)
         amount (last cost)]
-    ; This can possibly be improved to check if you can mill
-    ; clean up for forfeit (dont use word pay)
-    (when-not (or (some #(= type %) [:memory :mill :net-damage])
+    (when-not (or (some #(= type %) [:memory :net-damage])
                   (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
+                  (and (= type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
                   (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
       "Unable to pay")))
 
@@ -43,13 +41,15 @@
       (when title (toast state side (str cost-msg " for " title ".")) false))))
 
 (defn pay-forfeit
-  "Forfeit agenda as part of paying for a card or ability"
+  "Forfeit agenda as part of paying for a card or ability
+  Amount is always 1 but can be extend if we ever need more than a single forfeit"
   [state side card scored amount]
-  (repeatedly amount
-              #(if (and (= (count scored) 1) (= amount 1))
-                 (forfeit state side (first scored))
-                 (prompt! state side card "Choose an Agenda to forfeit" scored
-                          {:effect (effect (forfeit target))}))))
+  (if (= (count scored) 1)
+    (forfeit state side (first scored))
+    (prompt! state side card "Choose an Agenda to forfeit" scored
+             {:effect (effect (forfeit target))}))
+  (when-let [cost-name (cost-names amount :forfeit)]
+    cost-name))
 
 (defn pay
   "Deducts each cost from the player.
