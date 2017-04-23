@@ -8,10 +8,17 @@
 
 (defn abs [n] (max n (- n)))
 
+(defn clean-forfeit [costs]
+  "Takes a flat :forfeit in costs and adds a cost of 1.
+  Does not yet handle input of [:forfeit n] and will barf it it gets one
+  Delete this once costs are converted in code (or could i use a macro?)"
+  (replace {[:forfeit] [:forfeit 1],
+            :forfeit [:forfeit 1]} (flatten costs)))
+
 (defn merge-costs [costs]
   (vec (reduce #(let [key (first %2) value (last %2)]
               (assoc %1 key (+ (or (key %1) 0) value)))
-           {} (partition 2 (flatten costs)))))
+           {} (partition 2 (flatten (clean-forfeit costs))))))
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with pred coll)]
@@ -53,6 +60,8 @@
                                    (case key
                                      :credit (str value "[Credits]")
                                      :click (reduce str (for [i (range value)] "[Click]"))
+                                     :net-damage (str value " net damage")
+                                     :mill (str value " card mill")
                                      (str value (str key)))) (partition 2 (flatten costs)))))
 
 (defn vdissoc [v n]

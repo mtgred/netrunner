@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast)
+(declare forfeit prompt! toast damage mill)
 
 (defn deduce
   "Deduct the value from the player's attribute."
@@ -19,10 +19,14 @@
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
   [state side cost]
+  ;(prn "toast: " cost)
   (let [type (first cost)
         amount (last cost)]
-    (when-not (or (>= (- (get-in @state [side type]) amount) 0)
-                  (= type :memory))
+    ; This can possibly be improved to check if you can mill
+    ; clean up for forfeit (dont use word pay)
+    (when-not (or (some #(= type %) [:memory :mill :net-damage])
+                  (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
+                  (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
       "Unable to pay")))
 
 (defn can-pay?
@@ -30,37 +34,43 @@
   If title is specified a toast will be generated if the player is unable to pay
   explaining which cost they were unable to pay."
   [state side title & args]
-  ; ignore the optional map input - not a cost
-  (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit]) (map? %)) args))
-        forfeit-cost (some #{[:forfeit] :forfeit} args)
+  (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
         scored (get-in @state [side :scored])
-        cost-msg (or (some #(toast-msg-helper state side %) costs)
-                     (when (and forfeit-cost (empty? scored)) "Unable to forfeit an Agenda"))]
+        cost-msg (or (some #(toast-msg-helper state side %) costs))]
     ;; no cost message - hence can pay
     (if-not cost-msg
-      {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
-      ;; only toast if title is specified
+      {:costs costs, :scored scored}
       (when title (toast state side (str cost-msg " for " title ".")) false))))
+
+(defn pay-forfeit
+  "Forfeit agenda as part of paying for a card or ability"
+  [state side card scored amount]
+  (repeatedly amount
+              #(if (and (= (count scored) 1) (= amount 1))
+                 (forfeit state side (first scored))
+                 (prompt! state side card "Choose an Agenda to forfeit" scored
+                          {:effect (effect (forfeit target))}))))
 
 (defn pay
   "Deducts each cost from the player.
   args format as follows with each being optional ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
   The map with :action was added for Jeeves so we can log what each click was used on"
   [state side card & args]
-  (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side (:title card) args)]
-    (when forfeit-cost
-      (if (= (count scored) 1)
-        (forfeit state side (first scored))
-        (prompt! state side card "Choose an Agenda to forfeit" scored
-                 {:effect (effect (forfeit target))})))
-    (->> costs (map #(do
-                      (when (= (first %) :click)
-                        (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) (first (keep :action args)) (:click (into {} costs)))
-                        (swap! state assoc-in [side :register :spent-click] true))
-                      (deduce state side %)))
-         (filter some?)
-         (interpose " and ")
-         (apply str))))
+  (let [raw-costs (not-empty (remove map? args))
+        action (not-empty (filter map? args))]
+    (when-let [{:keys [costs scored]} (apply can-pay? state side (:title card) raw-costs)]
+        (->> costs (map
+                     #(cond
+                        (= (first %) :click) (do (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) (first (keep :action action)) (:click (into {} costs)))
+                                                 (swap! state assoc-in [side :register :spent-click] true)
+                                                 (deduce state side %))
+                        (= (first %) :forfeit) (pay-forfeit state side card scored (second %))
+                        (= (first %) :net-damage) (damage state side :net (second %))
+                        (= (first %) :mill) (mill state side (second %))
+                        :else (deduce state side %)))
+             (filter some?)
+             (interpose " and ")
+             (apply str)))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
