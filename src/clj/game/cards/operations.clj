@@ -483,10 +483,10 @@
                                (continue-ability state side (hr-choice (remove-once #(not= target %) remaining)
                                                                         chosen n original) card nil)
                                (continue-ability state side (hr-final chosen original) card nil))))})]
-     {:delayed-completion true
+     {:additional-cost [:mill 1]
+      :delayed-completion true
       :msg "trash the top card of R&D, draw 3 cards, and add 3 cards in HQ to the top of R&D"
-      :effect (req (mill state :corp)
-                   (draw state side 3)
+      :effect (req (draw state side 3)
                    (show-wait-prompt state :runner "Corp to add 3 cards in HQ to the top of R&D")
                    (let [from (get-in @state [:corp :hand])]
                      (continue-ability state :corp (hr-choice from '() 3 from) card nil)))})
