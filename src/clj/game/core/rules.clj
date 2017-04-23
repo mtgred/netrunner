@@ -14,6 +14,8 @@
                              (play-instant state side eid? card? nil)
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid {:keys [title] :as card} {:keys [targets ignore-cost extra-cost no-additional-cost]}]
+   (swap! state update-in [:bonus] dissoc :play-cost)
+   (trigger-event state side :pre-play-instant card)
    (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
      (let [cdef (card-def card)
            additional-cost (if (and (has-subtype? card "Double")
@@ -24,6 +26,9 @@
                                     (get-in @state [:bonus :run-cost]))
                              (concat additional-cost (get-in @state [:bonus :run-cost]))
                              additional-cost)
+           total-cost (play-cost state side card
+                                 (concat (when-not no-additional-cost additional-cost) extra-cost
+                                         [:credit (:cost card)]))
            eid (if-not eid (make-eid state) eid)]
        ;; ensure the instant can be played
        (if (and (if-let [req (:req cdef)]
@@ -34,9 +39,7 @@
                           (get-in @state [side :register :cannot-run])))
                 (not (and (has-subtype? card "Priority")
                           (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
-         (if-let [cost-str (pay state side card :credit (if ignore-cost 0 (:cost card)) extra-cost
-                                (when-not (or ignore-cost no-additional-cost)
-                                  additional-cost) {:action :play-instant})]
+         (if-let [cost-str (pay state side card (if ignore-cost 0 total-cost) {:action :play-instant})]
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (if ignore-cost
                                            "play "

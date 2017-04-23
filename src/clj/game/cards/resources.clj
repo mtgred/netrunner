@@ -401,6 +401,11 @@
    {:prevent {:tag [:all]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
+   "Donut Taganes"
+   {:msg "increase the play cost of operations and events by 1 [Credits]"
+    :events {:pre-play-instant
+             {:effect (effect (play-cost-bonus [:credit 1]))}}}
+
    "Dr. Lovegood"
    {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
     :abilities [{:prompt "Choose an installed card to make its text box blank for the remainder of the turn" :once :per-turn

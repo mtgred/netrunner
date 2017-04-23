@@ -83,6 +83,18 @@
       (swap! state assoc-in [side (first r)] 0)
       (deduce state side r))))
 
+(defn play-cost-bonus [state side costs]
+  (prn costs)
+  (prn (get-in @state [:bonus :play-cost]))
+  (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))
+
+(defn play-cost [state side card all-cost]
+  (vec (map #(if (keyword? %) % (max % 0))
+            (-> (concat all-cost (get-in @state [:bonus :play-cost])
+                        (when-let [playfun (:play-cost-bonus (card-def card))]
+                          (playfun state side (make-eid state) card nil)))
+                merge-costs flatten))))
+
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 

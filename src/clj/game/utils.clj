@@ -10,10 +10,12 @@
 
 (defn clean-forfeit [costs]
   "Takes a flat :forfeit in costs and adds a cost of 1.
-  Does not yet handle input of [:forfeit n] and will barf it it gets one
-  Delete this once costs are converted in code"
-  (replace {[:forfeit] [:forfeit 1],
-            :forfeit [:forfeit 1]} (flatten costs)))
+  Ignores cost vectors with an even count as these have forfeit value included"
+  (let [fcosts (flatten costs)]
+  (if (odd? (count fcosts))
+    (replace {[:forfeit] [:forfeit 1],
+              :forfeit [:forfeit 1]} fcosts)
+    costs)))
 
 (defn merge-costs [costs]
   (vec (reduce #(let [key (first %2) value (last %2)]
