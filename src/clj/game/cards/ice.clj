@@ -291,6 +291,9 @@
    "Bastion"
    {:subroutines [end-the-run]}
 
+   "Battlement"
+   {:subroutines [end-the-run]}
+
    "Brainstorm"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (:hand runner)) " subroutines")}]
