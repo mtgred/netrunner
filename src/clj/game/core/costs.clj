@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast damage mill)
+(declare forfeit prompt! toast damage mill lose)
 
 (defn deduce
   "Deduct the value from the player's attribute."
@@ -24,6 +24,7 @@
     (when-not (or (some #(= type %) [:memory :net-damage])
                   (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
                   (and (= type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
+                  (and (= type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
                   (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
       "Unable to pay")))
 
@@ -65,6 +66,7 @@
                                                  (swap! state assoc-in [side :register :spent-click] true)
                                                  (deduce state side %))
                         (= (first %) :forfeit) (pay-forfeit state side card scored (second %))
+                        (= (first %) :tag) (deduce state :runner %)
                         (= (first %) :net-damage) (damage state side :net (second %))
                         (= (first %) :mill) (mill state side (second %))
                         :else (deduce state side %)))

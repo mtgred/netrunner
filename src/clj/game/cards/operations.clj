@@ -734,15 +734,15 @@
                         card nil))))}
 
    "Observe and Destroy"
-   {:req (req (and (pos? (:tag runner))
+   {:additional-cost [:tag 1]
+    :req (req (and (pos? (:tag runner))
                    (< (:credit runner) 6)))
     :delayed-completion true
     :effect (effect (continue-ability
                       {:prompt "Choose an installed card to trash"
                        :choices {:req installed?}
                        :msg (msg "remove 1 Runner tag and trash " (:title target))
-                       :effect (effect (lose :runner :tag 1)
-                                       (trash target))}
+                       :effect (effect (trash target))}
                      card nil))}
 
    "Oversight AI"
