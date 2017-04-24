@@ -84,8 +84,6 @@
       (deduce state side r))))
 
 (defn play-cost-bonus [state side costs]
-  (prn costs)
-  (prn (get-in @state [:bonus :play-cost]))
   (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))
 
 (defn play-cost [state side card all-cost]
