@@ -1005,6 +1005,10 @@
    "Prey"
    {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
+   "Process Automation"
+   {:msg "gain 2 [Credits] and draw 1 card"
+    :effect (effect (gain :credit 2) (draw 1))}
+
    "Push Your Luck"
    {:effect (effect (show-wait-prompt :runner "Corp to guess Odd or Even")
                     (resolve-ability
