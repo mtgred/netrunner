@@ -1219,6 +1219,12 @@
                                                :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}
                                card nil))}}
 
+   "Student Loans"
+   {:events {:pre-play-instant
+             {:req (req (and (is-type? target "Event") (seq (filter #(= (:title %) (:title target)) (:discard runner)))))
+              :effect (effect (system-msg :corp (str "makes the runner pay an extra 2 [Credits] due to Student Loans"))
+                              (play-cost-bonus [:credit 2]))}}}
+
    "Sundew"
    {:events {:runner-spent-click {:once :per-turn
                                   :msg (req (when (not this-server) "gain 2 [Credits]"))
