@@ -454,7 +454,7 @@
    {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
                  :msg "force the Corp to draw 2 cards"}]
     :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (zero? (:position run)))
-                               [:credit -7 :click -1] nil))
+                               [:credit -15 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:rd]) (zero? (:position run)))
                    (when-completed (register-successful-run state side (:server run))
                                    (do (swap! state update-in [:runner :prompt] rest)
@@ -608,7 +608,7 @@
                                 (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0)))
                               (resolve-ability state :runner (choose-access (get-in @state [:corp :discard]) '(:archives)) card nil))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
-                               [:credit -7 :click -1] nil))
+                               [:credit -15 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
                    (when-completed (register-successful-run state side (:server run))
                                    (do (swap! state update-in [:runner :prompt] rest)
@@ -842,11 +842,12 @@
    "Neutralize All Threats"
    {:in-play [:hq-access 1]
     :events {:pre-access {:req (req (and (= target :archives)
-                                         (seq (filter #(not (nil? (:trash %))) (:discard corp)))))
+                                         (seq (filter #(:trash %) (:discard corp)))))
                           :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
              :access {:effect (req (swap! state assoc-in [:runner :register :force-trash] false))}
              :pre-trash {:req (req (let [cards (map first (turn-events state side :pre-trash))]
-                                     (empty? (filter #(not (nil? (:trash %))) cards))))
+                                     (and (empty? (filter #(:trash %) cards))
+                                          (number? (:trash target)))))
                          :once :per-turn
                          :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
 
@@ -886,7 +887,7 @@
                  :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
                  :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                                (system-msg state side (str "uses Oracle May, names " target
+                                (system-msg state side (str "spends [Click] to use Oracle May, names " target
                                                             " and reveals " (:title c)))
                                 (if (is-type? c target)
                                   (do (system-msg state side (str "gains 2 [Credits] and draws " (:title c)))
@@ -1084,7 +1085,7 @@
                                                         (get-in runner [:rig :resource]))
                                                 (:hand runner))]
                                 (trash state side c {:cause :ability-cost}))
-                              (lose state side :credit :all :tag :all)
+                              (lose state side :credit :all :tag :all :run-credit :all)
                               (damage-prevent state side :net Integer/MAX_VALUE)
                               (damage-prevent state side :meat Integer/MAX_VALUE)
                               (damage-prevent state side :brain Integer/MAX_VALUE))}]}
@@ -1409,7 +1410,7 @@
                  :effect (effect (update! (update-in card [:counters-spent] #(inc (or % 0)))))}]}
 
    "Theophilius Bagbiter"
-   {:effect (req (lose state :runner :credit :all)
+   {:effect (req (lose state :runner :credit :all :run-credit :all)
                  (add-watch state :theophilius-bagbiter
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
@@ -1446,7 +1447,7 @@
                                  (trash card {:cause :ability-cost}))
                  :msg "force the Corp to discard 2 cards from HQ at random"}]
     :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (zero? (:position run)))
-                               [:credit -7 :click -1] nil))
+                               [:credit -15 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:hq]) (zero? (:position run)))
                    (when-completed (register-successful-run state side (:server run))
                                    (do (swap! state update-in [:runner :prompt] rest)
