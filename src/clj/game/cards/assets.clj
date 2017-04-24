@@ -174,6 +174,12 @@
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
+   "Breached Dome"
+   {:access {:msg "do 1 meat damage and trash the top card of the stack"
+             :delayed-completion true
+             :effect (effect (damage eid :meat 1 {:card card})
+                             (mill :runner) ) }}
+
    "Brain-Taping Warehouse"
    {:events {:pre-rez
              {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
