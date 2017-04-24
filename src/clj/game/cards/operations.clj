@@ -1027,9 +1027,7 @@
                          (update! state side (dissoc card :so-activated)))
          remove-ability {:req (req (:so-activated card))
                          :effect (effect (remove-effect card))}]
-     {:msg (msg (when (and (= :runner (:active-player @state))
-                           (empty? (:made-run runner-reg)))
-             "add an additional cost of 1 [Credit] to make the first run this turn"))
+     {:msg "add a cost of 1 [Credit] for the Runner to make the first run each turn"
       :effect (req (when (and (= :runner (:active-player @state))
                               (empty? (:made-run runner-reg)))
                      (add-effect state side card)))

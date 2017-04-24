@@ -861,7 +861,6 @@
       (core/move state :corp (find-card "Architect" (:hand (get-corp))) :deck)
       (card-subroutine state :corp architect 0)
       (prompt-choice :corp (find-card "Architect" (:deck (get-corp))))
-     ; (prompt-choice :corp "Architect")
       (prompt-choice :corp "HQ")
       (is (= 3 (:credit (get-corp))) "Corp has 7 credits"))))
 
