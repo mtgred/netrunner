@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast damage mill lose)
+(declare forfeit prompt! toast damage mill)
 
 (defn deduce
   "Deduct the value from the player's attribute."

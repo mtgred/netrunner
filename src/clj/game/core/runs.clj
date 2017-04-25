@@ -159,7 +159,7 @@
                                                    " to steal " (:title card)))
                        (if (< (count chosen) n)
                          (continue-ability state side
-                                              (pay-choice state :runner (remove-once #(not= target %)
+                                              (steal-pay-choice state :runner (remove-once #(not= target %)
                                                                                      choices) chosen n card) card nil)
                          (resolve-steal state side eid card)))
                    (resolve-steal-events state side eid card)))))})
