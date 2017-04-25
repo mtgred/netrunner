@@ -18,9 +18,15 @@
     costs)))
 
 (defn merge-costs [costs]
-  (vec (reduce #(let [key (first %2) value (last %2)]
-              (assoc %1 key (+ (or (key %1) 0) value)))
-           {} (partition 2 (flatten (clean-forfeit costs))))))
+  "This combines costs from a number of sources in the game into a single cost per type
+  Damage is not merged as it needs to be invidual.  Needs augmention more than net-damage appears"
+  (let [fc (partition 2 (flatten (clean-forfeit costs)))
+        jc (filter #(not= :net-damage (first %)) fc)
+        dc (filter #(= :net-damage (first %)) fc)]
+    (vec (map vec (concat
+      (reduce #(let [key (first %2) value (last %2)]
+                    (assoc %1 key (+ (or (key %1) 0) value)))
+                 {} jc) dc)))))
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with pred coll)]
