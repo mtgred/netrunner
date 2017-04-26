@@ -64,12 +64,14 @@
   (str (Character/toUpperCase (first string)) (subs string 1)))
 
 (defn costs-to-symbol [costs]
+  "Used during steal to print runner prompt for payment"
   (clojure.string/join ", " (map #(let [key (first %) value (last %)]
                                    (case key
                                      :credit (str value "[Credits]")
                                      :click (reduce str (for [i (range value)] "[Click]"))
                                      :net-damage (str value " net damage")
                                      :mill (str value " card mill")
+                                     :hardware (str value " installed hardware")
                                      (str value (str key)))) (partition 2 (flatten costs)))))
 
 (defn vdissoc [v n]

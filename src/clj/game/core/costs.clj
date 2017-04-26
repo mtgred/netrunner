@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast damage mill)
+(declare forfeit prompt! toast damage mill installed? is-type?)
 
 (defn deduce
   "Deduct the value from the player's attribute."
@@ -25,6 +25,7 @@
                   (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
                   (and (= type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
                   (and (= type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
+                  (and (= type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                   (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
       "Unable to pay")))
 
@@ -52,6 +53,16 @@
   (when-let [cost-name (cost-names amount :forfeit)]
     cost-name))
 
+(defn pay-trash
+  "Trash one or more cards as part of paying for a card or ability"
+
+  ;; make this recursive
+  [state side card type amount]
+  (prn "pay trash:" (:title card) ":" type ":" amount)
+  (prompt! state side card (str "Choose a " (name type) " to trash") (get-in @state [:runner :rig type])
+           {:effect (effect (trash target))})
+  (when-let [cost-name (cost-names amount type)] cost-name))
+
 (defn pay
   "Deducts each cost from the player.
   args format as follows with each being optional ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
@@ -66,6 +77,7 @@
                                                  (swap! state assoc-in [side :register :spent-click] true)
                                                  (deduce state side %))
                         (= (first %) :forfeit) (pay-forfeit state side card scored (second %))
+                        (= (first %) :hardware) (pay-trash state side card :hardware (second %))
                         (= (first %) :tag) (deduce state :runner %)
                         (= (first %) :net-damage) (damage state side :net (second %))
                         (= (first %) :mill) (mill state side (second %))
