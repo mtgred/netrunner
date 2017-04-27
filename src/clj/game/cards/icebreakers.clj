@@ -388,6 +388,15 @@
                                  (update-breaker-strength card))}]
     :strength-bonus (req (or (get-virus-counters state side card) 0))}
 
+   "Demara"
+   (auto-icebreaker ["Barrier"]
+                    {:abilities [(break-sub 2 2 "barrier")
+                                 (strength-pump 2 3)
+                                 {:label "Bypass barrier being encountered"
+                                  :req (req (has-subtype? current-ice "Barrier"))
+                                  :msg (msg "trash it and bypass " (:title current-ice))
+                                  :effect (effect (trash card {:cause :ability-cost}))}]})
+
    "Deus X"
    {:prevent {:damage [:net]}
     :abilities [{:msg "break any number of AP subroutines"
@@ -680,6 +689,19 @@
                                   :msg (msg "derez " (:title current-ice) " and return Saker to their Grip")
                                   :effect (effect (derez current-ice)
                                                   (move card :hand))}]})
+
+   "Savant"
+   {:abilities [{:cost [:credit 2] :req (req (has-subtype? current-ice "Sentry"))
+                 :msg "break 1 sentry subroutine"}
+                {:cost [:credit 2] :req (req (has-subtype? current-ice "Code Gate"))
+                              :msg "break 2 code gate subroutines"}]
+    :effect (req (add-watch state (keyword (str "savant" (:cid card)))
+                            (fn [k ref old new]
+                              (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
+                                (update-breaker-strength ref side card))))
+                 (update-breaker-strength state side card))
+    :leave-play (req (remove-watch state (keyword (str "savant" (:cid card)))))
+    :strength-bonus (req (:memory runner))}
 
    "Snowball"
    (auto-icebreaker ["Barrier"]

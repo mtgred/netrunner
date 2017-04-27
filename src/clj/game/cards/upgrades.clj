@@ -275,6 +275,22 @@
    {:recurring (effect (set-prop card :rec-counter (count (get-remotes @state))))
     :effect (effect (set-prop card :rec-counter (count (get-remotes @state))))}
 
+   "K. P. Lynn"
+   (let [abi {:prompt "Choose one"
+              :player :runner
+              :choices ["Take 1 tag" "End the run"]
+              :effect (req (if (= target "Take 1 tag")
+                             (do (tag-runner state :runner 1)
+                                 (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag")))
+                             (do (end-run state side)
+                                 (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]
+     {:events {:pass-ice {:req (req (and this-server (= (:position run) 1))) ; trigger when last ice passed
+                          :delayed-completion true
+                          :effect (req (continue-ability state :runner abi card nil))}
+               :run {:req (req (and this-server (= (:position run) 0))) ; trigger on unprotected server
+                     :delayed-completion true
+                     :effect (req (continue-ability state :runner abi card nil))}}})
+
    "Manta Grid"
    {:events {:successful-run-ends
              {:msg "gain a [Click] next turn"
@@ -291,6 +307,13 @@
                                                         (rezzed? %))}
                                    :msg (msg "resolve a subroutine on " (:title target))}}
                  :effect (effect (trash card))}]}
+
+   "Mason Bellamy"
+   {:implementation "Manually triggered by Corp"
+    :abilities [{:label "Force the Runner to lose [Click] after an encounter where they broke a subroutine"
+                 :req (req this-server)
+                 :msg "force the Runner to lose [Click]"
+                 :effect (effect (lose :runner :click 1))}]}
 
    "Midori"
    {:abilities

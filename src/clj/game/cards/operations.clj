@@ -1272,14 +1272,17 @@
                                        tol nil)))}
                      card nil)))}
 
-   "Wetwork Refit"
-   {:choices {:req #(and (ice? %)
-                         (has-subtype? % "Bioroid")
-                         (rezzed? %))}
-    :msg (msg "give " (card-str state target) "\"[Subroutine] Do 1 brain damage\" before all its other subroutines")
-    :effect (effect (update! (assoc target :subroutines (cons (do-brain-damage 1) (:subroutines target))))
-                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))
-    :leave-play (effect (update! (assoc (:host card) :subroutines (rest (:subroutines (:host card))))))}
+   "Ultraviolet Clearance"
+   {:delayed-completion true
+    :effect (req (gain state side :credit 10)
+                 (draw state side 4)
+                 (continue-ability state side
+                   {:prompt "Choose a card in HQ to install"
+                    :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (not (is-type? % "Operation")))}
+                    :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
+                    :cancel-effect (req (effect-completed state side eid))
+                    :effect (effect (corp-install target nil))}
+                  card nil))}
 
    "Violet Level Clearance"
    {:msg "gain 8 [Credits] and draw 4 cards"
@@ -1292,6 +1295,15 @@
                                            (is-type? % "Resource"))}
                       :msg (msg "trash " (:title target))
                       :effect (effect (trash target))}}}
+
+   "Wetwork Refit"
+   {:choices {:req #(and (ice? %)
+                         (has-subtype? % "Bioroid")
+                         (rezzed? %))}
+    :msg (msg "give " (card-str state target) "\"[Subroutine] Do 1 brain damage\" before all its other subroutines")
+    :effect (effect (update! (assoc target :subroutines (cons (do-brain-damage 1) (:subroutines target))))
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))
+    :leave-play (effect (update! (assoc (:host card) :subroutines (rest (:subroutines (:host card))))))}
 
    "Witness Tampering"
    {:msg "remove 2 bad publicity"

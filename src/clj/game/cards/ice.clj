@@ -291,6 +291,22 @@
    "Bastion"
    {:subroutines [end-the-run]}
 
+   "Bloodletter"
+   {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
+                   :effect (req (if (empty? (filter #(is-type? % "Program") (all-installed state :runner)))
+                                   (do (mill state :runner 2)
+                                       (system-msg state :runner (str "trashes the top 2 cards of their Stack")))
+                                   (do (show-wait-prompt state :corp "Runner to choose an option for Bloodletter")
+                                       (resolve-ability state :runner
+                                         {:prompt "Trash 1 program or trash top 2 cards of the Stack?"
+                                          :choices ["Trash 1 program" "Trash top 2 of Stack"]
+                                          :effect (req (if (and (= target "Trash top 2 of Stack") (pos? (count (:deck runner))))
+                                                         (do (mill state :runner 2)
+                                                             (system-msg state :runner (str "trashes the top 2 cards of their Stack"))
+                                                             (clear-wait-prompt state :corp))
+                                                         (resolve-ability state :runner trash-program card nil)))}
+                                        card nil))))}]}
+
    "Brainstorm"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (:hand runner)) " subroutines")}]
@@ -604,6 +620,9 @@
    {:subroutines [{:label "The Runner cannot make another run this turn"
                    :msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
 
+   "Executive Functioning"
+   {:subroutines [(trace-ability 4 (do-brain-damage 1))]}
+
    "Fairchild"
    {:subroutines [end-the-run
                   (do-brain-damage 1)]
@@ -722,6 +741,14 @@
     :subroutines [end-the-run]
     :strength-bonus advance-counters}
 
+   "Hailstorm"
+   {:subroutines [{:label "Remove a card in the Heap from the game"
+                   :prompt "Choose a card in the Runner's Heap"
+                   :choices (req (:discard runner))
+                   :msg (msg "remove " (:title target) " from the game")
+                   :effect (effect (move :runner target :rfg))}
+                  end-the-run]}
+
    "Harvester"
    {:subroutines [{:label "Runner draws 3 cards and discards down to maximum hand size"
                    :msg "make the Runner draw 3 cards and discard down to their maximum hand size"
@@ -780,6 +807,18 @@
                                          :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (effect-completed eid))}}}
                               card nil))}}
+
+   "Holmegaard"
+   {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
+                                    :msg "stop the Runner from accessing any cards this run"
+                                    :effect (effect (max-access 0))})
+                  {:label "Trash an icebreaker"
+                   :prompt "Choose an icebreaker to trash"
+                   :msg (msg "trash " (:title target))
+                   :choices {:req #(and (installed? %)
+                                        (has? % :subtype "Icebreaker"))}
+                   :effect (effect (trash target {:cause :subroutine})
+                                   (clear-wait-prompt :runner))}]}
 
    "Hourglass"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
@@ -1381,6 +1420,18 @@
                                     :msg "reduce cards accessed for this run by 1"
                                     :effect (effect (access-bonus -1))})]}
 
+   "Tapestry"
+   {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
+                   :msg "force the Runner to lose 1 [Click]"
+                   :req (req (pos? (:click runner)))
+                   :effect (effect (lose :runner :click 1))}
+                  {:msg "draw 1 card"
+                   :effect (effect (draw))}
+                  {:req (req (pos? (count (:hand corp))))
+                   :prompt "Choose a card in HQ to move to the top of R&D"
+                   :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                   :msg "add 1 card in HQ to the top of R&D"
+                   :effect (effect (move target :deck {:front true}))}]}
 
    "Taurus"
    (constellation-ice trash-hardware)
@@ -1553,6 +1604,20 @@
                    :cancel-effect (effect (system-msg "cancels the effect of Watchtower"))
                    :effect (effect (shuffle! :deck)
                                    (move target :hand))}]}
+
+   "Weir"
+   {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
+                   :req (req (pos? (:click runner)))
+                   :msg "force the Runner to lose 1 [Click]"
+                   :effect (effect (lose :runner :click 1))}
+                  {:label "Runner trashes 1 card from their Grip"
+                   :req (req (pos? (count (:hand runner))))
+                   :prompt "Choose a card to trash from your Grip"
+                   :player :runner
+                   :choices (req (:hand runner))
+                   :not-distinct true
+                   :effect (effect (trash :runner target)
+                                   (system-msg :runner (str "trashes " (:title target) " from their Grip")))}]}
 
    "Wendigo"
    (implementation-note

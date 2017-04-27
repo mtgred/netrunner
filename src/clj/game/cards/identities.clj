@@ -722,6 +722,16 @@
                                 (trigger-event state side :ice-subtype-changed)))}]
     :events {:run-ends nil}}
 
+   "Seidr Laboratories: Destiny Defined"
+   {:implementation "Manually triggered"
+    :abilities [{:req (req (:run @state))
+                 :once :per-turn
+                 :prompt "Choose a card to add to the top of R&D"
+                 :show-discard true
+                 :choices {:req #(and (= (:side %) "Corp") (in-discard? %))}
+                 :effect (effect (move target :deck {:front true}))
+                 :msg (msg "add " (if (:seen target) (:title target) "a card") " to the top of R&D")}]}
+
    "Silhouette: Stealth Operative"
    {:events {:successful-run
              {:interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
@@ -732,6 +742,15 @@
                                                  :effect (effect (expose eid target)) :msg "expose 1 card"
                                                  :delayed-completion true }
                                                 card nil))}}}
+
+   "Skorpios Defense Systems: Persuasive Power"
+   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted"
+    :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
+                 :prompt "Choose a card in the Runner's Heap that was just trashed"
+                 :once :per-turn
+                 :choices (req (:discard runner))
+                 :msg (msg "remove " (:title target) " from the game")
+                 :effect (effect (move :runner target :rfg))}]}
 
    "Spark Agency: Worldswide Reach"
    {:events
