@@ -199,6 +199,15 @@
       :abilities [ability]
       :events {:runner-turn-begins ability}})
 
+   "Biometric Spoofing"
+   {:prevent {:damage [:net :meat :brain]}
+    :abilities [{:label "[Trash]: Prevent 2 damage"
+                 :msg "prevent 2 damage"
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (damage-prevent :brain 2)
+                                 (damage-prevent :net 2)
+                                 (damage-prevent :meat 2))}]}
+
    "Bio-Modeled Network"
    {:prevent {:damage [:net]}
     :events {:pre-damage {:req (req (= target :net))
@@ -766,6 +775,15 @@
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
                                                (when (is-type? c "Program")
                                                  (trash state side c))))}}}
+
+   "Maxwell James"
+   {:in-play [:link 1]
+    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
+                 :prompt "Choose a piece of ICE protecting a remote server"
+                 :choices {:req #(and (ice? %) (rezzed? %) (is-remote? (second (:zone %))))}
+                 :msg "derez a piece of ICE protecting a remote server"
+                 :effect (effect (derez target)
+                                 (trash card {:cause :ability-cost}))}]}
 
    "Motivation"
    (let [ability {:msg "look at the top card of their Stack"

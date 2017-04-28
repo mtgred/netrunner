@@ -187,6 +187,34 @@
                               :effect (effect (prompt! card (str "The top card of R&D is "
                                                                  (:title (first (:deck corp)))) ["OK"] {}))}}}
 
+   "Dhegdheer"
+   {:abilities [{:label "Install a program on Dhegdheer"
+                 :req (req (empty? (:hosted card)))
+                 :effect (effect (resolve-ability
+                                   {:cost [:click 1]
+                                    :prompt "Choose a program in your Grip to install on Dhegdheer"
+                                    :choices {:req #(and (is-type? % "Program")
+                                                         (runner-can-install? state side % false)
+                                                         (in-hand? %))}
+                                    :msg (msg "host " (:title target) ", lowering its cost by 1 [Credit]")
+                                    :effect (effect (gain :memory (:memoryunits target))
+                                                    (install-cost-bonus [:credit -1])
+                                                    (runner-install target {:host-card card})
+                                                    (update! (assoc (get-card state card) :dheg-prog (:cid target))))}
+                                  card nil))}
+                {:label "Host an installed program on Dhegdheer"
+                 :req (req (empty? (:hosted card)))
+                 :prompt "Choose an installed program to host on Dhegdheer"
+                 :choices {:req #(and (is-type? % "Program")
+                                      (installed? %))}
+                 :msg (msg "host " (:title target) ", lowering its cost by 1 [Credit]")
+                 :effect (effect (host card target)
+                                 (gain :memory (:memoryunits target) :credit 1)
+                                 (update! (assoc (get-card state card) :dheg-prog (:cid target))))}]
+    :events {:card-moved {:req (req (= (:cid target) (:dheg-prog (get-card state card))))
+                          :effect (effect (update! (dissoc card :dheg-prog))
+                                          (lose :memory (:memoryunits target)))}}}
+
    "Diwan"
    {:prompt "Choose the server that this copy of Diwan is targeting:"
     :choices (req servers)

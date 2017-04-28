@@ -84,6 +84,14 @@
    {:events {:jack-out {:msg "do 1 net damage"
                         :effect (effect (damage :net 1))}}}
 
+   "Armored Servers"
+   {:implementation "Runner must trash cards manually when required"
+    :effect (effect (add-counter card :agenda 1))
+    :silent (req true)
+    :abilities [{:counter-cost [:agenda 1]
+                 :req (req (:run @state))
+                 :msg "make the Runner trash a card from their Grip to jack out or break subroutines for the remainder of the run"}]}
+
    "AstroScript Pilot Program"
    {:effect (effect (add-counter card :agenda 1))
     :silent (req true)
@@ -287,6 +295,14 @@
                                        (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
                  :msg "gain [Click][Click]"}]}
 
+   "Elective Upgrade"
+   {:silent (req true)
+    :effect (effect (add-counter card :agenda 2))
+    :abilities [{:cost [:click 1] :counter-cost [:agenda 1]
+                 :once :per-turn
+                 :effect (effect (gain :click 2))
+                 :msg "gain [Click][Click]"}]}
+
    "Encrypted Portals"
    {:msg (msg "gain " (reduce (fn [c server]
                                 (+ c (count (filter #(and (has-subtype? % "Code Gate")
@@ -428,6 +444,21 @@
                  :req (req (:run @state))
                  :once :per-run
                  :effect (effect (damage eid :net 1 {:card card}))}]}
+
+   "Illicit Sales"
+   {:delayed-completion true
+    :effect (req (when-completed
+                   (resolve-ability state side
+                     {:optional
+                      {:prompt "Take 1 bad publicity from Illicit Sales?"
+                       :yes-ability {:msg "take 1 bad publicity"
+                                     :effect (effect (gain :bad-publicity 1))}
+                       :no-ability {:effect (req (effect-completed state side eid))}}}
+                     card nil)
+                   (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
+                         (gain state side :credit n)
+                         (system-msg state side (str "gains " n " [Credits] from Illicit Sales"))
+                         (effect-completed state side eid)))))}
 
    "Improved Protein Source"
    {:msg "make the Runner gain 4 [Credits]"
