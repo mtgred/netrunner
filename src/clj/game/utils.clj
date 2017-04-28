@@ -8,10 +8,25 @@
 
 (defn abs [n] (max n (- n)))
 
+(defn clean-forfeit [costs]
+  "Takes a flat :forfeit in costs and adds a cost of 1.
+  Ignores cost vectors with an even count as these have forfeit value included"
+  (let [fcosts (flatten costs)]
+  (if (odd? (count fcosts))
+    (replace {[:forfeit] [:forfeit 1],
+              :forfeit [:forfeit 1]} fcosts)
+    costs)))
+
 (defn merge-costs [costs]
-  (vec (reduce #(let [key (first %2) value (last %2)]
-              (assoc %1 key (+ (or (key %1) 0) value)))
-           {} (partition 2 (flatten costs)))))
+  "This combines costs from a number of sources in the game into a single cost per type
+  Damage is not merged as it needs to be invidual.  Needs augmention more than net-damage appears"
+  (let [fc (partition 2 (flatten (clean-forfeit costs)))
+        jc (filter #(not= :net-damage (first %)) fc)
+        dc (filter #(= :net-damage (first %)) fc)]
+    (vec (map vec (concat
+      (reduce #(let [key (first %2) value (last %2)]
+                    (assoc %1 key (+ (or (key %1) 0) value)))
+                 {} jc) dc)))))
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with pred coll)]
@@ -49,10 +64,14 @@
   (str (Character/toUpperCase (first string)) (subs string 1)))
 
 (defn costs-to-symbol [costs]
+  "Used during steal to print runner prompt for payment"
   (clojure.string/join ", " (map #(let [key (first %) value (last %)]
                                    (case key
                                      :credit (str value "[Credits]")
                                      :click (reduce str (for [i (range value)] "[Click]"))
+                                     :net-damage (str value " net damage")
+                                     :mill (str value " card mill")
+                                     :hardware (str value " installed hardware")
                                      (str value (str key)))) (partition 2 (flatten costs)))))
 
 (defn vdissoc [v n]
@@ -122,6 +141,7 @@
     (case attr
       :credit (str value " [$]")
       :click  (->> "[Click]" repeat (take value) (apply str))
+      :forfeit (str value " Agenda" (when (> value 1) "s"))
       nil)))
 
 (defn build-cost-str

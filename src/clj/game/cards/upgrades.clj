@@ -50,6 +50,18 @@
                                                                   (unregister-events state side card))}} card))}]
     :events {:run-ends nil}}
 
+   "Ben Musashi"
+   (let [bm {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+             :effect (effect (steal-cost-bonus [:net-damage 2]))}]
+     {:trash-effect
+              {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+               :effect (effect (register-events {:pre-steal-cost (assoc bm :req (req (or (= (:zone target) (:previous-zone card))
+                                                                                         (= (central->zone (:zone target))
+                                                                                            (butlast (:previous-zone card))))))
+                                                 :run-ends {:effect (effect (unregister-events card))}}
+                                                (assoc card :zone '(:discard))))}
+      :events {:pre-steal-cost bm :run-ends nil}})
+
    "Bernice Mai"
    {:events {:successful-run {:interactive (req true)
                               :req (req this-server)

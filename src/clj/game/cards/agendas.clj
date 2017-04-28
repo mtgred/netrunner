@@ -591,6 +591,9 @@
                        :effect (req (gain state side :credit
                                           (if (>= (:advance-counter (get-card state card)) 5) 3 2)))}}}
 
+   "Obokata Protocol"
+   {:steal-cost-bonus (req [:net-damage 4])}
+
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
              :effect (effect (trash (first (shuffle (:hand runner)))))

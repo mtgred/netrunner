@@ -22,6 +22,80 @@
         (is (get-in (refresh spid) [:rezzed]) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest ben-musashi
+  ;; Ben Musashi - pay 2 net damage to steal from this server
+  (do-game
+    (new-game (default-corp [(qty "Ben Musashi" 1) (qty "House of Knives" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ben Musashi" "New remote")
+    (play-from-hand state :corp "House of Knives" "Server 1")
+    (take-credits state :corp 1)
+    (let [bm (get-content state :remote1 0)
+          hok (get-content state :remote1 1)]
+      (core/rez state :corp bm)
+      (run-empty-server state "Server 1")
+      ;; runner now chooses which to access.
+      (prompt-select :runner hok)
+      ;; prompt should be asking for the 2 net damage cost
+      (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
+          "Prompt to pay 2 net damage")
+      (prompt-choice :runner "No")
+      (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
+      (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+      (prompt-select :runner bm)
+      (prompt-choice :runner "No")
+      (run-empty-server state "Server 1")
+      (prompt-select :runner hok)
+      (prompt-choice :runner "Yes")
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
+      (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
+
+(deftest ben-musashi-trash
+  ;; Ben Musashi - pay even when trashed
+  (do-game
+    (new-game (default-corp [(qty "Ben Musashi" 3) (qty "House of Knives" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Ben Musashi" "New remote")
+    (play-from-hand state :corp "House of Knives" "Server 1")
+    (take-credits state :corp 1)
+    (core/gain state :runner :credit 1)
+    (let [bm (get-content state :remote1 0)
+          hok (get-content state :remote1 1)]
+      (core/rez state :corp bm)
+      (run-empty-server state "Server 1")
+      ;; runner now chooses which to access.
+      (prompt-select :runner bm)
+      (prompt-choice :runner "Yes") ; pay to trash
+      (prompt-select :runner hok)
+      ;; should now have prompt to pay 2 net for HoK
+      (prompt-choice :runner "Yes")
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
+      (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
+
+(deftest ben-musashi-obokata
+  ;; Check runner chooses order of payment
+  (do-game
+    (new-game (default-corp [(qty "Ben Musashi" 1) (qty "Obokata Protocol" 1)])
+              (default-runner [(qty "Sure Gamble" 6)]))
+    (play-from-hand state :corp "Ben Musashi" "New remote")
+    (play-from-hand state :corp "Obokata Protocol" "Server 1")
+    (take-credits state :corp)
+    (let [bm (get-content state :remote1 0)
+          op (get-content state :remote1 1)]
+      (core/rez state :corp bm)
+      (run-empty-server state "Server 1")
+      ;; runner now chooses which to access.
+      (prompt-select :runner op)
+      ;; prompt should be asking for the net damage costs
+      (is (= "Obokata Protocol" (:title (:card (first (:prompt (get-runner))))))
+          "Prompt to pay steal costs")
+      (prompt-choice :runner "2 net damage")
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
+      (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+      (prompt-choice :runner "4 net damage")
+      (is (= 5 (count (:discard (get-runner)))) "Runner took 4 net damage")
+      (is (= 1 (count (:scored (get-runner)))) "Scored agenda"))))
+
 (deftest bernice-mai
   ;; Bernice Mai - successful and unsuccessful
   (do-game

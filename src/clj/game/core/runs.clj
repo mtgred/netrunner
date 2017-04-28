@@ -138,6 +138,32 @@
       (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))
     (effect-completed state side eid)))
 
+(defn- steal-pay-choice
+  "Enables a vector of costs to be resolved in the order of choosing"
+  [state side choices chosen n card]
+  {:delayed-completion true
+   :prompt "Pay steal cost?"
+   :choices (conj (vec choices) "Don't steal")
+   :effect (req
+             (if (= target "Don't steal")
+               (continue-ability state :runner
+                                 {:delayed-completion true
+                                  :effect (effect (system-msg (str "decides not to pay to steal " (:title card)))
+                                                  (resolve-steal-events eid card))} card nil)
+               (let [chosen (cons target chosen)
+                     kw (to-keyword (join "-" (rest (split target #" "))))
+                     val (string->num (first (split target #" ")))]
+                 (if (can-pay? state side name [kw val])
+                   (do (pay state side nil [kw val])
+                       (system-msg state side (str "pays " target
+                                                   " to steal " (:title card)))
+                       (if (< (count chosen) n)
+                         (continue-ability state side
+                                              (steal-pay-choice state :runner (remove-once #(not= target %)
+                                                                                     choices) chosen n card) card nil)
+                         (resolve-steal state side eid card)))
+                   (resolve-steal-events state side eid card)))))})
+
 (defn- access-agenda
   [state side eid c]
   (trigger-event state side :pre-steal-cost c)
@@ -148,24 +174,33 @@
                         (effect-completed state side eid c)))
     ;; The runner can potentially steal this agenda.
     (let [cost (steal-cost state side c)
-          name (:title c)]
+          name (:title c)
+          choices (map costs-to-symbol (partition 2 cost))
+          n (count choices)]
       ;; Steal costs are additional costs and can be denied by the runner.
-      (if-not (empty? cost)
-        ;; Ask if the runner will pay the additional cost to steal.
+      (cond
+        ;; Ask if the runner will pay a single additional cost to steal.
+        (= 1 (count choices))
         (optional-ability
           state :runner eid c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
           {:yes-ability
-                {:delayed-completion true
-                 :effect (req (if (can-pay? state side name cost)
-                                (do (pay state side nil cost)
-                                    (system-msg state side (str "pays " (costs-to-symbol cost)
-                                                                " to steal " name))
-                                    (resolve-steal state side eid c))
-                                (resolve-steal-events state side eid c)))}
+                       {:delayed-completion true
+                        :effect (req (if (can-pay? state side name cost)
+                                       (do (pay state side nil cost)
+                                           (system-msg state side (str "pays " (costs-to-symbol cost)
+                                                                       " to steal " name))
+                                           (resolve-steal state side eid c))
+                                       (resolve-steal-events state side eid c)))}
            :no-ability {:delayed-completion true
                         :effect (effect (resolve-steal-events eid c))}}
           nil)
+
+        ;; For multiple additional costs give the runner the choice of order to pay
+        (> (count choices) 1)
+        (continue-ability state side (steal-pay-choice state :runner choices '() n c) c nil)
+
         ;; Otherwise, show the "You access" prompt with the single option to Steal.
+        :else
         (continue-ability state :runner
                           {:delayed-completion true
                            :prompt (str "You access " name) :choices ["Steal"]
