@@ -1546,7 +1546,7 @@
       (is (= 2 (:credit (get-runner))) "Program installed for free")
       (let [ms (get-in @state [:runner :rig :program 0])]
         (play-from-hand state :runner "Scavenge")
-        (prompt-select :runner ms)
+        (prompt-choice :runner ms)
         (prompt-select :runner (find-card "Morning Star" (:discard (get-runner))))
         (take-credits state :runner)
         (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
