@@ -1343,18 +1343,18 @@
     :events {:pre-damage nil :run-ends nil}}
 
    "The Price of Freedom"
-   {:req (req (some #(has-subtype? % "Connection") (all-installed state :runner)))
-    :prompt "Choose an installed connection to trash"
-    :choices {:req #(and (has-subtype? % "Connection") (installed? %))}
-    :msg (msg "trash " (:title target) " to prevent the corp from advancing cards during their next turn")
-    :effect (effect (move (find-cid (:cid card) (:discard runner)) :rfg)
-                    (trash target)
-                    (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
-                    (register-persistent-flag!
-                             card :can-advance
-                             (fn [state side card]
-                                 ((constantly false) (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))
-    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :can-advance)
+   {:additional-cost [:connection 1]
+    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+
+    :events {:runner-trash {:effect (effect
+                                      (move (find-cid (:cid card) (:discard runner)) :rfg)
+                                      (unregister-events card)
+                                      (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
+                                      (system-msg (str "trashes " (:title target) " to prevent the corp from advancing cards during their next turn"))
+                                      (register-persistent-flag! card :can-advance
+                                                                 (fn [state side card] ((constantly false)
+                                                                                         (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))}
+             :corp-turn-ends {:effect (effect (clear-persistent-flag! card :can-advance)
                                               (unregister-events card))}}}
 
    "Three Steps Ahead"
