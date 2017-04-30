@@ -10,8 +10,6 @@
             [netrunner.account :refer [load-alt-arts]]
             [netrunner.ajax :refer [POST GET]]))
 
-(enable-console-print!)
-
 (def select-channel (chan))
 (def zoom-channel (chan))
 (def INFINITY 2147483647)
