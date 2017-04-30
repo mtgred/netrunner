@@ -10,6 +10,8 @@
             [netrunner.account :refer [load-alt-arts]]
             [netrunner.ajax :refer [POST GET]]))
 
+(enable-console-print!)
+
 (def select-channel (chan))
 (def zoom-channel (chan))
 (def INFINITY 2147483647)
@@ -415,9 +417,11 @@
            data (assoc deck :cards cards :identity identity)]
        (try (js/ga "send" "event" "deckbuilder" "save") (catch js/Error e))
        (go (let [new-id (get-in (<! (POST "/data/decks/" data :json)) [:json :_id])
-                 new-deck (if (:_id deck) deck (assoc deck :_id new-id))]
+                 new-deck (if (:_id deck) deck (assoc deck :_id new-id))
+                 all-decks (process-decks (:json (<! (GET (str "/data/decks")))))]
              (om/update! cursor :decks (conj decks new-deck))
-             (om/set-state! owner :deck new-deck)))))))
+             (om/set-state! owner :deck new-deck)
+             (load-decks all-decks)))))))
 
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
