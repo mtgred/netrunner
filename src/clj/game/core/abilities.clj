@@ -349,20 +349,27 @@
    ;; that can be selected.
    (letfn [(wrap-function [args kw]
              (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
-     (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))]
-     (swap! state update-in [side :selected]
-            #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
-                            :max (get-in ability [:choices :max])}))
-     (show-prompt state side card
-                  (if-let [msg (:prompt ability)]
-                    msg
-                    (if-let [m (get-in ability [:choices :max])]
-                      (str "Select up to " m " targets for " (:title card))
-                      (str "Select a target for " (:title card))))
-                  ["Done"] (fn [choice] (resolve-select state side))
-                  (-> args
-                      (assoc :prompt-type :select :show-discard (:show-discard ability))
-                      (wrap-function :cancel-effect)))))))
+     (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))
+           all (get-in ability [:choices :all])]
+       (swap! state update-in [side :selected]
+              #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+                              :max (get-in ability [:choices :max])
+                              :all all}))
+       (show-prompt state side card
+                    (if-let [msg (:prompt ability)]
+                      msg
+                      (if-let [m (get-in ability [:choices :max])]
+                        (str "Select up to " m " targets for " (:title card))
+                        (str "Select a target for " (:title card))))
+                    (if all ["Hide"] ["Done"])
+                    (if all
+                      (fn [choice]
+                        (toast state side (str "You must choose " (get-in ability [:choices :max])))
+                        (show-select state side card ability args))
+                      (fn [choice] (resolve-select state side)))
+                    (-> args
+                        (assoc :prompt-type :select :show-discard (:show-discard ability))
+                        (wrap-function :cancel-effect)))))))
 
 (defn resolve-select
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.

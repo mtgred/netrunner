@@ -134,6 +134,7 @@
                                                {:prompt (str "Choose 4 cards for NVRAM")
                                                 :delayed-completion true
                                                 :choices {:max 4
+                                                          :all true
                                                           :req #(and (= (:side %) "Runner")
                                                                      (= (:zone %) [:play-area]))}
                                                 :effect (req (doseq [c targets]
