@@ -391,6 +391,24 @@
    "Government Takeover"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
+   "Graft"
+   (letfn [(graft [n] {:prompt "Choose a card to add to HQ with Graft"
+                       :delayed-completion true
+                       :choices (req (cancellable (:deck corp) :sorted))
+                       :msg (msg "add " (:title target) " to HQ from R&D")
+                       :cancel-effect (req (shuffle! state side :deck)
+                                           (system-msg state side (str "shuffles R&D"))
+                                           (effect-completed state side eid))
+                       :effect (req (move state side target :hand)
+                                    (if (< n 3)
+                                      (continue-ability state side (graft (inc n)) card nil)
+                                      (do (shuffle! state side :deck)
+                                          (system-msg state side (str "shuffles R&D"))
+                                          (effect-completed state side eid card))))})]
+     {:delayed-completion true
+      :msg "add up to 3 cards from R&D to HQ"
+      :effect (effect (continue-ability (graft 1) card nil))})
+
    "Hades Fragment"
    {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard])) (is-scored? state :corp card)))}
     :abilities [{:prompt "Choose a card to add to the bottom of R&D"
