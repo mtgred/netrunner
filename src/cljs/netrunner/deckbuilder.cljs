@@ -26,6 +26,12 @@
   [identity]
   (= "Draft" (:setname identity)))
 
+(defn is-prof-prog?
+  "Check if ID is The Professor and card is a Program"
+  [deck card]
+  (and (= "03029" (get-in deck [:identity :code]))
+       (= "Program" (:type card))))
+
 (defn id-inf-limit
   "Returns influence limit of an identity or INFINITY in case of draft IDs."
   [identity]
@@ -212,10 +218,14 @@
   [deck]
   (let [cards (:cards deck)
         mwlhelper (fn [currmap line]
-                    (let [card (:card line)]
+                    (let [card (:card line)
+                          type (:type card)
+                          qty (if (is-prof-prog? deck card)
+                                (- (:qty line) 1)
+                                (:qty line))]
                       (if (mostwanted? card)
                         (update-in currmap [(keyword (faction-label card))]
-                                   (fnil (fn [curmwl] (+ curmwl (* (get-mwl-value card) (:qty line)))) 0))
+                                   (fnil (fn [curmwl] (+ curmwl (* (get-mwl-value card) qty))) 0))
                         currmap)))]
     (reduce mwlhelper {} cards)))
 
@@ -281,8 +291,7 @@
       0
       (cond
         ;; The Professor: Keeper of Knowledge - discount influence cost of first copy of each program
-        (and (= "03029" (get-in deck [:identity :code]))
-             (= "Program" (get-in line [:card :type])))
+        (is-prof-prog? deck (:card line))
         (- base-cost (get-in line [:card :factioncost]))
         ;; Check if the card is Alliance and fulfills its requirement
         (alliance-is-free? (:cards deck) line)
@@ -590,7 +599,8 @@
            allied (alliance-is-free? cards line)
            valid (and (allowed? card identity)
                       (legal-num-copies? identity line))
-           released (released? sets card)]
+           released (released? sets card)
+           modqty (if (is-prof-prog? deck card) (- qty 1) qty)]
        [:span
         [:span {:class (cond
                          (and valid released) "fake-link"
@@ -599,7 +609,7 @@
                 :on-mouse-enter #(put! zoom-channel card)
                 :on-mouse-leave #(put! zoom-channel false)} name]
         (when (or wanted (not infaction))
-          (let [influence (* (:factioncost card) qty)]
+          (let [influence (* (:factioncost card) modqty)]
             (list " "
                   [:span.influence
                    {:class (faction-label card)
@@ -611,7 +621,7 @@
                            ;; satisfies alliance criterion
                            (when allied (alliance-dots influence))
                            ;; on mwl
-                           (when wanted (restricted-dots (* (get-mwl-value card) qty))))}}])))])
+                           (when wanted (restricted-dots (* (get-mwl-value card) modqty))))}}])))])
      card)])
 
 (defn deck-builder
