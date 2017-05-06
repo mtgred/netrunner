@@ -1115,7 +1115,7 @@
              :effect ab}]
      {:effect ab
       :subroutines [end-the-run]
-      :events {:rez mg :card-moved mg :derez mg}})
+      :events {:rez mg :card-moved mg :derez mg :ice-subtype-changed mg}})
 
    "Muckraker"
    {:effect take-bad-pub
