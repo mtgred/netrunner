@@ -87,8 +87,9 @@
                    (same-side? side (:side card))))
       (case server
         ("Heap" "Archives")
-        (do (trash state s c {:unpreventable true})
-            (system-msg state side (str "trashes " label from-str)))
+        (do (let [action-str (if (= (first (:zone c)) :hand) "discards " "trashes ")]
+              (trash state s c {:unpreventable true})
+              (system-msg state side (str action-str label from-str))))
         ("Grip" "HQ")
         (do (move state s (dissoc c :seen :rezzed) :hand {:force true})
             (system-msg state side (str "moves " label from-str " to " server)))
