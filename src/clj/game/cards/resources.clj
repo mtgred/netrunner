@@ -517,9 +517,9 @@
                  :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))
-                 :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
+                 :effect (req (let [c (move state :runner (first (filter #(= "Agenda" (:type %)) (:hosted card))) :scored)]
                                 (gain-agenda-point state :runner (get-agenda-points state :runner c))))
-                 :msg (msg (let [c (first (:hosted card))]
+                 :msg (msg (let [c (first (filter #(= "Agenda" (:type %)) (:hosted card)))]
                              (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
                                   " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
 
