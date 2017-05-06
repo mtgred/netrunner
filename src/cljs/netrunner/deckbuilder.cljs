@@ -219,7 +219,6 @@
   (let [cards (:cards deck)
         mwlhelper (fn [currmap line]
                     (let [card (:card line)
-                          type (:type card)
                           qty (if (is-prof-prog? deck card)
                                 (- (:qty line) 1)
                                 (:qty line))]
