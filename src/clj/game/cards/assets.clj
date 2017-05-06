@@ -747,6 +747,7 @@
                                (when (zero? (get-in card [:counter :credit]))
                                  (trash state :corp card)))}]
      {:effect (effect (add-counter card :credit 8))
+      :flags {:corp-phase-12 (req (= 2 (get-in card [:counter :credit])))}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]
