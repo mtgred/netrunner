@@ -1566,7 +1566,7 @@
       (is (= 2 (:credit (get-runner))) "Program installed for free")
       (let [ms (get-in @state [:runner :rig :program 0])]
         (play-from-hand state :runner "Scavenge")
-        (prompt-select :runner ms)
+        (prompt-choice :runner ms)
         (prompt-select :runner (find-card "Morning Star" (:discard (get-runner))))
         (take-credits state :runner)
         (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
@@ -1588,7 +1588,7 @@
     (play-from-hand state :runner "The Price of Freedom")
     (is (= 0 (count (get-in @state [:runner :hand]))) "The Price of Freedom can be played because a connection is in play")
     (let [kj (find-card "Kati Jones" (:resource (:rig (get-runner))))]
-      (prompt-select :runner kj)
+      (prompt-choice :runner kj)
       (is (= 0 (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed wth The Price of Freedom")
       (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game, and only Kati Jones is in the discard"))
     (take-credits state :runner)

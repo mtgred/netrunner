@@ -1171,24 +1171,21 @@
                                    (expose state side eid card2))))}
 
    "Scavenge"
-   {:req (req (and (some #(is-type? % "Program") (all-installed state :runner))
-                   (some #(is-type? % "Program") (concat (:hand runner) (:discard runner)))))
-    :prompt "Choose an installed program to trash"
-    :choices {:req #(and (is-type? % "Program")
-                         (installed? %))}
-    :effect (req (let [trashed target tcost (- (:cost trashed)) st state si side]
-                   (trash state side trashed)
-                   (resolve-ability
-                     state side
-                     {:prompt "Choose a program to install from your Grip or Heap"
-                      :show-discard true
-                      :choices {:req #(and (is-type? % "Program")
-                                           (#{[:hand] [:discard]} (:zone %))
-                                           (can-pay? st si nil (modified-install-cost st si % [:credit tcost])))}
-                      :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
-                                      (runner-install target))
-                      :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}
+   {:req (req (some #(is-type? % "Program") (concat (:hand runner) (:discard runner))))
+    :additional-cost [:program 1]
+    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
 
+    :events {:runner-trash {:effect
+                            (req (let [trashed target tcost (- (:cost trashed)) st state si side]
+                                   (continue-ability state side {:prompt "Choose a program to install from your Grip or Heap"
+                                                                 :show-discard true
+                                                                 :choices {:req #(and (is-type? % "Program")
+                                                                                      (#{[:hand] [:discard]} (:zone %))
+                                                                                      (can-pay? st si nil (modified-install-cost st si % [:credit tcost])))}
+                                                                 :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
+                                                                                 (runner-install target)
+                                                                                 (unregister-events card))
+                                                                 :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}}}
 
    "Scrubbed"
    {:events (let [sc {:effect (req (update! state side (dissoc card :scrubbed-target)))}]
@@ -1370,18 +1367,18 @@
     :events {:pre-damage nil :run-ends nil}}
 
    "The Price of Freedom"
-   {:req (req (some #(has-subtype? % "Connection") (all-installed state :runner)))
-    :prompt "Choose an installed connection to trash"
-    :choices {:req #(and (has-subtype? % "Connection") (installed? %))}
-    :msg (msg "trash " (:title target) " to prevent the corp from advancing cards during their next turn")
-    :effect (effect (move (find-cid (:cid card) (:discard runner)) :rfg)
-                    (trash target)
-                    (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
-                    (register-persistent-flag!
-                             card :can-advance
-                             (fn [state side card]
-                                 ((constantly false) (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))
-    :events {:corp-turn-ends {:effect (effect (clear-persistent-flag! card :can-advance)
+   {:additional-cost [:connection 1]
+    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+
+    :events {:runner-trash {:effect (effect
+                                      (move (find-cid (:cid card) (:discard runner)) :rfg)
+                                      (unregister-events card)
+                                      (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
+                                      (system-msg (str "trashes " (:title target) " to prevent the corp from advancing cards during their next turn"))
+                                      (register-persistent-flag! card :can-advance
+                                                                 (fn [state side card] ((constantly false)
+                                                                                         (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))}
+             :corp-turn-ends {:effect (effect (clear-persistent-flag! card :can-advance)
                                               (unregister-events card))}}}
 
    "Three Steps Ahead"
