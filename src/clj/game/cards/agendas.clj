@@ -391,6 +391,24 @@
    "Government Takeover"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
 
+   "Graft"
+   (letfn [(graft [n] {:prompt "Choose a card to add to HQ with Graft"
+                       :delayed-completion true
+                       :choices (req (cancellable (:deck corp) :sorted))
+                       :msg (msg "add " (:title target) " to HQ from R&D")
+                       :cancel-effect (req (shuffle! state side :deck)
+                                           (system-msg state side (str "shuffles R&D"))
+                                           (effect-completed state side eid))
+                       :effect (req (move state side target :hand)
+                                    (if (< n 3)
+                                      (continue-ability state side (graft (inc n)) card nil)
+                                      (do (shuffle! state side :deck)
+                                          (system-msg state side (str "shuffles R&D"))
+                                          (effect-completed state side eid card))))})]
+     {:delayed-completion true
+      :msg "add up to 3 cards from R&D to HQ"
+      :effect (effect (continue-ability (graft 1) card nil))})
+
    "Hades Fragment"
    {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard])) (is-scored? state :corp card)))}
     :abilities [{:prompt "Choose a card to add to the bottom of R&D"
@@ -798,6 +816,23 @@
    {:delayed-completion true
     :msg "do 2 meat damage"
     :effect (effect (damage eid :meat 2 {:card card}))}
+
+   "Successful Field Test"
+   (letfn [(sft [n max] {:prompt "Select a card in HQ to install with Successful Field Test"
+                         :priority -1
+                         :delayed-completion true
+                         :choices {:req #(and (= (:side %) "Corp")
+                                              (not (is-type? % "Operation"))
+                                              (in-hand? %))}
+                         :effect (req (when-completed
+                                        (corp-install state side target nil {:no-install-cost true})
+                                        (if (< n max)
+                                          (continue-ability state side (sft (inc n) max) card nil)
+                                          (effect-completed state side eid card))))})]
+     {:delayed-completion true
+      :msg "install cards from HQ, ignoring all costs"
+      :effect (req (let [max (count (filter #(not (is-type? % "Operation")) (:hand corp)))]
+                     (continue-ability state side (sft 1 max) card nil)))})
 
    "Superior Cyberwalls"
    {:interactive (req true)
