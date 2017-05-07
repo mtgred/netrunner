@@ -442,7 +442,8 @@
                          :effect (effect (trash-cost-bonus 1))}}}
 
    "Estelle Moon"
-   {:events {:corp-install {:req (req (#{"Asset" "Agenda" "Upgrade"} (:type target)))
+   {:events {:corp-install {:req (req (and (#{"Asset" "Agenda" "Upgrade"} (:type target))
+                                           (is-remote? (second (:zone target)))))
                             :effect (effect (add-counter card :power 1)
                                             (system-msg (str "places 1 power counter on Estelle Moon")))}}
     :abilities [{:label "Draw 1 card and gain 2 [Credits] for each power counter"
@@ -746,6 +747,7 @@
                                (when (zero? (get-in card [:counter :credit]))
                                  (trash state :corp card)))}]
      {:effect (effect (add-counter card :credit 8))
+      :flags {:corp-phase-12 (req (= 2 (get-in card [:counter :credit])))}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]

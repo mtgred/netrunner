@@ -998,10 +998,11 @@
     :delayed-completion true
     :additional-cost [:forfeit]
     :effect (req (let [bplost (min (:agendapoints (last (:rfg corp))) (:bad-publicity corp))]
-                   (lose state side :bad-publicity bplost)
-                   (gain state side :credit bplost)
-                   (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
-                 (effect-completed state side eid))}
+                   (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
+                                               (gain state side :credit bplost)
+                                               (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
+                                           (system-msg state side "uses Sacrifce but gains no credits and loses no Bad Publicity"))
+                   (effect-completed state side eid)))}
 
    "Salems Hospitality"
    {:prompt "Name a Runner card"

@@ -718,9 +718,10 @@
                                 (update! state side (assoc ice :subtype (combine-subtypes true stypes "Code Gate")))
                                 (register-events state side
                                                  {:run-ends {:effect (effect (update! (assoc ice :subtype stypes))
+                                                                             (trigger-event :ice-subtype-changed ice)
                                                                              (unregister-events card))}} card)
                                 (update-ice-strength state side ice)
-                                (trigger-event state side :ice-subtype-changed)))}]
+                                (trigger-event state side :ice-subtype-changed ice)))}]
     :events {:run-ends nil}}
 
    "Seidr Laboratories: Destiny Defined"

@@ -504,7 +504,8 @@
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
                      :effect (effect (pay :corp card :credit 2))}}}
 
-   "Film Critic"
+               "Film Critic"
+   (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
    {:abilities [{:req (req (and (empty? (:hosted card))
                                 (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                  :label "Host an agenda being accessed"
@@ -517,11 +518,11 @@
                  :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
                 {:cost [:click 2] :label "Add hosted agenda to your score area"
                  :req (req (not (empty? (:hosted card))))
-                 :effect (req (let [c (move state :runner (first (:hosted card)) :scored)]
+                 :effect (req (let [c (move state :runner (get-agenda card) :scored)]
                                 (gain-agenda-point state :runner (get-agenda-points state :runner c))))
-                 :msg (msg (let [c (first (:hosted card))]
+                 :msg (msg (let [c (get-agenda card)]
                              (str "add " (:title c) " to their score area and gain " (get-agenda-points state :runner c)
-                                  " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]}
+                                  " agenda point" (when (> (get-agenda-points state :runner c) 1) "s"))))}]})
 
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
