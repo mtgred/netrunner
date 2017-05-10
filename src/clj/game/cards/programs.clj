@@ -268,6 +268,23 @@
                                                           :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
                                           (lose :memory (:memoryunits target)))}}}
 
+   "Egret"
+   {:implementation "Added sub-types don't get removed when Egret or ICE is moved/trashed"
+    :hosting {:req #(and (ice? %) (rezzed? %))}
+    :msg (msg "make " (card-str state (:host card)) " gain Barrier, Code Gate and Sentry sub-types")
+    :effect (req (when-let [h (:host card)]
+                   (update! state side (assoc-in card [:special :installing] true))
+                   (update-ice-strength state side h)
+                   (when-let [card (get-card state card)]
+                     (update! state side (update-in card [:special] dissoc :installing)))))
+    :events {:ice-strength-changed
+             {:effect (req (unregister-events state side card)
+                           (when (get-in card [:special :installing])
+                             (update! state side (assoc (:host (get-card state card)) :subtype (combine-subtypes false(-> card :host :subtype) "Barrier" "Code Gate" "Sentry")))
+                             (update! state side (update-in card [:special] dissoc :installing))
+                             (trigger-event state side :runner-install card))
+                           (continue state side nil))}}}
+
    "Equivocation"
    (let [force-draw (fn [title]
                       {:optional {:prompt (str "Force the Corp to draw " title "?")
