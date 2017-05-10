@@ -68,6 +68,15 @@
     :effect (effect (resolve-ability {:prompt "Choose a server" :choices (req runnable-servers)
                                       :effect (effect (run target nil card))} card nil))}
 
+   "Brute-Force-Hack"
+   {:prompt "How many [Credits]?" :choices :credit
+    :effect (effect (system-msg (str "spends " target " [Credit] on Brute-Force-Hack"))
+                    (resolve-ability {:choices {:req #(and (ice? %)
+                                                           (rezzed? %)
+                                                           (<= (:cost %) target))}
+                                      :effect (effect (derez target))
+                                      :msg (msg "derez " (:title target))} card nil))}
+
    "Build Script"
    {:msg "gain 1 [Credits] and draw 2 cards"
     :effect (effect (gain :credit 1) (draw 2))}
