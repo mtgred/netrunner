@@ -730,6 +730,26 @@
    "Laguna Velasco District"
    {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
 
+   "Levy Advanced Research Lab"
+   (letfn [(lab-keep [cards]
+             {:prompt "Choose a Program to keep"
+              :choices (cons "None" (filter #(= "Program" (:type %)) cards))
+              :delayed-completion true
+              :effect (req (when (not= target "None")
+                             (move state side target :hand))
+                           (if (not-empty cards)
+                             (let [tobottom (remove #(= % target) cards)]
+                               (continue-ability state side (reorder-choice :runner :corp tobottom '()
+                                                                            (count tobottom) tobottom "bottom") card nil))
+                             (do (clear-wait-prompt state :corp)
+                                 (effect-completed state side eid card))))})]
+   {:abilities [{:cost [:click 1]
+                 :msg (msg "draw 4 cards: " (join ", " (map :title (take 4 (:deck runner)))))
+                 :delayed-completion true
+                 :effect (req (show-wait-prompt state :corp "Runner to choose card to keep")
+                              (let [from (take 4 (:deck runner))]
+                                (continue-ability state side (lab-keep from) card nil)))}]})
+
    "Liberated Account"
    {:data {:counter {:credit 16}}
     :abilities [{:cost [:click 1]

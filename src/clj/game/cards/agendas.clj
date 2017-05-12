@@ -612,6 +612,14 @@
    "Obokata Protocol"
    {:steal-cost-bonus (req [:net-damage 4])}
 
+   "Paper Trail"
+   {:trace {:base 6
+            :msg "trash all connection and job resources"
+            :effect (req (doseq [resource (filter #(or (has-subtype? % "Job")
+                                                       (has-subtype? % "Connection"))
+                                                  (all-installed state :runner))]
+                                   (trash state side resource)))}}
+
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
              :effect (effect (trash (first (shuffle (:hand runner)))))
