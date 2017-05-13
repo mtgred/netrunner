@@ -803,7 +803,8 @@
                                          :prompt "You are encountering Herald. Allow its subroutines to fire?"
                                          :priority 1
                                          :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                       (play-subroutine eid {:card card :subroutine 0}))}
+                                                                       (play-subroutine :corp eid {:card card :subroutine 0})
+                                                                       (play-subroutine :corp eid {:card card :subroutine 1}))}
                                          :no-ability {:effect (effect (clear-wait-prompt :corp)
                                                                       (effect-completed eid))}}}
                               card nil))}}
