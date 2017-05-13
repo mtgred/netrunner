@@ -600,7 +600,8 @@
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]
-      :trash-effect {:req (req (= :servers (first (:previous-zone card))))
+      :trash-effect {:req (req (= :servers (first (:previous-zone card)))
+                               (= side :runner))
                      :effect (effect (gain :corp :bad-publicity 1)
                                      (system-msg :corp (str "takes 1 bad publicity from Illegal Arms Factory")))}})
 
