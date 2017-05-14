@@ -353,8 +353,9 @@
                                                                                   :default (req (:tag runner))}
                                                                         :msg (msg "to access " target " cards by paying " (:tag runner) " [Credit]")
                                                                         :effect (effect (access-bonus (- target 1))
-                                                                                        (do-access eid (:server run))
-                                                                                        (pay card (:tag runner)))}
+                                                                                        (pay card :credit (:tag runner))
+                                                                                        (max-access target)
+                                                                                        (do-access eid (:server run)))}
                                                                        card nil))})
                                              (system-msg state side "could not afford to use Counter Surveillance")))}
              :run-ends {:effect (effect (unregister-events card))}}}
