@@ -335,6 +335,30 @@
                                                   (trash state side card {:unpreventable true}))}
                                    card nil))))}]}
 
+   "Counter Surveillance"
+   {:abilities [{:cost [:click 1]
+                 :prompt "Choose a server to run with Counter Surveillance"
+                 :msg (msg "to run " target " and trashes Counter Surveillance")
+                 :choices (req (cancellable runnable-servers))
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (run target nil card)
+                                 (register-events (:events (card-def card)) (assoc card :zone '(:discard))))}]
+    :events {:successful-run {:effect (req (if (>= (:credit runner) (:tag runner))
+                                             (swap! state assoc-in [:run :run-effect :replace-access]
+                                                    {:mandatory true
+                                                     :effect (effect (continue-ability
+                                                                       {:prompt "Choose how many accesses to make"
+                                                                        :delayed-completion true
+                                                                        :choices {:number (req (:tag runner))
+                                                                                  :default (req (:tag runner))}
+                                                                        :msg (msg "to access " target " cards by paying " (:tag runner) " [Credit]")
+                                                                        :effect (effect (access-bonus (- target 1))
+                                                                                        (do-access eid (:server run))
+                                                                                        (pay card (:tag runner)))}
+                                                                       card nil))})
+                                             (system-msg state side "could not afford to use Counter Surveillance")))}
+             :run-ends {:effect (effect (unregister-events card))}}}
+
    "Crash Space"
    {:prevent {:damage [:meat]}
     :recurring 2
