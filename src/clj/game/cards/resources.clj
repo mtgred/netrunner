@@ -338,7 +338,7 @@
    "Counter Surveillance"
    {:abilities [{:cost [:click 1]
                  :prompt "Choose a server to run with Counter Surveillance"
-                 :msg (msg "to run " target " and trashes Counter Surveillance")
+                 :msg (msg "run " target " and trashes Counter Surveillance")
                  :choices (req (cancellable runnable-servers))
                  :effect (effect (trash card {:cause :ability-cost})
                                  (run target nil card)
@@ -346,17 +346,11 @@
     :events {:successful-run {:effect (req (if (>= (:credit runner) (:tag runner))
                                              (swap! state assoc-in [:run :run-effect :replace-access]
                                                     {:mandatory true
-                                                     :effect (effect (continue-ability
-                                                                       {:prompt "Choose how many accesses to make"
-                                                                        :delayed-completion true
-                                                                        :choices {:number (req (:tag runner))
-                                                                                  :default (req (:tag runner))}
-                                                                        :msg (msg "to access " target " cards by paying " (:tag runner) " [Credit]")
-                                                                        :effect (effect (access-bonus (- target 1))
-                                                                                        (pay card :credit (:tag runner))
-                                                                                        (max-access target)
-                                                                                        (do-access eid (:server run)))}
-                                                                       card nil))})
+                                                     :msg (msg "access " target " cards by paying " (:tag runner) " [Credit]")
+                                                     :effect (effect (access-bonus (- (:tag runner) 1))
+                                                                     (pay card :credit (:tag runner))
+                                                                     (max-access (:tag runner))
+                                                                     (do-access eid (:server run)))})
                                              (system-msg state side "could not afford to use Counter Surveillance")))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
