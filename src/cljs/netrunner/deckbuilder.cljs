@@ -353,6 +353,64 @@
     (and (not= date "")
          (< date (.toJSON (js/Date.))))))
 
+;; 1.1.1.1 and Cache Refresh validation
+(defn group-cards-from-restricted-sets
+  "Return map (big boxes and datapacks) of used sets that are restricted by given format"
+  [sets allowed-sets deck]
+  (let [restricted-cards (remove (fn [card] (some #(= (:setname (:card card)) %) allowed-sets)) (:cards deck))
+        restricted-sets (group-by (fn [card] (:setname (:card card))) restricted-cards)
+        sorted-restricted-sets (reverse (sort-by #(count (second %)) restricted-sets))
+        [restricted-bigboxes restricted-datapacks] (split-with (fn [[setname cards]] (some #(when (= (:name %) setname) (:bigbox %)) sets)) sorted-restricted-sets)]
+    { :bigboxes restricted-bigboxes :datapacks restricted-datapacks }))
+
+(defn cards-over-one-core
+  "Returns cards in deck that require more than single box."
+  [deck]
+  (let [one-box-num-copies? (fn [{:keys [qty card]}] (<= qty (or (:packquantity card) 3)))]
+    (remove one-box-num-copies? (:cards deck))))
+
+(defn sets-in-two-newest-cycles
+  "Returns sets in two newest cycles of released datapacks - for Cache Refresh format"
+  [sets]
+  (let [cycles (group-by :cycle (remove :bigbox sets))
+        cycle-release-date (reduce-kv (fn [result cycle sets-in-cycle] (assoc result cycle (apply min (map :available sets-in-cycle)))) {} cycles)
+        valid-cycles (map first (take-last 2 (sort-by last (filter (fn [[cycle date]] (and (not= date "") (< date (.toJSON (js/Date.))))) cycle-release-date))))]
+    (filter (fn [set] (some #(= (:cycle set) %) valid-cycles)) sets)))
+
+(defn cache-refresh-legal
+  "Returns true if deck is valid under Cache Refresh rules."
+  [sets deck]
+  (let [over-one-core (cards-over-one-core deck)
+        valid-sets (concat ["Core Set" "Terminal Directive"] (sets-in-two-newest-cycles sets))
+        deck-with-id (assoc deck :cards (cons {:card (:identity deck) } (:cards deck))) ;identity should also be from valid sets
+        restricted-sets (group-cards-from-restricted-sets sets valid-sets deck-with-id)
+        restricted-bigboxes (rest (:bigboxes restricted-sets)) ;one big box is fine
+        restricted-datapacks (:datapacks restricted-sets)
+        example-card (fn [cardlist] (get-in (first cardlist) [:card :title]))
+        reasons {
+          :onecore (when (not= (count over-one-core) 0) (str "Only one Core Set permitted - check: " (example-card over-one-core)))
+          :bigbox (when (not= (count restricted-bigboxes) 0) (str "Only one Deluxe Expansion permitted - check: " (example-card (second (first restricted-bigboxes)))))
+          :datapack (when (not= (count restricted-datapacks) 0) (str "Only two most recent cycles permitted - check: " (example-card (second (first restricted-datapacks)))))
+        }]
+    { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons))) }))
+
+(defn onesies-legal
+  "Returns true if deck is valid under 1.1.1.1 format rules."
+  [sets deck]
+  (let [over-one-core (cards-over-one-core deck)
+        valid-sets ["Core Set"]
+        restricted-sets (group-cards-from-restricted-sets sets valid-sets deck)
+        restricted-bigboxes (rest (:bigboxes restricted-sets)) ;one big box is fine
+        restricted-datapacks (rest (:datapacks restricted-sets)) ;one datapack is fine
+        only-one-offence (>= 1 (apply + (map count [over-one-core restricted-bigboxes restricted-datapacks]))) ;one offence is fine
+        example-card (fn [cardlist] (join ", " (map #(get-in % [:card :title]) (take 2 cardlist))))
+        reasons (if only-one-offence {} {
+          :onecore (when (not= (count over-one-core) 0) (str "Only one Core Set permitted - check: " (example-card over-one-core)))
+          :bigbox (when (not= (count restricted-bigboxes) 0) (str "Only one Deluxe Expansion permitted - check: " (example-card (second (first restricted-bigboxes)))))
+          :datapack (when (not= (count restricted-datapacks) 0) (str "Only one Datapack permitted - check: " (example-card (second (first restricted-datapacks)))))
+        })]
+    { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons))) }))
+
 (defn mwl-legal?
   "Returns true if the deck's influence fits within NAPD MWL universal influence restrictions."
   [deck]
@@ -487,11 +545,14 @@
 (defn deck-status-span
   "Returns a [:span] with standardized message and colors depending on the deck validity."
   ([sets deck] (deck-status-span sets deck false))
-  ([sets deck tooltip?]
+  ([sets deck tooltip?] (deck-status-span sets deck tooltip? false))
+  ([sets deck tooltip? onesies-details?]
    (let [status (deck-status-label sets deck)
          valid (valid? deck)
          mwl (mwl-legal? deck)
          rotation (only-in-rotation? sets deck)
+         cache-refresh (cache-refresh-legal sets deck)
+         onesies (onesies-legal sets deck)
          message (case status
                    "legal" "Tournament legal"
                    "casual" "Casual play only"
@@ -504,7 +565,11 @@
          [:div {:class (if mwl "legal" "invalid")}
           [:span.tick (if mwl "✔" "✘")] "NAPD Most Wanted List"]
          [:div {:class (if rotation "legal" "invalid")}
-          [:span.tick (if rotation "✔" "✘")] "Only released cards"]])])))
+          [:span.tick (if rotation "✔" "✘")] "Only released cards"]
+         [:div {:class (if (:legal cache-refresh) "legal" "invalid") :title (if onesies-details? (:reason cache-refresh)) }
+          [:span.tick (if (:legal cache-refresh) "✔" "✘")] "Cache Refresh compliant"]
+         [:div {:class (if (:legal onesies) "legal" "invalid") :title (if onesies-details? (:reason onesies))}
+          [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]])])))
 
 (defn match [identity query]
   (if (empty? query)
@@ -721,7 +786,7 @@
                         [:span.invalid " (minimum " min-point ")"])
                       (when (> points (inc min-point))
                         [:span.invalid " (maximum" (inc min-point) ")"])]))
-                 [:div (deck-status-span sets deck true)]]
+                 [:div (deck-status-span sets deck true true)]]
                 [:div.cards
                  (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
                    [:div.group

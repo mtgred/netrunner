@@ -28,6 +28,7 @@ setFields = {
   "name" : same
   "date_release" : (k, t) -> ["available", if t is null then "4096-01-01" else t]
   "cycle_code" : (k, t) -> ["cycle", capitalize(t.replace(/-/g, " "))]
+  "size" : (k, t) -> ["bigbox", t > 20]
 }
 
 mwlFields = {
@@ -75,7 +76,8 @@ cardFields = {
   "memory_cost" : rename("memoryunits"),
   "strength" : same,
   "trash_cost" : rename("trash"),
-  "deck_limit" : rename("limited")
+  "deck_limit" : rename("limited"),
+  "quantity" : rename("packquantity")
 }
 
 baseurl = "http://netrunnerdb.com/api/2.0/public/"
