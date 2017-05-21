@@ -260,6 +260,29 @@
       (core/rez state :corp (refresh jesus))
       (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
 
+(deftest counter-surveillance
+  ;; Trash to run, on successful run access cards equal to Tags and pay that amount in credits
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3)])
+              (default-runner [(qty "Counter Surveillance" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :tag 2)
+    (play-from-hand state :runner "Counter Surveillance")
+    (-> @state :runner :credit (= 4) (is "Runner has 4 credits"))
+    (let [cs (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner cs 0)
+      (prompt-choice :runner "HQ")
+      (run-successful state)
+      (-> (get-runner) :register :successful-run (= [:hq]) is)
+      (prompt-choice :runner "Card from hand")
+      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
+      (prompt-choice :runner "OK")
+      (prompt-choice :runner "Card from hand")
+      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
+      (prompt-choice :runner "OK")
+      (-> @state :runner :discard count (= 1) (is "Counter Surveillance trashed"))
+      (-> @state :runner :credit (= 2) (is "Runner has 2 credits")))))
+
 (deftest-pending councilman-zone-change
   ;; Rezz no longer prevented when card changes zone (issues #1571)
   (do-game

@@ -1001,7 +1001,7 @@
                    (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
                                                (gain state side :credit bplost)
                                                (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
-                                           (system-msg state side "uses Sacrifce but gains no credits and loses no Bad Publicity"))
+                                           (system-msg state side "uses Sacrifice but gains no credits and loses no Bad Publicity"))
                    (effect-completed state side eid)))}
 
    "Salems Hospitality"

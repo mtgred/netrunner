@@ -403,7 +403,7 @@
                                 :once :per-turn
                                 :effect (req (trash state :corp (first (shuffle (:hand corp)))))}}}]
      {:in-play [:memory 2]
-      :implementation "Manual - click card to fire the trash"
+      :implementation "Manual - click Maw to fire the trash.  For multi-access needs to be clicked during first card access prompt"
       :abilities [manual]})
 
    "Maya"
