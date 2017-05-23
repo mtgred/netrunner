@@ -375,7 +375,7 @@
   (let [cycles (group-by :cycle (remove :bigbox sets))
         cycle-release-date (reduce-kv (fn [result cycle sets-in-cycle] (assoc result cycle (apply min (map :available sets-in-cycle)))) {} cycles)
         valid-cycles (map first (take-last 2 (sort-by last (filter (fn [[cycle date]] (and (not= date "") (< date (.toJSON (js/Date.))))) cycle-release-date))))]
-    (filter (fn [set] (some #(= (:cycle set) %) valid-cycles)) sets)))
+    (map :name (filter (fn [set] (some #(= (:cycle set) %) valid-cycles)) sets))))
 
 (defn cache-refresh-legal
   "Returns true if deck is valid under Cache Refresh rules."
