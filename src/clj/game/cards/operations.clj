@@ -805,7 +805,7 @@
    "Power Shutdown"
    {:req (req (:made-run runner-reg))
     :prompt "Trash how many cards from the top R&D?"
-    :choices {:number (req (count (:deck corp)))}
+    :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-installed state :runner)))))}
     :msg (msg "trash " target " cards from the top of R&D")
     :delayed-completion true
     :effect (req (mill state :corp target)
