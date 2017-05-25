@@ -1228,10 +1228,11 @@
    {:recurring 2}
 
    "Security Testing"
-   (let [ability {:prompt "Choose a server for Security Testing" :choices (req servers)
+   (let [ability {:prompt "Choose a server for Security Testing" :choices (req (conj servers "No server"))
                   :msg (msg "target " target)
                   :req (req (and (not (click-spent? :runner state)) (not (used-this-turn? (:cid card) state))))
-                  :effect (effect (update! (assoc card :server-target target)))}]
+                  :effect (req (when (not= target "No server")
+                                 (update! state side (assoc card :server-target target))))}]
      {:events {:runner-turn-begins ability
                :successful-run
                {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
