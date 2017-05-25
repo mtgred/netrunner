@@ -1180,21 +1180,21 @@
                                    (expose state side eid card2))))}
 
    "Scavenge"
-   {:req (req (some #(is-type? % "Program") (concat (:hand runner) (:discard runner))))
-    :additional-cost [:program 1]
-    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-
-    :events {:runner-trash {:effect
-                            (req (let [trashed target tcost (- (:cost trashed)) st state si side]
-                                   (continue-ability state side {:prompt "Choose a program to install from your Grip or Heap"
-                                                                 :show-discard true
-                                                                 :choices {:req #(and (is-type? % "Program")
-                                                                                      (#{[:hand] [:discard]} (:zone %))
-                                                                                      (can-pay? st si nil (modified-install-cost st si % [:credit tcost])))}
-                                                                 :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
-                                                                                 (runner-install target)
-                                                                                 (unregister-events card))
-                                                                 :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}}}
+   {:prompt "Choose an installed program to trash"
+    :choices {:req #(and (is-type? % "Program")
+                         (installed? %))}
+    :effect (req (let [trashed target tcost (- (:cost trashed)) st state si side]
+                   (trash state side trashed)
+                   (resolve-ability
+                     state side
+                     {:prompt "Choose a program to install from your Grip or Heap"
+                      :show-discard true
+                      :choices {:req #(and (is-type? % "Program")
+                                           (#{[:hand] [:discard]} (:zone %))
+                                           (can-pay? st si nil (modified-install-cost st si % [:credit tcost])))}
+                      :effect (effect (install-cost-bonus [:credit (- (:cost trashed))])
+                                      (runner-install target))
+                      :msg (msg "trash " (:title trashed) " and install " (:title target))} card nil)))}
 
    "Scrubbed"
    {:events (let [sc {:effect (req (update! state side (dissoc card :scrubbed-target)))}]
