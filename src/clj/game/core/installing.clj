@@ -95,7 +95,7 @@
                  (effect (set-prop card :rec-counter recurring))
                  recurring)]
          (register-events state side
-                          {(if (= side :corp) :corp-phase-12 :runner-phase-12)
+                          {(if (= side :corp) :corp-turn-begins :runner-turn-begins)
                            {:effect r}} c)))
      (when-let [prevent (:prevent cdef)]
        (doseq [[ptype pvec] prevent]

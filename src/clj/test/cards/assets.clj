@@ -1618,7 +1618,7 @@
     (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")))
 
 (deftest the-root
-  ;; The Root - recurring credits refill at Step 1.2
+  ;; The Root - recurring credits DO NOT refill at Step 1.2
   (do-game
     (new-game (make-deck "Blue Sun: Powering the Future" [(qty "The Root" 1)])
               (default-runner))
@@ -1633,7 +1633,7 @@
       (take-credits state :runner)
       ; we expect Step 1.2 to have triggered because of Blue Sun
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-      (is (= 3 (:rec-counter (refresh root))) "Recurring credits were refilled before Step 1.2 window"))))
+      (is (= 2 (:rec-counter (refresh root))) "Recurring credits were NOT refilled before Step 1.2 window"))))
 
 (deftest toshiyuki-sakai
   ;; Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not
