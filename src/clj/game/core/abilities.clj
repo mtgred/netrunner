@@ -440,7 +440,8 @@
           (when-completed (trigger-event-sync state side :psi-game bet opponent-bet)
                           (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
                             (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
-                            (effect-completed state side eid card))))
+                            (effect-completed state side eid card)))
+          (trigger-event state side :psi-game-done bet opponent-bet))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 
