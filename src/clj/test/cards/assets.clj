@@ -918,13 +918,16 @@
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (card-ability state :runner nach 0)
       (prompt-choice :runner "Done")
+      (prompt-choice :corp "Yes") ; Draw from Net Analytics
       (prompt-choice :runner "No")
       (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
       (is (= 0 (:tag (get-runner))) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
       (core/tag-runner state :runner 1)
+      (prompt-choice :runner "No") ; Don't prevent the tag
       (core/remove-tag state :runner 1)
+      (prompt-choice :corp "Yes") ; Draw from Net Analytics
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
 
 (deftest net-police
