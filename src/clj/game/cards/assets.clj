@@ -170,6 +170,18 @@
       :events {:corp-turn-begins ability}
       :abilities [ability]})
 
+   "Bioroid Work Crew"
+   {:implementation "Timing restriction of ability use not enforced"
+    :abilities [{:label "[Trash]: Install 1 card, paying all costs"
+                 :req (req (= (:active-player @state) :corp))
+                 :prompt "Choose a card in HQ to install"
+                 :choices {:req #(and (not (is-type? % "Operation"))
+                                      (in-hand? %)
+                                      (= (:side %) "Corp"))}
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (corp-install target nil))
+                 :msg (msg (corp-install-msg target))}]}
+
    "Blacklist"
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
@@ -328,7 +340,7 @@
    {:advanceable :always
     :abilities [{:label "Trash a connection" :cost [:click 1] :req (req (>= (:advance-counter card) 2))
                  :choices {:req #(has-subtype? % "Connection")}
-                 :msg (msg "to trash " (:title target)) :effect (effect (trash card) (trash target))}
+                 :msg (msg "trash " (:title target)) :effect (effect (trash card) (trash target))}
                 {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
                  :delayed-completion true
                  :msg "do 2 meat damage"
@@ -893,7 +905,7 @@
 
    "Net Analytics"
    (let [ability {:req (req (not (empty? (filter #(some #{:tag} %) targets))))
-                  :msg (msg "to draw a card")
+                  :msg (msg "draw a card")
                   :effect (effect (draw :corp))}]
    {:events {:runner-loss ability
              :runner-prevent ability}})

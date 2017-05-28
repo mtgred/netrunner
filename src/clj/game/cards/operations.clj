@@ -941,6 +941,19 @@
     :msg (msg "search for " target " sysops")
     :effect (effect (continue-ability (rthelp target target []) card nil))})
 
+   "Red Planet Couriers"
+   {:delayed-completion true
+    :req (req (some #(can-be-advanced? %) (all-installed state :corp)))
+    :prompt "Select an installed card that can be advanced"
+    :choices {:req can-be-advanced?}
+    :effect (req (let [total-adv (reduce + (map :advance-counter (filter #(:advance-counter %) (all-installed state :corp))))]
+                   (doseq [c (all-installed state :corp)]
+                     (update! state side (dissoc c :advance-counter)))
+                   (set-prop state side target :advance-counter total-adv)
+                   (system-msg state side (str "uses Red Planet Couriers to move " total-adv
+                                               " advancement tokens to " (card-str state target)))
+                   (effect-completed state side eid)))}
+
    "Replanting"
    (letfn [(replant [n]
              {:prompt "Select a card to install with Replanting"
@@ -1218,13 +1231,13 @@
    (let [gaincr {:req (req (= (:title target) (:marketing-target card)))
                  :effect (effect (gain :corp :credit 10))
                  :msg (msg "gain 10 [Credits] from " (:marketing-target card))}]
-   {:prompt "Name a Runner card"
-    :choices {:card-title (req (and (card-is? target :side "Runner")
-                                    (not (card-is? target :type "Identity"))))}
-    :effect (effect (update! (assoc card :marketing-target target))
-                    (system-msg (str "uses Targeted Marketing to name " target)))
-    :events {:runner-install gaincr
-             :play-event gaincr}})
+     {:prompt "Name a Runner card"
+      :choices {:card-title (req (and (card-is? target :side "Runner")
+                                      (not (card-is? target :type "Identity"))))}
+      :effect (effect (update! (assoc card :marketing-target target))
+                      (system-msg (str "uses Targeted Marketing to name " target)))
+      :events {:runner-install gaincr
+               :play-event gaincr}})
 
    "The All-Seeing I"
    (let [trash-all-resources {:player :runner

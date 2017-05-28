@@ -398,7 +398,7 @@
                                                     (first (filter #(= (:msg %) target) abilities))
                                                     card nil))}
                                     (get-card state virus) nil))))
-                 :msg (msg "to trigger an ability on " (:title target))}]}
+                 :msg (msg "trigger an ability on " (:title target))}]}
 
    "Hyperdriver"
    {:flags {:runner-phase-12 (req true)}
@@ -425,7 +425,7 @@
                                  (add-counter target :virus (get-in card [:counter :virus] 0)))}]}
 
    "Ixodidae"
-   {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "to gain 1 [Credits]"
+   {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "gain 1 [Credits]"
                          :effect (effect (gain :runner :credit 1))}
              :purge {:effect (effect (trash card))}}}
 
