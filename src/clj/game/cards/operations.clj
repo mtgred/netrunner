@@ -106,23 +106,6 @@
                    (move state :runner c :rfg))
                  (effect-completed state side eid card))}
 
-   "Audacity"
-   (letfn [(aud [n]
-             {:prompt "Select a card to place an advancement on with Audacity"
-              :delayed-completion true
-              :choices {:req can-be-advanced?}
-              :cancel-effect (req (effect-completed state side eid))
-              :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
-                           (if (< n 2)
-                             (continue-ability state side (aud (inc n)) card nil)
-                             (effect-completed state side eid card)))})]
-     {:delayed-completion true
-      :req (req (> (count (:hand corp)) 2))
-      :msg "trash all cards in HQ and place up to 2 advancements"
-      :effect (req (doseq [c (:hand corp)]
-                     (trash state side c))
-                   (resolve-ability state side (aud 1) card nil))})
-
    "Back Channels"
    {:prompt "Choose an installed card in a server to trash"
     :choices {:req #(and (= (last (:zone %)) :content)
