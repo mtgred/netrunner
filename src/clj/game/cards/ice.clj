@@ -291,9 +291,6 @@
    "Bastion"
    {:subroutines [end-the-run]}
 
-   "Battlement"
-   {:subroutines [end-the-run]}
-
    "Bloodletter"
    {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
                    :effect (req (if (empty? (filter #(is-type? % "Program") (all-installed state :runner)))
