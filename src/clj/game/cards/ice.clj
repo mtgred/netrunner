@@ -1214,6 +1214,14 @@
    (implementation-note "\"Resolve a subroutine...\" subroutine is not implemented"
                         (space-ice trash-program end-the-run))
 
+   "Owl"
+   {:subroutines [{:choices {:req #(and (installed? %)
+                                        (is-type? % "Program"))}
+                   :label "Add installed program to the top of the Runner's Stack"
+                   :msg "add an installed program to the top of the Runner's Stack"
+                   :effect (effect (move :runner target :deck {:front true})
+                                   (system-msg (str "adds " (:title target) " to the top of the Runner's Stack")))}]}
+
    "Pachinko"
    {:subroutines [{:label "End the run if the Runner is tagged"
                    :req (req tagged)
