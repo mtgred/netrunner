@@ -272,14 +272,6 @@
    "Asteroid Belt"
    (space-ice end-the-run)
 
-   "Authenticator"
-   {:runner-abilities [{:label "Take 1 tag to bypass Authenticator"
-                        :delayed-completion true
-                        :effect (effect (system-msg :runner (str "takes 1 tag to bypass Authenticator"))
-                                        (tag-runner :runner eid 1 {:unpreventable true}))}]
-    :subroutines [(gain-credits 2)
-                  end-the-run]}
-
    "Bailiff"
    {:implementation "Gain credit is manual"
     :abilities [(gain-credits 1)]
