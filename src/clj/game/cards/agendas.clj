@@ -817,7 +817,7 @@
 
    "Sentinel Defense Program"
    {:events {:pre-resolve-damage {:req (req (and (= target :brain) (> (last targets) 0)))
-                                  :msg "to do 1 net damage"
+                                  :msg "do 1 net damage"
                                   :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Show of Force"
@@ -927,7 +927,7 @@
                                                                       " [Click] at the start of their next turn") "info")
                                                     (update! (update-in card [:vmi-count] #(inc (or % 0)))))}}}]
     :events {:runner-turn-begins {:req (req (pos? (:vmi-count card 0)))
-                                  :msg (msg "to force the Runner to lose " (:vmi-count card) " [Click]")
+                                  :msg (msg "force the Runner to lose " (:vmi-count card) " [Click]")
                                   :effect (effect (lose :runner :click (:vmi-count card))
                                                   (add-counter (dissoc card :vmi-count) :agenda (- (:vmi-count card))))}}}
 

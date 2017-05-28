@@ -272,6 +272,14 @@
    "Asteroid Belt"
    (space-ice end-the-run)
 
+   "Authenticator"
+   {:runner-abilities [{:label "Take 1 tag to bypass Authenticator"
+                        :delayed-completion true
+                        :effect (effect (system-msg :runner (str "takes 1 tag to bypass Authenticator"))
+                                        (tag-runner :runner eid 1 {:unpreventable true}))}]
+    :subroutines [(gain-credits 2)
+                  end-the-run]}
+
    "Bailiff"
    {:implementation "Gain credit is manual"
     :abilities [(gain-credits 1)]
@@ -289,6 +297,9 @@
     :events {:successful-run nil :run-ends nil}}
 
    "Bastion"
+   {:subroutines [end-the-run]}
+
+   "Battlement"
    {:subroutines [end-the-run]}
 
    "Bloodletter"
@@ -1200,6 +1211,16 @@
                    :msg (msg "do " (next-ice-count corp) " net damage")
                    :effect (effect (damage eid :net (next-ice-count corp) {:card card}))}
                   trash-program]}
+
+   "NEXT Opal"
+   {:subroutines [{:label "Install a card from HQ, paying all costs"
+                   :prompt "Choose a card in HQ to install"
+                   :priority true
+                   :choices {:req #(and (not (is-type? % "Operation"))
+                                        (in-hand? %)
+                                        (= (:side %) "Corp"))}
+                   :effect (effect (corp-install target nil))
+                   :msg (msg (corp-install-msg target))}]}
 
    "NEXT Silver"
    {:abilities [{:label "Gain subroutines"
