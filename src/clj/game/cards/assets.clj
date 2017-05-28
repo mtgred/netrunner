@@ -897,7 +897,7 @@
                                   (continue-ability :corp
                                     {:optional
                                      {:prompt "Draw from Net Analytics?"
-                                      :yes-ability {:msg (msg "to draw a card")
+                                      :yes-ability {:msg (msg "draw a card")
                                                     :effect (effect (draw :corp)
                                                                     (clear-wait-prompt :runner))}
                                       :no-ability {:effect (effect (system-msg :corp "does not draw from Net Analytics")
