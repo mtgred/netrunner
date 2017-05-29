@@ -267,6 +267,12 @@
                  :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
                  :effect (effect (lose :runner :credit :all :run-credit :all))}]}
 
+   "Henry Phillips"
+   {:implementation "Manually triggered by Corp"
+    :abilities [{:req (req (and this-server tagged))
+                 :msg "gain 2 [Credits]"
+                 :effect (effect (gain :credit 2))}]}
+
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
                               :delayed-completion true
