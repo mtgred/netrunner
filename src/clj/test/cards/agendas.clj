@@ -657,17 +657,6 @@
     (score-agenda state :corp (get-content state :remote4 0))
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
-	
-(deftest hostile-takeover
-  ;; Hostile Takeover - Gain 7 credits and take 1 bad publicity
-  (do-game
-    (new-game (default-corp [(qty "Hostile Takeover" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (let [ht (get-content state :remote1 0)]
-      (score-agenda state :corp ht)
-      (is (= 12 (:credit (get-corp))) "Gain 7 credits")
-      (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity"))))
 	  
 (deftest posted-bounty-yes
   ;; Posted Bounty - Forfeiting takes 1 bad publicity
