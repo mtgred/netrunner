@@ -184,6 +184,44 @@
           (prompt-choice :runner "Steal")
           (is (= 2 (:tag (get-runner))) "Runner took 2 tags from accessing agenda with Casting Call hosted on it"))))))
 
+(deftest cerebral-cast-runner-wins
+  ;; Cerebral Cast: if the runner succefully ran last turn, psi game to give runner choice of tag or BD
+  (do-game
+    (new-game (default-corp [(qty "Cerebral Cast" 1)])
+              (default-runner))
+	    (play-from-hand state :corp "Cerebral Cast")
+	    (is (= 3 (:click (get-corp))) "Cerebral Cast precondition not met; card not played")
+	    (take-credits state :corp)
+	    (run-empty-server state "Archives")
+	    (take-credits state :runner)
+	    (play-from-hand state :corp "Cerebral Cast")
+        (prompt-choice :corp "0 [Credits]")
+        (prompt-choice :runner "0 [Credits]")
+	    (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")
+		(is (= 0 (:tag (get-runner))) "Runner took no tags")))
+
+(deftest cerebral-cast-corp-wins
+  ;; Cerebral Cast: if the runner succefully ran last turn, psi game to give runner choice of tag or BD
+  (do-game
+    (new-game (default-corp [(qty "Cerebral Cast" 2)])
+              (default-runner))
+	    (take-credits state :corp)
+	    (run-empty-server state "Archives")
+	    (take-credits state :runner)
+	    (play-from-hand state :corp "Cerebral Cast")
+        (prompt-choice :corp "0 [Credits]")
+        (prompt-choice :runner "1 [Credits]")
+		(prompt-choice :runner "1 brain damage")
+	    (is (= 1 (count (:discard (get-runner)))) "Runner took a brain damage")
+		(is (= 0 (:tag (get-runner))) "Runner took no tags from brain damage choice")
+	    (play-from-hand state :corp "Cerebral Cast")
+        (prompt-choice :corp "0 [Credits]")
+        (prompt-choice :runner "1 [Credits]")
+		(prompt-choice :runner "1 tag")
+	    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
+		(is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))		
+
+
 (deftest cerebral-static-chaos-theory
   ;; Cerebral Static - vs Chaos Theory
   (do-game
