@@ -680,9 +680,9 @@
     (let [pb (get-content state :remote1 0)]
       (score-agenda state :corp pb)
 	  (prompt-choice :corp "No")
-	  (is (= 1 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
-      (is (= 0 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity"))
-	  (is (= 0 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))	  
+	  (is (= 1 (:agenda-point (get-corp))))
+      (is (= 0 (:bad-publicity (get-corp)))))
+	  (is (= 0 (get-in @state [:runner :tag])))))
 
 (deftest profiteering
   ;; Profiteering - Gain 5 credits per bad publicity taken
