@@ -533,10 +533,10 @@
                  :effect (req (corp-install state side target card))}]}
 
    "Fumiko Yamamori"
-   {:events {:psi-game {:req (req (not= (first targets) (second targets)))
-                        :delayed-completion true
-                        :msg "do 1 meat damage"
-                        :effect (effect (damage eid :meat 1 {:card card}))}}}
+   {:events {:psi-game-done {:req (req (not= (first targets) (second targets)))
+                             :delayed-completion true
+                             :msg "do 1 meat damage"
+                             :effect (effect (damage eid :meat 1 {:card card}))}}}
 
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
@@ -905,10 +905,17 @@
 
    "Net Analytics"
    (let [ability {:req (req (not (empty? (filter #(some #{:tag} %) targets))))
-                  :msg (msg "draw a card")
-                  :effect (effect (draw :corp))}]
-   {:events {:runner-loss ability
-             :runner-prevent ability}})
+                  :effect (effect (show-wait-prompt :runner "Corp to use Net Analytics")
+                                  (continue-ability :corp
+                                    {:optional
+                                     {:prompt "Draw from Net Analytics?"
+                                      :yes-ability {:msg (msg "draw a card")
+                                                    :effect (effect (draw :corp)
+                                                                    (clear-wait-prompt :runner))}
+                                      :no-ability {:effect (effect (system-msg :corp "does not draw from Net Analytics")
+                                                                   (clear-wait-prompt :runner))}}} card nil))}]
+     {:events {:runner-loss ability
+               :runner-prevent ability}})
 
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))

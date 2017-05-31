@@ -918,13 +918,16 @@
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (card-ability state :runner nach 0)
       (prompt-choice :runner "Done")
+      (prompt-choice :corp "Yes") ; Draw from Net Analytics
       (prompt-choice :runner "No")
       (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
       (is (= 0 (:tag (get-runner))) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
       (core/tag-runner state :runner 1)
+      (prompt-choice :runner "No") ; Don't prevent the tag
       (core/remove-tag state :runner 1)
+      (prompt-choice :corp "Yes") ; Draw from Net Analytics
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
 
 (deftest net-police
@@ -1618,7 +1621,7 @@
     (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")))
 
 (deftest the-root
-  ;; The Root - recurring credits refill at Step 1.2
+  ;; The Root - recurring credits DO NOT refill at Step 1.2
   (do-game
     (new-game (make-deck "Blue Sun: Powering the Future" [(qty "The Root" 1)])
               (default-runner))
@@ -1633,7 +1636,7 @@
       (take-credits state :runner)
       ; we expect Step 1.2 to have triggered because of Blue Sun
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-      (is (= 3 (:rec-counter (refresh root))) "Recurring credits were refilled before Step 1.2 window"))))
+      (is (= 2 (:rec-counter (refresh root))) "Recurring credits were NOT refilled before Step 1.2 window"))))
 
 (deftest toshiyuki-sakai
   ;; Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not

@@ -272,6 +272,16 @@
    "Asteroid Belt"
    (space-ice end-the-run)
 
+   "Authenticator"
+   {:implementation "Encounter effect is manual"
+    :abilities [give-tag]
+    :runner-abilities [{:label "Take 1 tag"
+                        :delayed-completion true
+                        :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to Bypass it")
+                                     (tag-runner state :runner eid 1 {:unpreventable true}))}]
+    :subroutines [(gain-credits 2)
+                  end-the-run]}
+
    "Bailiff"
    {:implementation "Gain credit is manual"
     :abilities [(gain-credits 1)]
@@ -291,6 +301,9 @@
    "Bastion"
    {:subroutines [end-the-run]}
 
+   "Battlement"
+   {:subroutines [end-the-run end-the-run]}
+
    "Bloodletter"
    {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
                    :effect (req (if (empty? (filter #(is-type? % "Program") (all-installed state :runner)))
@@ -306,6 +319,38 @@
                                                              (clear-wait-prompt state :corp))
                                                          (resolve-ability state :runner trash-program card nil)))}
                                         card nil))))}]}
+
+   "Bloom"
+   (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
+                                                      (get-in @state (cons :corp (:zone i))))))]
+     {:subroutines
+              [{:label "Install a piece of ice from HQ protecting another server, ignoring all costs"
+                :prompt "Choose ICE to install from HQ in another server"
+                :delayed-completion true
+                :choices {:req #(and (ice? %)
+                                     (in-hand? %))}
+                :effect (req (let [this (zone->name (second (:zone card)))
+                                   nice target]
+                               (continue-ability state side
+                                                 {:prompt (str "Choose a location to install " (:title target))
+                                                  :choices (req (remove #(= this %) (corp-install-list state nice)))
+                                                  :delayed-completion true
+                                                  :effect (effect (corp-install nice target {:no-install-cost true}))}
+                                                 card nil)))}
+               {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
+                :prompt "Choose ICE to install from HQ in this server"
+                :delayed-completion true
+                :choices {:req #(and (ice? %)
+                                     (in-hand? %))}
+                :effect (req (let [newice (assoc target :zone (:zone card))
+                                   bndx (ice-index state card)
+                                   ices (get-in @state (cons :corp (:zone card)))
+                                   newices (apply conj (subvec ices 0 bndx) newice (subvec ices bndx))]
+                               (swap! state assoc-in (cons :corp (:zone card)) newices)
+                               (swap! state update-in (cons :corp (:zone target))
+                                      (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                               (card-init state side newice false)
+                               (trigger-event state side :corp-install newice)))}]})
 
    "Brainstorm"
    {:abilities [{:label "Gain subroutines"
@@ -1224,6 +1269,14 @@
    (implementation-note "\"Resolve a subroutine...\" subroutine is not implemented"
                         (space-ice trash-program end-the-run))
 
+   "Owl"
+   {:subroutines [{:choices {:req #(and (installed? %)
+                                        (is-type? % "Program"))}
+                   :label "Add installed program to the top of the Runner's Stack"
+                   :msg "add an installed program to the top of the Runner's Stack"
+                   :effect (effect (move :runner target :deck {:front true})
+                                   (system-msg (str "adds " (:title target) " to the top of the Runner's Stack")))}]}
+
    "Pachinko"
    {:subroutines [{:label "End the run if the Runner is tagged"
                    :req (req tagged)
@@ -1478,7 +1531,6 @@
 
    "Thoth"
    {:implementation "Encounter effect is manual"
-    :abilities [give-tag]
     :runner-abilities [{:label "Take 1 tag"
                         :delayed-completion true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Thoth")

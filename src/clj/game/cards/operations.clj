@@ -106,6 +106,28 @@
                    (move state :runner c :rfg))
                  (effect-completed state side eid card))}
 
+   "Audacity"
+   (let [audacity (fn au [n] {:prompt "Choose a card on which to place an advancement"
+                              :delayed-completion true
+                              :choices {:req can-be-advanced?}
+                              :cancel-effect (req (effect-completed state side eid))
+                              :msg (msg "place an advancement token on " (card-str state target))
+                              :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
+                                           (if (< n 2)
+                                             (continue-ability state side (au (inc n)) card nil)
+                                             (effect-completed state side eid card)))})]
+   {:delayed-completion true
+    :req (req (let [h (:hand corp)
+                    p (:play-area corp)]
+                ;; this is needed to pass the req check for can-play? and again when card is actually played
+                (if (some #(= (:cid %) (:cid card)) p)
+                  (>= (count h) 2)
+                  (>= (count h) 3))))
+    :effect (req (system-msg state side "trashes all cards in HQ due to Audacity")
+                 (doseq [c (:hand corp)]
+                   (trash state side c {:unpreventable true}))
+                 (continue-ability state side (audacity 1) card nil))})
+
    "Back Channels"
    {:prompt "Choose an installed card in a server to trash"
     :choices {:req #(and (= (last (:zone %)) :content)
@@ -655,11 +677,9 @@
 
    "MCA Informant"
    {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"
-    :req (req (not-empty (filter #(and (has-subtype? % "Connection")
-                                         (installed? %)) (concat (all-installed state :runner)
-                                                                 (all-installed state :corp)))))
+    :req (req (not-empty (filter #(has-subtype? % "Connection") (all-installed state :runner))))
     :prompt "Choose a connection to host MCA Informant on it"
-    :choices {:req #(and (has-subtype? % "Connection") (installed? %))}
+    :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Connection") (installed? %))}
     :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
     :effect (req (host state side (get-card state target) (assoc card :zone [:discard] :seen true))
                  (swap! state update-in [:runner :tag] inc))
@@ -805,7 +825,7 @@
    "Power Shutdown"
    {:req (req (:made-run runner-reg))
     :prompt "Trash how many cards from the top R&D?"
-    :choices {:number (req (count (:deck corp)))}
+    :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-installed state :runner)))))}
     :msg (msg "trash " target " cards from the top of R&D")
     :delayed-completion true
     :effect (req (mill state :corp target)

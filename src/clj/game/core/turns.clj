@@ -215,6 +215,8 @@
       (swap! state assoc :end-turn true)
       (swap! state update-in [side :register] dissoc :cannot-draw)
       (swap! state update-in [side :register] dissoc :drawn-this-turn)
+      (doseq [c (filter #(= :this-turn (:rezzed %)) (all-installed state :corp))]
+        (update! state side (assoc c :rezzed true)))
       (clear-turn-register! state)
       (swap! state dissoc :turn-events)
       (when-let [extra-turns (get-in @state [side :extra-turns])]

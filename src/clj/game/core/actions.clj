@@ -296,8 +296,8 @@
                    (when (:derezzed-events cdef)
                      (unregister-events state side card))
                    (if (not disabled)
-                     (card-init state side (assoc card :rezzed true))
-                     (update! state side (assoc card :rezzed true)))
+                     (card-init state side (assoc card :rezzed :this-turn))
+                     (update! state side (assoc card :rezzed :this-turn)))
                    (doseq [h (:hosted card)]
                      (update! state side (-> h
                                              (update-in [:zone] #(map to-keyword %))

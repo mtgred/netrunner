@@ -220,7 +220,7 @@
       (is (= 1 (count (:discard (get-corp)))) "Card can't be trashed, Imp already used this turn")
       (prompt-choice :runner "OK")
       (play-from-hand state :runner "Scavenge")
-      (prompt-choice :runner imp)
+      (prompt-select :runner imp)
       (prompt-select :runner (find-card "Imp" (:discard (get-runner)))))
     (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
