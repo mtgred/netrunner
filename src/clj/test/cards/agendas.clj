@@ -139,6 +139,25 @@
       (prompt-select :corp kati)
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
+	  
+(deftest corporate-sales-team
+  ;; Corporate Sales Team - Places 10c on card, corp takes 1c on each turn start
+  (do-game
+    (new-game (default-corp [(qty "Corporate Sales Team" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Corporate Sales Team" "New remote")
+    (is (= 5 (:credit (get-corp))))
+    (score-agenda state :corp (get-content state :remote1 0))
+	(let [scored-cst (get-in @state [:corp :scored 0])]
+	  (core/end-turn state :corp nil)
+	  (core/start-turn state :runner nil)	
+	  (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
+	  (is (= 9 (get-counters (refresh scored-cst) :credit)))
+	  (core/end-turn state :runner nil)
+	  (core/start-turn state :corp nil)	
+	  (is (= 7 (:credit (get-corp))) "Increments at corp's start of turn")
+	  (is (= 8 (get-counters (refresh scored-cst) :credit)))
+	)))
 
 (deftest corporate-war
   ;; Corporate War - Gain 7c if you have 7c or more when scoring, otherwise lose all credits
