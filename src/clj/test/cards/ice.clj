@@ -488,6 +488,17 @@
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
+(deftest meru-mati
+  (do-game
+    (new-game (default-corp [(qty "Meru Mati" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Meru Mati" "HQ")
+    (play-from-hand state :corp "Meru Mati" "R&D")
+    (core/rez state :corp (get-ice state :hq 0))
+    (core/rez state :corp (get-ice state :rd 0))
+    (is (= 4 (:current-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
+	(is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
+
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost
   (do-game
