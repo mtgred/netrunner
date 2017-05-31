@@ -676,6 +676,32 @@
     (score-agenda state :corp (get-content state :remote4 0))
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
+	  
+(deftest posted-bounty-yes
+  ;; Posted Bounty - Forfeiting takes 1 bad publicity
+  (do-game
+    (new-game (default-corp [(qty "Posted Bounty" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (let [pb (get-content state :remote1 0)]
+      (score-agenda state :corp pb)
+	  (prompt-choice :corp "Yes")
+	  (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
+      (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity"))
+	  (is (= 1 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))
+	  
+(deftest posted-bounty-no
+  ;; Posted Bounty - Choosing not to forfeit scores normally
+  (do-game
+    (new-game (default-corp [(qty "Posted Bounty" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (let [pb (get-content state :remote1 0)]
+      (score-agenda state :corp pb)
+	  (prompt-choice :corp "No")
+	  (is (= 1 (:agenda-point (get-corp))))
+      (is (= 0 (:bad-publicity (get-corp)))))
+	  (is (= 0 (get-in @state [:runner :tag])))))
 
 (deftest profiteering
   ;; Profiteering - Gain 5 credits per bad publicity taken
