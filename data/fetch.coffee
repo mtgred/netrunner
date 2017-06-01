@@ -97,10 +97,10 @@ fetchSets = (callback) ->
         mapSets[set.code] = set.name
       sets = selectFields(setFields, data)
       db.collection("sets").remove ->
-      db.collection("sets").insert sets, (err, result) ->
-        fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
-          console.log("#{sets.length} sets fetched")
-        callback(null, sets.length)
+        db.collection("sets").insert sets, (err, result) ->
+          fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
+            console.log("#{sets.length} sets fetched")
+          callback(null, sets.length)
 
 fetchImg = (urlPath, code, imgPath, t) ->
   setTimeout ->
@@ -125,10 +125,10 @@ fetchCards = (callback) ->
           fetchImg(res.imageUrlTemplate, card.code, imgPath, i++ * 200)
 
       db.collection("cards").remove ->
-      db.collection("cards").insert cards, (err, result) ->
-        fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
-          console.log("#{cards.length} cards fetched")
-        callback(null, cards.length)
+        db.collection("cards").insert cards, (err, result) ->
+          fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
+            console.log("#{cards.length} cards fetched")
+          callback(null, cards.length)
 
 fetchMWL = (callback) ->
   request.get baseurl + "mwl", (error, response, body) ->
@@ -136,9 +136,9 @@ fetchMWL = (callback) ->
       data = JSON.parse(body).data
       mwl = selectFields(mwlFields, data)
       db.collection("mwl").remove ->
-      db.collection("mwl").insert mwl, (err, result) ->
-        fs.writeFile "andb-mwl.json", JSON.stringify(mwl), ->
-          console.log("#{mwl.length} MWL lists fetched")
-        callback(null, mwl.length)
+        db.collection("mwl").insert mwl, (err, result) ->
+          fs.writeFile "andb-mwl.json", JSON.stringify(mwl), ->
+            console.log("#{mwl.length} MWL lists fetched")
+          callback(null, mwl.length)
 
 async.series [fetchSets, fetchCards, fetchMWL, () -> db.close()]
