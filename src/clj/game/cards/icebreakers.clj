@@ -274,13 +274,13 @@
 
    "Berserker"
    {:abilities [(break-sub 2 2 "barrier")]
-    :implementation "Number of sub-routines on encountered ICE has to be entered by runner when Corp chooses 'No More Action'"
+    :implementation "Number of subroutines on encountered ICE has to be entered by runner when Corp chooses 'No More Action'"
     :events {:encounter-ice {:req (req (and (= (:cid target) (:cid current-ice))
                                             (has-subtype? target "Barrier")
                                             (rezzed? target)))
                              :delayed-completion true
                              :effect (effect (continue-ability :runner
-                                               {:prompt "How many sub-routines are on the encountered Barrier?"
+                                               {:prompt "How many subroutines are on the encountered Barrier?"
                                                 :choices {:number (req 10)}
                                                 :delayed-completion true
                                                 :effect (effect (system-msg (str "pumps Berserker by " target " on encounter with the current ICE"))
@@ -670,13 +670,13 @@
 
    "Persephone"
    (auto-icebreaker ["Sentry"]
-                    {:implementation "Requires runner to input the number of sub-routines allowed to resolve"
+                    {:implementation "Requires runner to input the number of subroutines allowed to resolve"
                      :abilities [(break-sub 2 1 "sentry")
                                  (strength-pump 1 1)]
                      :events {:pass-ice {:req (req (and (has-subtype? target "Sentry") (rezzed? target)) (pos? (count (:deck runner))))
                                          :delayed-completion true
                                          :optional {:prompt (msg "Use Persephone's ability??")
-                                                    :yes-ability {:prompt "How many sub-routines resolved on the passed ICE?"
+                                                    :yes-ability {:prompt "How many subroutines resolved on the passed ICE?"
                                                                   :delayed-completion true
                                                                   :choices {:number (req 10)}
                                                                   :msg (msg (if (pos? target)
