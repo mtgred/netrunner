@@ -93,11 +93,17 @@
    (@all-cards title)))
 
 (defn make-card
-  "Makes a proper card from an @all-cards card"
-  [card]
+  "Makes or remakes (with current cid) a proper card from an @all-cards card"
+  ([card] (make-card card (make-cid)))
+  ([card cid]
   (-> card
-      (assoc :cid (make-cid) :implementation (card-implemented card))
-      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)))
+      (assoc :cid cid :implementation (card-implemented card))
+      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
+
+(defn reset-card
+  "Resets a card back to its original state overlaid with any play-state data"
+  ([state side card]
+   (update! state side (merge card (make-card (get @all-cards (:title card)) (:cid card))))))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.

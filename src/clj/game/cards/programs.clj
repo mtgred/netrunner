@@ -269,7 +269,7 @@
                                           (lose :memory (:memoryunits target)))}}}
 
    "Egret"
-   {:implementation "Added sub-types don't get removed when Egret or ICE is moved/trashed"
+   {:implementation "Added sub-types don't get removed when Egret is moved/trashed"
     :hosting {:req #(and (ice? %) (rezzed? %))}
     :msg (msg "make " (card-str state (:host card)) " gain Barrier, Code Gate and Sentry sub-types")
     :effect (req (when-let [h (:host card)]
