@@ -128,6 +128,8 @@
             (continue-ability state :runner
                               {:optional
                                {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
+                                :no-ability {:delayed-completion true
+                                             :effect (effect (trigger-event :no-trash c))}
                                 :yes-ability {:cost [:credit trash-cost]
                                               :delayed-completion true
                                               :effect (req (trash state side eid card nil)

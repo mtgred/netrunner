@@ -40,6 +40,12 @@
                                                      (has-flag? state side :persistent :genetics-trigger-twice))))))
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
+   "Aeneas Informant"
+   {:events {:no-trash {:req (req (and (:trash target) (req (not= (first (:zone target)) :discard))))
+                        :optional {:prompt (msg "Use Aeneas Informant?")
+                                   :yes-ability {:msg (msg (str "gain 1 [Credits] and reveal " (:title target)))
+                                                 :effect (effect (gain :credit 1))}}}}}
+
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
     :abilities [{:effect (req (resolve-ability
