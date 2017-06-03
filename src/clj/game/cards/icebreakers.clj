@@ -654,6 +654,21 @@
                                   :effect (effect (derez current-ice)
                                                   (move card :hand))}]})
 
+   "Persephone"
+   (auto-icebreaker ["Sentry"]
+                    {:implementation "Requires runner to input the number of sub-routines allowed to resolve"
+                     :abilities [(break-sub 2 1 "sentry")
+                                 (strength-pump 1 1)]
+                     :events {:pass-ice {:req (req (and (has-subtype? target "Sentry") (rezzed? target)) (pos? (count (:deck runner))))
+                                         :delayed-completion true
+                                         :optional {:prompt (msg "Use Persephone's ability??")
+                                                    :yes-ability {:prompt "How many sub-routines resolved on the passed ICE?"
+                                                                  :delayed-completion true
+                                                                  :choices {:number (req 10)}
+                                                                  :msg (msg (str "trash " (:title (first (:deck runner))) " from their Stack and trash " (join ", " (map :title (take target (:deck corp)))) " from R&D"))
+                                                                  :effect (effect (mill :runner 1)
+                                                                                  (mill :corp target))}}}}})
+
    "Pipeline"
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 1 "sentry")
