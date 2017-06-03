@@ -678,7 +678,7 @@
                                          :optional {:prompt (msg "Use Persephone's ability??")
                                                     :yes-ability {:prompt "How many sub-routines resolved on the passed ICE?"
                                                                   :delayed-completion true
-                                                                  :choices {:number (req (count (:subroutines target)))}
+                                                                  :choices {:number (req 10)}
                                                                   :msg (msg (if (pos? target)
                                                                               (str "trash " (:title (first (:deck runner))) " from their Stack and trash " (join ", " (map :title (take target (:deck corp)))) " from R&D")
                                                                               (str "trash " (:title (first (:deck runner))) " from their Stack and nothing from R&D")))
