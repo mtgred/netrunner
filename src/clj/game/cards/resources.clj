@@ -361,6 +361,22 @@
                  :msg "prevent up to 3 meat damage"
                  :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :meat 3))}]}
 
+   "Dadiana Chacon"
+   (let [ability {:once :per-turn
+                  :msg "gain 1 [Credits]"
+                  :req (req (< (get-in @state [:runner :credit]) 6))
+                  :effect (req (gain state :runner :credit 1))}]
+     {:effect (req (add-watch state :dadiana
+                              (fn [k ref old new]
+                                (when (and (not (zero? (get-in old [:runner :credit])))
+                                           (zero? (get-in new [:runner :credit])))
+                                  (resolve-ability ref side {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
+                                                                             (damage eid :meat 3 {:unboostable true :card card})
+                                                                             (trash card {:cause :ability-cost}))} card nil)))))
+      :leave-play (req (remove-watch state :dadiana))
+      :flags {:drip-economy true}
+      :events {:runner-turn-begins ability}})
+
    "Daily Casts"
    (let [ability {:once :per-turn
                   :label "Take 2 [Credits] (start of turn)"
