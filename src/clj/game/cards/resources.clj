@@ -545,13 +545,14 @@
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
                      :effect (effect (pay :corp card :credit 2))}}}
 
-               "Film Critic"
+   "Film Critic"
    (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
    {:abilities [{:req (req (and (empty? (:hosted card))
                                 (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                  :label "Host an agenda being accessed"
                  :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
                                 (host state side card (move state side agenda :play-area))
+                                (trigger-event state side :no-steal agenda)
                                 (close-access-prompt state side)
                                 (effect-completed state side eid nil)
                                 (when-not (:run @state)

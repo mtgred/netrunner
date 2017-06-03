@@ -128,8 +128,7 @@
             (continue-ability state :runner
                               {:optional
                                {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
-                                :no-ability {:delayed-completion true
-                                             :effect (effect (trigger-event :no-trash c))}
+                                :no-ability {:effect (effect (trigger-event :no-trash c))}
                                 :yes-ability {:cost [:credit trash-cost]
                                               :delayed-completion true
                                               :effect (req (trash state side eid card nil)
@@ -151,6 +150,7 @@
                (continue-ability state :runner
                                  {:delayed-completion true
                                   :effect (effect (system-msg (str "decides not to pay to steal " (:title card)))
+                                                  (trigger-event :no-steal card)
                                                   (resolve-steal-events eid card))} card nil)
                (let [chosen (cons target chosen)
                      kw (to-keyword (join "-" (rest (split target #" "))))
@@ -173,6 +173,7 @@
     ;; The runner cannot steal this agenda.
     (when-completed (resolve-steal-events state side c)
                     (do (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})
+                        (trigger-event state side :no-steal c)
                         (effect-completed state side eid c)))
     ;; The runner can potentially steal this agenda.
     (let [cost (steal-cost state side c)
@@ -194,7 +195,8 @@
                                            (resolve-steal state side eid c))
                                        (resolve-steal-events state side eid c)))}
            :no-ability {:delayed-completion true
-                        :effect (effect (resolve-steal-events eid c))}}
+                        :effect (effect (trigger-event :no-steal card)
+                                        (resolve-steal-events eid c))}}
           nil)
 
         ;; For multiple additional costs give the runner the choice of order to pay

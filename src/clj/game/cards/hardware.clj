@@ -409,16 +409,19 @@
                               (move target :hand))}}}
 
    "Maw"
-   (let [manual {:optional
-                 {:label "Trash a card from HQ"
-                  :req (req (not (used-this-turn? (:cid card) state)))
-                  :prompt "Use Maw to trash a card from HQ?"
-                  :yes-ability {:msg "force the Corp to trash a random card from HQ"
-                                :once :per-turn
-                                :effect (req (trash state :corp (first (shuffle (:hand corp)))))}}}]
+   (let [ability {:optional
+                  {:label "Trash a card from HQ"
+                   :req (req (and (first-event? state side :no-trash)
+                                  (first-event? state side :no-steal)
+                                  (not= (first (:zone target)) :discard)))
+                   :prompt "Use Maw to trash a card from HQ?"
+                   :yes-ability {:msg "force the Corp to trash a random card from HQ"
+                                 :once :per-turn
+                                 :effect (req (trash state :corp (first (shuffle (:hand corp)))))}}}]
      {:in-play [:memory 2]
-      :implementation "Manual - click Maw to fire the trash.  For multi-access needs to be clicked during first card access prompt"
-      :abilities [manual]})
+      :abilities [ability]
+      :events {:no-trash ability
+               :no-steal ability}})
 
    "Maya"
    {:in-play [:memory 2]
