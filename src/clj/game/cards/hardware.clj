@@ -203,6 +203,20 @@
    "Cybsoft MacroDrive"
    {:recurring 1}
 
+   "Dedicated Processor"
+   {:implementation "Click Dedicated Processor to use ability"
+    :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
+    :prompt "Choose Icebreaker on which to install Dedicated Processor"
+    :choices {:req #(and (has-subtype? % "Icebreaker")
+                         (not (has-subtype? % "AI"))
+                         (installed? %))}
+    :msg (msg "host it on " (card-str state target))
+    :effect (effect (host target card))
+    :abilities [{:cost [:credit 2]
+                 :req (req run)
+                 :effect (effect (pump (get-card state (:host card)) 4))
+                 :msg (msg (str "pump the strength of " (get-in card [:host :title]) " by 4"))}]}
+
    "Deep Red"
    {:implementation "MU use restriction not enforced"
     :in-play [:memory 3]
