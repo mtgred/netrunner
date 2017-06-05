@@ -766,14 +766,18 @@
    {:events {:successful-run
              {:req (req (and (= target :hq)
                              (first-successful-run-on-server? state :hq)
-                             (> (count (:discard runner)) 1)))
+                             (if (-> @state :run :run-effect :card)
+                               (> (count (:discard runner)) 2)
+                               (> (count (:discard runner)) 1))))
               :interactive (req true)
               :delayed-completion true
               :effect (effect (continue-ability
                                 {:delayed-completion true
                                  :prompt "Choose 2 cards in your Heap"
                                  :show-discard true
-                                 :choices {:max 2 :req #(and (in-discard? %) (= (:side %) "Runner"))}
+                                 :choices {:max 2 :req #(and (in-discard? %)
+                                                             (= (:side %) "Runner")
+                                                             (not= (-> @state :run :run-effect :card :cid) (:cid %)))}
                                  :cancel-effect (req (effect-completed state side eid))
                                  :effect (req (let [c1 (first targets)
                                                     c2 (second targets)]

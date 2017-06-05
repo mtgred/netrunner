@@ -272,6 +272,20 @@
                     {:abilities [(break-sub 2 2 "barrier")
                                  (strength-pump 1 1 :all-run)]})
 
+   "Berserker"
+   {:abilities [(break-sub 2 2 "barrier")]
+    :implementation "Number of subroutines on encountered ICE has to be entered by runner when Corp chooses 'No More Action'"
+    :events {:encounter-ice {:req (req (and (= (:cid target) (:cid current-ice))
+                                            (has-subtype? target "Barrier")
+                                            (rezzed? target)))
+                             :delayed-completion true
+                             :effect (effect (continue-ability :runner
+                                               {:prompt "How many subroutines are on the encountered Barrier?"
+                                                :choices {:number (req 10)}
+                                                :delayed-completion true
+                                                :effect (effect (system-msg (str "pumps Berserker by " target " on encounter with the current ICE"))
+                                                                (pump card target))} card nil))}}}
+
    "BlacKat"
    {:implementation "Stealth credit restriction not enforced"
     :abilities [(break-sub 1 1 "barrier")
@@ -653,6 +667,23 @@
                                   :msg (msg "derez " (:title current-ice) " and return Peregrine to their Grip")
                                   :effect (effect (derez current-ice)
                                                   (move card :hand))}]})
+
+   "Persephone"
+   (auto-icebreaker ["Sentry"]
+                    {:implementation "Requires runner to input the number of subroutines allowed to resolve"
+                     :abilities [(break-sub 2 1 "sentry")
+                                 (strength-pump 1 1)]
+                     :events {:pass-ice {:req (req (and (has-subtype? target "Sentry") (rezzed? target)) (pos? (count (:deck runner))))
+                                         :delayed-completion true
+                                         :optional {:prompt (msg "Use Persephone's ability??")
+                                                    :yes-ability {:prompt "How many subroutines resolved on the passed ICE?"
+                                                                  :delayed-completion true
+                                                                  :choices {:number (req 10)}
+                                                                  :msg (msg (if (pos? target)
+                                                                              (str "trash " (:title (first (:deck runner))) " from their Stack and trash " (join ", " (map :title (take target (:deck corp)))) " from R&D")
+                                                                              (str "trash " (:title (first (:deck runner))) " from their Stack and nothing from R&D")))
+                                                                  :effect (effect (mill :runner 1)
+                                                                                  (mill :corp target))}}}}})
 
    "Pipeline"
    (auto-icebreaker ["Sentry"]

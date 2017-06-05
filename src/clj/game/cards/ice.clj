@@ -449,7 +449,8 @@
       :subroutines [end-the-run]})
 
    "Chiyashi"
-   {:abilities [{:label "Trash the top 2 cards of the Runner's Stack"
+   {:implementation "Trash effect when using an AI to break is activated manually"
+    :abilities [{:label "Trash the top 2 cards of the Runner's Stack"
                  :req (req (some #(has-subtype? % "AI") (all-installed state :runner)))
                  :msg (msg (str "trash " (join ", " (map :title (take 2 (:deck runner)))) " from the Runner's Stack"))
                  :effect (effect (mill :runner 2))}]

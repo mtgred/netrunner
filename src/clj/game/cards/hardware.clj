@@ -1,7 +1,21 @@
 (in-ns 'game.core)
 
 (def cards-hardware
-  {"Akamatsu Mem Chip"
+  {"Adjusted Matrix"
+   {:implementation "Click Adjusted Matrix to use ability"
+    :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
+    :prompt "Choose Icebreaker on which to install Adjusted Matrix"
+    :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Icebreaker") (installed? %))}
+    :msg (msg "host it on " (card-str state target))
+    :effect (effect (update! (assoc target :subtype (combine-subtypes false (-> target :subtype) "AI")))
+                    (host (get-card state target) (get-card state card)))
+    :abilities [{:cost [:click 1]
+                 :req (req run)
+                 :msg "break ice subroutine"}]
+    :events {:pre-card-moved {:req (req (= (:cid target) (:cid card)))
+                              :effect (effect (update! (assoc (-> card :host) :subtype (-> card :host :subtype (remove-subtypes-once ["AI"])))))}}}
+
+   "Akamatsu Mem Chip"
    {:in-play [:memory 1]}
 
    "Archives Interface"
@@ -188,6 +202,20 @@
 
    "Cybsoft MacroDrive"
    {:recurring 1}
+
+   "Dedicated Processor"
+   {:implementation "Click Dedicated Processor to use ability"
+    :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
+    :prompt "Choose Icebreaker on which to install Dedicated Processor"
+    :choices {:req #(and (has-subtype? % "Icebreaker")
+                         (not (has-subtype? % "AI"))
+                         (installed? %))}
+    :msg (msg "host it on " (card-str state target))
+    :effect (effect (host target card))
+    :abilities [{:cost [:credit 2]
+                 :req (req run)
+                 :effect (effect (pump (get-card state (:host card)) 4))
+                 :msg (msg (str "pump the strength of " (get-in card [:host :title]) " by 4"))}]}
 
    "Deep Red"
    {:implementation "MU use restriction not enforced"
@@ -395,16 +423,17 @@
                               (move target :hand))}}}
 
    "Maw"
-   (let [manual {:optional
-                 {:label "Trash a card from HQ"
-                  :req (req (not (used-this-turn? (:cid card) state)))
-                  :prompt "Use Maw to trash a card from HQ?"
-                  :yes-ability {:msg "force the Corp to trash a random card from HQ"
-                                :once :per-turn
-                                :effect (req (trash state :corp (first (shuffle (:hand corp)))))}}}]
+   (let [ability {:label "Trash a card from HQ"
+                  :req (req (and (first-event? state side :no-trash)
+                                 (first-event? state side :no-steal)
+                                 (not= (first (:zone target)) :discard)))
+                  :once :per-turn
+                  :msg "force the Corp to trash a random card from HQ"
+                  :effect (req (trash state :corp (first (shuffle (:hand corp)))))}]
      {:in-play [:memory 2]
-      :implementation "Manual - click Maw to fire the trash.  For multi-access needs to be clicked during first card access prompt"
-      :abilities [manual]})
+      :abilities [ability]
+      :events {:no-trash ability
+               :no-steal ability}})
 
    "Maya"
    {:in-play [:memory 2]

@@ -40,6 +40,12 @@
                                                      (has-flag? state side :persistent :genetics-trigger-twice))))))
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
+   "Aeneas Informant"
+   {:events {:no-trash {:req (req (and (:trash target) (req (not= (first (:zone target)) :discard))))
+                        :optional {:prompt (msg "Use Aeneas Informant?")
+                                   :yes-ability {:msg (msg (str "gain 1 [Credits] and reveal " (:title target)))
+                                                 :effect (effect (gain :credit 1))}}}}}
+
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
     :abilities [{:effect (req (resolve-ability
@@ -361,6 +367,22 @@
                  :msg "prevent up to 3 meat damage"
                  :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :meat 3))}]}
 
+   "Dadiana Chacon"
+   (let [ability {:once :per-turn
+                  :msg "gain 1 [Credits]"
+                  :req (req (< (get-in @state [:runner :credit]) 6))
+                  :effect (req (gain state :runner :credit 1))}]
+     {:effect (req (add-watch state :dadiana
+                              (fn [k ref old new]
+                                (when (and (not (zero? (get-in old [:runner :credit])))
+                                           (zero? (get-in new [:runner :credit])))
+                                  (resolve-ability ref side {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
+                                                                             (damage eid :meat 3 {:unboostable true :card card})
+                                                                             (trash card {:cause :ability-cost}))} card nil)))))
+      :leave-play (req (remove-watch state :dadiana))
+      :flags {:drip-economy true}
+      :events {:runner-turn-begins ability}})
+
    "Daily Casts"
    (let [ability {:once :per-turn
                   :label "Take 2 [Credits] (start of turn)"
@@ -523,13 +545,14 @@
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
                      :effect (effect (pay :corp card :credit 2))}}}
 
-               "Film Critic"
+   "Film Critic"
    (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
    {:abilities [{:req (req (and (empty? (:hosted card))
                                 (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                  :label "Host an agenda being accessed"
                  :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
                                 (host state side card (move state side agenda :play-area))
+                                (trigger-event state side :no-steal agenda)
                                 (close-access-prompt state side)
                                 (effect-completed state side eid nil)
                                 (when-not (:run @state)
@@ -1150,6 +1173,7 @@
                  :effect (req (let [n (:cost target)
                                     t (:title target)]
                                 (move state side target :rfg)
+                                (gain :memory (:memoryunits target))
                                 (resolve-ability state side
                                   {:prompt "Choose a non-virus program to install"
                                    :msg (req (if (not= target "No install")

@@ -94,15 +94,18 @@
     :effect (effect (install-cost-bonus [:credit -3]) (runner-install target))}
 
    "Careful Planning"
-   {:prompt "Choose a card in or protecting a remote server"
+   {:prompt  "Choose a card in or protecting a remote server"
     :choices {:req #(is-remote? (second (:zone %)))}
-    :effect (effect (register-turn-flag!
-                      card :can-rez
-                      (fn [state side card]
-                        (if (= (:cid card) (:cid target))
-                          ((constantly false)
-                           (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
-                          true))))}
+    :end-turn {:effect (effect (remove-icon card target))}
+    :effect (effect (add-icon card target "CP" "red")
+                    (system-msg (str "prevents the rezzing of " (card-str state target)
+                                     " for the rest of this turn via Careful Planning"))
+                    (register-turn-flag! card :can-rez
+                                         (fn [state side card]
+                                           (if (= (:cid card) (:cid target))
+                                             ((constantly false)
+                                               (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
+                                             true))))}
 
    "CBI Raid"
    (letfn [(cbi-final [chosen original]
@@ -151,7 +154,7 @@
    "Cold Read"
    (let [end-effect {:prompt "Choose a program that was used during the run to trash "
                      :choices {:req #(card-is? % :type "Program")}
-                     :msg (msg "trash" (:title target))
+                     :msg (msg "trash " (:title target))
                      :effect (effect (trash target {:unpreventable true}))}]
      {:delayed-completion true
       :prompt "Choose a server"
