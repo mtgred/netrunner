@@ -154,7 +154,7 @@
    "Cold Read"
    (let [end-effect {:prompt "Choose a program that was used during the run to trash "
                      :choices {:req #(card-is? % :type "Program")}
-                     :msg (msg "trash" (:title target))
+                     :msg (msg "trash " (:title target))
                      :effect (effect (trash target {:unpreventable true}))}]
      {:delayed-completion true
       :prompt "Choose a server"
