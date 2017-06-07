@@ -332,18 +332,6 @@
   (and (check-flag-types? state side card :can-steal [:current-turn :current-run])
        (check-flag-types? state side card :can-steal [:current-turn :persistent])))
 
-(defn can-run-reason
-  "Checks if the runner can run
-  Returns true if so, otherwise the reason:
-  :run-flag run flag prevents rez
-  :turn-flag turn flag prevents rez"
-  [state side]
-  (cond
-    (not (run-flag? state side :can-run)) :run-flag
-    (not (turn-flag? state side :can-run)) :turn-flag
-    ;; No problems - return true
-    :default true))
-
 (defn can-run?
   "Checks if the runner is allowed to run"
   [state side]
