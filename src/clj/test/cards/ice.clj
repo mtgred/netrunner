@@ -299,7 +299,13 @@
       (play-from-hand state :runner "Stimhack")
       (is (not (:run @state)) "No run initiated")
       (is (= 3 (:click (get-runner))))
-      (is (empty? (:discard (get-runner))) "Card not played from Grip"))))
+      (is (empty? (:discard (get-runner))) "Card not played from Grip")
+      ; Check cannot run flag is cleared on next turn #2474
+      (take-credits state :runner)
+      (is (= :corp (:active-player @state)) "Corp turn")
+      (core/gain state :runner :click 1)
+      (run-on state "HQ")
+      (is (:run @state) "Run initiated ok"))))
 
 (deftest fenris
   ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed

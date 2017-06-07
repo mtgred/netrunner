@@ -4,7 +4,7 @@
          gain-run-credits update-ice-in-server update-all-ice
          get-agenda-points gain-agenda-point optional-ability7
          get-remote-names card-name can-access-loud can-steal?
-         prevent-jack-out card-flag?)
+         prevent-jack-out card-flag? can-run?)
 
 ;;; Steps in the run sequence
 (defn run
@@ -13,7 +13,7 @@
   ([state side eid server] (run state side eid server nil nil))
   ([state side server run-effect card] (run state side (make-eid state) server run-effect card))
   ([state side eid server run-effect card]
-   (when-not (get-in @state [:runner :register :cannot-run])
+   (when (can-run? state :runner)
      (let [s [(if (keyword? server) server (last (server->zone state server)))]
            ices (get-in @state (concat [:corp :servers] s [:ices]))]
        ;; s is a keyword for the server, like :hq or :remote1
