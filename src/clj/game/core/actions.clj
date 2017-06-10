@@ -4,7 +4,7 @@
 
 (declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
-         runner-install trash update-breaker-strength update-ice-in-server update-run-ice win
+         runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? play-sfx)
 
 ;;; Neutral actions
@@ -393,7 +393,7 @@
   [state side {:keys [server] :as args}]
   (let [cost-bonus (get-in @state [:bonus :run-cost])
         click-cost-bonus (get-in @state [:bonus :click-run-cost])]
-    (when (and (not (get-in @state [:runner :register :cannot-run]))
+    (when (and (can-run? state side)
                (can-run-server? state server)
                (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
       (swap! state assoc-in [:runner :register :made-click-run] true)

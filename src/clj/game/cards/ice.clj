@@ -664,7 +664,8 @@
 
    "Excalibur"
    {:subroutines [{:label "The Runner cannot make another run this turn"
-                   :msg "prevent the Runner from making another run" :effect (effect (prevent-run))}]}
+                   :msg "prevent the Runner from making another run"
+                   :effect (effect (register-turn-flag! card :can-run nil))}]}
 
    "Executive Functioning"
    {:subroutines [(trace-ability 4 (do-brain-damage 1))]}
@@ -1627,7 +1628,8 @@
    "Uroboros"
    {:subroutines [(trace-ability 4 {:label "Prevent the Runner from making another run"
                                     :msg "prevent the Runner from making another run"
-                                    :effect (effect (prevent-run))})
+                                    :effect (effect (register-turn-flag! card :can-run nil))})
+
                   (trace-ability 4 end-the-run)]}
 
    "Vanilla"

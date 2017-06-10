@@ -2,7 +2,7 @@
 
 (declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
          in-corp-scored? prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
-         update-all-ice win win-decked play-sfx)
+         update-all-ice win win-decked play-sfx can-run?)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -39,7 +39,7 @@
                 (not (and (has-subtype? card "Current")
                           (get-in @state [side :register :cannot-play-current])))
                 (not (and (has-subtype? card "Run")
-                          (get-in @state [side :register :cannot-run])))
+                          (not (can-run? state :runner))))
                 (not (and (has-subtype? card "Priority")
                           (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
          (if-let [cost-str (pay state side card (if ignore-cost 0 total-cost) {:action :play-instant})]

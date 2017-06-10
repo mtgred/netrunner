@@ -175,9 +175,6 @@
 
 ;;; Functions for preventing specific game actions.
 ;;; TODO: look into migrating these to turn-flags and run-flags.
-(defn prevent-run [state side]
-  (swap! state assoc-in [:runner :register :cannot-run] true))
-
 (defn prevent-draw [state side]
   (swap! state assoc-in [:runner :register :cannot-draw] true))
 
@@ -334,6 +331,15 @@
   [state side card]
   (and (check-flag-types? state side card :can-steal [:current-turn :current-run])
        (check-flag-types? state side card :can-steal [:current-turn :persistent])))
+
+(defn can-run?
+  "Checks if the runner is allowed to run"
+  [state side]
+  (let [cards (->> @state :stack :current-turn :can-run (map :card))]
+    (if (empty? cards)
+      true
+      (do (toast state side (str "Cannot run due to " (join ", " (map :title cards))))
+        false))))
 
 (defn can-access?
   "Checks if the runner can access the specified card"
