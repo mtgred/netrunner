@@ -469,6 +469,21 @@
     (prompt-choice :runner "1 [Credits]")
     (is (empty? (get-content state :remote1)) "Psychic Field trashed")))
 
+(deftest early-bird
+  ;; Early Bird - Priority, make a run and gain a click
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Early Bird" 1)]))
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (play-from-hand state :runner "Early Bird")
+	(is (= 3 (:click (get-runner))) "Card not played, Early Bird priority restriction")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Early Bird")
+    (prompt-choice :runner "Archives")
+	(is (= 4 (:click (get-runner))) "Early Bird gains click")))
+
 (deftest employee-strike-blue-sun
   ;; Employee Strike - vs Blue Sun, suppress Step 1.2
   (do-game
