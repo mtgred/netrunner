@@ -660,7 +660,9 @@
     (run-empty-server state "Server 1")
     (is (= 4 (:credit (get-runner))))
     (run-empty-server state "Archives")
-    (is (= 3 (:credit (get-runner))))))
+    (is (= 3 (:credit (get-runner))))
+	(run-empty-server state "HQ")
+    (is (= 2 (:credit (get-runner))))))
 
 (deftest hostile-infrastructure
   ;; Hostile Infrastructure - do 1 net damage when runner trashes a corp card
