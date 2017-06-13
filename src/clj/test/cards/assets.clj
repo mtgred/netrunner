@@ -648,6 +648,19 @@
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
+	  
+(deftest honeyfarm
+  ;; lose one credit on access
+  (do-game
+    (new-game (default-corp [(qty "Honeyfarm" 3)])
+              (default-runner))
+    (trash-from-hand state :corp "Honeyfarm")
+    (play-from-hand state :corp "Honeyfarm" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (is (= 4 (:credit (get-runner))))
+    (run-empty-server state "Archives")
+    (is (= 3 (:credit (get-runner))))))
 
 (deftest hostile-infrastructure
   ;; Hostile Infrastructure - do 1 net damage when runner trashes a corp card
