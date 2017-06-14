@@ -121,7 +121,7 @@
                  :delayed-completion true
                  :prompt "Choose a card from NVRAM"
                  :choices (req (cancellable (:hosted card)))
-                 :msg "move a card from NVRAM to HQ"
+                 :msg "move a card from NVRAM to their Grip"
                  :effect (effect (move target :hand)
                                  (effect-completed eid card))}]
     :events {:pre-start-game

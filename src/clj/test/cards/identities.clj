@@ -127,10 +127,10 @@
     (prompt-choice :corp "Keep")
     (prompt-choice :runner "Keep")
     (take-credits state :corp)
-    (is (= 2 (count (get-in @state [:runner :hand]))) "HQ has 2 cards")
+    (is (= 2 (count (get-in @state [:runner :hand]))) "There are 2 cards in the runner's Grip")
     (card-ability state :runner (:identity (get-runner)) 0)
     (prompt-card :runner (find-card "Bank Job" (:hosted (:identity (get-runner)))))
-    (is (= 3 (count (get-in @state [:runner :hand]))) "HQ has 3 cards")))
+    (is (= 3 (count (get-in @state [:runner :hand]))) "There are 3 cards in the runner's Grip")))
 
 (deftest cerebral-imaging-max-hand-size
   ;; Cerebral Imaging - Maximum hand size equal to credits
