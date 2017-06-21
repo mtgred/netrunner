@@ -426,6 +426,7 @@
    (let [ability {:label "Trash a card from HQ"
                   :req (req (and (first-event? state side :no-trash)
                                  (first-event? state side :no-steal)
+                                 (pos? (count (:hand corp)))
                                  (not= (first (:zone target)) :discard)))
                   :once :per-turn
                   :msg "force the Corp to trash a random card from HQ"
