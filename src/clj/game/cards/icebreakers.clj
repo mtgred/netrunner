@@ -680,7 +680,7 @@
                                                                   :delayed-completion true
                                                                   :choices {:number (req 10)}
                                                                   :msg (msg (if (pos? target)
-                                                                              (str "trash " (:title (first (:deck runner))) " from their Stack and trash " (join ", " (map :title (take target (:deck corp)))) " from R&D")
+                                                                              (str "trash " (:title (first (:deck runner))) " from their Stack and trash " target " cards from R&D")
                                                                               (str "trash " (:title (first (:deck runner))) " from their Stack and nothing from R&D")))
                                                                   :effect (effect (mill :runner 1)
                                                                                   (mill :corp target))}}}}})
