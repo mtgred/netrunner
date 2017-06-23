@@ -203,6 +203,13 @@
    "Cybsoft MacroDrive"
    {:recurring 1}
 
+   "Daredevil"
+   {:in-play [:memory 2]
+    :events {:run-big {:once :per-turn
+                       :req (req (first-event? state side :run-big))
+                       :msg "draw two cards"
+                       :effect (effect (draw 2))}}}
+
    "Dedicated Processor"
    {:implementation "Click Dedicated Processor to use ability"
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
