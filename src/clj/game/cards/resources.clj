@@ -780,6 +780,15 @@
                  :effect (req (gain state side :credit (get-in card [:counter :credit] 0))
                               (add-counter state side card :credit (- (get-in card [:counter :credit] 0))))}]}
 
+   "Keros Mcintyre"
+   {:events
+    {:derez
+     {:req (req (and (first-event? state side :derez)
+                     (= (second targets) :runner)))
+      :once :per-turn
+      :msg "gain 2 [Credits]"
+      :effect (effect (gain :credit 2))}}}
+
    "Laguna Velasco District"
    {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
 

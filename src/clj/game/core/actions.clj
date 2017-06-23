@@ -331,7 +331,7 @@
         (resolve-ability state side derez-effect (get-card state card) nil))
       (when-let [dre (:derezzed-events cdef)]
         (register-events state side dre card)))
-    (trigger-event state side :derez card)))
+    (trigger-event state side :derez card side)))
 
 (defn advance
   "Advance a corp card that can be advanced."
