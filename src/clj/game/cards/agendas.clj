@@ -541,6 +541,29 @@
    "Merger"
    {:agendapoints-runner (req (do 3))}
 
+
+
+   "Meteor Mining"
+   (let [choices ["No mining" "Mine for money"]]
+    {:interactive (req true)
+     :prompt "Mine the meteor?"
+     :choices (req (if (> (:tag runner) 1)
+                     (conj choices "Mine for damage")
+                     choices))
+     :effect (req (cond
+
+                    (= target "Mine for money")
+                    (do (gain state side :credit 7)
+                        (system-msg state side "mines for 7 [Credits]"))
+
+                    (= target "Mine for damage")
+                    (do (damage state side eid :meat 7 {:card card})
+                        (system-msg state side "mines for 7 meat damage"))
+
+                    (= target "No mining")
+                    (system-msg state side "did not mine the meteor")))})
+
+
    "NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])
     :advancement-cost-bonus (req (+ (:bad-publicity corp)
