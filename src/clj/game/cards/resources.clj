@@ -248,6 +248,16 @@
    "Borrowed Satellite"
    {:in-play [:hand-size-modification 1 :link 1]}
 
+   "Bug Out Bag"
+   {:prompt "How many power counters?"
+    :choices :credit
+    :msg (msg "add " target " power counters")
+    :effect (effect (add-counter card :power target))
+    :events {:runner-turn-ends {:req (req (zero? (count (:hand runner))))
+                                :msg (msg "draw " (get-in card [:counter :power] 0) " cards. Bug Out Bag is trashed")
+                                :effect (effect (draw (get-in card [:counter :power] 0))
+                                                (trash card))}}}
+
    "Charlatan"
    {:abilities [{:cost [:click 2]
                  :label "Make a run"

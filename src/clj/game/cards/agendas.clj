@@ -320,6 +320,13 @@
     :events {:pre-ice-strength {:req (req (has-subtype? target "Code Gate"))
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 
+   "Escalate Vitriol"
+   {:abilities [{:label "Gain 1 [Credit] for each Runner tag"
+                 :cost [:click 1]
+                 :once :per-turn
+                 :msg (msg "gain " (:tag runner) " [Credits]")
+                 :effect (effect (gain :credit (:tag runner)))}]}
+
    "Executive Retreat"
    {:effect (effect (add-counter card :agenda 1)
                     (shuffle-into-deck :hand))

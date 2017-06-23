@@ -1179,6 +1179,23 @@
                    :prompt "Choose an ICE to install from HQ"
                    :effect (req (corp-install state side target (zone->name (first (:server run))) {:no-install-cost true}))}]}
 
+   "Mirāju"
+   {:abilities [{:label "Runner broke subroutine: Redirect run to Archives"
+                 :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
+                 :effect (req (swap! state update-in [:run]
+                                     #(assoc % :position (count (get-in corp [:servers :archives :ices]))
+                                               :server [:archives]))
+                              (derez state side card))}]
+    :subroutines [{:label "Draw 1 card, then shuffle 1 card from HQ into R&D"
+                   :msg "draw 1 card and then shuffle 1 card from HQ into R&D"
+                   :effect (effect (draw)
+                                   (resolve-ability
+                                     {:prompt "Choose 1 card in HQ to shuffle into R&D"
+                                      :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                      :effect (effect (move target :deck)
+                                                      (shuffle! :deck))}
+                                    card nil))}]}
+
    "Mother Goddess"
    (let [ab (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
                                                 (filter #(and (rezzed? %) (not= (:cid card) (:cid %))))

@@ -675,6 +675,10 @@
                                       :delayed-completion true
                                       :effect (effect (tag-runner :runner eid 1))}}}}
 
+   "Mass Commercialization"
+   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0))) (all-installed state :corp)))) " [Credits]")
+    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0))) (all-installed state :corp))))))}
+
    "MCA Informant"
    {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"
     :req (req (not-empty (filter #(has-subtype? % "Connection") (all-installed state :runner))))
@@ -1120,6 +1124,13 @@
                       :msg (msg "place " c " advancement tokens on " (card-str state target))
                       :effect (effect (add-prop :corp target :advance-counter c {:placed true}))}
                      card nil)))}
+
+   "Shipment from Tennin"
+   {:delayed-completion true
+    :req (req (not (:successful-run runner-reg)))
+    :choices {:req #(and (installed? %) (= (:side %) "Corp"))}
+    :msg (msg "place 2 advancement tokens on " (card-str state target))
+    :effect (effect (add-prop target :advance-counter 2 {:placed true}))}
 
    "Shoot the Moon"
    {:choices {:req #(and (ice? %) (not (rezzed? %)))

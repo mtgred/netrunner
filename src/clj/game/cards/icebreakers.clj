@@ -592,6 +592,12 @@
                                  (strength-pump 2 2)]
                      :events {:runner-turn-ends {:effect (effect (update! (assoc-in card [:counter :power] 0)))}}})
 
+   "Mass-Driver"
+   (auto-icebreaker ["Code Gate"]
+                    {:implementation "Prevention of subroutine resolution on next ICE is manual"
+                     :abilities [(break-sub 2 1 "code gate")
+                                 (strength-pump 1 1)]})
+
    "Morning Star"
    {:abilities [(break-sub 1 0 "barrier")]}
 
