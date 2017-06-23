@@ -337,7 +337,9 @@
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))
 
-       (and (= side :corp) (untrashable-while-resources? card))
+       (and (= side :corp)
+            (untrashable-while-resources? card)
+            (> (count (all-installed state :runner)) 1))
        (do (enforce-msg state card "cannot be trashed while there are other resources installed")
            (effect-completed state side eid))
 

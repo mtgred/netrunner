@@ -254,16 +254,17 @@
 (defn trash-resource
   "Click to trash a resource."
   [state side args]
-  (when (pos? (- (count (filter #(is-type? % "Resource") (all-installed state :runner)))
-                 (count (filter #(not (untrashable-while-resources? %)) (all-installed state :runner)))))
-    (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
-      (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
-        (resolve-ability state side
-                         {:prompt "Choose a resource to trash"
-                          :choices {:req #(and (is-type? % "Resource") (not (untrashable-while-resources? %)))}
-                          :effect (effect (trash target)
-                                          (system-msg (str (build-spend-msg cost-str "trash")
-                                                           (:title target))))} nil nil)))))
+  (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
+    (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
+      (resolve-ability state side
+                       {:prompt  "Choose a resource to trash"
+                        :choices {:req #(if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-installed state :runner)))
+                                                 (> (count (all-installed state :runner)) 1))
+                                          (and (is-type? % "Resource") (not (untrashable-while-resources? %)))
+                                          (is-type? % "Resource"))}
+                        :effect  (effect (trash target)
+                                         (system-msg (str (build-spend-msg cost-str "trash")
+                                                          (:title target))))} nil nil))))
 
 (defn do-purge
   "Purge viruses."
