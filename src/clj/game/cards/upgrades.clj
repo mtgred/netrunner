@@ -719,6 +719,13 @@
      :prevented-damage {:req (req (and this-server (= target :net) (> (last targets) 0)))
                         :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}}}
 
+   "Traffic Analyzer"
+   {:events {:rez {:req (req (and (= (second (:zone target)) (second (:zone card))) (ice? target)))
+                   :interactive (req true)
+                   :trace {:base 2
+                           :msg "gain 1 [Credits]"
+                           :effect (effect (gain :credit 1))}}}}
+
    "Tyrs Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a Bioroid from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
