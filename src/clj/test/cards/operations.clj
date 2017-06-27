@@ -693,6 +693,18 @@
     (prompt-choice :corp 0) ; default trace
     (prompt-choice :runner 2) ; Runner matches
     (is (= 1 (:bad-publicity (get-corp))))))
+	
+(deftest ipo-terminal
+  ;; IPO - credits with Terminal operations
+  (do-game
+    (new-game
+      (default-corp [(qty "IPO" 1)])
+      (default-runner))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "IPO")
+	(is (= 13 (:credit (get-corp))))
+	(is (= 0 (:click (get-corp))) "Terminal ends turns")))	
 
 (deftest lag-time
   (do-game
