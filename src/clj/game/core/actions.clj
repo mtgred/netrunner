@@ -257,11 +257,14 @@
   (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
       (resolve-ability state side
-                       {:prompt "Choose a resource to trash"
-                        :choices {:req #(is-type? % "Resource")}
-                        :effect (effect (trash target)
-                                        (system-msg (str (build-spend-msg cost-str "trash")
-                                                         (:title target))))} nil nil))))
+                       {:prompt  "Choose a resource to trash"
+                        :choices {:req #(if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-installed state :runner)))
+                                                 (> (count (all-installed state :runner)) 1))
+                                          (and (is-type? % "Resource") (not (untrashable-while-resources? %)))
+                                          (is-type? % "Resource"))}
+                        :effect  (effect (trash target)
+                                         (system-msg (str (build-spend-msg cost-str "trash")
+                                                          (:title target))))} nil nil))))
 
 (defn do-purge
   "Purge viruses."
@@ -328,7 +331,7 @@
         (resolve-ability state side derez-effect (get-card state card) nil))
       (when-let [dre (:derezzed-events cdef)]
         (register-events state side dre card)))
-    (trigger-event state side :derez card)))
+    (trigger-event state side :derez card side)))
 
 (defn advance
   "Advance a corp card that can be advanced."

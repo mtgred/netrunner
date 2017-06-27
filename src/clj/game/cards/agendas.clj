@@ -541,6 +541,27 @@
    "Merger"
    {:agendapoints-runner (req (do 3))}
 
+   "Meteor Mining"
+   (let [choices ["Take Nothing" "Take 7 [Credits]"]]
+    {:interactive (req true)
+     :delayed-completion true
+     :prompt "Pick what to take"
+     :choices (req (if (> (:tag runner) 1)
+                     (conj choices "Give 7 Meat Damage")
+                     choices))
+     :effect (req (cond
+
+                    (= target "Take 7 [Credits]")
+                    (do (gain state side :credit 7)
+                        (system-msg state side "takes 7 [Credits] from Meteor Mining"))
+
+                    (= target "Give 7 Meat Damage")
+                    (do (damage state side eid :meat 7 {:card card})
+                        (system-msg state side "gives 7 meat damage from Meteor Mining"))
+
+                    (= target "Take Nothing")
+                    (system-msg state side "did not take anything from Meteor Mining")))})
+
    "NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])
     :advancement-cost-bonus (req (+ (:bad-publicity corp)
@@ -824,6 +845,32 @@
    {:delayed-completion true
     :msg "do 2 meat damage"
     :effect (effect (damage eid :meat 2 {:card card}))}
+
+   "Standoff"
+   (letfn [(stand [state side card]
+             (show-wait-prompt state (other-side side) "trash target choice from Standoff")
+             (resolve-ability state side
+                              {:prompt "Choose an installed card to trash due to Standoff"
+                               :delayed-completion true
+                               :choices {:req #(installed? %)}
+                               :cancel-effect (req (if (= side :runner)
+                                                     (do (draw state :corp)
+                                                         (gain state :corp :credit 5)
+                                                         (clear-wait-prompt state :corp)
+                                                         (system-msg state :runner "declines to trash a card due to Standoff")
+                                                         (system-msg state :corp "draws a card and gains 5 [Credits] from Standoff")
+                                                         (effect-completed state :corp eid card))
+                                                     (do (system-msg state :corp "declines to trash a card from Standoff")
+                                                         (clear-wait-prompt state :runner)
+                                                         (effect-completed state :corp eid card))))
+                               :effect (req (do (system-msg state side (str "trashes " (:title target) " due to Standoff"))
+                                                (clear-wait-prompt state (other-side side))
+                                                (trash state side target {:unpreventable true})
+                                                (continue-ability state (other-side side) (stand state (other-side side) card) card nil)))}
+                              card nil))]
+     {:interactive (req true)
+      :delayed-completion true
+      :effect (req (continue-ability state :runner (stand state :runner card) card nil))})
 
    "Successful Field Test"
    (letfn [(sft [n max] {:prompt "Select a card in HQ to install with Successful Field Test"

@@ -272,9 +272,11 @@
            (installed? card)
            (not (facedown? card)))))
 
-;; This appears unused, can it be removed?
 (defn untrashable-while-rezzed? [card]
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
+
+(defn untrashable-while-resources? [card]
+  (card-flag? card :untrashable-while-resources true))
 
 (defn install-locked?
   "Checks if installing is locked"

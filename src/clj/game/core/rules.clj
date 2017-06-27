@@ -2,7 +2,7 @@
 
 (declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
          in-corp-scored? prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
-         update-all-ice win win-decked play-sfx can-run?)
+         update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -331,10 +331,20 @@
   ([state side card args] (trash state side (make-eid state) card args))
   ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args} & targets]
    (if (not (some #{:discard} zone))
-     (if (untrashable-while-rezzed? card)
+     (cond
+
+       (untrashable-while-rezzed? card)
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))
+
+       (and (= side :corp)
+            (untrashable-while-resources? card)
+            (> (count (all-installed state :runner)) 1))
+       (do (enforce-msg state card "cannot be trashed while there are other resources installed")
+           (effect-completed state side eid))
+
        ;; Card is not enforced untrashable
+       :else
        (let [ktype (keyword (clojure.string/lower-case type))]
          (when (and (not unpreventable) (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))

@@ -15,16 +15,18 @@
   ([state side eid server run-effect card]
    (when (can-run? state :runner)
      (let [s [(if (keyword? server) server (last (server->zone state server)))]
-           ices (get-in @state (concat [:corp :servers] s [:ices]))]
+           ices (get-in @state (concat [:corp :servers] s [:ices]))
+           n (count ices)]
        ;; s is a keyword for the server, like :hq or :remote1
        (swap! state assoc :per-run nil
-              :run {:server s :position (count ices) :access-bonus 0
+              :run {:server s :position n :access-bonus 0
                     :run-effect (assoc run-effect :card card)
                     :eid eid})
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
-       (trigger-event-sync state :runner (make-eid state) :run s)))))
+       (trigger-event-sync state :runner (make-eid state) :run s)
+       (when (>= n 2) (trigger-event state :runner :run-big s n))))))
 
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."

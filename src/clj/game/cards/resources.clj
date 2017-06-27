@@ -547,7 +547,7 @@
 
    "Film Critic"
    (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
-   {:abilities [{:req (req (and (empty? (:hosted card))
+   {:abilities [{:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
                                 (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                  :label "Host an agenda being accessed"
                  :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
@@ -734,6 +734,17 @@
                           :yes-ability ability}}}
     :abilities [ability]})
 
+   "Jarogniew Mercs"
+   {:effect (effect (tag-runner :runner eid 1)
+                    (add-counter card :power (-> @state :runner :tag (+ 3))))
+    :flags {:untrashable-while-resources true}
+    :prevent {:damage [:meat]}
+    :abilities [{:label "Prevent 1 meat damage"
+                 :counter-cost [:power 1]
+                 :effect (req (damage-prevent state side :meat 1)
+                              (when (<= (get-in card [:counter :power]) 0)
+                                (trash state :runner card {:unpreventable true})))}]}
+
    "John Masanori"
    {:events {:successful-run {:req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
                               :msg "draw 1 card" :once-key :john-masanori-draw
@@ -768,6 +779,15 @@
                  :label "Take all credits"
                  :effect (req (gain state side :credit (get-in card [:counter :credit] 0))
                               (add-counter state side card :credit (- (get-in card [:counter :credit] 0))))}]}
+
+   "Keros Mcintyre"
+   {:events
+    {:derez
+     {:req (req (and (first-event? state side :derez)
+                     (= (second targets) :runner)))
+      :once :per-turn
+      :msg "gain 2 [Credits]"
+      :effect (effect (gain :credit 2))}}}
 
    "Laguna Velasco District"
    {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
