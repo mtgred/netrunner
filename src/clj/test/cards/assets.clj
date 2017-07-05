@@ -701,6 +701,24 @@
       (prompt-choice :corp "2 [Credits]")
       (prompt-choice :runner "0 [Credits]")
       (is (= 3 (:credit (get-corp))) "No credits gained from Hyoubu"))))
+	  
+(deftest illegal-arms-factory
+  ;; Illegal Arms Factory; draw a card, gain a credit, bad pub when trashed while rezzed
+  (do-game
+    (new-game (default-corp [(qty "Illegal Arms Factory" 2)])
+              (default-runner))
+    (core/gain state :runner :credit 20)
+    (play-from-hand state :corp "Illegal Arms Factory" "New remote")
+    (play-from-hand state :corp "Illegal Arms Factory" "New remote")
+    (let [iaf (get-content state :remote2 0)]
+      (core/rez state :corp iaf)
+      (take-credits state :corp)
+	  (run-empty-server state :remote1)
+      (prompt-choice :runner "Yes")
+      (is (= 0 (:bad-publicity (get-corp))) "Took no bad pub on unrezzed trash")
+      (take-credits state :runner)
+	  (is (= 1 (count (:hand (get-corp)))) "Drew a card")	  
+	)))
 
 (deftest it-department
   ;; IT Department - Add strength to rezzed ICE until end of turn
