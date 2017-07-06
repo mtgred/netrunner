@@ -905,18 +905,18 @@
                        (swap! state update-in [:runner :brain-damage] #(+ % dmg))
                        (swap! state update-in [:runner :hand-size-modification] #(- % dmg)))
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
-                     (continue-ability state side
-                       {:prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
-                        :choices {:max dmg :req #(and (in-hand? %) (= (:side %) "Runner"))}
-                        :msg (msg "trash " (join ", " (map :title targets)))
-                        :effect (req (clear-wait-prompt state :corp)
-                                     (doseq [c targets]
-                                       (trash state side c {:cause dtype :unpreventable true}))
-                                     (trigger-event state side :damage-chosen)
-                                     (damage-defer state side dtype 0)
-                                     (effect-completed state side eid card))}
-                      card nil)
-                      (trigger-event state side :damage dtype nil)))}
+                     (when-completed (resolve-ability state side
+                                       {:prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
+                                        :choices {:max dmg :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                                        :msg (msg "trash " (join ", " (map :title targets)))
+                                        :effect (req (clear-wait-prompt state :corp)
+                                                     (doseq [c targets]
+                                                       (trash state side c {:cause dtype :unpreventable true}))
+                                                     (trigger-event state side :damage-chosen)
+                                                     (damage-defer state side dtype 0))}
+                                      card nil)
+                                     (do (trigger-event state side :damage dtype nil)
+                                         (effect-completed state side eid)))))}
     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
     :delayed-completion true
     :effect (effect (enable-runner-damage-choice)
