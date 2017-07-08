@@ -1714,3 +1714,22 @@
       (is (= 2 (:credit (get-corp))) "Only 2 credits to rez Architect")
       (core/rez state :corp wrap)
       (is (= 0 (:credit (get-corp))) "No rez discount on Wraparound"))))
+
+(deftest whampoa-reclamation
+  ;; Whampoa Reclamation: Enable trashing a card from HQ to place a card in Archives on the bottom of R+D
+  (do-game
+    (new-game (default-corp [(qty "Whampoa Reclamation" 3) (qty "PAD Campaign" 2) (qty "Global Food Initiative" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Whampoa Reclamation" "New remote")
+    (let [wr (get-content state :remote1 0)]
+      (core/draw state :corp)
+      (take-credits state :corp)
+      (core/rez state :corp wr)
+      (let [gfi (find-card "Global Food Initiative" (:hand (get-corp)))]
+        (core/trash state :runner gfi)
+        (card-ability state :corp wr 0)
+        (prompt-choice :corp "Global Food Initiative") ;; into archives
+        (prompt-select :corp (first (:discard (get-corp)))) ;; into R&D
+        (is (= 0 (count (:discard (get-corp)))) "Only card in discard placed in bottom of R&D")
+        (is (= "Global Food Initiative" (:title (last (:deck (get-corp))))) "GFI last card in deck")
+        ))))
