@@ -731,6 +731,23 @@
     (is (= "Breaking News" (:title (get-content state :remote1 0)))
       "Breaking News installed by Lateral Growth")
     (is (= 7 (:credit (get-corp))))))
+	
+(deftest mass-commercialization
+  ;; Mass Commercialization
+  (do-game
+    (new-game (default-corp [(qty "Mass Commercialization" 1)
+                             (qty "Ice Wall" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (take-credits state :runner)
+    (core/advance state :corp {:card (refresh (get-ice state :hq 0))})
+    (core/advance state :corp {:card (refresh (get-ice state :archives 0))})
+    (core/advance state :corp {:card (refresh (get-ice state :rd 0))})
+    (take-credits state :runner)
+    (play-from-hand state :corp "Mass Commercialization")
+    (is (= 8 (:credit (get-corp))) "Gained 6 for 3 advanced ice from Mass Commercialization")))
 
 (deftest manhunt-every-run
   ;; Manhunt - only fires once per turn. Unreported issue.
