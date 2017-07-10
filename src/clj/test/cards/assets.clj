@@ -701,6 +701,35 @@
       (prompt-choice :corp "2 [Credits]")
       (prompt-choice :runner "0 [Credits]")
       (is (= 3 (:credit (get-corp))) "No credits gained from Hyoubu"))))
+	  
+(deftest illegal-arms-factory
+  ;; Illegal Arms Factory; draw a card, gain a credit, bad pub when trashed while rezzed
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1)
+	                         (qty "Beanstalk Royalties" 1)
+	                         (qty "IPO" 1)							 
+							 (qty "Illegal Arms Factory" 3)])
+              (default-runner))
+    (core/gain state :runner :credit 20)
+	(core/move state :corp (find-card "IPO" (:hand (get-corp))) :deck)
+	(core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+	(core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "Illegal Arms Factory" "New remote")
+    (play-from-hand state :corp "Illegal Arms Factory" "New remote")
+    (let [iaf (get-content state :remote2 0)]
+      (core/rez state :corp iaf)
+      (take-credits state :corp)
+	  (run-empty-server state :remote1)
+      (prompt-choice :runner "Yes")
+      (is (= 0 (:bad-publicity (get-corp))) "Took no bad pub on unrezzed trash")
+      (take-credits state :runner)
+	  (is (= 3 (count (:hand (get-corp)))) "Drew a card from IAF + mandatory")
+      (is (= 4 (:credit (get-corp))) "Gained 1 credit from IAF")
+      (take-credits state :corp)
+	  (run-empty-server state :remote2)
+      (prompt-choice :runner "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash")	  
+	)))
 
 (deftest it-department
   ;; IT Department - Add strength to rezzed ICE until end of turn
