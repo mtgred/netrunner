@@ -638,10 +638,7 @@
     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
     (take-credits state :corp)
     (core/gain state :runner :click 3)
-    (loop [x 6]
-      (when (pos? x)
-        (do (play-from-hand state :runner "Spy Camera")
-            (recur (dec x)))))
+    (dotimes [_ 6] (play-from-hand state :runner "Spy Camera"))
     (let [spy (get-hardware state 5)]
       ;; look at top 6 cards
       (card-ability state :runner spy 0)

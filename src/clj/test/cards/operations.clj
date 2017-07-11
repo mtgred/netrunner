@@ -1416,6 +1416,48 @@
     (is (= 2 (count (:hand (get-corp)))) "Both Subliminals returned to HQ")
     (is (= 0 (count (:discard (get-corp)))) "No Subliminals in Archives")))
 
+(deftest success-bad-publicity
+  ;; Success - Works with bad publicity
+  (do-game
+    (new-game (default-corp [(qty "NAPD Contract" 1) (qty "Project Beale" 1) (qty "Success" 1)])
+              (default-runner))
+    (play-from-hand state :corp "NAPD Contract" "New remote")
+    (play-from-hand state :corp "Project Beale" "New remote")
+    (core/gain state :corp :bad-publicity 9)
+    (core/gain state :corp :credit 8)
+    (core/gain state :corp :click 15)
+    (let [napd (get-content state :remote1 0)
+          beale (get-content state :remote2 0)]
+      (dotimes [_ 13] (core/advance state :corp {:card (refresh napd)}))
+      (is (= 13 (:advance-counter (refresh napd))))
+      (core/score state :corp {:card (refresh napd)})
+      (is (= 2 (:agenda-point (get-corp))))
+      (play-from-hand state :corp "Success")
+      (is (= "NAPD Contract" (:title (first (:rfg (get-corp))))))
+      (prompt-select :corp (refresh beale))
+      (is (= 13 (:advance-counter (refresh beale))))
+      (core/score state :corp {:card (refresh beale)})
+      (is (= 7 (:agenda-point (get-corp)))))))
+
+(deftest success-public-agenda
+  ;; Success - Works with public agendas
+  (do-game
+    (new-game (default-corp [(qty "Oaktown Renovation" 1) (qty "Vanity Project" 1) (qty "Success" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (score-agenda state :corp (find-card "Vanity Project" (:hand (get-corp))))
+    (is (= 4 (:agenda-point (get-corp))))
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
+    (is (= 5 (:credit (get-corp))))
+    (play-from-hand state :corp "Success")
+    (is (= "Vanity Project" (:title (first (:rfg (get-corp))))))
+    (let [oaktown (get-content state :remote1 0)]
+      (prompt-select :corp (refresh oaktown))
+      (is (= 6 (:advance-counter (refresh oaktown))))
+      (is (= 19 (:credit (get-corp))) "Gain 2 + 2 + 2 + 2 + 3 + 3 = 14 credits for advancing Oaktown")
+      (core/score state :corp {:card (refresh oaktown)})
+      (is (= 2 (:agenda-point (get-corp)))))))
+
 (deftest successful-demonstration
   ;; Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits
   (do-game

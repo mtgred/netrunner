@@ -707,10 +707,7 @@
     (new-game (default-corp [(qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1) (qty "Quandary" 1)
                             (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
             (default-runner [(qty "Indexing" 1)]))
-    (loop [x 5]
-    (when (pos? x)
-      (do (core/move state :corp (first (:hand (get-corp))) :deck)
-          (recur (dec x)))))
+    (dotimes [_ 5] (core/move state :corp (first (:hand (get-corp))) :deck))
     (take-credits state :corp)
     (is (= 0 (count (:hand (get-corp)))))
     (is (= 5 (count (:deck (get-corp)))))
@@ -1024,14 +1021,12 @@
     (is (= 6 (count (:discard (get-runner)))))
     (take-credits state :corp)
     ;; remove 5 Out of the Ashes from the game
-    (loop [x 5]
-      (when (pos? x)
-        (do (is (not (empty? (get-in @state [:runner :prompt]))))
-            (prompt-choice :runner "Yes")
-            (prompt-choice :runner "Archives")
-            (is (:run @state))
-            (run-successful state)
-            (recur (dec x)))))
+    (dotimes [_ 5]
+      (is (not (empty? (get-in @state [:runner :prompt]))))
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Archives")
+      (is (:run @state))
+      (run-successful state))
     (prompt-choice :runner "No")
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 5 (count (:rfg (get-runner)))))
