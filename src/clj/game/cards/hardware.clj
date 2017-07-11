@@ -855,8 +855,7 @@
                                                      (all-installed state :runner)))
                                     from (take n (:deck runner))]
                                 (if (pos? (count from))
-                                  (continue-ability state side (reorder-choice :runner :corp from '()
-                                                                               (count from) from) card nil)
+                                  (continue-ability state side (reorder-choice :runner :corp from '() from) card nil)
                                   (do (clear-wait-prompt state :corp)
                                       (effect-completed state side eid card)))))}
                 {:label "[Trash]: Look at the top card of R&D"

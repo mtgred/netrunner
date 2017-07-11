@@ -38,17 +38,17 @@
   This is part 1 - the player keeps choosing cards until there are no more available choices. A wait prompt should
   exist before calling this function. See Indexing and Making an Entrance for examples on how to call this function."
 
-  ([reorder_side wait_side remaining chosen n original] (reorder-choice reorder_side wait_side remaining chosen n original nil))
-  ([reorder_side wait_side remaining chosen n original dest]
+  ([reorder_side wait_side remaining chosen original] (reorder-choice reorder_side wait_side remaining chosen original nil))
+  ([reorder_side wait_side remaining chosen original dest]
   {:prompt (str "Choose a card to move next "
                 (if (= dest "bottom") "under " "onto ")
                 (if (= reorder_side :corp) "R&D" "your Stack"))
    :choices remaining
    :delayed-completion true
    :effect (req (let [chosen (cons target chosen)]
-                  (if (< (count chosen) n)
+                  (if (< (count chosen) (count original))
                     (continue-ability state side (reorder-choice reorder_side wait_side (remove-once #(not= target %) remaining)
-                                                                 chosen n original dest) card nil)
+                                                                 chosen original dest) card nil)
                     (continue-ability state side (reorder-final reorder_side wait_side chosen original dest) card nil))))}))
 
 (defn- reorder-final
@@ -79,7 +79,7 @@
                    (effect-completed state side eid card))
 
                :else
-               (continue-ability state side (reorder-choice reorder_side wait_side original '() (count original) original dest) card nil)))}))
+               (continue-ability state side (reorder-choice reorder_side wait_side original '() original dest) card nil)))}))
 
 (defn swap-ice
   "Swaps two pieces of ICE."

@@ -812,7 +812,7 @@
                            (if (not-empty cards)
                              (let [tobottom (remove #(= % target) cards)]
                                (continue-ability state side (reorder-choice :runner :corp tobottom '()
-                                                                            (count tobottom) tobottom "bottom") card nil))
+                                                                            tobottom "bottom") card nil))
                              (do (clear-wait-prompt state :corp)
                                  (effect-completed state side eid card))))})]
    {:abilities [{:cost [:click 1]
@@ -1185,8 +1185,7 @@
     :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their Stack")
                  (let [from (take 5 (:deck runner))]
                    (if (pos? (count from))
-                     (continue-ability state side (reorder-choice :runner :corp from '()
-                                                                  (count from) from) card nil)
+                     (continue-ability state side (reorder-choice :runner :corp from '() from) card nil)
                      (do (clear-wait-prompt state :corp)
                          (effect-completed state side eid card)))))
     :trash-effect {:effect (effect (system-msg :runner (str "trashes "
