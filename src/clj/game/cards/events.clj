@@ -640,7 +640,7 @@
                                         (let [from (take 5 (:deck corp))]
                                           (if (pos? (count from))
                                             (continue-ability state side (reorder-choice :corp :corp from '()
-                                                                                         from) card nil)
+                                                                                         (count from) from) card nil)
                                             (do (clear-wait-prompt state :corp)
                                                 (effect-completed state side eid card)))))}} card))}
 
@@ -829,7 +829,8 @@
               :msg (req (when (not= target "None") (str "trash " (:title target))))
               :effect (req (if (= target "None")
                              (if (not-empty cards)
-                               (continue-ability state side (reorder-choice :runner :corp cards '() cards) card nil)
+                               (continue-ability state side (reorder-choice :runner :corp cards '()
+                                                                            (count cards) cards) card nil)
                                (do (clear-wait-prompt state :corp)
                                    (effect-completed state side eid card)))
                              (do (trash state side target {:unpreventable true})
