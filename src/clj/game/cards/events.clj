@@ -116,15 +116,16 @@
                              (do (doseq [c (reverse chosen)] (move state :corp c :deck {:front true}))
                                  (clear-wait-prompt state :runner)
                                  (effect-completed state side eid card))
-                             (continue-ability state side (cbi-choice original '() original) card nil)))})
-           (cbi-choice [remaining chosen original]
+                             (continue-ability state side (cbi-choice original '() (count original) original)
+                                               card nil)))})
+           (cbi-choice [remaining chosen n original]
              {:prompt "Choose a card to move next onto R&D"
               :choices remaining
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
-                             (if (< (count chosen) (count original))
+                             (if (< (count chosen) n)
                                (continue-ability state side (cbi-choice (remove-once #(not= target %) remaining)
-                                                                        chosen original) card nil)
+                                                                        chosen n original) card nil)
                                (continue-ability state side (cbi-final chosen original) card nil))))})]
      {:delayed-completion true
       :effect (effect (run :hq {:replace-access
@@ -133,7 +134,7 @@
                                  :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
                                               (let [from (:hand corp)]
                                                 (if (pos? (count from))
-                                                  (continue-ability state :corp (cbi-choice from '() from) card nil)
+                                                  (continue-ability state :corp (cbi-choice from '() (count from) from) card nil)
                                                   (do (clear-wait-prompt state :runner)
                                                       (effect-completed state side eid card)))))}} card))})
 
