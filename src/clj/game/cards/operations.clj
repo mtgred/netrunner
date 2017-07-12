@@ -1231,6 +1231,16 @@
                         (unregister-events state side card)))
       :events {:corp-phase-12 nil}})
 
+   "Success"
+   {:additional-cost [:forfeit]
+    :effect (req (let [adv (advancement-cost state side (last (:rfg corp)))]
+                   (resolve-ability
+                     state side
+                     {:choices {:req can-be-advanced?}
+                      :msg (msg "advance " (card-str state target) " " adv " times")
+                      :effect (req (dotimes [_ adv]
+                                     (advance state :corp target :no-cost)))} card nil)))}
+
    "Successful Demonstration"
    {:req (req (:unsuccessful-run runner-reg))
     :msg "gain 7 [Credits]"
