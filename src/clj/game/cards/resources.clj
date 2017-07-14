@@ -668,12 +668,15 @@
                               card nil)))}}}
 
    "Hades Shard"
-   {:abilities [{:msg "access all cards in Archives"
+   {:abilities [{:delayed-completion true
+                 :msg "access all cards in Archives"
                  :effect (req (trash state side card {:cause :ability-cost})
                               (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                               (when (:run @state)
                                 (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0)))
-                              (resolve-ability state :runner (choose-access (get-in @state [:corp :discard]) '(:archives)) card nil))}]
+                              (when-completed (trigger-event-sync state side :pre-access :archives)
+                                              (resolve-ability state :runner
+                                                               (choose-access (get-in @state [:corp :discard]) '(:archives)) card nil)))}]
     :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
                                [:credit -15 :click -1] nil))
     :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
