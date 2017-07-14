@@ -789,14 +789,14 @@
                                                    :effect (req (if (= target c1)
                                                                   (do (move state :runner c1 :rfg)
                                                                       (move state :runner c2 :hand)
-                                                                      (system-msg state side (str "uses Steve Cambridge: Master Grifter"
-                                                                                                  " to add " (:title c2) " to their Grip."
-                                                                                                  " Corp removes " (:title c1) " from the game")))
+                                                                      (system-msg state :runner (str "uses Steve Cambridge: Master Grifter"
+                                                                                                     " to add " (:title c2) " to their Grip."
+                                                                                                     " Corp removes " (:title c1) " from the game")))
                                                                   (do (move state :runner c2 :rfg)
                                                                       (move state :runner c1 :hand)
-                                                                      (system-msg state side (str "uses Steve Cambridge: Master Grifter"
-                                                                                                  " to add " (:title c1) " to their Grip."
-                                                                                                  " Corp removes " (:title c2) " from the game"))))
+                                                                      (system-msg state :runner (str "uses Steve Cambridge: Master Grifter"
+                                                                                                     " to add " (:title c1) " to their Grip."
+                                                                                                     " Corp removes " (:title c2) " from the game"))))
                                                                 (clear-wait-prompt state :runner)
                                                                 (effect-completed state side eid))} card nil)))}
                                card nil))}}}
