@@ -198,6 +198,7 @@
    {:implementation "Derez is manual"
     :choices {:req #(and (ice? %)
                          (has-subtype? % "Bioroid")
+                         (installed? %)
                          (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (final-effect (rez target {:ignore-cost :all-costs})
