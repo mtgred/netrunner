@@ -56,8 +56,15 @@
     (map #(assoc % :zone dest) coll)))
 
 (defn to-keyword [string]
-  (if (string? string)
+  (cond
+
+    (= "[Credits]" string)
+    :credit
+
+    (string? string)
     (keyword (.toLowerCase string))
+
+    :else
     string))
 
 (defn capitalize [string]
@@ -67,7 +74,7 @@
   "Used during steal to print runner prompt for payment"
   (clojure.string/join ", " (map #(let [key (first %) value (last %)]
                                    (case key
-                                     :credit (str value "[Credits]")
+                                     :credit (str value " [Credits]")
                                      :click (reduce str (for [i (range value)] "[Click]"))
                                      :net-damage (str value " net damage")
                                      :mill (str value " card mill")

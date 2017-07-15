@@ -96,6 +96,31 @@
       (is (= 5 (count (:discard (get-runner)))) "Runner took 4 net damage")
       (is (= 1 (count (:scored (get-runner)))) "Scored agenda"))))
 
+(deftest ben-musashi-fetal-ai
+  ;; Check Fetal AI can be stolen #2586
+  (do-game
+    (new-game (default-corp [(qty "Ben Musashi" 1) (qty "Fetal AI" 1)])
+              (default-runner [(qty "Sure Gamble" 5)]))
+    (play-from-hand state :corp "Ben Musashi" "New remote")
+    (play-from-hand state :corp "Fetal AI" "Server 1")
+    (take-credits state :corp)
+    (let [bm (get-content state :remote1 0)
+          fai (get-content state :remote1 1)]
+      (core/rez state :corp bm)
+      (run-empty-server state "Server 1")
+      ;; runner now chooses which to access.
+      (prompt-select :runner fai)
+      (prompt-choice :runner "Access")
+      ;; prompt should be asking for the net damage costs
+      (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
+          "Prompt to pay steal costs")
+      (prompt-choice :runner "2 [Credits]")
+      (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
+      (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+      (prompt-choice :runner "2 net damage")
+      (is (= 4 (count (:discard (get-runner)))) "Runner took 4 net damage - 2 from Fetal, 2 from Ben")
+      (is (= 1 (count (:scored (get-runner)))) "Scored agenda"))))
+
 (deftest bernice-mai
   ;; Bernice Mai - successful and unsuccessful
   (do-game
