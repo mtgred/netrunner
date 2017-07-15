@@ -258,10 +258,11 @@
     (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
       (resolve-ability state side
                        {:prompt  "Choose a resource to trash"
-                        :choices {:req #(if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-installed state :runner)))
-                                                 (> (count (all-installed state :runner)) 1))
-                                          (and (is-type? % "Resource") (not (untrashable-while-resources? %)))
-                                          (is-type? % "Resource"))}
+                        :choices {:req (fn [card]
+                                         (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-installed state :runner)))
+                                                  (> (count (filter #(is-type? % "Resource") (all-installed state :runner))) 1))
+                                           (and (is-type? card "Resource") (not (untrashable-while-resources? card)))
+                                           (is-type? card "Resource")))}
                         :effect  (effect (trash target)
                                          (system-msg (str (build-spend-msg cost-str "trash")
                                                           (:title target))))} nil nil))))

@@ -276,7 +276,7 @@
   (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
 
 (defn untrashable-while-resources? [card]
-  (card-flag? card :untrashable-while-resources true))
+  (and (card-flag? card :untrashable-while-resources true) (installed? card)))
 
 (defn install-locked?
   "Checks if installing is locked"
