@@ -540,9 +540,10 @@
    {:req (req (:trashed-card runner-reg))
     :trace {:base 2
             :label "Trash 2 installed non-program cards"
-            :choices {:max 2
+            :choices {:max (req (min 2 (count (filter #(not (is-type? % "Program")) (concat (all-installed state :corp)
+                                                                                            (all-installed state :runner))))))
+                      :all true
                       :req #(and (installed? %)
-                                 (= (:side %) "Runner")
                                  (not (is-type? % "Program")))}
             :msg (msg "trash " (join ", " (map :title targets)))
             :effect (req (doseq [c targets]
