@@ -28,15 +28,15 @@
                                       :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
 
    "Awakening Center"
-   {:abilities [{:label "Host a piece of bioroid ICE"
+   {:can-host (req (is-type? target "ICE"))
+    :abilities [{:label "Host a piece of bioroid ICE"
                  :cost [:click 1]
                  :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
                  :choices {:req #(and (ice? %)
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
                  :msg "host a piece of bioroid ICE"
-                 :effect (effect (trigger-event :corp-install target)
-                                 (host card target {:facedown true}))}
+                 :effect (req (corp-install state side target card))}
                 {:req (req (and this-server (= (get-in @state [:run :position]) 0)))
                  :label "Rez a hosted piece of bioroid ICE"
                  :prompt "Choose a piece of bioroid ICE to rez" :choices (req (:hosted card))
