@@ -530,7 +530,15 @@
                                       (in-hand? %)
                                       (= (:side %) "Corp"))}
                  :msg "install and host an asset or agenda"
-                 :effect (req (corp-install state side target card))}]}
+                 :effect (req (corp-install state side target card))}
+                {:label "Install a previously-installed asset or agenda on Full Immersion RecStudio (fixes only)"
+                 :req (req (< (count (:hosted card)) 2))
+                 :prompt "Choose an installed asset or agenda to host on Full Immersion RecStudio"
+                 :choices {:req #(and (or (is-type? % "Asset") (is-type? % "Agenda"))
+                                      (installed? %)
+                                      (= (:side %) "Corp"))}
+                 :msg "install and host an asset or agenda"
+                 :effect (req (host state side card target))}]}
 
    "Fumiko Yamamori"
    {:events {:psi-game-done {:req (req (not= (first targets) (second targets)))
