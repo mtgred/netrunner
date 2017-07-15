@@ -499,7 +499,7 @@
     :leave-play (req (enable-run-on-server state card (second (:zone card))))}
 
    "Old Hollywood Grid"
-   (let [ohg {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+   (let [ohg {:req (req (or (= (:zone card) (:zone (get-nested-host target))) (= (central->zone (:zone target)) (butlast (:zone card)))))
               :effect (effect (register-persistent-flag!
                                 card :can-steal
                                 (fn [state _ card]
@@ -508,7 +508,7 @@
                                     true))))}]
      {:trash-effect
               {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-               :effect (effect (register-events {:pre-steal-cost (assoc ohg :req (req (or (= (:zone target) (:previous-zone card))
+               :effect (effect (register-events {:pre-steal-cost (assoc ohg :req (req (or (= (:zone (get-nested-host target)) (:previous-zone card))
                                                                                           (= (central->zone (:zone target))
                                                                                              (butlast (:previous-zone card))))))
                                                  :run-ends {:effect (effect (unregister-events card))}}
