@@ -21,6 +21,13 @@
    :msg "end the run"
    :effect (effect (end-run))})
 
+(def end-the-run-if-tagged
+  "ETR subroutine if tagged"
+  {:label "End the run if the Runner is tagged"
+   :req (req tagged)
+   :msg "end the run"
+   :effect (effect (end-run))})
+
 (def give-tag
   "Basic give runner 1 tag subroutine
    Mostly used with tag-trace"
@@ -575,6 +582,11 @@
                                                            (clear-wait-prompt state :runner)
                                                            (effect-completed state side eid card)))))})]})
 
+   "Data Loop"
+   {:implementation "Encounter effect is manual"
+    :subroutines [end-the-run-if-tagged
+                  end-the-run]}
+
    "Data Mine"
    {:subroutines [{:msg "do 1 net damage"
                    :effect (req (damage state :runner eid :net 1 {:card card})
@@ -609,10 +621,7 @@
                         :delayed-completion true
                         :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Ward")
                                      (tag-runner state :runner eid 1))}]
-    :subroutines [{:label "End the run if the Runner is tagged"
-                   :req (req tagged)
-                   :msg "end the run"
-                   :effect (effect (end-run))}]}
+    :subroutines [end-the-run-if-tagged]}
 
    "DNA Tracker"
    {:subroutines [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
@@ -978,10 +987,7 @@
    {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-installed state :runner))))
                                 :label "Give the Runner 1 tag if there is an installed AI")]
     :subroutines [(tag-trace 3)
-                  {:label "End the run if the Runner is tagged"
-                   :req (req tagged)
-                   :msg "end the run"
-                   :effect (effect (end-run))}]}
+                  end-the-run-if-tagged]}
 
    "IQ"
    {:effect (req (add-watch state (keyword (str "iq" (:cid card)))
@@ -1216,8 +1222,7 @@
     :subroutines [(tag-trace 1)
                   (tag-trace 2)
                   (tag-trace 3)
-                  {:msg "end the run if the Runner is tagged" :req (req tagged)
-                   :effect (effect (end-run))}]}
+                  end-the-run-if-tagged]}
 
    "Nebula"
    (space-ice trash-program)
@@ -1297,10 +1302,7 @@
                                    (system-msg (str "adds " (:title target) " to the top of the Runner's Stack")))}]}
 
    "Pachinko"
-   {:subroutines [{:label "End the run if the Runner is tagged"
-                   :req (req tagged)
-                   :msg "end the run"
-                   :effect (effect (end-run))}]}
+   {:subroutines [end-the-run-if-tagged]}
 
    "Paper Wall"
    {:implementation "Trash on break is manual"
