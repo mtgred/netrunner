@@ -130,7 +130,11 @@
             (continue-ability state :runner
                               {:optional
                                {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
-                                :no-ability {:effect (effect (trigger-event :no-trash c))}
+                                :no-ability {:effect (req
+                                                       ;; toggle access flag to prevent Hiro issue #2638
+                                                       (swap! state dissoc :access)
+                                                       (trigger-event state side :no-trash c)
+                                                       (swap! state assoc :access true))}
                                 :yes-ability {:cost [:credit trash-cost]
                                               :delayed-completion true
                                               :effect (req (trash state side eid card nil)

@@ -289,6 +289,42 @@
       (is (= 1 (:current-strength (refresh inti))) "Strength reduced to default")
       (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
 
+(deftest maw
+  ;; Once per turn, first time runner declines to steal or trash, trash a HQ card at random
+  (do-game
+    (new-game (default-corp [(qty "BOOM!" 5)])
+              (default-runner [(qty "Maw" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 20)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "No")
+    (is (= 0 (count (:discard (get-corp)))) "No HQ card in discard before Maw installed")
+    (play-from-hand state :runner "Maw")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "No")
+    (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw as first decline already happened")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (prompt-choice :runner "No")
+    (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "No")
+    (is (= 1 (count (:discard (get-corp)))) "2nd HQ card on same turn not trashed by Maw")))
+
+(deftest maw-hiro
+  ;; Maw with Hiro in hand - Hiro not moved to runner scored area on trash decline #2638
+  (do-game
+    (new-game (default-corp [(qty "Chairman Hiro" 1)])
+              (default-runner [(qty "Maw" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 20)
+    (play-from-hand state :runner "Maw")
+    (run-empty-server state :hq)
+    (prompt-choice :runner "No")
+    (is (= 0 (count (:scored (get-corp)))) "Hiro not scored")
+    (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw")))
+
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
   (do-game
