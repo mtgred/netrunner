@@ -982,7 +982,7 @@
                                    {:cost [:click 1]
                                     :prompt "Choose a connection in your Grip to install on Off-Campus Apartment"
                                     :choices {:req #(and (has-subtype? % "Connection")
-                                                         (runner-can-install? state side % false)
+                                                         (can-pay? state side nil :credit (:cost %))
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and draw 1 card")
                                     :effect (effect (runner-install target {:host-card card}) (draw))}
