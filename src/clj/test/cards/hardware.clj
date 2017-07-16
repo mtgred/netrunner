@@ -641,6 +641,43 @@
       (prompt-choice :runner "Yes")  ; 6 installed
       (is (count-spy 6) "6 Spy Cameras installed"))))
 
+(deftest sifr-archangel
+  ; archangel then re-install sifr should not break the game #2576
+  (do-game
+    (new-game (default-corp [(qty "Archangel" 1) (qty "IP Block" 1) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Modded" 1) (qty "Şifr" 1) (qty "Parasite" 1)]))
+    (core/gain state :corp :credit 10)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :corp "Archangel" "HQ")
+    (play-from-hand state :corp "IP Block" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Şifr")
+    (let [arch (get-ice state :hq 0)
+          ip (get-ice state :hq 1)
+          sifr (get-hardware state 0)]
+      (core/rez state :corp arch)
+      (core/rez state :corp ip)
+      (run-on state :hq)
+      (is (= 2 (:position (:run @state))))
+      (card-ability state :runner sifr 0)
+      (run-continue state)
+      (is (= 1 (:position (:run @state))))
+      (card-subroutine state :corp arch 0) ; fire archangel
+      (prompt-choice :corp 0)
+      (is (not (empty? (:prompt (get-corp)))) "Archangel trace prompt - corp")
+      (prompt-choice :runner 0)
+      (is (not (empty? (:prompt (get-runner)))) "Archangel trace prompt - runner")
+      (prompt-select :corp sifr)
+      (is (not (empty? (:prompt (get-corp)))) "Archangel lift card prompt - corp")
+      (is (= 3 (count (:hand (get-runner))))) ; sifr got lifted to hand
+      (run-jack-out state)
+      (play-from-hand state :runner "Modded")
+      (is (not (empty? (:prompt (get-runner)))) "Modded choice prompt exists")
+      (prompt-select :runner (find-card "Şifr" (:hand (get-runner))))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner))))
+
 (deftest spinal-modem
   ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run
   (do-game
