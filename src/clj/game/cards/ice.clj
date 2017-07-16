@@ -257,7 +257,12 @@
                    :choices {:req #(and (not (is-type? % "Operation"))
                                         (#{[:hand] [:discard]} (:zone %))
                                         (= (:side %) "Corp"))}
-                   :effect (effect (corp-install target nil))
+                   :effect (req (when (= (first (:zone target)) :discard)
+                                  (let [discard (get-in @state [:corp :discard])]
+                                    (system-msg state side (str "chooses the card in position "
+                                                                (- (count discard) (.indexOf discard target))
+                                                                " from Archives (top is 1)"))))
+                                (corp-install state side target nil))
                    :msg (msg (corp-install-msg target))}]}
 
    "Ashigaru"
