@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
 (declare can-trigger? card-def clear-wait-prompt effect-completed event-title get-card get-nested-host get-remote-names
-         get-runnable-zones get-zones make-eid register-effect-completed register-suppress resolve-ability show-wait-prompt
-         trigger-suppress unregister-suppress)
+         get-runnable-zones get-zones installed? make-eid register-effect-completed register-suppress resolve-ability
+         show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
 (defn register-events
@@ -231,6 +231,21 @@
   "Returns true if the active run is the first succesful run on the given server"
   [state server]
   (empty? (filter #(= [server] %) (turn-events state :runner :successful-run))))
+
+(defn get-installed-trashed
+  "Returns list of cards trashed this turn owned by side that were installed"
+  [state side]
+  (filter #(-> % first installed?) (turn-events state side (keyword (str (name side) "-trash")))))
+
+(defn first-installed-trash?
+  "Returns true if this is the first trash of an installed card this turn by this side"
+  [state side]
+  (empty? (get-installed-trashed state side)))
+
+(defn first-installed-trash-own?
+  "Returns true if this is the first trash of an owned installed card this turn by this side"
+  [state side]
+  (empty? (filter #(= (:side (first %)) (side-str side)) (get-installed-trashed state side))))
 
 ;;; Effect completion triggers
 (defn register-effect-completed
