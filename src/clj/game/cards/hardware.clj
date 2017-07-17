@@ -20,8 +20,9 @@
 
    "Archives Interface"
    {:events
-    {:successful-run
+    {:pre-access
      {:delayed-completion true
+      :interactive (req true)
       :req (req (and (= target :archives)
                      (not= (:max-access run) 0)
                      (not-empty (:discard corp))))
@@ -837,7 +838,9 @@
    "Spinal Modem"
    {:in-play [:memory 1]
     :recurring 2
-    :events {:successful-trace {:req (req run) :effect (effect (damage eid :brain 1 {:card card}))}}}
+    :events {:successful-trace {:req (req run)
+                                :effect (effect (system-msg (str "suffers 1 brain damage from Spinal Modem"))
+                                                (damage eid :brain 1 {:card card}))}}}
 
    "Sports Hopper"
    {:in-play [:link 1]

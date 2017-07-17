@@ -96,7 +96,7 @@
                         (pay-trash state :corp card :ice (second %) (filter (every-pred rezzed? ice?) (all-installed state :corp)) {:cause :ability-cost :keep-server-alive true})
 
                         (= (first %) :tag) (deduce state :runner %)
-                        (= (first %) :net-damage) (damage state side :net (second %))
+                        (= (first %) :net-damage) (damage state side :net (second %) {:unpreventable true})
                         (= (first %) :mill) (mill state side (second %))
                         :else (deduce state side %)))
              (filter some?)

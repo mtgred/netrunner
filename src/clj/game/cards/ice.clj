@@ -1187,14 +1187,21 @@
                                                :server [:archives]))
                               (derez state side card))}]
     :subroutines [{:label "Draw 1 card, then shuffle 1 card from HQ into R&D"
-                   :msg "draw 1 card and then shuffle 1 card from HQ into R&D"
-                   :effect (effect (draw)
-                                   (resolve-ability
-                                     {:prompt "Choose 1 card in HQ to shuffle into R&D"
-                                      :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
-                                      :effect (effect (move target :deck)
-                                                      (shuffle! :deck))}
-                                    card nil))}]}
+                   :effect (req (when-completed (resolve-ability state side
+                                                  {:optional
+                                                   {:delayed-completion true
+                                                    :prompt "Draw 1 card?"
+                                                    :yes-ability {:msg "draw 1 card"
+                                                                  :effect (effect (draw))}
+                                                    :no-ability {:effect (req (effect-completed state side eid))}}}
+                                                 card nil)
+                                                (resolve-ability state side
+                                                  {:prompt "Choose 1 card in HQ to shuffle into R&D"
+                                                   :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                                   :msg "shuffle 1 card in HQ into R&D"
+                                                   :effect (effect (move target :deck)
+                                                                   (shuffle! :deck))}
+                                                 card nil)))}]}
 
    "Mother Goddess"
    (let [ab (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))

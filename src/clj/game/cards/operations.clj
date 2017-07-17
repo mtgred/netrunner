@@ -198,6 +198,7 @@
    {:implementation "Derez is manual"
     :choices {:req #(and (ice? %)
                          (has-subtype? % "Bioroid")
+                         (installed? %)
                          (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (final-effect (rez target {:ignore-cost :all-costs})
@@ -539,9 +540,10 @@
    {:req (req (:trashed-card runner-reg))
     :trace {:base 2
             :label "Trash 2 installed non-program cards"
-            :choices {:max 2
+            :choices {:max (req (min 2 (count (filter #(not (is-type? % "Program")) (concat (all-installed state :corp)
+                                                                                            (all-installed state :runner))))))
+                      :all true
                       :req #(and (installed? %)
-                                 (= (:side %) "Runner")
                                  (not (is-type? % "Program")))}
             :msg (msg "trash " (join ", " (map :title targets)))
             :effect (req (doseq [c targets]
@@ -676,8 +678,10 @@
                                       :effect (effect (tag-runner :runner eid 1))}}}}
 
    "Mass Commercialization"
-   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0))) (all-installed state :corp)))) " [Credits]")
-    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0))) (all-installed state :corp))))))}
+   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+                                          (concat (all-installed state :runner) (all-installed state :corp))))) " [Credits]")
+    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+                                                      (concat (all-installed state :runner) (all-installed state :corp)))))))}
 
    "MCA Informant"
    {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"

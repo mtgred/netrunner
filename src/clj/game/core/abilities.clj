@@ -474,15 +474,15 @@
         {:keys [strength ability card]} (:trace @state)]
     (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
                                    (+ (:link runner) boost)))
-    (let [succesful (> strength (+ (:link runner) boost))
-          which-ability (assoc (if succesful ability (:unsuccessful ability)) :eid (make-eid state))]
-      (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
-                                       card [strength (+ (:link runner) boost)])
-                      (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace) {:runner-spent boost})
-                          (when-let [kicker (:kicker ability)]
-                            (when (>= strength (:min kicker))
-                              (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))
-                          (effect-completed state side eid nil))))))
+    (let [successful (> strength (+ (:link runner) boost))
+          which-ability (assoc (if successful ability (:unsuccessful ability)) :eid (make-eid state))]
+      (when-completed (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace) {:runner-spent boost})
+                      (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
+                                                                   card [strength (+ (:link runner) boost)])
+                                      (do (when-let [kicker (:kicker ability)]
+                                            (when (>= strength (:min kicker))
+                                              (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))
+                                          (effect-completed state side eid nil)))))))
 
 (defn corp-trace-prompt
   "Starts the trace process by showing the boost prompt to the corp."

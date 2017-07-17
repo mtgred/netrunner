@@ -28,15 +28,15 @@
                                       :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
 
    "Awakening Center"
-   {:abilities [{:label "Host a piece of bioroid ICE"
+   {:can-host (req (is-type? target "ICE"))
+    :abilities [{:label "Host a piece of bioroid ICE"
                  :cost [:click 1]
                  :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
                  :choices {:req #(and (ice? %)
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
                  :msg "host a piece of bioroid ICE"
-                 :effect (effect (trigger-event :corp-install target)
-                                 (host card target {:facedown true}))}
+                 :effect (req (corp-install state side target card))}
                 {:req (req (and this-server (= (get-in @state [:run :position]) 0)))
                  :label "Rez a hosted piece of bioroid ICE"
                  :prompt "Choose a piece of bioroid ICE to rez" :choices (req (:hosted card))
@@ -499,7 +499,7 @@
     :leave-play (req (enable-run-on-server state card (second (:zone card))))}
 
    "Old Hollywood Grid"
-   (let [ohg {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+   (let [ohg {:req (req (or (= (:zone card) (:zone (get-nested-host target))) (= (central->zone (:zone target)) (butlast (:zone card)))))
               :effect (effect (register-persistent-flag!
                                 card :can-steal
                                 (fn [state _ card]
@@ -508,7 +508,7 @@
                                     true))))}]
      {:trash-effect
               {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-               :effect (effect (register-events {:pre-steal-cost (assoc ohg :req (req (or (= (:zone target) (:previous-zone card))
+               :effect (effect (register-events {:pre-steal-cost (assoc ohg :req (req (or (= (:zone (get-nested-host target)) (:previous-zone card))
                                                                                           (= (central->zone (:zone target))
                                                                                              (butlast (:previous-zone card))))))
                                                  :run-ends {:effect (effect (unregister-events card))}}
