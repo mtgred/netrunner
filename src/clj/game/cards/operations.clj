@@ -678,8 +678,10 @@
                                       :effect (effect (tag-runner :runner eid 1))}}}}
 
    "Mass Commercialization"
-   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0))) (all-installed state :corp)))) " [Credits]")
-    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0))) (all-installed state :corp))))))}
+   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+                                          (concat (all-installed state :runner) (all-installed state :corp))))) " [Credits]")
+    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+                                                      (concat (all-installed state :runner) (all-installed state :corp)))))))}
 
    "MCA Informant"
    {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"
