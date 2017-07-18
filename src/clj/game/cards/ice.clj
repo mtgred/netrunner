@@ -248,8 +248,10 @@
                                   (not (is-type? target "Operation"))))
                    :not-distinct true
                    :choices (req (conj (take 5 (:deck corp)) "No install"))
-                   :effect (effect (corp-install (move state side target :play-area)
-                                                 nil {:no-install-cost true}))}
+                   :effect (effect (system-msg (str "chooses the card in position "
+                                                    (+ 1 (.indexOf (take 5 (:deck corp)) target))
+                                                    " from R&D (top is 1)"))
+                                   (corp-install (move state side target :play-area) nil {:no-install-cost true}))}
                   {:label "Install a card from HQ or Archives"
                    :prompt "Choose a card to install from Archives or HQ"
                    :show-discard true
