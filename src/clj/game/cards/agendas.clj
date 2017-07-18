@@ -126,6 +126,7 @@
                              :choices {:req #(and (is-type? % "Agenda")
                                                   (not= (:title %) "Bifrost Array")
                                                   (= (first (:zone %)) :scored)
+                                                  (when-scored? %)
                                                   (:abilities %))}
                              :msg (msg "trigger the \"when scored\" ability of " (:title target))
                              :effect (effect (continue-ability (card-def target) target nil))}}}
@@ -612,6 +613,7 @@
 
    "NEXT Wave 2"
    {:delayed-completion true
+    :not-when-scored true
     :effect (req (if (some #(and (rezzed? %) (ice? %) (has-subtype? % "NEXT")) (all-installed state :corp))
                    (continue-ability state side
                      {:optional
