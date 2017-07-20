@@ -561,14 +561,16 @@
 
                     (= target "Take 7 [Credits]")
                     (do (gain state side :credit 7)
-                        (system-msg state side "takes 7 [Credits] from Meteor Mining"))
+                        (system-msg state side "takes 7 [Credits] from Meteor Mining")
+                        (effect-completed state side eid))
 
                     (= target "Give 7 Meat Damage")
                     (do (damage state side eid :meat 7 {:card card})
                         (system-msg state side "gives 7 meat damage from Meteor Mining"))
 
                     (= target "Take Nothing")
-                    (system-msg state side "did not take anything from Meteor Mining")))})
+                    (do (system-msg state side "did not take anything from Meteor Mining")
+                        (effect-completed state side eid))))})
 
    "NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])
