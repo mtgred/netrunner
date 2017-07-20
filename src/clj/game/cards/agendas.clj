@@ -916,7 +916,7 @@
                                                      (do (system-msg state :corp "declines to trash a card from Standoff")
                                                          (clear-wait-prompt state :runner)
                                                          (effect-completed state :corp eid card))))
-                               :effect (req (do (system-msg state side (str "trashes " (:title target) " due to Standoff"))
+                               :effect (req (do (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
                                                 (clear-wait-prompt state (other-side side))
                                                 (trash state side target {:unpreventable true})
                                                 (continue-ability state (other-side side) (stand state (other-side side) card) card nil)))}
