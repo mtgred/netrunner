@@ -395,6 +395,7 @@
     :events {:purge {:effect (effect (update-breaker-strength card))}}
     :abilities [(break-sub 2 1 "ICE")
                 {:label "Place 1 virus counter (start of turn)"
+                 :once :per-turn
                  :cost [:credit 1]
                  :msg "place 1 virus counter"
                  :req (req (:runner-phase-12 @state))
