@@ -477,6 +477,15 @@
                      :abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 2 1)]})
 
+   "Flashbang"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(strength-pump 1 1)
+                                 {:label "Derez a sentry being encountered"
+                                  :cost [:credit 6]
+                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Sentry")))
+                                  :msg (msg "derez " (:title current-ice))
+                                  :effect (effect (derez current-ice))}]})
+
    "Force of Nature"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 2 2 "code gate")
