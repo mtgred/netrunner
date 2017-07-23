@@ -651,6 +651,27 @@
                  :effect (effect (pump card 2)) :pump 2
                  :msg "add 2 strength and break up to 2 subroutines"}])
 
+   "NaNotK"
+   (auto-icebreaker ["Sentry"]
+                    {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))
+                                              (fn [k ref old new]
+                                                (let [server (first (get-in @state [:run :server]))]
+                                                  (when (or
+                                                          ; run initiated or ended
+                                                          (not= (get-in old [:run])
+                                                                (get-in new [:run]))
+                                                          ; server configuration changed (redirected or newly installed ICE)
+                                                          (not= (get-in old [:corp :servers server :ices])
+                                                                (get-in new [:corp :servers server :ices])))
+                                                    (update-breaker-strength ref side card))))))
+                     :strength-bonus (req (let [server (first (get-in @state [:run :server]))
+                                                corp_server_config (get-in @state [:corp :servers server :ices])]
+                                            (if-let [numice (count corp_server_config)]
+                                              numice 0)))
+                     :leave-play (req (remove-watch state (keyword (str "nanotk" (:cid card)))))
+                     :abilities [(break-sub 1 1 "sentry")
+                                 (strength-pump 3 2)]})
+
    "Nfr"
    {:implementation "Adding power counter is manual"
     :abilities [{:label "Place 1 power counter on Nfr"
