@@ -664,10 +664,7 @@
                                                           (not= (get-in old [:corp :servers server :ices])
                                                                 (get-in new [:corp :servers server :ices])))
                                                     (update-breaker-strength ref side card))))))
-                     :strength-bonus (req (let [server (first (get-in @state [:run :server]))
-                                                corp_server_config (get-in @state [:corp :servers server :ices])]
-                                            (if-let [numice (count corp_server_config)]
-                                              numice 0)))
+                     :strength-bonus (req (if-let [numice (count run-ices)] numice 0))
                      :leave-play (req (remove-watch state (keyword (str "nanotk" (:cid card)))))
                      :abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 3 2)]})

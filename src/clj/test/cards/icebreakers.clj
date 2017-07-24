@@ -288,6 +288,48 @@
     (core/trash state :corp iw)
     (is (not (:icon (refresh iw))) "Ice Wall does not have an icon after itself trashed"))))
 
+(deftest nanotk-install-ice-during-run
+  ;; Na'Not'K - Strength adjusts accordingly when ice installed during run
+  (do-game
+    (new-game (default-corp [(qty "Architect" 1) (qty "Eli 1.0" 1)])
+              (default-runner [(qty "Na'Not'K" 1)]))
+    (play-from-hand state :corp "Architect" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Na'Not'K")
+    (let [nanotk (get-program state 0)
+          architect (get-ice state :hq 0)]
+      (is (= 1 (:current-strength (refresh nanotk))) "Default strength")
+      (run-on state "HQ")
+      (core/rez state :corp architect)
+      (is (= 2 (:current-strength (refresh nanotk))) "1 ice on HQ")
+      (card-subroutine state :corp (refresh architect) 1)
+      (prompt-select :corp (find-card "Eli 1.0" (:hand (get-corp))))
+      (prompt-choice :corp "HQ")
+      (is (= 3 (:current-strength (refresh nanotk))) "2 ice on HQ")
+      (run-jack-out state)
+      (is (= 1 (:current-strength (refresh nanotk))) "Back to default strength"))))
+
+(deftest nanotk-redirect
+  ;; Na'Not'K - Strength adjusts accordingly when run redirected to another server
+  (do-game
+    (new-game (default-corp [(qty "Susanoo-no-Mikoto" 1) (qty "Crick" 1) (qty "Cortex Lock" 1)])
+              (default-runner [(qty "Na'Not'K" 1)]))
+    (play-from-hand state :corp "Cortex Lock" "HQ")
+    (play-from-hand state :corp "Susanoo-no-Mikoto" "HQ")
+    (play-from-hand state :corp "Crick" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Na'Not'K")
+    (let [nanotk (get-program state 0)
+          susanoo (get-ice state :hq 1)]
+      (is (= 1 (:current-strength (refresh nanotk))) "Default strength")
+      (run-on state "HQ")
+      (core/rez state :corp susanoo)
+      (is (= 3 (:current-strength (refresh nanotk))) "2 ice on HQ")
+      (card-subroutine state :corp (refresh susanoo) 0)
+      (is (= 2 (:current-strength (refresh nanotk))) "1 ice on Archives")
+      (run-jack-out state)
+      (is (= 1 (:current-strength (refresh nanotk))) "Back to default strength"))))
+
 (deftest overmind-counters
   ;; Overmind - Start with counters equal to unused MU
   (do-game
