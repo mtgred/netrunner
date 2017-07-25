@@ -771,6 +771,17 @@
    {:msg "remove 2 tags and draw 3 cards"
     :effect (effect (draw 3) (lose :tag 2))}
 
+   "Lean and Mean"
+   {:prompt "Choose a server"
+    :choices (req runnable-servers)
+    :delayed-completion true
+    :msg (msg "make a run on " target (when (< (count (filter #(is-type? % "Program") (all-installed state :runner))) 4)
+                                        ", adding +2 strength to all icebreakers"))
+    :effect (req (when (< (count (filter #(is-type? % "Program") (all-installed state :runner))) 4)
+                   (doseq [c (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+                     (pump state side c 2 :all-run)))
+                 (game.core/run state side (make-eid state) target nil card))}
+
    "Legwork"
    {:effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
