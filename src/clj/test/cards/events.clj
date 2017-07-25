@@ -477,12 +477,12 @@
     (take-credits state :corp)
     (run-empty-server state "Archives")
     (play-from-hand state :runner "Early Bird")
-	(is (= 3 (:click (get-runner))) "Card not played, Early Bird priority restriction")
+    (is (= 3 (:click (get-runner))) "Card not played, Early Bird priority restriction")
     (take-credits state :runner)
     (take-credits state :corp)
     (play-from-hand state :runner "Early Bird")
     (prompt-choice :runner "Archives")
-	(is (= 4 (:click (get-runner))) "Early Bird gains click")))
+    (is (= 4 (:click (get-runner))) "Early Bird gains click")))
 
 (deftest employee-strike-blue-sun
   ;; Employee Strike - vs Blue Sun, suppress Step 1.2
@@ -936,6 +936,29 @@
     (is (= 1 (count (:hand (get-runner)))))
     (play-from-hand state :runner "Making an Entrance")
     (is (= 1 (count (:hand (get-runner)))) "Can only play on first click")))
+
+(deftest mars-for-martians
+  ;; Mars for Martians - Full test
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Mars for Martians" 1) (qty "Clan Vengeance" 1) (qty "Counter Surveillance" 1)
+                               (qty "Jarogniew Mercs" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :runner ["Mars for Martians" "Clan Vengeance" "Counter Surveillance" "Jarogniew Mercs"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clan Vengeance")
+    (play-from-hand state :runner "Counter Surveillance")
+    (play-from-hand state :runner "Jarogniew Mercs")
+    (play-from-hand state :runner "Mars for Martians")
+    (is (= 1 (:click (get-runner))) "Mars for Martians not played, priority event")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (core/gain state :runner :tag 4)
+    (is (= 5 (:tag (get-runner))) "+1 tag from Jarogniew Mercs")
+    (is (= 1 (count (:hand (get-runner)))))
+    (is (= 2 (:credit (get-runner))))
+    (play-from-hand state :runner "Mars for Martians")
+    (is (= 3 (count (:hand (get-runner)))) "3 clan resources, +3 cards but -1 for playing Mars for Martians")
+    (is (= 7 (:credit (get-runner))) "5 tags, +5 credits")))
 
 (deftest modded
   ;; Modded - Install a program or piece of hardware at a 3 credit discount
