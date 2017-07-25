@@ -357,18 +357,19 @@
                  :msg (msg "run " target " and trashes Counter Surveillance")
                  :choices (req (cancellable runnable-servers))
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (run target nil card)
-                                 (register-events (:events (card-def card)) (assoc card :zone '(:discard))))}]
-    :events {:successful-run {:effect (req (if (>= (:credit runner) (:tag runner))
-                                             (swap! state assoc-in [:run :run-effect :replace-access]
-                                                    {:mandatory true
-                                                     :msg (msg "access " target " cards by paying " (:tag runner) " [Credit]")
-                                                     :effect (effect (access-bonus (- (:tag runner) 1))
-                                                                     (pay card :credit (:tag runner))
-                                                                     (max-access (:tag runner))
-                                                                     (do-access eid (:server run)))})
-                                             (system-msg state side "could not afford to use Counter Surveillance")))}
-             :run-ends {:effect (effect (unregister-events card))}}}
+                                 (register-events {:successful-run {:effect (req (if (>= (:credit runner) (:tag runner))
+                                                                                   (swap! state assoc-in [:run :run-effect :replace-access]
+                                                                                          {:mandatory true
+                                                                                           :msg (msg "access " target " cards by paying " (:tag runner) " [Credit]")
+                                                                                           :effect (effect (access-bonus (- (:tag runner) 1))
+                                                                                                           (pay card :credit (:tag runner))
+                                                                                                           (max-access (:tag runner))
+                                                                                                           (do-access eid (:server run)))})
+                                                                                   (system-msg state side "could not afford to use Counter Surveillance")))}
+                                                   :run-ends {:effect (effect (unregister-events card))}} (assoc card :zone '(:discard)))
+                                 (run target nil card))}]
+    :events {:successful-run nil
+             :run-ends nil}}
 
    "Crash Space"
    {:prevent {:damage [:meat]}
@@ -1613,11 +1614,10 @@
                                 (add-counter state side target :virus 1)))}]}
 
    "Wasteland"
-   {:events {:runner-trash {:req (req (if (= :runner (:active-player @state))
-                                        (and (= 1 (get-in @state [:runner :register :trashed-installed-runner])) (installed? target))
-                                        (and (= 1 (get-in @state [:runner :register :trashed-installed-corp])) (installed? target))))
-                     :effect (effect (gain :credit 1))
-                     :msg "gain 1 [Credits]"}}}
+   {:events {:runner-trash {:req (req (and (first-installed-trash-own? state :runner)
+                                           (= (:side target) "Runner")))
+                            :effect (effect (gain :credit 1))
+                            :msg "gain 1 [Credits]"}}}
 
    "Wireless Net Pavilion"
    {:effect (effect (trash-resource-bonus -2))

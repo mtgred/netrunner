@@ -126,6 +126,7 @@
                              :choices {:req #(and (is-type? % "Agenda")
                                                   (not= (:title %) "Bifrost Array")
                                                   (= (first (:zone %)) :scored)
+                                                  (when-scored? %)
                                                   (:abilities %))}
                              :msg (msg "trigger the \"when scored\" ability of " (:title target))
                              :effect (effect (continue-ability (card-def target) target nil))}}}
@@ -560,14 +561,16 @@
 
                     (= target "Take 7 [Credits]")
                     (do (gain state side :credit 7)
-                        (system-msg state side "takes 7 [Credits] from Meteor Mining"))
+                        (system-msg state side "takes 7 [Credits] from Meteor Mining")
+                        (effect-completed state side eid))
 
                     (= target "Give 7 Meat Damage")
                     (do (damage state side eid :meat 7 {:card card})
                         (system-msg state side "gives 7 meat damage from Meteor Mining"))
 
                     (= target "Take Nothing")
-                    (system-msg state side "did not take anything from Meteor Mining")))})
+                    (do (system-msg state side "did not take anything from Meteor Mining")
+                        (effect-completed state side eid))))})
 
    "NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])
@@ -612,6 +615,7 @@
 
    "NEXT Wave 2"
    {:delayed-completion true
+    :not-when-scored true
     :effect (req (if (some #(and (rezzed? %) (ice? %) (has-subtype? % "NEXT")) (all-installed state :corp))
                    (continue-ability state side
                      {:optional
@@ -911,7 +915,7 @@
                                                      (do (system-msg state :corp "declines to trash a card from Standoff")
                                                          (clear-wait-prompt state :runner)
                                                          (effect-completed state :corp eid card))))
-                               :effect (req (do (system-msg state side (str "trashes " (:title target) " due to Standoff"))
+                               :effect (req (do (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
                                                 (clear-wait-prompt state (other-side side))
                                                 (trash state side target {:unpreventable true})
                                                 (continue-ability state (other-side side) (stand state (other-side side) card) card nil)))}

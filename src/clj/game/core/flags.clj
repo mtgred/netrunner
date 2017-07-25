@@ -221,6 +221,11 @@
   [state side card]
   (some #(= (:cid %) (:cid card)) (get-in @state [side :scored])))
 
+(defn when-scored?
+  "Checks if the specified card is able to be used for a when-scored text ability"
+  [card]
+  (not (:not-when-scored (card-def card))))
+
 (defn in-deck?
   "Checks if the specified card is in the draw deck."
   [card]

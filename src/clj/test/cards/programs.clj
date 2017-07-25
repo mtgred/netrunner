@@ -609,6 +609,32 @@
       (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
       (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not added to available MU"))))
 
+(deftest reaver
+  ;; Reaver - Draw a card the first time you trash an installed card each turn
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 1)])
+              (default-runner [(qty "Reaver" 1) (qty "Fall Guy" 5)]))
+    (starting-hand state :runner ["Reaver" "Fall Guy"])
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (core/gain state :runner :click 1)
+    (play-from-hand state :runner "Reaver")
+    (is (= 1 (count (:hand (get-runner)))) "One card in hand")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes") ; Trash PAD campaign
+    (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
+    (play-from-hand state :runner "Fall Guy")
+    (play-from-hand state :runner "Fall Guy")
+    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+    ; No draw from Fall Guy trash as Reaver already fired this turn
+    (card-ability state :runner (get-resource state 0) 1)
+    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+    (take-credits state :runner)
+    ; Draw from Fall Guy trash on corp turn
+    (card-ability state :runner (get-resource state 0) 1)
+    (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
+
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
   (do-game

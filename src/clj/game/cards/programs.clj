@@ -673,9 +673,7 @@
                                           (lose :memory (:memoryunits target)))}}}
 
    "Reaver"
-   {:events {:runner-trash {:req (req (if (= :runner (:active-player @state))
-                                        (and (= 1 (get-in @state [:runner :register :trashed-installed-runner])) (installed? target))
-                                        (and (= 1 (get-in @state [:runner :register :trashed-installed-corp])) (installed? target))))
+   {:events {:runner-trash {:req (effect (first-installed-trash?))
                             :effect (effect (draw :runner 1))
                             :msg "draw 1 card"}}}
 

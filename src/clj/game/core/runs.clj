@@ -549,11 +549,12 @@
                   (do (let [cards (cards-to-access state side server)
                             n (count cards)]
                         ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
-                        (when-not (or (= (get-in @state [:run :max-access]) 0)
-                                      (empty? cards))
-                          (when-completed (resolve-ability state side (choose-access cards server) nil nil)
-                                          (effect-completed state side eid nil))
-                          (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0))))
+                        (if (or (= (get-in @state [:run :max-access]) 0)
+                                (empty? cards))
+                          (system-msg state side "accessed no cards during the run")
+                          (do (when-completed (resolve-ability state side (choose-access cards server) nil nil)
+                                              (effect-completed state side eid nil))
+                              (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
                       (handle-end-run state side))))
 
 (defn replace-access
