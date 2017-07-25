@@ -523,6 +523,16 @@
                          (= (:side %) "Corp"))}
     :effect (effect (corp-install eid target nil {:install-state :rezzed-no-cost}))}
 
+   "Mandatory Seed Replacement"
+   (letfn [(msr [] {:prompt "Select two pieces of ICE to swap positions"
+                    :choices {:req #(and (installed? %) (ice? %)) :max 2}
+                    :effect (req (if (= (count targets) 2)
+                                   (do (swap-ice state side (first targets) (second targets))
+                                       (resolve-ability state side (msr) card nil))
+                                   (system-msg state :corp (str "has finished rearranging ICE"))))})]
+     {:msg "rearrange any number of ICE"
+      :effect (effect (resolve-ability (msr) card nil))})
+
    "Mandatory Upgrades"
    {:msg "gain an additional [Click] per turn"
     :silent (req true)
