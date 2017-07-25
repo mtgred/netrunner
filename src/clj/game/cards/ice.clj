@@ -1119,6 +1119,10 @@
     :subroutines [(do-net-damage 1)
                   (do-psi add-power-counter)]}
 
+   "Marker"
+   {:subroutines [{:label "Give the next ICE encountered \"End the run\" for the remainder of the run"
+                   :msg (msg "give the next ICE encountered \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")}]}
+
    "Markus 1.0"
    {:subroutines [trash-installed end-the-run]
     :runner-abilities [(runner-break [:click 1] 1)]}
