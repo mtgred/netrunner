@@ -418,7 +418,42 @@
         (is (= 2 (count (:discard (get-runner)))) "Runner took 1 net damage")
         (run-on state "HQ")
         (run-jack-out state)
-        (is (= 2 (count (:discard (get-runner)))) "Runner did not take  damage")))))
+        (is (= 2 (count (:discard (get-runner)))) "Runner did not take damage")))))
+
+(deftest helheim-servers
+  ;; Helheim Servers - Full test
+  (do-game
+    (new-game (default-corp [(qty "Helheim Servers" 1) (qty "Gutenberg" 1) (qty "Vanilla" 1)
+                             (qty "Jackson Howard" 1) (qty "Hedge Fund" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Helheim Servers" "R&D")
+    (play-from-hand state :corp "Gutenberg" "R&D")
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (take-credits state :corp)
+    (run-on state "R&D")
+    (is (:run @state))
+    (let [helheim (get-content state :rd 0)
+          gutenberg (get-ice state :rd 0)
+          vanilla (get-ice state :rd 1)]
+      (core/rez state :corp helheim)
+      (core/rez state :corp gutenberg)
+      (core/rez state :corp vanilla)
+      (is (= 6 (:current-strength (refresh gutenberg))))
+      (is (= 0 (:current-strength (refresh vanilla))))
+      (card-ability state :corp helheim 0)
+      (prompt-select :corp (find-card "Jackson Howard" (:hand (get-corp))))
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (= 8 (:current-strength (refresh gutenberg))))
+      (is (= 2 (:current-strength (refresh vanilla))))
+      (card-ability state :corp helheim 0)
+      (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (is (= 2 (count (:discard (get-corp)))))
+      (is (= 10 (:current-strength (refresh gutenberg))))
+      (is (= 4 (:current-strength (refresh vanilla))))
+      (run-jack-out state)
+      (is (not (:run @state)))
+      (is (= 6 (:current-strength (refresh gutenberg))))
+      (is (= 0 (:current-strength (refresh vanilla)))))))
 
 (deftest hokusai-grid
   ;; Hokusai Grid - Do 1 net damage when run successful on its server

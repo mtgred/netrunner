@@ -82,9 +82,9 @@
     :effect (effect (gain :credit 1) (draw 2))}
 
    "Calling in Favors"
-   {:msg (msg "gain " (count (filter #(has-subtype? % "Connection") (all-installed state :runner)))
-              " [Credits]")
-    :effect (effect (gain :credit (count (filter #(has-subtype? % "Connection")
+   {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
+                                     (all-installed state :runner))) " [Credits]")
+    :effect (effect (gain :credit (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
                                                  (all-installed state :runner)))))}
 
    "Career Fair"
@@ -852,6 +852,14 @@
       :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their stack")
                    (let [from (take 6 (:deck runner))]
                      (continue-ability state side (entrance-trash from) card nil)))})
+
+   "Mars for Martians"
+   {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
+                                     (all-installed state :runner)))
+              " cards and gain " (:tag runner) " [Credits]")
+    :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
+                                         (all-installed state :runner))))
+                    (gain :credit (:tag runner)))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"

@@ -395,6 +395,7 @@
     :events {:purge {:effect (effect (update-breaker-strength card))}}
     :abilities [(break-sub 2 1 "ICE")
                 {:label "Place 1 virus counter (start of turn)"
+                 :once :per-turn
                  :cost [:credit 1]
                  :msg "place 1 virus counter"
                  :req (req (:runner-phase-12 @state))
@@ -476,6 +477,15 @@
                      :abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 2 1)]})
 
+   "Flashbang"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(strength-pump 1 1)
+                                 {:label "Derez a sentry being encountered"
+                                  :cost [:credit 6]
+                                  :req (req (and (rezzed? current-ice) (has-subtype? current-ice "Sentry")))
+                                  :msg (msg "derez " (:title current-ice))
+                                  :effect (effect (derez current-ice))}]})
+
    "Force of Nature"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 2 2 "code gate")
@@ -485,6 +495,23 @@
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 1 "sentry")
                                  (strength-pump 1 1)]})
+
+   "God of War"
+   (auto-icebreaker ["All"]
+                    {:flags {:runner-phase-12 (req true)}
+                     :abilities [(strength-pump 2 1)
+                                 {:counter-cost [:virus 1]
+                                  :msg "break 1 subroutine"}
+                                 {:label "Take 1 tag to place 2 virus counters (start of turn)"
+                                  :once :per-turn
+                                  :req (req (:runner-phase-12 @state))
+                                  :effect (req (when-completed (tag-runner state :runner 1)
+                                                               (if (not (get-in @state [:tag :tag-prevent]))
+                                                                 (do (add-counter state side card :virus 2)
+                                                                     (system-msg state side
+                                                                                 (str "takes 1 tag to place 2 virus counters on God of War"))
+                                                                     (effect-completed state side eid))
+                                                                 (effect-completed state side eid))))}]})
 
    "Golden"
    (auto-icebreaker ["Sentry"]
@@ -598,6 +625,14 @@
                      :abilities [(break-sub 2 1 "code gate")
                                  (strength-pump 1 1)]})
 
+   "Maven"
+   {:abilities [(break-sub 2 1 "ICE")]
+    :events (let [maven {:silent (req true)
+                         :req (req (is-type? target "Program"))
+                         :effect (effect (update-breaker-strength card))}]
+              {:runner-install maven :trash maven :card-moved maven})
+    :strength-bonus (req (count (filter #(is-type? % "Program") (all-installed state :runner))))}
+
    "Morning Star"
    {:abilities [(break-sub 1 0 "barrier")]}
 
@@ -615,6 +650,24 @@
                [{:cost [:credit 3]
                  :effect (effect (pump card 2)) :pump 2
                  :msg "add 2 strength and break up to 2 subroutines"}])
+
+   "NaNotK"
+   (auto-icebreaker ["Sentry"]
+                    {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))
+                                              (fn [k ref old new]
+                                                (let [server (first (get-in @state [:run :server]))]
+                                                  (when (or
+                                                          ; run initiated or ended
+                                                          (not= (get-in old [:run])
+                                                                (get-in new [:run]))
+                                                          ; server configuration changed (redirected or newly installed ICE)
+                                                          (not= (get-in old [:corp :servers server :ices])
+                                                                (get-in new [:corp :servers server :ices])))
+                                                    (update-breaker-strength ref side card))))))
+                     :strength-bonus (req (if-let [numice (count run-ices)] numice 0))
+                     :leave-play (req (remove-watch state (keyword (str "nanotk" (:cid card)))))
+                     :abilities [(break-sub 1 1 "sentry")
+                                 (strength-pump 3 2)]})
 
    "Nfr"
    {:implementation "Adding power counter is manual"
