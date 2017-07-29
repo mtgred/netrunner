@@ -263,6 +263,9 @@
 (defn rezzed? [card]
   (:rezzed card))
 
+(defn faceup? [card]
+  (or (:seen card) (:rezzed card)))
+
 (defn installed? [card]
   (or (:installed card) (= :servers (first (:zone card)))))
 
