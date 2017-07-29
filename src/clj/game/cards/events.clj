@@ -1107,6 +1107,11 @@
                     (cancellable swappable-ids :sorted)))
 
      :effect (req
+               ;; Handle Ayla - Part 1
+               (when (-> @state :runner :identity :code (= "13012"))
+                 (doseq [c (-> @state :runner :identity :hosted)]
+                   (move state side c :temp-nvram)))
+
                (move state side (last (:discard runner)) :rfg)
                (disable-identity state side)
 
@@ -1122,7 +1127,12 @@
                (init-identity state side (get-in @state [:runner :identity]))
                (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire
                 if their once per turn condition was met this turn before Rebirth was played.
-                Please adjust your game state manually for the rest of this turn if necessary"))}
+                Please adjust your game state manually for the rest of this turn if necessary")
+
+               ;; Handle Ayla - Part 2
+               (when-not (empty? (-> @state :runner :temp-nvram))
+                 (doseq [c (-> @state :runner :temp-nvram)]
+                   (host state side (get-in @state [:runner :identity]) c {:facedown true}))))}
 
    "Recon"
    {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
