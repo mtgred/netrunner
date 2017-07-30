@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare trash-program trash-hardware trash-installed)
+(declare trash-program trash-hardware trash-resource-sub trash-installed)
 
 ;;;; Helper functions specific for ICE
 
@@ -1582,6 +1582,16 @@
                                     :delayed-completion true
                                     :msg (msg "force the Runner to lose " (:tag runner) " [Credits]")
                                     :effect (effect (lose :runner :credit (:tag runner)))})]}
+
+   "Tithonium"
+   {:alternative-cost [:forfeit]
+    :cannot-host true
+    :subroutines [trash-program
+                  {:label "Trash a resource and end the run"
+                   :msg "trash a resource and end the run"
+                   :effect (req (when-completed (resolve-ability state side trash-resource card nil)
+                                                (continue-ability state side (end-run state side)
+                                                                  card nil)))}]}
 
    "TL;DR"
    {:subroutines [{:msg "duplicate subroutines on next piece of ICE encountered this run"}]}

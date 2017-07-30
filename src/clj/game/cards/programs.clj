@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare can-host?)
+
 (def cards-programs
   {"Analog Dreamers"
    {:abilities [{:cost [:click 1]
@@ -33,10 +35,12 @@
                                                            (is-central? (second (:zone %)))
                                                            (is-remote? (second (:zone %))))
                                                          (ice? %)
+                                                         (can-host? %)
                                                          (= (last (:zone %)) :ices)
                                                          (not (some (fn [c] (has-subtype? c "Caïssa"))
                                                                     (:hosted %))))
                                                     (and (ice? %)
+                                                         (can-host? %)
                                                          (= (last (:zone %)) :ices)
                                                          (not (some (fn [c] (has-subtype? c :subtype "Caïssa"))
                                                                     (:hosted %)))))}
@@ -270,7 +274,7 @@
 
    "Egret"
    {:implementation "Added subtypes don't get removed when Egret is moved/trashed"
-    :hosting {:req #(and (ice? %) (rezzed? %))}
+    :hosting {:req #(and (ice? %) (can-host? %) (rezzed? %))}
     :msg (msg "make " (card-str state (:host card)) " gain Barrier, Code Gate and Sentry subtypes")
     :effect (req (when-let [h (:host card)]
                    (update! state side (assoc-in card [:special :installing] true))
@@ -570,7 +574,7 @@
                  :once :per-turn}]}
 
    "Parasite"
-   {:hosting {:req #(and (ice? %) (rezzed? %))}
+   {:hosting {:req #(and (ice? %) (can-host? %) (rezzed? %))}
     :effect (req (when-let [h (:host card)]
                    (update! state side (assoc-in card [:special :installing] true))
                    (update-ice-strength state side h)
@@ -604,6 +608,7 @@
     :abilities [{:label "Host Pawn on the outermost ICE of a central server"
                  :prompt "Host Pawn on the outermost ICE of a central server" :cost [:click 1]
                  :choices {:req #(and (ice? %)
+                                      (can-host? %)
                                       (= (last (:zone %)) :ices)
                                       (is-central? (second (:zone %))))}
                  :msg (msg "host it on " (card-str state target))
@@ -611,6 +616,7 @@
                 {:label "Advance to next ICE"
                  :prompt "Choose the next innermost ICE to host Pawn on it"
                  :choices {:req #(and (ice? %)
+                                      (can-host? %)
                                       (= (last (:zone %)) :ices)
                                       (is-central? (second (:zone %))))}
                  :msg (msg "host it on " (card-str state target))
@@ -693,8 +699,10 @@
                                                              (= (ice-index state %) icepos))
                                                          (= (last (:zone %)) :ices)
                                                          (ice? %)
+                                                         (can-host? %)
                                                          (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
                                                     (and (ice? %)
+                                                         (can-host? %)
                                                          (= (last (:zone %)) :ices)
                                                          (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
                                   :msg (msg "host it on " (card-str state target))

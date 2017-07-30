@@ -1,5 +1,7 @@
 (in-ns 'game.core)
 
+(declare can-host?)
+
 (def cards-operations
   {"24/7 News Cycle"
    {:req (req (pos? (count (:scored corp))))
@@ -198,6 +200,7 @@
    "Bioroid Efficiency Research"
    {:implementation "Derez is manual"
     :choices {:req #(and (ice? %)
+                         (can-host? %)
                          (has-subtype? % "Bioroid")
                          (installed? %)
                          (not (rezzed? %)))}
@@ -792,13 +795,13 @@
 
    "Oversight AI"
    {:implementation "Trashing ICE is manual"
-    :choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
+    :choices {:req #(and (ice? %) (can-host? %)(not (rezzed? %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (final-effect (rez target {:ignore-cost :all-costs})
                           (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
 
    "Patch"
-   {:choices {:req #(and (ice? %) (rezzed? %))}
+   {:choices {:req #(and (ice? %) (can-host? %) (rezzed? %))}
     :msg (msg "give +2 strength to " (card-str state target))
     :effect (final-effect (host target (assoc card :zone [:discard] :seen true))
                           (update-ice-strength (get-card state target)))
@@ -1187,7 +1190,7 @@
     :effect (effect (gain :credit (* 3 (count (:scored runner)))))}
 
    "Sub Boost"
-   {:choices {:req #(and (ice? %) (rezzed? %))}
+   {:choices {:req #(and (ice? %) (can-host? %) (rezzed? %))}
     :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
     :effect (effect (update! (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
                     (update-ice-strength target)
@@ -1358,6 +1361,7 @@
 
    "Wetwork Refit"
    {:choices {:req #(and (ice? %)
+                         (can-host? %)
                          (has-subtype? % "Bioroid")
                          (rezzed? %))}
     :msg (msg "give " (card-str state target) "\"[Subroutine] Do 1 brain damage\" before all its other subroutines")
