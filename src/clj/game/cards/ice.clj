@@ -1585,6 +1585,7 @@
 
    "Tithonium"
    {:alternative-cost [:forfeit]
+    :implementation "Does not handle UFAQ for Pawn or Blackguard interaction"
     :cannot-host true
     :subroutines [trash-program
                   {:label "Trash a resource and end the run"
