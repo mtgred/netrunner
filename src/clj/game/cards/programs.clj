@@ -209,7 +209,7 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target) ", lowering its cost by 1 [Credit]")
                  :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target) :credit 1)
+                                 (gain :memory (:memoryunits target) :credit (if (> (:cost target) 0) 1 0))
                                  (update! (assoc (get-card state card) :dheg-prog (:cid target))))}]
     :events {:card-moved {:req (req (= (:cid target) (:dheg-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :dheg-prog))
