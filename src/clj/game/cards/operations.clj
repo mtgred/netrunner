@@ -179,7 +179,7 @@
                         :effect (req (doseq [c targets]
                                        (trash state :runner c {:unpreventable true}))
                                      (gain state :runner :credit (count targets))
-                                     (system-msg state :runner (str "trashes " (join ", " (map :title targets))
+                                     (system-msg state :runner (str "trashes " (join ", " (map :title (sort-by :title targets)))
                                                                     " and gains " (count targets) " [Credits]"))
                                      (clear-wait-prompt state :corp))}
                       card nil)
@@ -245,7 +245,7 @@
    {:choices {:max 5
               :req #(and (= (:side %) "Corp")
                          (in-hand? %))}
-    :msg (msg "reveal " (join ", " (map :title targets)) " and gain " (* 2 (count targets)) " [Credits]")
+    :msg (msg "reveal " (join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
     :effect (final-effect (gain :credit (* 2 (count targets))))}
 
    "Cerebral Cast"
@@ -451,7 +451,7 @@
 
    "Freelancer"
    {:req (req tagged)
-    :msg (msg "trash " (join ", " (map :title targets)))
+    :msg (msg "trash " (join ", " (map :title (sort-by :title targets))))
     :choices {:max 2
               :req #(and (installed? %)
                          (is-type? % "Resource"))}
@@ -546,7 +546,7 @@
                       :all true
                       :req #(and (installed? %)
                                  (not (is-type? % "Program")))}
-            :msg (msg "trash " (join ", " (map :title targets)))
+            :msg (msg "trash " (join ", " (map :title (sort-by :title targets))))
             :effect (req (doseq [c targets]
                            (trash state side c)))
             :unsuccessful {:msg "take 1 bad publicity"
@@ -607,7 +607,7 @@
               :effect (req (let [x (- target (second targets))]
                              (system-msg state :corp
                                          (str "reveals the Runner's Grip ( "
-                                              (join ", " (map :title (:hand runner)))
+                                              (join ", " (map :title (sort-by :title (:hand runner))))
                                               " ) and can trash up to " x " resources or events"))
                              (continue-ability state side (iop (dec x)) card nil)))
               :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}})
@@ -641,7 +641,7 @@
                    (continue-ability state side
                      {:prompt "Choose any number of rezzed cards to trash"
                       :choices {:max n :req #(and (rezzed? %) (not (is-type? % "Agenda")))}
-                      :msg (msg "trash " (join ", " (map :title targets)) " and gain " (* (count targets) 3) " [Credits]")
+                      :msg (msg "trash " (join ", " (map :title (sort-by :title targets))) " and gain " (* (count targets) 3) " [Credits]")
                       :effect (req (doseq [c targets]
                                      (trash state side c))
                                    (gain state side :credit (* (count targets) 3)))}
@@ -1053,7 +1053,7 @@
                                     (not (card-is? target :type "Identity"))))}
     :effect (req (system-msg state side
                              (str "uses Salem's Hospitality to reveal the Runner's Grip ( "
-                                  (join ", " (map :title (:hand runner)))
+                                  (join ", " (map :title (sort-by :title (:hand runner))))
                                   " ) and trash any copies of " target))
                  (doseq [c (filter #(= target (:title %)) (:hand runner))]
                    (trash state side c {:unpreventable true})))}
