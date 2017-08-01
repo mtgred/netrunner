@@ -256,7 +256,7 @@
    {:effect (effect (run :rd nil card)
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
-                              :effect (effect (access-bonus (min 4 (:memory runner))))}
+                              :effect (effect (access-bonus (max 0 (min 4 (:memory runner))))) }
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Demolition Run"
