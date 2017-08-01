@@ -1519,6 +1519,42 @@
     (play-from-hand state :corp "Successful Demonstration")
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
 
+(deftest transparency-initiative
+  ;; Transparency Initiative - Full test
+  (do-game
+    (new-game (default-corp [(qty "Transparency Initiative" 1) (qty "Oaktown Renovation" 1)
+                             (qty "Project Atlas" 1) (qty "Hostile Takeover" 1) (qty "Casting Call" 1)])
+              (default-runner))
+    (core/gain state :corp :click 5)
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
+    (play-from-hand state :corp "Casting Call")
+    (prompt-select :corp (find-card "Project Atlas" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (let [oaktown (get-content state :remote1 0)
+          atlas (get-content state :remote2 0)
+          hostile (get-content state :remote3 0)]
+      (play-from-hand state :corp "Transparency Initiative")
+      (prompt-select :corp (refresh oaktown))
+      ;; doesn't work on face-up agendas
+      (is (= 0 (count (:hosted (refresh oaktown)))))
+      (prompt-select :corp (refresh atlas))
+      (is (= 1 (count (:hosted (refresh atlas)))) "Casting Call")
+      ;; works on facedown agenda
+      (prompt-select :corp (refresh hostile))
+      (is (= 1 (count (:hosted (refresh hostile)))))
+      ;; gains Public subtype
+      (is (core/has-subtype? (refresh hostile) "Public"))
+      ;; gain 1 credit when advancing
+      (is (= 5 (:credit (get-corp))))
+      (core/advance state :corp {:card (refresh hostile)})
+      (is (= 5 (:credit (get-corp))))
+      ;; make sure advancing other agendas doesn't gain 1
+      (core/advance state :corp {:card (refresh oaktown)})
+      (is (= 6 (:credit (get-corp))) "Transparency initiative didn't fire")
+      (core/advance state :corp {:card (refresh atlas)})
+      (is (= 5 (:credit (get-corp))) "Transparency initiative didn't fire"))))
+
 (deftest wetwork-refit
   ;; Wetwork Refit - Only works on bioroid ice and adds a subroutine
   (do-game
