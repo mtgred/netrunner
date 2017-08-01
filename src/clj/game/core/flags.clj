@@ -257,6 +257,11 @@
   [card subtype]
   (has? card :subtype subtype))
 
+(defn can-host?
+  "Checks if the specified card is able to host other cards"
+  [card]
+  (or (not (rezzed? card)) (not (:cannot-host (card-def card)))))
+
 (defn ice? [card]
   (is-type? card "ICE"))
 

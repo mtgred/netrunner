@@ -203,7 +203,7 @@
                          (not (rezzed? %)))}
     :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
     :effect (final-effect (rez target {:ignore-cost :all-costs})
-                          (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
+                          (host (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))}
 
    "Biotic Labor"
    {:msg "gain [Click][Click]"
@@ -795,12 +795,12 @@
     :choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}
     :msg (msg "rez " (:title target) " at no cost")
     :effect (final-effect (rez target {:ignore-cost :all-costs})
-                          (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
+                          (host (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))}
 
    "Patch"
    {:choices {:req #(and (ice? %) (rezzed? %))}
     :msg (msg "give +2 strength to " (card-str state target))
-    :effect (final-effect (host target (assoc card :zone [:discard] :seen true))
+    :effect (final-effect (host target (assoc card :zone [:discard] :seen true :condition true))
                           (update-ice-strength (get-card state target)))
     :events {:pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (ice-strength-bonus 2 target))}}}
@@ -1192,7 +1192,7 @@
     :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
     :effect (effect (update! (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
                     (update-ice-strength target)
-                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))}
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))}
 
    "Subcontract"
    (letfn [(sc [i sccard]
@@ -1363,7 +1363,7 @@
                          (rezzed? %))}
     :msg (msg "give " (card-str state target) "\"[Subroutine] Do 1 brain damage\" before all its other subroutines")
     :effect (effect (update! (assoc target :subroutines (cons (do-brain-damage 1) (:subroutines target))))
-                    (host (get-card state target) (assoc card :zone [:discard] :seen true)))
+                    (host (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
     :leave-play (effect (update! (assoc (:host card) :subroutines (rest (:subroutines (:host card))))))}
 
    "Witness Tampering"

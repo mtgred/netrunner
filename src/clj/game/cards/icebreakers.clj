@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon)
+(declare add-icon remove-icon can-host?)
 
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
@@ -580,10 +580,12 @@
                                                                (not= 1 (abs (- (ice-index state %) icepos))))
                                                              (not= (:zone %) (:zone (:host k))))
                                                          (ice? %)
+                                                         (can-host? %)
                                                          (installed? %)
                                                          (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %))))
                                                     (and (ice? %)
                                                          (installed? %)
+                                                         (can-host? %)
                                                          (not (some (fn [c] (has? c :subtype "Caïssa")) (:hosted %)))))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}

@@ -15,6 +15,13 @@
                                           (is-type? % "Hardware"))}
                      :effect (effect (trash target {:cause :subroutine}))})
 
+(def trash-resource-sub {:prompt "Choose a resource to trash"
+                         :label "Trash a resource"
+                         :msg (msg "trash " (:title target))
+                         :choices {:req #(and (installed? %)
+                                              (is-type? % "Resource"))}
+                         :effect (effect (trash target {:cause :subroutine}))})
+
 (def trash-installed {:prompt "Choose an installed card to trash"
                       :player :runner
                       :label "Force the Runner to trash an installed card"

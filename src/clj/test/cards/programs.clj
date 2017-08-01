@@ -635,6 +635,23 @@
     (card-ability state :runner (get-resource state 0) 1)
     (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
 
+(deftest reaver-fcc
+  ;; Reaver / Freelance Coding Construct - should not draw when trash from hand #2671
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Reaver" 9) (qty "Imp" 1) (qty "Snitch" 1) (qty "Freelance Coding Contract" 1)]))
+    (starting-hand state :runner ["Reaver" "Imp" "Snitch" "Freelance Coding Contract"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Reaver")
+    (is (= 3 (count (:hand (get-runner)))) "Four cards in hand")
+    (is (= 3 (:credit (get-runner))) "3 credits")
+    (play-from-hand state :runner "Freelance Coding Contract")
+    (prompt-select :runner (find-card "Snitch" (:hand (get-runner))))
+    (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
+    (prompt-choice :runner "Done")
+    (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
+    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")))
+
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
   (do-game
