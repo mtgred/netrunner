@@ -157,13 +157,17 @@
                                                    (lose state side :tag 1)))} card nil))}]}
 
    "Clone Chip"
-   {:abilities [{:prompt "Choose a program to install from your Heap" :msg (msg "install " (:title target))
+   {:abilities [{:prompt "Choose a program to install from your Heap"
                  :priority true :show-discard true
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (not (install-locked? state side))))
                  :choices {:req #(and (is-type? % "Program")
                                       (= (:zone %) [:discard]))}
-                 :effect (effect (trash card {:cause :ability-cost}) (runner-install target))}]}
+                 :effect (req (when (>= (:credit runner) (:cost target))
+                                    (do
+                                      (trash state side card {:cause :ability-cost})
+                                      (system-msg state side (str "uses " (:title card) " to install " (:title target)))
+                                      (runner-install state side target))))}]}
 
    "Comet"
    {:in-play [:memory 1]

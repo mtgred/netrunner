@@ -114,6 +114,30 @@
         (is (not (nil? ds)))
         (is (= (:title ds) "Datasucker"))))))
 
+(deftest clone-chip-dont-install-choices-runner-cant-afford
+  ;; Test clone chip usage - dont show inavalid choices
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Inti" 1) (qty "Magnum Opus" 1) (qty "Clone Chip" 1)]))
+    (take-credits state :corp)
+    (trash-from-hand state :runner "Inti")
+    (trash-from-hand state :runner "Magnum Opus")
+    (play-from-hand state :runner "Clone Chip")
+    (is (= (get-in @state [:runner :click]) 3) "Runner has 3 clicks left")
+    (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Magnum Opus" (:discard (get-runner))))
+      (is (nil? (get-in @state [:runner :rig :program 0])) "No program was installed"))
+    (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (is (not (nil? chip)) "Clone Chip is still installed")
+      (is (= (get-in @state [:runner :click]) 3) "Runner has 3 clicks left")
+      (card-ability state :runner chip 0)
+      (prompt-select :runner (find-card "Inti" (:discard (get-runner))))
+      (let [inti (get-in @state [:runner :rig :program 0])]
+        (is (not (nil? inti)) "Program was installed")
+        (is (= (:title inti) "Inti") "Program is Inti")
+        (is (= (get-in @state [:runner :click]) 3) "Runner has 3 clicks left")))))
+
 (deftest comet-event-play
   ;; Comet - Play event without spending a click after first event played
   (do-game
