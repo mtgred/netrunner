@@ -592,7 +592,18 @@
    "Data Loop"
    {:implementation "Encounter effect is manual"
     :subroutines [end-the-run-if-tagged
-                  end-the-run]}
+                  end-the-run]
+    :runner-abilities [{:label "Add 2 cards from your Grip to the top of the Stack"
+                        :req (req (pos? (count (:hand runner))))
+                        :effect (req (let [n (min 2 (count (:hand runner)))]
+                                       (resolve-ability state side
+                                         {:prompt (msg "Choose " n " cards in your Grip to add to the top of the Stack (first card targeted will be topmost)")
+                                          :choices {:max n :all true
+                                                    :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                                          :effect (req (doseq [c targets]
+                                                         (move state :runner c :deck {:front true}))
+                                                       (system-msg state :runner (str "adds " n " cards from their Grip to the top of the Stack")))}
+                                        card nil)))}]}
 
    "Data Mine"
    {:subroutines [{:msg "do 1 net damage"
@@ -1079,6 +1090,27 @@
    "Lockdown"
    {:subroutines [{:label "The Runner cannot draw cards for the remainder of this turn"
                    :msg "prevent the Runner from drawing cards" :effect (effect (prevent-draw))}]}
+
+   "Loki"
+   {:implementation "Encounter effects not implemented"
+    :subroutines [{:label "End the run unless the Runner shuffles their Grip into the Stack"
+                   :effect (req (if (zero? (count (:hand runner)))
+                                    (do (end-run state side)
+                                        (system-msg state :corp (str "uses Loki to end the run")))
+                                    (do (show-wait-prompt state :corp "Runner to decide to shuffle their Grip into the Stack")
+                                        (resolve-ability state :runner
+                                          {:optional
+                                           {:prompt "Reshuffle your Grip into the Stack?"
+                                            :player :runner
+                                            :yes-ability {:effect (req (doseq [c (:hand runner)]
+                                                                         (move state :runner c :deck))
+                                                                       (shuffle! state :runner :deck)
+                                                                       (system-msg state :runner (str "shuffles their Grip into their Stack"))
+                                                                       (clear-wait-prompt state :corp))}
+                                            :no-ability {:effect (effect (end-run)
+                                                                         (system-msg :runner (str "doesn't shuffle their Grip into their Stack. Loki ends the run"))
+                                                                         (clear-wait-prompt :corp))}}}
+                                         card nil))))}]}
 
    "Lotus Field"
    {:subroutines [end-the-run]
