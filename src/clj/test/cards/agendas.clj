@@ -625,7 +625,7 @@
     (let [chip (get-in @state [:runner :rig :hardware 0])]
       (card-ability state :runner chip 0)
       (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
-      (is (last-log-contains? state "Patron")
+      (is (second-last-log-contains? state "Patron")
           "Personality Profiles trashed card name is in log")
       (is (= 3 (count (:discard (get-runner))))))))
 
