@@ -1622,7 +1622,7 @@
                                         (is-type? % "Resource"))}
                    :effect (effect (trash target {:reason :subroutine})
                                    (end-run))}]}
-   
+
    "TL;DR"
    {:subroutines [{:msg "duplicate subroutines on next piece of ICE encountered this run"}]}
 

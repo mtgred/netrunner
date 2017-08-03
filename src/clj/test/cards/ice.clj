@@ -780,9 +780,7 @@
         (card-subroutine state :corp ti 1)
         (prompt-select :corp (refresh wast))
         (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
-        (is (not (:run @state)) "Run ended")
-
-        ))))
+        (is (not (:run @state)) "Run ended")))))
 
 (deftest tmi
   ;; TMI ICE test
