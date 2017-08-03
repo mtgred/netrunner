@@ -743,7 +743,7 @@
   ;; Forfeit option as rez cost, can have hosted condition counters
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Tithonium" 1) (qty "Patch" 1)])
-              (default-runner [(qty "Pawn" 1)]))
+              (default-runner [(qty "Pawn" 1) (qty "Wasteland" 1)]))
     (core/gain state :corp :click 10)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (play-from-hand state :corp "Tithonium" "HQ")
@@ -768,12 +768,21 @@
       (core/derez state :corp (refresh ti))
       (is (= 1 (count (:hosted (refresh ti)))) "1 card on Tithonium")
       (play-from-hand state :runner "Pawn")
-      (let [pawn (get-program state 0)]
+      (play-from-hand state :runner "Wasteland")
+      (let [pawn (get-program state 0)
+            wast (get-resource state 0)]
         (card-ability state :runner (refresh pawn) 0)
         (prompt-select :runner (refresh ti))
         (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
         (core/derez state :corp (refresh ti))
-        (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")))))
+        (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
+        (run-on state "HQ")
+        (card-subroutine state :corp ti 1)
+        (prompt-select :corp (refresh wast))
+        (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
+        (is (not (:run @state)) "Run ended")
+
+        ))))
 
 (deftest tmi
   ;; TMI ICE test
