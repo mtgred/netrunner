@@ -812,6 +812,7 @@
              {:prompt "Choose a Program to keep"
               :choices (cons "None" (filter #(= "Program" (:type %)) cards))
               :delayed-completion true
+              :msg (msg (if (= target "None") "take no card to their Grip" (str "take " (-> target :title) " to their Grip")))
               :effect (req (when (not= target "None")
                              (move state side target :hand))
                            (if (not-empty cards)
