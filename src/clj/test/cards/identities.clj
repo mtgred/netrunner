@@ -495,6 +495,25 @@
     (prompt-choice :runner "Steal")
     (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage from steal")))
 
+(deftest jinteki-potential-unleashed
+  ;; PU - when the runner takes at least one net damage, mill 1 from their deck
+  (do-game
+    (new-game (make-deck "Jinteki: Potential Unleashed" [(qty "Philotic Entanglement" 1) (qty "Neural EMP" 1) (qty "Braintrust" 3)])
+              (default-runner [(qty "Employee Strike" 10)]))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (run-empty-server state "Server 2")
+    (prompt-choice :runner "Steal")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Philotic Entanglement" "New remote")
+    (score-agenda state :corp (get-content state :remote3 0))
+    (is (= 3 (count (:discard (get-runner)))))
+    (play-from-hand state :corp "Neural EMP")
+    (is (= 5 (count (:discard (get-runner)))))))
+
 (deftest jinteki-replicating-perfection
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
   (do-game

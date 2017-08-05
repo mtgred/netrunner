@@ -125,6 +125,29 @@
     (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
     (is (= 4 (:memory (get-runner))) "Memory back to 4")))
 
+(deftest apocalype-full-immersion-recstudio
+  ;; Apocalypse with Full Immersion - no duplicate cards in heap #2606
+  (do-game
+    (new-game
+      (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Sandburg" 1)
+                     (qty "Oaktown Renovation" 1)])
+      (default-runner  [(qty "Apocalypse" 1)]))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [fir (get-content state :remote1 0)]
+      (core/rez state :corp fir)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Sandburg" (:hand (get-corp))))
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (run-empty-server state "R&D")
+      (run-empty-server state "HQ")
+      (play-from-hand state :runner "Apocalypse")
+      (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
+      (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
+      (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap"))))
+
 (deftest apocalypse-in-play-ability
   ;; Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains
   (do-game
@@ -495,6 +518,24 @@
     (play-from-hand state :runner "Employee Strike")
     (take-credits state :runner)
     (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
+
+(deftest employee-strike-pu-philotic
+  ;; Employee Strike - vs PU/Philotic - test for #2688
+  (do-game
+    (new-game (make-deck "Jinteki: Potential Unleashed" [(qty "Philotic Entanglement" 1) (qty "Braintrust" 2)])
+              (default-runner [(qty "Employee Strike" 10)]))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (run-empty-server state "Server 2")
+    (prompt-choice :runner "Steal")
+    (play-from-hand state :runner "Employee Strike")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Philotic Entanglement" "New remote")
+    (score-agenda state :corp (get-content state :remote3 0))
+    (is (= 3 (count (:discard (get-runner)))) "Discard is 3 cards - 2 from Philotic, 1 EStrike.  Nothing from PU mill")))
 
 (deftest encore
   ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.

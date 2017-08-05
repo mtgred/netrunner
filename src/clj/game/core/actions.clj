@@ -389,6 +389,9 @@
           state :corp (make-eid state) :agenda-scored
           {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
                                           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+                                          ; This is to handle Employee Strike with damage IDs #2688
+                                          (when (:disable-id (card-def current))
+                                            (swap! state assoc-in [:corp :disable-id] true))
                                           (trash state side current)))}
            :card-ability (card-as-handler c)
            :after-active-player {:effect (req (let [c (get-card state c)
@@ -398,6 +401,7 @@
                                                 (system-msg state :corp (str "scores " (:title c) " and gains " points
                                                                              " agenda point" (when (> points 1) "s")))
                                                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+                                                (swap! state dissoc [:corp :disable-id])
                                                 (gain-agenda-point state :corp points)
                                                 (play-sfx state side "agenda-score")))}}
           c)))))

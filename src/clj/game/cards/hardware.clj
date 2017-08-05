@@ -164,10 +164,9 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (= (:zone %) [:discard]))}
                  :effect (req (when (>= (:credit runner) (:cost target))
-                                    (do
-                                      (trash state side card {:cause :ability-cost})
-                                      (system-msg state side (str "uses " (:title card) " to install " (:title target)))
-                                      (runner-install state side target))))}]}
+                                    (do (runner-install state side target)
+                                        (trash state side card {:cause :ability-cost})
+                                        (system-msg state side (str "uses " (:title card) " to install " (:title target))))))}]}
 
    "Comet"
    {:in-play [:memory 1]

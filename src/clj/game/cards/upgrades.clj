@@ -724,12 +724,14 @@
    {:events
     {:pre-resolve-damage
      {:once :per-run
+      :delayed-completion true
       :req (req (and this-server (= target :net) (> (last targets) 0) (can-pay? state :corp nil [:credit 2])))
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
                    (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")
                    (resolve-ability state side
                      {:optional {:prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?") :player :corp
+                                 :delayed-completion true
                                  :yes-ability {:msg "do 1 brain damage instead of net damage"
                                                :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                                             (clear-wait-prompt state :runner)
