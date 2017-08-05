@@ -510,9 +510,9 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Philotic Entanglement" "New remote")
     (score-agenda state :corp (get-content state :remote3 0))
-    (= 3 (count (:discard (get-runner))))
+    (is (= 3 (count (:discard (get-runner)))))
     (play-from-hand state :corp "Neural EMP")
-    (= 5 (count (:discard (get-runner))))))
+    (is (= 5 (count (:discard (get-runner)))))))
 
 (deftest jinteki-replicating-perfection
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central

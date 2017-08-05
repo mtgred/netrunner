@@ -499,14 +499,20 @@
 (deftest employee-strike-pu-philotic
   ;; Employee Strike - vs PU/Philotic - test for #2688
   (do-game
-    (new-game (make-deck "Jinteki: Potential Unleashed" [(qty "Philotic Entanglement" 1)])
+    (new-game (make-deck "Jinteki: Potential Unleashed" [(qty "Philotic Entanglement" 1) (qty "Braintrust" 2)])
               (default-runner [(qty "Employee Strike" 10)]))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (play-from-hand state :corp "Braintrust" "New remote")
     (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (run-empty-server state "Server 2")
+    (prompt-choice :runner "Steal")
     (play-from-hand state :runner "Employee Strike")
     (take-credits state :runner)
     (play-from-hand state :corp "Philotic Entanglement" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (= 0 (count (:discard (get-runner))))))
+    (score-agenda state :corp (get-content state :remote3 0))
+    (is (= 3 (count (:discard (get-runner)))) "Discard is 3 cards - 2 from Philotic, 1 EStrike.  Nothing from PU mill")))
 
 (deftest encore
   ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.
