@@ -789,6 +789,26 @@
                      (pump state side c 2 :all-run)))
                  (game.core/run state side (make-eid state) target nil card))}
 
+   "Leave No Trace"
+   {:prompt "Choose a server"
+    :msg "make a run and derez any ICE that are rezzed during this run"
+    :choices (req runnable-servers)
+    :delayed-completion true
+    :effect (req
+              (let [old-ice (filter #(and (rezzed? %) (is-type? % "ICE")) (all-installed state :corp))]
+                (swap! state assoc :lnt old-ice)
+                (register-events state side (:events (card-def card)) (assoc card :zone '(:discard)))
+                (game.core/run state side (make-eid state) target nil card)))
+    :events {:run-ends {:effect (req (let [new (set (filter #(and (rezzed? %) (is-type? % "ICE")) (all-installed state :corp)))
+                                           old (set (:lnt @state))
+                                           diff (seq (clojure.set/difference new old))]
+                                       (doseq [ice diff]
+                                         (derez state side ice))
+                                       (when-not (empty? diff)
+                                         (system-msg state side (str "derezzes " (join ", " (map :title diff)) " via Leave No Trace")))
+                                       (swap! state dissoc :lnt)
+                                       (unregister-events state side card)))}}}
+
    "Legwork"
    {:effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
