@@ -496,6 +496,18 @@
     (take-credits state :runner)
     (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
 
+(deftest employee-strike-pu-philotic
+  ;; Employee Strike - vs PU/Philotic - test for #2688
+  (do-game
+    (new-game (make-deck "Jinteki: Potential Unleashed" [(qty "Philotic Entanglement" 1)])
+              (default-runner [(qty "Employee Strike" 10)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Philotic Entanglement" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (= 0 (count (:discard (get-runner))))))
+
 (deftest encore
   ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.
   (do-game
