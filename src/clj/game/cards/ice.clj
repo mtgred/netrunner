@@ -311,7 +311,7 @@
    {:subroutines [end-the-run]}
 
    "Battlement"
-   {:subroutines [end-the-run end-the-run]}
+   {:subroutines [end-the-run]}
 
    "Bloodletter"
    {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
@@ -1616,7 +1616,7 @@
     :cannot-host true
     :subroutines [trash-program
                   {:label "Trash a resource and end the run"
-                   :msg (msg "trash a " (:title target) " and end the run")
+                   :msg (msg "trash " (:title target) " and end the run")
                    :delayed-completion true
                    :choices {:req #(and (installed? %)
                                         (is-type? % "Resource"))}
