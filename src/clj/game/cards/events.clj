@@ -32,11 +32,17 @@
                            ;; otherwise, auto-killing servers would move the cards to the next server
                            ;; so they could no longer be trashed in the same loop
     :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
-    :effect (req (let [allcorp (->> (all-installed state :corp)
+    :effect (req (let [ai (all-installed state :corp)
+                       onhost (filter #(= '(:onhost) (:zone %)) ai)
+                       allcorp (->> ai
+                                    (remove #(= '(:onhost) (:zone %)))
                                     (sort-by #(vec (:zone %)))
                                     (reverse))]
+                   ; Trash hosted cards first so they don't get trashed twice
+                   (doseq [c onhost]
+                     (trash state side c))
                    (doseq [c allcorp]
-                     (trash state side c)))
+                     (trash state side (get-card state c))))
 
                  ;; do hosted cards first so they don't get trashed twice
                  (doseq [c (all-installed state :runner)]

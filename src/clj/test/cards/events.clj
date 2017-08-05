@@ -125,6 +125,29 @@
     (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
     (is (= 4 (:memory (get-runner))) "Memory back to 4")))
 
+(deftest apocalype-full-immersion-recstudio
+  ;; Apocalypse with Full Immersion - no duplicate cards in heap #2606
+  (do-game
+    (new-game
+      (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Sandburg" 1)
+                     (qty "Oaktown Renovation" 1)])
+      (default-runner  [(qty "Apocalypse" 1)]))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [fir (get-content state :remote1 0)]
+      (core/rez state :corp fir)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Sandburg" (:hand (get-corp))))
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (run-empty-server state "R&D")
+      (run-empty-server state "HQ")
+      (play-from-hand state :runner "Apocalypse")
+      (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
+      (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
+      (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap"))))
+
 (deftest apocalypse-in-play-ability
   ;; Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains
   (do-game
