@@ -1199,6 +1199,31 @@
    {:effect (effect (show-wait-prompt :corp "Runner to spend credits")
                     (continue-ability (runner-choice (inc (min 2 (:credit runner)))) card nil))})
 
+   "Rip Deal"
+   {:effect (effect (run :hq {:req (req (= target :hq))
+                              :replace-access
+                                   {:delayed-completion true
+                                    :effect (req (let [n (min (-> @state :corp :hand count) (access-count state side :hq-access))
+                                                       root (-> @state :corp :servers :hq :content count)
+                                                       heap (-> @state :runner :discard count (- 1))]
+                                                   (move state side (find-cid (:cid card) (:discard runner)) :rfg)
+                                                   (if (pos? heap)
+                                                     (resolve-ability state side
+                                                                      {:show-discard true
+                                                                       :prompt (str "Choose " (min n heap) " card(s) to move from the Heap to your Grip")
+                                                                       :delayed-completion true
+                                                                       :msg (msg "take " (join ", " (map :title targets)) " from their Heap to their Grip")
+                                                                       :choices {:max (min n heap)
+                                                                                 :all true
+                                                                                 :req #(and (= (:side %) "Runner")
+                                                                                            (in-discard? %))}
+                                                                       :effect (req (doseq [c targets] (move state side c :hand))
+                                                                                    (do-access state side eid (:server run) {:hq-root-only true}))} card nil)
+                                                     (resolve-ability state side
+                                                                      {:delayed-completion true
+                                                                       :msg (msg "take no cards from their Heap to their Grip")
+                                                                       :effect (req (do-access state side eid (:server run) {:hq-root-only true}))} card nil))))}} card))}
+
    "Rumor Mill"
    (letfn [(eligible? [card] (and (:uniqueness card)
                                   (or (card-is? card :type "Asset")
