@@ -1204,7 +1204,6 @@
                               :replace-access
                                    {:delayed-completion true
                                     :effect (req (let [n (min (-> @state :corp :hand count) (access-count state side :hq-access))
-                                                       root (-> @state :corp :servers :hq :content count)
                                                        heap (-> @state :runner :discard count (- 1))]
                                                    (move state side (find-cid (:cid card) (:discard runner)) :rfg)
                                                    (if (pos? heap)
