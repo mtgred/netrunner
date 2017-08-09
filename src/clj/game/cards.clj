@@ -108,6 +108,29 @@
     (update-ice-strength state side a-new)
     (update-ice-strength state side b-new)))
 
+(defn card-index
+  "Get the zero-based index of the given card in its server's list of content. Same as ice-index"
+  [state card]
+  (first (keep-indexed #(when (= (:cid %2) (:cid card)) %1) (get-in @state (cons :corp (:zone card))))))
+
+(defn swap-installed
+  "Swaps two installed corp cards - like swap ICE except no strength update"
+  [state side a b]
+  (let [a-index (card-index state a)
+        b-index (card-index state b)
+        a-new (assoc a :zone (:zone b))
+        b-new (assoc b :zone (:zone a))]
+    (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
+    (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
+    (doseq [newcard [a-new b-new]]
+      (doseq [h (:hosted newcard)]
+        (let [newh (-> h
+                       (assoc-in [:zone] '(:onhost))
+                       (assoc-in [:host :zone] (:zone newcard)))]
+          (update! state side newh)
+          (unregister-events state side h)
+          (register-events state side (:events (card-def newh)) newh))))))
+
 ;; Load all card definitions into the current namespace.
 (load "cards/agendas")
 (load "cards/assets")
