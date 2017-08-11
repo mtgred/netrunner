@@ -799,7 +799,10 @@
                            (if (> n t)
                              (continue-ability state side (wt card n (inc t)) card nil)
                              (do (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid card))))})]
+                                 (effect-completed state side eid card)))
+                           ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
+                           (when (zero? (count (cards-to-access state side (get-in @state [:run :server]))))
+                             (handle-end-run state side)))})]
    {:implementation "Does not handle UFAQ interaction with Singularity"
     :events {:runner-trash {:delayed-completion true
                             :req (req (= (-> card :zone second) (-> target :zone second)))
