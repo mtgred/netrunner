@@ -378,7 +378,9 @@
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
                     (handle-access state side eid cards)
-                    (let [from-hq (access-count state side :hq-access)]
+                    (let [from-hq (access-count state side :hq-access)
+                          ; Handle root only access - no cards to access in hand
+                          from-hq (if (some #(= '[:hand] (:zone %)) cards) from-hq 0)]
                       (continue-ability state side (access-helper-hq state from-hq #{}) card nil)))
                   (effect-completed state side eid)))})
 
@@ -544,18 +546,20 @@
 
 (defn do-access
   "Starts the access routines for the run's server."
-  [state side eid server]
-  (when-completed (trigger-event-sync state side :pre-access (first server))
-                  (do (let [cards (cards-to-access state side server)
-                            n (count cards)]
-                        ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
-                        (if (or (= (get-in @state [:run :max-access]) 0)
-                                (empty? cards))
-                          (system-msg state side "accessed no cards during the run")
-                          (do (when-completed (resolve-ability state side (choose-access cards server) nil nil)
-                                              (effect-completed state side eid nil))
-                              (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
-                      (handle-end-run state side))))
+  ([state side eid server] (do-access state side eid server nil))
+  ([state side eid server {:keys [hq-root-only] :as args}]
+   (when-completed (trigger-event-sync state side :pre-access (first server))
+                   (do (let [cards (cards-to-access state side server)
+                             cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
+                             n (count cards)]
+                         ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
+                         (if (or (= (get-in @state [:run :max-access]) 0)
+                                 (empty? cards))
+                           (system-msg state side "accessed no cards during the run")
+                           (do (when-completed (resolve-ability state side (choose-access cards server) nil nil)
+                                               (effect-completed state side eid nil))
+                               (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
+                       (handle-end-run state side)))))
 
 (defn replace-access
   "Replaces the standard access routine with the :replace-access effect of the card"

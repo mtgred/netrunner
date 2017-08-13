@@ -1036,17 +1036,29 @@
     :msg "shuffle a card from HQ into R&D"
     :effect (final-effect (move target :deck) (shuffle! :deck))}
 
+   "Rover Algorithm"
+   {:choices {:req #(and (ice? %) (rezzed? %))}
+    :msg (msg "host it as a condition counter on " (card-str state target))
+    :effect (final-effect (host target (assoc card :zone [:discard] :seen true :condition true))
+                          (update-ice-strength (get-card state target)))
+    :events {:pass-ice {:req (req (= (:cid target) (:cid (:host card))))
+                                :effect (effect (add-counter card :power 1))}
+             :pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
+                                :effect (effect (ice-strength-bonus (get-in card [:counter :power] 0) target))}}}
+
    "Sacrifice"
    {:req (req (pos? (:bad-publicity corp)))
     :delayed-completion true
     :additional-cost [:forfeit]
-    :effect (req (let [bplost (min (:agendapoints (last (:rfg corp))) (:bad-publicity corp))]
-                   (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
-                                               (gain state side :credit bplost)
-                                               (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
-                                           (system-msg state side "uses Sacrifice but gains no credits and loses no Bad Publicity"))
-                   (effect-completed state side eid)))}
-
+    :effect (effect (register-events (:events (card-def card))
+                                     (assoc card :zone '(:discard))))
+    :events {:corp-forfeit-agenda {:effect (req (let [bplost (min (:agendapoints (last (:rfg corp))) (:bad-publicity corp))]
+                                                  (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
+                                                                              (gain state side :credit bplost)
+                                                                              (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
+                                                                          (system-msg state side "uses Sacrifice but gains no credits and loses no Bad Publicity"))
+                                                  (effect-completed state side eid)
+                                                  (unregister-events state side card)))}}}
    "Salems Hospitality"
    {:prompt "Name a Runner card"
     :choices {:card-title (req (and (card-is? target :side "Runner")
