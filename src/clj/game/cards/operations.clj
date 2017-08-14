@@ -818,6 +818,13 @@
                                     (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
+   "Planned Power Outage"
+   {:msg "increase the play cost of operations and events by 1 [Credits]"
+    :events {:play-event {:once :per-turn
+                          :msg "to gain 1 [Credits]"
+                          :effect (effect (gain :credit 1))}
+             :pre-play-instant {:effect (effect (play-cost-bonus [:credit 1]))}}}
+
    "Power Grid Overload"
    {:trace {:base 2
             :msg "trash 1 piece of hardware"
