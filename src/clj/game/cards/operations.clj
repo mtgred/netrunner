@@ -865,6 +865,14 @@
    {:msg "remove Preemptive Action from the game"
     :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
 
+   "Priority Construction"
+   {:delayed-completion true
+    :prompt "Choose an ICE in HQ to install"
+    :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (ice? %))}
+    :msg "install an ICE from HQ and place 3 advancements on it"
+    :cancel-effect (req (effect-completed state side eid))
+    :effect (effect (corp-install (assoc target :advance-counter 3) nil {:no-install-cost true}))}
+
    "Product Recall"
    {:prompt "Choose a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)
