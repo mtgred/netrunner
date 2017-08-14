@@ -189,8 +189,11 @@
    "Breached Dome"
    {:access {:msg "do 1 meat damage and trash the top card of the stack"
              :delayed-completion true
-             :effect (effect (damage eid :meat 1 {:card card})
-                             (mill :runner) ) }}
+             :effect (req (let [c (first (get-in @state [:runner :deck]))]
+                            (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
+                                                         " from the top of the Runner's Stack"))
+                            (mill state :runner)
+                            (damage state side eid :meat 1 {:card card})))}}
 
    "Brain-Taping Warehouse"
    {:events {:pre-rez
