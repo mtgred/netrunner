@@ -1164,7 +1164,7 @@
    "Recon"
    {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
 
-   "Reformation"
+   "Reshape"
    {:prompt "Select two non-rezzed ICE to swap positions"
     :choices {:req #(and (installed? %) (not (rezzed? %)) (ice? %)) :max 2}
     :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))

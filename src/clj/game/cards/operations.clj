@@ -818,13 +818,6 @@
                                     (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                                   0 (flatten (seq (:servers corp))))))}
 
-   "Planned Power Outage"
-   {:msg "increase the play cost of operations and events by 1 [Credits]"
-    :events {:play-event {:once :per-turn
-                          :msg "to gain 1 [Credits]"
-                          :effect (effect (gain :credit 1))}
-             :pre-play-instant {:effect (effect (play-cost-bonus [:credit 1]))}}}
-
    "Power Grid Overload"
    {:trace {:base 2
             :msg "trash 1 piece of hardware"
@@ -1018,9 +1011,9 @@
       :effect (req (move state side target :hand)
                    (resolve-ability state side (replant 1) card nil))})
 
-   "Restoration"
+   "Restore"
    {:delayed-completion true
-    :effect (effect (continue-ability {:prompt "Select a card in Archives to install & rez with Restoration"
+    :effect (effect (continue-ability {:prompt "Select a card in Archives to install & rez with Restore"
                                        :priority -1
                                        :delayed-completion true
                                        :show-discard true
@@ -1029,7 +1022,7 @@
                                                             (in-discard? %))}
                                        :effect (req (when-completed
                                                       (corp-install state side target nil {:install-state :rezzed})
-                                                      (do (system-msg state side (str "uses Restoration to "
+                                                      (do (system-msg state side (str "uses Restore to "
                                                                                       (corp-install-msg target)))
                                                           (let [leftover (filter #(= (:title target) (:title %)) (-> @state :corp :discard))]
                                                             (when (seq leftover)
@@ -1070,6 +1063,13 @@
                          (= (:side %) "Corp"))}
     :msg "shuffle a card from HQ into R&D"
     :effect (final-effect (move target :deck) (shuffle! :deck))}
+
+   "Rolling Brownout"
+   {:msg "increase the play cost of operations and events by 1 [Credits]"
+    :events {:play-event {:once :per-turn
+                          :msg "to gain 1 [Credits]"
+                          :effect (effect (gain :credit 1))}
+             :pre-play-instant {:effect (effect (play-cost-bonus [:credit 1]))}}}
 
    "Rover Algorithm"
    {:choices {:req #(and (ice? %) (rezzed? %))}

@@ -84,6 +84,13 @@
    {:events {:jack-out {:msg "do 1 net damage"
                         :effect (effect (damage :net 1))}}}
 
+   "AR-Enhanced Security"
+   {:events {:runner-trash {:once :per-turn
+                            :delayed-completion true
+                            :req (req (some #(card-is? % :side :corp) targets))
+                            :msg "give the Runner a tag for trashing a Corp card"
+                            :effect (effect (tag-runner :runner eid 1))}}}
+
    "Armored Servers"
    {:implementation "Runner must trash cards manually when required"
     :effect (effect (add-counter card :agenda 1))
@@ -165,7 +172,7 @@
     :end-turn {:effect (effect (lose :runner :tag 2))
                :msg "make the Runner lose 2 tags"}}
 
-   "CFC Mining Contract"
+   "CFC Excavation Contract"
    {:msg "gain 2 [Credits] per rezzed Bioroid"
     :effect (req (let [bios (count (filter #(and (rezzed? %) (has-subtype? % "Bioroid")) (all-installed state :corp)))
                        bucks (* bios 2)]
@@ -327,13 +334,6 @@
     :swapped {:effect (req (update-all-ice state side))}
     :events {:pre-ice-strength {:req (req (has-subtype? target "Code Gate"))
                                 :effect (effect (ice-strength-bonus 1 target))}}}
-
-   "Enhanced AR Security"
-   {:events {:runner-trash {:once :per-turn
-                            :delayed-completion true
-                            :req (req (some #(card-is? % :side :corp) targets))
-                            :msg "give the Runner a tag for trashing a Corp card"
-                            :effect (effect (tag-runner :runner eid 1))}}}
 
    "Escalate Vitriol"
    {:abilities [{:label "Gain 1 [Credit] for each Runner tag"

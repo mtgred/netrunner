@@ -328,7 +328,7 @@
                    :msg "gain 1 [Credits]"
                    :effect (effect (gain :runner :credit 1))}}}
 
-   "Corporate Defectors"
+   "Corporate Defector"
    {:events {:corp-click-draw {:msg (msg "reveal " (:title target))}}}
 
    "Councilman"
