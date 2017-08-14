@@ -328,6 +328,9 @@
                    :msg "gain 1 [Credits]"
                    :effect (effect (gain :runner :credit 1))}}}
 
+   "Corporate Defectors"
+   {:events {:corp-click-draw {:msg (msg "reveal " (:title target))}}}
+
    "Councilman"
    {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
     :events {:rez {:req (req (and (#{"Asset" "Upgrade"} (:type target))
