@@ -165,6 +165,13 @@
     :end-turn {:effect (effect (lose :runner :tag 2))
                :msg "make the Runner lose 2 tags"}}
 
+   "CFC Mining Contract"
+   {:msg "gain 2 [Credits] per rezzed Bioroid"
+    :effect (req (let [bios (count (filter #(and (rezzed? %) (has-subtype? % "Bioroid")) (all-installed state :corp)))
+                       bucks (* bios 2)]
+                   (gain state side :credit bucks)
+                   (system-msg state side "gains " bucks " [Credits]")))}
+
    "Character Assassination"
    {:prompt "Choose a resource to trash"
     :choices {:req #(and (installed? %)
