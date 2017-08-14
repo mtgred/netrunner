@@ -258,6 +258,11 @@
                                 :effect (effect (draw (get-in card [:counter :power] 0))
                                                 (trash card))}}}
 
+   "Caldera"
+   {:prevent {:damage [:net :brain]}
+    :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
+                {:cost [:credit 3] :msg "prevent 1 brain damage" :effect (effect (damage-prevent :brain 1))}]}
+
    "Charlatan"
    {:abilities [{:cost [:click 2]
                  :label "Make a run"
