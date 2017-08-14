@@ -328,6 +328,13 @@
     :events {:pre-ice-strength {:req (req (has-subtype? target "Code Gate"))
                                 :effect (effect (ice-strength-bonus 1 target))}}}
 
+   "Enhanced AR Security"
+   {:events {:runner-trash {:once :per-turn
+                            :delayed-completion true
+                            :req (req (some #(card-is? % :side :corp) targets))
+                            :msg "give the Runner a tag for trashing a Corp card"
+                            :effect (effect (tag-runner :runner eid 1))}}}
+
    "Escalate Vitriol"
    {:abilities [{:label "Gain 1 [Credit] for each Runner tag"
                  :cost [:click 1]
