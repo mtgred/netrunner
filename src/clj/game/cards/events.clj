@@ -897,6 +897,35 @@
                                               (resolve-ability state side (mi (inc n)) card nil)))})]
      {:effect (effect (resolve-ability (mhelper 1) card nil))})
 
+   "Mining Accident"
+   (letfn [(mining [] {:player :corp
+                       :delayed-completion true
+                       :prompt "Pay 5 [Credits] or take 1 Bad Publicity?"
+                       :choices ["Pay 5 [Credits]" "Take 1 Bad Publicity"]
+                       :effect (req (cond
+
+                                      (and (= target "Pay 5 [Credits]") (can-pay? state :corp nil :credit 5))
+                                      (do (lose state :corp :credit 5)
+                                          (system-msg state side "pays 5 [Credits] from Mining Accident")
+                                          (clear-wait-prompt state :runner)
+                                          (effect-completed state side eid))
+
+                                      (= target "Pay 5 [Credits]")
+                                      (do (can-pay? state :corp "Mining Accident" :credit 5)
+                                          (continue-ability state side (mining) card nil))
+
+                                      (= target "Take 1 Bad Publicity")
+                                      (do (gain state :corp :bad-publicity 1)
+                                          (system-msg state side "takes 1 Bad Publicity from Mining Accident")
+                                          (clear-wait-prompt state :runner)
+                                          (effect-completed state side eid))))})]
+   {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+    :delayed-completion true
+    :effect (req (move state side (first (:play-area runner)) :rfg)
+                 (show-wait-prompt state :runner "Corp to choose to pay or take bad publicity")
+                 (continue-ability state side (mining) card nil))
+    :msg "make the Corp pay 5 [Credits] or take 1 Bad Publicity"})
+
    "Möbius"
    {:delayed-completion true
     :effect (req (register-events state side (:events (card-def card))
