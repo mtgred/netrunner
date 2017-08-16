@@ -187,8 +187,7 @@
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
    "Breached Dome"
-   {:access {:msg "do 1 meat damage and trash the top card of the stack"
-             :delayed-completion true
+   {:access {:delayed-completion true
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
                             (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
                                                          " from the top of the Runner's Stack"))
