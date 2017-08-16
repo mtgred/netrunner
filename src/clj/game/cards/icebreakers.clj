@@ -237,6 +237,23 @@
     :events {:counter-added {:req (req (= :cid target) (:cid card))
                              :effect (effect (update-breaker-strength card))}}}
 
+   "Aumakua"
+   {:implementation "Add counters manually for access outside of a run"
+    ; We would need a :once :per-access key to make this work for Gang Sign etc.
+    :abilities [(break-sub 1 1)
+                {:label "Add a virus counter"
+                 :effect (effect (add-counter card :virus 1))}]
+    :strength-bonus (req (get-in card [:counter :virus] 0))
+    :events {:no-trash {:once :per-run
+                        :req (req run)
+                        :effect (effect (add-counter card :virus 1))}
+             :no-steal {:once :per-run
+                        :req (req run)
+                        :effect (effect (add-counter card :virus 1))}
+             :expose {:effect (effect (add-counter card :virus 1))}
+             :counter-added {:req (req (= :cid target) (:cid card))
+                             :effect (effect (update-breaker-strength card))}}}
+
    "Aurora"
    (auto-icebreaker ["Barrier"]
                     {:abilities [(break-sub 2 1 "barrier")
