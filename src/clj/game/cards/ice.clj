@@ -533,6 +533,13 @@
                                                    card nil))))}]
     :strength-bonus advance-counters}
 
+   "Conundrum"
+   {:subroutines [trash-program
+                  {:msg "force the Runner to lose 1 [Click] if able"
+                   :effect (effect (lose :runner :click 1))}
+                  end-the-run]
+    :strength-bonus (req (if (some #(has-subtype? % "AI") (all-installed state :runner)) 3 0))}
+
    "Cortex Lock"
    {:subroutines [{:label "Do 1 net damage for each unused memory unit the Runner has"
                    :msg (msg "do " (:memory runner) " net damage")
