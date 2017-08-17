@@ -203,7 +203,7 @@
                                                  {:unpreventable true}))
                                 (do (trash-cards state side (make-eid state) cards-trashed
                                                  {:unpreventable true :cause type})
-                                    (trigger-event state side :damage type card)))))))
+                                    (trigger-event state side :damage type card n)))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (effect-completed state side eid card))))
 
