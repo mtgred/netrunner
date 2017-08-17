@@ -509,6 +509,33 @@
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
 
+   "Dummy Box"
+   {:prevent {:trash [:hardware :resource :program]}
+    :abilities [{:msg "prevent a hardware from being trashed"
+                 :delayed-completion true
+                 :priority 15
+                 :prompt "Choose a hardware in your Grip"
+                 :choices {:req #(and (is-type? % "Hardware")
+                                      (in-hand? %))}
+                 :effect (effect (move target :discard)
+                                 (trash-prevent :hardware 1))}
+                {:msg "prevent a resource from being trashed"
+                 :delayed-completion true
+                 :priority 15
+                 :prompt "Choose a resource in your Grip"
+                 :choices {:req #(and (is-type? % "Resource")
+                                      (in-hand? %))}
+                 :effect (effect (move target :discard)
+                                 (trash-prevent :resource 1))}
+                {:msg "prevent a program from being trashed"
+                 :delayed-completion true
+                 :priority 15
+                 :prompt "Choose a program in your Grip"
+                 :choices {:req #(and (is-type? % "Program")
+                                      (in-hand? %))}
+                 :effect (effect (move target :discard)
+                                 (trash-prevent :program 1))}]}
+
    "Earthrise Hotel"
    (let [ability {:msg "draw 2 cards"
                   :once :per-turn
