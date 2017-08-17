@@ -820,6 +820,20 @@
                  :effect (effect (add-counter card :credit 3))}]
     :events {:corp-turn-begins ability}})
 
+   "MCA Austerity Policy"
+   {:abilities [{:cost [:click 1]
+                 :once :per-turn
+                 :msg "to force the Runner to lose a [Click] next turn and place a power counter on itself"
+                 :effect (effect (register-events (:events {:runner-turn-begins {:msg "make the Runner lose [Click]"
+                                                                                 :effect (effect (lose :runner :click 1) (unregister-events card))}}))
+                                 (add-counter card :power 1))}
+                {:cost [:click 1]
+                 :counter-cost [:power 3]
+                 :msg "gain 4 [Click] and trash itself"
+                 :effect (effect (gain :click 4)
+                                 (trash card {:unpreventable true}))}]
+    :events {:runner-turn-begins nil}}
+
    "Melange Mining Corp."
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
 
