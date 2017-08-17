@@ -1352,6 +1352,17 @@
                     trash-all-resources)
                   card targets))})
 
+   "Threat Level Alpha"
+   {:additional-cost [:click 1]
+    :trace {:base 1
+            :delayed-completion true
+            :effect (req (let [tags (-> @state :runner :tag)]
+                           (if (pos? tags)
+                             (do (tag-runner :runner eid tags)
+                                 (system-msg state side "uses Threat Level Alpha to give the Runner " tags " tags"))
+                             (do (tag-runner :runner eid 1)
+                                 (system-msg state side "uses Threat Level Alpha to give the Runner a tag")))))}}
+
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))
     :msg "do 2 meat damage"
