@@ -1028,7 +1028,7 @@
                                                             (when (seq leftover)
                                                               (doseq [c leftover]
                                                                 (move state side c :rfg))
-                                                              (system-msg state side "removes " (count leftover) " copies of " (:title target) " from the game")))
+                                                              (system-msg state side (str "removes " (count leftover) " copies of " (:title target) " from the game"))))
                                                           (effect-completed state side eid card))))} card nil))}
 
    "Restoring Face"
