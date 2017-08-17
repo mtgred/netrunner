@@ -468,16 +468,16 @@
              {:effect (effect (play-cost-bonus [:credit 1]))}}}
 
    "Dr. Lovegood"
-   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
-    :abilities [{:prompt "Choose an installed card to make its text box blank for the remainder of the turn" :once :per-turn
-                 :choices {:req #(:installed %)}
+   {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}
+    :abilities [{:req (req (:runner-phase-12 @state))
+                 :prompt "Choose an installed card to make its text box blank for the remainder of the turn" :once :per-turn
+                 :choices {:req installed?}
                  :msg (msg "make the text box of " (:title target) " blank for the remainder of the turn")
                  :effect (req (let [c target]
-                                (update! state side (dissoc target :events :abilities))
-                                (deactivate state side target)
+                                (disable-card state side c)
                                 (register-events state side
                                                  {:runner-turn-ends
-                                                  {:effect (effect (card-init (get-card state c))
+                                                  {:effect (effect (enable-card (get-card state c))
                                                                    (unregister-events card))}} card)))}]
     :events {:runner-turn-ends nil}}
 
