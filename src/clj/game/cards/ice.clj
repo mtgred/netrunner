@@ -533,6 +533,13 @@
                                                    card nil))))}]
     :strength-bonus advance-counters}
 
+   "Conundrum"
+   {:subroutines [trash-program
+                  {:msg "force the Runner to lose 1 [Click] if able"
+                   :effect (effect (lose :runner :click 1))}
+                  end-the-run]
+    :strength-bonus (req (if (some #(has-subtype? % "AI") (all-installed state :runner)) 3 0))}
+
    "Cortex Lock"
    {:subroutines [{:label "Do 1 net damage for each unused memory unit the Runner has"
                    :msg (msg "do " (:memory runner) " net damage")
@@ -1439,6 +1446,18 @@
     :abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (:advance-counter card 0) " subroutines")}]
     :subroutines [(tag-trace 2)]}
+
+   "Sand Storm"
+   {:subroutines [{:req (req (:run @state))
+                   :label "Move Sand Storm and the run to another server"
+                   :prompt "Choose another server and redirect the run to its outermost position"
+                   :choices (req (cancellable servers))
+                   :msg (msg "move Sand Storm and the run.  The Runner is now running on " target ". Sand Storm is trashed")
+                   :effect (req (let [dest (server->zone state target)]
+                                (trash state side card {:unpreventable true})
+                                (swap! state update-in [:run]
+                                       #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                 :server (rest dest)))))}]}
 
    "Sapper"
    {:subroutines [trash-program]

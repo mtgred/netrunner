@@ -84,6 +84,13 @@
    {:events {:jack-out {:msg "do 1 net damage"
                         :effect (effect (damage :net 1))}}}
 
+   "AR-Enhanced Security"
+   {:events {:runner-trash {:once :per-turn
+                            :delayed-completion true
+                            :req (req (some #(card-is? % :side :corp) targets))
+                            :msg "give the Runner a tag for trashing a Corp card"
+                            :effect (effect (tag-runner :runner eid 1))}}}
+
    "Armored Servers"
    {:implementation "Runner must trash cards manually when required"
     :effect (effect (add-counter card :agenda 1))
@@ -164,6 +171,12 @@
     :msg "give the Runner 2 tags"
     :end-turn {:effect (effect (lose :runner :tag 2))
                :msg "make the Runner lose 2 tags"}}
+
+   "CFC Excavation Contract"
+   {:effect (req (let [bios (count (filter #(and (rezzed? %) (has-subtype? % "Bioroid")) (all-installed state :corp)))
+                       bucks (* bios 2)]
+                   (gain state side :credit bucks)
+                   (system-msg state side (str "gains " bucks " [Credits] from CFC Excavation Contract"))))}
 
    "Character Assassination"
    {:prompt "Choose a resource to trash"

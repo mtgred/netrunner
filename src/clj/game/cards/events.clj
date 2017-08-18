@@ -311,6 +311,39 @@
      {:delayed-completion true
       :effect (effect (continue-ability (choice all) card nil))})
 
+   "Dianas Hunt"
+   {:implementation "One program per encounter not enforced"
+    :prompt "Choose a server"
+    :msg "make a run and install a program on encounter with each ICE"
+    :choices (req runnable-servers)
+    :delayed-completion true
+    :abilities [{:label "Install a program using Diana's Hunt?"
+                 :delayed-completion true
+                 :effect (effect (resolve-ability
+                                   {:prompt "Choose a program in your Grip to install"
+                                    :choices {:req #(and (is-type? % "Program")
+                                                         (runner-can-install? state side % false)
+                                                         (in-hand? %))}
+                                    :msg (msg "install " (:title target))
+                                    :effect (req (runner-install state side target {:no-cost true})
+                                                 (swap! state update :diana #(conj % target)))}
+                                   card nil))}]
+    :effect (effect (run target nil card)
+                    (prompt! card (str "Click Diana's Hunt in the Temporary Zone to install a Program") ["OK"] {})
+                    (resolve-ability
+                      {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
+                                      (card-init state side c false)
+                                      (register-events state side
+                                                       {:run-ends {:effect (req (let [hunt (:diana @state)]
+                                                                                  (doseq [c hunt]
+                                                                                    (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
+                                                                                    (trash state side (find-cid (:cid c) (all-installed state side)) {:unpreventable true}))
+                                                                                  (swap! state dissoc :diana)
+                                                                                  (unregister-events state side card)
+                                                                                  (trash state side c)))}} c)))}
+                      card nil))
+    :events {:run-ends nil}}
+
    "Diesel"
    {:msg "draw 3 cards" :effect (effect (draw 3))}
 
@@ -897,6 +930,35 @@
                                               (resolve-ability state side (mi (inc n)) card nil)))})]
      {:effect (effect (resolve-ability (mhelper 1) card nil))})
 
+   "Mining Accident"
+   (letfn [(mining [] {:player :corp
+                       :delayed-completion true
+                       :prompt "Pay 5 [Credits] or take 1 Bad Publicity?"
+                       :choices ["Pay 5 [Credits]" "Take 1 Bad Publicity"]
+                       :effect (req (cond
+
+                                      (and (= target "Pay 5 [Credits]") (can-pay? state :corp nil :credit 5))
+                                      (do (lose state :corp :credit 5)
+                                          (system-msg state side "pays 5 [Credits] from Mining Accident")
+                                          (clear-wait-prompt state :runner)
+                                          (effect-completed state side eid))
+
+                                      (= target "Pay 5 [Credits]")
+                                      (do (can-pay? state :corp "Mining Accident" :credit 5)
+                                          (continue-ability state side (mining) card nil))
+
+                                      (= target "Take 1 Bad Publicity")
+                                      (do (gain state :corp :bad-publicity 1)
+                                          (system-msg state side "takes 1 Bad Publicity from Mining Accident")
+                                          (clear-wait-prompt state :runner)
+                                          (effect-completed state side eid))))})]
+   {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+    :delayed-completion true
+    :effect (req (move state side (first (:play-area runner)) :rfg)
+                 (show-wait-prompt state :runner "Corp to choose to pay or take bad publicity")
+                 (continue-ability state side (mining) card nil))
+    :msg "make the Corp pay 5 [Credits] or take 1 Bad Publicity"})
+
    "Möbius"
    {:delayed-completion true
     :effect (req (register-events state side (:events (card-def card))
@@ -1163,6 +1225,13 @@
 
    "Recon"
    {:prompt "Choose a server" :choices (req runnable-servers) :effect (effect (run target nil card))}
+
+   "Reshape"
+   {:prompt "Select two non-rezzed ICE to swap positions"
+    :choices {:req #(and (installed? %) (not (rezzed? %)) (ice? %)) :max 2}
+    :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
+    :effect (req (when (= (count targets) 2)
+                   (swap-ice state side (first targets) (second targets))))}
 
    "Retrieval Run"
    {:effect (effect (run :archives

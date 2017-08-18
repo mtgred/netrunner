@@ -232,6 +232,11 @@
   [state server]
   (empty? (filter #(= [server] %) (turn-events state :runner :successful-run))))
 
+(defn get-turn-damage
+  "Returns the value of damage take this turn"
+  [state side]
+  (apply + (map #(nth % 2) (turn-events state :runner :damage))))
+
 (defn get-installed-trashed
   "Returns list of cards trashed this turn owned by side that were installed"
   [state side]

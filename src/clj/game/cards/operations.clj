@@ -865,6 +865,14 @@
    {:msg "remove Preemptive Action from the game"
     :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
 
+   "Priority Construction"
+   {:delayed-completion true
+    :prompt "Choose an ICE in HQ to install"
+    :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (ice? %))}
+    :msg "install an ICE from HQ and place 3 advancements on it"
+    :cancel-effect (req (effect-completed state side eid))
+    :effect (effect (corp-install (assoc target :advance-counter 3) nil {:no-install-cost true}))}
+
    "Product Recall"
    {:prompt "Choose a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)
@@ -1003,6 +1011,26 @@
       :effect (req (move state side target :hand)
                    (resolve-ability state side (replant 1) card nil))})
 
+   "Restore"
+   {:delayed-completion true
+    :effect (effect (continue-ability {:prompt "Select a card in Archives to install & rez with Restore"
+                                       :priority -1
+                                       :delayed-completion true
+                                       :show-discard true
+                                       :choices {:req #(and (= (:side %) "Corp")
+                                                            (not (is-type? % "Operation"))
+                                                            (in-discard? %))}
+                                       :effect (req (when-completed
+                                                      (corp-install state side target nil {:install-state :rezzed})
+                                                      (do (system-msg state side (str "uses Restore to "
+                                                                                      (corp-install-msg target)))
+                                                          (let [leftover (filter #(= (:title target) (:title %)) (-> @state :corp :discard))]
+                                                            (when (seq leftover)
+                                                              (doseq [c leftover]
+                                                                (move state side c :rfg))
+                                                              (system-msg state side (str "removes " (count leftover) " copies of " (:title target) " from the game"))))
+                                                          (effect-completed state side eid card))))} card nil))}
+
    "Restoring Face"
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (card-str state target) " to remove 2 bad publicity")
@@ -1035,6 +1063,13 @@
                          (= (:side %) "Corp"))}
     :msg "shuffle a card from HQ into R&D"
     :effect (final-effect (move target :deck) (shuffle! :deck))}
+
+   "Rolling Brownout"
+   {:msg "increase the play cost of operations and events by 1 [Credits]"
+    :events {:play-event {:once :per-turn
+                          :msg "to gain 1 [Credits]"
+                          :effect (effect (gain :credit 1))}
+             :pre-play-instant {:effect (effect (play-cost-bonus [:credit 1]))}}}
 
    "Rover Algorithm"
    {:choices {:req #(and (ice? %) (rezzed? %))}
@@ -1316,6 +1351,16 @@
                                  :no-ability trash-all-resources}}
                     trash-all-resources)
                   card targets))})
+
+   "Threat Level Alpha"
+   {:trace {:base 1
+            :delayed-completion true
+            :effect (req (let [tags (-> @state :runner :tag)]
+                           (if (pos? tags)
+                             (do (tag-runner state :runner eid tags)
+                                 (system-msg state side (str "uses Threat Level Alpha to give the Runner " tags " tags")))
+                             (do (tag-runner state :runner eid 1)
+                                 (system-msg state side "uses Threat Level Alpha to give the Runner a tag")))))}}
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))

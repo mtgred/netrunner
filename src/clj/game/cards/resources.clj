@@ -258,6 +258,11 @@
                                 :effect (effect (draw (get-in card [:counter :power] 0))
                                                 (trash card))}}}
 
+   "Caldera"
+   {:prevent {:damage [:net :brain]}
+    :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
+                {:cost [:credit 3] :msg "prevent 1 brain damage" :effect (effect (damage-prevent :brain 1))}]}
+
    "Charlatan"
    {:abilities [{:cost [:click 2]
                  :label "Make a run"
@@ -322,6 +327,9 @@
     :events {:rez {:req (req (ice? target))
                    :msg "gain 1 [Credits]"
                    :effect (effect (gain :runner :credit 1))}}}
+
+   "Corporate Defector"
+   {:events {:corp-click-draw {:msg (msg "reveal " (-> target first :title))}}}
 
    "Councilman"
    {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
@@ -500,6 +508,33 @@
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
+
+   "Dummy Box"
+   {:prevent {:trash [:hardware :resource :program]}
+    :abilities [{:msg "prevent a hardware from being trashed"
+                 :delayed-completion true
+                 :priority 15
+                 :prompt "Choose a hardware in your Grip"
+                 :choices {:req #(and (is-type? % "Hardware")
+                                      (in-hand? %))}
+                 :effect (effect (move target :discard)
+                                 (trash-prevent :hardware 1))}
+                {:msg "prevent a resource from being trashed"
+                 :delayed-completion true
+                 :priority 15
+                 :prompt "Choose a resource in your Grip"
+                 :choices {:req #(and (is-type? % "Resource")
+                                      (in-hand? %))}
+                 :effect (effect (move target :discard)
+                                 (trash-prevent :resource 1))}
+                {:msg "prevent a program from being trashed"
+                 :delayed-completion true
+                 :priority 15
+                 :prompt "Choose a program in your Grip"
+                 :choices {:req #(and (is-type? % "Program")
+                                      (in-hand? %))}
+                 :effect (effect (move target :discard)
+                                 (trash-prevent :program 1))}]}
 
    "Earthrise Hotel"
    (let [ability {:msg "draw 2 cards"
@@ -1249,6 +1284,19 @@
     :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))
                                 :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
+
+   "Salvaged Vanadis Armory"
+   {:events {:damage
+             {:effect (req (show-wait-prompt state :corp "Runner to use Salvaged Vanadis Armory")
+                           (resolve-ability state :runner
+                                            {:optional
+                                             {:prompt "Use Salvaged Vanadis Armory?"
+                                              :yes-ability {:msg (msg "force the Corp to trash the top " (get-turn-damage state :runner) " cards of R&D and trash itself")
+                                                            :effect (effect (mill :corp (get-turn-damage state :runner))
+                                                                            (clear-wait-prompt :corp)
+                                                                            (trash card {:unpreventable true}))}
+                                              :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                            card nil))}}}
 
    "Salsette Slums"
    {:flags {:slow-trash (req true)}

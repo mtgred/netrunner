@@ -187,10 +187,12 @@
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
    "Breached Dome"
-   {:access {:msg "do 1 meat damage and trash the top card of the stack"
-             :delayed-completion true
-             :effect (effect (damage eid :meat 1 {:card card})
-                             (mill :runner) ) }}
+   {:access {:delayed-completion true
+             :effect (req (let [c (first (get-in @state [:runner :deck]))]
+                            (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
+                                                         " from the top of the Runner's Stack"))
+                            (mill state :runner)
+                            (damage state side eid :meat 1 {:card card})))}}
 
    "Brain-Taping Warehouse"
    {:events {:pre-rez
@@ -817,6 +819,18 @@
                  :msg "store 3 [Credits]"
                  :effect (effect (add-counter card :credit 3))}]
     :events {:corp-turn-begins ability}})
+
+   "MCA Austerity Policy"
+   {:abilities [{:cost [:click 1]
+                 :once :per-turn
+                 :msg "to force the Runner to lose a [Click] next turn and place a power counter on itself"
+                 :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
+                              (add-counter state side card :power 1))}
+                {:cost [:click 1]
+                 :counter-cost [:power 3]
+                 :msg "gain 4 [Click] and trash itself"
+                 :effect (effect (gain :click 4)
+                                 (trash card {:unpreventable true}))}]}
 
    "Melange Mining Corp."
    {:abilities [{:cost [:click 3] :effect (effect (gain :credit 7)) :msg "gain 7 [Credits]"}]}
