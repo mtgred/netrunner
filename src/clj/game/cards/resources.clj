@@ -329,7 +329,7 @@
                    :effect (effect (gain :runner :credit 1))}}}
 
    "Corporate Defector"
-   {:events {:corp-click-draw {:msg (msg "reveal " (:title target))}}}
+   {:events {:corp-click-draw {:msg (msg "reveal " (-> target first :title))}}}
 
    "Councilman"
    {:implementation "Does not restrict Runner to Asset / Upgrade just rezzed"
