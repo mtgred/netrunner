@@ -336,6 +336,21 @@
     (prompt-choice :runner "No")
     (is (= 1 (count (:discard (get-corp)))) "2nd HQ card on same turn not trashed by Maw")))
 
+(deftest maw-card-seen
+  ;; Check trashed card is trashed face-up if it's the card that is accessed, issue #2695
+  ;; Also checks Maw auto-trashes on Operation with no trash cost
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1)])
+              (default-runner [(qty "Maw" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 20)
+    (play-from-hand state :runner "Maw")
+    (run-empty-server state :hq)
+    ;; (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
+    (prompt-choice :runner "OK")
+    (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw now")
+    (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
+
 (deftest maw-hiro
   ;; Maw with Hiro in hand - Hiro not moved to runner scored area on trash decline #2638
   (do-game

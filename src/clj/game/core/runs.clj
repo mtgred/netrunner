@@ -142,7 +142,9 @@
                                                            (system-msg state side (str "pays " trash-msg)))}}}
                               card nil))))
       ;; The card does not have a trash cost
-      (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid}))
+      (do (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid})
+          ;; TODO: Trigger :no-trash after hit "OK" on access
+          (trigger-event state side :no-trash c)))
     (effect-completed state side eid)))
 
 (defn- steal-pay-choice
