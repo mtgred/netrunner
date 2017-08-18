@@ -459,8 +459,8 @@
      {:interactive (req true)
       :delayed-completion true
       :req (req (and this-server
-                     (< (:credit runner) 6)
-                     (< (count (:hand runner)) 2)
+                     (or (< (:credit runner) 6)
+                         (< (count (:hand runner)) 2))
                      (not-empty (:hand corp))))
       :effect (req (show-wait-prompt state :runner "Corp to use Nihongai Grid")
                    (let [top5 (take 5 (:deck corp))]
