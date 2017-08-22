@@ -452,7 +452,7 @@
              (deactivate state side card) card)]
      (system-msg state side (str "forfeits " (:title c)))
      (gain-agenda-point state side (- (get-agenda-points state side c)))
-     (move state :corp c :rfg)
+     (move state side c :rfg)
      (when-completed (trigger-event-sync state side (keyword (str (name side) "-forfeit-agenda")) c)
                      (effect-completed state side eid)))))
 
