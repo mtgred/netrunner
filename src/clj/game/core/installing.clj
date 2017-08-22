@@ -48,6 +48,7 @@
    (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
      (gain state :runner :memory (:memoryunits card)))
    (when (and (find-cid (:cid card) (all-installed state side))
+              (not (:disabled card))
               (or (:rezzed card) (:installed card)))
      (when-let [in-play (:in-play (card-def card))]
        (apply lose state side in-play)))
