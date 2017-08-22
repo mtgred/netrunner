@@ -99,11 +99,13 @@
       (default-corp)
       (make-deck "Apex: Invasive Predator" [(qty "Heartbeat" 2)]))
     (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
     (prompt-choice :runner "Done") ; no facedown install on turn 1
     (play-from-hand state :runner "Heartbeat")
     (is (= 1 (count (get-in @state [:runner :rig :hardware]))))
     (take-credits state :runner)
     (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
     (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "2nd console installed facedown")))
 
