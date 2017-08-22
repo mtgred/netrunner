@@ -187,7 +187,8 @@
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (damage-choice-priority state)
   (when-completed (trigger-event-sync state side :pre-resolve-damage type card n)
-                  (do (when-not (get-in @state [:damage :damage-replace])
+                  (do (when-not (or (get-in @state [:damage :damage-replace])
+                                    (runner-can-choose-damage? state))
                         (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
                           (when (pos? n)
                             (let [hand (get-in @state [:runner :hand])
