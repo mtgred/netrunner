@@ -885,6 +885,10 @@
    "The Masque: Cyber General"
    {:events {:pre-start-game {:effect draft-points-target}}}
 
+   ;; No special implementation
+   "The Professor: Keeper of Knowledge"
+   {}
+
    "The Shadow: Pulling the Strings"
    {:events {:pre-start-game {:effect draft-points-target}}}
 
