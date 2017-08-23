@@ -521,7 +521,6 @@
                                   :msg "break 1 subroutine"}
                                  {:label "Take 1 tag to place 2 virus counters (start of turn)"
                                   :once :per-turn
-                                  :req (req (:runner-phase-12 @state))
                                   :effect (req (when-completed (tag-runner state :runner 1)
                                                                (if (not (get-in @state [:tag :tag-prevent]))
                                                                  (do (add-counter state side card :virus 2)
