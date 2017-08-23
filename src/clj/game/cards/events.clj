@@ -1529,18 +1529,15 @@
 
    "The Price of Freedom"
    {:additional-cost [:connection 1]
-    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-
-    :events {:runner-trash {:effect (effect
-                                      (move (find-cid (:cid card) (:discard runner)) :rfg)
-                                      (unregister-events card)
-                                      (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
-                                      (system-msg (str "trashes " (:title target) " to prevent the corp from advancing cards during their next turn"))
-                                      (register-persistent-flag! card :can-advance
-                                                                 (fn [state side card] ((constantly false)
-                                                                                         (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))}
-             :corp-turn-ends {:effect (effect (clear-persistent-flag! card :can-advance)
-                                              (unregister-events card))}}}
+    :msg "prevent the Corp from advancing cards during their next turn"
+    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:rfg)))
+                    (move (first (:play-area runner)) :rfg))
+    :events {:corp-turn-begins
+             {:effect (effect (register-turn-flag! card :can-advance
+                                (fn [state side card]
+                                  ((constantly false)
+                                   (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning"))))
+                              (unregister-events card))}}}
 
    "Three Steps Ahead"
    {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
