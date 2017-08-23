@@ -749,10 +749,12 @@
    {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                  :prompt "Choose a card in the Runner's Heap that was just trashed"
+                 :delayed-completion true
                  :once :per-turn
-                 :choices (req (:discard runner))
+                 :choices (req (cancellable (:discard runner)))
                  :msg (msg "remove " (:title target) " from the game")
-                 :effect (effect (move :runner target :rfg))}]}
+                 :effect (effect (move :runner target :rfg)
+                                 (effect-completed eid card))}]}
 
    "Spark Agency: Worldswide Reach"
    {:events
