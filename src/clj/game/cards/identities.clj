@@ -748,13 +748,18 @@
    "Skorpios Defense Systems: Persuasive Power"
    {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
-                 :prompt "Choose a card in the Runner's Heap that was just trashed"
-                 :delayed-completion true
                  :once :per-turn
-                 :choices (req (cancellable (:discard runner)))
-                 :msg (msg "remove " (:title target) " from the game")
-                 :effect (effect (move :runner target :rfg)
-                                 (effect-completed eid card))}]}
+                 :delayed-completion true
+                 :effect (effect (show-wait-prompt :runner "Corp to use Skorpios' ability")
+                                 (continue-ability {:prompt "Choose a card in the Runner's Heap that was just trashed"
+                                                    :choices (req (cancellable (:discard runner)))
+                                                    :msg (msg "remove " (:title target) " from the game")
+                                                    :effect (req (move state :runner target :rfg)
+                                                                 (clear-wait-prompt state :runner)
+                                                                 (effect-completed state side eid))
+                                                    :cancel-effect (req (clear-wait-prompt state :runner)
+                                                                        (effect-completed state side eid))}
+                                                   card nil))}]}
 
    "Spark Agency: Worldswide Reach"
    {:events
