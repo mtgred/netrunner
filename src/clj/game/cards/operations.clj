@@ -30,6 +30,7 @@
                                              (continue-ability state side (ad (inc i) n adcard) adcard nil)
                                              (effect-completed state side eid))))})]
      {:delayed-completion true
+      :implementation "Corp has to manually cards back to R&D to correctly play a draw operation"
       :effect (req (let [n (count (filter #(is-type? % "Operation")
                                           (take 3 (:deck corp))))]
                      (continue-ability state side
