@@ -785,7 +785,7 @@
                       (when (< points min-point)
                         [:span.invalid " (minimum " min-point ")"])
                       (when (> points (inc min-point))
-                        [:span.invalid " (maximum" (inc min-point) ")"])]))
+                        [:span.invalid " (maximum " (inc min-point) ")"])]))
                  [:div (deck-status-span sets deck true true)]]
                 [:div.cards
                  (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
