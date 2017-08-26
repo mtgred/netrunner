@@ -732,6 +732,7 @@
                                   "Independent Thinking"
                                   "Independent Thinking"])
     (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
     (prompt-select :runner (find-card "Neutralize All Threats" (:hand (get-runner))))
     (play-from-hand state :runner "Fan Site")
     (let [fs (get-in @state [:runner :rig :resource 0])

@@ -445,6 +445,7 @@
     (new-game (default-corp)
               (make-deck "Apex: Invasive Predator" [(qty "Parasite" 1)]))
     (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
     (prompt-select :runner (find-card "Parasite" (:hand (get-runner))))
     (is (empty? (:prompt (get-runner))) "No prompt to host Parasite")
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "Parasite installed face down")))

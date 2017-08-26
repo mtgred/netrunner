@@ -813,10 +813,11 @@
    "Security Nexus"
    {:in-play [:memory 1 :link 1]
     :abilities [{:req (req (:run @state))
+                 :once :per-turn
                  :delayed-completion true
                  :msg "force the Corp to initiate a trace"
                  :label "Trace 5 - Give the Runner 1 tag and end the run"
-                 :trace {:once :per-turn :base 5 :msg "give the Runner 1 tag and end the run"
+                 :trace {:base 5 :msg "give the Runner 1 tag and end the run"
                          :effect (effect (tag-runner :runner eid 1) (end-run))
                          :unsuccessful {:msg "bypass the current ICE"}}}]}
 
@@ -925,10 +926,11 @@
    {:events
     {:pre-resolve-damage
      {:delayed-completion true
-      :req (req (and (> (last targets) 0)
+      :req (req (and (pos? (last targets))
                      (runner-can-choose-damage? state)
                      (not (get-in @state [:damage :damage-replace]))))
       :effect (req (let [dtype target
+                         src (second targets)
                          dmg (last targets)]
                      (when (> dmg (count (:hand runner)))
                        (flatline state))
@@ -937,16 +939,18 @@
                        (swap! state update-in [:runner :hand-size-modification] #(- % dmg)))
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
                      (when-completed (resolve-ability state side
-                                       {:prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
-                                        :choices {:max dmg :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                                       {:delayed-completion true
+                                        :prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
+                                        :choices {:max dmg :all true :req #(and (in-hand? %) (= (:side %) "Runner"))}
                                         :msg (msg "trash " (join ", " (map :title targets)))
                                         :effect (req (clear-wait-prompt state :corp)
                                                      (doseq [c targets]
                                                        (trash state side c {:cause dtype :unpreventable true}))
                                                      (trigger-event state side :damage-chosen)
-                                                     (damage-defer state side dtype 0))}
+                                                     (damage-defer state side dtype 0)
+                                                     (effect-completed state side eid))}
                                       card nil)
-                                     (do (trigger-event state side :damage dtype nil)
+                                     (do (trigger-event state side :damage dtype src dmg)
                                          (effect-completed state side eid)))))}
     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
     :delayed-completion true
