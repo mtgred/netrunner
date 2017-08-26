@@ -283,6 +283,36 @@
       (-> @state :runner :discard count (= 1) (is "Counter Surveillance trashed"))
       (-> @state :runner :credit (= 2) (is "Runner has 2 credits")))))
 
+(deftest counter-surveillance-obelus
+  ;; Test Obelus does not trigger before Counter Surveillance accesses are done. Issues #2675
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3)])
+              (default-runner [(qty "Counter Surveillance" 1) (qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :runner ["Counter Surveillance" "Obelus"])
+    (take-credits state :corp)
+    (core/gain state :runner :tag 2)
+    (core/gain state :runner :credit 2)
+    (-> (get-runner) :credit (= 7) (is "Runner has 7 credits"))
+    (play-from-hand state :runner "Counter Surveillance")
+    (play-from-hand state :runner "Obelus")
+    (-> (get-runner) :credit (= 2) (is "Runner has 2 credits")) ; Runner has enough credits to pay for CS
+    (let [cs (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner cs 0)
+      (prompt-choice :runner "HQ")
+      (run-successful state)
+      (-> (get-runner) :register :successful-run (= [:hq]) is)
+      (-> (get-runner) :hand count zero? (is "Runner did not draw cards from Obelus yet"))
+      (prompt-choice :runner "Card from hand")
+      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
+      (-> (get-runner) :hand count zero? (is "Runner did not draw cards from Obelus yet"))
+      (prompt-choice :runner "OK")
+      (prompt-choice :runner "Card from hand")
+      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
+      (prompt-choice :runner "OK")
+      (-> (get-runner) :hand count (= 2) (is "Runner did draw cards from Obelus after all accesses are done"))
+      (-> (get-runner) :discard count (= 1) (is "Counter Surveillance trashed"))
+      (-> (get-runner) :credit (= 0) (is "Runner has no credits")))))
+
 (deftest-pending councilman-zone-change
   ;; Rezz no longer prevented when card changes zone (issues #1571)
   (do-game
@@ -715,8 +745,12 @@
     (play-from-hand state :runner "Joshua B.")
     (take-credits state :runner)
     (take-credits state :corp)
-    (prompt-choice :runner "Yes") ; gain the extra click
-    (is (= 5 (:click (get-runner))) "Gained extra click")
+    (is (= 0 (:click (get-runner))) "Runner has 0 clicks")
+    (is (:runner-phase-12 @state) "Runner is in Step 1.2")
+    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+    (is (= 1 (:click (get-runner))) "Gained extra click from Joshua")
+    (core/end-phase-12 state :runner nil)
+    (is (= 5 (:click (get-runner))) "Gained normal clicks as well")
     (take-credits state :runner)
     (is (= 1 (:tag (get-runner))) "Took 1 tag")))
 

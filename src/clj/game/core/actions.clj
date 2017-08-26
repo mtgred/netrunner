@@ -309,7 +309,8 @@
                  (let [cdef (card-def card)
                        cost (rez-cost state side card)
                        costs (concat (when-not ignore-cost [:credit cost])
-                                     (when (not= ignore-cost :all-costs)
+                                     (when (and (not= ignore-cost :all-costs)
+                                                (not (:disabled card)))
                                        (:additional-cost cdef)))]
                    (when-let [cost-str (apply pay state side card costs)]
                      ;; Deregister the derezzed-events before rezzing card

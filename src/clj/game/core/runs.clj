@@ -124,8 +124,8 @@
                                           (system-msg state side (str "is forced to pay " trash-msg)))}
                             card nil)
           ;; Otherwise, show the option to pay to trash the card.
-          (if-not (and (is-type? card "Operation")
-                       (card-flag? card :can-trash-operation true))
+          (when-not (and (is-type? card "Operation")
+                         (card-flag? card :can-trash-operation true))
             ;; Don't show the option if Edward Kim's auto-trash flag is true.
             (continue-ability state :runner
                               {:optional
@@ -144,7 +144,9 @@
       ;; The card does not have a trash cost
       (do (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid})
           ;; TODO: Trigger :no-trash after hit "OK" on access
-          (trigger-event state side :no-trash c)))
+          (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
+            ;; Do not trigger :no-trash if card (operation) has already been trashed
+            (trigger-event state side :no-trash c))))
     (effect-completed state side eid)))
 
 (defn- steal-pay-choice

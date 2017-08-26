@@ -229,6 +229,21 @@
       (run-empty-server state "HQ")
       (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
+(deftest edward-kim-maw
+  ;; Edward Kim - Do not trigger maw on first Operation access (due to trash)
+  (do-game
+    (new-game
+      (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2)])
+      (make-deck "Edward Kim: Humanity's Hammer" [(qty "Maw" 1) (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Maw")
+    (is (= 0 (count (:discard (get-corp)))) "No cards in Archives")
+    (run-empty-server state "HQ")
+    (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
+    (run-empty-server state "HQ")
+    (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw")))
+
 (deftest gabriel-santiago
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
   (do-game
