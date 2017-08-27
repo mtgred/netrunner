@@ -20,8 +20,13 @@
 (defn make-span [text symbol class]
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
 
-(defn image-url [card]
-  (str "/img/cards/" (:code card) ".png"))
+(defn image-url [{code :code}]
+  (let [alt-art (get-in @app-state [:alt-arts code])
+        version (when (and (get-in @app-state [:user :special])
+                           (get-in @app-state [:options :show-alt-art])
+                           alt-art)
+                  (first (:versions alt-art)))]
+    (str "/img/cards/" code (when version (str "-" version)) ".png")))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
