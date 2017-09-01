@@ -742,7 +742,7 @@
                      {:optional {:prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?") :player :corp
                                  :delayed-completion true
                                  :yes-ability {:msg "do 1 brain damage instead of net damage"
-                                               :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                               :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
                                                             (clear-wait-prompt state :runner)
                                                             (pay state :corp card :credit 2)
                                                             (damage state side eid :brain 1 {:card card}))}
