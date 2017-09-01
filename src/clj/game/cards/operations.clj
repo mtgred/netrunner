@@ -299,7 +299,12 @@
 
    "Dedication Ceremony"
    {:prompt "Choose a faceup card"
-    :choices {:req rezzed?}
+    :choices {:req #(or (and (card-is? % :side :corp)
+                             (:rezzed %))
+                        (and (card-is? % :side :runner)
+                             (or (installed? %)
+                                 (:host %))
+                             (not (facedown? %))))}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
     :effect (req (add-prop state :corp target :advance-counter 3 {:placed true})
                  (effect-completed state side eid card)
