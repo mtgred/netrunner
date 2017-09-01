@@ -36,7 +36,7 @@
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
                  :msg "host a piece of bioroid ICE"
-                 :effect (req (corp-install state side target card))}
+                 :effect (req (corp-install state side target card {:no-install-cost true}))}
                 {:req (req (and this-server (= (get-in @state [:run :position]) 0)))
                  :label "Rez a hosted piece of bioroid ICE"
                  :prompt "Choose a piece of bioroid ICE to rez" :choices (req (:hosted card))
