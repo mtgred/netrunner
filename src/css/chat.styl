@@ -1,0 +1,25 @@
+.typing
+  font-size: 40px
+  position: absolute
+  bottom: 0
+
+.typing span
+  font-size: 50px
+  animation-name: blink
+  animation-duration: 1.5s
+  animation-iteration-count: infinite
+  animation-fill-mode: both
+
+for i in (1..10)
+  .typing span:nth-child(i)
+    animation-delay: 0.1*i s
+
+@keyframes blink
+  0%
+    opacity: .2
+
+  20%
+    opacity: 1
+
+  100%
+    opacity: .2

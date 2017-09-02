@@ -126,6 +126,16 @@
       (aset input "value" "")
       (.focus input))))
 
+(defn send-typing [event owner]
+  "Send a typing event to server for this user if it is not already set in game state"
+  (.preventDefault event)
+  (let [input (om/get-node owner "msg-input")
+        text (.-value input)]
+    (if (empty? text)
+      (send-command "typingstop" {:user (:user @app-state)})
+      (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
+        (send-command "typing" {:user (:user @app-state)})))))
+
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]
             (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
@@ -343,14 +353,18 @@
                   :on-mouse-out  card-preview-mouse-out}
         [:div.panel.blue-shade.messages {:ref "msg-list"}
          (for [msg messages]
-           (if (= (:user msg) "__system__")
-             [:div.system (for [item (get-message-parts (:text msg))] (create-span item))]
-             [:div.message
-              (om/build avatar (:user msg) {:opts {:size 38}})
-              [:div.content
-               [:div.username (get-in msg [:user :username])]
-               [:div (for [item (get-message-parts (:text msg))] (create-span item))]]]))]
-        [:form {:on-submit #(send-msg % owner)}
+           (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
+             (if (= (:user msg) "__system__")
+               [:div.system (for [item (get-message-parts (:text msg))] (create-span item))]
+               [:div.message
+                (om/build avatar (:user msg) {:opts {:size 38}})
+                [:div.content
+                 [:div.username (get-in msg [:user :username])]
+                 [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
+        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
+          [:div [:p.typing [:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "]]])
+        [:form {:on-submit #(send-msg % owner)
+                :on-input #(send-typing % owner)}
          [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
 
 (defn handle-dragstart [e cursor]
