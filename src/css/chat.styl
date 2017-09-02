@@ -11,7 +11,7 @@
   animation-fill-mode: both
 
 for i in (1..10)
-  .typing span:nth-child(i)
+  .typing span:nth-child({i})
     animation-delay: 0.1*i s
 
 @keyframes blink
