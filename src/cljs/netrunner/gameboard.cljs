@@ -362,7 +362,7 @@
                  [:div.username (get-in msg [:user :username])]
                  [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
         (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
-          [:div [:p.typing [:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "][:span " . "]]])
+          [:div [:p.typing (for [i (range 10)] [:span " . "])]])
         [:form {:on-submit #(send-msg % owner)
                 :on-input #(send-typing % owner)}
          [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
