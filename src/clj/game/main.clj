@@ -15,10 +15,14 @@
 (def ctx (ZMQ/context 1))
 
 (def spectator-commands
-  {"say" core/say})
+  {"say" core/say
+   "typing" core/typing
+   "typingstop" core/typingstop})
 
 (def commands
   {"say" core/say
+   "typing" core/typing
+   "typingstop" core/typingstop
    "concede" core/concede
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "change" core/change
