@@ -244,8 +244,9 @@
                 {:label "Add a virus counter"
                  :effect (effect (add-counter card :virus 1))}]
     :strength-bonus (req (get-in card [:counter :virus] 0))
-    :events {:run-ends {:req (req (not (or (get-in @state [:run :did-trash])
-                                           (get-in @state [:run :did-steal]))))
+    :events {:run-ends {:req (req (and (not (or (get-in @state [:run :did-trash])
+                                                (get-in @state [:run :did-steal])))
+                                       (get-in @state [:run :did-access])))
                         :effect (effect (add-counter card :virus 1))}
              :expose {:effect (effect (add-counter card :virus 1))}
              :counter-added {:req (req (= :cid target) (:cid card))
