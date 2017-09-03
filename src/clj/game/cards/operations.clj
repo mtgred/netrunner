@@ -867,12 +867,17 @@
     :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
 
    "Priority Construction"
-   {:delayed-completion true
-    :prompt "Choose an ICE in HQ to install"
-    :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (ice? %))}
-    :msg "install an ICE from HQ and place 3 advancements on it"
-    :cancel-effect (req (effect-completed state side eid))
-    :effect (effect (corp-install (assoc target :advance-counter 3) nil {:no-install-cost true}))}
+   (letfn [(install-card [chosen]
+            {:prompt "Select a remote server"
+             :choices (req (conj (vec (get-remote-names @state)) "New remote"))
+             :delayed-completion true
+             :effect (effect (corp-install (assoc (move state side chosen :play-area) :advance-counter 3) target {:no-install-cost true}))})]
+     {:delayed-completion true
+      :prompt "Choose a piece of ICE in HQ to install"
+      :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (ice? %))}
+      :msg "install an ICE from HQ and place 3 advancements on it"
+      :cancel-effect (req (effect-completed state side eid))
+      :effect (effect (continue-ability (install-card target) card nil))})
 
    "Product Recall"
    {:prompt "Choose a rezzed asset or upgrade to trash"
