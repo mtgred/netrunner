@@ -50,6 +50,8 @@
                                               #(+ (or % 0) (:agendapoints c)))
                                        (gain-agenda-point state :runner points)
                                        (play-sfx state side "agenda-steal")
+                                       (when (:run @state)
+                                         (swap! state assoc-in [:run :did-steal] true))
                                        (when-let [current (first (get-in @state [:corp :current]))]
                                          (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                                          (trash state side current)))}
@@ -138,6 +140,8 @@
                                 :yes-ability {:cost [:credit trash-cost]
                                               :delayed-completion true
                                               :effect (req (trash state side eid card nil)
+                                                           (when (:run @state)
+                                                             (swap! state assoc-in [:run :did-trash] true))
                                                            (swap! state assoc-in [:runner :register :trashed-card] true)
                                                            (system-msg state side (str "pays " trash-msg)))}}}
                               card nil))))
