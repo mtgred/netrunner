@@ -156,8 +156,12 @@
   [{:keys [code] :as card}]
   (let [alts (:alt-arts @app-state)
         card-alts (get alts code {:versions ["default"]})]
-    (map #(assoc card :version % :code-version (str code "-" %) :check_for_alts false) (:versions card-alts))
-  ))
+    (map #(assoc card
+                 :version %
+                 :code-version (str code "-" %)
+                 :check_for_alts false
+                 :setname (if (= % "default") (:setname card) "Alternative Art"))
+         (:versions card-alts))))
 
 (defn add-alt-arts
   "Add alternate art versions of cards to the list of cards"
@@ -207,8 +211,10 @@
            (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
              [:option {:value field} field])]]
 
-         (let [cycles (for [[cycle cycle-sets] (rest (group-by :cycle sets))]
-                        {:name (str cycle " cycle") :available (:available (first cycle-sets))})
+         (let [cycles (conj
+                        (for [[cycle cycle-sets] (rest (group-by :cycle sets))]
+                          {:name (str cycle " cycle") :available (:available (first cycle-sets))})
+                        {:name "Alternative Art" :available "4097-01-01"})
                cycle-sets (map #(if (:cycle %)
                                   (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
                                   %)
@@ -230,16 +236,15 @@
                                      (.replace " cycle" ""))
                              cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
                              cards (if (= s "All")
-                                     (:cards cursor)
+                                     (add-alt-arts (:cards cursor))
                                      (if (= (.indexOf (:set-filter state) "cycle") -1)
-                                       (filter #(= (:setname %) s) (:cards cursor))
-                                       (filter #(cycle-sets (:setname %)) (:cards cursor))))]
+                                       (filter #(= (:setname %) s) (add-alt-arts (:cards cursor)))
+                                       (filter #(cycle-sets (:setname %)) (add-alt-arts (:cards cursor)))))]
                          (->> cards
                               (filter-cards (:side-filter state) :side)
                               (filter-cards (:faction-filter state) :faction)
                               (filter-cards (:type-filter state) :type)
                               (match (.toLowerCase (:search-query state)))
-                              (add-alt-arts)
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))
                        {:key :code-version})]]))))
