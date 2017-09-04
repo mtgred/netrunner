@@ -148,7 +148,7 @@
          [:div {:data-dismiss "modal"}
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
             [:div.deckline {:on-click #(send {:action "deck" :gameid (:gameid @app-state) :deck deck})}
-             [:img {:src (image-url (:identity deck))}]
+             [:img {:src (image-url (assoc (:identity deck) :check_for_alts true))}]
              [:div.float-right (deck-status-span sets deck)]
              [:h4 (:name deck)]
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
