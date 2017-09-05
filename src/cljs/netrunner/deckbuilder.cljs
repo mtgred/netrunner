@@ -500,10 +500,10 @@
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
 ;; Dot definitions
-(def zws "&#8203;")                                         ; zero-width space for wrapping dots
-(def influence-dot (str "&#9679;" zws))                     ; normal influence dot
-(def mwl-dot (str "&#9733;" zws))                           ; influence penalty from MWL
-(def alliance-dot (str "&#9675;" zws))                      ; alliance free-inf dot
+(def zws "\u200B")                                          ; zero-width space for wrapping dots
+(def influence-dot (str "●" zws))                           ; normal influence dot
+(def mwl-dot (str "★" zws))                                 ; influence penalty from MWL
+(def alliance-dot (str "○" zws))                            ; alliance free-inf dot
 
 (defn- make-dots
   "Returns string of specified dots and number. Uses number for n > 20"

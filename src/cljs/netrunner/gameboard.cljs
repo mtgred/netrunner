@@ -804,7 +804,7 @@
                                        :fn (fn [cursor] (let [total (count cursor)
                                                               face-up (count (filter faceup? cursor))]
                                                           ;; use non-breaking space to keep counts on same line.
-                                                          (str face-up "\u2191\u00A0" (- total face-up) "\u2193")))}})
+                                                          (str face-up "↑ " (- total face-up) "↓")))}})
 
        [:div.panel.blue-shade.popup {:ref "popup" :class (if (= (:side @game-state) :runner) "opponent" "me")}
         [:div
