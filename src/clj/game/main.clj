@@ -114,6 +114,8 @@
     (private-card-vector state side deck)))
 
 (defn- private-states [state]
+  "Generates privatized states for the Corp, Runner and any spectators from the base state.
+  If `:spectatorhands` is on, all information is passed on to spectators as well."
   ;; corp, runner, spectator
   (let [corp-private (make-private-corp state)
         runner-private (make-private-runner state)
@@ -124,8 +126,7 @@
      (assoc @state :corp corp-private
                    :runner runner-deck)
      (if (get-in @state [:options :spectatorhands])
-       (assoc @state :corp (assoc-in corp-private [:hand] (get-in @state [:corp :hand]))
-                     :runner (assoc-in runner-private [:hand] (get-in @state [:runner :hand])))
+       (assoc @state :corp corp-deck :runner runner-deck)
        (assoc @state :corp corp-private :runner runner-private))]))
 
 (defn- reset-all-cards
