@@ -530,9 +530,7 @@
   "Make a hiccup-ready vector for the specified dot and cost-map (influence or mwl)"
   [dot cost-map]
   (for [factionkey (sort (keys cost-map))]
-    [:span.influence
-     {:class (name factionkey)
-      :dangerouslySetInnerHTML #js {:__html (make-dots dot (factionkey cost-map))}}]))
+    [:span.influence {:class (name factionkey)} (make-dots dot (factionkey cost-map))]))
 
 (defn influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
