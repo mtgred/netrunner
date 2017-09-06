@@ -3,10 +3,11 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
+            [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar authenticated] :as auth]
             [netrunner.ajax :refer [GET]]))
 
-(def app-state
+(def chat-state
   (atom {:channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
                     :español [] :italia [] :português [] :sverige [] :stimhack-league []}}))
 
@@ -18,8 +19,8 @@
 (go (while true
       (let [msg (<! chat-channel)
             ch (keyword (:channel msg))
-            messages (get-in @app-state [:channels ch])]
-        (swap! app-state assoc-in [:channels ch] (conj messages msg)))))
+            messages (get-in @chat-state [:channels ch])]
+        (swap! chat-state assoc-in [:channels ch] (conj messages msg)))))
 
 (defn send-msg [event channel owner]
   (.preventDefault event)
@@ -66,10 +67,10 @@
 
 (defn fetch-messages [owner]
   (let [channel (om/get-state owner :channel)
-        messages (get-in @app-state [:channels channel])]
+        messages (get-in @chat-state [:channels channel])]
     (when (empty? messages)
       (go (let [data (:json (<! (GET (str "/messages/" (name channel)))))]
-            (swap! app-state assoc-in [:channels channel] data))))))
+            (swap! chat-state assoc-in [:channels channel] data))))))
 
 (defn chat [cursor owner]
   (reify
@@ -105,7 +106,8 @@
         [:div.chat-box
          [:div.blue-shade.panel.message-list {:ref "message-list"}
           (om/build-all message-view (get-in cursor [:channels (:channel state)]))]
-         [:div
-          (om/build msg-input-view state)]]]))))
+         (when (:user @app-state)
+           [:div
+            (om/build msg-input-view state)])]]))))
 
-(om/root chat app-state {:target (. js/document (getElementById "chat"))})
+(om/root chat chat-state {:target (. js/document (getElementById "chat"))})
