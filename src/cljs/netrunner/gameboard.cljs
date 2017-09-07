@@ -322,14 +322,18 @@
     (when (pos? (count code))
       code)))
 
-(defn card-preview-mouse-over [e]
+(defn card-preview-mouse-over [e channel]
+  (.preventDefault e)
   (when-let [code (get-card-code e)]
     (when-let [card (some #(when (= (:code %) code) %) (:cards @app-state))]
-     (put! zoom-channel (assoc card :implementation :full)))))
+      (put! channel (assoc card :implementation :full))))
+  nil)
 
-(defn card-preview-mouse-out [e]
+(defn card-preview-mouse-out [e channel]
+  (.preventDefault e)
   (when-let [code (get-card-code e)]
-    (put! zoom-channel false)))
+    (put! channel false))
+  nil)
 
 (defn log-pane [messages owner]
   (reify
@@ -349,8 +353,8 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div.log {:on-mouse-over card-preview-mouse-over
-                  :on-mouse-out  card-preview-mouse-out}
+       [:div.log {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                  :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
         [:div.panel.blue-shade.messages {:ref "msg-list"}
          (for [msg messages]
            (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
@@ -1005,8 +1009,8 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-        [:div.button-pane {:on-mouse-over card-preview-mouse-over
-                           :on-mouse-out  card-preview-mouse-out}
+        [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                           :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
          (if-let [prompt (first (:prompt me))]
            [:div.panel.blue-shade
             [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
