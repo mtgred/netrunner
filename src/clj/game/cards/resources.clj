@@ -546,6 +546,7 @@
    (let [ability {:msg "draw 2 cards"
                   :once :per-turn
                   :counter-cost [:power 1]
+                  :req (req (:runner-phase-12 @state))
                   :effect (req (draw state :runner 2)
                                (when (zero? (get-in card [:counter :power] 0))
                                  (trash state :runner card {:unpreventable true})))}]
