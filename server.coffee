@@ -90,10 +90,17 @@ getUsername = (socket) ->
 
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
+requester_connected = false
 requester = zmq.socket('req')
 requester.on 'connect', (fd, ep) ->
+  requester_connected = true
   db.collection("cards").find().sort(_id: 1).toArray (err, data) ->
     requester.send(JSON.stringify({action: "initialize", cards: data}))
+
+requester.on 'close', (fd,ep) ->
+  requester_connected = false
+requester.on 'disconnect', (fd,ep) ->
+  requester_connected = false
 
 requester.monitor(500, 0)
 requester.connect("tcp://#{clojure_hostname}:1043")
@@ -266,33 +273,44 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           lobby.to(msg.gameid).emit('netrunner', {type: "games", gamesdiff: updateMsg})
 
       when "start"
-        game = games[socket.gameid]
-        if game
-          if game.players.length is 2
-            corp = if game.players[0].side is "Corp" then game.players[0] else game.players[1]
-            runner = if game.players[0].side is "Runner" then game.players[0] else game.players[1]
-            g = {
-              gameid: socket.gameid
-              startDate: (new Date()).toISOString()
-              title: game.title
-              room: game.room
-              corp: corp.user.username
-              runner: runner.user.username
-              corpIdentity: if corp.deck then corp.deck.identity.title else null
-              runnerIdentity: if runner.deck then runner.deck.identity.title else null
-            }
-            db.collection('gamestats').insert g, (err, data) ->
-              console.log(err) if err
-          game.started = true
-          msg = games[socket.gameid]
-          msg.action = "start"
-          msg.gameid = socket.gameid
-          requester.send(JSON.stringify(msg))
-          for player in game.players
-            player.faction = if player.deck then player.deck.identity.faction else null
-            player.identity = if player.deck then player.deck.identity.title else null
-            delete player.deck
-          refreshLobby("update", msg.gameid)
+        if !requester_connected
+          lobby.to(msg.gameid).emit 'netrunner',
+            type: "say"
+            user: "__system__"
+            notification: "ting"
+            text: "Unable to connect to game server, please try again."
+          lobby.to(msg.gameid).emit 'netrunner',
+            type: "lobby-notification"
+            text: "Unable to start game. Please try again."
+            severity: "error"
+        else
+          game = games[socket.gameid]
+          if game
+            if game.players.length is 2
+              corp = if game.players[0].side is "Corp" then game.players[0] else game.players[1]
+              runner = if game.players[0].side is "Runner" then game.players[0] else game.players[1]
+              g = {
+                gameid: socket.gameid
+                startDate: (new Date()).toISOString()
+                title: game.title
+                room: game.room
+                corp: corp.user.username
+                runner: runner.user.username
+                corpIdentity: if corp.deck then corp.deck.identity.title else null
+                runnerIdentity: if runner.deck then runner.deck.identity.title else null
+              }
+              db.collection('gamestats').insert g, (err, data) ->
+                console.log(err) if err
+            game.started = true
+            msg = games[socket.gameid]
+            msg.action = "start"
+            msg.gameid = socket.gameid
+            requester.send(JSON.stringify(msg))
+            for player in game.players
+              player.faction = if player.deck then player.deck.identity.faction else null
+              player.identity = if player.deck then player.deck.identity.title else null
+              delete player.deck
+            refreshLobby("update", msg.gameid)
 
       when "do"
         try
