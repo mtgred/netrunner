@@ -71,12 +71,14 @@
 (defn strip [state]
   (dissoc state :events :turn-events :per-turn :prevent :damage :effect-completed))
 
-(defn not-spectator? [state user]
+(defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"
+  [state user]
   (and state (#{(get-in @state [:corp :user]) (get-in @state [:runner :user])} user)))
 
-(defn handle-do [user command state side args]
+(defn handle-do
   "Ensures the user is allowed to do command they are trying to do"
+  [user command state side args]
   (if (not-spectator? state user)
     ((commands command) state (keyword side) args)
     (when-let [cmd (spectator-commands command)]
@@ -165,9 +167,10 @@
                     (do (println "Toast Error " action command (get-in args [:card :title]) e)
                         false)))))))
 
-(defn run [socket]
+(defn run
   "Main thread for handling commands from the UI server. Attempts to apply a command,
   then returns the resulting game state, or another message as appropriate."
+  [socket]
   (while true
       ;; Attempt to handle the command. If true is returned, then generate a successful
       ;; message. Otherwise generate an error message.
