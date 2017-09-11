@@ -570,7 +570,11 @@ app.post '/data/decks/delete', (req, res) ->
 
 app.get '/data/donators', (req, res) ->
   db.collection('donators').find({}).sort({amount: -1}).toArray (err, data) ->
-    res.status(200).json(d.username or d.name for d in data)
+    if data
+      res.status(200).json(d.username or d.name for d in data)
+    else
+      res.status(200).json([])
+    throw err if err
 
 app.get '/data/news', (req, res) ->
   if process.env['TRELLO_API_KEY']
