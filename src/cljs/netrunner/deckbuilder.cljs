@@ -349,8 +349,10 @@
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
   [sets card]
   (let [card-set (:setname card)
+        rotated (some #(when (= (:name %) card-set) (:rotated %)) sets)
         date (some #(when (= (:name %) card-set) (:available %)) sets)]
-    (and (not= date "")
+    (and (not rotated)
+         (not= date "")
          (< date (.toJSON (js/Date.))))))
 
 ;; 1.1.1.1 and Cache Refresh validation

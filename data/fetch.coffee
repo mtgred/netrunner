@@ -27,8 +27,17 @@ capitalize = (s) ->
 setFields = {
   "name" : same
   "date_release" : (k, t) -> ["available", if t is null then "4096-01-01" else t]
-  "cycle_code" : (k, t) -> ["cycle", capitalize(t.replace(/-/g, " "))]
+  "cycle_code" : (k, t) -> ["cycle", mapCycles[t].name]
+  "cyc_code" : rename("cycle_code")
   "size" : (k, t) -> ["bigbox", t > 20]
+}
+
+cycleFields = {
+  "code" : same
+  "name" : same
+  "position" : same
+  "size" : same
+  "rotated" : same
 }
 
 mwlFields = {
@@ -54,6 +63,8 @@ mapFactions = {
 }
 
 mapSets = {}
+
+mapCycles = {}
 
 cardFields = {
   "code" : same,
@@ -89,13 +100,32 @@ selectFields = (fields, objectList) ->
                     return newObj), {}) \
    for obj in objectList)
 
+fetchCycles = (callback) ->
+  request.get baseurl + "cycles", (error, response, body) ->
+    if !error and response.statusCode is 200
+      data = JSON.parse(body).data
+      cycles = selectFields(cycleFields, data)
+      for cycle in cycles
+        mapCycles[cycle.code] = cycle
+      db.collection("cycles").remove ->
+        db.collection("cycles").insert cycles, (err, result) ->
+          fs.writeFile "andb-cycles.json", JSON.stringify(cycles), ->
+            console.log("#{cycles.length} cycles fetched")
+          callback(null, cycles.length)
+
 fetchSets = (callback) ->
   request.get baseurl + "packs", (error, response, body) ->
     if !error and response.statusCode is 200
       data = JSON.parse(body).data
       for set in data
         mapSets[set.code] = set.name
+      data = data.map (d) ->
+        d.cyc_code = d.cycle_code
+        d
       sets = selectFields(setFields, data)
+      sets = sets.map (s) ->
+        s.rotated = mapCycles[s.cycle_code].rotated
+        s
       db.collection("sets").remove ->
         db.collection("sets").insert sets, (err, result) ->
           fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
@@ -141,4 +171,4 @@ fetchMWL = (callback) ->
             console.log("#{mwl.length} MWL lists fetched")
           callback(null, mwl.length)
 
-async.series [fetchSets, fetchCards, fetchMWL, () -> db.close()]
+async.series [fetchCycles, fetchSets, fetchCards, fetchMWL, () -> db.close()]
