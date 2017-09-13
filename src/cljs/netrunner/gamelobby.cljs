@@ -271,7 +271,7 @@
        [:div
         [:div.lobby-bg]
         [:div.container
-         [:div.lobby.panel.blue-shade 
+         [:div.lobby.panel.blue-shade
           [:div.games
            [:div.button-bar
             (if gameid
@@ -327,10 +327,11 @@
                  [:input {:type "checkbox" :checked (om/get-state owner :spectatorhands)
                           :on-change #(om/set-state! owner :spectatorhands (.. % -target -checked))
                           :disabled (not (om/get-state owner :allowspectator))}]
-                 "Make players' hands visible to spectators"]]
-               [:p {:style {:display (if (om/get-state owner :spectatorhands) "block" "none")}}
-                "This will reveal both players' hands to ALL spectators of your game. We recommend "
-                "using a password to prevent strangers from spoiling the game."]
+                 "Make players' hidden information visible to spectators"]]
+               [:div {:style {:display (if (om/get-state owner :spectatorhands) "block" "none")}}
+                [:p "This will reveal both players' hidden information to ALL spectators of your game, "
+                 "including hand and face-down cards."]
+                [:p "We recommend using a password to prevent strangers from spoiling the game."]]
                [:p
                 [:label
                  [:input {:type "checkbox" :checked (om/get-state owner :private)
