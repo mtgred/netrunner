@@ -15,6 +15,35 @@ appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
 
 db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}").open( (err, _) -> throw err if err )
 
+console.log('process.argv', process.argv)
+rotate_cycle = process.argv[2]
+rotate_value = process.argv[3] || true
+
+rotateCycle = (callback) ->
+  if (!rotate_cycle?)
+    console.log("Usage: npm run rotate -- \"cycle_code\" [false]")
+    console.log("Will set the rotated value of all packs and cards belonging to the cycle")
+    console.log("Defaults to setting the rotated value to true, can be specified to set the value to false")
+    callback(null, 0)
+  else
+    rotate_value = (rotate_value != 'false')
+    console.log('Rotation Cycle:', rotate_cycle)
+    console.log('Rotation Value:', rotate_value)
+    db.collection('cycles').update({code: rotate_cycle}, {'$set': {rotated: rotate_value}}, (err, result) ->
+      throw(err) if err
+      console.log('Cycle Update:', result.result)
+      db.collection('sets').update({cycle_code: rotate_cycle}, {'$set': {rotated: rotate_value}}, {multi: true},
+        (err, result) ->
+          throw(err) if err
+          console.log('Sets Update:', result.result)
+          db.collection('cards').update({cycle_code: rotate_cycle}, {'$set': {rotated: rotate_value}}, {multi: true},
+            (err, result) ->
+              throw(err) if err
+              console.log('Cards Update:', result.result)
+              callback(null, 0))
+      )
+    )
+
 same = (key, t) ->
   return [key, t]
 
@@ -84,7 +113,6 @@ cardFields = {
   "position" : rename("number"),
   "pack_code": (k, t) -> ["setname", mapSets[t].name]
   "set_code" : same,
-  "cycle_code" : same,
   "side_code" : (k, t) -> ["side", capitalize(t)],
   "uniqueness" : same,
   "memory_cost" : rename("memoryunits"),
@@ -149,7 +177,6 @@ fetchCards = (callback) ->
       res = JSON.parse(body)
       data = res.data.map (d) ->
         d.set_code = d.pack_code
-        d.cycle_code = mapSets[d.set_code].cycle_code
         d.rotated = mapSets[d.set_code].rotated
         d
       cards = selectFields(cardFields, data)
@@ -180,4 +207,4 @@ fetchMWL = (callback) ->
             console.log("#{mwl.length} MWL lists fetched")
           callback(null, mwl.length)
 
-async.series [fetchCycles, fetchSets, fetchCards, fetchMWL, () -> db.close()]
+async.series [rotateCycle, () -> db.close()]
