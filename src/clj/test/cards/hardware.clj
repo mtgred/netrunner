@@ -797,6 +797,27 @@
         (is (= "The top card of R&D is Hedge Fund" topcard)))
       (is (= 1 (count (:discard (get-runner))))))))
 
+(deftest the-gauntlet-not-with-gang-sign
+  ;; Access additional cards on run on HQ, not with Gang Sign
+  ;; Issue #2749
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1)
+                             (qty "Hedge Fund" 3)])
+              (default-runner [(qty "The Gauntlet" 1)
+                               (qty "Gang Sign" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Gang Sign")
+    (play-from-hand state :runner "The Gauntlet")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    ;; Gang Sign should trigger, without The Gauntlet pop-up
+    (let [gs (get-resource state 0)]
+      (prompt-is-card? :runner gs))
+    ;; This will throw error if The Gauntlet triggers.
+    (prompt-choice :runner "Card from hand")))
+
 (deftest the-personal-touch
   ;; The Personal Touch - Give +1 strength to an icebreaker
   (do-game
