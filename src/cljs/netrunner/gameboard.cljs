@@ -1024,6 +1024,11 @@
                 (= (:choices prompt) "credit")
                 [:div
                  [:div.credit-select
+                  ;; Inform user of base trace / link and any bonuses
+                  (when-let [base (:base prompt)]
+                    (let [bonus (:bonus prompt 0)
+                          preamble (if (pos? bonus) (str base " + " bonus) (str base))]
+                      [:span (str preamble " + ")]))
                   [:select#credit (for [i (range (inc (:credit me)))]
                                     [:option {:value i} i])] " credits"]
                  [:button {:on-click #(send-command "choice"

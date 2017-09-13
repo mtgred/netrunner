@@ -1367,6 +1367,7 @@
 
    "Threat Level Alpha"
    {:trace {:base 1
+            :label "Give the Runner X tags"
             :delayed-completion true
             :effect (req (let [tags (-> @state :runner :tag)]
                            (if (pos? tags)
