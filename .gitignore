@@ -22,3 +22,45 @@ pom.xml
 /data/andb-*.json
 /data/img
 /.lein-failures
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.source
+
+# Packages
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEA IntelliJ files
+.idea
+*.iml
+
+# MongoDB files
+*.wt
+*.lock
+*.turtle
+data/WiredTiger
+data/diagnostic.data
+data/journal
+data/storage.bson
