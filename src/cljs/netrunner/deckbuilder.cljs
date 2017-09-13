@@ -647,7 +647,7 @@
   (for [deck (sort-by :date > decks)]
     [:div.deckline {:class (when (= active-deck deck) "active")
                     :on-click #(put! select-channel deck)}
-     [:img {:src (image-url (:identity deck))}]
+     [:img {:src (image-url (assoc (:identity deck) :check_for_alts true))}]
      [:div.float-right (deck-status-span sets deck)]
      [:h4 (:name deck)]
      [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
@@ -739,7 +739,7 @@
               :else (deck-collection sets decks (om/get-state owner :deck)))]
            [:div {:class (when (:edit state) "edit")}
             (when-let [card (om/get-state owner :zoom)]
-              (om/build card-view card))]]
+              (om/build card-view (assoc card :check_for_alts true)))]]
 
           [:div.decklist
            (when-let [deck (:deck state)]
@@ -760,7 +760,7 @@
                          [:button {:on-click #(delete-deck owner)} "Delete"]])
                 [:h3 (:name deck)]
                 [:div.header
-                 [:img {:src (image-url identity)}]
+                 [:img {:src (image-url (assoc identity :check_for_alts true))}]
                  [:h4.fake-link {:on-mouse-enter #(put! zoom-channel identity)
                                  :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
                  (let [count (card-count cards)

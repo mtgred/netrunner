@@ -20,8 +20,27 @@
 (defn make-span [text symbol class]
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
 
-(defn image-url [card]
-  (str "/img/cards/" (:code card) ".png"))
+(defn- image-url-string
+  [code, version-string]
+  (str "/img/cards/" code (when version-string (str "-" version-string)) ".png"))
+
+(defn- build-image-url
+  [code, version-string]
+  (let [version (if (get-in @app-state [:options :show-alt-art]) version-string nil)]
+    (image-url-string code version)))
+
+(defn image-url 
+  [{:keys [code, version, check_for_alts]}]
+  (let [alt-art (get-in @app-state [:alt-arts code])
+        allowed_alt (when (and check_for_alts
+                               (get-in @app-state [:user :special])
+                               alt-art)
+                      (first (:versions alt-art)))
+        version-string (cond
+                         (= version "default") nil
+                         (nil? version) allowed_alt
+                         :else version)]
+    (build-image-url code version-string)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -132,6 +151,25 @@
     (om/set-state! owner filter "All"))
   (om/set-state! owner :search-query (.. e -target -value)))
 
+(defn- add-alt-art
+  "Add all alternate art versions for a single card"
+  [{:keys [code] :as card}]
+  (let [alts (:alt-arts @app-state)
+        card-alts (get alts code {:versions ["default"]})]
+    (map #(assoc card
+                 :version %
+                 :code-version (str code "-" %)
+                 :check_for_alts false
+                 :setname (if (= % "default") (:setname card) "Alternative Art"))
+         (:versions card-alts))))
+
+(defn add-alt-arts
+  "Add alternate art versions of cards to the list of cards"
+  [cards]
+  (if (get-in @app-state [:options :show-alt-art]) 
+    (flatten (map add-alt-art cards))
+    cards))
+
 (defn card-browser [{:keys [sets] :as cursor} owner]
   (reify
     om/IInitState
@@ -173,8 +211,10 @@
            (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
              [:option {:value field} field])]]
 
-         (let [cycles (for [[cycle cycle-sets] (rest (group-by :cycle sets))]
-                        {:name (str cycle " cycle") :available (:available (first cycle-sets))})
+         (let [cycles (conj
+                        (for [[cycle cycle-sets] (rest (group-by :cycle sets))]
+                          {:name (str cycle " cycle") :available (:available (first cycle-sets))})
+                        {:name "Alternative Art" :available "4097-01-01"})
                cycle-sets (map #(if (:cycle %)
                                   (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
                                   %)
@@ -196,10 +236,10 @@
                                      (.replace " cycle" ""))
                              cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
                              cards (if (= s "All")
-                                     (:cards cursor)
+                                     (add-alt-arts (:cards cursor))
                                      (if (= (.indexOf (:set-filter state) "cycle") -1)
-                                       (filter #(= (:setname %) s) (:cards cursor))
-                                       (filter #(cycle-sets (:setname %)) (:cards cursor))))]
+                                       (filter #(= (:setname %) s) (add-alt-arts (:cards cursor)))
+                                       (filter #(cycle-sets (:setname %)) (add-alt-arts (:cards cursor)))))]
                          (->> cards
                               (filter-cards (:side-filter state) :side)
                               (filter-cards (:faction-filter state) :faction)
@@ -207,6 +247,6 @@
                               (match (.toLowerCase (:search-query state)))
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))
-                       {:key :code})]]))))
+                       {:key :code-version})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
