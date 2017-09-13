@@ -212,10 +212,6 @@
                      (alt-art? %)))
        (distinct-by :title)))
 
-(defn get-card [title]
-  (some #(when (and (= (:title %) title) (alt-art? %)) %)
-        (:cards @app-state)))
-
 (defn deck->str [owner]
   (let [cards (om/get-state owner [:deck :cards])
         str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards)]
