@@ -91,21 +91,29 @@
   (or (get-in @app-state [:user :special])
       (not= "Alternates" (:setname card))))
 
+(defn take-best-card
+  "Returns a non-rotated card from the list of cards or a random rotated card from the list"
+  [cards]
+  (let [non-rotated (filter #(not (:rotated %)) cards)]
+    (if (not-empty non-rotated)
+      (first non-rotated)
+      (first cards))))
+
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
   [side query]
   (let [q (.toLowerCase query)
         cards (filter #(and (= (:side %) side) (alt-art? %))
                       (:cards @app-state))]
-    (if-let [card (some #(when (= (-> % :title .toLowerCase) q) %) cards)]
-      card
+    (if-let [all-matches (filter #(= (-> % :title .toLowerCase) q) cards)]
+      (take-best-card all-matches)
       (loop [i 2 matches cards]
         (let [subquery (subs q 0 i)]
-         (cond (zero? (count matches)) query
-               (or (= (count matches) 1) (identical-cards? matches)) (first matches)
-               (found? subquery matches) (found? subquery matches)
-               (<= i (count query)) (recur (inc i) (search subquery matches))
-               :else query))))))
+          (cond (zero? (count matches)) query
+                (or (= (count matches) 1) (identical-cards? matches)) (first matches)
+                (found? subquery matches) (found? subquery matches)
+                (<= i (count query)) (recur (inc i) (search subquery matches))
+                :else query))))))
 
 (defn parse-identity
   "Parse an id to the corresponding card map - only care about side and name for now"
@@ -349,7 +357,7 @@
   "Returns false if the card comes from a spoiled set or is out of competitive rotation."
   [sets card]
   (let [card-set (:setname card)
-        rotated (some #(when (= (:name %) card-set) (:rotated %)) sets)
+        rotated (:rotated card)
         date (some #(when (= (:name %) card-set) (:available %)) sets)]
     (and (not rotated)
          (not= date "")
@@ -599,12 +607,14 @@
 
 (defn handle-add [owner event]
   (.preventDefault event)
-  (let [qty (js/parseInt (om/get-state owner :quantity))]
+  (let [qty (js/parseInt (om/get-state owner :quantity))
+        card (nth (om/get-state owner :matches) (om/get-state owner :selected))
+        best-card (lookup (:side card) (:title card))]
     (if (js/isNaN qty)
       (om/set-state! owner :quantity 3)
       (do (put! (om/get-state owner :edit-channel)
                 {:qty qty
-                 :card (nth (om/get-state owner :matches) (om/get-state owner :selected))})
+                 :card best-card})
           (om/set-state! owner :quantity 3)
           (om/set-state! owner :query "")
           (-> ".deckedit .lookup" js/$ .select)))))
@@ -763,8 +773,9 @@
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
-                 [:h4.fake-link {:on-mouse-enter #(put! zoom-channel identity)
-                                 :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
+                 [:h4 {:class (if (released? (:sets @app-state) identity) "fake-link" "casual")
+                       :on-mouse-enter #(put! zoom-channel identity)
+                       :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
                  (let [count (card-count cards)
                        min-count (min-deck-size identity)]
                    [:div count " cards"
@@ -814,7 +825,10 @@
             [:p
              [:h3 "Identity"]
              [:select.identity {:value (get-in state [:deck :identity :title])
-                                :on-change #(om/set-state! owner [:deck :identity] (get-card (.. % -target -value)))}
+                                :on-change #(om/set-state! owner
+                                                           [:deck :identity]
+                                                           (lookup (get-in state [:deck :identity :side])
+                                                                   (.. % -target -value)))}
               (for [card (sort-by :title (side-identities (get-in state [:deck :identity :side])))]
                 [:option (:title card)])]]
             (om/build card-lookup cursor {:state state})
