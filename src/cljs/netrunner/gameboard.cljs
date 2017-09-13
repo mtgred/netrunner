@@ -251,6 +251,12 @@
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
               (pos? (:click me))))))
 
+(defn spectator-view-hidden?
+  "Checks if spectators are allowed to see hidden information, such as hands and face-down cards"
+  []
+  (and (get-in @game-state [:options :spectatorhands])
+       (not (not-spectator? game-state app-state))))
+
 (def ci-open "\u2664")
 (def ci-seperator "\u2665")
 (def ci-close "\u2666")
@@ -322,14 +328,18 @@
     (when (pos? (count code))
       code)))
 
-(defn card-preview-mouse-over [e]
+(defn card-preview-mouse-over [e channel]
+  (.preventDefault e)
   (when-let [code (get-card-code e)]
     (when-let [card (some #(when (= (:code %) code) %) (:cards @app-state))]
-     (put! zoom-channel (assoc card :implementation :full)))))
+      (put! channel (assoc card :implementation :full))))
+  nil)
 
-(defn card-preview-mouse-out [e]
+(defn card-preview-mouse-out [e channel]
+  (.preventDefault e)
   (when-let [code (get-card-code e)]
-    (put! zoom-channel false)))
+    (put! channel false))
+  nil)
 
 (defn log-pane [messages owner]
   (reify
@@ -349,8 +359,8 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       [:div.log {:on-mouse-over card-preview-mouse-over
-                  :on-mouse-out  card-preview-mouse-out}
+       [:div.log {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                  :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
         [:div.panel.blue-shade.messages {:ref "msg-list"}
          (for [msg messages]
            (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
@@ -569,6 +579,7 @@
                             :on-drag-start #(handle-dragstart % cursor)
                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                             :on-mouse-enter #(when (or (not (or flipped facedown))
+                                                       (spectator-view-hidden?)
                                                        (= (:side @game-state) (keyword (.toLowerCase side))))
                                                (put! zoom-channel cursor))
                             :on-mouse-leave #(put! zoom-channel false)
@@ -705,8 +716,7 @@
                                            :style {:left (* (/ 320 (dec size)) i)}}
                         (if (or (= (:user player) (:user @app-state))
                                 (:openhand player)
-                                (and (get-in @game-state [:options :spectatorhands])
-                                     (not (not-spectator? game-state app-state))))
+                                (spectator-view-hidden?))
                           (om/build card-view (assoc card :remotes remotes))
                           [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
                      (:hand player))]
@@ -778,22 +788,22 @@
 (defmethod discard-view "Corp" [{:keys [discard servers] :as cursor} owner]
   (om/component
    (sab/html
-    (let [faceup? #(or (:seen %) (:rezzed %))]
+    (let [faceup? #(or (:seen %) (:rezzed %))
+          draw-card #(if (faceup? %)
+                       (om/build card-view %)
+                       (if (or (= (:side @game-state) :corp)
+                               (spectator-view-hidden?))
+                         [:div.unseen (om/build card-view %)]
+                         [:img.card {:src "/img/corp.png"}]))]
       [:div.blue-shade.discard
        (drop-area :corp "Archives" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeToggle)})
 
-       (when-not (empty? discard)
-         (let [c (last discard)]
-           (if (= (:side @game-state) :corp)
-             (om/build card-view c)
-             (if (faceup? c)
-               (om/build card-view c)
-               [:img.card {:src "/img/corp.png"}]))))
+       (when-not (empty? discard) (draw-card (last discard)))
 
        (om/build label discard {:opts {:name "Archives"
                                        :fn (fn [cursor] (let [total (count cursor)
                                                               face-up (count (filter faceup? cursor))]
-                                                         ;; use non-breaking space to keep counts on same line.
+                                                          ;; use non-breaking space to keep counts on same line.
                                                           (str face-up "\u2191\u00A0" (- total face-up) "\u2193")))}})
 
        [:div.panel.blue-shade.popup {:ref "popup" :class (if (= (:side @game-state) :runner) "opponent" "me")}
@@ -802,12 +812,7 @@
          [:label (let [total (count discard)
                        face-up (count (filter faceup? discard))]
                    (str total " cards, " (- total face-up) " face-down."))]]
-        (for [c discard]
-          (if (faceup? c)
-            (om/build card-view c)
-            (if (not= (:side @game-state) :corp)
-              [:img.card {:src "/img/corp.png"}]
-              [:div.unseen (om/build card-view c)])))]]))))
+        (for [c discard] (draw-card c))]]))))
 
 (defn rfg-view [{:keys [cards name] :as cursor}]
   (om/component
@@ -1005,8 +1010,8 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-        [:div.button-pane {:on-mouse-over card-preview-mouse-over
-                           :on-mouse-out  card-preview-mouse-out}
+        [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                           :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
          (if-let [prompt (first (:prompt me))]
            [:div.panel.blue-shade
             [:h4 (for [item (get-message-parts (:msg prompt))] (create-span item))]
@@ -1024,6 +1029,11 @@
                 (= (:choices prompt) "credit")
                 [:div
                  [:div.credit-select
+                  ;; Inform user of base trace / link and any bonuses
+                  (when-let [base (:base prompt)]
+                    (let [bonus (:bonus prompt 0)
+                          preamble (if (pos? bonus) (str base " + " bonus) (str base))]
+                      [:span (str preamble " + ")]))
                   [:select#credit (for [i (range (inc (:credit me)))]
                                     [:option {:value i} i])] " credits"]
                  [:button {:on-click #(send-command "choice"
