@@ -294,7 +294,7 @@
          (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))
                    (:install-rezzed (card-def card)))
            (do (trigger-event state side :pre-rez-cost card)
-               (if (and altcost (can-pay? state side nil altcost))
+               (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
                  (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
                           {:delayed-completion true
                            :effect (req (if (and (= target "Yes")
