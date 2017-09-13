@@ -31,6 +31,7 @@ setFields = {
   "cyc_code" : rename("cycle_code")
   "size" : (k, t) -> ["bigbox", t > 20]
   "code" : same
+  "position" : same
 }
 
 cycleFields = {
@@ -127,6 +128,7 @@ fetchSets = (callback) ->
       sets = selectFields(setFields, data)
       sets = sets.map (s) ->
         s.rotated = mapCycles[s.cycle_code].rotated
+        s.cycle_position = mapCycles[s.cycle_code].position
         s
       for set in sets
         mapSets[set.code] = set

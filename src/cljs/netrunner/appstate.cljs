@@ -10,6 +10,6 @@
                           :sounds-volume (let [volume (js->clj (.getItem js/localStorage "sounds_volume"))]
                                            (if (nil? volume) 100 (js/parseInt volume)))}
                          (:options (js->clj js/user :keywordize-keys true)))
-         :cards [] :sets [] :mwl []
+         :cards [] :sets [] :mwl [] :cycles []
          :decks [] :decks-loaded false
          :games [] :gameid nil :messages []}))
