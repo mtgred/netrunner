@@ -782,6 +782,22 @@
         (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
         (is (not (:run @state)) "Run ended")))))
 
+(deftest tithonium-oversight-ai
+  ;; Do not prompt for alt cost #2734
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Oversight AI" 1) (qty "Tithonium" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Tithonium" "R&D")
+    (let [ht (get-content state :remote1 0)
+          ti (get-ice state :rd 0)]
+      (score-agenda state :corp ht)
+      (play-from-hand state :corp "Oversight AI")
+      (prompt-select :corp ti)
+      (is (get-in (refresh ti) [:rezzed]))
+      (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
+          "Tithonium hosting OAI as a condition"))))
+
 (deftest tmi
   ;; TMI ICE test
   (do-game

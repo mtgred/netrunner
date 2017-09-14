@@ -5,13 +5,14 @@
 
 (def game-states (atom {}))
 
-(defn- card-implemented [card]
+(defn- card-implemented
   "Checks if the card is implemented. Looks for a valid return from `card-def`.
   If implemented also looks for `:implementation` key which may contain special notes.
   Returns either:
     nil - not implemented
     :full - implemented fully
     msg - string with implementation notes"
+  [card]
   (when-let [cdef (card-def card)]
     ;; Card is defined - hence implemented
     (if-let [impl (:implementation cdef)]

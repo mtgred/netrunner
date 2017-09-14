@@ -16,6 +16,7 @@
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
       (swap! app-state assoc :cards cards)
+      (swap! app-state assoc :cards-loaded true)
       (put! cards-channel cards)))
 
 (defn make-span [text symbol class]
