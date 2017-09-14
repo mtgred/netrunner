@@ -423,12 +423,14 @@
        (released? sets (:identity deck))))
 
 (defn edit-deck [owner]
-  (om/set-state! owner :edit true)
-  (deck->str owner)
-  (-> owner (om/get-node "viewport") js/$ (.addClass "edit"))
-  (try (js/ga "send" "event" "deckbuilder" "edit") (catch js/Error e))
-  (go (<! (timeout 500))
-      (-> owner (om/get-node "deckname") js/$ .select)))
+  (let [deck (om/get-state owner :deck)]
+    (om/set-state! owner :old-deck deck)
+    (om/set-state! owner :edit true)
+    (deck->str owner)
+    (-> owner (om/get-node "viewport") js/$ (.addClass "edit"))
+    (try (js/ga "send" "event" "deckbuilder" "edit") (catch js/Error e))
+    (go (<! (timeout 500))
+        (-> owner (om/get-node "deckname") js/$ .select))))
 
 (defn end-edit [owner]
   (om/set-state! owner :edit false)
@@ -441,6 +443,13 @@
         cards (parse-deck-string side text)]
     (om/set-state! owner :deck-edit text)
     (om/set-state! owner [:deck :cards] cards)))
+
+(defn cancel-edit [owner]
+  (end-edit owner)
+  (go (let [deck (om/get-state owner :old-deck)
+            all-decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+        (load-decks all-decks)
+        (put! select-channel deck))))
 
 (defn delete-deck [owner]
   (om/set-state! owner :delete true)
@@ -643,15 +652,23 @@
                  (:title (nth matches i))])]))]]))))
 
 (defn deck-collection
-  [sets decks active-deck]
-  (for [deck (sort-by :date > decks)]
-    [:div.deckline {:class (when (= active-deck deck) "active")
-                    :on-click #(put! select-channel deck)}
-     [:img {:src (image-url (:identity deck))}]
-     [:div.float-right (deck-status-span sets deck)]
-     [:h4 (:name deck)]
-     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
-     [:p (get-in deck [:identity :title])]]))
+  [{:keys [sets decks decks-loaded active-deck]} owner]
+  (reify
+    om/IRenderState
+    (render-state [this state]
+      (sab/html
+        (cond
+          (not decks-loaded) [:h4 "Loading deck collection..."]
+          (empty? decks) [:h4 "No decks"]
+          :else [:div
+                 (for [deck (sort-by :date > decks)]
+                   [:div.deckline {:class (when (= active-deck deck) "active")
+                                   :on-click #(put! select-channel deck)}
+                    [:img {:src (image-url (:identity deck))}]
+                    [:div.float-right (deck-status-span sets deck)]
+                    [:h4 (:name deck)]
+                    [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
+                    [:p (get-in deck [:identity :title])]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -695,6 +712,7 @@
     om/IInitState
     (init-state [this]
       {:edit false
+       :old-deck nil
        :edit-channel (chan)
        :deck nil})
 
@@ -733,10 +751,7 @@
             [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
             [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]]
            [:div.deck-collection
-            (cond
-              (not decks-loaded) [:h4 "Loading deck collection..."]
-              (empty? decks) [:h4 "No decks"]
-              :else (deck-collection sets decks (om/get-state owner :deck)))]
+              (om/build deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (om/get-state owner :deck)})]
            [:div {:class (when (:edit state) "edit")}
             (when-let [card (om/get-state owner :zoom)]
               (om/build card-view card))]]
@@ -751,7 +766,7 @@
                 (cond
                   edit? [:div.button-bar
                          [:button {:on-click #(save-deck cursor owner)} "Save"]
-                         [:button {:on-click #(end-edit owner)} "Cancel"]]
+                         [:button {:on-click #(cancel-edit owner)} "Cancel"]]
                   delete? [:div.button-bar
                            [:button {:on-click #(handle-delete cursor owner)} "Confirm Delete"]
                            [:button {:on-click #(end-delete owner)} "Cancel"]]

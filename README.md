@@ -55,7 +55,7 @@ $ lein uberjar
 Launch game server:
 
 ```
-$ java -jar target/netrunner-0.1.0-SNAPSHOT-standalone.jar
+$ java -jar target/netrunner-standalone.jar
 ```
 
 Launch the Node server:

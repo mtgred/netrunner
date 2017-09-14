@@ -168,7 +168,7 @@
      (update! state side (update-in updated-card [:counter type] #(+ (or % 0) n)))
      (if (= type :advancement)
        ;; if advancement counter use existing system
-       (add-prop state side card :advancement n args)
+       (add-prop state side card :advance-counter n args)
        (trigger-event state side :counter-added (get-card state updated-card))))))
 
 ;;; Deck-related functions
