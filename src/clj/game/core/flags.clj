@@ -274,8 +274,9 @@
 (defn installed? [card]
   (or (:installed card) (= :servers (first (:zone card)))))
 
-(defn active? [{:keys [zone] :as card}]
+(defn active?
   "Checks if the card is active and should receive game events/triggers."
+  [{:keys [zone] :as card}]
   (or (is-type? card "Identity")
       (= zone [:current])
       (and (card-is? card :side :corp)
