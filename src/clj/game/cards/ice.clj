@@ -188,8 +188,9 @@
   {:subroutines [(trace-ability 2 (assoc ability :kicker (assoc ability :min 5)))]})
 
 ;;; Helper function for adding implementation notes to ICE defined with functions
-(defn- implementation-note [note ice-def]
+(defn- implementation-note
   "Adds an implementation note to the ice-definition"
+  [note ice-def]
   (assoc ice-def :implementation note))
 
 

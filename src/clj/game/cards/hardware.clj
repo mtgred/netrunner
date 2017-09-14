@@ -899,15 +899,15 @@
 
    "The Gauntlet"
    {:in-play [:memory 2]
-    :events {:pre-access {:req (req (= :hq target))
+    :events {:pre-access {:req (req (and (= :hq target)
+                                         run))
                           :silent (req true)
                           :delayed-completion true
                           :effect (effect (continue-ability
                                             {:prompt "How many ICE protecting HQ did you break all subroutines on?"
-                                             ; HACK ALERT - :number needs an upper limit. we don't track "broke all subroutines"
-                                             ; events, so we can't put an accurate upper limit here. The higher the upper limit,
-                                             ; the more entries in the UI drop-down list. 10 seems OK.
-                                             :choices {:number (req 10)}
+                                             ;; Makes number of ice on server (HQ) the upper limit.
+                                             ;; This should work since trashed ice do not count according to UFAQ
+                                             :choices {:number (req (count (get-in @state [:corp :servers :hq :ices])))}
                                              :effect (effect (access-bonus target))}
                                             card nil))}}}
 

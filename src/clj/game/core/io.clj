@@ -12,7 +12,24 @@
       (when (and (not= side nil) (not= side :spectator))
         (command state side)
         (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)})))
-      (swap! state update-in [:log] #(conj % {:user author :text text})))))
+      (swap! state update-in [:log] #(conj % {:user author :text text})))
+    (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))))
+
+(defn typing
+  "Updates game state list with username of whoever is typing"
+  [state side {:keys [user]}]
+  (let [author (:username (or user (get-in @state [side :user])))]
+    (swap! state assoc :typing (distinct (conj (:typing @state) author)))
+    ;; say something to force update in client side rendering
+    (say state side {:user "__system__" :text "typing"})))
+
+(defn typingstop
+  "Clears typing flag from game state for user"
+  [state side {:keys [user text]}]
+  (let [author (or user (get-in @state [side :user]))]
+    (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))
+    ;; say something to force update in client side rendering
+    (say state side {:user "__system__" :text "typing"})))
 
 (defn system-msg
   "Prints a message to the log without a username."

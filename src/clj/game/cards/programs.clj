@@ -216,7 +216,7 @@
                  :effect (effect (host card target)
                                  (when (-> target :cost pos?)
                                    (gain state side :credit 1))
-                                 (gain :memory (:memoryunits target) :credit 1)
+                                 (gain :memory (:memoryunits target))
                                  (update! (assoc (get-card state card) :dheg-prog (:cid target))))}]
     :events {:card-moved {:req (req (= (:cid target) (:dheg-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :dheg-prog))

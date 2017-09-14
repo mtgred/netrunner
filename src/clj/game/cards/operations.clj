@@ -299,7 +299,12 @@
 
    "Dedication Ceremony"
    {:prompt "Choose a faceup card"
-    :choices {:req rezzed?}
+    :choices {:req #(or (and (card-is? % :side :corp)
+                             (:rezzed %))
+                        (and (card-is? % :side :runner)
+                             (or (installed? %)
+                                 (:host %))
+                             (not (facedown? %))))}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
     :effect (req (add-prop state :corp target :advance-counter 3 {:placed true})
                  (effect-completed state side eid card)
@@ -867,12 +872,17 @@
     :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
 
    "Priority Construction"
-   {:delayed-completion true
-    :prompt "Choose an ICE in HQ to install"
-    :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (ice? %))}
-    :msg "install an ICE from HQ and place 3 advancements on it"
-    :cancel-effect (req (effect-completed state side eid))
-    :effect (effect (corp-install (assoc target :advance-counter 3) nil {:no-install-cost true}))}
+   (letfn [(install-card [chosen]
+            {:prompt "Select a remote server"
+             :choices (req (conj (vec (get-remote-names @state)) "New remote"))
+             :delayed-completion true
+             :effect (effect (corp-install (assoc (move state side chosen :play-area) :advance-counter 3) target {:no-install-cost true}))})]
+     {:delayed-completion true
+      :prompt "Choose a piece of ICE in HQ to install"
+      :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (ice? %))}
+      :msg "install an ICE from HQ and place 3 advancements on it"
+      :cancel-effect (req (effect-completed state side eid))
+      :effect (effect (continue-ability (install-card target) card nil))})
 
    "Product Recall"
    {:prompt "Choose a rezzed asset or upgrade to trash"
@@ -984,8 +994,10 @@
     :req (req (some #(can-be-advanced? %) (all-installed state :corp)))
     :prompt "Select an installed card that can be advanced"
     :choices {:req can-be-advanced?}
-    :effect (req (let [total-adv (reduce + (map :advance-counter (filter #(:advance-counter %) (all-installed state :corp))))]
-                   (doseq [c (all-installed state :corp)]
+    :effect (req (let [installed (get-all-installed state)
+                       total-adv (reduce + (map :advance-counter 
+                                                (filter #(:advance-counter %) installed)))]
+                   (doseq [c installed]
                      (update! state side (dissoc c :advance-counter)))
                    (set-prop state side target :advance-counter total-adv)
                    (update-all-ice state side)
@@ -1355,6 +1367,7 @@
 
    "Threat Level Alpha"
    {:trace {:base 1
+            :label "Give the Runner X tags"
             :delayed-completion true
             :effect (req (let [tags (-> @state :runner :tag)]
                            (if (pos? tags)
