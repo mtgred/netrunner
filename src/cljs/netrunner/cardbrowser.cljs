@@ -88,7 +88,11 @@
    [:div.text
     [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
                                                    "" (str ": " (:subtype card)))]
-    [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
+    [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]
+    [:div.pack
+     (when-let [pack (:setname card)]
+       (when-let [number (:number card)]
+         (str pack " " number)))]]
    ])
 
 (defn card-view [card owner]
