@@ -578,7 +578,7 @@
                             :on-touch-move  #(handle-touchmove %)
                             :on-drag-start #(handle-dragstart % cursor)
                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
-                            :on-mouse-enter #(when (or (not (or flipped facedown))
+                            :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
                                                        (spectator-view-hidden?)
                                                        (= (:side @game-state) (keyword (.toLowerCase side))))
                                                (put! zoom-channel cursor))
