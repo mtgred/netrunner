@@ -55,7 +55,7 @@
                                                               {:effect (effect (update! (assoc card :shuffle-occurred true)))}}
                                                              card)
                                             (let [n (count (filter ice? (take 3 (:deck corp))))]
-                                              (doseq [c (take 3 (:deck corp))]
+                                              (doseq [c (take (min (count (:deck corp)) 3) (:deck corp))]
                                                 (move state side c :play-area))
                                               (continue-ability state side (abt 1 n) card nil)))}}})
 

@@ -127,7 +127,8 @@
                (om/build-all message-view (get-in cursor [:channels (:channel state)])
                              {:init-state {:zoom-ch (:zoom-ch state)}}))
              ]
-            [:div
-             (om/build msg-input-view state)]]]]))))
+            (when (:user @app-state)
+              [:div
+               (om/build msg-input-view state)])]]]))))
 
 (om/root chat app-state {:target (. js/document (getElementById "chat"))})
