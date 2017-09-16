@@ -245,9 +245,22 @@
                      (alt-art? %)))
        (distinct-by :title)))
 
+(defn- insert-params
+  "Add card parameters into the string representation"
+  [card]
+  (let [id (:id card)
+        art (:art card)]
+    (if (or id art)
+      (str " ["
+           (when id (str "id: " id))
+           (when (and id art) ", ")
+           (when art (str "art: " art))
+           "]")
+      "")))
+
 (defn deck->str [owner]
   (let [cards (om/get-state owner [:deck :cards])
-        str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) "\n") "" cards)]
+        str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) (insert-params %2) "\n") "" cards)]
     (om/set-state! owner :deck-edit str)))
 
 (defn mostwantedval
@@ -523,7 +536,11 @@
      (let [deck (assoc (om/get-state owner :deck) :date (.toJSON (js/Date.)))
            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
            cards (for [card (:cards deck) :when (get-in card [:card :title])]
-                   {:qty (:qty card) :card (get-in card [:card :title])})
+                   (let [card-map {:qty (:qty card) :card (get-in card [:card :title])}
+                         card-id (if (contains? card :id) (conj card-map {:id (:id card)}) card-map)]
+                     (if (contains? card :art)
+                       (conj card-id {:art (:art card)})
+                       card-id)))
            ;; only include keys that are relevant, currently title and side, includes code for future-proofing
            identity (select-keys (:identity deck) [:title :side :code])
            data (assoc deck :cards cards :identity identity)]
@@ -771,9 +788,10 @@
                 (let [new-qty (+ (or (:qty existing-line) 0) (:qty edit))
                       rest (remove match? cards)
                       draft-id (is-draft-id? (om/get-state owner [:deck :identity]))
-                      new-cards (cond (and (not draft-id) (> new-qty max-qty)) (conj rest {:qty max-qty :card card})
+                      new-cards (cond (and (not draft-id) (> new-qty max-qty))
+                                        (conj rest (assoc existing-line :qty max-qty))
                                       (<= new-qty 0) rest
-                                      :else (conj rest {:qty new-qty :card card}))]
+                                      :else (conj rest (assoc existing-line :qty new-qty)))]
                   (om/set-state! owner [:deck :cards] new-cards))
                 (deck->str owner)))))
       (go (while true
