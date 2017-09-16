@@ -105,15 +105,17 @@
   (let [q (.toLowerCase query)
         cards (filter #(and (= (:side %) side) (alt-art? %))
                       (:cards @app-state))]
-    (if-let [all-matches (filter #(= (-> % :title .toLowerCase) q) cards)]
-      (take-best-card all-matches)
-      (loop [i 2 matches cards]
-        (let [subquery (subs q 0 i)]
-          (cond (zero? (count matches)) query
-                (or (= (count matches) 1) (identical-cards? matches)) (first matches)
-                (found? subquery matches) (found? subquery matches)
-                (<= i (count query)) (recur (inc i) (search subquery matches))
-                :else query))))))
+    (let [all-matches (filter #(= (-> % :title .toLowerCase) q) cards)]
+      (if (not (empty? all-matches))
+        (take-best-card all-matches)
+        (loop [i 2 matches cards]
+          (let [subquery (subs q 0 i)]
+            (cond (zero? (count matches)) query
+                  (or (= (count matches) 1) (identical-cards? matches)) (take-best-card matches)
+                  (found? subquery matches) (take-best-card
+                                              (filter #(if (= (.toLowerCase (:title %)) subquery) %) matches))
+                  (<= i (count query)) (recur (inc i) (search subquery matches))
+                  :else query)))))))
 
 (defn parse-identity
   "Parse an id to the corresponding card map - only care about side and name for now"
