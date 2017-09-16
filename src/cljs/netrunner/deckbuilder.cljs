@@ -3,7 +3,7 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <! timeout] :as async]
-            [clojure.string :refer [split split-lines join escape]]
+            [clojure.string :refer [split split-lines join escape] :as s]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
@@ -120,24 +120,57 @@
   [{:keys [side title]}]
   (lookup side title))
 
-(defn parse-line [side line]
-  (let [tokens (split line " ")
-        qty (js/parseInt (first tokens))
-        cardname (join " " (rest tokens))]
-    (when-not (js/isNaN qty)
-      {:qty (min qty 6) :card (lookup side cardname)})))
+(defn- clean-param
+  "Parse card parameter key value pairs from a string"
+  [param]
+  (if (and param
+           (= 2 (count param)))
+    (let [[k v] (map s/trim param)
+          allowed-keys '("id" "art")]
+      (if (some #{k} allowed-keys)
+        [(keyword k) v]
+        nil))
+    nil))
+
+(defn- param-reducer
+  [acc param]
+  (if param
+    (assoc acc (first param) (second param))
+    acc))
+
+(defn- add-params
+  "Parse a string of parameters and add them to a map"
+  [result params-str]
+  (if params-str
+    (let [params-groups (split params-str #"\,")
+          params-all (map #(split % #":") params-groups)
+          params-clean (map #(clean-param %) params-all)]
+      (reduce param-reducer result params-clean))
+    result))
+
+(defn parse-line
+  "Parse a single line of a deck string"
+  [line]
+  (let [clean (s/trim line)
+        [_ qty-str card-name _ card-params] (re-matches #"(\d+)[^\s]*\s+([^\[]+)(\[(.*)\])?" clean)]
+    (if (and qty-str
+             (not (js/isNaN (js/parseInt qty-str)))
+             card-name)
+      (let [result (assoc {} :qty (js/parseInt qty-str) :card (s/trim card-name))]
+        (add-params result card-params))
+      nil)))
+
+(defn- line-reducer
+  "Reducer function to parse lines in a deck string"
+  [acc line]
+  (if-let [card (parse-line line)]
+    (conj acc card)
+    acc))
 
 (defn deck-string->list
   "Turn a raw deck string into a list of {:qty :title}"
   [deck-string]
-  (letfn [(line-reducer [coll line]
-            (let [[qty & cardname] (split line " ")
-                  qty (js/parseInt qty)
-                  title (join " " cardname)]
-              (if (js/isNaN qty)
-                coll
-                (conj coll {:qty qty :card title}))))]
-          (reduce line-reducer [] (split-lines deck-string))))
+  (reduce line-reducer [] (split-lines deck-string)))
 
 (defn collate-deck
   "Takes a list of {:qty n :card title} and returns list of unique titles and summed n for same title"
