@@ -120,6 +120,13 @@
   [{:keys [side title]}]
   (lookup side title))
 
+(defn add-params-to-card
+  "Add art and id parameters to a card hash"
+  [card id art]
+  (-> card
+    (assoc :art art)
+    (assoc :id id)))
+
 (defn- clean-param
   "Parse card parameter key value pairs from a string"
   [param]
@@ -743,7 +750,7 @@
                          (and valid released) "fake-link"
                          valid "casual"
                          :else "invalid")
-                :on-mouse-enter #(put! zoom-channel card)
+                :on-mouse-enter #(put! zoom-channel line)
                 :on-mouse-leave #(put! zoom-channel false)} name]
         (when (or wanted (not infaction))
           (let [influence (* (:factioncost card) modqty)]
@@ -810,8 +817,11 @@
            [:div.deck-collection
               (om/build deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (om/get-state owner :deck)})]
            [:div {:class (when (:edit state) "edit")}
-            (when-let [card (om/get-state owner :zoom)]
-              (om/build card-view card))]]
+            (when-let [line (om/get-state owner :zoom)]
+              (let [art (:art line)
+                    id (:id line)
+                    updated-card (add-params-to-card (:card line) id art)]
+              (om/build card-view updated-card)))]]
 
           [:div.decklist
            (when-let [deck (:deck state)]
@@ -834,7 +844,7 @@
                 [:div.header
                  [:img {:src (image-url identity)}]
                  [:h4 {:class (if (released? (:sets @app-state) identity) "fake-link" "casual")
-                       :on-mouse-enter #(put! zoom-channel identity)
+                       :on-mouse-enter #(put! zoom-channel {:qty 1 :card identity})
                        :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
                  (let [count (card-count cards)
                        min-count (min-deck-size identity)]

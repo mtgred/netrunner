@@ -23,7 +23,14 @@
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
 
 (defn image-url [card]
-  (str "/img/cards/" (:code card) ".png"))
+  (let [has-art (and (:alt_art card)
+                     (:art card)
+                     (not= -1 (.indexOf (:alt_art card) (:art card))))]
+    (str "/img/cards/"
+         (:code card)
+         (when has-art
+           (str "-" (:art card)))
+         ".png")))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
