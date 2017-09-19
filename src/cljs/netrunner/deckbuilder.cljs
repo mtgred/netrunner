@@ -8,7 +8,9 @@
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
             [netrunner.account :refer [load-alt-arts]]
-            [netrunner.ajax :refer [POST GET]]))
+            [netrunner.ajax :refer [POST GET]]
+            [goog.string :as gstring]
+            [goog.string.format]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
@@ -668,13 +670,18 @@
           (empty? decks) [:h4 "No decks"]
           :else [:div
                  (for [deck (sort-by :date > decks)]
-                   [:div.deckline {:class (when (= active-deck deck) "active")
-                                   :on-click #(put! select-channel deck)}
-                    [:img {:src (image-url (:identity deck))}]
-                    [:div.float-right (deck-status-span sets deck)]
-                    [:h4 (:name deck)]
-                    [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
-                    [:p (get-in deck [:identity :title])]])])))))
+                   (let [stats (:stats deck)]
+                     [:div.deckline {:class (when (= active-deck deck) "active")
+                                     :on-click #(put! select-channel deck)}
+                      [:img {:src (image-url (:identity deck))}]
+                      [:div.float-right (deck-status-span sets deck)]
+                      [:h4 (:name deck)]
+                      [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
+                      [:p (get-in deck [:identity :title])
+                       (when stats [:br "  Games: " (:games stats)
+                                    " - Win: " (or (:wins stats) 0)
+                                    " - Lose: " (or (:loses stats) 0)
+                                    " - Percent Win: " (gstring/format "%.0f" (* 100 (float (/ (:wins stats) (:games stats))))) "%"])]]))])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
