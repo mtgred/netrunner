@@ -102,23 +102,36 @@
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
   [side query]
-  (let [q (.toLowerCase query)
+  (let [q (.toLowerCase (:card query))
+        id (:id query)
         cards (filter #(and (= (:side %) side) (alt-art? %))
-                      (:cards @app-state))]
-    (if-let [all-matches (filter #(= (-> % :title .toLowerCase) q) cards)]
-      (take-best-card all-matches)
-      (loop [i 2 matches cards]
-        (let [subquery (subs q 0 i)]
-          (cond (zero? (count matches)) query
-                (or (= (count matches) 1) (identical-cards? matches)) (first matches)
-                (found? subquery matches) (found? subquery matches)
-                (<= i (count query)) (recur (inc i) (search subquery matches))
-                :else query))))))
+                      (:cards @app-state))
+        exact-matches (filter #(= (-> % :title .toLowerCase) q) cards)]
+    (cond (and id
+               (first (filter #(= id (:code %)) cards)))
+          (first (filter #(= id (:code %)) cards))
+          exact-matches (take-best-card exact-matches)
+          :else
+          (loop [i 2 matches cards]
+            (let [subquery (subs q 0 i)]
+              (cond (zero? (count matches)) query
+                    (or (= (count matches) 1) (identical-cards? matches)) (first matches)
+                    (found? subquery matches) (found? subquery matches)
+                    (<= i (count query)) (recur (inc i) (search subquery matches))
+                    :else query))))))
+
+(defn- build-identity-name
+  [title setname art]
+  (let [set-title (if setname (str title " (" setname ")") title)]
+    (if art
+      (str set-title " [" art "]")
+      set-title)))
 
 (defn parse-identity
-  "Parse an id to the corresponding card map - only care about side and name for now"
-  [{:keys [side title]}]
-  (lookup side title))
+  "Parse an id to the corresponding card map"
+  [{:keys [side title code art setname]}]
+  (let [card (lookup side {:card title :id code})]
+    (assoc card :id code :art art :display-name (build-identity-name title setname art))))
 
 (defn add-params-to-card
   "Add art and id parameters to a card hash"
@@ -193,10 +206,9 @@
 (defn lookup-deck
   "Takes a list of {:qty n :card title} and looks up each title and replaces it with the corresponding cardmap"
   [side card-list]
-  (let [card-list (collate-deck card-list)
-        card-lookup (partial lookup side)]
+  (let [card-list (collate-deck card-list)]
     ;; lookup each card and replace title with cardmap
-    (map #(update % :card card-lookup) card-list)))
+    (map #(assoc % :card (lookup side %)) card-list)))
 
 (defn parse-deck-string
   "Parses a string containing the decklist and returns a list of lines {:qty :card}"
@@ -245,12 +257,40 @@
                             (cons x (step more (conj seen k))))))))]
     (step coll #{})))
 
+(defn- add-deck-name
+  [all-titles card]
+  (let [card-title (:title card)
+        indexes (keep-indexed #(if (= %2 card-title) %1 nil) all-titles)
+        dups (> (count indexes) 1)]
+    (if dups
+      (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
+      (assoc card :display-name (:title card)))))
+
+(defn- expand-alts
+  [acc card]
+  (if-let [alt-arts (:alt_art card)]
+    (->> alt-arts
+      (concat [""])
+      (map (fn [art] (if-not (s/blank? art)
+                       (assoc card :art art)
+                       card)))
+      (map (fn [c] (if (:art c)
+                     (assoc c :display-name (str (:display-name c) " [" (:art c) "]"))
+                     c)))
+      (concat acc))
+    (conj acc card)))
+
 (defn side-identities [side]
-  (->> (:cards @app-state)
-       (filter #(and (= (:side %) side)
-                     (= (:type %) "Identity")
-                     (alt-art? %)))
-       (distinct-by :title)))
+  (let [cards
+        (->> (:cards @app-state)
+          (filter #(and (= (:side %) side)
+                        (= (:type %) "Identity")
+                        (alt-art? %))))
+        all-titles (map :title cards)
+        add-deck (partial add-deck-name all-titles)]
+    (->> cards
+      (map add-deck)
+      (reduce expand-alts []))))
 
 (defn- insert-params
   "Add card parameters into the string representation"
@@ -548,9 +588,13 @@
                      (if (contains? card :art)
                        (conj card-id {:art (:art card)})
                        card-id)))
-           ;; only include keys that are relevant, currently title and side, includes code for future-proofing
+           ;; only include keys that are relevant
            identity (select-keys (:identity deck) [:title :side :code])
-           data (assoc deck :cards cards :identity identity)]
+           identity-art (if (contains? (:identity deck) :art)
+                          (do
+                            (conj identity {:art (:art (:identity deck))}))
+                          identity)
+           data (assoc deck :cards cards :identity identity-art)]
        (try (js/ga "send" "event" "deckbuilder" "save") (catch js/Error e))
        (go (let [new-id (get-in (<! (POST "/data/decks/" data :json)) [:json :_id])
                  new-deck (if (:_id deck) deck (assoc deck :_id new-id))
@@ -669,7 +713,7 @@
   (.preventDefault event)
   (let [qty (js/parseInt (om/get-state owner :quantity))
         card (nth (om/get-state owner :matches) (om/get-state owner :selected))
-        best-card (lookup (:side card) (:title card))]
+        best-card (lookup (:side card) card)]
     (if (js/isNaN qty)
       (om/set-state! owner :quantity 3)
       (do (put! (om/get-state owner :edit-channel)
@@ -768,6 +812,20 @@
                            (when wanted (restricted-dots (* (get-mwl-value card) modqty))))}}])))])
      card)])
 
+(defn- create-identity
+  [state target-value]
+  (let [side (get-in state [:deck :identity :side]) 
+        json-map (.parse js/JSON (.. target-value -target -value))
+        id-map (js->clj json-map :keywordize-keys true)
+        card (lookup side id-map)]
+    (if-let [art (:art id-map)]
+      (assoc card :art art)
+      card)))
+
+(defn- identity-option-string
+  [card]
+  (.stringify js/JSON (clj->js {:card (:title card) :id (:code card) :art (:art card)})))
+
 (defn deck-builder
   "Make the deckbuilder view"
   [{:keys [decks decks-loaded sets] :as cursor} owner]
@@ -844,7 +902,7 @@
                 [:div.header
                  [:img {:src (image-url identity)}]
                  [:h4 {:class (if (released? (:sets @app-state) identity) "fake-link" "casual")
-                       :on-mouse-enter #(put! zoom-channel {:qty 1 :card identity})
+                       :on-mouse-enter #(put! zoom-channel {:card identity :art (:art identity) :id (:id identity)})
                        :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
                  (let [count (card-count cards)
                        min-count (min-deck-size identity)]
@@ -894,13 +952,13 @@
                                :on-change #(om/set-state! owner [:deck :name] (.. % -target -value))}]]
             [:p
              [:h3 "Identity"]
-             [:select.identity {:value (get-in state [:deck :identity :title])
-                                :on-change #(om/set-state! owner
-                                                           [:deck :identity]
-                                                           (lookup (get-in state [:deck :identity :side])
-                                                                   (.. % -target -value)))}
-              (for [card (sort-by :title (side-identities (get-in state [:deck :identity :side])))]
-                [:option (:title card)])]]
+             [:select.identity {:value (identity-option-string (get-in state [:deck :identity]))
+                                :on-change #(om/set-state! owner [:deck :identity] (create-identity state %))}
+              (let [idents (side-identities (get-in state [:deck :identity :side]))]
+                (for [card (sort-by :display-name idents)]
+                  [:option
+                   {:value (identity-option-string card)}
+                   (:display-name card)]))]]
             (om/build card-lookup cursor {:state state})
             [:h3 "Decklist"
              [:span.small "(Type or paste a decklist, it will be parsed)" ]]]
