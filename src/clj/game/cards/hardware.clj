@@ -956,7 +956,7 @@
     :delayed-completion true
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
-                    (damage eid :meat 2 {:card card}))
+                    (damage eid :meat 2 {:unboostable true :card card}))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
 
    "Top Hat"
