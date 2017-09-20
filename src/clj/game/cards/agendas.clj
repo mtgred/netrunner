@@ -987,7 +987,9 @@
              :effect (effect (tag-runner :runner eid 1))}}
 
    "The Cleaners"
-   {:events {:pre-damage {:req (req (= target :meat)) :msg "do 1 additional meat damage"
+   {:events {:pre-damage {:req (req (and (= target :meat)
+                                         (= side :corp)))
+                          :msg "do 1 additional meat damage"
                           :effect (effect (damage-bonus :meat 1))}}}
 
    "The Future is Now"
