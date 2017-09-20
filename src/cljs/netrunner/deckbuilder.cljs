@@ -101,24 +101,24 @@
 
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
-  [side query]
-  (let [q (.toLowerCase (:card query))
-        id (:id query)
+  [side card]
+  (let [q (.toLowerCase (:title card))
+        id (:id card)
         cards (filter #(and (= (:side %) side) (alt-art? %))
                       (:cards @app-state))
         exact-matches (filter #(= (-> % :title .toLowerCase) q) cards)]
     (cond (and id
                (first (filter #(= id (:code %)) cards)))
           (first (filter #(= id (:code %)) cards))
-          exact-matches (take-best-card exact-matches)
+          (not-empty exact-matches) (take-best-card exact-matches)
           :else
           (loop [i 2 matches cards]
             (let [subquery (subs q 0 i)]
-              (cond (zero? (count matches)) query
+              (cond (zero? (count matches)) card
                     (or (= (count matches) 1) (identical-cards? matches)) (first matches)
                     (found? subquery matches) (found? subquery matches)
-                    (<= i (count query)) (recur (inc i) (search subquery matches))
-                    :else query))))))
+                    (<= i (count (:title card))) (recur (inc i) (search subquery matches))
+                    :else card))))))
 
 (defn- build-identity-name
   [title setname art]
@@ -130,7 +130,7 @@
 (defn parse-identity
   "Parse an id to the corresponding card map"
   [{:keys [side title code art setname]}]
-  (let [card (lookup side {:card title :id code})]
+  (let [card (lookup side {:title title :id code})]
     (assoc card :id code :art art :display-name (build-identity-name title setname art))))
 
 (defn add-params-to-card
@@ -208,7 +208,7 @@
   [side card-list]
   (let [card-list (collate-deck card-list)]
     ;; lookup each card and replace title with cardmap
-    (map #(assoc % :card (lookup side %)) card-list)))
+    (map #(assoc % :card (lookup side (assoc % :title (:card %)))) card-list)))
 
 (defn parse-deck-string
   "Parses a string containing the decklist and returns a list of lines {:qty :card}"
@@ -824,7 +824,7 @@
 
 (defn- identity-option-string
   [card]
-  (.stringify js/JSON (clj->js {:card (:title card) :id (:code card) :art (:art card)})))
+  (.stringify js/JSON (clj->js {:title (:title card) :id (:code card) :art (:art card)})))
 
 (defn deck-builder
   "Make the deckbuilder view"
@@ -856,6 +856,7 @@
                       new-cards (cond (and (not draft-id) (> new-qty max-qty))
                                         (conj rest (assoc existing-line :qty max-qty))
                                       (<= new-qty 0) rest
+                                      (empty? existing-line) (conj rest {:qty new-qty :card card})
                                       :else (conj rest (assoc existing-line :qty new-qty)))]
                   (om/set-state! owner [:deck :cards] new-cards))
                 (deck->str owner)))))
