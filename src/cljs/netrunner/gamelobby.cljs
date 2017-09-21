@@ -259,6 +259,22 @@
        (for [game roomgames]
         (om/build game-view (assoc game :current-game gameid :password-game password-game))))]))
 
+(def open-games-symbol "○")
+(def closed-games-symbol "●")
+
+(defn- room-tab
+  "Creates the room tab for the specified room"
+  [owner games room room-name]
+  (let [room-games (filter #(= room (:room %)) games)
+        closed-games (count (filter #(:started %) room-games))
+        open-games (- (count room-games) closed-games)]
+    [:span.roomtab
+     (if (= room (om/get-state owner :current-room))
+       {:class "current"}
+       {:on-click #(om/set-state! owner :current-room room)})
+     room-name " (" open-games open-games-symbol " "
+     closed-games closed-games-symbol ")"]))
+
 (defn game-lobby [{:keys [games gameid messages sets user password-gameid] :as cursor} owner]
   (reify
     om/IInitState
@@ -271,22 +287,15 @@
        [:div
         [:div.lobby-bg]
         [:div.container
-         [:div.lobby.panel.blue-shade 
+         [:div.lobby.panel.blue-shade
           [:div.games
            [:div.button-bar
             (if gameid
               [:button.float-left {:class "disabled"} "New game"]
               [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
-            (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))
-                  room-tab (fn [room roomname]
-                             [:span.roomtab
-                              (if (= room (om/get-state owner :current-room))
-                                {:class "current"}
-                                {:on-click #(om/set-state! owner :current-room room)})
-                              roomname " (" (count-games room) ")"])]
-              [:div.rooms
-               (room-tab "competitive" "Competitive")
-               (room-tab "casual" "Casual")])]
+            [:div.rooms
+             (room-tab owner games "competitive" "Competitive")
+             (room-tab owner games "casual" "Casual")]]
            (let [password-game (some #(when (= password-gameid (:gameid %)) %) games)]
              (game-list (assoc cursor :password-game password-game) owner))]
 
@@ -327,10 +336,11 @@
                  [:input {:type "checkbox" :checked (om/get-state owner :spectatorhands)
                           :on-change #(om/set-state! owner :spectatorhands (.. % -target -checked))
                           :disabled (not (om/get-state owner :allowspectator))}]
-                 "Make players' hands visible to spectators"]]
-               [:p {:style {:display (if (om/get-state owner :spectatorhands) "block" "none")}}
-                "This will reveal both players' hands to ALL spectators of your game. We recommend "
-                "using a password to prevent strangers from spoiling the game."]
+                 "Make players' hidden information visible to spectators"]]
+               [:div {:style {:display (if (om/get-state owner :spectatorhands) "block" "none")}}
+                [:p "This will reveal both players' hidden information to ALL spectators of your game, "
+                 "including hand and face-down cards."]
+                [:p "We recommend using a password to prevent strangers from spoiling the game."]]
                [:p
                 [:label
                  [:input {:type "checkbox" :checked (om/get-state owner :private)

@@ -27,8 +27,19 @@ capitalize = (s) ->
 setFields = {
   "name" : same
   "date_release" : (k, t) -> ["available", if t is null then "4096-01-01" else t]
-  "cycle_code" : (k, t) -> ["cycle", capitalize(t.replace(/-/g, " "))]
+  "cycle_code" : (k, t) -> ["cycle", mapCycles[t].name]
+  "cyc_code" : rename("cycle_code")
   "size" : (k, t) -> ["bigbox", t > 20]
+  "code" : same
+  "position" : same
+}
+
+cycleFields = {
+  "code" : same
+  "name" : same
+  "position" : same
+  "size" : same
+  "rotated" : same
 }
 
 mwlFields = {
@@ -55,6 +66,8 @@ mapFactions = {
 
 mapSets = {}
 
+mapCycles = {}
+
 cardFields = {
   "code" : same,
   "title" : same,
@@ -70,14 +83,17 @@ cardFields = {
   "faction_code" : (k, t) -> ["faction", mapFactions[t]],
   "faction_cost" : rename("factioncost"), # influence
   "position" : rename("number"),
-  "pack_code": (k, t) -> ["setname", mapSets[t]]
+  "pack_code": (k, t) -> ["setname", mapSets[t].name]
+  "set_code" : same,
+  "cycle_code" : same,
   "side_code" : (k, t) -> ["side", capitalize(t)],
   "uniqueness" : same,
   "memory_cost" : rename("memoryunits"),
   "strength" : same,
   "trash_cost" : rename("trash"),
   "deck_limit" : rename("limited"),
-  "quantity" : rename("packquantity")
+  "quantity" : rename("packquantity"),
+  "rotated" : same
 }
 
 baseurl = "http://netrunnerdb.com/api/2.0/public/"
@@ -89,13 +105,33 @@ selectFields = (fields, objectList) ->
                     return newObj), {}) \
    for obj in objectList)
 
+fetchCycles = (callback) ->
+  request.get baseurl + "cycles", (error, response, body) ->
+    if !error and response.statusCode is 200
+      data = JSON.parse(body).data
+      cycles = selectFields(cycleFields, data)
+      for cycle in cycles
+        mapCycles[cycle.code] = cycle
+      db.collection("cycles").remove ->
+        db.collection("cycles").insert cycles, (err, result) ->
+          fs.writeFile "andb-cycles.json", JSON.stringify(cycles), ->
+            console.log("#{cycles.length} cycles fetched")
+          callback(null, cycles.length)
+
 fetchSets = (callback) ->
   request.get baseurl + "packs", (error, response, body) ->
     if !error and response.statusCode is 200
       data = JSON.parse(body).data
-      for set in data
-        mapSets[set.code] = set.name
+      data = data.map (d) ->
+        d.cyc_code = d.cycle_code
+        d
       sets = selectFields(setFields, data)
+      sets = sets.map (s) ->
+        s.rotated = mapCycles[s.cycle_code].rotated
+        s.cycle_position = mapCycles[s.cycle_code].position
+        s
+      for set in sets
+        mapSets[set.code] = set
       db.collection("sets").remove ->
         db.collection("sets").insert sets, (err, result) ->
           fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
@@ -113,7 +149,12 @@ fetchCards = (callback) ->
   request.get baseurl + "cards", (error, response, body) ->
     if !error and response.statusCode is 200
       res = JSON.parse(body)
-      cards = selectFields(cardFields, res.data)
+      data = res.data.map (d) ->
+        d.set_code = d.pack_code
+        d.cycle_code = mapSets[d.set_code].cycle_code
+        d.rotated = mapSets[d.set_code].rotated
+        d
+      cards = selectFields(cardFields, data)
       imgDir = path.join(__dirname, "..", "resources", "public", "img", "cards")
       mkdirp imgDir, (err) ->
         if err
@@ -141,4 +182,4 @@ fetchMWL = (callback) ->
             console.log("#{mwl.length} MWL lists fetched")
           callback(null, mwl.length)
 
-async.series [fetchSets, fetchCards, fetchMWL, () -> db.close()]
+async.series [fetchCycles, fetchSets, fetchCards, fetchMWL, () -> db.close()]

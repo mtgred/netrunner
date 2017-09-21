@@ -50,6 +50,8 @@
                                               #(+ (or % 0) (:agendapoints c)))
                                        (gain-agenda-point state :runner points)
                                        (play-sfx state side "agenda-steal")
+                                       (when (:run @state)
+                                         (swap! state assoc-in [:run :did-steal] true))
                                        (when-let [current (first (get-in @state [:corp :current]))]
                                          (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                                          (trash state side current)))}
@@ -138,6 +140,8 @@
                                 :yes-ability {:cost [:credit trash-cost]
                                               :delayed-completion true
                                               :effect (req (trash state side eid card nil)
+                                                           (when (:run @state)
+                                                             (swap! state assoc-in [:run :did-trash] true))
                                                            (swap! state assoc-in [:runner :register :trashed-card] true)
                                                            (system-msg state side (str "pays " trash-msg)))}}}
                               card nil))))
@@ -560,7 +564,9 @@
                          (if (or (= (get-in @state [:run :max-access]) 0)
                                  (empty? cards))
                            (system-msg state side "accessed no cards during the run")
-                           (do (when-completed (resolve-ability state side (choose-access cards server) nil nil)
+                           (do (when (:run @state)
+                                 (swap! state assoc-in [:run :did-access] true))
+                               (when-completed (resolve-ability state side (choose-access cards server) nil nil)
                                                (effect-completed state side eid nil))
                                (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
                        (handle-end-run state side)))))

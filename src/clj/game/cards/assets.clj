@@ -988,8 +988,7 @@
    "PAD Factory"
    {:abilities [{:cost [:click 1]
                  :label "Place 1 advancement token on a card"
-                 :choices {:req #(and (= (:side %) "Corp")
-                                      (installed? %))}
+                 :choices {:req installed?}
                  :msg (msg "place 1 advancement token on " (card-str state target))
                  :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
                               (let [tgtcid (:cid target)]
