@@ -504,6 +504,21 @@
              (om/set-state! owner :deck new-deck)
              (load-decks all-decks)))))))
 
+(defn clear-deck-stats [cursor owner]
+  (authenticated
+    (fn [user]
+      (let [deck (dissoc (om/get-state owner :deck) :stats)
+            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
+            cards (for [card (:cards deck) :when (get-in card [:card :title])]
+                    {:qty (:qty card) :card (get-in card [:card :title])})
+            ;; only include keys that are relevant, currently title and side, includes code for future-proofing
+            identity (select-keys (:identity deck) [:title :side :code])
+            data (assoc deck :cards cards :identity identity)]
+        (try (js/ga "send" "event" "deckbuilder" "cleardeckstats") (catch js/Error e))
+        (go (let [result (<! (POST "/data/decks/" data :json))]
+              (om/update! cursor :decks (conj decks deck))
+              (om/set-state! owner :deck deck)))))))
+
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
@@ -670,18 +685,18 @@
           (empty? decks) [:h4 "No decks"]
           :else [:div
                  (for [deck (sort-by :date > decks)]
-                   (let [stats (:stats deck)]
-                     [:div.deckline {:class (when (= active-deck deck) "active")
-                                     :on-click #(put! select-channel deck)}
-                      [:img {:src (image-url (:identity deck))}]
-                      [:div.float-right (deck-status-span sets deck)]
-                      [:h4 (:name deck)]
-                      [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
-                      [:p (get-in deck [:identity :title])
-                       (when stats [:br "  Games: " (:games stats)
-                                    " - Win: " (or (:wins stats) 0)
-                                    " - Lose: " (or (:loses stats) 0)
-                                    " - Percent Win: " (gstring/format "%.0f" (* 100 (float (/ (:wins stats) (:games stats))))) "%"])]]))])))))
+                   [:div.deckline {:class (when (= active-deck deck) "active")
+                                   :on-click #(put! select-channel deck)}
+                    [:img {:src (image-url (:identity deck))}]
+                    [:div.float-right (deck-status-span sets deck)]
+                    [:h4 (:name deck)]
+                    [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
+                    [:p (get-in deck [:identity :title]) [:br]
+                     (when-let [stats (:stats deck)]
+                       [:span "  Games: " (:games stats)
+                        " - Win: " (or (:wins stats) 0)
+                        " - Lose: " (or (:loses stats) 0)
+                        " - Percent Win: " (gstring/format "%.0f" (* 100 (float (/ (:wins stats) (:games stats))))) "%"])]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -785,7 +800,8 @@
                            [:button {:on-click #(end-delete owner)} "Cancel"]]
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
-                         [:button {:on-click #(delete-deck owner)} "Delete"]])
+                         [:button {:on-click #(delete-deck owner)} "Delete"]
+                         [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"]])
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
