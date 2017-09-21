@@ -801,7 +801,8 @@
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
                          [:button {:on-click #(delete-deck owner)} "Delete"]
-                         [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"]])
+                         (when (:stats deck)
+                           [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
