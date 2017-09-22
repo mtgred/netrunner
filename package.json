@@ -30,7 +30,7 @@
     "express-session": "^1.14.1",
     "jade": "^1.11.0",
     "jsonwebtoken": "^8.0.1",
-    "memory-cache": "^0.1.6",
+    "memory-cache": "^0.2.0",
     "method-override": "^2.3.6",
     "mkdirp": "^0.5.1",
     "moment": "^2.15.1",
