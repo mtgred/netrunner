@@ -341,6 +341,10 @@
     (put! channel false))
   nil)
 
+;; Dot definitions
+(def zws "\u200B")                                          ; zero-width space for wrapping dots
+(def influence-dot (str "●" zws))
+
 (defn log-pane [messages owner]
   (reify
     om/IDidUpdate
@@ -371,11 +375,11 @@
                 [:div.content
                  [:div.username (get-in msg [:user :username])]
                  [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
-        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
-          [:div [:p.typing (for [i (range 10)] [:span " . "])]])
         [:form {:on-submit #(send-msg % owner)
                 :on-input #(send-typing % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
+         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]
+        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
+          [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])]))))
 
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))
