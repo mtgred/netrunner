@@ -88,6 +88,18 @@ joinGame = (socket, gameid, options) ->
 getUsername = (socket) ->
   ((socket.request || {}).user || {}).username
 
+users_blocked_from_game = (game) ->
+  blocked_users = []
+  for user in game.players
+    if user.options['blocked-users']
+      for blocked in user.options['blocked-users']
+        blocked_users.push(blocked)
+  blocked_users
+
+user_allowed_in_game = (username, game) ->
+  not_allowed = username in users_blocked_from_game(game)
+  not not_allowed
+
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester = zmq.socket('req')
@@ -206,6 +218,10 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "join"
         game = games[msg.gameid]
 
+        unless user_allowed_in_game(getUsername(socket), game)
+          fn("not allowed")
+          return
+
         if not game.password or game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
           fn("join ok")
           joinGame(socket, msg.gameid, msg.options)
@@ -219,6 +235,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "watch"
         game = games[msg.gameid]
+
+        unless user_allowed_in_game(getUsername(socket), game)
+          fn("not allowed")
+          return
+
         if not game.password or game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
           if game
             game.spectators.push({user: socket.request.user, id: socket.id})
@@ -243,6 +264,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           requester.send(JSON.stringify({action: "notification", gameid: socket.gameid, text: "#{getUsername(socket)} reconnected."}))
 
       when "say"
+        game = games[msg.gameid]
+        unless user_allowed_in_game(getUsername(socket), game)
+          fn("not allowed")
+          return
+
         lobby.to(msg.gameid).emit("netrunner", {type: "say", user: socket.request.user, text: msg.text})
 
       when "swap"
