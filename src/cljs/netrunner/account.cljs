@@ -33,19 +33,21 @@
   (let [params (:options @app-state)]
     (go (let [response (<! (POST url params :json))]
           (if (= (:status response) 200)
-            (om/set-state! owner :flash-message "Profile updated!")
+            (om/set-state! owner :flash-message "Profile updated - Please refresh your browser")
             (case (:status response)
               401 (om/set-state! owner :flash-message "Invalid login or password")
               421 (om/set-state! owner :flash-message "No account with that email address exists")
               :else (om/set-state! owner :flash-message "Profile updated - Please refresh your browser")))))))
 
 (defn add-user-to-block-list
-  [owner]
+  [owner user]
   (let [blocked-user-node (om/get-node owner "block-user-input")
         blocked-user (.-value blocked-user-node)
+        my-user-name (:username user)
         current-blocked-list (om/get-state owner :blocked-users)]
     (set! (.-value blocked-user-node) "")
     (when (and (not (s/blank? blocked-user))
+               (not= my-user-name blocked-user)
                (= -1 (.indexOf current-blocked-list blocked-user)))
       (om/set-state! owner :blocked-users (conj current-blocked-list blocked-user)))))
 
@@ -133,13 +135,13 @@
               [:input.search {:on-key-down (fn [e]
                                              (when (= e.keyCode 13)
                                                (do
-                                                 (add-user-to-block-list owner)
+                                                 (add-user-to-block-list owner user)
                                                  (.preventDefault e))))
                               :ref "block-user-input"
                               :type "text" :placeholder "User name"}]
               [:button.block-user-btn {:type "button"
                                        :name "block-user-button"
-                                       :on-click #(add-user-to-block-list owner)}
+                                       :on-click #(add-user-to-block-list owner user)}
                "Block user"]]
              (for [bu (om/get-state owner :blocked-users)]
                [:div.line
