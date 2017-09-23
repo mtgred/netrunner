@@ -36,7 +36,7 @@
     "moment": "^2.15.1",
     "mongodb": "^2.2.10",
     "mongoskin": "^2.1.0",
-    "node-trello": "github:adunkman/node-trello#eb3b4fc53e5d3c2bd4f913a806a88dfe8fa43218",
+    "node-trello": "^1.3.0",
     "node-uuid": "^1.4.7",
     "nodemailer": "^4.1.0",
     "passport": "^0.4.0",
