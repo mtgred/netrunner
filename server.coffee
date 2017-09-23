@@ -474,7 +474,7 @@ app.get '/reset/:token', (req, res) ->
     if user
       db.collection('users').update {username: user.username}, {$set: {lastConnection: new Date()}}, (err) ->
       token = jwt.sign(user, config.salt, {expiresIn: '6h'})
-    res.render('reset.jade', { user: req.user })
+    res.render('reset.pug', { user: req.user })
 
 app.post '/reset/:token', (req, res) ->
   async.waterfall [
@@ -619,7 +619,7 @@ app.get '/data/:collection/:field/:value', (req, res) ->
 
 app.get '/admin/announce', (req, res) ->
   if req.user and req.user.isadmin
-    res.render('announce.jade', {user : req.user})
+    res.render('announce.pug', {user : req.user})
   else
     res.status(401).send({message: 'Unauthorized'})
 
@@ -640,7 +640,7 @@ app.get '/admin/init', (req, res) ->
 
 app.get '/admin/version', (req, res) ->
   if req.user and req.user.isadmin
-    res.render('version.jade', {user : req.user, version: app.locals.version})
+    res.render('version.pug', {user : req.user, version: app.locals.version})
   else
     res.status(401).send({message: 'Unauthorized'})
 
@@ -660,7 +660,7 @@ if env == 'development'
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
       token = jwt.sign(req.user, config.salt)
-    res.render('index.jade', { user: req.user, env: 'dev', token: token, version: app.locals.version})
+    res.render('index.pug', { user: req.user, env: 'dev', token: token, version: app.locals.version})
 
 if env == 'production'
   console.log "Prod environment"
@@ -668,7 +668,7 @@ if env == 'production'
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
       token = jwt.sign(req.user, config.salt, {expiresIn: '6h'})
-    res.render('index.jade', { user: req.user, env: 'prod', token: token, version: app.locals.version})
+    res.render('index.pug', { user: req.user, env: 'prod', token: token, version: app.locals.version})
 
 # Server
 terminate = () ->
