@@ -860,7 +860,8 @@
                                          (shuffle! state side :deck))}
                            card nil))}]}
      "Upya"
-     {:events {:successful-run {:silent (req true)
+     {:implementation "Power counters added automatically"
+      :events {:successful-run {:silent (req true)
                                 :req (req (= target :rd))
                                 :effect (effect (add-counter card :power 1)) }}
       :abilities [{:cost [:click 1]
