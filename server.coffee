@@ -176,6 +176,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           title: msg.title.substring(0,30)
           allowspectator: msg.allowspectator
           spectatorhands: msg.spectatorhands
+          mutespectators: false
           password: if msg.password then crypto.createHash('md5').update(msg.password).digest('hex') else ""
           room: msg.room
           players: [{user: socket.request.user, id: socket.id, side: msg.side, options: msg.options}]
@@ -236,6 +237,25 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         else
           fn("invalid password")
 
+      when "mute-spectators"
+        game = games[msg.gameid]
+        if game
+          game.mutespectators = msg.mutestate
+          refreshLobby("update", msg.gameid)
+          sendLobby()
+          if game.mutespectators
+            str = "muted"
+          else
+            str = "unmuted"
+          text = "#{getUsername(socket)} #{str} spectators."
+          if game.started
+            requester.send(JSON.stringify({action: "notification", gameid: msg.gameid, text: text}))
+          else
+            socket.broadcast.to(msg.gameid).emit 'netrunner',
+              type: "say"
+              user: "__system__"
+              text: text
+
       when "reconnect"
         game = games[msg.gameid]
         if game and game.started
@@ -295,6 +315,10 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           refreshLobby("update", msg.gameid)
 
       when "do"
+        if msg.command == "say"
+          game = games[socket.gameid]
+          if game and msg.side == "spectator" and game.mutespectators
+            return
         try
           requester.send(JSON.stringify(msg))
         catch err
