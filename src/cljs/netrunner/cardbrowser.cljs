@@ -22,8 +22,16 @@
 (defn make-span [text symbol class]
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
 
+(defn show-alt-art?
+  "Is the current user allowed to use alternate art cards and do they want to see them?"
+  []
+  (and
+    (get-in @app-state [:options :show-alt-art] true)
+    (get-in @app-state [:user :special] false)))
+
 (defn image-url [card]
-  (let [has-art (and (:alt_art card)
+  (let [has-art (and (show-alt-art?)
+                     (:alt_art card)
                      (:art card)
                      (not= -1 (.indexOf (:alt_art card) (:art card))))]
     (str "/img/cards/"
