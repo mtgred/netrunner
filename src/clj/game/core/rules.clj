@@ -534,25 +534,14 @@
   [state side]
   (swap! state update-in [side] dissoc :openhand))
 
-(defn log-deck-stats
-  "Updates Mongo with the deck games, wins, loses"
-  [state side]
-  ; This when-let is needed to avoid logging stats for test cases
-  (when-let [winning-deck (get-in @state [side :deck-id])]
-    (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
-          db (mg/get-db conn "netrunner")
-          losing-deck (get-in @state [(other-side side) :deck-id])
-          update-win (mc/update-by-id db "decks" (ObjectId. winning-deck) {(keyword "$inc") {:stats.games 1 :stats.wins 1}})
-          update-lose (mc/update-by-id db "decks" (ObjectId. losing-deck) {(keyword "$inc") {:stats.games 1 :stats.loses 1}})]
-      (mg/disconnect conn))))
-
 (defn win
   "Records a win reason for statistics."
   [state side reason]
-  (log-deck-stats state side)
   (system-msg state side "wins the game")
   (play-sfx state side "game-end")
-  (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)))
+  (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)
+         :winning-deck-id (get-in @state [side :deck-id])
+         :losing-deck-id (get-in @state [(other-side side) :deck-id])))
 
 (defn win-decked
   "Records a win via decking the corp."

@@ -7,10 +7,7 @@
                                 combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case]]
-            [clojure.core.match :refer [match]]
-            [monger.core :as mg]
-            [monger.collection :as mc])
-  (:import org.bson.types.ObjectId))
+            [clojure.core.match :refer [match]]))
 
 (def all-cards (atom {}))
 

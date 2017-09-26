@@ -122,6 +122,8 @@ requester.on 'message', (data) ->
   response = JSON.parse(data)
   if response.action is "remove"
     if response.state
+      winningDeck = response.state["winning-deck-id"]
+      losingDeck = response.state["losing-deck-id"]
       g = {
         winner: response.state.winner
         reason: response.state.reason
@@ -130,6 +132,10 @@ requester.on 'message', (data) ->
         runnerAgenda: response.state.runner["agenda-point"]
         corpAgenda: response.state.corp["agenda-point"]
       }
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
+        throw err if err
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
+        throw err if err
       db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
         throw err if err
   else

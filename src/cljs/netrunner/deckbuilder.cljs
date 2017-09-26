@@ -519,6 +519,12 @@
               (om/update! cursor :decks (conj decks deck))
               (om/set-state! owner :deck deck)))))))
 
+(defn refresh-deck-stats [cursor owner]
+  (authenticated
+    (fn [user]
+      (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+            (load-decks decks))))))
+
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
@@ -801,6 +807,7 @@
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
                          [:button {:on-click #(delete-deck owner)} "Delete"]
+                         [:button {:on-click #(refresh-deck-stats owner)} "Refresh Stats"]
                          (when (:stats deck)
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]

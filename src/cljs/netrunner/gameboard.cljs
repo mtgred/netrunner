@@ -7,6 +7,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
+            [netrunner.deckbuilder :refer [influence-dot]]
             [differ.core :as differ]
             [om.dom :as dom]))
 
@@ -340,10 +341,6 @@
   (when-let [code (get-card-code e)]
     (put! channel false))
   nil)
-
-;; Dot definitions
-(def zws "\u200B")                                          ; zero-width space for wrapping dots
-(def influence-dot (str "●" zws))
 
 (defn log-pane [messages owner]
   (reify
