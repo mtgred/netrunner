@@ -490,6 +490,7 @@
    (fn [user]
      (end-edit owner)
      (let [deck (assoc (om/get-state owner :deck) :date (.toJSON (js/Date.)))
+           deck (dissoc deck :stats)
            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
            cards (for [card (:cards deck) :when (get-in card [:card :title])]
                    {:qty (:qty card) :card (get-in card [:card :title])})
@@ -515,7 +516,7 @@
             identity (select-keys (:identity deck) [:title :side :code])
             data (assoc deck :cards cards :identity identity)]
         (try (js/ga "send" "event" "deckbuilder" "cleardeckstats") (catch js/Error e))
-        (go (let [result (<! (POST "/data/decks/" data :json))]
+        (go (let [result (<! (POST "/data/decks/clearstats" data :json))]
               (om/update! cursor :decks (conj decks deck))
               (om/set-state! owner :deck deck)))))))
 
@@ -807,7 +808,7 @@
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
                          [:button {:on-click #(delete-deck owner)} "Delete"]
-                         [:button {:on-click #(refresh-deck-stats owner)} "Refresh Stats"]
+                         [:button {:on-click #(refresh-deck-stats cursor owner)} "Refresh Stats"]
                          (when (:stats deck)
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]

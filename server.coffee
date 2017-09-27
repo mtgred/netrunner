@@ -561,13 +561,28 @@ app.post '/data/decks', (req, res) ->
     if deck._id
       id = deck._id
       delete deck._id
-      db.collection('decks').update {_id: mongoskin.helper.toObjectID(id)}, deck, (err) ->
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(id)}, {$set: deck}, (err) ->
         console.log(err) if err
         res.status(200).send({message: 'OK'})
     else
       db.collection('decks').insert deck, (err, data) ->
         console.log(err) if err
         res.status(200).send(data.ops[0])
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.post '/data/decks/clearstats', (req, res) ->
+  deck = req.body
+  if req.user
+    deck.username = req.user.username
+    if deck._id
+      id = deck._id
+      delete deck._id
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(id)}, deck, (err) ->
+        console.log(err) if err
+        res.status(200).send({message: 'OK'})
+    else
+      res.status(401).send({message: 'Deck ID does not exist'})
   else
     res.status(401).send({message: 'Unauthorized'})
 
