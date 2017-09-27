@@ -26,10 +26,7 @@
         has-art (and art-options
                      art
                      (not= -1 (.indexOf art-options art)))
-        version (cond
-                  (and show-art has-art) art
-                  (and show-art (not has-art) art-available) (first art-options)
-                  :else nil)]
+        version (when (and show-art has-art) art)]
     (str "/img/cards/" code (when version (str "-" version)) ".png")))
 
 (defn toastr-options

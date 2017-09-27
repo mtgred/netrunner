@@ -23,6 +23,8 @@
 (defn image-url [card version]
   (str "/img/cards/" card (when-not (= version "default") (str "-" version)) ".png"))
 
+(def all-alt-art-types ["alt" "wc2015" "default"])
+
 (defn alt-art-name [type]
   (case type
     "alt" "Alternate"
@@ -59,9 +61,14 @@
       (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
       (om/set-state! owner :show-alt-art (get-in @app-state [:options :show-alt-art]))
       (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume]))
+      (om/set-state! owner :all-art-type "alt")
       (go (while true
-            (let [cards (<! alt-arts-channel)]
-              (om/set-state! owner :cards cards)))))
+            (let [cards (<! alt-arts-channel)
+                  first-alt (first (sort-by :title (vals cards)))]
+              (om/set-state! owner :cards cards)
+              (om/set-state! owner :alt-card (:code first-alt))
+              (om/set-state! owner :alt-card-version (get-in @app-state [:options :alt-arts (keyword (:code first-alt))]
+                                                             "default"))))))
 
     om/IRenderState
     (render-state [this state]
@@ -118,12 +125,13 @@
                                :checked (om/get-state owner :show-alt-art)
                                :on-change #(om/set-state! owner :show-alt-art (.. % -target -checked))}]
                "Show alternate card arts"]]
-             (when (or (:special user) true) ; temporarily showing to all users on test server
+             (when (and (:special user) (:alt-arts @app-state))
                [:div {:id "my-alt-art"}
                 [:h4 "My alternate card arts"]
                 [:select {:on-change #(do (om/set-state! owner :alt-card (.. % -target -value))
                                           (om/set-state! owner :alt-card-version
-                                                         (get-in @app-state [:options :alt-arts (keyword (.. % -target -value))] "default")))}
+                                                         (get-in @app-state [:options :alt-arts (keyword (.. % -target -value))]
+                                                                 "default")))}
                  (for [card (sort-by :title (vals (:alt-arts @app-state)))]
                    [:option {:value (:code card)} (:title card)])]
 
@@ -149,8 +157,23 @@
                               :onError #(-> % .-target js/$ .hide)
                               :onLoad #(-> % .-target js/$ .show)}]]]))]
                [:div {:id "set-all"}
-                [:p "Set all to:"]]]
-               )]
+                "Set all cards to: "
+                [:select {:on-change #(om/set-state! owner :all-art-type (.. % -target -value))}
+                 (for [t all-alt-art-types]
+                   [:option {:value t} (alt-art-name t)])]
+                [:button
+                 {:on-click #(doseq [card (vals (:alt-arts @app-state))]
+                               (let [versions (:versions card)
+                                     selected (om/get-state owner :all-art-type)]
+                                 (cond (some (fn [i] (= i selected)) versions)
+                                       (swap! app-state update-in [:options :alt-arts]
+                                              assoc (keyword (:code card)) selected)
+
+                                       (= "default" selected)
+                                       (swap! app-state update-in [:options] dissoc :alt-arts)
+
+                                       :else nil)))}
+                 "Set"]]])]
 
             [:p {:id "update"}
              [:button "Update Profile"]
