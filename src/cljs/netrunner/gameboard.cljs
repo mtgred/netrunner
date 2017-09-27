@@ -15,11 +15,18 @@
 (defonce lock (atom false))
 
 (defn image-url [{:keys [side code] :as card}]
-  (let [alt-art (get-in @app-state [:alt-arts code])
-        version (when (and (get-in @game-state [(keyword (lower-case side)) :user :special])
-                           (get-in @app-state [:options :show-alt-art])
-                           alt-art)
-                  (first (:versions alt-art)))]
+  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
+                (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
+        art-options (om/value (:alt_art card))
+        special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
+        special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
+        viewer-wants-art (get-in @app-state [:options :show-alt-art])
+        show-art (and special-user special-wants-art viewer-wants-art)
+        art-available (and art-options (not-empty art-options))
+        has-art (and art-options
+                     art
+                     (not= -1 (.indexOf art-options art)))
+        version (when (and show-art has-art) art)]
     (str "/img/cards/" code (when version (str "-" version)) ".png")))
 
 (defn toastr-options

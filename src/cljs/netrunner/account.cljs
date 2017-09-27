@@ -7,14 +7,28 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.ajax :refer [POST GET]]))
 
+(def alt-arts-channel (chan))
 (defn load-alt-arts []
   (go (let [cards (->> (<! (GET "/data/altarts"))
                        :json
                        (filter :versions)
-                       (map #(update-in % [:versions] conj "default"))
+                       (map #(update-in % [:versions] (fn [c] (concat ["default"] c))))
                        (map #(assoc % :title (some (fn [c] (when (= (:code c) (:code %)) (:title c))) (:cards @app-state))))
                        (into {} (map (juxt :code identity))))]
-        (swap! app-state assoc :alt-arts cards))))
+        (swap! app-state assoc :alt-arts cards)
+        (put! alt-arts-channel cards))))
+
+
+(defn image-url [card version]
+  (str "/img/cards/" card (when-not (= version "default") (str "-" version)) ".png"))
+
+(def all-alt-art-types ["alt" "wc2015" "default"])
+
+(defn alt-art-name [type]
+  (case type
+    "alt" "Alternate"
+    "wc2015" "World Champion 2015"
+    "Official"))
 
 (defn handle-post [event owner url ref]
   (.preventDefault event)
@@ -45,7 +59,15 @@
       (om/set-state! owner :background (get-in @app-state [:options :background]))
       (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
       (om/set-state! owner :show-alt-art (get-in @app-state [:options :show-alt-art]))
-      (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume])))
+      (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume]))
+      (om/set-state! owner :all-art-type "alt")
+      (go (while true
+            (let [cards (<! alt-arts-channel)
+                  first-alt (first (sort-by :title (vals cards)))]
+              (om/set-state! owner :cards cards)
+              (om/set-state! owner :alt-card (:code first-alt))
+              (om/set-state! owner :alt-card-version (get-in @app-state [:options :alt-arts (keyword (:code first-alt))]
+                                                             "default"))))))
 
     om/IRenderState
     (render-state [this state]
@@ -94,16 +116,65 @@
                                  :checked (= (om/get-state owner :background) (:ref option))}]
                  (:name option)]])]
 
-            [:section
+            [:section {:id "alt-art"}
              [:h3 "Alt arts"]
              [:div
               [:label [:input {:type "checkbox"
                                :name "show-alt-art"
                                :checked (om/get-state owner :show-alt-art)
                                :on-change #(om/set-state! owner :show-alt-art (.. % -target -checked))}]
-               "Show alternate card arts"]]]
+               "Show alternate card arts"]]
+             (when (and (:special user) (:alt-arts @app-state))
+               [:div {:id "my-alt-art"}
+                [:h4 "My alternate card arts"]
+                [:select {:on-change #(do (om/set-state! owner :alt-card (.. % -target -value))
+                                          (om/set-state! owner :alt-card-version
+                                                         (get-in @app-state [:options :alt-arts (keyword (.. % -target -value))]
+                                                                 "default")))}
+                 (for [card (sort-by :title (vals (:alt-arts @app-state)))]
+                   [:option {:value (:code card)} (:title card)])]
 
-            [:p
+                [:div {:class "alt-art-group"}
+                 (for [version (get-in @app-state [:alt-arts (om/get-state owner :alt-card) :versions])]
+                   (let [url (image-url (om/get-state owner :alt-card) version)]
+                     [:div
+                      [:div
+                       [:div [:label [:input {:type "radio"
+                                              :name "alt-art-radio"
+                                              :value version
+                                              :on-change #(do (om/set-state! owner :alt-card-version (.. % -target -value))
+                                                              (swap! app-state update-in [:options :alt-arts]
+                                                                     assoc (keyword (om/get-state owner :alt-card)) (.. % -target -value)))
+                                              :checked (= (om/get-state owner :alt-card-version) version)}]
+                              (alt-art-name version)]]]
+                      [:div
+                       [:img {:class "alt-art-select"
+                              :src url
+                              :on-click  #(do (om/set-state! owner :alt-card-version version)
+                                              (swap! app-state update-in [:options :alt-arts]
+                                                     assoc (keyword (om/get-state owner :alt-card)) version))
+                              :onError #(-> % .-target js/$ .hide)
+                              :onLoad #(-> % .-target js/$ .show)}]]]))]
+               [:div {:id "set-all"}
+                "Set all cards to: "
+                [:select {:on-change #(om/set-state! owner :all-art-type (.. % -target -value))}
+                 (for [t all-alt-art-types]
+                   [:option {:value t} (alt-art-name t)])]
+                [:button
+                 {:on-click #(doseq [card (vals (:alt-arts @app-state))]
+                               (let [versions (:versions card)
+                                     selected (om/get-state owner :all-art-type)]
+                                 (cond (some (fn [i] (= i selected)) versions)
+                                       (swap! app-state update-in [:options :alt-arts]
+                                              assoc (keyword (:code card)) selected)
+
+                                       (= "default" selected)
+                                       (swap! app-state update-in [:options] dissoc :alt-arts)
+
+                                       :else nil)))}
+                 "Set"]]])]
+
+            [:p {:id "update"}
              [:button "Update Profile"]
              [:span.flash-message (:flash-message state)]]]]]]))))
 
