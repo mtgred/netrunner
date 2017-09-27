@@ -45,7 +45,7 @@ cycleFields = {
 mwlFields = {
   "name" : same
   "code" : same
-  "active" : same
+  "date_start" : same
   "cards" : same
 }
 
@@ -169,17 +169,19 @@ fetchCards = (callback) ->
         db.collection("cards").insert cards, (err, result) ->
           fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
             console.log("#{cards.length} cards fetched")
-          callback(null, cards.length)
+            callback(null, cards.length)
 
 fetchMWL = (callback) ->
-  request.get baseurl + "mwl", (error, response, body) ->
-    if !error and response.statusCode is 200
-      data = JSON.parse(body).data
-      mwl = selectFields(mwlFields, data)
-      db.collection("mwl").remove ->
-        db.collection("mwl").insert mwl, (err, result) ->
-          fs.writeFile "andb-mwl.json", JSON.stringify(mwl), ->
-            console.log("#{mwl.length} MWL lists fetched")
+  # request.get baseurl + "mwl", (error, response, body) ->
+  #   if !error and response.statusCode is 200
+  fs.readFile "mwl.json", 'utf8', (err, body) ->
+    throw err if err
+    data = JSON.parse(body)
+    mwl = selectFields(mwlFields, data)
+    db.collection("mwl").remove ->
+      db.collection("mwl").insert mwl, (err, result) ->
+        fs.writeFile "andb-mwl.json", JSON.stringify(mwl), ->
+          console.log("#{mwl.length} MWL lists fetched")
           callback(null, mwl.length)
 
 async.series [fetchCycles, fetchSets, fetchCards, fetchMWL, () -> db.close()]
