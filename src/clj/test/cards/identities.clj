@@ -99,13 +99,40 @@
       (default-corp)
       (make-deck "Apex: Invasive Predator" [(qty "Heartbeat" 2)]))
     (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
     (prompt-choice :runner "Done") ; no facedown install on turn 1
     (play-from-hand state :runner "Heartbeat")
     (is (= 1 (count (get-in @state [:runner :rig :hardware]))))
     (take-credits state :runner)
     (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
     (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "2nd console installed facedown")))
+
+(deftest ayla
+  ;; Ayla - choose & use cards for NVRAM
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Ayla \"Bios\" Rahim: Simulant Specialist" [(qty "Sure Gamble" 1) (qty "Desperado" 1)
+                                                             (qty "Security Testing" 1) (qty "Bank Job" 1)
+                                                             (qty "Heartbeat" 1) (qty "Eater" 1)])
+      {:dont-start-game true})
+    (is (= 6 (count (get-in @state [:runner :play-area]))) "Deck cards are in play area")
+    (is (= 0 (count (get-in @state [:runner :hand]))))
+    (prompt-select :runner (find-card "Sure Gamble" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Desperado" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Bank Job" (get-in @state [:runner :play-area])))
+    (prompt-select :runner (find-card "Eater" (get-in @state [:runner :play-area])))
+    (is (= 4 (count (:hosted (:identity (get-runner))))) "4 cards in NVRAM")
+    (is (= 0 (count (get-in @state [:runner :play-area]))) "The play area is empty")
+    (prompt-choice :corp "Keep")
+    (prompt-choice :runner "Keep")
+    (take-credits state :corp)
+    (is (= 2 (count (get-in @state [:runner :hand]))) "There are 2 cards in the runner's Grip")
+    (card-ability state :runner (:identity (get-runner)) 0)
+    (prompt-card :runner (find-card "Bank Job" (:hosted (:identity (get-runner)))))
+    (is (= 3 (count (get-in @state [:runner :hand]))) "There are 3 cards in the runner's Grip")))
 
 (deftest cerebral-imaging-max-hand-size
   ;; Cerebral Imaging - Maximum hand size equal to credits
@@ -201,6 +228,21 @@
       (is (= 3 (count (:discard (get-corp)))))
       (run-empty-server state "HQ")
       (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
+
+(deftest edward-kim-maw
+  ;; Edward Kim - Do not trigger maw on first Operation access (due to trash)
+  (do-game
+    (new-game
+      (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2)])
+      (make-deck "Edward Kim: Humanity's Hammer" [(qty "Maw" 1) (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Maw")
+    (is (= 0 (count (:discard (get-corp)))) "No cards in Archives")
+    (run-empty-server state "HQ")
+    (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
+    (run-empty-server state "HQ")
+    (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw")))
 
 (deftest gabriel-santiago
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
@@ -469,6 +511,25 @@
     (run-empty-server state "Server 1")
     (prompt-choice :runner "Steal")
     (is (= 2 (count (:hand (get-runner)))) "Runner took 1 net damage from steal")))
+
+(deftest jinteki-potential-unleashed
+  ;; PU - when the runner takes at least one net damage, mill 1 from their deck
+  (do-game
+    (new-game (make-deck "Jinteki: Potential Unleashed" [(qty "Philotic Entanglement" 1) (qty "Neural EMP" 1) (qty "Braintrust" 3)])
+              (default-runner [(qty "Employee Strike" 10)]))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (run-empty-server state "Server 2")
+    (prompt-choice :runner "Steal")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Philotic Entanglement" "New remote")
+    (score-agenda state :corp (get-content state :remote3 0))
+    (is (= 3 (count (:discard (get-runner)))))
+    (play-from-hand state :corp "Neural EMP")
+    (is (= 5 (count (:discard (get-runner)))))))
 
 (deftest jinteki-replicating-perfection
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central

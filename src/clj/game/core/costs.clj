@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast)
+(declare forfeit prompt! toast damage mill installed? is-type?)
 
 (defn deduce
   "Deduct the value from the player's attribute."
@@ -21,8 +21,16 @@
   [state side cost]
   (let [type (first cost)
         amount (last cost)]
-    (when-not (or (>= (- (get-in @state [side type]) amount) 0)
-                  (= type :memory))
+    (when-not (or (some #(= type %) [:memory :net-damage])
+                  (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
+                  (and (= type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
+                  (and (= type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
+                  (and (= type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
+                  (and (= type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
+                  (and (= type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
+                  (and (= type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
+                                                                  (all-installed state :runner))) amount) 0))
+                  (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
       "Unable to pay")))
 
 (defn can-pay?
@@ -30,37 +38,70 @@
   If title is specified a toast will be generated if the player is unable to pay
   explaining which cost they were unable to pay."
   [state side title & args]
-  ; ignore the optional map input - not a cost
-  (let [costs (merge-costs (remove #(or (nil? %) (= % [:forfeit]) (map? %)) args))
-        forfeit-cost (some #{[:forfeit] :forfeit} args)
+  (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
         scored (get-in @state [side :scored])
-        cost-msg (or (some #(toast-msg-helper state side %) costs)
-                     (when (and forfeit-cost (empty? scored)) "Unable to forfeit an Agenda"))]
+        cost-msg (or (some #(toast-msg-helper state side %) costs))]
     ;; no cost message - hence can pay
     (if-not cost-msg
-      {:costs costs, :forfeit-cost forfeit-cost, :scored scored}
-      ;; only toast if title is specified
+      {:costs costs, :scored scored}
       (when title (toast state side (str cost-msg " for " title ".")) false))))
+
+(defn pay-forfeit
+  "Forfeit agenda as part of paying for a card or ability
+  Amount is always 1 but can be extend if we ever need more than a single forfeit"
+  ;; If multiples needed in future likely prompt-select needs work to take a function
+  ;; instead of an ability
+  [state side card scored amount]
+  (if (= (count scored) 1)
+    (forfeit state side (first scored))
+    (prompt! state side card "Choose an Agenda to forfeit" scored
+             {:effect (effect (forfeit target))}))
+  (when-let [cost-name (cost-names amount :forfeit)]
+    cost-name))
+
+(defn pay-trash
+  "Trash a card as part of paying for a card or ability"
+  ;; If multiples needed in future likely prompt-select needs work to take a function
+  ;; instead of an ability
+  ([state side card type amount choices] (pay-trash state side card type amount choices nil))
+  ([state side card type amount choices args]
+   (prompt! state side card (str "Choose a " (name type) " to trash") choices
+            {:effect (effect (trash target args))})
+   (when-let [cost-name (cost-names amount type)] cost-name)))
 
 (defn pay
   "Deducts each cost from the player.
   args format as follows with each being optional ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
   The map with :action was added for Jeeves so we can log what each click was used on"
   [state side card & args]
-  (when-let [{:keys [costs forfeit-cost scored]} (apply can-pay? state side (:title card) args)]
-    (when forfeit-cost
-      (if (= (count scored) 1)
-        (forfeit state side (first scored))
-        (prompt! state side card "Choose an Agenda to forfeit" scored
-                 {:effect (effect (forfeit target))})))
-    (->> costs (map #(do
-                      (when (= (first %) :click)
-                        (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) (first (keep :action args)) (:click (into {} costs)))
-                        (swap! state assoc-in [side :register :spent-click] true))
-                      (deduce state side %)))
-         (filter some?)
-         (interpose " and ")
-         (apply str))))
+  (let [raw-costs (not-empty (remove map? args))
+        action (not-empty (filter map? args))]
+    (when-let [{:keys [costs scored]} (apply can-pay? state side (:title card) raw-costs)]
+        (->> costs (map
+                     #(cond
+                        (= (first %) :click) (do (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) (first (keep :action action)) (:click (into {} costs)))
+                                                 (swap! state assoc-in [side :register :spent-click] true)
+                                                 (deduce state side %))
+                        (= (first %) :forfeit) (pay-forfeit state side card scored (second %))
+                        (= (first %) :hardware) (pay-trash state side card :hardware (second %) (get-in @state [:runner :rig :hardware]))
+                        (= (first %) :program) (pay-trash state side card :program (second %) (get-in @state [:runner :rig :program]))
+
+                        ; Connection
+                        (= (first %) :connection)
+                        (pay-trash state side card :connection (second %) (filter (fn [c] (has-subtype? c "Connection"))
+                                                                                  (all-installed state :runner)))
+
+                        ; Rezzed ICE
+                        (= (first %) :ice)
+                        (pay-trash state :corp card :ice (second %) (filter (every-pred rezzed? ice?) (all-installed state :corp)) {:cause :ability-cost :keep-server-alive true})
+
+                        (= (first %) :tag) (deduce state :runner %)
+                        (= (first %) :net-damage) (damage state side :net (second %) {:unpreventable true})
+                        (= (first %) :mill) (mill state side (second %))
+                        :else (deduce state side %)))
+             (filter some?)
+             (interpose " and ")
+             (apply str)))))
 
 (defn gain [state side & args]
   (doseq [r (partition 2 args)]
@@ -72,6 +113,16 @@
     (if (= (last r) :all)
       (swap! state assoc-in [side (first r)] 0)
       (deduce state side r))))
+
+(defn play-cost-bonus [state side costs]
+  (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))
+
+(defn play-cost [state side card all-cost]
+  (vec (map #(if (keyword? %) % (max % 0))
+            (-> (concat all-cost (get-in @state [:bonus :play-cost])
+                        (when-let [playfun (:play-cost-bonus (card-def card))]
+                          (playfun state side (make-eid state) card nil)))
+                merge-costs flatten))))
 
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))

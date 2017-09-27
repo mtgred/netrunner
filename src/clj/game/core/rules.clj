@@ -2,7 +2,7 @@
 
 (declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
          in-corp-scored? prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
-         update-all-ice win win-decked play-sfx)
+         update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -14,16 +14,24 @@
                              (play-instant state side eid? card? nil)
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid {:keys [title] :as card} {:keys [targets ignore-cost extra-cost no-additional-cost]}]
+   (swap! state update-in [:bonus] dissoc :play-cost)
+   (trigger-event state side :pre-play-instant card)
    (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
      (let [cdef (card-def card)
+           additional-cost (if (has-subtype? card "Triple")
+                             (concat (:additional-cost cdef) [:click 2])
+                             (:additional-cost cdef))
            additional-cost (if (and (has-subtype? card "Double")
                                     (not (get-in @state [side :register :double-ignore-additional])))
                              (concat (:additional-cost cdef) [:click 1])
-                             (:additional-cost cdef))
+                             additional-cost)
            additional-cost (if (and (has-subtype? card "Run")
                                     (get-in @state [:bonus :run-cost]))
                              (concat additional-cost (get-in @state [:bonus :run-cost]))
                              additional-cost)
+           total-cost (play-cost state side card
+                                 (concat (when-not no-additional-cost additional-cost) extra-cost
+                                         [:credit (:cost card)]))
            eid (if-not eid (make-eid state) eid)]
        ;; ensure the instant can be played
        (if (and (if-let [req (:req cdef)]
@@ -31,12 +39,10 @@
                 (not (and (has-subtype? card "Current")
                           (get-in @state [side :register :cannot-play-current])))
                 (not (and (has-subtype? card "Run")
-                          (get-in @state [side :register :cannot-run])))
+                          (not (can-run? state :runner))))
                 (not (and (has-subtype? card "Priority")
                           (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
-         (if-let [cost-str (pay state side card :credit (if ignore-cost 0 (:cost card)) extra-cost
-                                (when-not (or ignore-cost no-additional-cost)
-                                  additional-cost) {:action :play-instant})]
+         (if-let [cost-str (pay state side card (if ignore-cost 0 total-cost) {:action :play-instant})]
            (let [c (move state side (assoc card :seen true) :play-area)]
              (system-msg state side (str (if ignore-cost
                                            "play "
@@ -49,7 +55,8 @@
                      (when-let [current (first (get-in @state [s :current]))] ; trash old current
                        (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                        (trash state side current)))
-                   (let [moved-card (move state side (first (get-in @state [side :play-area])) :current)]
+                   (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
+                         moved-card (move state side c :current)]
                      (card-init state side eid moved-card true)))
                (do (resolve-ability state side (assoc cdef :eid eid) card nil)
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
@@ -180,7 +187,8 @@
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (damage-choice-priority state)
   (when-completed (trigger-event-sync state side :pre-resolve-damage type card n)
-                  (do (when-not (get-in @state [:damage :damage-replace])
+                  (do (when-not (or (get-in @state [:damage :damage-replace])
+                                    (runner-can-choose-damage? state))
                         (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
                           (when (pos? n)
                             (let [hand (get-in @state [:runner :hand])
@@ -196,7 +204,7 @@
                                                  {:unpreventable true}))
                                 (do (trash-cards state side (make-eid state) cards-trashed
                                                  {:unpreventable true :cause type})
-                                    (trigger-event state side :damage type card)))))))
+                                    (trigger-event state side :damage type card n)))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (effect-completed state side eid card))))
 
@@ -311,9 +319,6 @@
 (defn- resolve-trash
   [state side eid {:keys [zone type] :as card}
    {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
-  (when (installed? card)
-    (if (= :runner (:active-player @state)) (swap! state update-in [side :register :trashed-installed-runner] (fnil inc 0))
-                                            (swap! state update-in [side :register :trashed-installed-corp] (fnil inc 0))))
   (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
                     (apply resolve-trash-end state side eid card args targets))
@@ -325,10 +330,20 @@
   ([state side card args] (trash state side (make-eid state) card args))
   ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args} & targets]
    (if (not (some #{:discard} zone))
-     (if (untrashable-while-rezzed? card)
+     (cond
+
+       (untrashable-while-rezzed? card)
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))
+
+       (and (= side :corp)
+            (untrashable-while-resources? card)
+            (> (count (filter #(is-type? % "Resource") (all-installed state :runner))) 1))
+       (do (enforce-msg state card "cannot be trashed while there are other resources installed")
+           (effect-completed state side eid))
+
        ;; Card is not enforced untrashable
+       :else
        (let [ktype (keyword (clojure.string/lower-case type))]
          (when (and (not unpreventable) (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
@@ -437,7 +452,7 @@
              (deactivate state side card) card)]
      (system-msg state side (str "forfeits " (:title c)))
      (gain-agenda-point state side (- (get-agenda-points state side c)))
-     (move state :corp c :rfg)
+     (move state side c :rfg)
      (when-completed (trigger-event-sync state side (keyword (str (name side) "-forfeit-agenda")) c)
                      (effect-completed state side eid)))))
 

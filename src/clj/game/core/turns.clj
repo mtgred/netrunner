@@ -5,13 +5,14 @@
 
 (def game-states (atom {}))
 
-(defn- card-implemented [card]
+(defn- card-implemented
   "Checks if the card is implemented. Looks for a valid return from `card-def`.
   If implemented also looks for `:implementation` key which may contain special notes.
   Returns either:
     nil - not implemented
     :full - implemented fully
     msg - string with implementation notes"
+  [card]
   (when-let [cdef (card-def card)]
     ;; Card is defined - hence implemented
     (if-let [impl (:implementation cdef)]
@@ -93,11 +94,17 @@
    (@all-cards title)))
 
 (defn make-card
-  "Makes a proper card from an @all-cards card"
-  [card]
+  "Makes or remakes (with current cid) a proper card from an @all-cards card"
+  ([card] (make-card card (make-cid)))
+  ([card cid]
   (-> card
-      (assoc :cid (make-cid) :implementation (card-implemented card))
-      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost)))
+      (assoc :cid cid :implementation (card-implemented card))
+      (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
+
+(defn reset-card
+  "Resets a card back to its original state overlaid with any play-state data"
+  ([state side card]
+   (update! state side (merge card (make-card (get @all-cards (:title card)) (:cid card))))))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
@@ -162,7 +169,8 @@
   (swap! state dissoc-in [side :extra-click-temp])
   (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
                   (do (when (= side :corp)
-                        (draw state side))
+                        (draw state side)
+                        (trigger-event state side :corp-mandatory-draw))
                       (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
                       (when (= side :corp)
                         (update-all-advancement-costs state side)))))
@@ -215,8 +223,13 @@
       (swap! state assoc :end-turn true)
       (swap! state update-in [side :register] dissoc :cannot-draw)
       (swap! state update-in [side :register] dissoc :drawn-this-turn)
+      (doseq [c (filter #(= :this-turn (:rezzed %)) (all-installed state :corp))]
+        (update! state side (assoc c :rezzed true)))
       (clear-turn-register! state)
       (swap! state dissoc :turn-events)
-      (when (some? (get-in @state [side :extra-turn]))
-        (start-turn state side nil)
-        (swap! state dissoc-in [side :extra-turn])))))
+      (when-let [extra-turns (get-in @state [side :extra-turns])]
+        (when (> extra-turns 0)
+          (start-turn state side nil)
+          (swap! state update-in [side :extra-turns] dec)
+          (let [turns (if (= 1 extra-turns) "turn" "turns")]
+            (system-msg state side (clojure.string/join ["will have " extra-turns " extra " turns " remaining."]))))))))

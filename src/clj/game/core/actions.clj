@@ -4,7 +4,7 @@
 
 (declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
-         runner-install trash update-breaker-strength update-ice-in-server update-run-ice win
+         runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? play-sfx)
 
 ;;; Neutral actions
@@ -15,7 +15,7 @@
     (case (:type card)
       ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
-      ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1]}))
+      ("ICE" "Upgrade" "Asset" "Agenda") (corp-install state side card server {:extra-cost [:click 1] :action :corp-click-install}))
     (trigger-event state side :play card)))
 
 (defn shuffle-deck
@@ -34,8 +34,8 @@
   (when (and (not (get-in @state [side :register :cannot-draw]))
              (pay state side nil :click 1 {:action :corp-click-draw}))
     (system-msg state side "spends [Click] to draw a card")
+    (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
     (draw state side)
-    (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw))
     (play-sfx state side "click-card")))
 
 (defn click-credit
@@ -87,8 +87,9 @@
                    (same-side? side (:side card))))
       (case server
         ("Heap" "Archives")
-        (do (trash state s c {:unpreventable true})
-            (system-msg state side (str "trashes " label from-str)))
+        (do (let [action-str (if (= (first (:zone c)) :hand) "discards " "trashes ")]
+              (trash state s c {:unpreventable true})
+              (system-msg state side (str action-str label from-str))))
         ("Grip" "HQ")
         (do (move state s (dissoc c :seen :rezzed) :hand {:force true})
             (system-msg state side (str "moves " label from-str " to " server)))
@@ -256,11 +257,15 @@
   (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
       (resolve-ability state side
-                       {:prompt "Choose a resource to trash"
-                        :choices {:req #(is-type? % "Resource")}
-                        :effect (effect (trash target)
-                                        (system-msg (str (build-spend-msg cost-str "trash")
-                                                         (:title target))))} nil nil))))
+                       {:prompt  "Choose a resource to trash"
+                        :choices {:req (fn [card]
+                                         (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-installed state :runner)))
+                                                  (> (count (filter #(is-type? % "Resource") (all-installed state :runner))) 1))
+                                           (and (is-type? card "Resource") (not (untrashable-while-resources? card)))
+                                           (is-type? card "Resource")))}
+                        :effect  (effect (trash target)
+                                         (system-msg (str (build-spend-msg cost-str "trash")
+                                                          (:title target))))} nil nil))))
 
 (defn do-purge
   "Purge viruses."
@@ -277,41 +282,64 @@
   ([state side card] (rez state side (make-eid state) card nil))
   ([state side card args]
    (rez state side (make-eid state) card args))
-  ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force] :as args}]
-   (let [card (get-card state card)]
+  ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt] :as args}]
+   (let [card (if no-get-card
+                card
+                (get-card state card))
+         altcost (when-not no-get-card
+                   (:alternative-cost (card-def card)))]
      (if (or force (can-rez? state side card))
        (do
          (trigger-event state side :pre-rez card)
          (if (or (#{"Asset" "ICE" "Upgrade"} (:type card))
                    (:install-rezzed (card-def card)))
            (do (trigger-event state side :pre-rez-cost card)
-               (let [cdef (card-def card)
-                     cost (rez-cost state side card)
-                     costs (concat (when-not ignore-cost [:credit cost])
-                                   (when (not= ignore-cost :all-costs)
-                                     (:additional-cost cdef)))]
-                 (when-let [cost-str (apply pay state side card costs)]
-                   ;; Deregister the derezzed-events before rezzing card
-                   (when (:derezzed-events cdef)
-                     (unregister-events state side card))
-                   (if (not disabled)
-                     (card-init state side (assoc card :rezzed true))
-                     (update! state side (assoc card :rezzed true)))
-                   (doseq [h (:hosted card)]
-                     (update! state side (-> h
-                                             (update-in [:zone] #(map to-keyword %))
-                                             (update-in [:host :zone] #(map to-keyword %)))))
-                   (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
-                                               (:title card) (when ignore-cost " at no cost")))
-                   (when (and (not no-warning) (:corp-phase-12 @state))
-                     (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
-                      Please rez prior to clicking Start Turn in the future." "warning"
-                            {:time-out 0 :close-button true}))
-                   (if (ice? card)
-                     (do (update-ice-strength state side card)
-                         (play-sfx state side "rez-ice"))
-                     (play-sfx state side "rez-other"))
-                   (trigger-event-sync state side eid :rez card))))
+               (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
+                 (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
+                          {:delayed-completion true
+                           :effect (req (if (and (= target "Yes")
+                                                 (can-pay? state side (:title card) altcost))
+                                          (do (pay state side card altcost)
+                                              (rez state side (-> card (dissoc :alternative-cost))
+                                                   {:ignore-cost true
+                                                    :no-get-card true
+                                                    :paid-alt true}))
+                                          (rez state side (-> card (dissoc :alternative-cost))
+                                               {:no-get-card true})))})
+                 (let [cdef (card-def card)
+                       cost (rez-cost state side card)
+                       costs (concat (when-not ignore-cost [:credit cost])
+                                     (when (and (not= ignore-cost :all-costs)
+                                                (not (:disabled card)))
+                                       (:additional-cost cdef)))]
+                   (when-let [cost-str (apply pay state side card costs)]
+                     ;; Deregister the derezzed-events before rezzing card
+                     (when (:derezzed-events cdef)
+                       (unregister-events state side card))
+                     (if (not disabled)
+                       (card-init state side (assoc card :rezzed :this-turn))
+                       (update! state side (assoc card :rezzed :this-turn)))
+                     (doseq [h (:hosted card)]
+                       (update! state side (-> h
+                                               (update-in [:zone] #(map to-keyword %))
+                                               (update-in [:host :zone] #(map to-keyword %)))))
+                     (system-msg state side (str (build-spend-msg cost-str "rez" "rezzes")
+                                                 (:title card)
+                                                 (cond
+                                                   paid-alt
+                                                   " by paying its alternative cost"
+
+                                                   ignore-cost
+                                                   " at no cost")))
+                     (when (and (not no-warning) (:corp-phase-12 @state))
+                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
+                        Please rez prior to clicking Start Turn in the future." "warning"
+                              {:time-out 0 :close-button true}))
+                     (if (ice? card)
+                       (do (update-ice-strength state side card)
+                           (play-sfx state side "rez-ice"))
+                       (play-sfx state side "rez-other"))
+                     (trigger-event-sync state side eid :rez card)))))
            (effect-completed state side eid))
          (swap! state update-in [:bonus] dissoc :cost))
        (effect-completed state side eid)))))
@@ -327,21 +355,24 @@
         (resolve-ability state side derez-effect (get-card state card) nil))
       (when-let [dre (:derezzed-events cdef)]
         (register-events state side dre card)))
-    (trigger-event state side :derez card)))
+    (trigger-event state side :derez card side)))
 
 (defn advance
-  "Advance a corp card that can be advanced."
-  [state side {:keys [card]}]
-  (let [card (get-card state card)]
-    (when (can-advance? state side card)
-      (when-let [cost (pay state side card :click 1 :credit 1 {:action :corp-advance})]
-        (let [spent   (build-spend-msg cost "advance")
-              card    (card-str state card)
-              message (str spent card)]
-          (system-msg state side message))
-        (update-advancement-cost state side card)
-        (add-prop state side (get-card state card) :advance-counter 1)
-        (play-sfx state side "click-advance")))))
+  "Advance a corp card that can be advanced.
+   If you pass in a truthy value as the 4th parameter, it will advance at no cost (for the card Success)."
+  ([state side {:keys [card]}] (advance state side card nil))
+  ([state side card no-cost]
+   (let [card (get-card state card)]
+     (when (can-advance? state side card)
+       (when-let [cost (pay state side card :click (if-not no-cost 1 0)
+                            :credit (if-not no-cost 1 0) {:action :corp-advance})]
+         (let [spent   (build-spend-msg cost "advance")
+               card    (card-str state card)
+               message (str spent card)]
+           (system-msg state side message))
+         (update-advancement-cost state side card)
+         (add-prop state side (get-card state card) :advance-counter 1)
+         (play-sfx state side "click-advance"))))))
 
 (defn score
   "Score an agenda. It trusts the card data passed to it."
@@ -359,6 +390,9 @@
           state :corp (make-eid state) :agenda-scored
           {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
                                           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+                                          ; This is to handle Employee Strike with damage IDs #2688
+                                          (when (:disable-id (card-def current))
+                                            (swap! state assoc-in [:corp :disable-id] true))
                                           (trash state side current)))}
            :card-ability (card-as-handler c)
            :after-active-player {:effect (req (let [c (get-card state c)
@@ -368,6 +402,7 @@
                                                 (system-msg state :corp (str "scores " (:title c) " and gains " points
                                                                              " agenda point" (when (> points 1) "s")))
                                                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+                                                (swap! state dissoc [:corp :disable-id])
                                                 (gain-agenda-point state :corp points)
                                                 (play-sfx state side "agenda-score")))}}
           c)))))
@@ -392,7 +427,7 @@
   [state side {:keys [server] :as args}]
   (let [cost-bonus (get-in @state [:bonus :run-cost])
         click-cost-bonus (get-in @state [:bonus :click-run-cost])]
-    (when (and (not (get-in @state [:runner :register :cannot-run]))
+    (when (and (can-run? state side)
                (can-run-server? state server)
                (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
       (swap! state assoc-in [:runner :register :made-click-run] true)

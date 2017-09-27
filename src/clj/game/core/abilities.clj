@@ -311,6 +311,15 @@
                       (wrap-function :cancel-effect)
                       (wrap-function :end-effect))))))
 
+(defn- add-to-prompt-queue
+  "Adds a newly created prompt to the current prompt queue"
+  [state side {:keys [priority] :as prompt}]
+  (let [priority-comp #(case % true 1 nil 0 %)]
+    (swap! state update-in [side :prompt]
+           ;; insert the new prompt into the already-sorted queue based on its priority.
+           #(let [[head tail] (split-with (fn [p] (>= (priority-comp (:priority p)) (priority-comp priority))) %)]
+              (concat head (cons prompt tail))))))
+
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
   when the prompt is resolved. All prompts flow through this method."
@@ -319,7 +328,6 @@
   ([state side eid card msg choices f
     {:keys [priority prompt-type show-discard cancel-effect end-effect] :as args}]
    (let [prompt (if (string? msg) msg (msg state side nil card nil))
-         priority-comp #(case % true 1 nil 0 %)
          newitem {:eid eid
                   :msg prompt
                   :choices choices
@@ -335,10 +343,23 @@
                (:card-title choices)
                (#{:credit :counter} choices)
                (pos? (count choices)))
-       (swap! state update-in [side :prompt]
-              ;; insert the new prompt into the already-sorted queue based on its priority.
-              #(let [[head tail] (split-with (fn [p] (>= (priority-comp (:priority p)) (priority-comp priority))) %)]
-                (concat head (cons newitem tail))))))))
+       (add-to-prompt-queue state side newitem)))))
+
+(defn- show-trace-prompt
+  "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
+  Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
+  ([state side card msg f args] (show-trace-prompt state side (make-eid state) card msg f args))
+  ([state side eid card msg f {:keys [priority base bonus] :as args}]
+   (let [prompt (if (string? msg) msg (msg state side nil card nil))
+         newitem {:eid eid
+                  :msg prompt
+                  :choices :credit
+                  :effect f
+                  :card card
+                  :priority priority
+                  :base base
+                  :bonus bonus}]
+     (add-to-prompt-queue state side newitem))))
 
 (defn show-select
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
@@ -349,20 +370,27 @@
    ;; that can be selected.
    (letfn [(wrap-function [args kw]
              (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
-     (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))]
-     (swap! state update-in [side :selected]
-            #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
-                            :max (get-in ability [:choices :max])}))
-     (show-prompt state side card
-                  (if-let [msg (:prompt ability)]
-                    msg
-                    (if-let [m (get-in ability [:choices :max])]
-                      (str "Select up to " m " targets for " (:title card))
-                      (str "Select a target for " (:title card))))
-                  ["Done"] (fn [choice] (resolve-select state side))
-                  (-> args
-                      (assoc :prompt-type :select :show-discard (:show-discard ability))
-                      (wrap-function :cancel-effect)))))))
+     (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))
+           all (get-in ability [:choices :all])]
+       (swap! state update-in [side :selected]
+              #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+                              :max (get-in ability [:choices :max])
+                              :all all}))
+       (show-prompt state side card
+                    (if-let [msg (:prompt ability)]
+                      msg
+                      (if-let [m (get-in ability [:choices :max])]
+                        (str "Select up to " m " targets for " (:title card))
+                        (str "Select a target for " (:title card))))
+                    (if all ["Hide"] ["Done"])
+                    (if all
+                      (fn [choice]
+                        (toast state side (str "You must choose " (get-in ability [:choices :max])))
+                        (show-select state side card ability args))
+                      (fn [choice] (resolve-select state side)))
+                    (-> args
+                        (assoc :prompt-type :select :show-discard (:show-discard ability))
+                        (wrap-function :cancel-effect)))))))
 
 (defn resolve-select
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.
@@ -433,28 +461,31 @@
           (when-completed (trigger-event-sync state side :psi-game bet opponent-bet)
                           (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
                             (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
-                            (effect-completed state side eid card))))
+                            (effect-completed state side eid card)))
+          (trigger-event state side :psi-game-done bet opponent-bet))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 
 
 ;;; Traces
-(defn init-trace
+(defn- init-trace
   "Shows a trace prompt to the runner, after the corp has already spent credits to boost."
   [state side card {:keys [base eid] :as ability} boost]
   (clear-wait-prompt state :runner)
   (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
   (trigger-event state side :pre-init-trace card)
-  (let [bonus (or (get-in @state [:bonus :trace]) 0)
-        base (if (fn? base) (base state side  (make-eid state) card nil) base)
-        total (+ base boost bonus)]
+  (let [bonus (get-in @state [:bonus :trace] 0)
+        base (if (fn? base) (base state side (make-eid state) card nil) base)
+        total (+ base boost bonus)
+        link (get-in @state [:runner :link] 0)]
     (system-msg state :corp (str "uses " (:title card)
                                  " to initiate a trace with strength " total
                                  " (" base
                                  (when (pos? bonus) (str " + " bonus " bonus"))
                                  " + " boost " [Credits]) (" (make-label ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
-    (show-prompt state :runner card (str "Boost link strength?") :credit #(resolve-trace state side eid %) {:priority 2})
+    (show-trace-prompt state :runner card "Boost link strength?"
+                       #(resolve-trace state side eid %) {:priority 2 :base link})
     (swap! state assoc :trace {:strength total :ability ability :card card})
     (trigger-event state side :trace nil)))
 
@@ -462,26 +493,28 @@
   "Compares trace strength and link strength and triggers the appropriate effects."
   [state side eid boost]
   (clear-wait-prompt state :corp)
-  (let [runner (:runner @state)
+  (let [link (get-in @state [:runner :link] 0)
+        runner-trace (+ link boost)
         {:keys [strength ability card]} (:trace @state)]
-    (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to "
-                                   (+ (:link runner) boost)))
-    (let [succesful (> strength (+ (:link runner) boost))
-          which-ability (assoc (if succesful ability (:unsuccessful ability)) :eid (make-eid state))]
-      (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
-                                       card [strength (+ (:link runner) boost)])
-                      (do (trigger-event state :corp (if succesful :successful-trace :unsuccessful-trace) {:runner-spent boost})
-                          (when-let [kicker (:kicker ability)]
-                            (when (>= strength (:min kicker))
-                              (resolve-ability state :corp kicker card [strength (+ (:link runner) boost)])))
-                          (effect-completed state side eid nil))))))
+    (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to " runner-trace))
+    (let [successful (> strength runner-trace)
+          which-ability (assoc (if successful ability (:unsuccessful ability)) :eid (make-eid state))]
+      (when-completed (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace) {:runner-spent boost})
+                      (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
+                                                                   card [strength runner-trace])
+                                      (do (when-let [kicker (:kicker ability)]
+                                            (when (>= strength (:min kicker))
+                                              (resolve-ability state :corp kicker card [strength runner-trace])))
+                                          (effect-completed state side eid nil)))))))
 
 (defn corp-trace-prompt
   "Starts the trace process by showing the boost prompt to the corp."
-  [state card trace]
-  (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority 2})
-  (show-prompt state :corp card "Boost trace strength?" :credit
-               #(init-trace state :corp card trace %) {:priority 2}))
+  [state card {:keys [base] :as trace}]
+  (let [base-trace (if (fn? base) (base state :corp (make-eid state) card nil) base)
+        bonus (or (get-in @state [:bonus :trace]) 0)]
+    (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority 2})
+    (show-trace-prompt state :corp card "Boost trace strength?"
+                       #(init-trace state :corp card trace %) {:priority 2 :base base-trace :bonus bonus})))
 
 (defn rfg-and-shuffle-rd-effect [state side card n]
   (move state side card :rfg)

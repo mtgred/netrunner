@@ -299,7 +299,13 @@
       (play-from-hand state :runner "Stimhack")
       (is (not (:run @state)) "No run initiated")
       (is (= 3 (:click (get-runner))))
-      (is (empty? (:discard (get-runner))) "Card not played from Grip"))))
+      (is (empty? (:discard (get-runner))) "Card not played from Grip")
+      ; Check cannot run flag is cleared on next turn #2474
+      (take-credits state :runner)
+      (is (= :corp (:active-player @state)) "Corp turn")
+      (core/gain state :runner :click 1)
+      (run-on state "HQ")
+      (is (:run @state) "Run initiated ok"))))
 
 (deftest fenris
   ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed
@@ -336,7 +342,7 @@
       (prompt-choice :runner 0)
       (prompt-select :corp cc)
       (is (= 1 (count (get-in @state [:runner :rig :hardware]))) "Clone Chip trashed")
-      (is (empty? (:prompt (get-runner))) "Plascrete didn't try peventing meat damage")
+      (is (empty? (:prompt (get-runner))) "Plascrete didn't try preventing meat damage")
       (is (= 1 (count (:hand (get-runner)))))
       (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
       (is (not (:run @state)) "Run ended"))))
@@ -487,6 +493,17 @@
       (is (= 2 (:tag (get-runner))) "corp gives 1 tag")
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
+
+(deftest meru-mati
+  (do-game
+    (new-game (default-corp [(qty "Meru Mati" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Meru Mati" "HQ")
+    (play-from-hand state :corp "Meru Mati" "R&D")
+    (core/rez state :corp (get-ice state :hq 0))
+    (core/rez state :corp (get-ice state :rd 0))
+    (is (= 4 (:current-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
+	(is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
 
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost
@@ -721,6 +738,65 @@
       (is (= 9 (:credit (get-corp))) "Special Offer paid 5 credits")
       (is (= 1 (:position (get-in @state [:run])))
           "Run position updated; now approaching Ice Wall"))))
+
+(deftest tithonium
+  ;; Forfeit option as rez cost, can have hosted condition counters
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Tithonium" 1) (qty "Patch" 1)])
+              (default-runner [(qty "Pawn" 1) (qty "Wasteland" 1)]))
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Tithonium" "HQ")
+    (let [ht (get-content state :remote1 0)
+          ti (get-ice state :hq 0)]
+      (score-agenda state :corp ht)
+      (is (= 1 (count (:scored (get-corp)))) "Agenda scored")
+      (is (= 12 (:credit (get-corp))) "Gained 7 credits")
+      (core/rez state :corp ti)
+      (prompt-choice :corp "No") ; don't use alternative cost
+      (is (= 3 (:credit (get-corp))) "Spent 9 to Rez")
+      (core/derez state :corp (refresh ti))
+      (core/rez state :corp ti)
+      (prompt-choice :corp "Yes") ; use alternative cost
+      (is (= 3 (:credit (get-corp))) "Still on 3c")
+      (is (= 0 (count (:scored (get-corp)))) "Agenda forfeited")
+      ; Can Host Conditions Counters
+      (play-from-hand state :corp "Patch")
+      (prompt-select :corp (refresh ti))
+      (is (= 1 (count (:hosted (refresh ti)))) "1 card on Tithonium")
+      (take-credits state :corp)
+      (core/derez state :corp (refresh ti))
+      (is (= 1 (count (:hosted (refresh ti)))) "1 card on Tithonium")
+      (play-from-hand state :runner "Pawn")
+      (play-from-hand state :runner "Wasteland")
+      (let [pawn (get-program state 0)
+            wast (get-resource state 0)]
+        (card-ability state :runner (refresh pawn) 0)
+        (prompt-select :runner (refresh ti))
+        (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
+        (core/derez state :corp (refresh ti))
+        (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
+        (run-on state "HQ")
+        (card-subroutine state :corp ti 1)
+        (prompt-select :corp (refresh wast))
+        (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
+        (is (not (:run @state)) "Run ended")))))
+
+(deftest tithonium-oversight-ai
+  ;; Do not prompt for alt cost #2734
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Oversight AI" 1) (qty "Tithonium" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Tithonium" "R&D")
+    (let [ht (get-content state :remote1 0)
+          ti (get-ice state :rd 0)]
+      (score-agenda state :corp ht)
+      (play-from-hand state :corp "Oversight AI")
+      (prompt-select :corp ti)
+      (is (get-in (refresh ti) [:rezzed]))
+      (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
+          "Tithonium hosting OAI as a condition"))))
 
 (deftest tmi
   ;; TMI ICE test

@@ -139,6 +139,25 @@
       (prompt-select :corp kati)
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
+	  
+(deftest corporate-sales-team
+  ;; Corporate Sales Team - Places 10c on card, corp takes 1c on each turn start
+  (do-game
+    (new-game (default-corp [(qty "Corporate Sales Team" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Corporate Sales Team" "New remote")
+    (is (= 5 (:credit (get-corp))))
+    (score-agenda state :corp (get-content state :remote1 0))
+	(let [scored-cst (get-in @state [:corp :scored 0])]
+	  (core/end-turn state :corp nil)
+	  (core/start-turn state :runner nil)	
+	  (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
+	  (is (= 9 (get-counters (refresh scored-cst) :credit)))
+	  (core/end-turn state :runner nil)
+	  (core/start-turn state :corp nil)	
+	  (is (= 7 (:credit (get-corp))) "Increments at corp's start of turn")
+	  (is (= 8 (get-counters (refresh scored-cst) :credit)))
+	)))
 
 (deftest corporate-war
   ;; Corporate War - Gain 7c if you have 7c or more when scoring, otherwise lose all credits
@@ -606,7 +625,7 @@
     (let [chip (get-in @state [:runner :rig :hardware 0])]
       (card-ability state :runner chip 0)
       (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
-      (is (last-log-contains? state "Patron")
+      (is (second-last-log-contains? state "Patron")
           "Personality Profiles trashed card name is in log")
       (is (= 3 (count (:discard (get-runner))))))))
 
@@ -657,6 +676,32 @@
     (score-agenda state :corp (get-content state :remote4 0))
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
+	  
+(deftest posted-bounty-yes
+  ;; Posted Bounty - Forfeiting takes 1 bad publicity
+  (do-game
+    (new-game (default-corp [(qty "Posted Bounty" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (let [pb (get-content state :remote1 0)]
+      (score-agenda state :corp pb)
+	  (prompt-choice :corp "Yes")
+	  (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
+      (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity"))
+	  (is (= 1 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))
+	  
+(deftest posted-bounty-no
+  ;; Posted Bounty - Choosing not to forfeit scores normally
+  (do-game
+    (new-game (default-corp [(qty "Posted Bounty" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Posted Bounty" "New remote")
+    (let [pb (get-content state :remote1 0)]
+      (score-agenda state :corp pb)
+	  (prompt-choice :corp "No")
+	  (is (= 1 (:agenda-point (get-corp))))
+      (is (= 0 (:bad-publicity (get-corp)))))
+	  (is (= 0 (get-in @state [:runner :tag])))))
 
 (deftest profiteering
   ;; Profiteering - Gain 5 credits per bad publicity taken
@@ -756,6 +801,51 @@
     (is (not (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Advertisement")))
     (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Alliance"))
     (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))))
+
+(deftest reeducation
+  ;; Reeducation - Simple test
+  (do-game
+    (new-game (default-corp [(qty "Reeducation" 1) (qty "Sweeps Week" 1) (qty "Hedge Fund" 1)
+                             (qty "Jackson Howard" 1) (qty "Gutenberg" 1)])
+              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                               (qty "Corroder" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)]))
+    (starting-hand state :corp ["Reeducation" "Sweeps Week"])
+    (starting-hand state :runner ["Self-modifying Code"])
+    (score-agenda state :corp (find-card "Reeducation" (:hand (get-corp))))
+    (is (prompt-is-type? :runner :waiting) "Runner has wait prompt")
+    (is (= 1 (count (get-in @state [:corp :hand]))))
+    (is (= 1 (count (get-in @state [:runner :hand]))))
+    (prompt-choice :corp (find-card "Sweeps Week" (:hand (get-corp)))) ; put Sweeps Week at bottom of R&D
+    (prompt-choice :corp "Done") ; finished selecting cards
+    (prompt-choice :corp "Done") ; corp prompt for Done/Start Over
+    (is (= "Sweeps Week" (:title (last (:deck (get-corp))))))
+    (is (= "Self-modifying Code" (:title (last (:deck (get-runner))))))
+    (is (= 1 (count (get-in @state [:corp :hand]))))
+    (is (= 0 (count (get-in @state [:runner :hand]))))))
+
+(deftest reeducation-extra-cards
+  ;; Reeducation - If Corp is adding more cards in HQ than Runner has in their Grip, Runner
+  ;; is not 'able' to resolve the effect and doesn't have to add to bottom of Stack
+  (do-game
+    (new-game (default-corp [(qty "Reeducation" 1) (qty "Sweeps Week" 1) (qty "Hedge Fund" 1)
+                             (qty "Jackson Howard" 1) (qty "Gutenberg" 1)])
+              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                               (qty "Corroder" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)]))
+    (starting-hand state :corp ["Reeducation" "Sweeps Week" "Hedge Fund"])
+    (starting-hand state :runner ["Self-modifying Code"])
+    (score-agenda state :corp (find-card "Reeducation" (:hand (get-corp))))
+    (is (prompt-is-type? :runner :waiting) "Runner has wait prompt")
+    (is (= 2 (count (get-in @state [:corp :hand]))))
+    (is (= 1 (count (get-in @state [:runner :hand]))))
+    (prompt-choice :corp (find-card "Sweeps Week" (:hand (get-corp))))
+    (prompt-choice :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; this is the bottom card of R&D
+    (prompt-choice :corp "Done") ; finished selecting cards
+    (prompt-choice :corp "Done") ; corp prompt for Done/Start Over
+    (is (= "Hedge Fund" (:title (last (:deck (get-corp))))))
+    (is (= "Sweeps Week" (:title (last (butlast (:deck (get-corp)))))))
+    (is (= "Self-modifying Code" (:title (first (:hand (get-runner))))))
+    (is (= 2 (count (get-in @state [:corp :hand]))))
+    (is (= 1 (count (get-in @state [:runner :hand]))))))
 
 (deftest sentinel-defense-program
   ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented

@@ -260,6 +260,59 @@
       (core/rez state :corp (refresh jesus))
       (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
 
+(deftest counter-surveillance
+  ;; Trash to run, on successful run access cards equal to Tags and pay that amount in credits
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3)])
+              (default-runner [(qty "Counter Surveillance" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :tag 2)
+    (play-from-hand state :runner "Counter Surveillance")
+    (-> @state :runner :credit (= 4) (is "Runner has 4 credits"))
+    (let [cs (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner cs 0)
+      (prompt-choice :runner "HQ")
+      (run-successful state)
+      (-> (get-runner) :register :successful-run (= [:hq]) is)
+      (prompt-choice :runner "Card from hand")
+      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
+      (prompt-choice :runner "OK")
+      (prompt-choice :runner "Card from hand")
+      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
+      (prompt-choice :runner "OK")
+      (-> @state :runner :discard count (= 1) (is "Counter Surveillance trashed"))
+      (-> @state :runner :credit (= 2) (is "Runner has 2 credits")))))
+
+(deftest counter-surveillance-obelus
+  ;; Test Obelus does not trigger before Counter Surveillance accesses are done. Issues #2675
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 3)])
+              (default-runner [(qty "Counter Surveillance" 1) (qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :runner ["Counter Surveillance" "Obelus"])
+    (take-credits state :corp)
+    (core/gain state :runner :tag 2)
+    (core/gain state :runner :credit 2)
+    (-> (get-runner) :credit (= 7) (is "Runner has 7 credits"))
+    (play-from-hand state :runner "Counter Surveillance")
+    (play-from-hand state :runner "Obelus")
+    (-> (get-runner) :credit (= 2) (is "Runner has 2 credits")) ; Runner has enough credits to pay for CS
+    (let [cs (get-in @state [:runner :rig :resource 0])]
+      (card-ability state :runner cs 0)
+      (prompt-choice :runner "HQ")
+      (run-successful state)
+      (-> (get-runner) :register :successful-run (= [:hq]) is)
+      (-> (get-runner) :hand count zero? (is "Runner did not draw cards from Obelus yet"))
+      (prompt-choice :runner "Card from hand")
+      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
+      (-> (get-runner) :hand count zero? (is "Runner did not draw cards from Obelus yet"))
+      (prompt-choice :runner "OK")
+      (prompt-choice :runner "Card from hand")
+      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
+      (prompt-choice :runner "OK")
+      (-> (get-runner) :hand count (= 2) (is "Runner did draw cards from Obelus after all accesses are done"))
+      (-> (get-runner) :discard count (= 1) (is "Counter Surveillance trashed"))
+      (-> (get-runner) :credit (= 0) (is "Runner has no credits")))))
+
 (deftest-pending councilman-zone-change
   ;; Rezz no longer prevented when card changes zone (issues #1571)
   (do-game
@@ -371,6 +424,21 @@
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
     (is (= 0 (:tag (get-runner))) "Tag avoided")))
+
+(deftest donut-taganes
+  ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Donut Taganes" 1) (qty "Easy Mark" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Donut Taganes")
+    (is (= 2 (:credit (get-runner))) "Donut played for 3c")
+    (play-from-hand state :runner "Easy Mark")
+    (is (= 4 (:credit (get-runner))) "Easy Mark only gained 2c")
+    (take-credits state :runner)
+    (is (= 8 (:credit (get-corp))) "Corp has 8c")
+    (play-from-hand state :corp "Hedge Fund")
+    (is (= 11 (:credit (get-corp))) "Corp has 11c")))
 
 (deftest eden-shard
   ;; Eden Shard - Install from Grip in lieu of accessing R&D; trash to make Corp draw 2
@@ -677,8 +745,12 @@
     (play-from-hand state :runner "Joshua B.")
     (take-credits state :runner)
     (take-credits state :corp)
-    (prompt-choice :runner "Yes") ; gain the extra click
-    (is (= 5 (:click (get-runner))) "Gained extra click")
+    (is (= 0 (:click (get-runner))) "Runner has 0 clicks")
+    (is (:runner-phase-12 @state) "Runner is in Step 1.2")
+    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+    (is (= 1 (:click (get-runner))) "Gained extra click from Joshua")
+    (core/end-phase-12 state :runner nil)
+    (is (= 5 (:click (get-runner))) "Gained normal clicks as well")
     (take-credits state :runner)
     (is (= 1 (:tag (get-runner))) "Took 1 tag")))
 
@@ -845,6 +917,44 @@
     (is (= 6 (:credit (get-corp))) "Paid 1 extra  to install Paper Wall")
     (play-from-hand state :corp "Paper Wall" "HQ")
     (is (= 3 (:credit (get-corp))) "Paid 1 extra  to install Paper Wall")))
+
+(deftest network-exchange-architect
+  ;; Architect 1st sub should ignore additional install cose
+  (do-game
+    (new-game (default-corp [(qty "Architect" 3)])
+              (default-runner [(qty "Network Exchange" 1)]))
+    (play-from-hand state :corp "Architect" "HQ")
+    (take-credits state :corp) ; corp has 7 credits
+    (play-from-hand state :runner "Network Exchange")
+    (take-credits state :runner)
+    (let [architect (get-ice state :hq 0)]
+      (core/rez state :corp architect)
+      (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rez")
+      (core/move state :corp (find-card "Architect" (:hand (get-corp))) :deck)
+      (card-subroutine state :corp architect 0)
+      (prompt-choice :corp (find-card "Architect" (:deck (get-corp))))
+      (prompt-choice :corp "HQ")
+      (is (= 3 (:credit (get-corp))) "Corp has 7 credits"))))
+
+(deftest neutralize-all-threats
+  ;; Neutralize All Threats - Access 2 cards from HQ, force trash first accessed card with a trash cost
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Breaker Bay Grid" 1) (qty "Elizabeth Mills" 1)])
+              (default-runner [(qty "Neutralize All Threats" 1)]))
+    (play-from-hand state :corp "Breaker Bay Grid" "New remote")
+    (play-from-hand state :corp "Elizabeth Mills" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Neutralize All Threats")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Card from hand")
+    (prompt-choice :runner "OK") ; access first Hedge Fund
+    (prompt-choice :runner "Card from hand")
+    (prompt-choice :runner "OK") ; access second Hedge Fund
+    (run-empty-server state "Server 1")
+    (is (= 3 (:credit (get-runner))) "Forced to pay 2c to trash BBG")
+    (is (= 1 (count (:discard (get-corp)))) "Breaker Bay Grid trashed")
+    (run-empty-server state "Server 2")
+    (is (not (empty? (:prompt (get-runner)))) "Runner prompt to trash Elizabeth Mills")))
 
 (deftest new-angeles-city-hall
   ;; New Angeles City Hall - Avoid tags; trash when agenda is stolen
@@ -1737,15 +1847,21 @@
       (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
 
 (deftest wasteland
-  ;; Wasteland - Gain 1c the first time you trash an installed card each turn
+  ;; Wasteland - Gain 1c the first time you trash an installed card of yours each turn
   (do-game
-    (new-game (default-corp)
+    (new-game (default-corp [(qty "PAD Campaign" 1)])
               (default-runner [(qty "Wasteland" 1) (qty "Faust" 1) (qty "Fall Guy" 4)]))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
-    (core/gain state :runner :click 1)
+    (core/gain state :runner :click 2)
+    (core/gain state :runner :credit 4)
     (core/draw state :runner)
     (play-from-hand state :runner "Faust")
     (play-from-hand state :runner "Wasteland")
+    (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes") ; Trash PAD campaign
+    (is (= 0 (:credit (get-runner))) "Gained nothing from Wasteland on corp trash")
     ; trash from hand first which should not trigger #2291
     (let [faust (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner faust 1)

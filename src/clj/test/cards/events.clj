@@ -125,6 +125,29 @@
     (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
     (is (= 4 (:memory (get-runner))) "Memory back to 4")))
 
+(deftest apocalype-full-immersion-recstudio
+  ;; Apocalypse with Full Immersion - no duplicate cards in heap #2606
+  (do-game
+    (new-game
+      (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Sandburg" 1)
+                     (qty "Oaktown Renovation" 1)])
+      (default-runner  [(qty "Apocalypse" 1)]))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [fir (get-content state :remote1 0)]
+      (core/rez state :corp fir)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Sandburg" (:hand (get-corp))))
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (run-empty-server state "R&D")
+      (run-empty-server state "HQ")
+      (play-from-hand state :runner "Apocalypse")
+      (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
+      (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
+      (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap"))))
+
 (deftest apocalypse-in-play-ability
   ;; Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains
   (do-game
@@ -469,6 +492,21 @@
     (prompt-choice :runner "1 [Credits]")
     (is (empty? (get-content state :remote1)) "Psychic Field trashed")))
 
+(deftest early-bird
+  ;; Early Bird - Priority, make a run and gain a click
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Early Bird" 1)]))
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (play-from-hand state :runner "Early Bird")
+    (is (= 3 (:click (get-runner))) "Card not played, Early Bird priority restriction")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Early Bird")
+    (prompt-choice :runner "Archives")
+    (is (= 4 (:click (get-runner))) "Early Bird gains click")))
+
 (deftest employee-strike-blue-sun
   ;; Employee Strike - vs Blue Sun, suppress Step 1.2
   (do-game
@@ -480,6 +518,24 @@
     (play-from-hand state :runner "Employee Strike")
     (take-credits state :runner)
     (is (not (:corp-phase-12 @state)) "Employee Strike suppressed Blue Sun step 1.2")))
+
+(deftest employee-strike-pu-philotic
+  ;; Employee Strike - vs PU/Philotic - test for #2688
+  (do-game
+    (new-game (make-deck "Jinteki: Potential Unleashed" [(qty "Philotic Entanglement" 1) (qty "Braintrust" 2)])
+              (default-runner [(qty "Employee Strike" 10)]))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (run-empty-server state "Server 2")
+    (prompt-choice :runner "Steal")
+    (play-from-hand state :runner "Employee Strike")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Philotic Entanglement" "New remote")
+    (score-agenda state :corp (get-content state :remote3 0))
+    (is (= 3 (count (:discard (get-runner)))) "Discard is 3 cards - 2 from Philotic, 1 EStrike.  Nothing from PU mill")))
 
 (deftest encore
   ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.
@@ -498,6 +554,26 @@
     ; only get one extra turn
     (take-credits state :runner)
     (is (= 9 (:credit (get-runner))))))
+
+(deftest encore-stacking
+  ;; Encore - 2 encores in a 5 click turn results in 2 extra turns
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1)])
+              (default-runner [(qty "Encore" 2)]))
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Encore")
+    (play-from-hand state :runner "Encore")
+    (is (= 2 (count (:rfg (get-runner)))) "2 Encores removed from game")
+    (take-credits state :runner)
+    (take-credits state :runner)
+    ;; Two extra turns
+    (take-credits state :runner)
+    (is (= 13 (:credit (get-runner))))))
 
 (deftest eureka!
   ;; Eureka! - Install the program but trash the event
@@ -656,6 +732,7 @@
                                   "Independent Thinking"
                                   "Independent Thinking"])
     (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
     (prompt-select :runner (find-card "Neutralize All Threats" (:hand (get-runner))))
     (play-from-hand state :runner "Fan Site")
     (let [fs (get-in @state [:runner :rig :resource 0])
@@ -672,10 +749,7 @@
     (new-game (default-corp [(qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1) (qty "Quandary" 1)
                             (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
             (default-runner [(qty "Indexing" 1)]))
-    (loop [x 5]
-    (when (pos? x)
-      (do (core/move state :corp (first (:hand (get-corp))) :deck)
-          (recur (dec x)))))
+    (dotimes [_ 5] (core/move state :corp (first (:hand (get-corp))) :deck))
     (take-credits state :corp)
     (is (= 0 (count (:hand (get-corp)))))
     (is (= 5 (count (:deck (get-corp)))))
@@ -905,6 +979,29 @@
     (play-from-hand state :runner "Making an Entrance")
     (is (= 1 (count (:hand (get-runner)))) "Can only play on first click")))
 
+(deftest mars-for-martians
+  ;; Mars for Martians - Full test
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Mars for Martians" 1) (qty "Clan Vengeance" 1) (qty "Counter Surveillance" 1)
+                               (qty "Jarogniew Mercs" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :runner ["Mars for Martians" "Clan Vengeance" "Counter Surveillance" "Jarogniew Mercs"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clan Vengeance")
+    (play-from-hand state :runner "Counter Surveillance")
+    (play-from-hand state :runner "Jarogniew Mercs")
+    (play-from-hand state :runner "Mars for Martians")
+    (is (= 1 (:click (get-runner))) "Mars for Martians not played, priority event")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (core/gain state :runner :tag 4)
+    (is (= 5 (:tag (get-runner))) "+1 tag from Jarogniew Mercs")
+    (is (= 1 (count (:hand (get-runner)))))
+    (is (= 2 (:credit (get-runner))))
+    (play-from-hand state :runner "Mars for Martians")
+    (is (= 3 (count (:hand (get-runner)))) "3 clan resources, +3 cards but -1 for playing Mars for Martians")
+    (is (= 7 (:credit (get-runner))) "5 tags, +5 credits")))
+
 (deftest modded
   ;; Modded - Install a program or piece of hardware at a 3 credit discount
   (do-game
@@ -989,14 +1086,12 @@
     (is (= 6 (count (:discard (get-runner)))))
     (take-credits state :corp)
     ;; remove 5 Out of the Ashes from the game
-    (loop [x 5]
-      (when (pos? x)
-        (do (is (not (empty? (get-in @state [:runner :prompt]))))
-            (prompt-choice :runner "Yes")
-            (prompt-choice :runner "Archives")
-            (is (:run @state))
-            (run-successful state)
-            (recur (dec x)))))
+    (dotimes [_ 5]
+      (is (not (empty? (get-in @state [:runner :prompt]))))
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Archives")
+      (is (:run @state))
+      (run-successful state))
     (prompt-choice :runner "No")
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 5 (count (:rfg (get-runner)))))
@@ -1255,12 +1350,13 @@
   ;; Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects
   (do-game
     (new-game
-      (default-corp [(qty "Project Atlas" 1)
+      (default-corp [(qty "Project Atlas" 2)
                      (qty "Caprice Nisei" 1) (qty "Chairman Hiro" 1) (qty "Cybernetics Court" 1)
                      (qty "Elizabeth Mills" 1)
                      (qty "Ibrahim Salem" 1)
                      (qty "Housekeeping" 1)
-                     (qty "Director Haas" 1)])
+                     (qty "Director Haas" 1)
+                     (qty "Oberth Protocol" 1)])
       (default-runner [(qty "Rumor Mill" 1)]))
     (core/gain state :corp :credit 100 :click 100 :bad-publicity 1)
     (core/draw state :corp 100)
@@ -1270,6 +1366,7 @@
     (play-from-hand state :corp "Elizabeth Mills" "New remote")
     (play-from-hand state :corp "Project Atlas" "New remote")
     (play-from-hand state :corp "Ibrahim Salem" "New remote")
+    (play-from-hand state :corp "Oberth Protocol" "New remote")
     (core/move state :corp (find-card "Director Haas" (:hand (get-corp))) :deck)
     (core/rez state :corp (get-content state :remote2 0))
     (core/rez state :corp (get-content state :remote3 0))
@@ -1281,9 +1378,9 @@
 
     (play-from-hand state :runner "Rumor Mill")
 
-    ;; Additional costs to rez should STILL be applied
+    ;; Additional costs to rez should NOT be applied
     (core/rez state :corp (get-content state :remote6 0))
-    (is (seq (:rfg (get-corp))) "Agenda was auto-forfeit to rez Ibrahim Salem")
+    (is (= 1 (count (:scored (get-corp)))) "No agenda was auto-forfeit to rez Ibrahim Salem")
 
     ;; In-play effects
     (is (= 0 (:hand-size-modification (get-corp))) "Corp has original hand size")
@@ -1316,6 +1413,10 @@
     (play-from-hand state :corp "Housekeeping")
     (is (= 4 (:hand-size-modification (get-corp))) "Corp has +4 hand size")
     (is (= 0 (:hand-size-modification (get-runner))) "Runner has +0 hand size")
+
+    ;; Additional costs to rez should now be applied again
+    (core/rez state :corp (get-content state :remote7 0))
+    (is (zero? (count (:scored (get-corp)))) "Agenda was auto-forfeit to rez Oberth")
 
     (core/derez state :corp (get-content state :remote4 0))
     (core/rez state :corp (get-content state :remote4 0))
@@ -1568,7 +1669,7 @@
     (play-from-hand state :runner "The Price of Freedom")
     (is (= 0 (count (get-in @state [:runner :hand]))) "The Price of Freedom can be played because a connection is in play")
     (let [kj (find-card "Kati Jones" (:resource (:rig (get-runner))))]
-      (prompt-select :runner kj)
+      (prompt-choice :runner kj)
       (is (= 0 (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed wth The Price of Freedom")
       (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game, and only Kati Jones is in the discard"))
     (take-credits state :runner)
@@ -1605,6 +1706,24 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
       (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have code gate")
       (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have sentry"))))
+
+(deftest unscheduled-maintenance
+  ;; Unscheduled Maintenance - prevent Corp from installing more than 1 ICE per turn
+  (do-game
+    (new-game
+      (default-corp [(qty "Vanilla" 2) (qty "Breaking News" 1)])
+      (default-runner [(qty "Unscheduled Maintenance" 1)]))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Unscheduled Maintenance")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "First ICE install of turn allowed")
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (is (empty? (get-in @state [:corp :servers :rd :ices])) "Second ICE install of turn blocked")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Current trashed; second ICE install of turn allowed")))
 
 (deftest vamp
   ;; Vamp - Run HQ and use replace access to pay credits to drain equal amount from Corp

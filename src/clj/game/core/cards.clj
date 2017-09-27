@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare active? all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run has-subtype? ice?
-         make-eid register-events remove-from-host remove-icon rezzed? trash trigger-event update-hosted!
+         make-eid register-events remove-from-host remove-icon reset-card rezzed? trash trigger-event update-hosted!
          update-ice-strength unregister-events)
 
 ;;; Functions for loading card information.
@@ -68,6 +68,7 @@
                          (some #(when (= cid (:cid %)) %) (get-in @state (cons :corp (vec zone)))))
                 (or (empty? (get-in @state [side :locked (-> card :zone first)]))
                     force))
+       (trigger-event state side :pre-card-moved card src-zone target-zone)
        (let [dest (if (sequential? to) (vec to) [to])
              trash-hosted (fn [h]
                              (trash state side
@@ -119,6 +120,7 @@
          (when-let [card-moved (:move-zone (card-def c))]
            (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card moved-card)
+         (when (#{:discard :hand} to) (reset-card state side moved-card))
          (when-let [icon-card (get-in moved-card [:icon :card])]
            ;; remove icon if card moved to :discard or :hand
            (when (#{:discard :hand} to) (remove-icon state side icon-card moved-card)))
@@ -166,7 +168,7 @@
      (update! state side (update-in updated-card [:counter type] #(+ (or % 0) n)))
      (if (= type :advancement)
        ;; if advancement counter use existing system
-       (add-prop state side card :advancement n args)
+       (add-prop state side card :advance-counter n args)
        (trigger-event state side :counter-added (get-card state updated-card))))))
 
 ;;; Deck-related functions

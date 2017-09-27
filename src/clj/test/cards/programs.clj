@@ -445,6 +445,7 @@
     (new-game (default-corp)
               (make-deck "Apex: Invasive Predator" [(qty "Parasite" 1)]))
     (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
     (prompt-select :runner (find-card "Parasite" (:hand (get-runner))))
     (is (empty? (:prompt (get-runner))) "No prompt to host Parasite")
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "Parasite installed face down")))
@@ -608,6 +609,49 @@
       ;; Trash Hivemind
       (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
       (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not added to available MU"))))
+
+(deftest reaver
+  ;; Reaver - Draw a card the first time you trash an installed card each turn
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 1)])
+              (default-runner [(qty "Reaver" 1) (qty "Fall Guy" 5)]))
+    (starting-hand state :runner ["Reaver" "Fall Guy"])
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (core/gain state :runner :click 1)
+    (play-from-hand state :runner "Reaver")
+    (is (= 1 (count (:hand (get-runner)))) "One card in hand")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes") ; Trash PAD campaign
+    (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
+    (play-from-hand state :runner "Fall Guy")
+    (play-from-hand state :runner "Fall Guy")
+    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+    ; No draw from Fall Guy trash as Reaver already fired this turn
+    (card-ability state :runner (get-resource state 0) 1)
+    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+    (take-credits state :runner)
+    ; Draw from Fall Guy trash on corp turn
+    (card-ability state :runner (get-resource state 0) 1)
+    (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
+
+(deftest reaver-fcc
+  ;; Reaver / Freelance Coding Construct - should not draw when trash from hand #2671
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Reaver" 9) (qty "Imp" 1) (qty "Snitch" 1) (qty "Freelance Coding Contract" 1)]))
+    (starting-hand state :runner ["Reaver" "Imp" "Snitch" "Freelance Coding Contract"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Reaver")
+    (is (= 3 (count (:hand (get-runner)))) "Four cards in hand")
+    (is (= 3 (:credit (get-runner))) "3 credits")
+    (play-from-hand state :runner "Freelance Coding Contract")
+    (prompt-select :runner (find-card "Snitch" (:hand (get-runner))))
+    (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
+    (prompt-choice :runner "Done")
+    (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
+    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program

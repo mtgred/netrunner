@@ -12,7 +12,24 @@
       (when (and (not= side nil) (not= side :spectator))
         (command state side)
         (swap! state update-in [:log] #(conj % {:user nil :text (str "[!]" (:username author) " uses a command: " text)})))
-      (swap! state update-in [:log] #(conj % {:user author :text text})))))
+      (swap! state update-in [:log] #(conj % {:user author :text text})))
+    (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))))
+
+(defn typing
+  "Updates game state list with username of whoever is typing"
+  [state side {:keys [user]}]
+  (let [author (:username (or user (get-in @state [side :user])))]
+    (swap! state assoc :typing (distinct (conj (:typing @state) author)))
+    ;; say something to force update in client side rendering
+    (say state side {:user "__system__" :text "typing"})))
+
+(defn typingstop
+  "Clears typing flag from game state for user"
+  [state side {:keys [user text]}]
+  (let [author (or user (get-in @state [side :user]))]
+    (swap! state assoc :typing (remove #{(:username author)} (:typing @state)))
+    ;; say something to force update in client side rendering
+    (say state side {:user "__system__" :text "typing"})))
 
 (defn system-msg
   "Prints a message to the log without a username."
@@ -196,6 +213,12 @@
                                              :effect (effect (move target :deck))
                                              :choices {:req (fn [t] (and (card-is? t :side %2) (in-hand? t)))}}
                                             {:title "/move-bottom command"} nil)
+          "/move-hand"  #(resolve-ability %1 %2
+                                          {:prompt "Select a card to move to your hand"
+                                           :effect (req (let [c (deactivate %1 %2 target)]
+                                                          (move %1 %2 c :hand)))
+                                           :choices {:req (fn [t] (card-is? t :side %2))}}
+                                          {:title "/move-hand command"} nil)
           "/psi"        #(when (= %2 :corp) (psi-game %1 %2
                                                       {:title "/psi command" :side %2}
                                                       {:equal  {:msg "resolve equal bets effect"}

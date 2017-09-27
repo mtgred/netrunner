@@ -648,6 +648,21 @@
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
+	  
+(deftest honeyfarm
+  ;; lose one credit on access
+  (do-game
+    (new-game (default-corp [(qty "Honeyfarm" 3)])
+              (default-runner))
+    (trash-from-hand state :corp "Honeyfarm")
+    (play-from-hand state :corp "Honeyfarm" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (is (= 4 (:credit (get-runner))))
+    (run-empty-server state "Archives")
+    (is (= 3 (:credit (get-runner))))
+	(run-empty-server state "HQ")
+    (is (= 2 (:credit (get-runner))))))
 
 (deftest hostile-infrastructure
   ;; Hostile Infrastructure - do 1 net damage when runner trashes a corp card
@@ -686,6 +701,35 @@
       (prompt-choice :corp "2 [Credits]")
       (prompt-choice :runner "0 [Credits]")
       (is (= 3 (:credit (get-corp))) "No credits gained from Hyoubu"))))
+	  
+(deftest illegal-arms-factory
+  ;; Illegal Arms Factory; draw a card, gain a credit, bad pub when trashed while rezzed
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1)
+	                         (qty "Beanstalk Royalties" 1)
+	                         (qty "IPO" 1)							 
+							 (qty "Illegal Arms Factory" 3)])
+              (default-runner))
+    (core/gain state :runner :credit 20)
+	(core/move state :corp (find-card "IPO" (:hand (get-corp))) :deck)
+	(core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+	(core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "Illegal Arms Factory" "New remote")
+    (play-from-hand state :corp "Illegal Arms Factory" "New remote")
+    (let [iaf (get-content state :remote2 0)]
+      (core/rez state :corp iaf)
+      (take-credits state :corp)
+	  (run-empty-server state :remote1)
+      (prompt-choice :runner "Yes")
+      (is (= 0 (:bad-publicity (get-corp))) "Took no bad pub on unrezzed trash")
+      (take-credits state :runner)
+	  (is (= 3 (count (:hand (get-corp)))) "Drew a card from IAF + mandatory")
+      (is (= 4 (:credit (get-corp))) "Gained 1 credit from IAF")
+      (take-credits state :corp)
+	  (run-empty-server state :remote2)
+      (prompt-choice :runner "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash")	  
+	)))
 
 (deftest it-department
   ;; IT Department - Add strength to rezzed ICE until end of turn
@@ -918,13 +962,16 @@
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (card-ability state :runner nach 0)
       (prompt-choice :runner "Done")
+      (prompt-choice :corp "Yes") ; Draw from Net Analytics
       (prompt-choice :runner "No")
       (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
       (is (= 0 (:tag (get-runner))) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
       (core/tag-runner state :runner 1)
+      (prompt-choice :runner "No") ; Don't prevent the tag
       (core/remove-tag state :runner 1)
+      (prompt-choice :corp "Yes") ; Draw from Net Analytics
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
 
 (deftest net-police
@@ -1416,6 +1463,27 @@
     (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
     (is (not (:run @state)) "Run completed")))
 
+(deftest student-loans
+  ;; Student Loans - costs Runner 2c extra to play event if already same one in discard
+  (do-game
+    (new-game (default-corp [(qty "Student Loans" 1) (qty "Hedge Fund" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 2)
+    (play-from-hand state :corp "Student Loans" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (is (= 5 (:credit (get-corp))) "Corp has 5c")
+    (play-from-hand state :corp "Hedge Fund")
+    (is (= 9 (:credit (get-corp))) "Corp has 9c - no penalty from Student Loans")
+    (play-from-hand state :corp "Hedge Fund")
+    (is (= 13 (:credit (get-corp))) "Corp has 13c - no penalty from Student Loans")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (is (= 9 (:credit (get-runner))) "1st Gamble played for 4c")
+    (play-from-hand state :runner "Sure Gamble")
+    (is (= 11 (:credit (get-runner))) "2nd Gamble played for 2c")
+    (play-from-hand state :runner "Sure Gamble")
+    (is (= 13 (:credit (get-runner))) "3rd Gamble played for 2c")))
+
 (deftest sundew
   ;; Sundew
   (do-game
@@ -1675,3 +1743,22 @@
       (is (= 2 (:credit (get-corp))) "Only 2 credits to rez Architect")
       (core/rez state :corp wrap)
       (is (= 0 (:credit (get-corp))) "No rez discount on Wraparound"))))
+
+(deftest whampoa-reclamation
+  ;; Whampoa Reclamation: Enable trashing a card from HQ to place a card in Archives on the bottom of R+D
+  (do-game
+    (new-game (default-corp [(qty "Whampoa Reclamation" 3) (qty "PAD Campaign" 2) (qty "Global Food Initiative" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Whampoa Reclamation" "New remote")
+    (let [wr (get-content state :remote1 0)]
+      (core/draw state :corp)
+      (take-credits state :corp)
+      (core/rez state :corp wr)
+      (let [gfi (find-card "Global Food Initiative" (:hand (get-corp)))]
+        (core/trash state :runner gfi)
+        (card-ability state :corp wr 0)
+        (prompt-choice :corp "Global Food Initiative") ;; into archives
+        (prompt-select :corp (first (:discard (get-corp)))) ;; into R&D
+        (is (= 0 (count (:discard (get-corp)))) "Only card in discard placed in bottom of R&D")
+        (is (= "Global Food Initiative" (:title (last (:deck (get-corp))))) "GFI last card in deck")
+        ))))

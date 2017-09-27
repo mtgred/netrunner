@@ -84,7 +84,8 @@
                            {:name "Rumor Mill"      :ref "rumor-mill-bg"}
                            {:name "Find The Truth"  :ref "find-the-truth-bg"}
                            {:name "Push Your Luck"  :ref "push-your-luck-bg"}
-                           {:name "Apex"            :ref "apex-bg"}]]
+                           {:name "Apex"            :ref "apex-bg"}
+                           {:name "Monochrome"      :ref "monochrome-bg"}]]
                [:div.radio
                 [:label [:input {:type "radio"
                                  :name "background"
