@@ -550,6 +550,12 @@ app.get '/data/decks', (req, res) ->
 
 app.post '/data/decks', (req, res) ->
   deck = req.body
+  sanitized_cards = deck.cards.map (entry) ->
+    sanitized_entries = {}
+    for k, v of entry
+      sanitized_entries[k] = v if k in ["qty", "card", "id", "art"]
+    sanitized_entries
+  deck.cards = sanitized_cards
   if req.user
     deck.username = req.user.username
     if deck._id
