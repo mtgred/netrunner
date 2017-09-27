@@ -779,7 +779,7 @@
    "Rubicon Switch"
    {:abilities [{:cost [:click 1]
                  :once :per-turn
-                 :delayed-effect true
+                 :delayed-completion true
                  :prompt "How many [Credits]?" :choices :credit
                  :effect (effect (system-msg (str "spends a [Click] and " target " [Credit] on Rubicon Switch"))
                                  (resolve-ability {:choices {:req #(and (ice? %)
