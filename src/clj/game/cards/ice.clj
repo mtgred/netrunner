@@ -535,7 +535,9 @@
     :strength-bonus advance-counters}
 
    "Conundrum"
-   {:subroutines [trash-program
+   {:subroutines [(assoc trash-program :player :runner
+                                       :msg "force the Runner to trash 1 program"
+                                       :label "The Runner trashes 1 program")
                   {:msg "force the Runner to lose 1 [Click] if able"
                    :effect (effect (lose :runner :click 1))}
                   end-the-run]

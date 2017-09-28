@@ -779,7 +779,7 @@
    "Rubicon Switch"
    {:abilities [{:cost [:click 1]
                  :once :per-turn
-                 :delayed-effect true
+                 :delayed-completion true
                  :prompt "How many [Credits]?" :choices :credit
                  :effect (effect (system-msg (str "spends a [Click] and " target " [Credit] on Rubicon Switch"))
                                  (resolve-ability {:choices {:req #(and (ice? %)
@@ -956,7 +956,7 @@
     :delayed-completion true
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
-                    (damage eid :meat 2 {:card card}))
+                    (damage eid :meat 2 {:unboostable true :card card}))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
 
    "Top Hat"

@@ -912,6 +912,17 @@
       (play-from-hand state :corp "Scorched Earth")
       (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner"))))
 
+(deftest the-cleaners-cybernetics
+  ;; The Cleaners - No bonus damage when runner "suffers" damage
+  (do-game
+    (new-game (default-corp [(qty "The Cleaners" 1)])
+              (default-runner [(qty "Respirocytes" 3)]))
+    (play-from-hand state :corp "The Cleaners" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Respirocytes")
+    (is (= 1 (count (:hand (get-runner)))) "Only 1 damage dealt to Runner from Cybernetics")))
+
 (deftest the-future-perfect
   ;; The Future Perfect - cannot steal on failed psi game (if not installed)
   (do-game
