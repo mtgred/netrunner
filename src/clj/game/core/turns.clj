@@ -48,6 +48,8 @@
         runner (some #(when (= (:side %) "Runner") %) players)
         corp-deck (create-deck (:deck corp) (:user corp))
         runner-deck (create-deck (:deck runner) (:user runner))
+        corp-deck-id (get-in corp [:deck :_id])
+        runner-deck-id (get-in runner [:deck :_id])
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
         corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
@@ -59,6 +61,7 @@
                  :options {:spectatorhands spectatorhands}
                  :corp {:user (:user corp) :identity corp-identity
                         :deck (zone :deck corp-deck)
+                        :deck-id corp-deck-id
                         :hand []
                         :discard [] :scored [] :rfg [] :play-area []
                         :servers {:hq {} :rd{} :archives {}}
@@ -69,6 +72,7 @@
                         :click-per-turn 3 :agenda-point-req 7 :keep false}
                  :runner {:user (:user runner) :identity runner-identity
                           :deck (zone :deck runner-deck)
+                          :deck-id runner-deck-id
                           :hand []
                           :discard [] :scored [] :rfg [] :play-area []
                           :rig {:program [] :resource [] :hardware []}

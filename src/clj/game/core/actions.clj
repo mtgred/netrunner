@@ -263,6 +263,7 @@
                                                   (> (count (filter #(is-type? % "Resource") (all-installed state :runner))) 1))
                                            (and (is-type? card "Resource") (not (untrashable-while-resources? card)))
                                            (is-type? card "Resource")))}
+                        :cancel-effect (effect (gain :credit trash-cost :click 1))
                         :effect  (effect (trash target)
                                          (system-msg (str (build-spend-msg cost-str "trash")
                                                           (:title target))))} nil nil))))
@@ -402,7 +403,7 @@
                                                 (system-msg state :corp (str "scores " (:title c) " and gains " points
                                                                              " agenda point" (when (> points 1) "s")))
                                                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                                                (swap! state dissoc [:corp :disable-id])
+                                                (swap! state dissoc-in [:corp :disable-id])
                                                 (gain-agenda-point state :corp points)
                                                 (play-sfx state side "agenda-score")))}}
           c)))))
