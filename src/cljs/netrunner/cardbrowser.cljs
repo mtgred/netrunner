@@ -16,7 +16,6 @@
                        (map (fn [e] (update e :date_start #(js/Date %))))
                        (sort-by :date_start)
                        (last))]
-      (println latest_mwl)
       (swap! app-state assoc :sets sets :mwl latest_mwl :cycles cycles)))
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
