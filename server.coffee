@@ -573,6 +573,7 @@ app.post '/update-profile', (req, res) ->
   if req.user
     db.collection('users').update {username: req.user.username}, {$set: {options: {background: req.body.background,\
       'show-alt-art': req.body['show-alt-art'], 'blocked-users': req.body['blocked-users']}}}, \
+      'alt-arts': req.body['alt-arts'],
       (err) ->
         console.log(err) if err
         res.status(200).send({message: 'OK', background: req.body.background, \
