@@ -6,7 +6,7 @@
             [clojure.string :refer [join]]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
-            [netrunner.gameboard :refer [init-game game-state]]
+            [netrunner.gameboard :refer [init-game game-state toast]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
             [netrunner.deckbuilder :refer [deck-status-span deck-status-label]]))
 
@@ -56,6 +56,7 @@
                       (.play (.getElementById js/document sound ))))
           "start" (launch-game (:state msg))
           "Invalid password" (js/console.log "pwd" (:gameid msg))
+          "lobby-notification" (toast (:text msg) (:severity msg) nil)
           nil))))
 
 (defn send
