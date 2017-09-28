@@ -431,6 +431,12 @@
                  :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
                  :msg (msg "place 1 advancement token on " (card-str state target))}]}
 
+   "Echo Chamber"
+   {:abilities [{:label "Add Echo Chamber to your score area as an agenda worth 1 agenda point"
+                 :cost [:click 3]
+                 :msg "add it to their score area as an agenda worth 1 agenda point"
+                 :effect (effect (as-agenda :corp card 1)) }]}
+
    "Edge of World"
    (letfn [(ice-count [state]
              (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))]

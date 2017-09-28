@@ -13,11 +13,20 @@
 
 (.on chat-socket "netrunner" #(put! chat-channel (js->clj % :keywordize-keys true)))
 
+(defn filter-blocked-messages
+  [messages]
+  (let [blocked-users (get-in @app-state [:options :blocked-users] [])]
+    (filter #(= -1 (.indexOf blocked-users (:username %))) messages)))
+
+(defn update-message-channel
+  [channel messages]
+  (swap! app-state assoc-in [:channels channel] (filter-blocked-messages messages)))
+
 (go (while true
       (let [msg (<! chat-channel)
             ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
-        (swap! app-state assoc-in [:channels ch] (conj messages msg)))))
+        (update-message-channel ch (reverse (conj (reverse messages) msg))))))
 
 (defn send-msg [event channel owner]
   (.preventDefault event)
@@ -74,7 +83,7 @@
         messages (get-in @app-state [:channels channel])]
     (when (empty? messages)
       (go (let [data (:json (<! (GET (str "/messages/" (name channel)))))]
-            (swap! app-state assoc-in [:channels channel] data))))))
+            (update-message-channel channel data))))))
 
 (defn chat [cursor owner]
   (reify

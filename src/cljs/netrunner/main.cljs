@@ -47,7 +47,7 @@
    (sab/html
     [:div
      [:div.float-right
-      (let [c (count (:games cursor))]
+      (let [c (count (gamelobby/filter-blocked-games (:user cursor) (:games cursor)))]
         (str c " Game" (when (not= c 1) "s")))]
      (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
