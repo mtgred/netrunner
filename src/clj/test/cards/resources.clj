@@ -456,6 +456,19 @@
     (is (= 3 (count (:hand (get-corp)))) "Corp drew 2 cards")
     (is (= 1 (count (:discard (get-runner)))) "Eden Shard trashed")))
 
+(deftest eden-shard-no-install-on-access
+  ;; Eden Shard - Do not install when accessing cards
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Eden Shard" 1)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (is (= 1 (count (:hand (get-corp)))))
+    (run-empty-server state :rd)
+    (play-from-hand state :runner "Eden Shard")
+    (is (not (get-resource state 0)) "Eden Shard not installed")
+    (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed")))
+
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (do-game
