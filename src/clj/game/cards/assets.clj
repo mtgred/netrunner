@@ -103,7 +103,7 @@
                                            " in HQ into R&D")
                                  :effect (req (if (pos? (quot target 2))
                                                 (let [prevented (quot target 2)
-                                                      unprevented (- (count (:hand corp)) n)]
+                                                      unprevented (- (count (:hand corp)) prevented)]
                                                   (doseq [c (take unprevented (shuffle (:hand corp)))]
                                                     (move state :corp c :deck))
                                                   (when (pos? unprevented) (shuffle! state :corp :deck))
