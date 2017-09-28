@@ -4,11 +4,12 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
+            [netrunner.ajax :refer [GET]]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state toast]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.deckbuilder :refer [deck-status-span deck-status-label]]))
+            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks]]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -115,9 +116,11 @@
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
+  ; Update decks to get new stats
+  (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+        (load-decks decks)))
   (reset! game-state nil)
-  (when (-> @app-state :players empty?)
-    (swap! app-state dissoc :gameid :side :password-gameid))
+  (swap! app-state dissoc :gameid :side :password-gameid)
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)

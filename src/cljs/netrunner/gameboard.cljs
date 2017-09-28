@@ -7,6 +7,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
+            [netrunner.deckbuilder :refer [influence-dot]]
             [differ.core :as differ]
             [om.dom :as dom]))
 
@@ -371,11 +372,11 @@
                 [:div.content
                  [:div.username (get-in msg [:user :username])]
                  [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
-        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
-          [:div [:p.typing (for [i (range 10)] [:span " . "])]])
         [:form {:on-submit #(send-msg % owner)
                 :on-input #(send-typing % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
+         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]
+        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
+          [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])]))))
 
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))

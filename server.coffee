@@ -129,6 +129,8 @@ requester.on 'message', (data) ->
   response = JSON.parse(data)
   if response.action is "remove"
     if response.state
+      winningDeck = response.state["winning-deck-id"]
+      losingDeck = response.state["losing-deck-id"]
       g = {
         winner: response.state.winner
         reason: response.state.reason
@@ -137,6 +139,10 @@ requester.on 'message', (data) ->
         runnerAgenda: response.state.runner["agenda-point"]
         corpAgenda: response.state.corp["agenda-point"]
       }
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
+        throw err if err
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
+        throw err if err
       db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
         throw err if err
   else
@@ -573,13 +579,28 @@ app.post '/data/decks', (req, res) ->
     if deck._id
       id = deck._id
       delete deck._id
-      db.collection('decks').update {_id: mongoskin.helper.toObjectID(id)}, deck, (err) ->
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(id)}, {$set: deck}, (err) ->
         console.log(err) if err
         res.status(200).send({message: 'OK'})
     else
       db.collection('decks').insert deck, (err, data) ->
         console.log(err) if err
         res.status(200).send(data.ops[0])
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.post '/data/decks/clearstats', (req, res) ->
+  deck = req.body
+  if req.user
+    deck.username = req.user.username
+    if deck._id
+      id = deck._id
+      delete deck._id
+      db.collection('decks').update {_id: mongoskin.helper.toObjectID(id)}, deck, (err) ->
+        console.log(err) if err
+        res.status(200).send({message: 'OK'})
+    else
+      res.status(401).send({message: 'Deck ID does not exist'})
   else
     res.status(401).send({message: 'Unauthorized'})
 

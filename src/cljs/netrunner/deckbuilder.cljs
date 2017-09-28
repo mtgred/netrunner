@@ -8,7 +8,9 @@
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
             [netrunner.account :refer [load-alt-arts]]
-            [netrunner.ajax :refer [POST GET]]))
+            [netrunner.ajax :refer [POST GET]]
+            [goog.string :as gstring]
+            [goog.string.format]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
@@ -490,6 +492,7 @@
    (fn [user]
      (end-edit owner)
      (let [deck (assoc (om/get-state owner :deck) :date (.toJSON (js/Date.)))
+           deck (dissoc deck :stats)
            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
            cards (for [card (:cards deck) :when (get-in card [:card :title])]
                    {:qty (:qty card) :card (get-in card [:card :title])})
@@ -503,6 +506,27 @@
              (om/update! cursor :decks (conj decks new-deck))
              (om/set-state! owner :deck new-deck)
              (load-decks all-decks)))))))
+
+(defn clear-deck-stats [cursor owner]
+  (authenticated
+    (fn [user]
+      (let [deck (dissoc (om/get-state owner :deck) :stats)
+            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
+            cards (for [card (:cards deck) :when (get-in card [:card :title])]
+                    {:qty (:qty card) :card (get-in card [:card :title])})
+            ;; only include keys that are relevant, currently title and side, includes code for future-proofing
+            identity (select-keys (:identity deck) [:title :side :code])
+            data (assoc deck :cards cards :identity identity)]
+        (try (js/ga "send" "event" "deckbuilder" "cleardeckstats") (catch js/Error e))
+        (go (let [result (<! (POST "/data/decks/clearstats" data :json))]
+              (om/update! cursor :decks (conj decks deck))
+              (om/set-state! owner :deck deck)))))))
+
+(defn refresh-deck-stats [cursor owner]
+  (authenticated
+    (fn [user]
+      (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+            (load-decks decks))))))
 
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
@@ -676,7 +700,12 @@
                     [:div.float-right (deck-status-span sets deck)]
                     [:h4 (:name deck)]
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
-                    [:p (get-in deck [:identity :title])]])])))))
+                    [:p (get-in deck [:identity :title]) [:br]
+                     (when-let [stats (:stats deck)]
+                       [:span "  Games: " (:games stats)
+                        " - Win: " (or (:wins stats) 0)
+                        " - Lose: " (or (:loses stats) 0)
+                        " - Percent Win: " (gstring/format "%.0f" (* 100 (float (/ (:wins stats) (:games stats))))) "%"])]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -780,7 +809,10 @@
                            [:button {:on-click #(end-delete owner)} "Cancel"]]
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
-                         [:button {:on-click #(delete-deck owner)} "Delete"]])
+                         [:button {:on-click #(delete-deck owner)} "Delete"]
+                         [:button {:on-click #(refresh-deck-stats cursor owner)} "Refresh Stats"]
+                         (when (:stats deck)
+                           [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]
