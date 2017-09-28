@@ -11,8 +11,13 @@
 ;; Load in sets and mwl lists
 (go (let [sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
-          mwl (:json (<! (GET "/data/mwl")))]
-      (swap! app-state assoc :sets sets :mwl mwl :cycles cycles)))
+          mwl (:json (<! (GET "/data/mwl")))
+          latest_mwl (->> mwl
+                       (map (fn [e] (update e :date_start #(js/Date %))))
+                       (sort-by :date_start)
+                       (last))]
+      (println latest_mwl)
+      (swap! app-state assoc :sets sets :mwl latest_mwl :cycles cycles)))
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
       (swap! app-state assoc :cards cards)
