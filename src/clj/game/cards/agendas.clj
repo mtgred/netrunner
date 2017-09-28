@@ -55,7 +55,7 @@
                                                               {:effect (effect (update! (assoc card :shuffle-occurred true)))}}
                                                              card)
                                             (let [n (count (filter ice? (take 3 (:deck corp))))]
-                                              (doseq [c (take 3 (:deck corp))]
+                                              (doseq [c (take (min (count (:deck corp)) 3) (:deck corp))]
                                                 (move state side c :play-area))
                                               (continue-ability state side (abt 1 n) card nil)))}}})
 
@@ -483,6 +483,9 @@
                  :req (req (:run @state))
                  :once :per-run
                  :effect (effect (damage eid :net 1 {:card card}))}]}
+
+   "Ikawah Project"
+   {:steal-cost-bonus (req [:credit 2 :click 1])}
 
    "Illicit Sales"
    {:delayed-completion true
@@ -987,7 +990,9 @@
              :effect (effect (tag-runner :runner eid 1))}}
 
    "The Cleaners"
-   {:events {:pre-damage {:req (req (= target :meat)) :msg "do 1 additional meat damage"
+   {:events {:pre-damage {:req (req (and (= target :meat)
+                                         (= side :corp)))
+                          :msg "do 1 additional meat damage"
                           :effect (effect (damage-bonus :meat 1))}}}
 
    "The Future is Now"

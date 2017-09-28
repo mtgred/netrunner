@@ -12,8 +12,13 @@
 
 ;; Load in sets and mwl lists
 (go (let [sets (:json (<! (GET "/data/sets")))
-          mwl (:json (<! (GET "/data/mwl")))]
-      (swap! app-state assoc :sets sets :mwl mwl)))
+          cycles (:json (<! (GET "/data/cycles")))
+          mwl (:json (<! (GET "/data/mwl")))
+          latest_mwl (->> mwl
+                       (map (fn [e] (update e :date_start #(js/Date %))))
+                       (sort-by :date_start)
+                       (last))]
+      (swap! app-state assoc :sets sets :mwl latest_mwl :cycles cycles)))
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
       (swap! app-state assoc :cards cards)
@@ -183,7 +188,7 @@
     (om/set-state! owner filter "All"))
   (om/set-state! owner :search-query (.. e -target -value)))
 
-(defn card-browser [{:keys [sets] :as cursor} owner]
+(defn card-browser [{:keys [sets cycles] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -207,39 +212,45 @@
       (.focus (js/$ ".search"))
       (sab/html
        [:div.cardbrowser
-        [:div.filters#left-bar
-         [:div.blue-shade.panel.filters
-          (let [query (:search-query state)]
-            [:div.search-box
-             [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#xe822;"}}]
-             (when-not (empty? query)
-               [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#xe819;"}
-                                      :on-click #(om/set-state! owner :search-query "")}])
-             [:input.search {:on-change #(handle-search % owner)
-                             :type "text" :placeholder "Search cards" :value query}]])
+        [:div.blue-shade.panel.filters
+         (let [query (:search-query state)]
+           [:div.search-box
+            [:span.e.search-icon {:dangerouslySetInnerHTML #js {:__html "&#xe822;"}}]
+            (when-not (empty? query)
+              [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#xe819;"}
+                                     :on-click #(om/set-state! owner :search-query "")}])
+            [:input.search {:on-change #(handle-search % owner)
+                            :type "text" :placeholder "Search cards" :value query}]])
 
-          [:div
-           [:h4 "Sort by"]
-           [:select {:value (:sort-filter state)
-                     :on-change #(om/set-state! owner :sort-field (.trim (.. % -target -value)))}
-            (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
-              [:option {:value field} field])]]
+         [:div
+          [:h4 "Sort by"]
+          [:select {:value (:sort-filter state)
+                    :on-change #(om/set-state! owner :sort-field (.trim (.. % -target -value)))}
+           (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
+             [:option {:value field} field])]]
 
-          (let [cycles (for [[cycle cycle-sets] (rest (group-by :cycle sets))]
-                         {:name (str cycle " cycle") :available (:available (first cycle-sets))})
-                cycle-sets (map #(if (:cycle %)
-                                   (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
-                                   %)
-                                sets)]
-            (for [filter [["Set" :set-filter (map :name (sort-by :available (concat cycles cycle-sets)))]
-                          ["Side" :side-filter ["Corp" "Runner"]]
-                          ["Faction" :faction-filter (factions (:side-filter state))]
-                          ["Type" :type-filter (types (:side-filter state))]]]
-              [:div
-               [:h4 (first filter)]
-               [:select {:value ((second filter) state)
-                         :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
-                (options (last filter))]]))]
+         (let [cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
+                                            :cycle_position (:position %)
+                                            :position 0)
+                                    cycles)
+               cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
+               ;; Draft is specified as a cycle, but contains no set, nor is it marked as a bigbox
+               ;; so we handled it specifically here for formatting purposes
+               sets-list (map #(if (not (or (:bigbox %) (= (:name %) "Draft")))
+                                  (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
+                                  %)
+                               sets)]
+           (for [filter [["Set" :set-filter (map :name
+                                                 (sort-by (juxt :cycle_position :position)
+                                                          (concat cycles-list sets-list)))]
+                         ["Side" :side-filter ["Corp" "Runner"]]
+                         ["Faction" :faction-filter (factions (:side-filter state))]
+                         ["Type" :type-filter (types (:side-filter state))]]]
+             [:div
+              [:h4 (first filter)]
+              [:select {:value ((second filter) state)
+                        :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
+               (options (last filter))]]))
 
          [:div.blue-shade.panel.filters
           (om/build card-info-view nil)
@@ -249,11 +260,11 @@
          (om/build-all card-view
                        (let [s (-> (:set-filter state)
                                      (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
-                                     (.replace " cycle" ""))
+                                     (.replace " Cycle" ""))
                              cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
                              cards (if (= s "All")
                                      (:cards cursor)
-                                     (if (= (.indexOf (:set-filter state) "cycle") -1)
+                                     (if (= (.indexOf (:set-filter state) "Cycle") -1)
                                        (filter #(= (:setname %) s) (:cards cursor))
                                        (filter #(cycle-sets (:setname %)) (:cards cursor))))]
                          (->> cards

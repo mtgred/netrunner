@@ -666,9 +666,12 @@
 
    "Independent Thinking"
    (let [cards-to-draw (fn [ts] (* (count ts) (if (some #(and (not (facedown? %)) (has-subtype? % "Directive")) ts) 2 1)))]
-     {:choices {:max 5 :req #(and (:installed %) (= (:side %) "Runner"))}
-      :effect (effect (trash-cards targets) (draw :runner (cards-to-draw targets)))
-      :msg (msg "trash " (count targets) " card" (when (not= 1(count targets)) "s") " and draw " (cards-to-draw targets) " cards")})
+     {:delayed-completion true
+      :prompt "Choose up to 5 installed cards to trash with Independent Thinking"
+      :choices {:max 5 :req #(and (installed? %) (= (:side %) "Runner"))}
+      :effect (req (when-completed (trash-cards state side targets nil)
+                                   (draw state :runner (cards-to-draw targets))))
+      :msg (msg "trash " (join ", " (map :title targets)) " and draw " (cards-to-draw targets) " cards")})
 
    "Indexing"
    {:delayed-completion true

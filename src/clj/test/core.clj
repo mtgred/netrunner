@@ -187,13 +187,13 @@
   [state content]
   (not (nil?
          (re-find (re-pattern content)
-                     (get (last (get-in @state [:log])) :text)))))
+                  (get (last (get @state :log)) :text)))))
 
 (defn second-last-log-contains?
   [state content]
   (not (nil?
          (re-find (re-pattern content)
-                  (get (last (butlast (get-in @state [:log]))) :text)))))
+                  (get (last (butlast (get @state :log))) :text)))))
 
 (defn trash-from-hand
   "Trash specified card from hand of specified side"

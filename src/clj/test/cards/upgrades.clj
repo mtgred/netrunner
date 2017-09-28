@@ -1101,6 +1101,38 @@
       (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
       (is (= 1 (:brain-damage (get-runner)))))))
 
+(deftest tori-hanzo-hokusai
+  ;; Tori Hanzō + Hokusai Grid: Issue #2702
+  (do-game
+    (new-game (default-corp [(qty "Tori Hanzō" 1) (qty "Hokusai Grid" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 5)
+    (play-from-hand state :corp "Hokusai Grid" "Archives")
+    (play-from-hand state :corp "Tori Hanzō" "Archives")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (let [hg (get-content state :archives 0)
+          tori (get-content state :archives 1)]
+      (core/rez state :corp hg)
+      (core/rez state :corp tori)
+      (run-successful state)
+      (prompt-choice :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+      (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
+      (prompt-choice :runner "Hokusai Grid")
+      (prompt-choice :runner "No")
+      (prompt-choice :runner "Tori Hanzō")
+      (prompt-choice :runner "No")
+      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
+      (run-empty-server state "Archives")
+      (prompt-choice :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+      (is (= 2 (count (:discard (get-runner)))))
+      (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
+      (prompt-choice :runner "Hokusai Grid")
+      (prompt-choice :runner "No")
+      (prompt-choice :runner "Tori Hanzō")
+      (prompt-choice :runner "No")
+      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
+
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game

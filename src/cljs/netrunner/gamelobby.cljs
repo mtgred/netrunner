@@ -4,11 +4,12 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
+            [netrunner.ajax :refer [GET]]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
-            [netrunner.gameboard :refer [init-game game-state]]
+            [netrunner.gameboard :refer [init-game game-state toast]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.deckbuilder :refer [deck-status-span deck-status-label]]))
+            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks]]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -56,6 +57,7 @@
                       (.play (.getElementById js/document sound ))))
           "start" (launch-game (:state msg))
           "Invalid password" (js/console.log "pwd" (:gameid msg))
+          "lobby-notification" (toast (:text msg) (:severity msg) nil)
           nil))))
 
 (defn send
@@ -114,6 +116,9 @@
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
+  ; Update decks to get new stats
+  (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+        (load-decks decks)))
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid)
   (.removeItem js/localStorage "gameid")
@@ -251,13 +256,52 @@
             (when-let [error-msg (om/get-state owner :error-msg)]
               [:p.flash-message error-msg])])])))))
 
-(defn game-list [{:keys [games gameid password-game] :as cursor} owner]
-  (let [roomgames (filter #(= (:room %) (om/get-state owner :current-room)) games)]
+(defn- blocked-from-game
+  "Remove games for which the user is blocked by one of the players"
+  [username game]
+  (let [players (get game :players [])
+    blocked-users (flatten (map #(get-in % [:user :options :blocked-users] []) players))]
+    (= -1 (.indexOf blocked-users username))))
+
+(defn- blocking-from-game
+  "Remove games with players we are blocking"
+  [blocked-users game]
+  (let [players (get game :players [])
+        player-names (map #(get-in % [:user :username] "") players)
+        intersect (clojure.set/intersection (set blocked-users) (set player-names))]
+    (empty? intersect)))
+
+(defn filter-blocked-games
+  [user games]
+  (let [blocked-games (filter #(blocked-from-game (:username user) %) games)
+        blocked-users (get-in user [:options :blocked-users] [])]
+    (filter #(blocking-from-game blocked-users %) blocked-games)))
+
+(defn game-list [{:keys [user games gameid password-game] :as cursor} owner]
+  (let [roomgames (filter #(= (:room %) (om/get-state owner :current-room)) games)
+        filtered-games (filter-blocked-games user roomgames)]
     [:div.game-list
-     (if (empty? roomgames)
+     (if (empty? filtered-games)
        [:h4 "No games"]
-       (for [game roomgames]
+       (for [game filtered-games]
         (om/build game-view (assoc game :current-game gameid :password-game password-game))))]))
+
+(def open-games-symbol "○")
+(def closed-games-symbol "●")
+
+(defn- room-tab
+  "Creates the room tab for the specified room"
+  [{:keys [user]} owner games room room-name]
+  (let [room-games (filter #(= room (:room %)) games)
+        filtered-games (filter-blocked-games user room-games)
+        closed-games (count (filter #(:started %) filtered-games))
+        open-games (- (count filtered-games) closed-games)]
+    [:span.roomtab
+     (if (= room (om/get-state owner :current-room))
+       {:class "current"}
+       {:on-click #(om/set-state! owner :current-room room)})
+     room-name " (" open-games open-games-symbol " "
+     closed-games closed-games-symbol ")"]))
 
 (defn game-lobby [{:keys [games gameid messages sets user password-gameid] :as cursor} owner]
   (reify
@@ -277,16 +321,9 @@
             (if gameid
               [:button.float-left {:class "disabled"} "New game"]
               [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
-            (let [count-games (fn [room] (count (filter #(= room (:room %)) games)))
-                  room-tab (fn [room roomname]
-                             [:span.roomtab
-                              (if (= room (om/get-state owner :current-room))
-                                {:class "current"}
-                                {:on-click #(om/set-state! owner :current-room room)})
-                              roomname " (" (count-games room) ")"])]
-              [:div.rooms
-               (room-tab "competitive" "Competitive")
-               (room-tab "casual" "Casual")])]
+            [:div.rooms
+             (room-tab cursor owner games "competitive" "Competitive")
+             (room-tab cursor owner games "casual" "Casual")]]
            (let [password-game (some #(when (= password-gameid (:gameid %)) %) games)]
              (game-list (assoc cursor :password-game password-game) owner))]
 

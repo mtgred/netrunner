@@ -7,6 +7,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
+            [netrunner.deckbuilder :refer [influence-dot]]
             [differ.core :as differ]
             [om.dom :as dom]))
 
@@ -242,10 +243,40 @@
                (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
+(defn has?
+  "Checks the string property of the card to see if it contains the given value"
+  [card property value]
+  (when-let [p (property card)]
+    (> (.indexOf p value) -1)))
+
+(defn has-subtype?
+  "Checks if the specified subtype is present in the card.
+  Mostly sugar for the has? function."
+  [card subtype]
+  (has? card :subtype subtype))
+
 (defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
+
+         (cond
+
+           (has-subtype? card "Double")
+           (if (>= (:click me) 2) true false)
+
+           (has-subtype? card "Triple")
+           (if (>= (:click me) 3) true false)
+
+           (= (:code card) "07036") ; Day Job
+           (if (>= (:click me) 4) true false)
+
+           (has-subtype? card "Priority")
+           (if (get-in @game-state [my-side :register :spent-click]) false true)
+
+           :else
+           true)
+
          (and (= zone ["hand"])
               (or (not uniqueness) (not (in-play? card)))
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
@@ -371,11 +402,11 @@
                 [:div.content
                  [:div.username (get-in msg [:user :username])]
                  [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
-        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
-          [:div [:p.typing (for [i (range 10)] [:span " . "])]])
         [:form {:on-submit #(send-msg % owner)
                 :on-input #(send-typing % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
+         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]
+        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
+          [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])]))))
 
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -578,7 +609,7 @@
                             :on-touch-move  #(handle-touchmove %)
                             :on-drag-start #(handle-dragstart % cursor)
                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
-                            :on-mouse-enter #(when (or (not (or flipped facedown))
+                            :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
                                                        (spectator-view-hidden?)
                                                        (= (:side @game-state) (keyword (.toLowerCase side))))
                                                (put! zoom-channel cursor))
@@ -804,7 +835,7 @@
                                        :fn (fn [cursor] (let [total (count cursor)
                                                               face-up (count (filter faceup? cursor))]
                                                           ;; use non-breaking space to keep counts on same line.
-                                                          (str face-up "\u2191\u00A0" (- total face-up) "\u2193")))}})
+                                                          (str face-up "↑ " (- total face-up) "↓")))}})
 
        [:div.panel.blue-shade.popup {:ref "popup" :class (if (= (:side @game-state) :runner) "opponent" "me")}
         [:div
