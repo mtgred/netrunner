@@ -484,6 +484,9 @@
                  :once :per-run
                  :effect (effect (damage eid :net 1 {:card card}))}]}
 
+   "Ikawah Project"
+   {:steal-cost-bonus (req [:credit 2 :click 1])}
+
    "Illicit Sales"
    {:delayed-completion true
     :effect (req (when-completed
