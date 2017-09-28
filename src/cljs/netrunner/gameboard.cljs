@@ -243,10 +243,40 @@
                (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
+(defn has?
+  "Checks the string property of the card to see if it contains the given value"
+  [card property value]
+  (when-let [p (property card)]
+    (> (.indexOf p value) -1)))
+
+(defn has-subtype?
+  "Checks if the specified subtype is present in the card.
+  Mostly sugar for the has? function."
+  [card subtype]
+  (has? card :subtype subtype))
+
 (defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
+
+         (cond
+
+           (has-subtype? card "Double")
+           (if (>= (:click me) 2) true false)
+
+           (has-subtype? card "Triple")
+           (if (>= (:click me) 3) true false)
+
+           (= (:code card) "07036") ; Day Job
+           (if (>= (:click me) 4) true false)
+
+           (has-subtype? card "Priority")
+           (if (get-in @game-state [my-side :register :spent-click]) false true)
+
+           :else
+           true)
+
          (and (= zone ["hand"])
               (or (not uniqueness) (not (in-play? card)))
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))

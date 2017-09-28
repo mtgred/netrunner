@@ -238,7 +238,7 @@
                              :effect (effect (update-breaker-strength card))}}}
 
    "Aumakua"
-   {:implementation "Add counters manually for access outside of a run"
+   {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
     ; We would need a :once :per-access key to make this work for Gang Sign etc.
     :abilities [(break-sub 1 1)
                 {:label "Add a virus counter"
