@@ -1136,6 +1136,7 @@
 
 (deftest political-graffiti-forfeit
   ;; Political Graffiti - forfeiting agenda with Political Graffiti does not refund double points
+  ;; Regression test for issue #2765
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Sacrifice" 1)])
               (default-runner [(qty "Political Graffiti" 1)]))
@@ -1151,7 +1152,8 @@
     (is (= 0 (:agenda-point (get-corp))) "Political Dealings lowered agenda points by 1")
     (take-credits state :runner)
     (play-from-hand state :corp "Sacrifice")
-    (is (= 0 (:agenda-point (get-corp))) "Forfeiting agenda did not refund extra agenda points ")))
+    (is (= 0 (:agenda-point (get-corp))) "Forfeiting agenda did not refund extra agenda points ")
+    (is (= 1 (count (:discard (get-runner)))) "Political Graffiti is in the Heap")))
 
 (deftest push-your-luck-correct-guess
   ;; Push Your Luck - Corp guesses correctly

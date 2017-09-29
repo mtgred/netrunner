@@ -448,7 +448,13 @@
   "Forfeits the given agenda to the :rfg zone."
   ([state side card] (forfeit state side (make-eid state) card))
   ([state side eid card]
-   (let [c (if (in-corp-scored? state side card)
+   ;; Remove all hosted cards first
+   (doseq [h (:hosted card)]
+     (trash state side
+            (update-in h [:zone] #(map to-keyword %))
+            {:unpreventable true :suppress-event true}))
+   (let [card (get-card state card)
+         c (if (in-corp-scored? state side card)
              (deactivate state side card) card)]
      (system-msg state side (str "forfeits " (:title c)))
      (gain-agenda-point state side (- (get-agenda-points state side c)))
