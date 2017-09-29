@@ -935,9 +935,9 @@
                      (continue-ability state side (choose-card from) card nil)))})
 
    "Punitive Counterstrike"
-   {:trace {:base 5 :msg "do meat damage equal to the number of agenda points stolen last turn"
-            :effect (effect (damage eid :meat (or (get-in runner [:register :stole-agenda]) 0) {:card card})
-                            (system-msg (str "does " (or (:stole-agenda runner-reg) 0) " meat damage")))}}
+   {:trace {:base 5
+            :msg (msg "do " (:stole-agenda runner-reg 0) " meat damage")
+            :effect (effect (damage eid :meat (:stole-agenda runner-reg 0) {:card card}))}}
 
    "Reclamation Order"
    {:prompt "Choose a card from Archives"
