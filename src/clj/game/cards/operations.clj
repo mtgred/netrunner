@@ -936,6 +936,7 @@
 
    "Punitive Counterstrike"
    {:trace {:base 5
+            :delayed-completion true
             :msg (msg "do " (:stole-agenda runner-reg 0) " meat damage")
             :effect (effect (damage eid :meat (:stole-agenda runner-reg 0) {:card card}))}}
 
