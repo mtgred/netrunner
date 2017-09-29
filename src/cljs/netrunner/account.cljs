@@ -20,7 +20,6 @@
         (swap! app-state assoc :alt-arts cards)
         (put! alt-arts-channel cards))))
 
-
 (defn image-url [card version]
   (str "/img/cards/" card (when-not (= version "default") (str "-" version)) ".png"))
 

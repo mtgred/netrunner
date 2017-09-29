@@ -24,6 +24,18 @@ add_art = (callback) ->
             inner_callback()
     , (inner_err) ->
       throw(inner_err) if inner_err
+
+    async.each results, (result, inner_callback) ->
+      if result
+            db.collection('cards').update {replaces: result.code}, {'$set': {alt_art: result.versions}},
+              (err, replaces_result) ->
+                throw(err) if err
+                console.log("\tUpdating replacement for " + result.code)
+                console.log(replaces_result.result)
+                inner_callback()
+    , (inner_err) ->
+      throw(inner_err) if inner_err
+
     callback(null, 0)
 
 async.series [add_art, () -> db.close()]
