@@ -1134,6 +1134,25 @@
       (is (= 1 (:agenda-point (get-corp))))
       (is (= 1 (:agenda-point (get-runner)))))))
 
+(deftest political-graffiti-forfeit
+  ;; Political Graffiti - forfeiting agenda with Political Graffiti does not refund double points
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Sacrifice" 1)])
+              (default-runner [(qty "Political Graffiti" 1)]))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 1 (:agenda-point (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Political Graffiti")
+    (is (= [:archives] (get-in @state [:run :server])) "Run initiated on Archives")
+    (run-successful state)
+    (prompt-choice :runner "Run ability")
+    (prompt-select :runner (find-card "Hostile Takeover" (:scored (get-corp))))
+    (is (= 0 (:agenda-point (get-corp))) "Political Dealings lowered agenda points by 1")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Sacrifice")
+    (is (= 0 (:agenda-point (get-corp))) "Forfeiting agenda did not refund extra agenda points ")))
+
 (deftest push-your-luck-correct-guess
   ;; Push Your Luck - Corp guesses correctly
   (do-game
