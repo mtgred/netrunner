@@ -34,14 +34,16 @@
     (get-in @app-state [:user :special] false)))
 
 (defn image-url [card]
-  (let [has-art (and (show-alt-art?)
+  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
+                (get-in @app-state [:options :alt-arts (keyword (:code card))]))
+        has-art (and (show-alt-art?)
                      (:alt_art card)
-                     (:art card)
-                     (not= -1 (.indexOf (:alt_art card) (:art card))))]
+                     art
+                     (not= -1 (.indexOf (:alt_art card) art)))]
     (str "/img/cards/"
          (:code card)
          (when has-art
-           (str "-" (:art card)))
+           (str "-" art))
          ".png")))
 
 (defn add-symbols [card-text]

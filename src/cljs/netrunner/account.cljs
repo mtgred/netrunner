@@ -7,8 +7,7 @@
             [goog.dom :as gdom]
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.appstate :refer [app-state]]
-            [netrunner.ajax :refer [POST GET]]
-            [netrunner.cardbrowser :refer [cards-channel]]))
+            [netrunner.ajax :refer [POST GET]]))
 
 (def alt-arts-channel (chan))
 (defn load-alt-arts []
@@ -41,6 +40,7 @@
   (swap! app-state assoc-in [:options :show-alt-art] (om/get-state owner :show-alt-art))
   (swap! app-state assoc-in [:options :sounds-volume] (om/get-state owner :volume))
   (swap! app-state assoc-in [:options :blocked-users] (om/get-state owner :blocked-users))
+  (swap! app-state assoc-in [:options :alt-arts] (om/get-state owner :alt-arts))
   (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
   (.setItem js/localStorage "sounds_volume" (om/get-state owner :volume))
 
@@ -74,6 +74,29 @@
     (when user-name
       (om/set-state! owner :blocked-users (vec (remove #(= % user-name) current-blocked-list))))))
 
+(defn select-card
+  [owner value]
+  (om/set-state! owner :alt-card value)
+  (om/set-state! owner :alt-card-version
+                 (get (om/get-state owner :alt-arts) (keyword value) "default")))
+
+(defn set-card-art
+  [owner value]
+  (om/set-state! owner :alt-card-version value)
+  (om/update-state! owner [:alt-arts]
+                    (fn [m] (assoc m (keyword (om/get-state owner :alt-card)) value))))
+
+(defn reset-card-art
+  [owner]
+  (om/set-state! owner :alt-arts {})
+  (let [selected (om/get-state owner :all-art-type)]
+    (when (not= "default" selected)
+      (doseq [card (vals (:alt-arts @app-state))]
+        (let [versions (:versions card)]
+          (when (some (fn [i] (= i selected)) versions)
+            (om/update-state! owner [:alt-arts]
+                              (fn [m] (assoc m (keyword (:code card)) selected)))))))))
+
 (defn account-view [user owner]
   (reify
     om/IInitState
@@ -90,7 +113,7 @@
       (go (while true
             (let [cards (<! alt-arts-channel)
                   first-alt (first (sort-by :title (vals cards)))]
-              (om/set-state! owner :cards cards)
+              (om/set-state! owner :alt-arts (get-in @app-state [:options :alt-arts]))
               (om/set-state! owner :alt-card (:code first-alt))
               (om/set-state! owner :alt-card-version (get-in @app-state [:options :alt-arts (keyword (:code first-alt))]
                                                              "default"))))))
@@ -150,55 +173,42 @@
                                :checked (om/get-state owner :show-alt-art)
                                :on-change #(om/set-state! owner :show-alt-art (.. % -target -checked))}]
                "Show alternate card arts"]]
+
              (when (and (:special user) (:alt-arts @app-state))
                [:div {:id "my-alt-art"}
                 [:h4 "My alternate card arts"]
-                [:select {:on-change #(do (om/set-state! owner :alt-card (.. % -target -value))
-                                          (om/set-state! owner :alt-card-version
-                                                         (get-in @app-state [:options :alt-arts (keyword (.. % -target -value))]
-                                                                 "default")))}
+                [:select {:on-change #(select-card owner (.. % -target -value))}
                  (for [card (sort-by :title (vals (:alt-arts @app-state)))]
                    [:option {:value (:code card)} (:title card)])]
 
                 [:div {:class "alt-art-group"}
-                 (for [version (get-in @app-state [:alt-arts (om/get-state owner :alt-card) :versions])]
+                 (for [version (get-in (:alt-arts @app-state) [(om/get-state owner :alt-card) :versions])]
                    (let [url (image-url (om/get-state owner :alt-card) version)]
                      [:div
                       [:div
                        [:div [:label [:input {:type "radio"
                                               :name "alt-art-radio"
                                               :value version
-                                              :on-change #(do (om/set-state! owner :alt-card-version (.. % -target -value))
-                                                              (swap! app-state update-in [:options :alt-arts]
-                                                                     assoc (keyword (om/get-state owner :alt-card)) (.. % -target -value)))
+                                              :on-change #(set-card-art owner (.. % -target -value))
                                               :checked (= (om/get-state owner :alt-card-version) version)}]
                               (alt-art-name version)]]]
                       [:div
                        [:img {:class "alt-art-select"
                               :src url
-                              :on-click  #(do (om/set-state! owner :alt-card-version version)
-                                              (swap! app-state update-in [:options :alt-arts]
-                                                     assoc (keyword (om/get-state owner :alt-card)) version))
+                              :on-click #(set-card-art owner version)
                               :onError #(-> % .-target js/$ .hide)
                               :onLoad #(-> % .-target js/$ .show)}]]]))]
                [:div {:id "set-all"}
-                "Set all cards to: "
+                "Reset all cards to: "
                 [:select {:on-change #(om/set-state! owner :all-art-type (.. % -target -value))}
                  (for [t all-alt-art-types]
                    [:option {:value t} (alt-art-name t)])]
                 [:button
-                 {:on-click #(doseq [card (vals (:alt-arts @app-state))]
-                               (let [versions (:versions card)
-                                     selected (om/get-state owner :all-art-type)]
-                                 (cond (some (fn [i] (= i selected)) versions)
-                                       (swap! app-state update-in [:options :alt-arts]
-                                              assoc (keyword (:code card)) selected)
-
-                                       (= "default" selected)
-                                       (swap! app-state update-in [:options] dissoc :alt-arts)
-
-                                       :else nil)))}
-                 "Set"]]])]
+                 {:type "button"
+                  :on-click #(do
+                               (reset-card-art owner)
+                               (select-card owner (om/get-state owner :alt-card)))}
+                 "Reset"]]])]
 
             [:section
              [:h3 "Blocked users"]
