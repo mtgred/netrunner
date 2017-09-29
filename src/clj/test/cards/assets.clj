@@ -544,6 +544,118 @@
       (core/advance state :corp {:card (last (:hosted (refresh fir)))})
       (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
 
+(deftest gene-splicer-access-unadvanced-no-trash
+  ;; Runner accesses an unadvanced Gene Splicer and doesn't trash
+  ;; No net damage is dealt and Gene Splicer remains installed
+  (do-game
+    (new-game
+      (default-corp [(qty "Gene Splicer" 1)])
+      (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Gene Splicer" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "No")
+    (is (= 0 (count (:discard (get-runner)))) "Runner took no net damage")
+    (is (= "Gene Splicer" (:title (get-content state :remote1 0))) "Gene Splicer was not trashed")
+    (is (= 5 (:credit (get-runner))) "Runner spent no credits")))
+
+(deftest gene-splicer-access-unadvanced-trash
+  ;; Runner accesses an unadvanced Gene Splicer and trashes it - no net damage is dealt and Gene Splicer is trashed
+  (do-game
+    (new-game
+      (default-corp [(qty "Gene Splicer" 1)])
+      (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Gene Splicer" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 0 (count (:discard (get-runner)))) "Runner took no net damage")
+    (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+    (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
+    (is (= 4 (:credit (get-runner))) "Runner spent 1 credit to trash Gene Splicer")))
+
+(deftest gene-splicer-access-single-advanced-no-trash
+  ;; Runner accesses a single-advanced Gene Splicer and doesn't trash
+  ;; 1 net damage is dealt and Gene Splicer remains installed
+  (do-game
+    (new-game
+      (default-corp [(qty "Gene Splicer" 1)])
+      (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Gene Splicer" "New remote")
+    (core/add-counter state :corp (get-content state :remote1 0) :advancement 1)
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "No")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
+    (is (= "Gene Splicer" (:title (get-content state :remote1 0))) "Gene Splicer was not trashed")
+    (is (= 5 (:credit (get-runner))) "Runner spent no credits")))
+
+(deftest gene-splicer-access-single-advanced-trash
+  ;; Runner accesses a single-advanced Gene Splicer and trashes it
+  ;; 1 net damage is dealt and Gene Splicer is trashed
+  (do-game
+    (new-game
+      (default-corp [(qty "Gene Splicer" 1)])
+      (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Gene Splicer" "New remote")
+    (core/add-counter state :corp (get-content state :remote1 0) :advancement 1)
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
+    (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+    (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
+    (is (= 4 (:credit (get-runner))) "Runner spent 1 credit to trash Gene Splicer")))
+
+(deftest gene-splicer-access-double-advanced-no-trash
+  ;; Runner accesses a double-advanced Gene Splicer and doesn't trash
+  ;; 2 net damage is dealt and Gene Splicer remains installed
+  (do-game
+    (new-game
+      (default-corp [(qty "Gene Splicer" 1)])
+      (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Gene Splicer" "New remote")
+    (core/add-counter state :corp (get-content state :remote1 0) :advancement 2)
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "No")
+    (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
+    (is (= "Gene Splicer" (:title (get-content state :remote1 0))) "Gene Splicer was not trashed")
+    (is (= 5 (:credit (get-runner))) "Runner spent no credits")))
+
+(deftest gene-splicer-access-double-advanced-trash
+  ;; Runner accesses a double-advanced Gene Splicer and trashes it
+  ;; 2 net damage is dealt and Gene Splicer is trashed
+  (do-game
+    (new-game
+      (default-corp [(qty "Gene Splicer" 1)])
+      (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Gene Splicer" "New remote")
+    (core/add-counter state :corp (get-content state :remote1 0) :advancement 2)
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
+    (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+    (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
+    (is (= 4 (:credit (get-runner))) "Runner spent 1 credit to trash Gene Splicer")))
+
+(deftest gene-splicer-agenda-ability
+  ;; Corp triple-advances a Gene Splicer and uses its ability to add to their score area as a 1 point agenda
+  (do-game
+    (new-game
+      (default-corp [(qty "Gene Splicer" 2) (qty "Ice Wall" 3) (qty "Vanilla" 2)])
+      (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Gene Splicer" "New remote")
+    (let [gs (get-content state :remote1 0)]
+      (core/add-counter state :corp gs :advancement 2)
+      (take-credits state :runner)
+      (core/add-counter state :corp (refresh gs) :advancement 1)
+      (core/rez state :corp (refresh gs))
+      (card-ability state :corp (refresh gs) 0)
+      (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
+      (is (= 1 (:agendapoints (get-in @state [:corp :scored 0]))) "Gene Splicer added to Corp score area"))))
+
 (deftest genetics-pavilion
   ;; Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn
   (do-game
