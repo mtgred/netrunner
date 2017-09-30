@@ -39,12 +39,11 @@
         has-art (and (show-alt-art?)
                      (:alt_art card)
                      art
-                     (not= -1 (.indexOf (:alt_art card) art)))]
-    (str "/img/cards/"
-         (:code card)
-         (when has-art
-           (str "-" art))
-         ".png")))
+                     (contains? (:alt_art card) (keyword art)))
+        version-path (if has-art
+                       (get (:alt_art card) (keyword art) (:code card))
+                       (:code card))]
+    (str "/img/cards/" version-path ".png")))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
