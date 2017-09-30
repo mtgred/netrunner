@@ -10,6 +10,14 @@ appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
 
 db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}").open( (err, _) -> throw err if err )
 
+remove_art = (callback) ->
+  console.log("Removing old alt_arts")
+  db.collection('cards').update {}, {'$unset': {"alt_art": 1}}, {multi: true},
+    (err, result) ->
+      throw(err) if err
+      console.log(result.result)
+      callback(null)
+
 add_art = (callback) ->
   db.collection('altarts').find().toArray (err, packs) ->
     throw(err) if err
@@ -29,7 +37,7 @@ add_art = (callback) ->
           pack_callback()
     , (pack_err) ->
       throw(pack_err) if pack_err
-      callback(null, 0)
+      callback(null)
 
 add_replacement_art = (callback) ->
   db.collection('cards').find({replaces: {'$exists': true}}).toArray (err, cards) ->
@@ -52,6 +60,6 @@ add_replacement_art = (callback) ->
             card_callback()
     , (err) ->
       throw(err) if err
-      callback(null, 0)
+      callback(null)
 
-async.series [add_art, add_replacement_art, () -> db.close()]
+async.series [remove_art, add_art, add_replacement_art, () -> db.close()]
