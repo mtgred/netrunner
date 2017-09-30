@@ -539,7 +539,9 @@
   [state side reason]
   (system-msg state side "wins the game")
   (play-sfx state side "game-end")
-  (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)))
+  (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)
+         :winning-deck-id (get-in @state [side :deck-id])
+         :losing-deck-id (get-in @state [(other-side side) :deck-id])))
 
 (defn win-decked
   "Records a win via decking the corp."

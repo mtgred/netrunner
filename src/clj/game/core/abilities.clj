@@ -166,7 +166,7 @@
   "Checks if there is a trace to resolve"
   [state side {:keys [eid] :as ability} card targets]
   (when-let [trace (:trace ability)]
-    (if (can-trigger? state side trace card targets)
+    (if (can-trigger? state side ability card targets)
       (corp-trace-prompt state card (assoc trace :eid (:eid ability)))
       (effect-completed state side eid card))))
 

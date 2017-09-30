@@ -11,8 +11,12 @@
 ;; Load in sets and mwl lists
 (go (let [sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
-          mwl (:json (<! (GET "/data/mwl")))]
-      (swap! app-state assoc :sets sets :mwl mwl :cycles cycles)))
+          mwl (:json (<! (GET "/data/mwl")))
+          latest_mwl (->> mwl
+                       (map (fn [e] (update e :date_start #(js/Date %))))
+                       (sort-by :date_start)
+                       (last))]
+      (swap! app-state assoc :sets sets :mwl latest_mwl :cycles cycles)))
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
       (swap! app-state assoc :cards cards)
@@ -30,15 +34,16 @@
     (get-in @app-state [:user :special] false)))
 
 (defn image-url [card]
-  (let [has-art (and (show-alt-art?)
+  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
+                (get-in @app-state [:options :alt-arts (keyword (:code card))]))
+        has-art (and (show-alt-art?)
                      (:alt_art card)
-                     (:art card)
-                     (not= -1 (.indexOf (:alt_art card) (:art card))))]
-    (str "/img/cards/"
-         (:code card)
-         (when has-art
-           (str "-" (:art card)))
-         ".png")))
+                     art
+                     (contains? (:alt_art card) (keyword art)))
+        version-path (if has-art
+                       (get (:alt_art card) (keyword art) (:code card))
+                       (:code card))]
+    (str "/img/cards/" version-path ".png")))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)

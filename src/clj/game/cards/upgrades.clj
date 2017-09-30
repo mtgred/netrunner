@@ -738,18 +738,20 @@
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
                    (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")
-                   (resolve-ability state side
+                   (continue-ability state side
                      {:optional {:prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?") :player :corp
-                                 :delayed-completion true
-                                 :yes-ability {:msg "do 1 brain damage instead of net damage"
+                                 :yes-ability {:delayed-completion true
+                                               :msg "do 1 brain damage instead of net damage"
                                                :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
                                                             (clear-wait-prompt state :runner)
                                                             (pay state :corp card :credit 2)
-                                                            (damage state side eid :brain 1 {:card card}))}
-                                 :no-ability {:effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                                            (when-completed (damage state side :brain 1 {:card card})
+                                                                            (do (swap! state assoc-in [:damage :damage-replace] true)
+                                                                                (effect-completed state side eid))))}
+                                 :no-ability {:delayed-completion true
+                                              :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                                            (clear-wait-prompt state :runner)
-                                                           (damage state side eid :net (get-defer-damage state side :net nil)
-                                                                   {:card card}))}}} card nil))}
+                                                           (effect-completed state side eid))}}} card nil))}
      :prevented-damage {:req (req (and this-server (= target :net) (> (last targets) 0)))
                         :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}}}
 

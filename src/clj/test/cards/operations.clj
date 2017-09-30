@@ -274,6 +274,30 @@
     (play-from-hand state :corp "Closed Accounts")
     (is (= 0 (:credit (get-runner))) "Runner lost all credits")))
 
+(deftest commercialization-single-advancement
+  ;; Commercialization - Single advancement token
+  (do-game
+    (new-game (default-corp [(qty "Commercialization" 1)
+                             (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/add-counter state :corp (refresh (get-ice state :hq 0)) :advancement 1)
+    (play-from-hand state :corp "Commercialization")
+    (prompt-select :corp (refresh (get-ice state :hq 0)))
+    (is (= 6 (:credit (get-corp))) "Gained 1 for single advanced ice from Commercialization")))
+
+(deftest commercialization-double-advancement
+  ;; Commercialization - Two advancement tokens
+  (do-game
+    (new-game (default-corp [(qty "Commercialization" 1)
+                             (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/add-counter state :corp (refresh (get-ice state :hq 0)) :advancement 2)
+    (play-from-hand state :corp "Commercialization")
+    (prompt-select :corp (refresh (get-ice state :hq 0)))
+    (is (= 7 (:credit (get-corp))) "Gained 2 for double advanced ice from Commercialization")))
+
 (deftest consulting-visit
   ;; Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation
   (do-game
