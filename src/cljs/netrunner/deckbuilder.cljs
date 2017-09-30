@@ -7,7 +7,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art?] :as cb]
-            [netrunner.account :refer [load-alt-arts]]
+            [netrunner.account :refer [load-alt-arts alt-art-name]]
             [netrunner.ajax :refer [POST GET]]
             [goog.string :as gstring]
             [goog.string.format]))
@@ -240,16 +240,16 @@
 
 (defn- expand-alts
   [acc card]
-  (let [alt-arts (:alt_art card)]
+  (let [alt-arts (keys (:alt_art card))]
     (if (and alt-arts
              (show-alt-art?))
     (->> alt-arts
       (concat [""])
-      (map (fn [art] (if-not (s/blank? art)
+      (map (fn [art] (if art
                        (assoc card :art art)
                        card)))
       (map (fn [c] (if (:art c)
-                     (assoc c :display-name (str (:display-name c) " [" (:art c) "]"))
+                     (assoc c :display-name (str (:display-name c) " [" (alt-art-name (:art c)) "]"))
                      c)))
       (concat acc))
     (conj acc card))))
