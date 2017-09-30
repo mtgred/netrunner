@@ -26,9 +26,11 @@
         art-available (and art-options (not-empty art-options))
         has-art (and art-options
                      art
-                     (not= -1 (.indexOf art-options art)))
-        version (when (and show-art has-art) art)]
-    (str "/img/cards/" code (when version (str "-" version)) ".png")))
+                     (contains? art-options (keyword art)))
+        version-path (if (and has-art show-art)
+                       (get (:alt_art card) (keyword art) (:code card))
+                       (:code card))]
+    (str "/img/cards/" version-path ".png")))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
