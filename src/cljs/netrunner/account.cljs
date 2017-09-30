@@ -11,25 +11,37 @@
 
 (def alt-arts-channel (chan))
 (defn load-alt-arts []
-  (go (let [cards (->> (<! (GET "/data/altarts"))
-                       :json
-                       (filter :versions)
-                       (map #(update-in % [:versions] (fn [c] (concat ["default"] c))))
-                       (map #(assoc % :title (some (fn [c] (when (= (:code c) (:code %)) (:title c))) (:cards @app-state))))
-                       (into {} (map (juxt :code identity))))]
+  (go (let [alt_info (->> (<! (GET "/data/altarts"))
+                       (:json)
+                       (map #(select-keys % [:version :name])))
+            cards (->> (:cards @app-state)
+                    (filter :alt_art)
+                    (map #(select-keys % [:title :setname :code :alt_art :replaces :replaced_by]))
+                    (map #(if (or (contains? % :replaces)
+                                  (contains? % :replaced_by))
+                            (update % :title (fn [t] (str t " (" (:setname %) ")")))
+                            %))
+                    (into {} (map (juxt :code identity))))]
         (swap! app-state assoc :alt-arts cards)
+        (swap! app-state assoc :alt-info alt_info)
         (put! alt-arts-channel cards))))
 
-(defn image-url [card version]
-  (str "/img/cards/" card (when-not (= version "default") (str "-" version)) ".png"))
+(defn image-url [card-code version]
+  (let [cards (:cards @app-state)
+        card (first (filter #(= card-code (:code %)) cards))
+        version-path (get (:alt_art card) (keyword version) (:code card))]
+    (str "/img/cards/" version-path ".png")))
 
-(def all-alt-art-types ["alt" "wc2015" "default"])
+(defn all-alt-art-types
+  []
+  (conj
+    (map :version (:alt-info @app-state))
+    "default"))
 
-(defn alt-art-name [type]
-  (case type
-    "alt" "Alternate"
-    "wc2015" "World Champion 2015"
-    "Official"))
+(defn alt-art-name
+  [version]
+  (let [alt (first (filter #(= (name version) (:version %)) (:alt-info @app-state)))]
+    (get alt :name "Official")))
 
 (defn handle-post [event owner url ref]
   (.preventDefault event)
@@ -88,13 +100,14 @@
 (defn reset-card-art
   [owner]
   (om/set-state! owner :alt-arts {})
-  (let [selected (om/get-state owner :all-art-type)]
-    (when (not= "default" selected)
+  (let [select-node (om/get-node owner "all-art-select")
+        selected (keyword (.-value select-node))]
+    (when (not= :default selected)
       (doseq [card (vals (:alt-arts @app-state))]
-        (let [versions (:versions card)]
-          (when (some (fn [i] (= i selected)) versions)
+        (let [versions (keys (:alt_art card))]
+          (when (some (fn [i] (= i (keyword selected))) versions)
             (om/update-state! owner [:alt-arts]
-                              (fn [m] (assoc m (keyword (:code card)) selected)))))))))
+                              (fn [m] (assoc m (keyword (:code card)) (name selected))))))))))
 
 (defn account-view [user owner]
   (reify
@@ -108,7 +121,6 @@
       (om/set-state! owner :show-alt-art (get-in @app-state [:options :show-alt-art]))
       (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume]))
       (om/set-state! owner :blocked-users (sort (get-in @app-state [:options :blocked-users] [])))
-      (om/set-state! owner :all-art-type "alt")
       (go (while true
             (let [cards (<! alt-arts-channel)
                   first-alt (first (sort-by :title (vals cards)))]
@@ -181,26 +193,26 @@
                    [:option {:value (:code card)} (:title card)])]
 
                 [:div {:class "alt-art-group"}
-                 (for [version (get-in (:alt-arts @app-state) [(om/get-state owner :alt-card) :versions])]
+                 (for [version (conj (keys (get-in (:alt-arts @app-state) [(om/get-state owner :alt-card) :alt_art])) :default)]
                    (let [url (image-url (om/get-state owner :alt-card) version)]
                      [:div
                       [:div
                        [:div [:label [:input {:type "radio"
                                               :name "alt-art-radio"
-                                              :value version
+                                              :value (name version)
                                               :on-change #(set-card-art owner (.. % -target -value))
-                                              :checked (= (om/get-state owner :alt-card-version) version)}]
+                                              :checked (= (om/get-state owner :alt-card-version) (name version))}]
                               (alt-art-name version)]]]
                       [:div
                        [:img {:class "alt-art-select"
                               :src url
-                              :on-click #(set-card-art owner version)
+                              :on-click #(set-card-art owner (name version))
                               :onError #(-> % .-target js/$ .hide)
                               :onLoad #(-> % .-target js/$ .show)}]]]))]
                [:div {:id "set-all"}
                 "Reset all cards to: "
-                [:select {:on-change #(om/set-state! owner :all-art-type (.. % -target -value))}
-                 (for [t all-alt-art-types]
+                [:select {:ref "all-art-select"}
+                 (for [t (all-alt-art-types)]
                    [:option {:value t} (alt-art-name t)])]
                 [:button
                  {:type "button"
