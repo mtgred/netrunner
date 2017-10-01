@@ -150,11 +150,9 @@
              "remove" (do (swap! game-states dissoc gameid)
                           (swap! old-states dissoc gameid))
              "do" (handle-do user command state side args)
-             "notification" (when state
-                              (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))
-             "rejoin" (when state
-                        (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
-
+             ("notification" "rejoin")
+             (when state
+               (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
            true)
        (catch Exception e
          (do (println "Error " action command (get-in args [:card :title]) e)
