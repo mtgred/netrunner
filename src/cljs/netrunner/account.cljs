@@ -15,8 +15,9 @@
                        (:json)
                        (map #(select-keys % [:version :name])))
             cards (->> (:cards @app-state)
-                    (filter :alt_art)
+                    (filter #(and (:alt_art %) (not (:replaced_by %))))
                     (map #(select-keys % [:title :setname :code :alt_art :replaces :replaced_by]))
+
                     (map #(if (or (contains? % :replaces)
                                   (contains? % :replaced_by))
                             (update % :title (fn [t] (str t " (" (:setname %) ")")))
@@ -26,6 +27,7 @@
                            (if (and replaces (= "Revised Core Set" setname))
                              (update-in % [:alt_art] assoc :core replaces)
                              %)))
+
                     (into {} (map (juxt :code identity))))]
         (swap! app-state assoc :alt-arts cards)
         (swap! app-state assoc :alt-info alt_info)
@@ -99,8 +101,15 @@
 (defn set-card-art
   [owner value]
   (om/set-state! owner :alt-card-version value)
-  (om/update-state! owner [:alt-arts]
-                    (fn [m] (assoc m (keyword (om/get-state owner :alt-card)) value))))
+
+  (let [code (om/get-state owner :alt-card)
+        card (some #(when (= code (:code %)) %) (:cards @app-state))]
+    (om/update-state! owner [:alt-arts]
+                      (fn [m]
+                        (if-let [replaces (:replaces card)]
+                          (assoc m (keyword code) value
+                                   (keyword replaces) value)
+                          (assoc m (keyword code) value))))))
 
 (defn reset-card-art
   [owner]
