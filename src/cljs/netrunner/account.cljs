@@ -17,6 +17,17 @@
             cards (->> (:cards @app-state)
                     (filter #(and (:alt_art %) (not (:replaced_by %))))
                     (map #(select-keys % [:title :setname :code :alt_art :replaces :replaced_by]))
+
+                    (map #(if (or (contains? % :replaces)
+                                  (contains? % :replaced_by))
+                            (update % :title (fn [t] (str t " (" (:setname %) ")")))
+                            %))
+                   (map #(let [replaces (:replaces %)
+                               setname (:setname %)]
+                           (if (and replaces (= "Revised Core Set" setname))
+                             (update-in % [:alt_art] assoc :core replaces)
+                             %)))
+
                     (into {} (map (juxt :code identity))))]
         (swap! app-state assoc :alt-arts cards)
         (swap! app-state assoc :alt-info alt_info)
