@@ -234,18 +234,25 @@
               :prompt "Choose a card in HQ to add to the bottom of R&D"
               :choices {:req #(and (= (:side %) "Corp")
                                    (in-hand? %))}
+              :delayed-completion true
               :msg "add a card to the bottom of R&D"
               :effect (req (move state side target :deck)
-                           (when (< n i)
-                             (resolve-ability state side (dhq (inc n) i) card nil)))})]
-     {:access {:effect (req (let [n (count (:hand corp))]
+                           (if (< n i)
+                             (continue-ability state side (dhq (inc n) i) card nil)
+                             (do
+                               (clear-wait-prompt state :runner)
+                               (effect-completed state side eid))))
+              :cancel-effect (final-effect (clear-wait-prompt :runner))})]
+     {:access {:delayed-completion true
+               :effect (req (let [n (count (:hand corp))]
                               (show-wait-prompt state :runner "Corp to finish using Disposable HQ")
-                              (resolve-ability state side
+                              (continue-ability state side
                                 {:optional
                                  {:prompt "Use Disposable HQ to add cards to the bottom of R&D?"
-                                  :yes-ability {:msg "add cards in HQ to the bottom of R&D"
-                                                :effect (effect (resolve-ability (dhq 1 n) card nil))}
-                                  :end-effect (effect (clear-wait-prompt :runner))}}
+                                  :yes-ability {:delayed-completion true
+                                                :msg "add cards in HQ to the bottom of R&D"
+                                                :effect (effect (continue-ability (dhq 1 n) card nil))}
+                                  :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                                card nil)))}})
 
    "Drone Screen"
