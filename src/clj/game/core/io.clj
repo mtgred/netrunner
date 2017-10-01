@@ -171,7 +171,7 @@
     {:title "/rez-all command"} nil))
 
 (defn command-roll [state side value]
-  (system-msg state side (str "rolls a " value " sided die and rolls a " (+ (rand-int (- value 1)) 1))))
+  (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value)))))
 
 (defn command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]
