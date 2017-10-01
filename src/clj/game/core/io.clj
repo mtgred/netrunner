@@ -170,6 +170,9 @@
                                             (rez state side c {:ignore-cost :all-costs :force true}))))}}}
     {:title "/rez-all command"} nil))
 
+(defn command-roll [state side value]
+  (system-msg state side (str "rolls a " value " sided die and rolls a " (+ (rand-int (- value 1)) 1))))
+
 (defn command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]
     (swap! state update-in [side :prompt] rest)
@@ -235,6 +238,7 @@
                                                           (move %1 %2 c :rfg)))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/rfg command"} nil)
+          "/roll"       #(command-roll %1 %2 value)
           "/tag"        #(swap! %1 assoc-in [%2 :tag] (max 0 value))
           "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
           "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
