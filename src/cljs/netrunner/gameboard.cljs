@@ -327,10 +327,11 @@
 
 (defn prepare-cards []
   (->> (:cards @app-state)
-       (group-by :title)
-       (map get-non-alt-art)
-       (sort-by #(count (:title %1)))
-       (reverse)))
+    (filter #(not (:replaced_by %)))
+    (group-by :title)
+    (map get-non-alt-art)
+    (sort-by #(count (:title %1)))
+    (reverse)))
 
 (def prepared-cards (memoize prepare-cards))
 
