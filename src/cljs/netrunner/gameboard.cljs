@@ -18,7 +18,7 @@
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
-        art-options (om/value (:alt_art card))
+        art-options (:alt_art (get (:alt-arts @app-state) code))
         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
         viewer-wants-art (get-in @app-state [:options :show-alt-art])
@@ -28,7 +28,7 @@
                      art
                      (contains? art-options (keyword art)))
         version-path (if (and has-art show-art)
-                       (get (:alt_art card) (keyword art) (:code card))
+                       (get art-options (keyword art) (:code card))
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 

@@ -36,12 +36,12 @@
 (defn image-url [card]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @app-state [:options :alt-arts (keyword (:code card))]))
+        alt-card (get (:alt-arts @app-state) (:code card))
         has-art (and (show-alt-art?)
-                     (:alt_art card)
                      art
-                     (contains? (:alt_art card) (keyword art)))
+                     (contains? (:alt_art alt-card) (keyword art)))
         version-path (if has-art
-                       (get (:alt_art card) (keyword art) (:code card))
+                       (get (:alt_art alt-card) (keyword art) (:code card))
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
