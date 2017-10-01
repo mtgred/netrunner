@@ -240,7 +240,8 @@
 
 (defn- expand-alts
   [acc card]
-  (let [alt-arts (keys (:alt_art card))]
+  (let [alt-card (get (:alt-arts @app-state) (:code card))
+        alt-arts (keys (:alt_art alt-card))]
     (if (and alt-arts
              (show-alt-art?))
     (->> alt-arts
@@ -259,7 +260,8 @@
         (->> (:cards @app-state)
           (filter #(and (= (:side %) side)
                         (= (:type %) "Identity")
-                        (alt-art? %))))
+                        (alt-art? %)))
+          (filter #(not (contains? %1 :replaced_by))))
         all-titles (map :title cards)
         add-deck (partial add-deck-name all-titles)]
     (->> cards
