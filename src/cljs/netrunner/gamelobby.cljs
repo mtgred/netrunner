@@ -7,7 +7,7 @@
             [netrunner.ajax :refer [GET]]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
-            [netrunner.gameboard :refer [init-game game-state toast]]
+            [netrunner.gameboard :refer [init-game game-state toast launch-game]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
             [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks]]))
 
@@ -15,18 +15,6 @@
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
 
-(defn launch-game [game]
-  (let [user (:user @app-state)
-        side (if (= (get-in game [:runner :user]) user)
-               :runner
-               (if (= (get-in game [:corp :user]) user)
-                 :corp
-                 :spectator))]
-    (swap! app-state assoc :side side)
-    (init-game game side))
-  (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
-  (-> "#gamelobby" js/$ .fadeOut)
-  (-> "#gameboard" js/$ .fadeIn))
 
 (defn sort-games-list [games]
   (sort-by #(vec (map (assoc % :started (not (:started %)))
@@ -217,7 +205,7 @@
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
-(defn game-view [{:keys [title password started players gameid current-game password-game] :as game} owner]
+(defn game-view [{:keys [title password started players gameid current-game password-game originalPlayers] :as game} owner]
   (reify
     om/IRenderState
     (render-state [this state]
@@ -234,6 +222,10 @@
            [:button {:on-click #(join "watch")} "Watch"])
          (when-not (or current-game (= (count players) 2) started)
            [:button {:on-click #(join "join")} "Join"])
+         (when (and (not current-game) started
+                    (some #(= % (get-in @app-state [:user :_id]))
+                          (map #(get-in % [:user :_id]) originalPlayers)))
+           [:button {:on-click #(join "rejoin")} "Rejoin"])
          (let [c (count (:spectators game))]
            [:h4 (str (when-not (empty? (:password game))
                        "[PRIVATE] ")

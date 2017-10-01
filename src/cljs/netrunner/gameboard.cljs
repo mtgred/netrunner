@@ -53,6 +53,20 @@
   (swap! game-state assoc :side side)
   (swap! last-state #(identity @game-state)))
 
+
+(defn launch-game [game]
+  (let [user (:user @app-state)
+        side (if (= (get-in game [:runner :user :_id]) (:_id user))
+               :runner
+               (if (= (get-in game [:corp :user :_id]) (:_id user))
+                 :corp
+                 :spectator))]
+    (swap! app-state assoc :side side)
+    (init-game game side))
+  (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
+  (-> "#gamelobby" js/$ .fadeOut)
+  (-> "#gameboard" js/$ .fadeIn))
+
 (declare toast)
 
 (defn notify
@@ -95,6 +109,7 @@
       (let [msg (<! socket-channel)]
         (reset! lock false)
         (case (:type msg)
+          "rejoin" (launch-game (:state msg))
           ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
                                                                  #(assoc (:state msg) :side (:side @game-state))))
                                            (swap! last-state #(identity @game-state)))

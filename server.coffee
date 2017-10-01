@@ -75,6 +75,17 @@ removePlayer = (socket) ->
       delete games[k]
       refreshLobby("delete", v.gameid)
 
+rejoinGame = (socket, gameid, user, options) ->
+  game = games[gameid]
+  if game and game.started and game.players.length < 2
+    side = if game.players.length is 1 then swapSide(game.players[0].side) else "Corp"
+    user.id = socket.id
+    game.players.push(user)
+    socket.join(gameid)
+    socket.gameid = gameid
+    socket.emit("netrunner", {type: "game", gameid: gameid})
+    refreshLobby("update", gameid)
+
 joinGame = (socket, gameid, options) ->
   game = games[gameid]
   if game and game.players.length < 2
@@ -270,6 +281,14 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         else
           fn("invalid password")
 
+      when "rejoin"
+        game = games[msg.gameid]
+        if game and game.started and game.players.length == 1
+          in_game = game.originalPlayers.filter (p) -> p.user._id == socket.request.user._id
+          if in_game.length > 0
+            rejoinGame(socket, msg.gameid, in_game[0], null)
+            requester.send(JSON.stringify({action: "rejoin", gameid: socket.gameid, text: "#{socket.request.user.username} rejoined the game."}))
+
       when "reconnect"
         game = games[msg.gameid]
         if game and game.started
@@ -334,6 +353,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
               db.collection('gamestats').insert g, (err, data) ->
                 console.log(err) if err
             game.started = true
+            game.originalPlayers = game.players.slice(0)
             msg = games[socket.gameid]
             msg.action = "start"
             msg.gameid = socket.gameid
