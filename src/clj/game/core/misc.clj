@@ -39,15 +39,14 @@
   "True if the two cards are IN or PROTECTING the same server."
   (let [zone1 (get-nested-zone card1)
         zone2 (get-nested-zone card2)]
-    (and (= zone1 zone2)
-         #{:ices :content} (last zone1))))
+    (= (second zone1) (second zone2))))
 
-(defn protecting-same-server? [card1 card2]
-  "True if two cards are PROTECTING the same server."
-  (let [zone1 (get-nested-zone card1)
-        zone2 (get-nested-zone card2)]
-    (and (= zone1 zone2)
-         (= :ices (last zone1)))))
+(defn protecting-same-server? [card ice]
+  "True if an ice is protecting the server that the card is in or protecting."
+  (let [zone1 (get-nested-zone card)
+        zone2 (get-nested-zone ice)]
+    (and (= (second zone1) (second zone2))
+         (= :ices (last zone2)))))
 
 (defn in-same-server? [card1 card2]
   "True if the two cards are installed IN the same server, or hosted on cards IN the same server."
