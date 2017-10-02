@@ -591,7 +591,7 @@ app.post '/update-profile', (req, res) ->
   else
     res.status(401).send({message: 'Unauthorized'})
 
-app.post '/clearuserstats', (req, res) ->
+app.post '/user/clearstats', (req, res) ->
   if req.user
     db.collection('users').update {username: req.user.username}, {$unset: {stats: ""}}, \
       (err) ->
@@ -600,13 +600,10 @@ app.post '/clearuserstats', (req, res) ->
   else
     res.status(401).send({message: 'Unauthorized'})
 
-app.get '/getuserstats', (req, res) ->
-  console.log req.user
-  console.log req.body
+app.get '/user', (req, res) ->
   if req.user
     db.collection('users').find({username: req.user.username}).toArray (err, data) ->
       throw err if err
-      console.log(data)
       res.status(200).json(data)
   else
     res.status(401).send({message: 'Unauthorized'})
