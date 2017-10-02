@@ -1437,6 +1437,7 @@
 
     ;; Additional costs to rez should now be applied again
     (core/rez state :corp (get-content state :remote7 0))
+    (prompt-select :corp (get-in (get-corp) [:scored 0]))
     (is (zero? (count (:scored (get-corp)))) "Agenda was auto-forfeit to rez Oberth")
 
     (core/derez state :corp (get-content state :remote4 0))

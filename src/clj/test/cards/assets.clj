@@ -760,7 +760,7 @@
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
-	  
+
 (deftest honeyfarm
   ;; lose one credit on access
   (do-game
@@ -813,13 +813,13 @@
       (prompt-choice :corp "2 [Credits]")
       (prompt-choice :runner "0 [Credits]")
       (is (= 3 (:credit (get-corp))) "No credits gained from Hyoubu"))))
-	  
+
 (deftest illegal-arms-factory
   ;; Illegal Arms Factory; draw a card, gain a credit, bad pub when trashed while rezzed
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 1)
 	                         (qty "Beanstalk Royalties" 1)
-	                         (qty "IPO" 1)							 
+	                         (qty "IPO" 1)
 							 (qty "Illegal Arms Factory" 3)])
               (default-runner))
     (core/gain state :runner :credit 20)
@@ -840,7 +840,7 @@
       (take-credits state :corp)
 	  (run-empty-server state :remote2)
       (prompt-choice :runner "Yes")
-      (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash")	  
+      (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash")
 	)))
 
 (deftest it-department
@@ -1317,6 +1317,7 @@
       ; 1 on rez
       (is (= 101 (:credit (get-corp))) "Corp has 101 creds")
       (card-ability state :corp qs 0)
+      (prompt-select :corp (get-in (get-corp) [:scored 0]))
       (prompt-select :corp ch1)
       (prompt-select :corp ch2)
       (prompt-select :corp ch3)
@@ -1767,7 +1768,7 @@
 
     (card-ability state :runner (get-resource state 0) 0)
     (prompt-choice :runner (->> @state :runner :prompt first :choices first))
-    (prompt-choice :runner (first (:scored (get-runner))))
+    (prompt-select :runner (first (:scored (get-runner))))
     (is (= 2 (count (:scored (get-runner)))) "Fan Site removed from Runner score area")
     (is (= -2 (:agenda-point (get-runner))) "Runner has -2 agenda points")
 

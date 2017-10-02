@@ -20,7 +20,7 @@
       (is (= 0 (:tag (get-runner)))) ; tags cleared
       (take-credits state :runner)
       (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
+      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
       (is (= 1 (:agenda-point (get-corp))) "Forfeited Breaking News")
       (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
@@ -41,7 +41,7 @@
       (score-agenda state :corp ag2)
       (prompt-choice :corp "No")
       (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-card :corp (find-card "Posted Bounty" (:scored (get-corp))))
+      (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
       (is (= 1 (:agenda-point (get-corp))) "Forfeited Posted Bounty")
       (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
       (prompt-choice :corp "Yes") ; "Forfeit Posted Bounty to give 1 tag?"
@@ -66,7 +66,7 @@
     (is (= 2 (:agenda-point (get-runner))))
     (take-credits state :runner)
     (play-from-hand state :corp "24/7 News Cycle")
-    (prompt-card :corp (find-card "Chronos Project" (:scored (get-corp))))
+    (prompt-select :corp (find-card "Chronos Project" (:scored (get-corp))))
     (is (= "Chronos Project" (:title (first (:rfg (get-corp))))))
     ;; shouldn't work on an agenda in the Runner's scored area
     (is (= 2 (count (:hand (get-runner)))))
@@ -247,7 +247,7 @@
         (prompt-choice :runner "1 [Credits]")
 		(prompt-choice :runner "1 tag")
 	    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
-		(is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))		
+		(is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))
 
 
 (deftest cerebral-static-chaos-theory
@@ -745,7 +745,7 @@
     (prompt-choice :corp 0) ; default trace
     (prompt-choice :runner 2) ; Runner matches
     (is (= 1 (:bad-publicity (get-corp))))))
-	
+
 (deftest ipo-terminal
   ;; IPO - credits with Terminal operations
   (do-game
@@ -756,7 +756,7 @@
     (take-credits state :runner)
     (play-from-hand state :corp "IPO")
 	(is (= 13 (:credit (get-corp))))
-	(is (= 0 (:click (get-corp))) "Terminal ends turns")))	
+	(is (= 0 (:click (get-corp))) "Terminal ends turns")))
 
 (deftest lag-time
   (do-game
@@ -783,7 +783,7 @@
     (is (= "Breaking News" (:title (get-content state :remote1 0)))
       "Breaking News installed by Lateral Growth")
     (is (= 7 (:credit (get-corp))))))
-	
+
 (deftest mass-commercialization
   ;; Mass Commercialization
   (do-game
@@ -1020,7 +1020,7 @@
 (deftest psychokinesis
   ;; Pyschokinesis - Terminal Event (end the turn); Look at R&D, install an Asset, Agenda, or Upgrade in a Remote Server
   (do-game
-    (new-game (default-corp [(qty "Psychokinesis" 3) (qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1) 
+    (new-game (default-corp [(qty "Psychokinesis" 3) (qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1)
                               (qty "Global Food Initiative" 1)])
               (default-runner))
     (starting-hand state :corp ["Psychokinesis","Psychokinesis","Psychokinesis"])
@@ -1502,6 +1502,7 @@
       (core/score state :corp {:card (refresh napd)})
       (is (= 2 (:agenda-point (get-corp))))
       (play-from-hand state :corp "Success")
+      (prompt-select :corp (get-in (get-corp) [:scored 0]))
       (is (= "NAPD Contract" (:title (first (:rfg (get-corp))))))
       (prompt-select :corp (refresh beale))
       (is (= 13 (:advance-counter (refresh beale))))
@@ -1519,6 +1520,7 @@
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Success")
+    (prompt-select :corp (get-in (get-corp) [:scored 0]))
     (is (= "Vanity Project" (:title (first (:rfg (get-corp))))))
     (let [oaktown (get-content state :remote1 0)]
       (prompt-select :corp (refresh oaktown))
