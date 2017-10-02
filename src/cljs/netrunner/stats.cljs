@@ -71,11 +71,11 @@
             [:div.panel.blue-shade
              [:h2 "Game Stats"]
               [:section
-               [:div "Games Started: " started]
-               [:div "Games Completed: " completed " (" pc "%)"]
-               [:div "Win: "win  " (" pw "%)"]
-               [:div "Lose: "lose  " (" pl "%)"]
-               [:div "Incomplete: "incomplete  " (" pi "%)"]]]
+               [:div "Started: " started]
+               [:div "Completed: " completed " (" pc "%)"]
+               [:div "Not completed: " incomplete  " (" pi "%)"]
+               [:div "Won: " win  " (" pw "%)"]
+               [:div "Lost: " lose  " (" pl "%)"]]]
           [:div.button-bar
            [:button {:on-click #(refresh-user-stats owner)} "Refresh Stats"]
            [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]])))))
