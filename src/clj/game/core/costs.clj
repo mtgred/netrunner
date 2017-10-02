@@ -39,11 +39,10 @@
   explaining which cost they were unable to pay."
   [state side title & args]
   (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
-        scored (get-in @state [side :scored])
         cost-msg (or (some #(toast-msg-helper state side %) costs))]
     ;; no cost message - hence can pay
     (if-not cost-msg
-      {:costs costs, :scored scored}
+      costs
       (when title (toast state side (str cost-msg " for " title ".")) false))))
 
 (defn pay-forfeit
@@ -51,7 +50,7 @@
   Amount is always 1 but can be extend if we ever need more than a single forfeit"
   ;; If multiples needed in future likely prompt-select needs work to take a function
   ;; instead of an ability
-  [state side card scored n]
+  [state side card n]
   (resolve-ability state side
                    {:prompt "Choose an Agenda to forfeit"
                     :choices {:max n
@@ -59,10 +58,6 @@
                                          (= (:zone %) [:scored]))}
                     :effect (effect (forfeit target))}
                    card nil)
-  #_(if (= (count scored) 1)
-    (forfeit state side (first scored))
-    (prompt! state side card "Choose an Agenda to forfeit" scored
-             {:effect (effect (forfeit target))}))
   (when-let [cost-name (cost-names n :forfeit)]
     cost-name))
 
@@ -83,13 +78,13 @@
   [state side card & args]
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
-    (when-let [{:keys [costs scored]} (apply can-pay? state side (:title card) raw-costs)]
+    (when-let [costs (apply can-pay? state side (:title card) raw-costs)]
         (->> costs (map
                      #(cond
                         (= (first %) :click) (do (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) (first (keep :action action)) (:click (into {} costs)))
                                                  (swap! state assoc-in [side :register :spent-click] true)
                                                  (deduce state side %))
-                        (= (first %) :forfeit) (pay-forfeit state side card scored (second %))
+                        (= (first %) :forfeit) (pay-forfeit state side card (second %))
                         (= (first %) :hardware) (pay-trash state side card :hardware (second %) (get-in @state [:runner :rig :hardware]))
                         (= (first %) :program) (pay-trash state side card :program (second %) (get-in @state [:runner :rig :program]))
 
