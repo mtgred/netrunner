@@ -1502,7 +1502,7 @@
       (core/score state :corp {:card (refresh napd)})
       (is (= 2 (:agenda-point (get-corp))))
       (play-from-hand state :corp "Success")
-      (prompt-select :corp (get-in (get-corp) [:scored 0]))
+      (prompt-select :corp (get-scored state :corp 0))
       (is (= "NAPD Contract" (:title (first (:rfg (get-corp))))))
       (prompt-select :corp (refresh beale))
       (is (= 13 (:advance-counter (refresh beale))))
@@ -1520,7 +1520,7 @@
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Success")
-    (prompt-select :corp (get-in (get-corp) [:scored 0]))
+    (prompt-select :corp (get-scored state :corp))
     (is (= "Vanity Project" (:title (first (:rfg (get-corp))))))
     (let [oaktown (get-content state :remote1 0)]
       (prompt-select :corp (refresh oaktown))
@@ -1528,6 +1528,27 @@
       (is (= 19 (:credit (get-corp))) "Gain 2 + 2 + 2 + 2 + 3 + 3 = 14 credits for advancing Oaktown")
       (core/score state :corp {:card (refresh oaktown)})
       (is (= 2 (:agenda-point (get-corp)))))))
+
+(deftest success-jemison
+  ;; Success interaction with Jemison, regression test for issue #2704
+  (do-game
+    (new-game (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success."
+                         [(qty "Success" 1)
+                          (qty "High-Risk Investment" 1)
+                          (qty "Government Takeover" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (score-agenda state :corp (find-card "High-Risk Investment" (:hand (get-corp))))
+    (play-from-hand state :corp "Government Takeover" "New remote")
+    (play-from-hand state :corp "Success")
+    (prompt-select :corp (get-in (get-corp) [:scored 0]))
+    (let [gto (get-content state :remote1 0)]
+      ;; Prompt for Success
+      (prompt-select :corp (refresh gto))
+      (is (= 5 (:advance-counter (refresh gto))) "Advance 5 times from Success")
+      ;; Prompt for Jemison
+      (prompt-select :corp (refresh gto))
+      (is (= 9 (:advance-counter (refresh gto))) "Added 4 counters from Jemison trigger"))))
 
 (deftest successful-demonstration
   ;; Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits
