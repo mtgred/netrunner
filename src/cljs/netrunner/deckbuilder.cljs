@@ -238,7 +238,7 @@
       (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
       (assoc card :display-name (:title card)))))
 
-(defn- expand-alts
+(defn expand-alts
   [acc card]
   (let [alt-card (get (:alt-arts @app-state) (:code card))
         alt-arts (keys (:alt_art alt-card))]

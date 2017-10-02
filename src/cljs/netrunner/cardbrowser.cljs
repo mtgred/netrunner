@@ -45,6 +45,11 @@
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
+(defn insert-alt-arts
+  "Add copies of all alt art cards to the list of cards"
+  [cards]
+  (reduce netrunner.deckbuilder/expand-alts () (reverse cards)))
+
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
       (make-span "\\[Credits\\]" "credit")
@@ -100,6 +105,7 @@
           (when-not (:showText state)
             (when-let [url (image-url card)]
               [:img {:src url
+                     :title (str (:setname card) (when (:art card) (str " [" (netrunner.account/alt-art-name (:art card)) "]")))
                      :onError #(-> (om/set-state! owner {:showText true}))
                      :onLoad #(-> % .-target js/$ .show)}]))])))))
 
@@ -139,7 +145,7 @@
     "Name" :title
     "Influence" :factioncost
     "Cost" :cost
-    "Faction" (juxt :side :faction)
+    "Faction" (juxt :side :faction :code)
     "Type" (juxt :side :type)
     "Set number" :number))
 
@@ -234,8 +240,9 @@
                               (filter-cards (:faction-filter state) :faction)
                               (filter-cards (:type-filter state) :type)
                               (match (.toLowerCase (:search-query state)))
+                              (insert-alt-arts)
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))
-                       {:key :code})]]))))
+                       {:key-fn #(str (:setname %) (:code %) (:art %))})]]))))
 
 (om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
