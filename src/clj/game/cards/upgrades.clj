@@ -10,7 +10,7 @@
    "Amazon Industrial Zone"
    {:events
      {:corp-install  {:optional {:req (req (and (ice? target)
-                                                (= (card->server state card) (card->server state target))))
+                                                (protecting-same-server? card target)))
                                  :prompt "Rez ICE with rez cost lowered by 3?" :priority 2
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
@@ -256,7 +256,7 @@
 
    "Experiential Data"
    {:effect (req (update-ice-in-server state side (card->server state card)))
-    :events {:pre-ice-strength {:req (req (= (card->server state card) (card->server state target)))
+    :events {:pre-ice-strength {:req (req (protecting-same-server? card target))
                                 :effect (effect (ice-strength-bonus 1 target))}}
     :derez-effect {:effect (req (update-ice-in-server state side (card->server state card)))}
     :trash-effect {:effect (req (update-all-ice state side))}}
@@ -455,9 +455,8 @@
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
    "NeoTokyo Grid"
-   (let [ng {:req (req (and (= (second (:zone target)) (second (:zone card)))
-                            (#{:content} (last (:zone target)))
-                            (is-remote? (second (:zone card))))) :once :per-turn
+   (let [ng {:req (req (in-same-server? card target))
+             :once :per-turn
              :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}]
      {:events {:advance ng :advancement-placed ng}})
 
@@ -510,7 +509,7 @@
 
    "Oberth Protocol"
    {:additional-cost [:forfeit]
-    :events {:advance {:req (req (and (= (second (:zone target)) (second (:zone card)))
+    :events {:advance {:req (req (and (same-server? card target)
                                       (empty? (filter #(= (second (:zone %)) (second (:zone card)))
                                                       (map first (turn-events state side :advance))))))
                        :msg (msg "place an additional advancement token on " (card-str state target))
@@ -631,7 +630,7 @@
                    (set-prop state side c :extra-advance-counter 1))
                  (update-all-ice state side))
     :events {:corp-install {:req (req (and (ice? target)
-                                           (= (card->server state target) (card->server state card))))
+                                           (protecting-same-server? card target)))
                             :effect (effect (set-prop target :extra-advance-counter 1))}}
     :leave-play (req (doseq [c (:ices (card->server state card))]
                        (update! state side (dissoc c :extra-advance-counter)))
@@ -694,7 +693,7 @@
 
    "Surat City Grid"
    {:events
-    {:rez {:req (req (and (= (second (:zone target)) (second (:zone card)))
+    {:rez {:req (req (and (same-server? card target)
                           (not (and (is-type? target "Upgrade")
                                     (is-central? (second (:zone target)))))
                           (not= (:cid target) (:cid card))
@@ -756,7 +755,8 @@
                         :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}}}
 
    "Traffic Analyzer"
-   {:events {:rez {:req (req (and (= (second (:zone target)) (second (:zone card))) (ice? target)))
+   {:events {:rez {:req (req (and (protecting-same-server? card target)
+                                  (ice? target)))
                    :interactive (req true)
                    :trace {:base 2
                            :msg "gain 1 [Credits]"
@@ -771,7 +771,7 @@
 
    "Underway Grid"
    {:implementation "Bypass prevention is not implemented"
-    :events {:pre-expose {:req (req (= (take 2 (:zone target)) (take 2 (:zone card))))
+    :events {:pre-expose {:req (req (protecting-same-server? card target))
                           :msg "prevent 1 card from being exposed"
                           :effect (effect (expose-prevent 1))}}}
 
