@@ -51,12 +51,19 @@
   Amount is always 1 but can be extend if we ever need more than a single forfeit"
   ;; If multiples needed in future likely prompt-select needs work to take a function
   ;; instead of an ability
-  [state side card scored amount]
-  (if (= (count scored) 1)
+  [state side card scored n]
+  (resolve-ability state side
+                   {:prompt "Choose an Agenda to forfeit"
+                    :choices {:max n
+                              :req #(and (= (:side %) (side-str side))
+                                         (= (:zone %) [:scored]))}
+                    :effect (effect (forfeit target))}
+                   card nil)
+  #_(if (= (count scored) 1)
     (forfeit state side (first scored))
     (prompt! state side card "Choose an Agenda to forfeit" scored
              {:effect (effect (forfeit target))}))
-  (when-let [cost-name (cost-names amount :forfeit)]
+  (when-let [cost-name (cost-names n :forfeit)]
     cost-name))
 
 (defn pay-trash
