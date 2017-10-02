@@ -82,7 +82,8 @@
                               (continue-ability state side (dome card) card nil))}]})
 
    "Ben Musashi"
-   (let [bm {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+   (let [bm {:req (req (or (in-same-server? card target)
+                           (from-same-server? card target)))
              :effect (effect (steal-cost-bonus [:net-damage 2]))}]
      {:trash-effect
               {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
@@ -125,9 +126,7 @@
                                card nil))}}}
 
    "Breaker Bay Grid"
-   {:events {:pre-rez-cost {:req (req (and (is-remote? (second (:zone card)))
-                                           (or (= (:zone card) (:zone target))
-                                               (= (:zone card) (:zone (get-card state (:host target)))))))
+   {:events {:pre-rez-cost {:req (req (in-same-server? card target))
                             :effect (effect (rez-cost-bonus -5))}}}
 
    "Bryan Stinson"
@@ -506,9 +505,7 @@
                            (effect-completed state side eid card)))))}}}
 
    "Oaktown Grid"
-   {:events {:pre-trash {:req (req (and (is-remote? (second (:zone card)))
-                                           (or (= (:zone card) (:zone target))
-                                               (= (:zone card) (:zone (get-card state (:host target)))))))
+   {:events {:pre-trash {:req (req (in-same-server? card target))
                          :effect (effect (trash-cost-bonus 3))}}}
 
    "Oberth Protocol"
@@ -531,7 +528,8 @@
     :leave-play (req (enable-run-on-server state card (second (:zone card))))}
 
    "Old Hollywood Grid"
-   (let [ohg {:req (req (or (= (:zone card) (:zone (get-nested-host target))) (= (central->zone (:zone target)) (butlast (:zone card)))))
+   (let [ohg {:req (req (or (in-same-server? card target)
+                            (from-same-server? card target)))
               :effect (effect (register-persistent-flag!
                                 card :can-steal
                                 (fn [state _ card]
@@ -582,7 +580,8 @@
              :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
 
    "Red Herrings"
-   (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+   (let [ab {:req (req (or (in-same-server? card target)
+                           (from-same-server? card target)))
              :effect (effect (steal-cost-bonus [:credit 5]))}]
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
@@ -622,9 +621,9 @@
                                          (:content (card->server state card)))]
                    (update-advancement-cost state side agenda)))
     :events {:corp-install {:req (req (and (is-type? target "Agenda")
-                                           (= (:zone card) (:zone target))))
+                                           (in-same-server? card target)))
                             :effect (effect (update-advancement-cost target))}
-             :pre-advancement-cost {:req (req (= (:zone card) (:zone target)))
+             :pre-advancement-cost {:req (req (in-same-server? card target))
                                     :effect (effect (advancement-cost-bonus -1))}}}
 
    "Satellite Grid"
@@ -681,7 +680,8 @@
    {:recurring 2}
 
    "Strongbox"
-   (let [ab {:req (req (or (= (:zone card) (:zone target)) (= (central->zone (:zone target)) (butlast (:zone card)))))
+   (let [ab {:req (req (or (in-same-server? card target)
+                           (from-same-server? card target)))
              :effect (effect (steal-cost-bonus [:click 1]))}]
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
