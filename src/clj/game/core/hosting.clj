@@ -5,6 +5,9 @@
   [card]
   (if (:host card) (recur (:host card)) card))
 
+(defn get-nested-zone [card]
+  (:zone (get-nested-host card)))
+
 (defn update-hosted!
   "Updates a card that is hosted on another, by recursively updating the host card's
   :hosted vector."
