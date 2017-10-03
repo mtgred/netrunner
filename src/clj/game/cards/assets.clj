@@ -554,6 +554,19 @@
                              :msg "do 1 meat damage"
                              :effect (effect (damage eid :meat 1 {:card card}))}}}
 
+   "Gene Splicer"
+   {:advanceable :always
+    :access {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+             :msg (msg "do " (:advance-counter (get-card state card) 0) " net damage")
+             :delayed-completion true
+             :effect (effect (damage eid :net (:advance-counter (get-card state card) 0)
+                                      {:card card}))}
+    :abilities [{:cost [:click 1]
+                 :advance-counter-cost 3
+                 :label "Add Gene Splicing to your score area as an agenda worth 1 agenda point"
+                 :msg "add it to their score area as an agenda worth 1 agenda point"
+                 :effect (effect (as-agenda :corp card 1))}]}
+
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
     :effect (req (max-draw state :runner 2)
