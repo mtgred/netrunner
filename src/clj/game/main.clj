@@ -150,9 +150,9 @@
              "remove" (do (swap! game-states dissoc gameid)
                           (swap! old-states dissoc gameid))
              "do" (handle-do user command state side args)
-             "notification" (when state
-                              (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
-
+             ("notification" "rejoin")
+             (when state
+               (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
            true)
        (catch Exception e
          (do (println "Error " action command (get-in args [:card :title]) e)
@@ -192,7 +192,7 @@
                     (let [[new-corp new-runner new-spect] (private-states new-state)]
                       (do
                         (swap! old-states assoc (:gameid msg) @new-state)
-                        (if (#{"start" "reconnect" "notification"} action)
+                        (if (#{"start" "reconnect" "notification" "rejoin"} action)
                           ;; send the whole state, not a diff
                           (.send socket (generate-string {:action      action
                                                           :runnerstate (strip new-runner)
@@ -219,6 +219,11 @@
 (def zmq-url (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
 
 (defn dev []
+  (Thread/setDefaultUncaughtExceptionHandler
+    (reify Thread$UncaughtExceptionHandler
+      (uncaughtException [_ thread ex]
+        (println "UNCAUGHT EXCEPTION " ex))))
+
   (println "[Dev] Listening on port 1043 for incoming commands...")
   (let [socket (.socket ctx ZMQ/REP)]
     (.bind socket zmq-url)
