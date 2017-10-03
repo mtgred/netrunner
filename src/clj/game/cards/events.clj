@@ -424,8 +424,7 @@
                    (resolve-ability state side
                      {:prompt (msg "Choose an unrezzed piece of ICE protecting " serv " that you passed on your last run")
                       :choices {:req #(and (ice? %)
-                                           (not (rezzed? %))
-                                           (= runtgt (second (:zone %))))}
+                                           (not (rezzed? %)))}
                       :msg (msg "trash " (card-str state target))
                       :effect (effect (trash target))}
                     card nil)))}
