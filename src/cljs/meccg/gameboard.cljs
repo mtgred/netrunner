@@ -1,12 +1,12 @@
-(ns netrunner.gameboard
+(ns meccg.gameboard
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
-            [netrunner.appstate :refer [app-state]]
-            [netrunner.auth :refer [avatar] :as auth]
-            [netrunner.cardbrowser :refer [add-symbols] :as cb]
+            [meccg.appstate :refer [app-state]]
+            [meccg.auth :refer [avatar] :as auth]
+            [meccg.cardbrowser :refer [add-symbols] :as cb]
             [differ.core :as differ]
             [om.dom :as dom]))
 
@@ -63,12 +63,12 @@
 (def zoom-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
 (def socket-channel (chan))
-(.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
+(.on socket "meccg" #(put! socket-channel (js->clj % :keywordize-keys true)))
 (.on socket "disconnect" #(notify "Connection to the server lost. Attempting to reconnect."
                                   "error"))
 (.on socket "reconnect" #(when (.-onbeforeunload js/window)
                            (notify "Reconnected to the server." "success")
-                           (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
+                           (.emit socket "meccg" #js {:action "reconnect" :gameid (:gameid @app-state)})))
 
 (def anr-icons {"[Credits]" "credit"
                 "[$]" "credit"
@@ -100,7 +100,7 @@
           nil))))
 
 (defn send [msg]
-  (.emit socket "netrunner" (clj->js msg)))
+  (.emit socket "meccg" (clj->js msg)))
 
 (defn not-spectator? [game-state app-state]
   (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state)))
@@ -145,7 +145,7 @@
          msg
          "<br/>"
          "<button type=\"button\" class=\"reportbtn\" style=\"margin-top: 5px\" "
-         "onclick=\"window.open('https://github.com/mtgred/netrunner/issues/new?body="
+         "onclick=\"window.open('https://github.com/rezwits/cardnum/issues/new?body="
          (build-report-url error)
          "');\">Report on GitHub</button></div>")))
 

@@ -6,7 +6,7 @@ mongoPassword = process.env.OPENSHIFT_MONGODB_DB_PASSWORD
 login = if process.env.OPENSHIFT_MONGODB_DB_PASSWORD then "#{mongoUser}:#{mongoPassword}@" else ""
 mongoHost = process.env.OPENSHIFT_MONGODB_DB_HOST || '127.0.0.1'
 mongoPort = process.env.OPENSHIFT_MONGODB_DB_PORT || '27017'
-appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
+appName = process.env.OPENSHIFT_APP_NAME || 'meccg'
 
 db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}").open( (err, _) -> throw err if err )
 

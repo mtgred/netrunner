@@ -1,7 +1,7 @@
-(defproject netrunner "1.0"
+(defproject meccg "1.0"
   ;; the version string gets replaced by the git rev version plugin anyway
-  :description "Browser implementation of Android: Netrunner card game."
-  :url "https://github.com/mtgred/netrunner"
+  :description "Browser implementation of Middle-earth CCG card game."
+  :url "https://github.com/rezwits/cardnum"
   :license {:name "The MIT License (MIT)"
             :url "https://opensource.org/licenses/MIT"}
 
@@ -35,8 +35,8 @@
 
   :source-paths ["src/clj" "src/cljs"]
 
-  :jar-name "netrunner.jar"
-  :uberjar-name "netrunner-standalone.jar"
+  :jar-name "meccg.jar"
+  :uberjar-name "meccg-standalone.jar"
 
   :omit-source true
 
@@ -49,7 +49,7 @@
                   :optimizations :none
                   :source-map true}}
       {:id "prod"
-       :source-paths ["src/cljs/netrunner"]
+       :source-paths ["src/cljs/meccg"]
        :compiler {:output-to "resources/public/js/app.js"
                   :output-dir "out"
                   :optimizations :advanced

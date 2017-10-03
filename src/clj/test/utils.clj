@@ -5,7 +5,7 @@
 
 (defn load-card [title]
   (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
-        db (mg/get-db conn "netrunner")
+        db (mg/get-db conn "meccg")
         card (mc/find-maps db "cards" {:title title})
         ret (first card)]
     (mg/disconnect conn)
@@ -13,7 +13,7 @@
 
 (defn load-cards []
   (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
-        db (mg/get-db conn "netrunner")
+        db (mg/get-db conn "meccg")
         cards (mc/find-maps db "cards")
         ret (take 99999 cards)]
     ;; Doing this to materialize the list. I'm sure there's a better way. The take above might be useless.

@@ -1,17 +1,17 @@
 {
-  "name": "netrunner",
+  "name": "meccg",
   "version": "0.0.1",
   "license": "MIT",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/mtgred/netrunner.git"
+    "url": "https://github.com/rezwits/cardnum.git"
   },
   "scripts": {
     "start": "coffee server.coffee",
     "postinstall": "bower install",
     "fetch": "cd data/ && coffee fetch.coffee",
-    "promo": "cd data/ && mongo netrunner --eval \"db.altarts.drop()\" && mongoimport --db=netrunner --collection=altarts --file=promo.json --jsonArray",
+    "promo": "cd data/ && mongo meccg --eval \"db.altarts.drop()\" && mongoimport --db=meccg --collection=altarts --file=promo.json --jsonArray",
     "rotate": "cd data/ && coffee rotate.coffee",
     "link_cards": "cd data/ && coffee link_cards.coffee"
   },

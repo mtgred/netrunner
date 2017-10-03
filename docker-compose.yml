@@ -2,17 +2,17 @@ version: '2'
 services:
 
   npm-install:
-    image: netrunner-node
+    image: meccg-node
     volumes:
-      - .:/netrunner
+      - .:/meccg
     command: |
       sh -c "npm install
              ./node_modules/.bin/bower --allow-root install"
 
   fetch-cards:
-    image: netrunner-node
+    image: meccg-node
     volumes:
-      - .:/netrunner
+      - .:/meccg
     links:
       - mongo
     environment: 
@@ -24,44 +24,44 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - /tmp/netrunner/mongo-data:/data/db
+      - /tmp/meccg/mongo-data:/data/db
 
   lein-cljs:
     image: clojure:latest
     volumes:
-      - .:/netrunner
+      - .:/meccg
     command: |
-      sh -c "cd /netrunner
+      sh -c "cd /meccg
              lein cljsbuild auto dev"
 
-  lein-netrunner:
+  lein-meccg:
     image: clojure:latest
     volumes:
-      - .:/netrunner
+      - .:/meccg
     ports:
       - 7001:7001
     environment:
       ZMQ_HOST: "*"
     command: |
-      sh -c "cd /netrunner
+      sh -c "cd /meccg
              lein run"
 
   stylus-css:
-    image: netrunner-node
+    image: meccg-node
     volumes:
-      - .:/netrunner
+      - .:/meccg
     command: ./node_modules/.bin/stylus -w src/css -o resources/public/css/
 
   coffee-server:
-    image: netrunner-node
+    image: meccg-node
     volumes:
-      - .:/netrunner
+      - .:/meccg
     ports:
       - 1042:1042
     links:
       - mongo
-      - lein-netrunner
+      - lein-meccg
     environment:
-      MONGO_URL: mongodb://mongo:27017/netrunner
-      CLOJURE_HOST: lein-netrunner
+      MONGO_URL: mongodb://mongo:27017/meccg
+      CLOJURE_HOST: lein-meccg
     command: ./node_modules/.bin/coffee server.coffee

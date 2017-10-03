@@ -1,14 +1,14 @@
-(ns netrunner.deckbuilder
+(ns meccg.deckbuilder
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <! timeout] :as async]
             [clojure.string :refer [split split-lines join escape]]
-            [netrunner.appstate :refer [app-state]]
-            [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.cardbrowser :refer [cards-channel image-url card-view] :as cb]
-            [netrunner.account :refer [load-alt-arts]]
-            [netrunner.ajax :refer [POST GET]]))
+            [meccg.appstate :refer [app-state]]
+            [meccg.auth :refer [authenticated] :as auth]
+            [meccg.cardbrowser :refer [cards-channel image-url card-view] :as cb]
+            [meccg.account :refer [load-alt-arts]]
+            [meccg.ajax :refer [POST GET]]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
