@@ -86,7 +86,14 @@
   "Generate text html representation a card"
   [card]
   [:div
-   [:h4 (:title card)]
+   [:h4 (str (:title card) " ")
+    [:span.influence
+     {:class (if-let [faction (:faction card)]
+               (-> faction .toLowerCase (.replace " " "-"))
+               "neutral")}
+     (when (netrunner.deckbuilder/banned? card) netrunner.deckbuilder/banned-dot)
+     (when (netrunner.deckbuilder/restricted? card) netrunner.deckbuilder/restricted-dot)
+     (when (:rotated card) netrunner.deckbuilder/rotated-dot)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -109,7 +116,7 @@
      (when-let [faction (:faction card)]
        [:div.heading "Influence "
         [:span.influence
-         {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
+         {:dangerouslySetInnerHTML #js {:__html (netrunner.deckbuilder/influence-dots influence)}
           :class                   (-> faction .toLowerCase (.replace " " "-"))}]]))
    [:div.text
     [:p [:span.type (str (:type card))] (if (empty? (:subtype card))

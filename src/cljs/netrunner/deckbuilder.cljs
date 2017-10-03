@@ -629,8 +629,9 @@
 (def zws "\u200B")                                          ; zero-width space for wrapping dots
 (def influence-dot (str "●" zws))                           ; normal influence dot
 (def banned-dot (str "✘" zws))                              ; on the banned list
-(def restricted-dot (str "🦄" zws))                          ; on the restricted list
+(def restricted-dot (str "🦄" zws))                         ; on the restricted list
 (def alliance-dot (str "○" zws))                            ; alliance free-inf dot
+(def rotated-dot (str "↻" zws))                             ; on the rotation list
 
 (defn- make-dots
   "Returns string of specified dots and number. Uses number for n > 20"
@@ -812,23 +813,19 @@
                          :else "invalid")
                 :on-mouse-enter #(put! zoom-channel line)
                 :on-mouse-leave #(put! zoom-channel false)} name]
-        (when (or banned (not infaction))
-          (let [influence (* (:factioncost card) modqty)]
-            (list " "
-                  [:span.influence
-                   {:class (faction-label card)
-                    :dangerouslySetInnerHTML
-                    #js {:__html
+        (let [influence (* (:factioncost card) modqty)]
+          (list " "
+                [:span.influence
+                 {:class (faction-label card)
+                  :dangerouslySetInnerHTML
+                  #js {:__html
+                       (if banned
+                         banned-dot
                          (str
-                           (if banned
-                             banned-dot
-                             (do
-                               ;; normal influence
-                               (when (and (not infaction) (not allied)) (influence-dots influence))
-                               ;; satisfies alliance criterion
-                               (when allied (alliance-dots influence))
-                               ;; restricted card
-                               (when restricted restricted-dot))))}}])))])
+                           (when (and (not infaction) (not allied)) (influence-dots influence))
+                           (when allied (alliance-dots influence))
+                           (when restricted restricted-dot)
+                           (when (:rotated card) rotated-dot)))}}]))])
      card)])
 
 (defn- create-identity
