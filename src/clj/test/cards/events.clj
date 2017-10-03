@@ -1134,6 +1134,27 @@
       (is (= 1 (:agenda-point (get-corp))))
       (is (= 1 (:agenda-point (get-runner)))))))
 
+(deftest political-graffiti-forfeit
+  ;; Political Graffiti - forfeiting agenda with Political Graffiti does not refund double points
+  ;; Regression test for issue #2765
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Sacrifice" 1)])
+              (default-runner [(qty "Political Graffiti" 1)]))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 1 (:agenda-point (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Political Graffiti")
+    (is (= [:archives] (get-in @state [:run :server])) "Run initiated on Archives")
+    (run-successful state)
+    (prompt-choice :runner "Run ability")
+    (prompt-select :runner (find-card "Hostile Takeover" (:scored (get-corp))))
+    (is (= 0 (:agenda-point (get-corp))) "Political Dealings lowered agenda points by 1")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Sacrifice")
+    (is (= 0 (:agenda-point (get-corp))) "Forfeiting agenda did not refund extra agenda points ")
+    (is (= 1 (count (:discard (get-runner)))) "Political Graffiti is in the Heap")))
+
 (deftest push-your-luck-correct-guess
   ;; Push Your Luck - Corp guesses correctly
   (do-game
@@ -1695,17 +1716,17 @@
     (play-from-hand state :runner "Tinkering")
     (let [iwall (get-ice state :hq 0)]
       (prompt-select :runner iwall)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate")
-      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has sentry")
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
+      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
       (core/rez state :corp iwall)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has code gate")
-      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has sentry")
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
+      (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
       (take-credits state :runner)
-      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has barrier")
-      (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have code gate")
-      (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have sentry"))))
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
+      (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))
 
 (deftest unscheduled-maintenance
   ;; Unscheduled Maintenance - prevent Corp from installing more than 1 ICE per turn

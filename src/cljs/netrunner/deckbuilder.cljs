@@ -322,7 +322,7 @@
     "10019"                                                 ; Museum of History
     (<= 50 (card-count cards))
     "10038"                                                 ; PAD Factory
-    (= 3 (card-count (filter #(= "01109" (:code (:card %))) cards)))
+    (= 3 (card-count (filter #(= "PAD Campaign" (:title (:card %))) cards)))
     "10076"                                                 ; Mumbad Virtual Tour
     (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
     ;; Not an alliance card

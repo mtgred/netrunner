@@ -2,11 +2,13 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [chan put! >!] :as async]
+            [cljs.core.async :refer [chan put! >! sub pub] :as async]
             [netrunner.appstate :refer [app-state]]
             [netrunner.ajax :refer [GET]]))
 
 (def cards-channel (chan))
+(def pub-chan (chan))
+(def notif-chan (pub pub-chan :topic))
 
 ;; Load in sets and mwl lists
 (go (let [sets (:json (<! (GET "/data/sets")))
@@ -24,7 +26,7 @@
       (put! cards-channel cards)))
 
 (defn make-span [text symbol class]
-  (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
+  (.replace text (js/RegExp. symbol "gi") (str "<span class='anr-icon " class "'></span>")))
 
 (defn show-alt-art?
   "Is the current user allowed to use alternate art cards and do they want to see them?"
@@ -57,12 +59,67 @@
       (make-span "\\[Click\\]" "click")
       (make-span "\\[Subroutine\\]" "subroutine")
       (make-span "\\[Recurring Credits\\]" "recurring-credit")
+      (make-span "\\[recurring-credit\\]" "recurring-credit")
       (make-span "1\\[Memory Unit\\]" "mu1")
       (make-span "2\\[Memory Unit\\]" "mu2")
       (make-span "3\\[Memory Unit\\]" "mu3")
       (make-span "\\[Memory Unit\\]" "mu")
+      (make-span "1\\[mu\\]" "mu1")
+      (make-span "2\\[mu\\]" "mu2")
+      (make-span "3\\[mu\\]" "mu3")
+      (make-span "\\[mu\\]" "mu")
       (make-span "\\[Link\\]" "link")
-      (make-span "\\[Trash\\]" "trash")))
+      (make-span "\\[Trash\\]" "trash")
+      (make-span "\\[adam\\]" "adam")
+      (make-span "\\[anarch\\]" "anarch")
+      (make-span "\\[apex\\]" "apex")
+      (make-span "\\[criminal\\]" "criminal")
+      (make-span "\\[hb\\]" "hb")
+      (make-span "\\[jinteki\\]" "jinteki")
+      (make-span "\\[nbn\\]" "nbn")
+      (make-span "\\[shaper\\]" "shaper")
+      (make-span "\\[sunny\\]" "sunny")
+      (make-span "\\[weyland\\]" "weyland-consortium")
+      (make-span "\\[weyland-consortium\\]" "weyland-consortium")))
+
+(defn- card-text
+  "Generate text html representation a card"
+  [card]
+  [:div
+   [:h4 (:title card)]
+   (when-let [memory (:memoryunits card)]
+     (if (< memory 3)
+       [:div.anr-icon {:class (str "mu" memory)} ""]
+       [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]]))
+   (when-let [cost (:cost card)]
+     [:div.heading (str "Cost: " cost)])
+   (when-let [trash-cost (:trash card)]
+     [:div.heading (str "Trash cost: " trash-cost)])
+   (when-let [strength (:strength card)]
+     [:div.heading (str "Strength: " strength)])
+   (when-let [requirement (:advancementcost card)]
+     [:div.heading (str "Advancement requirement: " requirement)])
+   (when-let [agenda-point (:agendapoints card)]
+     [:div.heading (str "Agenda points: " agenda-point)])
+   (when-let [min-deck-size (:minimumdecksize card)]
+     [:div.heading (str "Minimum deck size: " min-deck-size)])
+   (when-let [influence-limit (:influencelimit card)]
+     [:div.heading (str "Influence limit: " influence-limit)])
+   (when-let [influence (:factioncost card)]
+     (when-let [faction (:faction card)]
+       [:div.heading "Influence "
+        [:span.influence
+         {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
+          :class                   (-> faction .toLowerCase (.replace " " "-"))}]]))
+   [:div.text
+    [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
+                                                   "" (str ": " (:subtype card)))]
+    [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]
+    [:div.pack
+     (when-let [pack (:setname card)]
+       (when-let [number (:number card)]
+         (str pack " " number)))]]
+   ])
 
 (defn card-view [card owner]
   (reify
@@ -70,44 +127,37 @@
     (init-state [_] {:showText false})
     om/IRenderState
     (render-state [_ state]
-      (let [ifShowText #(when (:showText state) %)]
-        (sab/html
-         [:div.card-preview.blue-shade
-          (ifShowText [:h4 (:title card)])
-          (ifShowText (when-let [memory (:memoryunits card)]
-                        (if (< memory 3)
-                          [:div.anr-icon {:class (str "mu" memory)} ""]
-                          [:div.heading (str "Memory: " memory) [:span.anr-icon.mu]])))
-          (ifShowText (when-let [cost (:cost card)]
-                        [:div.heading (str "Cost: " cost)]))
-          (ifShowText (when-let [trash-cost (:trash card)]
-                        [:div.heading (str "Trash cost: " trash-cost)]))
-          (ifShowText (when-let [strength (:strength card)]
-                        [:div.heading (str "Strength: " strength)]))
-          (ifShowText (when-let [requirement (:advancementcost card)]
-                        [:div.heading (str "Advancement requirement: " requirement)]))
-          (ifShowText (when-let [agenda-point (:agendatpoints card)]
-                        [:div.heading (str "Agenda points: " agenda-point)]))
-          (ifShowText (when-let [min-deck-size (:minimumdecksize card)]
-                        [:div.heading (str "Minimum deck size: " min-deck-size)]))
-          (ifShowText (when-let [influence-limit (:influencelimit card)]
-                        [:div.heading (str "Influence limit: " influence-limit)]))
-          (ifShowText (when-let [influence (:factioncost card)]
-                        (when-let [faction (:faction card)]
-                         [:div.heading "Influence "
-                          [:span.influence
-                           {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
-                            :class                   (-> faction .toLowerCase (.replace " " "-"))}]])))
-          (ifShowText [:div.text
-                       [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
-                                                             "" (str ": " (:subtype card)))]
-                       [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]])
-          (when-not (:showText state)
-            (when-let [url (image-url card)]
-              [:img {:src url
-                     :title (str (:setname card) (when (:art card) (str " [" (netrunner.account/alt-art-name (:art card)) "]")))
-                     :onError #(-> (om/set-state! owner {:showText true}))
-                     :onLoad #(-> % .-target js/$ .show)}]))])))))
+      (sab/html
+        [:div.card-preview.blue-shade
+         (if (:showText state)
+           (card-text card)
+           (when-let [url (image-url card)]
+             [:img {:src url
+                    :title (str (:setname card) (when (:art card) (str " [" (netrunner.account/alt-art-name (:art card)) "]")))
+                    :onClick #(do (.preventDefault %)
+                                (put! (:pub-chan (om/get-shared owner))
+                                      {:topic :card-selected :data card})
+                                nil)
+                    :onError #(-> (om/set-state! owner {:showText true}))
+                    :onLoad #(-> % .-target js/$ .show)}]))]))))
+
+(defn card-info-view [card owner]
+  (reify
+    om/IInitState
+    (init-state [_] {:selected-card nil})
+    om/IDidMount
+    (did-mount [_]
+      (let [events (sub (:notif-chan (om/get-shared owner)) :card-selected (chan))]
+        (go
+          (loop [e (<! events)]
+            (om/set-state! owner :selected-card (:data e))
+            (recur (<! events))))))
+    om/IRenderState
+    (render-state [_ {:keys [selected-card]}]
+      (sab/html
+        (if (nil? selected-card)
+          [:div]
+          (card-text selected-card))))))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
@@ -222,7 +272,11 @@
               [:h4 (first filter)]
               [:select {:value ((second filter) state)
                         :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
-               (options (last filter))]]))]
+               (options (last filter))]]))
+
+         [:div.blue-shade.panel.filters
+          (om/build card-info-view nil)
+          ]]
 
         [:div.card-list {:on-scroll #(handle-scroll % owner state)}
          (om/build-all card-view
@@ -245,4 +299,8 @@
                               (take (* (:page state) 28))))
                        {:key-fn #(str (:setname %) (:code %) (:art %))})]]))))
 
-(om/root card-browser app-state {:target (. js/document (getElementById "cardbrowser"))})
+(om/root card-browser
+         app-state
+         {:shared {:notif-chan notif-chan
+                   :pub-chan   pub-chan}
+          :target (. js/document (getElementById "cardbrowser"))})
