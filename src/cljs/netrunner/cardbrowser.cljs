@@ -28,8 +28,29 @@
 (defn make-span [text symbol class]
   (.replace text (js/RegExp. symbol "gi") (str "<span class='anr-icon " class "'></span>")))
 
+(defn show-alt-art?
+  "Is the current user allowed to use alternate art cards and do they want to see them?"
+  []
+  (and
+    (get-in @app-state [:options :show-alt-art] true)
+    (get-in @app-state [:user :special] false)))
+
 (defn image-url [card]
-  (str "/img/cards/" (:code card) ".png"))
+  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
+                (get-in @app-state [:options :alt-arts (keyword (:code card))]))
+        alt-card (get (:alt-arts @app-state) (:code card))
+        has-art (and (show-alt-art?)
+                     art
+                     (contains? (:alt_art alt-card) (keyword art)))
+        version-path (if has-art
+                       (get (:alt_art alt-card) (keyword art) (:code card))
+                       (:code card))]
+    (str "/img/cards/" version-path ".png")))
+
+(defn insert-alt-arts
+  "Add copies of all alt art cards to the list of cards"
+  [cards]
+  (reduce netrunner.deckbuilder/expand-alts () (reverse cards)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -112,6 +133,7 @@
            (card-text card)
            (when-let [url (image-url card)]
              [:img {:src url
+                    :title (str (:setname card) (when (:art card) (str " [" (netrunner.account/alt-art-name (:art card)) "]")))
                     :onClick #(do (.preventDefault %)
                                 (put! (:pub-chan (om/get-shared owner))
                                       {:topic :card-selected :data card})
@@ -173,7 +195,7 @@
     "Name" :title
     "Influence" :factioncost
     "Cost" :cost
-    "Faction" (juxt :side :faction)
+    "Faction" (juxt :side :faction :code)
     "Type" (juxt :side :type)
     "Set number" :number))
 
@@ -272,9 +294,10 @@
                               (filter-cards (:faction-filter state) :faction)
                               (filter-cards (:type-filter state) :type)
                               (match (.toLowerCase (:search-query state)))
+                              (insert-alt-arts)
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))
-                       {:key :code})]]))))
+                       {:key-fn #(str (:setname %) (:code %) (:art %))})]]))))
 
 (om/root card-browser
          app-state

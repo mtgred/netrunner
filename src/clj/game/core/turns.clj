@@ -116,10 +116,10 @@
   ([deck] (create-deck deck nil))
   ([deck user]
    (shuffle (mapcat #(map (fn [card]
-                            (let [card (or (server-card (:title card) user) card)
-                                  c (make-card card)]
+                            (let [server-card (or (server-card (:title card) user) card)
+                                  c (assoc (make-card server-card) :art (:art card))]
                               (if-let [init (:init (card-def c))] (merge c init) c)))
-                          (repeat (:qty %) (:card %)))
+                          (repeat (:qty %) (assoc (:card %) :art (:art %))))
                     (shuffle (vec (:cards deck)))))))
 
 (defn make-rid

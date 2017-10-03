@@ -16,12 +16,21 @@
 (defonce lock (atom false))
 
 (defn image-url [{:keys [side code] :as card}]
-  (let [alt-art (get-in @app-state [:alt-arts code])
-        version (when (and (get-in @game-state [(keyword (lower-case side)) :user :special])
-                           (get-in @app-state [:options :show-alt-art])
-                           alt-art)
-                  (first (:versions alt-art)))]
-    (str "/img/cards/" code (when version (str "-" version)) ".png")))
+  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
+                (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
+        art-options (:alt_art (get (:alt-arts @app-state) code))
+        special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
+        special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
+        viewer-wants-art (get-in @app-state [:options :show-alt-art])
+        show-art (and special-user special-wants-art viewer-wants-art)
+        art-available (and art-options (not-empty art-options))
+        has-art (and art-options
+                     art
+                     (contains? art-options (keyword art)))
+        version-path (if (and has-art show-art)
+                       (get art-options (keyword art) (:code card))
+                       (:code card))]
+    (str "/img/cards/" version-path ".png")))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
@@ -337,10 +346,11 @@
 
 (defn prepare-cards []
   (->> (:cards @app-state)
-       (group-by :title)
-       (map get-non-alt-art)
-       (sort-by #(count (:title %1)))
-       (reverse)))
+    (filter #(not (:replaced_by %)))
+    (group-by :title)
+    (map get-non-alt-art)
+    (sort-by #(count (:title %1)))
+    (reverse)))
 
 (def prepared-cards (memoize prepare-cards))
 
