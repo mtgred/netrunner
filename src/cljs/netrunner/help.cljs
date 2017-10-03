@@ -150,7 +150,11 @@
                              "Some examples would be: learning the game, learning the site's interface, testing a completely new and crazy deck idea, "
                              "testing future spoilers, playing on a touchscreen, playing at work and likely to have to quit on short notice, etc. "
                              "All of these circumstances may cause needless frustration of players expecting to play a game in a competitive setting."])}
-
+            {:id "aboutstats"
+             :title "Why are the deck & user stats not updated instantly??"
+             :content [:p "Deck & user stats are only updated when everyone has left a game."
+                       "This is to allow re-joining of games, and also clean detection of a finalised game"
+                       "Note: Games commenced are logged as soon as you start a game"]}
             )}
     {:id "cards"
      :title "Cards and Specific Interactions"
