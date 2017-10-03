@@ -9,6 +9,23 @@
       (and (has-flag? state side :persistent :genetics-trigger-twice)
            (second-event? state side event))))
 
+(defn- shard-constructor
+  "Function for constructing a Shard card"
+  ([target-server message effect-fn] (shard-constructor target-server message nil effect-fn))
+  ([target-server message ability-options effect-fn]
+   (letfn [(can-install-shard? [state run] (and run
+                                                (= (:server run) [target-server])
+                                                (zero? (:position run))
+                                                (not (:access @state))))]
+     {:abilities [(merge {:effect (effect (trash card {:cause :ability-cost}) (effect-fn eid card target))
+                          :msg message}
+                         ability-options)]
+      :install-cost-bonus (req (when (can-install-shard? state run) [:credit -15 :click -1]))
+      :effect (req (when (can-install-shard? state run)
+                     (when-completed (register-successful-run state side (:server run))
+                                     (do (swap! state update-in [:runner :prompt] rest)
+                                         (handle-end-run state side)))))})))
+
 ;;; Card definitions
 (def cards-resources
   {"Aaron Marrón"
@@ -559,14 +576,7 @@
     :abilities [ability]})
 
    "Eden Shard"
-   {:abilities [{:effect (effect (trash card {:cause :ability-cost}) (draw :corp 2))
-                 :msg "force the Corp to draw 2 cards"}]
-    :install-cost-bonus (req (if (and run (= (:server run) [:rd]) (zero? (:position run)))
-                               [:credit -15 :click -1] nil))
-    :effect (req (when (and run (= (:server run) [:rd]) (zero? (:position run)))
-                   (when-completed (register-successful-run state side (:server run))
-                                   (do (swap! state update-in [:runner :prompt] rest)
-                                       (handle-end-run state side)))))}
+   (shard-constructor :rd "force the Corp to draw 2 cards" (req (draw state :corp 2)))
 
    "Emptied Mind"
    (let [ability {:req (req (= 0 (count (:hand runner))))
@@ -713,21 +723,15 @@
                               card nil)))}}}
 
    "Hades Shard"
-   {:abilities [{:delayed-completion true
-                 :msg "access all cards in Archives"
-                 :effect (req (trash state side card {:cause :ability-cost})
-                              (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                              (when (:run @state)
-                                (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0)))
-                              (when-completed (trigger-event-sync state side :pre-access :archives)
-                                              (resolve-ability state :runner
-                                                               (choose-access (get-in @state [:corp :discard]) '(:archives)) card nil)))}]
-    :install-cost-bonus (req (if (and run (= (:server run) [:archives]) (= 0 (:position run)))
-                               [:credit -15 :click -1] nil))
-    :effect (req (when (and run (= (:server run) [:archives]) (= 0 (:position run)))
-                   (when-completed (register-successful-run state side (:server run))
-                                   (do (swap! state update-in [:runner :prompt] rest)
-                                       (handle-end-run state side)))))}
+   (shard-constructor :archives "access all cards in Archives" {:delayed-completion true}
+                      (req (trash state side card {:cause :ability-cost})
+                           (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
+                           (when (:run @state)
+                             (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0)))
+                           (when-completed (trigger-event-sync state side :pre-access :archives)
+                                           (resolve-ability state :runner
+                                                            (choose-access (get-in @state [:corp :discard])
+                                                                           '(:archives)) card nil))))
 
    "Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"
@@ -1651,15 +1655,8 @@
     :events {:runner-turn-begins ability}})
 
    "Utopia Shard"
-   {:abilities [{:effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
-                                 (trash card {:cause :ability-cost}))
-                 :msg "force the Corp to discard 2 cards from HQ at random"}]
-    :install-cost-bonus (req (if (and run (= (:server run) [:hq]) (zero? (:position run)))
-                               [:credit -15 :click -1] nil))
-    :effect (req (when (and run (= (:server run) [:hq]) (zero? (:position run)))
-                   (when-completed (register-successful-run state side (:server run))
-                                   (do (swap! state update-in [:runner :prompt] rest)
-                                       (handle-end-run state side)))))}
+   (shard-constructor :hq "force the Corp to discard 2 cards from HQ at random"
+                      (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))))
 
    "Virus Breeding Ground"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}
