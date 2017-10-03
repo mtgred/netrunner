@@ -1106,12 +1106,12 @@
                                                  (play-instant target {:no-additional-cost true}))}
 
    "Political Graffiti"
-   (let [update-agendapoints (fn [state side target amount]
+   (let [update-agenda-points (fn [state side target amount]
                                (set-prop state side (get-card state target) :agendapoints (+ amount (:agendapoints (get-card state target))))
                                (gain-agenda-point state side amount))]
      {:events {:purge {:effect (effect (trash card))}}
       :trash-effect {:effect (req (let [current-side (get-scoring-owner state {:cid (:agenda-cid card)})]
-                                    (update-agendapoints state current-side (find-cid (:agenda-cid card) (get-in @state [current-side :scored])) 1)))}
+                                    (update-agenda-points state current-side (find-cid (:agenda-cid card) (get-in @state [current-side :scored])) 1)))}
       :effect (effect (run :archives
                         {:req (req (= target :archives))
                          :replace-access
@@ -1121,7 +1121,7 @@
                           :effect (req (host state :runner (get-card state target)
                                          ; keep host cid in :agenda-cid because `trash` will clear :host
                                          (assoc card :zone [:discard] :installed true :agenda-cid (:cid (get-card state target))))
-                                       (update-agendapoints state :corp target -1))}} card))})
+                                       (update-agenda-points state :corp target -1))}} card))})
 
    "Populist Rally"
    {:req (req (seq (filter #(has-subtype? % "Seedy") (all-installed state :runner))))
