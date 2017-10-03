@@ -75,10 +75,10 @@
                [:div "Completed: " completed " (" pc "%)"]
                [:div "Not completed: " incomplete  " (" pi "%)"]
                [:div "Won: " win  " (" pw "%)"]
-               [:div "Lost: " lose  " (" pl "%)"]]]
-          [:div.button-bar
-           [:button {:on-click #(refresh-user-stats owner)} "Refresh Stats"]
-           [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]])))))
+               [:div "Lost: " lose  " (" pl "%)"]]
+             [:div.button-bar
+              [:button {:on-click #(refresh-user-stats owner)} "Refresh Stats"]
+              [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]])))))
 
 (defn stats [{:keys [user]} owner]
   (om/component
