@@ -75,14 +75,14 @@
 (defn costs-to-symbol
   "Used during steal to print runner prompt for payment"
   [costs]
-  (clojure.string/join ", " (map #(let [key (first %) value (last %)]
-                                   (case key
-                                     :credit (str value " [Credits]")
-                                     :click (reduce str (for [i (range value)] "[Click]"))
-                                     :net-damage (str value " net damage")
-                                     :mill (str value " card mill")
-                                     :hardware (str value " installed hardware")
-                                     (str value (str key)))) (partition 2 (flatten costs)))))
+  (join ", " (map #(let [key (first %) value (last %)]
+                     (case key
+                       :credit (str value " [Credits]")
+                       :click (reduce str (for [i (range value)] "[Click]"))
+                       :net-damage (str value " net damage")
+                       :mill (str value " card mill")
+                       :hardware (str value " installed hardware")
+                       (str value (str key)))) (partition 2 (flatten costs)))))
 
 (defn vdissoc [v n]
   (vec (concat (subvec v 0 n) (subvec v (inc n)))))
@@ -102,7 +102,7 @@
       (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
   (catch Exception e nil)))
 
-(def safe-split (fnil clojure.string/split ""))
+(def safe-split (fnil split ""))
 
 (defn dissoc-in
   "Dissociates an entry from a nested associative structure returning a new
@@ -288,3 +288,20 @@
     (if-not (empty? left)
       (remove-subtypes-once part left)
       part)))
+
+(defn pluralize
+  "Makes a string plural based on the number n. Takes specific suffixes for singular and plural cases if necessary."
+  ([string n] (pluralize string "s" n))
+  ([string suffix n] (pluralize string "" suffix n))
+  ([string single-suffix plural-suffix n]
+   (if (or (= 1 n)
+           (= -1 n))
+     (str string single-suffix)
+     (str string plural-suffix))))
+
+(defn quantify
+  "Ensures the string is correctly pluralized based on the number n."
+  ([n string] (str n " " (pluralize string n)))
+  ([n string suffix] (str n " " (pluralize string suffix n)))
+  ([n string single-suffix plural-suffix]
+   (str n " " (pluralize string single-suffix plural-suffix n))))

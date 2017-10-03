@@ -29,17 +29,17 @@
 
    "Awakening Center"
    {:can-host (req (is-type? target "ICE"))
-    :abilities [{:label "Host a piece of bioroid ICE"
+    :abilities [{:label "Host a piece of Bioroid ICE"
                  :cost [:click 1]
-                 :prompt "Choose a piece of bioroid ICE to host on Awakening Center"
+                 :prompt "Select a piece of Bioroid ICE to host on Awakening Center"
                  :choices {:req #(and (ice? %)
                                       (has-subtype? % "Bioroid")
                                       (in-hand? %))}
-                 :msg "host a piece of bioroid ICE"
+                 :msg "host a piece of Bioroid ICE"
                  :effect (req (corp-install state side target card {:no-install-cost true}))}
                 {:req (req (and this-server (= (get-in @state [:run :position]) 0)))
-                 :label "Rez a hosted piece of bioroid ICE"
-                 :prompt "Choose a piece of bioroid ICE to rez" :choices (req (:hosted card))
+                 :label "Rez a hosted piece of Bioroid ICE"
+                 :prompt "Choose a piece of Bioroid ICE to rez" :choices (req (:hosted card))
                  :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
                  :effect (effect (rez-cost-bonus -7) (rez target)
                                  (update! (dissoc (get-card state target) :facedown))
@@ -231,7 +231,7 @@
    "Disposable HQ"
    (letfn [(dhq [n i]
              {:req (req (pos? i))
-              :prompt "Choose a card in HQ to add to the bottom of R&D"
+              :prompt "Select a card in HQ to add to the bottom of R&D"
               :choices {:req #(and (= (:side %) "Corp")
                                    (in-hand? %))}
               :msg "add a card to the bottom of R&D"
@@ -383,7 +383,7 @@
    {:abilities [{:req (req this-server)
                  :label "[Trash]: Start a Psi game"
                  :msg "start a Psi game"
-                 :psi {:not-equal {:prompt "Choose a rezzed piece of ICE to resolve one of its subroutines"
+                 :psi {:not-equal {:prompt "Select a rezzed piece of ICE to resolve one of its subroutines"
                                    :choices {:req #(and (ice? %)
                                                         (rezzed? %))}
                                    :msg (msg "resolve a subroutine on " (:title target))}}
@@ -400,7 +400,7 @@
    {:abilities
     [{:req (req this-server)
       :label "Swap the ICE being approached with a piece of ICE from HQ"
-      :prompt "Choose a piece of ICE"
+      :prompt "Select a piece of ICE"
       :choices {:req #(and (ice? %)
                            (in-hand? %))}
       :once :per-run
@@ -536,7 +536,8 @@
                                 card :can-steal
                                 (fn [state _ card]
                                   (if-not (some #(= (:title %) (:title card)) (:scored runner))
-                                    ((constantly false) (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
+                                    ((constantly false)
+                                      (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
                                     true))))}]
      {:trash-effect
               {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
@@ -703,7 +704,7 @@
            :effect (effect (resolve-ability
                              {:optional
                               {:prompt (msg "Rez another card with Surat City Grid?")
-                               :yes-ability {:prompt "Choose a card to rez"
+                               :yes-ability {:prompt "Select a card to rez"
                                              :choices {:req #(and (not (rezzed? %))
                                                                   (not (is-type? % "Agenda")))}
                                              :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
@@ -719,7 +720,7 @@
                  :effect (req (let [icename (:title (get-in (:ices (card->server state card)) [(:position run)]))]
                                 (resolve-ability
                                   state side
-                                  {:prompt "Choose a copy of the ICE just passed"
+                                  {:prompt "Select a copy of the ICE just passed"
                                    :choices {:req #(and (in-hand? %)
                                                         (ice? %)
                                                         (= (:title %) icename))}
@@ -763,7 +764,7 @@
                            :effect (effect (gain :credit 1))}}}}
 
    "Tyrs Hand"
-   {:abilities [{:label "[Trash]: Prevent a subroutine on a Bioroid from being broken"
+   {:abilities [{:label "[Trash]: Prevent a subroutine on a piece of Bioroid ICE from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
                                 (has-subtype? current-ice "Bioroid")))
                  :effect (effect (trash card))
