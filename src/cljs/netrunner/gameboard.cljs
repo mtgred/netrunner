@@ -137,6 +137,10 @@
       (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
         (send-command "typing" {:user (:user @app-state)})))))
 
+(defn mute-spectators [mute-state]
+  (send {:action "mute-spectators" :gameid (:gameid @app-state)
+         :user (:user @app-state) :side (:side @game-state) :mutestate mute-state}))
+
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]
             (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
@@ -372,7 +376,7 @@
     (put! channel false))
   nil)
 
-(defn log-pane [messages owner]
+(defn log-pane [cursor owner]
   (reify
     om/IDidUpdate
     (did-update [this prev-props prev-state]
@@ -393,7 +397,7 @@
        [:div.log {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                   :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
         [:div.panel.blue-shade.messages {:ref "msg-list"}
-         (for [msg messages]
+         (for [msg (:log cursor)]
            (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
              (if (= (:user msg) "__system__")
                [:div.system (for [item (get-message-parts (:text msg))] (create-span item))]
@@ -402,11 +406,14 @@
                 [:div.content
                  [:div.username (get-in msg [:user :username])]
                  [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
-        [:form {:on-submit #(send-msg % owner)
-                :on-input #(send-typing % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]
-        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
-          [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])]))))
+        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing cursor))))
+          [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])
+        (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games @app-state))]
+          (when (or (not-spectator? game-state app-state)
+                    (not (:mutespectators game)))
+            [:form {:on-submit #(send-msg % owner)
+                    :on-input #(send-typing % owner)}
+             [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]))]))))
 
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -1241,7 +1248,8 @@
                     (case implemented
                       nil [:span.unimplemented "Unimplemented"]
                       [:span.impl-msg implemented])])))
-             (om/build log-pane (:log cursor))]
+             (om/build log-pane cursor)]
+             ;; (om/build log-pane (:log cursor))]
 
             [:div.centralpane
              (om/build board-view {:player opponent :run run})
