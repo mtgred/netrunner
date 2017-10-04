@@ -437,7 +437,8 @@
           (when (or (not-spectator? game-state app-state)
                     (not (:mutespectators game)))
             [:form {:on-submit #(send-msg % owner)
-                    :on-input #(send-typing % owner)}
+                    ;:on-input #(send-typing % owner)
+                    }
              [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]))]))))
 
 (defn handle-dragstart [e cursor]
