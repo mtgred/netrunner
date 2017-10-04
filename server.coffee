@@ -130,6 +130,10 @@ requester.connect("tcp://#{clojure_hostname}:1043")
 
 sendGameResponse = (game, response) ->
   diffs = response.runnerdiff
+  console.log("RunnerDiffs:")
+  console.log(diffs)
+  console.log("CorpDiffs:")
+  console.log(response.corpdiff)
 
   for player in game.players
     socket = io.sockets.connected[player.id]
@@ -194,6 +198,8 @@ io.use (socket, next) ->
 chat = io.of('/chat').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
     msg.date = new Date()
+    console.log("GeneralChatMsgtoDB:")
+    console.log(msg)
     chat.emit('netrunner', msg)
     db.collection('messages').insert msg, (err, result) ->
 

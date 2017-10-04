@@ -130,12 +130,16 @@
 (defn not-spectator? [game-state app-state]
   (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state)))
 
+(defn log [& args]
+  (.apply js/console.log js/console (to-array args)))
+
 (defn send-command
   ([command] (send-command command nil))
   ([command args]
    (when-not @lock
      (try (js/ga "send" "event" "game" command) (catch js/Error e))
      (reset! lock true)
+     (log command args)
      (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
             :user (:user @app-state)
             :command command :args args}))))
@@ -379,6 +383,7 @@
         splitted (.split with-image-codes (js/RegExp. (str "(" ci-open "[^" ci-close "]*" ci-close ")") "g"))
         oldstyle (for [i splitted]
                    (seq (.split i (js/RegExp. (str "([1-3]\\[mu\\]|\\[[^\\]]*\\])") "g"))))]
+    (log "message text:" text)
     (flatten oldstyle)))
 
 (def get-message-parts (memoize get-message-parts-impl))
