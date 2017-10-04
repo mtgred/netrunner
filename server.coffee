@@ -156,6 +156,8 @@ requester.on 'message', (data) ->
       losingDeck = response.state["losing-deck-id"]
       winner = response.state["winning-user"]
       loser = response.state["losing-user"]
+      winningSide = response.state.winner
+      losingSide = response.state.loser
       g = {
         winner: response.state.winner
         reason: response.state.reason
@@ -168,10 +170,16 @@ requester.on 'message', (data) ->
         throw err if err
       db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
         throw err if err
-      db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.wins" : 1}}, (err) ->
-        throw err if err
-      db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.loses" : 1}}, (err) ->
-        throw err if err
+      if winningSide is "corp"
+        db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.wins": 1, "stats.wins-corp" : 1}}, (err) ->
+          throw err if err
+        db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.loses": 1, "stats.loses-runner" : 1}}, (err) ->
+          throw err if err
+      else if winningSide is "runner"
+        db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.wins": 1, "stats.wins-runner" : 1}}, (err) ->
+          throw err if err
+        db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.loses": 1, "stats.loses-corp" : 1}}, (err) ->
+          throw err if err
       db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
         throw err if err
   else
@@ -378,9 +386,9 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
               }
               db.collection('gamestats').insert g, (err, data) ->
                 console.log(err) if err
-              db.collection('users').update {username: corp.user.username}, {$inc: {"stats.games-started" : 1}}, (err) ->
+              db.collection('users').update {username: corp.user.username}, {$inc: {"stats.games-started" : 1, "stats.games-started-corp" : 1}}, (err) ->
                 console.log(err) if err
-              db.collection('users').update {username: runner.user.username}, {$inc: {"stats.games-started" : 1}}, (err) ->
+              db.collection('users').update {username: runner.user.username}, {$inc: {"stats.games-started" : 1, "stats.games-started-runner" : 1}}, (err) ->
                 console.log(err) if err
             game.started = true
             game.originalPlayers = game.players.slice(0)

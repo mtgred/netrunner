@@ -29,7 +29,19 @@
             (om/set-state! owner :games-completed 0)
             (om/set-state! owner :wins 0)
             (om/set-state! owner :loses 0)
-            (om/set-state! owner :dnf 0))))))
+            (om/set-state! owner :dnf 0)
+            ; Corp
+            (om/set-state! owner :games-started-corp 0)
+            (om/set-state! owner :games-completed-corp 0)
+            (om/set-state! owner :wins-corp 0)
+            (om/set-state! owner :loses-corp 0)
+            (om/set-state! owner :dnf-corp 0)
+            ; Runner
+            (om/set-state! owner :games-started-runner 0)
+            (om/set-state! owner :games-completed-runner 0)
+            (om/set-state! owner :wins-runner 0)
+            (om/set-state! owner :loses-runner 0)
+            (om/set-state! owner :dnf-runner 0))))))
 
 (defn refresh-user-stats [owner]
   (authenticated
@@ -40,7 +52,19 @@
             (om/set-state! owner :games-completed (:games-completed result))
             (om/set-state! owner :wins (:wins result))
             (om/set-state! owner :loses (:loses result))
-            (om/set-state! owner :dnf (- (:games-started result) (:games-completed result))))))))
+            (om/set-state! owner :dnf (- (:games-started result) (:games-completed result)))
+            ; Corp
+            (om/set-state! owner :games-started-corp (:games-started-corp result))
+            (om/set-state! owner :games-completed-corp (:games-completed-corp result))
+            (om/set-state! owner :wins-corp (:wins-corp result))
+            (om/set-state! owner :loses-corp (:loses-corp result))
+            (om/set-state! owner :dnf-corp (- (:games-started-corp result) (:games-completed-corp result)))
+            ; Runner
+            (om/set-state! owner :games-started-runner (:games-started-runner result))
+            (om/set-state! owner :games-completed-runner (:games-completed-runner result))
+            (om/set-state! owner :wins-runner (:wins-runner result))
+            (om/set-state! owner :loses-runner (:loses-runner result))
+            (om/set-state! owner :dnf-runner (- (:games-started-runner result) (:games-completed-runner result))))))))
 
 (defn stats-view [user owner]
   (reify
@@ -53,7 +77,19 @@
       (om/set-state! owner :games-completed (get-in @app-state [:stats :games-completed]))
       (om/set-state! owner :wins (get-in @app-state [:stats :wins]))
       (om/set-state! owner :loses (get-in @app-state [:stats :loses]))
-      (om/set-state! owner :dnf (- (om/get-state owner :games-started) (om/get-state owner :games-completed))))
+      (om/set-state! owner :dnf (- (om/get-state owner :games-started) (om/get-state owner :games-completed)))
+      ;; Corp
+      (om/set-state! owner :games-started-corp (get-in @app-state [:stats :games-started-corp]))
+      (om/set-state! owner :games-completed-corp (get-in @app-state [:stats :games-completed-corp]))
+      (om/set-state! owner :wins-corp (get-in @app-state [:stats :wins-corp]))
+      (om/set-state! owner :loses-corp (get-in @app-state [:stats :loses-corp]))
+      (om/set-state! owner :dnf-corp (- (om/get-state owner :games-started-corp) (om/get-state owner :games-completed-corp)))
+      ;; Runner
+      (om/set-state! owner :games-started-runner (get-in @app-state [:stats :games-started-runner]))
+      (om/set-state! owner :games-completed-runner (get-in @app-state [:stats :games-completed-runner]))
+      (om/set-state! owner :wins-runner (get-in @app-state [:stats :wins-runner]))
+      (om/set-state! owner :loses-runner (get-in @app-state [:stats :loses-runner]))
+      (om/set-state! owner :dnf-runner (- (om/get-state owner :games-started-runner) (om/get-state owner :games-completed-runner))))
 
     om/IRenderState
     (render-state [this state]
@@ -66,9 +102,29 @@
               lose (notnum->zero (om/get-state owner :loses))
               pl (notnum->zero (num->percent lose started))
               incomplete (notnum->zero (om/get-state owner :dnf))
-              pi (notnum->zero (num->percent incomplete started))]
-          [:div
-            [:div.panel.blue-shade
+              pi (notnum->zero (num->percent incomplete started))
+              ;; Corp Stats
+              started-corp (notnum->zero (om/get-state owner :games-started-corp))
+              completed-corp (notnum->zero (om/get-state owner :games-completed-corp))
+              pc-corp (notnum->zero (num->percent completed-corp started-corp))
+              win-corp (notnum->zero (om/get-state owner :wins-corp))
+              pw-corp (notnum->zero (num->percent win-corp started-corp))
+              lose-corp (notnum->zero (om/get-state owner :loses-corp))
+              pl-corp (notnum->zero (num->percent lose-corp started-corp))
+              incomplete-corp (notnum->zero (om/get-state owner :dnf-corp))
+              pi-corp (notnum->zero (num->percent incomplete-corp started-corp))
+              ;; Runner Stats
+              started-runner (notnum->zero (om/get-state owner :games-started-runner))
+              completed-runner (notnum->zero (om/get-state owner :games-completed-runner))
+              pc-runner (notnum->zero (num->percent completed-runner started-runner))
+              win-runner (notnum->zero (om/get-state owner :wins-runner))
+              pw-runner (notnum->zero (num->percent win-runner started-runner))
+              lose-runner (notnum->zero (om/get-state owner :loses-runner))
+              pl-runner (notnum->zero (num->percent lose-runner started-runner))
+              incomplete-runner (notnum->zero (om/get-state owner :dnf-runner))
+              pi-runner (notnum->zero (num->percent incomplete-runner started-runner))]
+          [:div.blue-shade.panel.stats-main
+            [:div.stats-left
              [:h2 "Game Stats"]
               [:section
                [:div "Started: " started]
@@ -78,7 +134,23 @@
                [:div "Lost: " lose  " (" pl "%)"]]
              [:div.button-bar
               [:button {:on-click #(refresh-user-stats owner)} "Refresh Stats"]
-              [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]])))))
+              [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]
+           [:div.stats-middle
+            [:h2 "Corp Stats"]
+            [:section
+             [:div "Started: " started-corp]
+             [:div "Completed: " completed-corp " (" pc-corp "%)"]
+             [:div "Not completed: " incomplete-corp  " (" pi-corp "%)"]
+             [:div "Won: " win-corp  " (" pw-corp "%)"]
+             [:div "Lost: " lose-corp  " (" pl-corp "%)"]]]
+           [:div.stats-right
+            [:h2 "Runner Stats"]
+            [:section
+             [:div "Started: " started-runner]
+             [:div "Completed: " completed-runner " (" pc-runner "%)"]
+             [:div "Not completed: " incomplete-runner  " (" pi-runner "%)"]
+             [:div "Won: " win-runner  " (" pw-runner "%)"]
+             [:div "Lost: " lose-runner  " (" pl-runner "%)"]]]])))))
 
 (defn stats [{:keys [user]} owner]
   (om/component
