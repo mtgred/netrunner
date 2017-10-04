@@ -238,9 +238,10 @@
       (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
       (assoc card :display-name (:title card)))))
 
-(defn- expand-alts
+(defn expand-alts
   [acc card]
-  (let [alt-arts (keys (:alt_art card))]
+  (let [alt-card (get (:alt-arts @app-state) (:code card))
+        alt-arts (keys (:alt_art alt-card))]
     (if (and alt-arts
              (show-alt-art?))
     (->> alt-arts
@@ -259,7 +260,8 @@
         (->> (:cards @app-state)
           (filter #(and (= (:side %) side)
                         (= (:type %) "Identity")
-                        (alt-art? %))))
+                        (alt-art? %)))
+          (filter #(not (contains? %1 :replaced_by))))
         all-titles (map :title cards)
         add-deck (partial add-deck-name all-titles)]
     (->> cards
@@ -320,7 +322,7 @@
     "10019"                                                 ; Museum of History
     (<= 50 (card-count cards))
     "10038"                                                 ; PAD Factory
-    (= 3 (card-count (filter #(= "01109" (:code (:card %))) cards)))
+    (= 3 (card-count (filter #(= "PAD Campaign" (:title (:card %))) cards)))
     "10076"                                                 ; Mumbad Virtual Tour
     (<= 7 (card-count (filter #(= "Asset" (:type (:card %))) cards)))
     ;; Not an alliance card
@@ -627,8 +629,9 @@
 (def zws "\u200B")                                          ; zero-width space for wrapping dots
 (def influence-dot (str "●" zws))                           ; normal influence dot
 (def banned-dot (str "✘" zws))                              ; on the banned list
-(def restricted-dot (str "🦄" zws))                          ; on the restricted list
+(def restricted-dot (str "🦄" zws))                         ; on the restricted list
 (def alliance-dot (str "○" zws))                            ; alliance free-inf dot
+(def rotated-dot (str "↻" zws))                             ; on the rotation list
 
 (defn- make-dots
   "Returns string of specified dots and number. Uses number for n > 20"
@@ -810,23 +813,19 @@
                          :else "invalid")
                 :on-mouse-enter #(put! zoom-channel line)
                 :on-mouse-leave #(put! zoom-channel false)} name]
-        (when (or banned (not infaction))
-          (let [influence (* (:factioncost card) modqty)]
-            (list " "
-                  [:span.influence
-                   {:class (faction-label card)
-                    :dangerouslySetInnerHTML
-                    #js {:__html
+        (let [influence (* (:factioncost card) modqty)]
+          (list " "
+                [:span.influence
+                 {:class (faction-label card)
+                  :dangerouslySetInnerHTML
+                  #js {:__html
+                       (if banned
+                         banned-dot
                          (str
-                           (if banned
-                             banned-dot
-                             (do
-                               ;; normal influence
-                               (when (and (not infaction) (not allied)) (influence-dots influence))
-                               ;; satisfies alliance criterion
-                               (when allied (alliance-dots influence))
-                               ;; restricted card
-                               (when restricted restricted-dot))))}}])))])
+                           (when (and (not infaction) (not allied)) (influence-dots influence))
+                           (when allied (alliance-dots influence))
+                           (when restricted restricted-dot)
+                           (when (:rotated card) rotated-dot)))}}]))])
      card)])
 
 (defn- create-identity

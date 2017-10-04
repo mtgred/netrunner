@@ -10,7 +10,7 @@
   "scripts": {
     "start": "coffee server.coffee",
     "postinstall": "bower install",
-    "fetch": "cd data/ && coffee fetch.coffee",
+    "fetch": "cd data/ && coffee fetch.coffee && coffee link_cards.coffee",
     "promo": "cd data/ && mongo netrunner --eval \"db.altarts.drop()\" && mongoimport --db=netrunner --collection=altarts --file=promo.json --jsonArray && coffee add_art.coffee",
     "rotate": "cd data/ && coffee rotate.coffee",
     "link_cards": "cd data/ && coffee link_cards.coffee",

@@ -50,6 +50,33 @@
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
+(deftest ben-musashi-rd
+  ;; Ben Musashi - on R&D access
+  (do-game
+    (new-game (default-corp [(qty "Ben Musashi" 1) (qty "House of Knives" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Ben Musashi"])
+    (play-from-hand state :corp "Ben Musashi" "R&D")
+    (take-credits state :corp)
+    (let [bm (get-content state :rd 0)]
+      (core/rez state :corp bm)
+      (run-empty-server state "R&D")
+      ;; runner now chooses which to access.
+      (prompt-choice :runner "Card from deck")
+      ;; prompt should be asking for the 2 net damage cost
+      (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
+          "Prompt to pay 2 net damage")
+      (prompt-choice :runner "No")
+      (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
+      (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+      (prompt-choice :runner "Ben Musashi")
+      (prompt-choice :runner "No")
+      (run-empty-server state "R&D")
+      (prompt-choice :runner "Card from deck")
+      (prompt-choice :runner "Yes")
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
+      (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
+
 (deftest ben-musashi-trash
   ;; Ben Musashi - pay even when trashed
   (do-game

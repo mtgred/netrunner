@@ -18,7 +18,7 @@
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
-        art-options (om/value (:alt_art card))
+        art-options (:alt_art (get (:alt-arts @app-state) code))
         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
         viewer-wants-art (get-in @app-state [:options :show-alt-art])
@@ -28,7 +28,7 @@
                      art
                      (contains? art-options (keyword art)))
         version-path (if (and has-art show-art)
-                       (get (:alt_art card) (keyword art) (:code card))
+                       (get art-options (keyword art) (:code card))
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
@@ -61,6 +61,20 @@
   (swap! game-state merge game)
   (swap! game-state assoc :side side)
   (swap! last-state #(identity @game-state)))
+
+
+(defn launch-game [game]
+  (let [user (:user @app-state)
+        side (if (= (get-in game [:runner :user :_id]) (:_id user))
+               :runner
+               (if (= (get-in game [:corp :user :_id]) (:_id user))
+                 :corp
+                 :spectator))]
+    (swap! app-state assoc :side side)
+    (init-game game side))
+  (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
+  (-> "#gamelobby" js/$ .fadeOut)
+  (-> "#gameboard" js/$ .fadeIn))
 
 (declare toast)
 
@@ -104,6 +118,7 @@
       (let [msg (<! socket-channel)]
         (reset! lock false)
         (case (:type msg)
+          "rejoin" (launch-game (:state msg))
           ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
                                                                  #(assoc (:state msg) :side (:side @game-state))))
                                            (swap! last-state #(identity @game-state)))
@@ -145,6 +160,10 @@
       (send-command "typingstop" {:user (:user @app-state)})
       (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
         (send-command "typing" {:user (:user @app-state)})))))
+
+(defn mute-spectators [mute-state]
+  (send {:action "mute-spectators" :gameid (:gameid @app-state)
+         :user (:user @app-state) :side (:side @game-state) :mutestate mute-state}))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]
@@ -327,10 +346,11 @@
 
 (defn prepare-cards []
   (->> (:cards @app-state)
-       (group-by :title)
-       (map get-non-alt-art)
-       (sort-by #(count (:title %1)))
-       (reverse)))
+    (filter #(not (:replaced_by %)))
+    (group-by :title)
+    (map get-non-alt-art)
+    (sort-by #(count (:title %1)))
+    (reverse)))
 
 (def prepared-cards (memoize prepare-cards))
 
@@ -381,7 +401,7 @@
     (put! channel false))
   nil)
 
-(defn log-pane [messages owner]
+(defn log-pane [cursor owner]
   (reify
     om/IDidUpdate
     (did-update [this prev-props prev-state]
@@ -402,7 +422,7 @@
        [:div.log {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                   :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
         [:div.panel.blue-shade.messages {:ref "msg-list"}
-         (for [msg messages]
+         (for [msg (:log cursor)]
            (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
              (if (= (:user msg) "__system__")
                [:div.system (for [item (get-message-parts (:text msg))] (create-span item))]
@@ -411,11 +431,14 @@
                 [:div.content
                  [:div.username (get-in msg [:user :username])]
                  [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
-        [:form {:on-submit #(send-msg % owner)
-                :on-input #(send-typing % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]
-        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
-          [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])]))))
+        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing cursor))))
+          [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])
+        (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games @app-state))]
+          (when (or (not-spectator? game-state app-state)
+                    (not (:mutespectators game)))
+            [:form {:on-submit #(send-msg % owner)
+                    :on-input #(send-typing % owner)}
+             [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]))]))))
 
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -1250,7 +1273,8 @@
                     (case implemented
                       nil [:span.unimplemented "Unimplemented"]
                       [:span.impl-msg implemented])])))
-             (om/build log-pane (:log cursor))]
+             (om/build log-pane cursor)]
+             ;; (om/build log-pane (:log cursor))]
 
             [:div.centralpane
              (om/build board-view {:player opponent :run run})
