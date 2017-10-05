@@ -166,10 +166,12 @@ requester.on 'message', (data) ->
         runnerAgenda: response.state.runner["agenda-point"]
         corpAgenda: response.state.corp["agenda-point"]
       }
-      db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
-        throw err if err
-      db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
-        throw err if err
+      if response.state[winningSide].options.deckstats is true
+        db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
+          throw err if err
+      if response.state[losingSide].options.deckstats is true
+        db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
+          throw err if err
       if winningSide is "corp"
         db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.wins": 1, "stats.wins-corp" : 1}}, (err) ->
           throw err if err

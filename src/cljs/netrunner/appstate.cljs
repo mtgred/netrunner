@@ -5,6 +5,8 @@
          :user (js->clj js/user :keywordize-keys true)
          :options (merge {:background "lobby-bg"
                           :show-alt-art true
+                          :deckstats (let [deckstats (js->clj (.getItem js/localStorage "deckstats"))]
+                                       (if (nil? deckstats) true (= deckstats "true")))
                           :sounds (let [sounds (js->clj (.getItem js/localStorage "sounds"))]
                                     (if (nil? sounds) true (= sounds "true")))
                           :sounds-volume (let [volume (js->clj (.getItem js/localStorage "sounds_volume"))]

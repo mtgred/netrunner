@@ -9,6 +9,7 @@
             [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art?] :as cb]
             [netrunner.account :refer [load-alt-arts alt-art-name]]
             [netrunner.ajax :refer [POST GET]]
+            [netrunner.stats :refer [num->percent]]
             [goog.string :as gstring]
             [goog.string.format]))
 
@@ -787,11 +788,12 @@
                     [:h4 (:name deck)]
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                     [:p (get-in deck [:identity :title]) [:br]
-                     (when-let [stats (:stats deck)]
-                       [:span "  Games: " (:games stats)
-                        " - Win: " (or (:wins stats) 0)
-                        " - Lose: " (or (:loses stats) 0)
-                        " - Percent Win: " (gstring/format "%.0f" (* 100 (float (/ (:wins stats) (:games stats))))) "%"])]])])))))
+                     (when (and (:stats deck) (get-in @app-state [:options :deckstats]))
+                       (let [stats (:stats deck)]
+                         [:span "  Games: " (:games stats)
+                          " - Win: " (or (:wins stats) 0)
+                          " - Lose: " (or (:loses stats) 0)
+                          " - Percent Win: " (num->percent (:wins stats) (:games stats)) "%"]))]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -915,8 +917,9 @@
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
                          [:button {:on-click #(delete-deck owner)} "Delete"]
-                         [:button {:on-click #(refresh-deck-stats cursor owner)} "Refresh Stats"]
-                         (when (:stats deck)
+                         (when (get-in @app-state [:options :deckstats])
+                           [:button {:on-click #(refresh-deck-stats cursor owner)} "Refresh Stats"])
+                         (when (and (:stats deck) (get-in @app-state [:options :deckstats]))
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]
                 [:div.header

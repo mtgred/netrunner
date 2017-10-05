@@ -50,6 +50,8 @@
         runner-deck (create-deck (:deck runner) (:user runner))
         corp-deck-id (get-in corp [:deck :_id])
         runner-deck-id (get-in runner [:deck :_id])
+        corp-options (get-in corp [:options])
+        runner-options (get-in runner [:options])
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
         corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
@@ -60,6 +62,7 @@
                  :sfx [] :sfx-current-id 0
                  :options {:spectatorhands spectatorhands}
                  :corp {:user (:user corp) :identity corp-identity
+                        :options corp-options
                         :deck (zone :deck corp-deck)
                         :deck-id corp-deck-id
                         :hand []
@@ -71,6 +74,7 @@
                         :agenda-point 0
                         :click-per-turn 3 :agenda-point-req 7 :keep false}
                  :runner {:user (:user runner) :identity runner-identity
+                          :options runner-options
                           :deck (zone :deck runner-deck)
                           :deck-id runner-deck-id
                           :hand []
