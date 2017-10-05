@@ -95,15 +95,18 @@
    (fn [user]
      (om/set-state! owner :editing false)
      (swap! app-state assoc :messages [])
-     (send {:action action :gameid gameid :password password :options (:options @app-state)} #(if (= % "invalid password")
-                                                                 (om/set-state! owner :error-msg "Invalid password")
-                                                                 (om/set-state! owner :prompt false))))))
+     (send {:action action :gameid gameid :password password :options (:options @app-state)}
+           #(cond
+              (= % "invalid password") (om/set-state! owner :error-msg "Invalid password")
+              (= % "not allowed") (om/set-state! owner :error-msg "Not allowed")
+              :else (om/set-state! owner :prompt false))))))
 
 (defn leave-lobby [cursor owner]
   (send {:action "leave-lobby" :gameid (:gameid @app-state)})
   (om/update! cursor :gameid nil)
-  (om/update! cursor :message []))
-  (swap! app-state dissoc :password-gameid)
+  (om/update! cursor :message [])
+  (om/set-state! owner :prompt false)
+  (swap! app-state dissoc :password-gameid))
 
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state)
@@ -222,11 +225,11 @@
                     (do (swap! app-state assoc :password-gameid gameid) (om/set-state! owner :prompt action))))))]
        (sab/html
         [:div.gameline {:class (when (= current-game gameid) "active")}
-         (when (and (:allowspectator game) (not current-game))
+         (when (and (:allowspectator game) (not (or password-game current-game)))
            [:button {:on-click #(join "watch")} "Watch"])
-         (when-not (or current-game (= (count players) 2) started)
+         (when-not (or current-game (= (count players) 2) started password-game)
            [:button {:on-click #(join "join")} "Join"])
-         (when (and (not current-game) started
+         (when (and (not current-game) started (not password-game)
                     (some #(= % (get-in @app-state [:user :_id]))
                           (map #(get-in % [:user :_id]) originalPlayers)))
            [:button {:on-click #(join "rejoin")} "Rejoin"])
@@ -247,7 +250,11 @@
             [:p
              [:button {:type "button" :on-click #(join prompt)}
               prompt]
-             [:span.fake-link {:on-click #(do (swap! app-state dissoc :password-gameid) (om/set-state! owner :prompt false))}
+             [:span.fake-link {:on-click #(do
+                                            (swap! app-state dissoc :password-gameid)
+                                            (om/set-state! owner :prompt false)
+                                            (om/set-state! owner :error-msg nil)
+                                            (om/set-state! owner :password nil))}
               "Cancel"]]
             (when-let [error-msg (om/get-state owner :error-msg)]
               [:p.flash-message error-msg])])])))))
