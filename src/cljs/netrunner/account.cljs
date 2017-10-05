@@ -53,7 +53,9 @@
   (swap! app-state assoc-in [:options :sounds-volume] (om/get-state owner :volume))
   (swap! app-state assoc-in [:options :blocked-users] (om/get-state owner :blocked-users))
   (swap! app-state assoc-in [:options :alt-arts] (om/get-state owner :alt-arts))
+  (swap! app-state assoc-in [:options :gamestats] (om/get-state owner :gamestats))
   (swap! app-state assoc-in [:options :deckstats] (om/get-state owner :deckstats))
+  (.setItem js/localStorage "gamestats" (om/get-state owner :gamestats))
   (.setItem js/localStorage "deckstats" (om/get-state owner :deckstats))
   (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
   (.setItem js/localStorage "sounds_volume" (om/get-state owner :volume))
@@ -130,6 +132,7 @@
       (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
       (om/set-state! owner :show-alt-art (get-in @app-state [:options :show-alt-art]))
       (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume]))
+      (om/set-state! owner :gamestats (get-in @app-state [:options :gamestats]))
       (om/set-state! owner :deckstats (get-in @app-state [:options :deckstats]))
       (om/set-state! owner :blocked-users (sort (get-in @app-state [:options :blocked-users] [])))
       (go (while true
@@ -189,6 +192,12 @@
 
             [:section
              [:h3 "Statistics"]
+             [:div
+              [:label [:input {:type "checkbox"
+                               :value true
+                               :checked (om/get-state owner :gamestats)
+                               :on-change #(om/set-state! owner :gamestats (.. % -target -checked))}]
+               "Enable Game Win/Lose Statistics"]]
              [:div
               [:label [:input {:type "checkbox"
                                :value true

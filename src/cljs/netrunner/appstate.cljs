@@ -7,6 +7,8 @@
                           :show-alt-art true
                           :deckstats (let [deckstats (js->clj (.getItem js/localStorage "deckstats"))]
                                        (if (nil? deckstats) true (= deckstats "true")))
+                          :gamestats (let [gamestats (js->clj (.getItem js/localStorage "gamestats"))]
+                                       (if (nil? gamestats) true (= gamestats "true")))
                           :sounds (let [sounds (js->clj (.getItem js/localStorage "sounds"))]
                                     (if (nil? sounds) true (= sounds "true")))
                           :sounds-volume (let [volume (js->clj (.getItem js/localStorage "sounds_volume"))]

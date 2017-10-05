@@ -130,8 +130,10 @@
                [:div "Started: " started]
                [:div "Completed: " completed " (" pc "%)"]
                [:div "Not completed: " incomplete  " (" pi "%)"]
-               [:div "Won: " win  " (" pw "%)"]
-               [:div "Lost: " lose  " (" pl "%)"]]
+               (if (get-in @app-state [:options :gamestats])
+                 [:div [:div "Won: " win  " (" pw "%)"]
+                  [:div "Lost: " lose  " (" pl "%)"]]
+                 [:div [:br] [:br]])]
              [:div.button-bar
               [:button {:on-click #(refresh-user-stats owner)} "Refresh Stats"]
               [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]
@@ -141,16 +143,18 @@
              [:div "Started: " started-corp]
              [:div "Completed: " completed-corp " (" pc-corp "%)"]
              [:div "Not completed: " incomplete-corp  " (" pi-corp "%)"]
-             [:div "Won: " win-corp  " (" pw-corp "%)"]
-             [:div "Lost: " lose-corp  " (" pl-corp "%)"]]]
+             (when (get-in @app-state [:options :gamestats])
+               [:div [:div "Won: " win-corp  " (" pw-corp "%)"]
+                [:div "Lost: " lose-corp  " (" pl-corp "%)"]])]]
            [:div.stats-right
             [:h2 "Runner Stats"]
             [:section
              [:div "Started: " started-runner]
              [:div "Completed: " completed-runner " (" pc-runner "%)"]
              [:div "Not completed: " incomplete-runner  " (" pi-runner "%)"]
-             [:div "Won: " win-runner  " (" pw-runner "%)"]
-             [:div "Lost: " lose-runner  " (" pl-runner "%)"]]]])))))
+             (when (get-in @app-state [:options :gamestats])
+               [:div [:div "Won: " win-runner  " (" pw-runner "%)"]
+                [:div "Lost: " lose-runner  " (" pl-runner "%)"]])]]])))))
 
 (defn stats [{:keys [user]} owner]
   (om/component
