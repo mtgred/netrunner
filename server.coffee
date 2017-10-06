@@ -193,9 +193,12 @@ io.use (socket, next) ->
 
 chat = io.of('/chat').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
-    msg.date = new Date()
-    chat.emit('netrunner', msg)
-    db.collection('messages').insert msg, (err, result) ->
+    if socket.request.user
+      msg.date = new Date()
+      msg.username = socket.request.user.username
+      msg.emailhash = socket.request.user.emailhash
+      chat.emit('netrunner', msg)
+      db.collection('messages').insert msg, (err, result) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.emit("netrunner", {type: "games", games: games})
