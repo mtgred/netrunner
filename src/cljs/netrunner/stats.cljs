@@ -98,9 +98,9 @@
               completed (notnum->zero (om/get-state owner :games-completed))
               pc (notnum->zero (num->percent completed started))
               win (notnum->zero (om/get-state owner :wins))
-              pw (notnum->zero (num->percent win started))
               lose (notnum->zero (om/get-state owner :loses))
-              pl (notnum->zero (num->percent lose started))
+              pw (notnum->zero (num->percent win (+ win lose)))
+              pl (notnum->zero (num->percent lose (+ win lose)))
               incomplete (notnum->zero (om/get-state owner :dnf))
               pi (notnum->zero (num->percent incomplete started))
               ;; Corp Stats
@@ -108,9 +108,9 @@
               completed-corp (notnum->zero (om/get-state owner :games-completed-corp))
               pc-corp (notnum->zero (num->percent completed-corp started-corp))
               win-corp (notnum->zero (om/get-state owner :wins-corp))
-              pw-corp (notnum->zero (num->percent win-corp started-corp))
               lose-corp (notnum->zero (om/get-state owner :loses-corp))
-              pl-corp (notnum->zero (num->percent lose-corp started-corp))
+              pw-corp (notnum->zero (num->percent win-corp (+ win-corp lose-corp)))
+              pl-corp (notnum->zero (num->percent lose-corp (+ win-corp lose-corp)))
               incomplete-corp (notnum->zero (om/get-state owner :dnf-corp))
               pi-corp (notnum->zero (num->percent incomplete-corp started-corp))
               ;; Runner Stats
@@ -118,9 +118,9 @@
               completed-runner (notnum->zero (om/get-state owner :games-completed-runner))
               pc-runner (notnum->zero (num->percent completed-runner started-runner))
               win-runner (notnum->zero (om/get-state owner :wins-runner))
-              pw-runner (notnum->zero (num->percent win-runner started-runner))
               lose-runner (notnum->zero (om/get-state owner :loses-runner))
-              pl-runner (notnum->zero (num->percent lose-runner started-runner))
+              pw-runner (notnum->zero (num->percent win-runner (+ win-runner lose-runner)))
+              pl-runner (notnum->zero (num->percent lose-runner (+ win-runner lose-runner)))
               incomplete-runner (notnum->zero (om/get-state owner :dnf-runner))
               pi-runner (notnum->zero (num->percent incomplete-runner started-runner))]
           [:div.blue-shade.panel.stats-main
