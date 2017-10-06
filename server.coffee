@@ -252,6 +252,14 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "join"
         game = games[msg.gameid]
 
+        unless game
+          fn("invalid game")
+          return
+
+        unless socket.request.user
+          fn("invalid user")
+          return
+
         unless user_allowed_in_game(getUsername(socket), game)
           fn("not allowed")
           return
@@ -269,6 +277,14 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
       when "watch"
         game = games[msg.gameid]
+
+        unless game
+          fn("invalid game")
+          return
+
+        unless socket.request.user
+          fn("invalid user")
+          return
 
         unless user_allowed_in_game(getUsername(socket), game)
           fn("not allowed")
