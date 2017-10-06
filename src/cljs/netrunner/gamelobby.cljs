@@ -410,7 +410,7 @@
                    (when (:allowspectator game)
                      [:div.spectators
                       (let [c (count (:spectators game))]
-                        [:h3 (str c " Spectator" (when (> c 1) "s"))])
+                        [:h3 (str c " Spectator" (when (not= c 1) "s"))])
                       (for [spectator (:spectators game)]
                         (om/build player-view {:player spectator}))])]
                   (om/build chat-view messages {:state state})])))]
