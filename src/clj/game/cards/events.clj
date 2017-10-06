@@ -700,7 +700,8 @@
    "Indexing"
    {:delayed-completion true
     :effect (effect (run :rd
-                         {:replace-access
+                         {:req (req (= target :rd))
+                          :replace-access
                           {:msg "rearrange the top 5 cards of R&D"
                            :delayed-completion true
                            :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of R&D")
