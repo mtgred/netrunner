@@ -11,7 +11,7 @@ mongoPassword = process.env.OPENSHIFT_MONGODB_DB_PASSWORD
 login = if process.env.OPENSHIFT_MONGODB_DB_PASSWORD then "#{mongoUser}:#{mongoPassword}@" else ""
 mongoHost = process.env.OPENSHIFT_MONGODB_DB_HOST || '127.0.0.1'
 mongoPort = process.env.OPENSHIFT_MONGODB_DB_PORT || '27017'
-appName = process.env.OPENSHIFT_APP_NAME || 'meccg'
+appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
 
 db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}").open( (err, _) -> throw err if err )
 
@@ -26,122 +26,150 @@ capitalize = (s) ->
 
 setFields = {
   "name" : same
-  "date_release" : (k, t) -> ["available", if t is null then "4096-01-01" else t]
-  "cycle_code" : (k, t) -> ["cycle", mapCycles[t].name]
-  "cyc_code" : rename("cycle_code")
-  "size" : (k, t) -> ["bigbox", t > 20]
   "code" : same
+  "format" : same
   "position" : same
-}
-
-cycleFields = {
-  "code" : same
-  "name" : same
-  "position" : same
-  "size" : same
-  "rotated" : same
-}
-
-mwlFields = {
-  "name" : same
-  "code" : same
-  "active" : same
-  "cards" : same
-}
-
-mapFactions = {
-  "haas-bioroid" : "Haas-Bioroid",
-  "jinteki" : "Jinteki",
-  "nbn" : "NBN",
-  "weyland-consortium" : "Weyland Consortium",
-  "anarch" : "Anarch",
-  "criminal" : "Criminal",
-  "shaper" : "Shaper",
-  "adam" : "Adam",
-  "sunny-lebeau" : "Sunny Lebeau",
-  "apex" : "Apex",
-  "neutral-runner" : "Neutral",
-  "neutral-corp" : "Neutral"
 }
 
 mapSets = {}
 
-mapCycles = {}
-
-cardFields = {
-  "code" : same,
-  "title" : same,
-  "type_code" : (k, t) -> ["type", if t is "ice" then "ICE" else capitalize(t)],
-  "keywords": rename("subtype"),
-  "text" : same,
-  "cost" : (k, t) -> ["cost", if t is null then 0 else t],
-  "advancement_cost" : rename("advancementcost"),
-  "agenda_points" : rename("agendapoints"),
-  "base_link" : rename("baselink"),
-  "influence_limit" : rename("influencelimit"),
-  "minimum_deck_size" : rename("minimumdecksize"),
-  "faction_code" : (k, t) -> ["faction", mapFactions[t]],
-  "faction_cost" : rename("factioncost"), # influence
-  "position" : rename("number"),
-  "pack_code": (k, t) -> ["setname", mapSets[t].name]
-  "set_code" : same,
-  "cycle_code" : same,
-  "side_code" : (k, t) -> ["side", capitalize(t)],
-  "uniqueness" : same,
-  "memory_cost" : rename("memoryunits"),
-  "strength" : same,
-  "trash_cost" : rename("trash"),
-  "deck_limit" : rename("limited"),
-  "quantity" : rename("packquantity"),
-  "rotated" : same
+mapAlignments = {
+  "hero" : "Hero",
+  "minion" : "Minion",
+  "RW" : "Ringwraith",
+  "sauron" : "Sauron",
+  "balrog" : "Balrog",
+  "FW" : "Fallen-wizard",
+  "EL" : "Elf-lord",
+  "DL" : "Dwarf-lord",
+  "AL" : "Atani-Lord",
+  "all" : "All",
+  "dual" : "Dual",
+  "neutral" : "Neutral"
+  "black" : "Black"
+  "grey" : "Grey"
+  "white" : "White"
 }
 
-baseurl = "http://netrunnerdb.com/api/2.0/public/"
+mapPrimaries = {
+  "character" : "Character",
+  "hazard" : "Hazard",
+  "resource" : "Resource",
+  "region" : "Region",
+  "site" : "Site"
+}
+
+mapSecondaries = {
+  "ally" : "Ally",
+  "avatar" : "Avatar",
+  "character" : "character",
+  "creature" : "Creature",
+  "creaPerm" : "Creature/Permanent-event",
+  "creaShort" : "Creature/Short-event",
+  "faction" : "Faction",
+  "goldRingItem" : "Gold Ring Item",
+  "greaterItem" : "Greater Item",
+  "longEvent" : "Long-event",
+  "majorItem" : "Major Item",
+  "minorItem" : "Minor Item",
+  "permanent" : "Permanent-event",
+  "permShort" : "Permanent-event/Short-event",
+  "region" : "region",
+  "short" : "Short-event",
+  "site" : "site",
+  "specialItem" : "Special Item",
+  "stage" : "Stage"
+}
+
+banFields = {
+  "NameEN" : same
+  "code" : same
+  "playableAlignment" : same
+  "unplayableAlignment" : same
+  "effectedAlignment" : same
+  "uneffectedAlignment" : same
+  "swapableAlignment" : same
+  "Set" : same #
+}
+
+mapBans = {}
+
+cardFields = {
+  "Set": same,
+  "Primary": same,
+  "Alignment": same,
+  "MEID": same,
+  "Artist": same,
+  "Rarity": same,
+  "Precise": same,
+  "NameEN": same,
+  "NameFR": same,
+  "NameGR": same,
+  "NameSP": same,
+  "NameJP": same,
+  "ImageName": same,
+  "Text": same,
+  "Skill": same,
+  "MPs": same,
+  "Mind": same,
+  "Direct": same,
+  "General": same,
+  "Prowess": same,
+  "Body": same,
+  "Corruption": same,
+  "Home": same,
+  "Unique": same,
+  "Secondary": same,
+  "Race": same,
+  "RWMPs": same,
+  "Site": same,
+  "Path": same,
+  "Region": same,
+  "RPath": same,
+  "Playable": same,
+  "GoldRing": same,
+  "GreaterItem": same,
+  "MajorItem": same,
+  "MinorItem": same,
+  "Information": same,
+  "Palantiri": same,
+  "Scroll": same,
+  "Haven": same,
+  "Stage": same,
+  "Strikes": same,
+  "code": same,
+  "codeFR": same,
+  "codeGR": same,
+  "codeSP": same,
+  "codeJP": same
+}
+
+baseurl = "http://192.168.1.180:8080/rez/"
 
 selectFields = (fields, objectList) ->
   ((Object.keys(fields).reduce ((newObj, key) ->
-                    newKey = fields[key](key, obj[key]) if typeof(obj[key]) isnt "undefined"
-                    newObj[newKey[0]] = newKey[1] if newKey and newKey[1] isnt null
-                    return newObj), {}) \
-   for obj in objectList)
-
-fetchCycles = (callback) ->
-  request.get baseurl + "cycles", (error, response, body) ->
-    if !error and response.statusCode is 200
-      data = JSON.parse(body).data
-      cycles = selectFields(cycleFields, data)
-      for cycle in cycles
-        mapCycles[cycle.code] = cycle
-      db.collection("cycles").remove ->
-        db.collection("cycles").insert cycles, (err, result) ->
-          fs.writeFile "andb-cycles.json", JSON.stringify(cycles), ->
-            console.log("#{cycles.length} cycles fetched")
-          callback(null, cycles.length)
+    newKey = fields[key](key, obj[key]) if typeof(obj[key]) isnt "undefined"
+    newObj[newKey[0]] = newKey[1] if newKey and newKey[1] isnt null
+    return newObj), {}) \
+  for obj in objectList)
 
 fetchSets = (callback) ->
-  request.get baseurl + "packs", (error, response, body) ->
+  request.get baseurl + "sets", (error, response, body) ->
     if !error and response.statusCode is 200
-      data = JSON.parse(body).data
-      data = data.map (d) ->
-        d.cyc_code = d.cycle_code
-        d
+      data = JSON.parse(body)
       sets = selectFields(setFields, data)
-      sets = sets.map (s) ->
-        s.rotated = mapCycles[s.cycle_code].rotated
-        s.cycle_position = mapCycles[s.cycle_code].position
-        s
       for set in sets
         mapSets[set.code] = set
       db.collection("sets").remove ->
         db.collection("sets").insert sets, (err, result) ->
-          fs.writeFile "andb-sets.json", JSON.stringify(sets), ->
+          fs.writeFile "meccg-sets.json", JSON.stringify(sets), ->
             console.log("#{sets.length} sets fetched")
           callback(null, sets.length)
 
 fetchImg = (urlPath, code, imgPath, t) ->
   setTimeout ->
     console.log("Downloading image for " + code)
-    url = urlPath.replace("{code}", code)
+    url = urlPath + code
     request(url).pipe(fs.createWriteStream(imgPath))
   , t
 
@@ -149,37 +177,33 @@ fetchCards = (callback) ->
   request.get baseurl + "cards", (error, response, body) ->
     if !error and response.statusCode is 200
       res = JSON.parse(body)
-      data = res.data.map (d) ->
-        d.set_code = d.pack_code
-        d.cycle_code = mapSets[d.set_code].cycle_code
-        d.rotated = mapSets[d.set_code].rotated
-        d
-      cards = selectFields(cardFields, data)
+      cards = selectFields(cardFields, res)
       imgDir = path.join(__dirname, "..", "resources", "public", "img", "cards")
       mkdirp imgDir, (err) ->
         if err
           console.error("Failed to create card image resource directory #{imgDir}")
       i = 0
       for card in cards
-        imgPath = path.join(imgDir, "#{card.code}.png")
+        imgPath = path.join(imgDir, "#{card.ImageName}")
         if !fs.existsSync(imgPath)
-          fetchImg(res.imageUrlTemplate, card.code, imgPath, i++ * 200)
-
+          fetchImg(baseurl, card.ImageName, imgPath, i++ * 200)
       db.collection("cards").remove ->
         db.collection("cards").insert cards, (err, result) ->
-          fs.writeFile "andb-cards.json", JSON.stringify(cards), ->
+          fs.writeFile "meccg-cards.json", JSON.stringify(cards), ->
             console.log("#{cards.length} cards fetched")
           callback(null, cards.length)
 
-fetchMWL = (callback) ->
-  request.get baseurl + "mwl", (error, response, body) ->
+fetchBans = (callback) ->
+  request.get baseurl + "bans", (error, response, body) ->
     if !error and response.statusCode is 200
-      data = JSON.parse(body).data
-      mwl = selectFields(mwlFields, data)
-      db.collection("mwl").remove ->
-        db.collection("mwl").insert mwl, (err, result) ->
-          fs.writeFile "andb-mwl.json", JSON.stringify(mwl), ->
-            console.log("#{mwl.length} MWL lists fetched")
-          callback(null, mwl.length)
+      data = JSON.parse(body)
+      bans = selectFields(setFields, data)
+      for ban in bans
+        mapBans[ban.code] = ban
+      db.collection("bans").remove ->
+        db.collection("bans").insert bans, (err, result) ->
+          fs.writeFile "meccg-bans.json", JSON.stringify(bans), ->
+            console.log("#{bans.length} bans fetched")
+          callback(null, bans.length)
 
-async.series [fetchCycles, fetchSets, fetchCards, fetchMWL, () -> db.close()]
+async.series [fetchSets, fetchCards, fetchBans, () -> db.close()]
