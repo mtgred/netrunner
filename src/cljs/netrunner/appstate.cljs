@@ -6,9 +6,9 @@
          :options (merge {:background "lobby-bg"
                           :show-alt-art true
                           :deckstats (let [deckstats (js->clj (.getItem js/localStorage "deckstats"))]
-                                       (if (nil? deckstats) true (= deckstats "true")))
+                                       (if (nil? deckstats) "always" deckstats))
                           :gamestats (let [gamestats (js->clj (.getItem js/localStorage "gamestats"))]
-                                       (if (nil? gamestats) "all" gamestats))
+                                       (if (nil? gamestats) "always" gamestats))
                           :sounds (let [sounds (js->clj (.getItem js/localStorage "sounds"))]
                                     (if (nil? sounds) true (= sounds "true")))
                           :sounds-volume (let [volume (js->clj (.getItem js/localStorage "sounds_volume"))]

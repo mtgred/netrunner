@@ -168,10 +168,16 @@ requester.on 'message', (data) ->
         corpAgenda: response.state.corp["agenda-point"]
       }
       # Handle Deck Statistics
-      if response.state[winningSide].options.deckstats is true
+      if response.state[winningSide].options.deckstats is "always"
         db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
           throw err if err
-      if response.state[losingSide].options.deckstats is true
+      else if response.state[winningSide].options.deckstats is "competitive" and room is "competitive"
+        db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
+          throw err if err
+      if response.state[losingSide].options.deckstats is "always"
+        db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
+          throw err if err
+      else if response.state[losingSide].options.deckstats is "competitive" and room is "competitive"
         db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
           throw err if err
 

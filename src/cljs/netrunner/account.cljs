@@ -203,15 +203,18 @@
                                  :checked (= (om/get-state owner :gamestats) (:ref option))}]
                  (:name option)]])]
 
-
             [:section
              [:h3 " Deck Statistics "]
-             [:div
-              [:label [:input {:type "checkbox"
-                               :value true
-                               :checked (om/get-state owner :deckstats)
-                               :on-change #(om/set-state! owner :deckstats (.. % -target -checked))}]
-               "Enable Deck Statistics"]]]
+             (for [option [{:name "Always"                   :ref "always"}
+                           {:name "Competitive Lobby Only"   :ref "competitive"}
+                           {:name "None"                     :ref "none"}]]
+               [:div
+                [:label [:input {:type "radio"
+                                 :name "deckstats"
+                                 :value (:ref option)
+                                 :on-change #(om/set-state! owner :deckstats (.. % -target -value))
+                                 :checked (= (om/get-state owner :deckstats) (:ref option))}]
+                 (:name option)]])]
 
             [:section {:id "alt-art"}
              [:h3 "Alt arts"]

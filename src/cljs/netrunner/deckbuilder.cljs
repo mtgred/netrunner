@@ -788,7 +788,7 @@
                     [:h4 (:name deck)]
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                     [:p (get-in deck [:identity :title]) [:br]
-                     (when (and (:stats deck) (get-in @app-state [:options :deckstats]))
+                     (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
                        (let [stats (:stats deck)]
                          [:span "  Games: " (:games stats)
                           " - Win: " (or (:wins stats) 0)
@@ -917,9 +917,9 @@
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
                          [:button {:on-click #(delete-deck owner)} "Delete"]
-                         (when (get-in @app-state [:options :deckstats])
+                         (when-not (= "none" (get-in @app-state [:options :deckstats]))
                            [:button {:on-click #(refresh-deck-stats cursor owner)} "Refresh Stats"])
-                         (when (and (:stats deck) (get-in @app-state [:options :deckstats]))
+                         (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]
                 [:div.header
