@@ -43,7 +43,7 @@
 
 (defn init-game
   "Initializes a new game with the given players vector."
-  [{:keys [players gameid spectatorhands] :as game}]
+  [{:keys [players gameid spectatorhands room] :as game}]
   (let [corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
         corp-deck (create-deck (:deck corp) (:user corp))
@@ -58,6 +58,7 @@
         runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
         state (atom
                 {:gameid gameid :log [] :active-player :runner :end-turn true
+                 :room room
                  :rid 0 :turn 0 :eid 0
                  :sfx [] :sfx-current-id 0
                  :options {:spectatorhands spectatorhands}

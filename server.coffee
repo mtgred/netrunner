@@ -158,6 +158,7 @@ requester.on 'message', (data) ->
       loser = response.state["losing-user"]
       winningSide = response.state.winner
       losingSide = response.state.loser
+      room = response.state.room
       g = {
         winner: response.state.winner
         reason: response.state.reason
@@ -166,33 +167,48 @@ requester.on 'message', (data) ->
         runnerAgenda: response.state.runner["agenda-point"]
         corpAgenda: response.state.corp["agenda-point"]
       }
+      # Handle Deck Statistics
       if response.state[winningSide].options.deckstats is true
         db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
           throw err if err
       if response.state[losingSide].options.deckstats is true
         db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
           throw err if err
+
+      # Handle Game Statistics
       if winningSide is "corp"
-        if response.state[winningSide].options.gamestats is true
+        if response.state[winningSide].options.gamestats is "always"
+          db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.wins": 1, "stats.wins-corp" : 1}}, (err) ->
+            throw err if err
+        else if response.state[winningSide].options.gamestats is "competitive" and room is "competitive"
           db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.wins": 1, "stats.wins-corp" : 1}}, (err) ->
             throw err if err
         else
           db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1}}, (err) ->
             throw err if err
-        if response.state[losingSide].options.gamestats is true
+        if response.state[losingSide].options.gamestats is "always"
+          db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.loses": 1, "stats.loses-runner" : 1}}, (err) ->
+            throw err if err
+        else if response.state[losingSide].options.gamestats is "competitive" and room is "competitive"
           db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.loses": 1, "stats.loses-runner" : 1}}, (err) ->
             throw err if err
         else
           db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1}}, (err) ->
             throw err if err
       else if winningSide is "runner"
-        if response.state[winningSide].options.gamestats is true
+        if response.state[winningSide].options.gamestats is "always"
+          db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.wins": 1, "stats.wins-runner" : 1}}, (err) ->
+            throw err if err
+        else if response.state[winningSide].options.gamestats is "competitive" and room is "competitive"
           db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.wins": 1, "stats.wins-runner" : 1}}, (err) ->
             throw err if err
         else
           db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1}}, (err) ->
             throw err if err
-        if response.state[losingSide].options.gamestats is true
+        if response.state[losingSide].options.gamestats is "always"
+          db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.loses": 1, "stats.loses-corp" : 1}}, (err) ->
+            throw err if err
+        else if response.state[losingSide].options.gamestats is "competitive" and room is "competitive"
           db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.loses": 1, "stats.loses-corp" : 1}}, (err) ->
             throw err if err
         else

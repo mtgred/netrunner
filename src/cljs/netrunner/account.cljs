@@ -191,13 +191,21 @@
                  (:name option)]])]
 
             [:section
-             [:h3 "Statistics"]
-             [:div
-              [:label [:input {:type "checkbox"
-                               :value true
-                               :checked (om/get-state owner :gamestats)
-                               :on-change #(om/set-state! owner :gamestats (.. % -target -checked))}]
-               "Enable Game Win/Lose Statistics"]]
+             [:h3 " Game Statistics "]
+             (for [option [{:name "Always"                   :ref "always"}
+                           {:name "Competitive Lobby Only"   :ref "competitive"}
+                           {:name "None"                     :ref "none"}]]
+               [:div
+                [:label [:input {:type "radio"
+                                 :name "gamestats"
+                                 :value (:ref option)
+                                 :on-change #(om/set-state! owner :gamestats (.. % -target -value))
+                                 :checked (= (om/get-state owner :gamestats) (:ref option))}]
+                 (:name option)]])]
+
+
+            [:section
+             [:h3 " Deck Statistics "]
              [:div
               [:label [:input {:type "checkbox"
                                :value true
