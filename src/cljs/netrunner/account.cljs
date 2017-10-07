@@ -55,8 +55,6 @@
   (swap! app-state assoc-in [:options :alt-arts] (om/get-state owner :alt-arts))
   (swap! app-state assoc-in [:options :gamestats] (om/get-state owner :gamestats))
   (swap! app-state assoc-in [:options :deckstats] (om/get-state owner :deckstats))
-  (.setItem js/localStorage "gamestats" (om/get-state owner :gamestats))
-  (.setItem js/localStorage "deckstats" (om/get-state owner :deckstats))
   (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
   (.setItem js/localStorage "sounds_volume" (om/get-state owner :volume))
 
@@ -191,7 +189,7 @@
                  (:name option)]])]
 
             [:section
-             [:h3 " Game Statistics "]
+             [:h3 " Game Win/Lose Statistics "]
              (for [option [{:name "Always"                   :ref "always"}
                            {:name "Competitive Lobby Only"   :ref "competitive"}
                            {:name "None"                     :ref "none"}]]
