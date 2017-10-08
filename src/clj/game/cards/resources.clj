@@ -613,7 +613,6 @@
    (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
      {:implementation "Use hosting ability when presented with Access prompt for an agenda"
       :abilities [{:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
-                                  (not (:psi @state)) ; hack for The Future Perfect
                                   (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                    :label "Host an agenda being accessed"
                    :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
