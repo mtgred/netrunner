@@ -87,7 +87,7 @@
           (loop [i 2 matches cards]
             (let [subquery (subs q 0 i)]
               (cond (zero? (count matches)) card
-                    (or (= (count matches) 1) (identical-cards? matches)) (first matches)
+                    (or (= (count matches) 1) (identical-cards? matches)) (take-best-card matches)
                     (found? subquery matches) (found? subquery matches)
                     (<= i (count (:title card))) (recur (inc i) (search subquery matches))
                     :else card))))))
