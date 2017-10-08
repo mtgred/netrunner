@@ -61,9 +61,16 @@ removePlayer = (socket) ->
         game.spectators.splice(i, 1)
         break
     if game.players.length is 0 and game.spectators.length is 0
+      # Store the list of player sockets for the game before we delete the game
+      stats.sockets = []
+      for player in game.endingPlayers
+        stats.sockets.push(player.id)
       delete games[socket.gameid]
       requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
       refreshLobby("delete", socket.gameid)
+      # Send a message to players telling browser to pull updated stats
+      for id in stats.sockets
+        stats.to(id).emit("netrunner", {channel: 'stats', msg: 'updatestats'})
     else
       refreshLobby("update", socket.gameid)
     socket.leave(socket.gameid)
@@ -71,7 +78,6 @@ removePlayer = (socket) ->
 
   for k, v of games
     if (not v.started or v.players.length < 2) and (new Date() - v.date) > 3600000
-
       delete games[k]
       refreshLobby("delete", v.gameid)
 
@@ -81,6 +87,8 @@ rejoinGame = (socket, gameid, user, options) ->
     side = if game.players.length is 1 then swapSide(game.players[0].side) else "Corp"
     user.id = socket.id
     game.players.push(user)
+    # Replace the game end player list with the new list
+    game.endingPlayers = game.players.slice(0)
     socket.join(gameid)
     socket.gameid = gameid
     socket.emit("netrunner", {type: "game", gameid: gameid})
@@ -238,6 +246,10 @@ io.use (socket, next) ->
       next()
   else
     next()
+
+stats = io.of('/stats').on 'connection', (socket) ->
+  socket.on 'netrunner', (msg) ->
+    stats.emit('netrunner', msg)
 
 chat = io.of('/chat').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
@@ -432,6 +444,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
                 console.log(err) if err
             game.started = true
             game.originalPlayers = game.players.slice(0)
+            game.endingPlayers = game.players.slice(0)
             msg = games[socket.gameid]
             msg.action = "start"
             msg.gameid = socket.gameid
