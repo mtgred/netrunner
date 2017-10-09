@@ -79,13 +79,12 @@
             [:section
              [:h3  "Game board background"]
              (for [option [{:name "The Root"        :ref "lobby-bg"}
-                           {:name "Freelancer"      :ref "freelancer-bg"}
-                           {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
-                           {:name "Traffic Jam"     :ref "traffic-jam-bg"}
-                           {:name "Rumor Mill"      :ref "rumor-mill-bg"}
-                           {:name "Find The Truth"  :ref "find-the-truth-bg"}
-                           {:name "Push Your Luck"  :ref "push-your-luck-bg"}
-                           {:name "Apex"            :ref "apex-bg"}
+                           {:name "Carn Dum (Hero)"      :ref "carn-dum-1-bg"}
+                           {:name "Carn Dum (Minion)"      :ref "carn-dum-2-bg"}
+                           {:name "Carn Dum (Balrog)"      :ref "carn-dum-3-bg"}
+                           {:name "Carn Dum (Hero-gray)"      :ref "carn-dum-1-bw-bg"}
+                           {:name "Carn Dum (Minion-gray)"      :ref "carn-dum-2-bw-bg"}
+                           {:name "Carn Dum (Balrog-gray)"      :ref "carn-dum-3-bw-bg"}
                            {:name "Monochrome"      :ref "monochrome-bg"}]]
                [:div.radio
                 [:label [:input {:type "radio"
