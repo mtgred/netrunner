@@ -195,7 +195,10 @@
 (defn match [query cards]
   (if (empty? query)
     cards
-    (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards)))
+    (let [lcquery (.toLowerCase query)]
+      (filter #(or (not= (.indexOf (.toLowerCase (:title %)) lcquery) -1)
+                   (not= (.indexOf (:normalizedtitle %) lcquery) -1))
+              cards))))
 
 (defn sort-field [fieldname]
   (case fieldname
@@ -300,7 +303,7 @@
                               (filter-cards (:side-filter state) :side)
                               (filter-cards (:faction-filter state) :faction)
                               (filter-cards (:type-filter state) :type)
-                              (match (.toLowerCase (:search-query state)))
+                              (match (:search-query state))
                               (insert-alt-arts)
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))
