@@ -121,7 +121,7 @@
            (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card moved-card)
          (when (#{:discard :hand} to) (reset-card state side moved-card))
-         (when-let [icon-card (get-in moved-card [:icon :card])]
+         (when-let [icon-card (get-card state (get-in moved-card [:icon :card]))]
            ;; remove icon if card moved to :discard or :hand
            (when (#{:discard :hand} to) (remove-icon state side icon-card moved-card)))
          moved-card)))))
