@@ -153,9 +153,17 @@
              "finaluser-add" (swap! state assoc :final-user {:username (get-in user [:user :username])
                                                              :side (clojure.string/lower-case (:side user))})
              "finaluser-del" (swap! state dissoc :final-user)
-             ("notification" "rejoin")
+             "notification" (when state
+                              (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))
+             "rejoin"
              (when state
-               (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
+               ;; when rejoining, there is probably a new socket ID that needs to be set into the user.
+               (let [side (cond
+                            (= (:_id user) (get-in @state [:corp :user :_id])) :corp
+                            (= (:_id user) (get-in @state [:runner :user :_id])) :runner
+                            :else nil)]
+                 (swap! state assoc-in [side :user] user)
+                 (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))))
            true)
        (catch Exception e
          (do (println "Error " action command (get-in args [:card :title]) e)
