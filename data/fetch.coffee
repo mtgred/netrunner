@@ -5,6 +5,7 @@ mongoskin = require('mongoskin')
 mkdirp = require('mkdirp')
 path = require('path')
 async = require('async')
+removeDiacritics = require('diacritics').remove
 
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
 mongoPassword = process.env.OPENSHIFT_MONGODB_DB_PASSWORD
@@ -71,6 +72,7 @@ mapCycles = {}
 cardFields = {
   "code" : same,
   "title" : same,
+  "normalized_title": (k, t) -> ["normalizedtitle", removeDiacritics(t).toLowerCase()],
   "type_code" : (k, t) -> ["type", if t is "ice" then "ICE" else capitalize(t)],
   "keywords": rename("subtype"),
   "text" : same,
@@ -153,6 +155,7 @@ fetchCards = (callback) ->
         d.set_code = d.pack_code
         d.cycle_code = mapSets[d.set_code].cycle_code
         d.rotated = mapSets[d.set_code].rotated
+        d.normalized_title = d.title
         d
       cards = selectFields(cardFields, data)
       imgDir = path.join(__dirname, "..", "resources", "public", "img", "cards")
