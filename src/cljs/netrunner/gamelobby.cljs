@@ -9,8 +9,8 @@
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state toast launch-game]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.stats :refer [notnum->zero num->percent]]
-            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks]]))
+            [netrunner.stats :refer [notnum->zero]]
+            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks num->percent]]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -109,9 +109,6 @@
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
-  ; Update decks to get new stats
-  (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-        (load-decks decks)))
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid)
   (.removeItem js/localStorage "gameid")

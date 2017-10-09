@@ -4,6 +4,7 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.appstate :refer [app-state]]
+            [netrunner.deckbuilder :refer [process-decks num->percent]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.ajax :refer [POST GET]]
             [goog.string :as gstring]
@@ -13,22 +14,10 @@
 (def stats-socket (.connect js/io (str js/iourl "/stats")))
 (.on stats-socket "netrunner" #(put! stats-channel (js->clj % :keywordize-keys true)))
 
-(defn num->percent
-  "Converts an input number to a percent of the second input number for display"
-  [num1 num2]
-  (gstring/format "%.0f" (* 100 (float (/ num1 num2)))))
-
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
   [input]
   (if (pos? (int input)) input 0))
-
-(defn refresh-user-stats [owner]
-  (authenticated
-    (fn [user]
-      (try (js/ga "send" "event" "user" "refreshstats") (catch js/Error e))
-      (go (let [result (-> (<! (GET (str "/user"))) :json first :stats)]
-            (swap! app-state assoc :stats result))))))
 
 (defn clear-user-stats [owner]
   (authenticated
@@ -41,11 +30,13 @@
 ;; Go loop to receive messages from node server to refresh stats on game-end
 (go (while true
       (let [msg (<! stats-channel)
-            result (-> (<! (GET (str "/user"))) :json first :stats)]
+            result (-> (<! (GET (str "/user"))) :json first :stats)
+            decks (process-decks (:json (<! (GET (str "/data/decks")))))]
         (try (js/ga "send" "event" "user" "refreshstats") (catch js/Error e))
-        (swap! app-state assoc :stats result))))
+        (swap! app-state assoc :stats result)
+        (swap! app-state assoc :decks decks))))
 
-(defn stats [{:keys [user stats] :as cursor} owner]
+(defn stats [{:keys [stats] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this] {:flash-message ""})
@@ -94,7 +85,6 @@
                   [:div "Lost: " lose  " (" pl "%)"]]
                  [:div [:br] [:br]])]
              [:div.button-bar
-              [:button {:on-click #(refresh-user-stats owner)} "Refresh Stats"]
               [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]
            [:div.stats-middle
             [:h2 "Corp Stats"]

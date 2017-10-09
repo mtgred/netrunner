@@ -9,13 +9,17 @@
             [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art?] :as cb]
             [netrunner.account :refer [load-alt-arts alt-art-name]]
             [netrunner.ajax :refer [POST GET]]
-            [netrunner.stats :refer [num->percent]]
             [goog.string :as gstring]
             [goog.string.format]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
 (def INFINITY 2147483647)
+
+(defn num->percent
+  "Converts an input number to a percent of the second input number for display"
+  [num1 num2]
+  (gstring/format "%.0f" (* 100 (float (/ num1 num2)))))
 
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
@@ -617,12 +621,6 @@
               (om/update! cursor :decks (conj decks deck))
               (om/set-state! owner :deck deck)))))))
 
-(defn refresh-deck-stats [cursor owner]
-  (authenticated
-    (fn [user]
-      (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-            (load-decks decks))))))
-
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
@@ -917,8 +915,6 @@
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
                          [:button {:on-click #(delete-deck owner)} "Delete"]
-                         (when-not (= "none" (get-in @app-state [:options :deckstats]))
-                           [:button {:on-click #(refresh-deck-stats cursor owner)} "Refresh Stats"])
                          (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]
