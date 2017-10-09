@@ -619,7 +619,8 @@
         (try (js/ga "send" "event" "deckbuilder" "cleardeckstats") (catch js/Error e))
         (go (let [result (<! (POST "/data/decks/clearstats" data :json))]
               (om/update! cursor :decks (conj decks deck))
-              (om/set-state! owner :deck deck)))))))
+              (om/set-state! owner :deck deck)
+              (.focus deck)))))))
 
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
