@@ -20,9 +20,6 @@
   (let [name (:title (first cards))]
     (every? #(= (:title %) name) cards)))
 
-(defn found? [query cards]
-  (some #(if (= (.toLowerCase (:title %)) query) %) cards))
-
 (defn is-draft-id?
   "Check if the specified id is a draft identity"
   [identity]
@@ -54,9 +51,6 @@
   (or (= (:faction card) (:faction identity))
       (= 0 (:factioncost card)) (= INFINITY (id-inf-limit identity))))
 
-(defn search [query cards]
-  (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
-
 (defn alt-art?
   "Removes alt-art cards from the search if user is not :special"
   [card]
@@ -71,6 +65,12 @@
       (first non-rotated)
       (first cards))))
 
+(defn filter-exact-title [query cards]
+  (let [lcquery (.toLowerCase query)]
+    (filter #(or (= (.toLowerCase (:title %)) lcquery)
+                 (= (:normalizedtitle %) lcquery))
+            cards)))
+
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
   [side card]
@@ -78,7 +78,7 @@
         id (:id card)
         cards (filter #(and (= (:side %) side) (alt-art? %))
                       (:cards @app-state))
-        exact-matches (filter #(= (-> % :title .toLowerCase) q) cards)]
+        exact-matches (filter-exact-title q cards)]
     (cond (and id
                (first (filter #(= id (:code %)) cards)))
           (first (filter #(= id (:code %)) cards))
@@ -87,9 +87,8 @@
           (loop [i 2 matches cards]
             (let [subquery (subs q 0 i)]
               (cond (zero? (count matches)) card
-                    (or (= (count matches) 1) (identical-cards? matches)) (first matches)
-                    (found? subquery matches) (found? subquery matches)
-                    (<= i (count (:title card))) (recur (inc i) (search subquery matches))
+                    (or (= (count matches) 1) (identical-cards? matches)) (take-best-card matches)
+                    (<= i (count (:title card))) (recur (inc i) (filter-title subquery matches))
                     :else card))))))
 
 (defn- build-identity-name
