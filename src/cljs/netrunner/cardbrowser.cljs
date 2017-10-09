@@ -192,7 +192,7 @@
     cards
     (filter #(= (field %) filter-value) cards)))
 
-(defn match [query cards]
+(defn filter-title [query cards]
   (if (empty? query)
     cards
     (let [lcquery (.toLowerCase query)]
@@ -303,7 +303,7 @@
                               (filter-cards (:side-filter state) :side)
                               (filter-cards (:faction-filter state) :faction)
                               (filter-cards (:type-filter state) :type)
-                              (match (:search-query state))
+                              (filter-title (:search-query state))
                               (insert-alt-arts)
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))

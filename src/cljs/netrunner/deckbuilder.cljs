@@ -6,7 +6,7 @@
             [clojure.string :refer [split split-lines join escape] :as s]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art?] :as cb]
+            [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title] :as cb]
             [netrunner.account :refer [load-alt-arts alt-art-name]]
             [netrunner.ajax :refer [POST GET]]
             [goog.string :as gstring]
@@ -697,14 +697,13 @@
           [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]])])))
 
 (defn match [identity query]
-  (if (empty? query)
-    []
-    (let [cards (->> (:cards @app-state)
-                     (filter #(and (allowed? % identity)
-                                   (not= "Special" (:setname %))
-                                   (alt-art? %)))
-                     (distinct-by :title))]
-      (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
+  (->> (:cards @app-state)
+    (filter #(and (allowed? % identity)
+                  (not= "Special" (:setname %))
+                  (alt-art? %)))
+    (distinct-by :title)
+    (filter-title query)
+    (take 10)))
 
 (defn handle-keydown [owner event]
   (let [selected (om/get-state owner :selected)
