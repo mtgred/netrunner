@@ -294,7 +294,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           in_game = game.originalPlayers.filter (p) -> p.user._id == socket.request.user._id
           if in_game.length > 0
             rejoinGame(socket, msg.gameid, in_game[0], null)
-            requester.send(JSON.stringify({action: "rejoin", gameid: socket.gameid, text: "#{socket.request.user.username} rejoined the game."}))
+            requester.send(JSON.stringify({action: "rejoin", user: socket.request.user, gameid: socket.gameid, text: "#{socket.request.user.username} rejoined the game."}))
 
       when "mute-spectators"
         game = games[msg.gameid]
@@ -400,6 +400,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
           if game and msg.side == "spectator" and game.mutespectators
             return
         try
+          msg.user = socket.request.user
           requester.send(JSON.stringify(msg))
         catch err
           console.log(err)
