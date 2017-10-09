@@ -4,15 +4,17 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! >!] :as async]
             [meccg.appstate :refer [app-state]]
-            [meccg.ajax :refer [GET]]))
+            [meccg.ajax :refer [GET]]
+            [superstring.core :as str]))
 
 (def cards-channel (chan))
 
 ;; Load in sets and mwl lists
 (go (let [sets (:json (<! (GET "/data/sets")))
-          cycles (:json (<! (GET "/data/cycles")))
-          mwl (:json (<! (GET "/data/mwl")))]
-      (swap! app-state assoc :sets sets :mwl mwl :cycles cycles)))
+         ;; cycles (:json (<! (GET "/data/cycles")))
+         ;; mwl (:json (<! (GET "/data/mwl")))
+         ]
+      (swap! app-state assoc :sets sets)))
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
       (swap! app-state assoc :cards cards)
@@ -23,7 +25,7 @@
   (.replace text (js/RegExp. symbol "g") (str "<span class='anr-icon " class "'></span>")))
 
 (defn image-url [card]
-  (str "/img/cards/" (:code card) ".png"))
+  (str "/img/cards/" (:Set card) "/" (:ImageName card))) ;;had ".png"
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -74,7 +76,7 @@
                            {:dangerouslySetInnerHTML #js {:__html (apply str (for [i (range influence)] "&#8226;"))}
                             :class                   (-> faction .toLowerCase (.replace " " "-"))}]])))
           (ifShowText [:div.text
-                       [:p [:span.type (str (:type card))] (if (empty? (:subtype card))
+                       [:p [:span.NameEN (str (:NameEN card))] (if (empty? (:subtype card))
                                                              "" (str ": " (:subtype card)))]
                        [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]])
           (when-not (:showText state)
@@ -83,21 +85,30 @@
                      :onError #(-> (om/set-state! owner {:showText true}))
                      :onLoad #(-> % .-target js/$ .show)}]))])))))
 
-(defn types [side]
-  (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
-        corp-types ["Agenda" "Asset" "ICE" "Operation" "Upgrade"]]
-    (case side
-      "All" (concat runner-types corp-types)
-      "Runner" runner-types
-      "Corp" (cons "Identity" corp-types))))
+(def primary-order ["Character" "Resource" "Hazard" "Site" "Region"])
+(def resource-secondaries ["Ally" "Faction" "Greater Item" "Major Item" "Minor Item" "Special Item"])
+(def shared-secondaries ["Long-event" "Permanent-event" "Permanent-event/Short-event" "Short-event"])
+(def hazard-secondaries ["Creature" "Creature/Permanent-event" "Creature/Short-event"])
+(def general-alignments ["Hero" "Minion" "Balrog" "Fallen-wizard" "Elf-lord" "Dwarf-lord" "Dual"])
+(def set-order ["METW" "METD" "MEDM" "MELE" "MEAS" "MEWH" "MEBA" "MEFB" "MEDF" "MENE"])
 
-(defn factions [side]
-  (let [runner-factions ["Anarch" "Criminal" "Shaper"]
-        corp-factions ["Jinteki" "Haas-Bioroid" "NBN" "Weyland Consortium" "Neutral"]]
-    (case side
-      "All" (concat runner-factions corp-factions)
-      "Runner" (conj runner-factions "Neutral")
-      "Corp" corp-factions)))
+(defn secondaries [primary]
+    (case primary
+      "All" (concat ["character"] hazard-secondaries shared-secondaries resource-secondaries ["site"] ["region"])
+      "Character" ["character" "Avatar" "Agent"]
+      "Resource" (concat resource-secondaries shared-secondaries)
+      "Hazard" (concat hazard-secondaries shared-secondaries)
+      "Site" ["site"]
+      "Region" ["region"]))
+
+(defn alignments [primary]
+    (case primary
+      "All" (concat general-alignments ["Neutral"])
+      "Character" (concat general-alignments ["Neutral"])
+      "Resource" general-alignments
+      "Hazard" ["Neutral"]
+      "Site" general-alignments
+      "Region" ["Neutral"]))
 
 (defn options [list]
   (let [options (cons "All" list)]
@@ -112,16 +123,16 @@
 (defn match [query cards]
   (if (empty? query)
     cards
-    (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards)))
+    (filter #(if (= (.indexOf (str/strip-accents (.toLowerCase (:NameEN %))) query) -1) false true) cards)))
 
 (defn sort-field [fieldname]
   (case fieldname
-    "Name" :title
-    "Influence" :factioncost
-    "Cost" :cost
-    "Faction" (juxt :side :faction)
-    "Type" (juxt :side :type)
-    "Set number" :number))
+    "Set" #((into {} (map-indexed (fn [i e] [e i]) set-order)) (:Set %))
+    "Name" (juxt :NameEN #((into {} (map-indexed (fn [i e] [e i]) set-order)) (:Set %)))
+    "Primary" (juxt #((into {} (map-indexed (fn [i e] [e i]) set-order)) (:Set %))
+                    #((into {} (map-indexed (fn [i e] [e i]) primary-order)) (:Primary %)))
+    "Alignment" (juxt #((into {} (map-indexed (fn [i e] [e i]) set-order)) (:Set %))
+                      #((into {} (map-indexed (fn [i e] [e i]) (concat general-alignments ["Neutral"]))) (:Alignment %)))))
 
 (defn handle-scroll [e owner {:keys [page]}]
   (let [$cardlist (js/$ ".card-list")
@@ -130,20 +141,20 @@
       (om/update-state! owner :page inc))))
 
 (defn handle-search [e owner]
-  (doseq [filter [:set-filter :type-filter :sort-filter :faction-filter]]
+  (doseq [filter [:set-filter :secondary-filter :sort-filter :alignment-filter]]
     (om/set-state! owner filter "All"))
   (om/set-state! owner :search-query (.. e -target -value)))
 
-(defn card-browser [{:keys [sets cycles] :as cursor} owner]
+(defn card-browser [{:keys [sets] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
       {:search-query ""
-       :sort-field "Faction"
+       :sort-field "Set"
        :set-filter "All"
-       :type-filter "All"
-       :side-filter "All"
-       :faction-filter "All"
+       :primary-filter "All"
+       :alignment-filter "All"
+       :secondary-filter "All"
        :page 1
        :filter-ch (chan)})
 
@@ -166,32 +177,26 @@
               [:span.e.search-clear {:dangerouslySetInnerHTML #js {:__html "&#xe819;"}
                                      :on-click #(om/set-state! owner :search-query "")}])
             [:input.search {:on-change #(handle-search % owner)
-                            :type "text" :placeholder "Search cards" :value query}]])
+                            :NameEN "text" :placeholder "Search cards" :value query}]])
 
          [:div
           [:h4 "Sort by"]
           [:select {:value (:sort-filter state)
                     :on-change #(om/set-state! owner :sort-field (.trim (.. % -target -value)))}
-           (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
+           (for [field ["Set" "Name" "Primary" "Alignment"]]
              [:option {:value field} field])]]
 
-         (let [cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
-                                            :cycle_position (:position %)
+         (let [sets-list-all (map #(assoc % :code (str (:code %))
+                                            :position %
                                             :position 0)
-                                    cycles)
-               cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
-               ;; Draft is specified as a cycle, but contains no set, nor is it marked as a bigbox
-               ;; so we handled it specifically here for formatting purposes
-               sets-list (map #(if (not (or (:bigbox %) (= (:name %) "Draft")))
-                                  (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
-                                  %)
-                               sets)]
-           (for [filter [["Set" :set-filter (map :name
-                                                 (sort-by (juxt :cycle_position :position)
-                                                          (concat cycles-list sets-list)))]
-                         ["Side" :side-filter ["Corp" "Runner"]]
-                         ["Faction" :faction-filter (factions (:side-filter state))]
-                         ["Type" :type-filter (types (:side-filter state))]]]
+                                    sets)
+               sets-list (filter #(not (= (:size %) 1)) sets-list-all)]
+           (for [filter [["Set" :set-filter (map :code
+                                                 (sort-by (juxt :position)
+                                                          sets-list-all))]
+                         ["Primary" :primary-filter ["Character" "Resource" "Hazard" "Site" "Region"]]
+                         ["Alignment" :alignment-filter (alignments (:primary-filter state))]
+                         ["Secondary" :secondary-filter (secondaries (:primary-filter state))]]]
              [:div
               [:h4 (first filter)]
               [:select {:value ((second filter) state)
@@ -201,19 +206,19 @@
         [:div.card-list {:on-scroll #(handle-scroll % owner state)}
          (om/build-all card-view
                        (let [s (-> (:set-filter state)
-                                     (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
-                                     (.replace " Cycle" ""))
-                             cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
+                                     (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" ""))
+                             list-sets (set (for [x sets :when (= (:code x) s)] (:code x)))
                              cards (if (= s "All")
                                      (:cards cursor)
-                                     (if (= (.indexOf (:set-filter state) "Cycle") -1)
-                                       (filter #(= (:setname %) s) (:cards cursor))
-                                       (filter #(cycle-sets (:setname %)) (:cards cursor))))]
+                                     (if (= (.indexOf (:set-filter state) "Set") -1)
+                                       (filter #(= (:Set %) s) (:cards cursor))
+                                       (filter #(list-sets (:position %)) (:cards cursor))))]
                          (->> cards
-                              (filter-cards (:side-filter state) :side)
-                              (filter-cards (:faction-filter state) :faction)
-                              (filter-cards (:type-filter state) :type)
-                              (match (.toLowerCase (:search-query state)))
+                              (filter-cards (:primary-filter state) :Primary)
+                              (filter-cards (:alignment-filter state) :Alignment)
+                              (filter-cards (:secondary-filter state) :Secondary)
+                              (match (str/strip-accents (.toLowerCase (:search-query state))))
+                              ;;(match (:search-query state))
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))
                        {:key :code})]]))))

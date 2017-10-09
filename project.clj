@@ -16,7 +16,8 @@
                  [com.novemberain/monger "3.1.0"]
                  [org.slf4j/slf4j-nop "1.7.21"]
                  [org.clojure/core.match "0.3.0-alpha4"]
-                 [differ "0.3.1"]]
+                 [differ "0.3.1"]
+                 [superstring "2.1.0"]]
 
   :profiles {:dev {:dependencies [[figwheel "0.5.8"]
                                   [figwheel-sidecar "0.5.8"]

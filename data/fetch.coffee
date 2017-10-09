@@ -11,7 +11,7 @@ mongoPassword = process.env.OPENSHIFT_MONGODB_DB_PASSWORD
 login = if process.env.OPENSHIFT_MONGODB_DB_PASSWORD then "#{mongoUser}:#{mongoPassword}@" else ""
 mongoHost = process.env.OPENSHIFT_MONGODB_DB_HOST || '127.0.0.1'
 mongoPort = process.env.OPENSHIFT_MONGODB_DB_PORT || '27017'
-appName = process.env.OPENSHIFT_APP_NAME || 'netrunner'
+appName = process.env.OPENSHIFT_APP_NAME || 'meccg'
 
 db = mongoskin.db("mongodb://#{login}#{mongoHost}:#{mongoPort}/#{appName}").open( (err, _) -> throw err if err )
 
@@ -160,6 +160,10 @@ fetchSets = (callback) ->
       sets = selectFields(setFields, data)
       for set in sets
         mapSets[set.code] = set
+        imgDir = path.join(__dirname, "..", "resources", "public", "img", "cards", "#{set.code}")
+        mkdirp imgDir, (err) ->
+          if err
+            console.error("Failed to create card image resource directory #{imgDir}")
       db.collection("sets").remove ->
         db.collection("sets").insert sets, (err, result) ->
           fs.writeFile "meccg-sets.json", JSON.stringify(sets), ->
@@ -179,14 +183,11 @@ fetchCards = (callback) ->
       res = JSON.parse(body)
       cards = selectFields(cardFields, res)
       imgDir = path.join(__dirname, "..", "resources", "public", "img", "cards")
-      mkdirp imgDir, (err) ->
-        if err
-          console.error("Failed to create card image resource directory #{imgDir}")
       i = 0
       for card in cards
-        imgPath = path.join(imgDir, "#{card.ImageName}")
+        imgPath = path.join(imgDir, "#{card.Set}", "#{card.ImageName}")
         if !fs.existsSync(imgPath)
-          fetchImg(baseurl, card.ImageName, imgPath, i++ * 200)
+          fetchImg((baseurl + card.Set + "/"), card.ImageName, imgPath,  i++ * 200)
       db.collection("cards").remove ->
         db.collection("cards").insert cards, (err, result) ->
           fs.writeFile "meccg-cards.json", JSON.stringify(cards), ->
