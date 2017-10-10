@@ -266,9 +266,12 @@ stats = io.of('/stats').on 'connection', (socket) ->
 
 chat = io.of('/chat').on 'connection', (socket) ->
   socket.on 'netrunner', (msg) ->
-    msg.date = new Date()
-    chat.emit('netrunner', msg)
-    db.collection('messages').insert msg, (err, result) ->
+    if socket.request.user
+      msg.date = new Date()
+      msg.username = socket.request.user.username
+      msg.emailhash = socket.request.user.emailhash
+      chat.emit('netrunner', msg)
+      db.collection('messages').insert msg, (err, result) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
   socket.emit("netrunner", {type: "games", games: games})
@@ -322,6 +325,14 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "join"
         game = games[msg.gameid]
 
+        unless game
+          fn("invalid game")
+          return
+
+        unless socket.request.user
+          fn("invalid user")
+          return
+
         unless user_allowed_in_game(getUsername(socket), game)
           fn("not allowed")
           return
@@ -341,7 +352,11 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
         game = games[msg.gameid]
 
         unless game
-          fn("unknown game")
+          fn("invalid game")
+          return
+
+        unless socket.request.user
+          fn("invalid user")
           return
 
         unless game.allowspectator
