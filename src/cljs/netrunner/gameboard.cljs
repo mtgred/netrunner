@@ -116,13 +116,13 @@
 
 (go (while true
       (let [msg (<! socket-channel)]
-        (reset! lock false)
         (case (:type msg)
           "rejoin" (launch-game (:state msg))
           ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
                                                                  #(assoc (:state msg) :side (:side @game-state))))
                                            (swap! last-state #(identity @game-state)))
-          nil))))
+          nil)
+        (reset! lock false))))
 
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
