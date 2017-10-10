@@ -39,11 +39,10 @@
   explaining which cost they were unable to pay."
   [state side title & args]
   (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
-        scored (get-in @state [side :scored])
         cost-msg (or (some #(toast-msg-helper state side %) costs))]
     ;; no cost message - hence can pay
     (if-not cost-msg
-      {:costs costs, :scored scored}
+      costs
       (when title (toast state side (str cost-msg " for " title ".")) false))))
 
 (defn pay-forfeit
@@ -51,12 +50,16 @@
   Amount is always 1 but can be extend if we ever need more than a single forfeit"
   ;; If multiples needed in future likely prompt-select needs work to take a function
   ;; instead of an ability
-  [state side card scored amount]
-  (if (= (count scored) 1)
-    (forfeit state side (first scored))
-    (prompt! state side card "Choose an Agenda to forfeit" scored
-             {:effect (effect (forfeit target))}))
-  (when-let [cost-name (cost-names amount :forfeit)]
+  [state side card n]
+  (resolve-ability state side
+                   {:prompt "Choose an Agenda to forfeit"
+                    :delayed-completion true
+                    :choices {:max n
+                              :req #(and (= (:side %) (side-str side))
+                                         (= (:zone %) [:scored]))}
+                    :effect (effect (forfeit eid target))}
+                   card nil)
+  (when-let [cost-name (cost-names n :forfeit)]
     cost-name))
 
 (defn pay-trash
@@ -69,6 +72,34 @@
             {:effect (effect (trash target args))})
    (when-let [cost-name (cost-names amount type)] cost-name)))
 
+(defn- cost-handler
+  "Calls the relevant function for a cost depending on the keyword passed in"
+  [state side card action costs cost]
+  (case (first cost)
+    :click (do (trigger-event state side
+                              (if (= side :corp) :corp-spent-click :runner-spent-click)
+                              (first (keep :action action)) (:click (into {} costs)))
+               (swap! state assoc-in [side :register :spent-click] true)
+               (deduce state side cost))
+    :forfeit (pay-forfeit state side card (second cost))
+    :hardware (pay-trash state side card :hardware (second cost) (get-in @state [:runner :rig :hardware]))
+    :program (pay-trash state side card :program (second cost) (get-in @state [:runner :rig :program]))
+
+    ;; Connection
+    :connection (pay-trash state side card :connection (second cost) (filter (fn [c] (has-subtype? c "Connection"))
+                                                                          (all-installed state :runner)))
+
+    ;; Rezzed ICE
+    :ice (pay-trash state :corp card :ice (second cost) (filter (every-pred rezzed? ice?) (all-installed state :corp))
+                    {:cause :ability-cost :keep-server-alive true})
+
+    :tag (deduce state :runner cost)
+    :net-damage (damage state side :net (second cost) {:unpreventable true})
+    :mill (mill state side (second cost))
+
+    ;; Else
+    (deduce state side cost)))
+
 (defn pay
   "Deducts each cost from the player.
   args format as follows with each being optional ([:click 1 :credit 0] [:forfeit] {:action :corp-click-credit})
@@ -76,29 +107,9 @@
   [state side card & args]
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
-    (when-let [{:keys [costs scored]} (apply can-pay? state side (:title card) raw-costs)]
-        (->> costs (map
-                     #(cond
-                        (= (first %) :click) (do (trigger-event state side (if (= side :corp) :corp-spent-click :runner-spent-click) (first (keep :action action)) (:click (into {} costs)))
-                                                 (swap! state assoc-in [side :register :spent-click] true)
-                                                 (deduce state side %))
-                        (= (first %) :forfeit) (pay-forfeit state side card scored (second %))
-                        (= (first %) :hardware) (pay-trash state side card :hardware (second %) (get-in @state [:runner :rig :hardware]))
-                        (= (first %) :program) (pay-trash state side card :program (second %) (get-in @state [:runner :rig :program]))
-
-                        ; Connection
-                        (= (first %) :connection)
-                        (pay-trash state side card :connection (second %) (filter (fn [c] (has-subtype? c "Connection"))
-                                                                                  (all-installed state :runner)))
-
-                        ; Rezzed ICE
-                        (= (first %) :ice)
-                        (pay-trash state :corp card :ice (second %) (filter (every-pred rezzed? ice?) (all-installed state :corp)) {:cause :ability-cost :keep-server-alive true})
-
-                        (= (first %) :tag) (deduce state :runner %)
-                        (= (first %) :net-damage) (damage state side :net (second %) {:unpreventable true})
-                        (= (first %) :mill) (mill state side (second %))
-                        :else (deduce state side %)))
+    (when-let [costs (apply can-pay? state side (:title card) raw-costs)]
+        (->> costs
+             (map (partial cost-handler state side card action costs))
              (filter some?)
              (interpose " and ")
              (apply str)))))

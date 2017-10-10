@@ -53,6 +53,8 @@
   (swap! app-state assoc-in [:options :sounds-volume] (om/get-state owner :volume))
   (swap! app-state assoc-in [:options :blocked-users] (om/get-state owner :blocked-users))
   (swap! app-state assoc-in [:options :alt-arts] (om/get-state owner :alt-arts))
+  (swap! app-state assoc-in [:options :gamestats] (om/get-state owner :gamestats))
+  (swap! app-state assoc-in [:options :deckstats] (om/get-state owner :deckstats))
   (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
   (.setItem js/localStorage "sounds_volume" (om/get-state owner :volume))
 
@@ -128,6 +130,8 @@
       (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
       (om/set-state! owner :show-alt-art (get-in @app-state [:options :show-alt-art]))
       (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume]))
+      (om/set-state! owner :gamestats (get-in @app-state [:options :gamestats]))
+      (om/set-state! owner :deckstats (get-in @app-state [:options :deckstats]))
       (om/set-state! owner :blocked-users (sort (get-in @app-state [:options :blocked-users] [])))
       (go (while true
             (let [cards (<! alt-arts-channel)
@@ -182,6 +186,32 @@
                                  :value (:ref option)
                                  :on-change #(om/set-state! owner :background (.. % -target -value))
                                  :checked (= (om/get-state owner :background) (:ref option))}]
+                 (:name option)]])]
+
+            [:section
+             [:h3 " Game Win/Lose Statistics "]
+             (for [option [{:name "Always"                   :ref "always"}
+                           {:name "Competitive Lobby Only"   :ref "competitive"}
+                           {:name "None"                     :ref "none"}]]
+               [:div
+                [:label [:input {:type "radio"
+                                 :name "gamestats"
+                                 :value (:ref option)
+                                 :on-change #(om/set-state! owner :gamestats (.. % -target -value))
+                                 :checked (= (om/get-state owner :gamestats) (:ref option))}]
+                 (:name option)]])]
+
+            [:section
+             [:h3 " Deck Statistics "]
+             (for [option [{:name "Always"                   :ref "always"}
+                           {:name "Competitive Lobby Only"   :ref "competitive"}
+                           {:name "None"                     :ref "none"}]]
+               [:div
+                [:label [:input {:type "radio"
+                                 :name "deckstats"
+                                 :value (:ref option)
+                                 :on-change #(om/set-state! owner :deckstats (.. % -target -value))
+                                 :checked (= (om/get-state owner :deckstats) (:ref option))}]
                  (:name option)]])]
 
             [:section {:id "alt-art"}

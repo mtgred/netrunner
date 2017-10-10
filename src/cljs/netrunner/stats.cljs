@@ -2,17 +2,17 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [<!] :as async]
+            [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.appstate :refer [app-state]]
+            [netrunner.deckbuilder :refer [process-decks num->percent]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.ajax :refer [POST GET]]
             [goog.string :as gstring]
             [goog.string.format]))
 
-(defn num->percent
-  "Converts an input number to a percent of the second input number for display"
-  [num1 num2]
-  (gstring/format "%.0f" (* 100 (float (/ num1 num2)))))
+(def stats-channel (chan))
+(def stats-socket (.connect js/io (str js/iourl "/stats")))
+(.on stats-socket "netrunner" #(put! stats-channel (js->clj % :keywordize-keys true)))
 
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
@@ -24,65 +24,85 @@
     (fn [user]
       (let [data (:user @app-state)]
         (try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
-        (go (let [result (<! (POST "/user/clearstats" data :json))])
-            (om/set-state! owner :games-started 0)
-            (om/set-state! owner :games-completed 0)
-            (om/set-state! owner :wins 0)
-            (om/set-state! owner :loses 0)
-            (om/set-state! owner :dnf 0))))))
+        (go (let [result (<! (POST "/user/clearstats" data :json))]
+              (swap! app-state assoc :stats result)))))))
 
-(defn refresh-user-stats [owner]
-  (authenticated
-    (fn [user]
-      (try (js/ga "send" "event" "user" "refreshstats") (catch js/Error e))
-      (go (let [result (-> (<! (GET (str "/user"))) :json first :stats)]
-            (om/set-state! owner :games-started (:games-started result))
-            (om/set-state! owner :games-completed (:games-completed result))
-            (om/set-state! owner :wins (:wins result))
-            (om/set-state! owner :loses (:loses result))
-            (om/set-state! owner :dnf (- (:games-started result) (:games-completed result))))))))
+;; Go loop to receive messages from node server to refresh stats on game-end
+(go (while true
+      (let [msg (<! stats-channel)
+            result (-> (<! (GET (str "/user"))) :json first :stats)
+            decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+        (try (js/ga "send" "event" "user" "refreshstats") (catch js/Error e))
+        (swap! app-state assoc :stats result)
+        (swap! app-state assoc :decks decks))))
 
-(defn stats-view [user owner]
+(defn stats [{:keys [stats] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this] {:flash-message ""})
 
-    om/IWillMount
-    (will-mount [this]
-      (om/set-state! owner :games-started (get-in @app-state [:stats :games-started]))
-      (om/set-state! owner :games-completed (get-in @app-state [:stats :games-completed]))
-      (om/set-state! owner :wins (get-in @app-state [:stats :wins]))
-      (om/set-state! owner :loses (get-in @app-state [:stats :loses]))
-      (om/set-state! owner :dnf (- (om/get-state owner :games-started) (om/get-state owner :games-completed))))
-
     om/IRenderState
     (render-state [this state]
       (sab/html
-        (let [started (notnum->zero (om/get-state owner :games-started))
-              completed (notnum->zero (om/get-state owner :games-completed))
+        (let [started (notnum->zero (:games-started stats))
+              completed (notnum->zero (:games-completed stats))
               pc (notnum->zero (num->percent completed started))
-              win (notnum->zero (om/get-state owner :wins))
-              pw (notnum->zero (num->percent win started))
-              lose (notnum->zero (om/get-state owner :loses))
-              pl (notnum->zero (num->percent lose started))
-              incomplete (notnum->zero (om/get-state owner :dnf))
-              pi (notnum->zero (num->percent incomplete started))]
-          [:div
-            [:div.panel.blue-shade
+              win (notnum->zero (:wins stats))
+              lose (notnum->zero (:loses stats))
+              pw (notnum->zero (num->percent win (+ win lose)))
+              pl (notnum->zero (num->percent lose (+ win lose)))
+              incomplete (notnum->zero (- started completed))
+              pi (notnum->zero (num->percent incomplete started))
+              ;; Corp Stats
+              started-corp (notnum->zero (:games-started-corp stats))
+              completed-corp (notnum->zero (:games-completed-corp stats))
+              pc-corp (notnum->zero (num->percent completed-corp started-corp))
+              win-corp (notnum->zero (:wins-corp stats))
+              lose-corp (notnum->zero (:loses-corp stats))
+              pw-corp (notnum->zero (num->percent win-corp (+ win-corp lose-corp)))
+              pl-corp (notnum->zero (num->percent lose-corp (+ win-corp lose-corp)))
+              incomplete-corp (notnum->zero (- started-corp completed-corp))
+              pi-corp (notnum->zero (num->percent incomplete-corp started-corp))
+              ;; Runner Stats
+              started-runner (notnum->zero (:games-started-runner stats))
+              completed-runner (notnum->zero (:games-completed-runner stats))
+              pc-runner (notnum->zero (num->percent completed-runner started-runner))
+              win-runner (notnum->zero (:wins-runner stats))
+              lose-runner (notnum->zero (:loses-runner stats))
+              pw-runner (notnum->zero (num->percent win-runner (+ win-runner lose-runner)))
+              pl-runner (notnum->zero (num->percent lose-runner (+ win-runner lose-runner)))
+              incomplete-runner (notnum->zero (- started-runner completed-runner))
+              pi-runner (notnum->zero (num->percent incomplete-runner started-runner))]
+          [:div.blue-shade.panel.stats-main
+            [:div.stats-left
              [:h2 "Game Stats"]
               [:section
                [:div "Started: " started]
                [:div "Completed: " completed " (" pc "%)"]
                [:div "Not completed: " incomplete  " (" pi "%)"]
-               [:div "Won: " win  " (" pw "%)"]
-               [:div "Lost: " lose  " (" pl "%)"]]
+               (if-not (= "none" (get-in @app-state [:options :gamestats]))
+                 [:div [:div "Won: " win  " (" pw "%)"]
+                  [:div "Lost: " lose  " (" pl "%)"]]
+                 [:div [:br] [:br]])]
              [:div.button-bar
-              [:button {:on-click #(refresh-user-stats owner)} "Refresh Stats"]
-              [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]])))))
-
-(defn stats [{:keys [user]} owner]
-  (om/component
-    (when user
-      (om/build stats-view user))))
+              [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]
+           [:div.stats-middle
+            [:h2 "Corp Stats"]
+            [:section
+             [:div "Started: " started-corp]
+             [:div "Completed: " completed-corp " (" pc-corp "%)"]
+             [:div "Not completed: " incomplete-corp  " (" pi-corp "%)"]
+             (when-not (= "none" (get-in @app-state [:options :gamestats]))
+               [:div [:div "Won: " win-corp  " (" pw-corp "%)"]
+                [:div "Lost: " lose-corp  " (" pl-corp "%)"]])]]
+           [:div.stats-right
+            [:h2 "Runner Stats"]
+            [:section
+             [:div "Started: " started-runner]
+             [:div "Completed: " completed-runner " (" pc-runner "%)"]
+             [:div "Not completed: " incomplete-runner  " (" pi-runner "%)"]
+             (when-not (= "none" (get-in @app-state [:options :gamestats]))
+               [:div [:div "Won: " win-runner  " (" pw-runner "%)"]
+                [:div "Lost: " lose-runner  " (" pl-runner "%)"]])]]])))))
 
 (om/root stats app-state {:target (. js/document (getElementById "stats"))})

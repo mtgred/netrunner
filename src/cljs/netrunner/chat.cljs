@@ -91,13 +91,15 @@
     (init-state [this] {:channel :general
                         :channel-ch (chan)
                         :zoom false
-                        :zoom-ch (chan)})
+                        :zoom-ch (chan)
+                        :scrolling false})
 
     om/IWillMount
     (will-mount [this]
       (fetch-messages owner)
       (go (while true
             (let [ch (<! (om/get-state owner :channel-ch))]
+              (om/set-state! owner :scrolling false)
               (om/set-state! owner :channel ch))))
       (go (while true
             (let [card (<! (om/get-state owner :zoom-ch))]
@@ -106,15 +108,23 @@
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (fetch-messages owner)
-      (let [curr-zoom (om/get-state owner :zoom)
-            prev-zoom (:zoom prev-state)]
-        (when (= curr-zoom prev-zoom)
-          (let [div (om/get-node owner "message-list")
-                scrolltop (.-scrollTop div)
-                height (.-scrollHeight div)]
-            (when (or (zero? scrolltop)
-                      (< (- height scrolltop (.height (js/$ ".chat-app .chat-box"))) 500))
-              (aset div "scrollTop" height))))))
+      (let [curr-channel (om/get-state owner :channel)
+            prev-channel (:channel prev-state)
+            curr-msg-count (count (get-in cursor [:channels curr-channel]))
+            prev-msg-count (count (get-in prev-props [:channels curr-channel]))
+            curr-page (:active-page cursor)
+            prev-page (:active-page prev-props)
+            is-scrolled (om/get-state owner :scrolling)
+            div (om/get-node owner "message-list")
+            scroll-top (.-scrollTop div)
+            scroll-height (.-scrollHeight div)]
+        (when (or (and (zero? scroll-top)
+                       (not is-scrolled))
+                  (not= curr-page prev-page)
+                  (not= curr-channel prev-channel)
+                  (and (not= curr-msg-count prev-msg-count)
+                       (not is-scrolled)))
+          (aset div "scrollTop" scroll-height))))
 
     om/IRenderState
     (render-state [this state]
@@ -130,7 +140,13 @@
             (when-let [card (om/get-state owner :zoom)]
               (om/build card-zoom card))]
            [:div.chat-box
-            [:div.blue-shade.panel.message-list {:ref "message-list"}
+            [:div.blue-shade.panel.message-list {:ref "message-list"
+                                                 :on-scroll #(let [currElt (.-currentTarget %)
+                                                                   scroll-top (.-scrollTop currElt)
+                                                                   scroll-height (.-scrollHeight currElt)
+                                                                   client-height (.-clientHeight currElt)
+                                                                   scrolling (< (+ scroll-top client-height) scroll-height)]
+                                                               (om/set-state! owner :scrolling scrolling))}
              (if (not (:cards-loaded cursor))
                [:h4 "Loading cards..."]
                (om/build-all message-view (get-in cursor [:channels (:channel state)])

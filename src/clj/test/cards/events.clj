@@ -1152,6 +1152,7 @@
     (is (= 0 (:agenda-point (get-corp))) "Political Dealings lowered agenda points by 1")
     (take-credits state :runner)
     (play-from-hand state :corp "Sacrifice")
+    (prompt-select :corp (get-scored state :corp 0))
     (is (= 0 (:agenda-point (get-corp))) "Forfeiting agenda did not refund extra agenda points ")
     (is (= 1 (count (:discard (get-runner)))) "Political Graffiti is in the Heap")))
 
@@ -1437,6 +1438,7 @@
 
     ;; Additional costs to rez should now be applied again
     (core/rez state :corp (get-content state :remote7 0))
+    (prompt-select :corp (get-in (get-corp) [:scored 0]))
     (is (zero? (count (:scored (get-corp)))) "Agenda was auto-forfeit to rez Oberth")
 
     (core/derez state :corp (get-content state :remote4 0))

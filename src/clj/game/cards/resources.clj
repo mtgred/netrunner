@@ -386,21 +386,23 @@
                  :choices (req (cancellable runnable-servers))
                  :effect (req (trash state side card {:cause :ability-cost})
                               (game.core/run state side target nil card)
-                              (register-events state side (:events (card-def card))
+                              (register-events state side
+                                               {:successful-run
+                                                {:silent (req true)
+                                                 :effect (req (if (>= (:credit runner) (:tag runner))
+                                                                ;; Can pay, do access
+                                                                (do (system-msg state side (str "uses Counter Surveillance to access up to "
+                                                                                                (:tag runner) " cards by paying "
+                                                                                                (:tag runner) " [Credit]"))
+                                                                    (pay state side card :credit (:tag runner))
+                                                                    (access-bonus state side (- (:tag runner) 1)))
+                                                                ;; Can't pay, don't access cards
+                                                                (do (system-msg state side "could not afford to use Counter Surveillance")
+                                                                    ;; Cannot access any cards
+                                                                    (max-access state side 0))))}
+                                                :run-ends {:effect (effect (unregister-events card))}}
                                                (assoc card :zone '(:discard))))}]
-    :events {:successful-run {:silent (req true)
-                              :effect (req (if (>= (:credit runner) (:tag runner))
-                                             ;; Can pay, do access
-                                             (do (system-msg state side (str "uses Counter Surveillance to access up to "
-                                                                             (:tag runner) " cards by paying "
-                                                                             (:tag runner) " [Credit]"))
-                                                 (pay state side card :credit (:tag runner))
-                                                 (access-bonus state side (- (:tag runner) 1)))
-                                             ;; Can't pay, don't access cards
-                                             (do (system-msg state side "could not afford to use Counter Surveillance")
-                                                 ;; Cannot access any cards
-                                                 (max-access state side 0))))}
-             :run-ends {:effect (effect (unregister-events card))}}}
+    :events {:successful-run nil :run-ends nil}}
 
    "Crash Space"
    {:prevent {:damage [:meat]}
@@ -613,7 +615,6 @@
    (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
      {:implementation "Use hosting ability when presented with Access prompt for an agenda"
       :abilities [{:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
-                                  (not (:psi @state)) ; hack for The Future Perfect
                                   (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
                    :label "Host an agenda being accessed"
                    :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]

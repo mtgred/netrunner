@@ -116,13 +116,13 @@
 
 (go (while true
       (let [msg (<! socket-channel)]
-        (reset! lock false)
         (case (:type msg)
           "rejoin" (launch-game (:state msg))
           ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
                                                                  #(assoc (:state msg) :side (:side @game-state))))
                                            (swap! last-state #(identity @game-state)))
-          nil))))
+          nil)
+        (reset! lock false))))
 
 (defn send [msg]
   (.emit socket "netrunner" (clj->js msg)))
@@ -132,10 +132,10 @@
 
 (defn send-command
   ([command] (send-command command nil))
-  ([command args]
-   (when-not @lock
+  ([command {:keys [no-lock] :as args}]
+   (when (or (not @lock) no-lock)
      (try (js/ga "send" "event" "game" command) (catch js/Error e))
-     (reset! lock true)
+     (when-not no-lock (reset! lock true))
      (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
             :user (:user @app-state)
             :command command :args args}))))
@@ -157,9 +157,9 @@
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
     (if (empty? text)
-      (send-command "typingstop" {:user (:user @app-state)})
+      (send-command "typingstop" {:user (:user @app-state) :no-lock true})
       (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
-        (send-command "typing" {:user (:user @app-state)})))))
+        (send-command "typing" {:user (:user @app-state) :no-lock true})))))
 
 (defn mute-spectators [mute-state]
   (send {:action "mute-spectators" :gameid (:gameid @app-state)

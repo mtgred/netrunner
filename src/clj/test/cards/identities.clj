@@ -444,11 +444,13 @@
       (prompt-choice :runner "Steal")
       (let [dd (get-resource state 0)]
         (card-ability state :runner dd 0)
+        (prompt-select :runner (get-in (get-runner) [:scored 0]))
         (is (empty? (:prompt (get-corp))) "No Jemison prompt for Runner forfeit")
         (take-credits state :runner)
         (play-from-hand state :corp "Global Food Initiative" "New remote")
         (score-agenda state :corp (get-content state :remote2 0))
         (core/rez state :corp enf)
+        (prompt-select :corp (get-in (get-corp) [:scored 0]))
         (prompt-select :corp iwall)
         (is (= 4 (:advance-counter (refresh iwall))) "Jemison placed 4 advancements")))))
 

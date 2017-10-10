@@ -78,6 +78,7 @@
     (is (= 2 (:agenda-point (get-runner))))
     (let [dd (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner dd 0)
+      (prompt-select :runner (get-in (get-runner) [:scored 0]))
       (is (= 1 (:click (get-runner))) "Didn't lose a click")
       (is (= 4 (:click-per-turn (get-runner))) "Still have 4 clicks per turn"))))
 
@@ -92,6 +93,7 @@
     (play-from-hand state :corp "Corporate Town" "New remote")
     (let [ctown (get-content state :remote2 0)]
       (core/rez state :corp ctown)
+      (prompt-select :corp (get-in (get-corp) [:scored 0]))
       (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn"))))
 
 (deftest refresh-recurring-credits-hosted

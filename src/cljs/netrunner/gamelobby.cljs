@@ -9,7 +9,8 @@
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state toast launch-game]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks]]))
+            [netrunner.stats :refer [notnum->zero]]
+            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks num->percent]]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -95,22 +96,22 @@
    (fn [user]
      (om/set-state! owner :editing false)
      (swap! app-state assoc :messages [])
-     (send {:action action :gameid gameid :password password :options (:options @app-state)} #(if (= % "invalid password")
-                                                                 (om/set-state! owner :error-msg "Invalid password")
-                                                                 (om/set-state! owner :prompt false))))))
+     (send {:action action :gameid gameid :password password :options (:options @app-state)}
+           #(cond
+              (= % "invalid password") (om/set-state! owner :error-msg "Invalid password")
+              (= % "not allowed") (om/set-state! owner :error-msg "Not allowed")
+              :else (om/set-state! owner :prompt false))))))
 
 (defn leave-lobby [cursor owner]
   (send {:action "leave-lobby" :gameid (:gameid @app-state)})
   (om/update! cursor :gameid nil)
-  (om/update! cursor :message []))
-  (swap! app-state dissoc :password-gameid)
+  (om/update! cursor :message [])
+  (om/set-state! owner :prompt false)
+  (swap! app-state dissoc :password-gameid))
 
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
-  ; Update decks to get new stats
-  (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-        (load-decks decks)))
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid)
   (.removeItem js/localStorage "gameid")
@@ -167,12 +168,23 @@
       "Weyland Consortium" (icon-span "weyland")
       [:span.side "(Unknown)"])))
 
+(defn user-status-span
+  "Returns a [:span] showing players game completion rate"
+  [player]
+  (let [started (get-in player [:user :stats :games-started])
+        completed (get-in player [:user :stats :games-completed])
+        completion-rate (str (notnum->zero (num->percent completed started)) "%")
+        completion-rate (if (< started 10) "Too little data" completion-rate)]
+    [:span.deck-status (get-in player [:user :username])
+     [:div.status-tooltip.blue-shade
+      [:div "Game Completion Rate: " completion-rate]]]))
+
 (defn player-view [{:keys [player game] :as args}]
   (om/component
    (sab/html
     [:span.player
      (om/build avatar (:user player) {:opts {:size 22}})
-     (get-in player [:user :username])
+     (user-status-span player)
      (let [side (:side player)
            faction (:faction player)
            identity (:identity player)
@@ -222,11 +234,11 @@
                     (do (swap! app-state assoc :password-gameid gameid) (om/set-state! owner :prompt action))))))]
        (sab/html
         [:div.gameline {:class (when (= current-game gameid) "active")}
-         (when (and (:allowspectator game) (not current-game))
+         (when (and (:allowspectator game) (not (or password-game current-game)))
            [:button {:on-click #(join "watch")} "Watch"])
-         (when-not (or current-game (= (count players) 2) started)
+         (when-not (or current-game (= (count players) 2) started password-game)
            [:button {:on-click #(join "join")} "Join"])
-         (when (and (not current-game) started
+         (when (and (not current-game) started (not password-game)
                     (some #(= % (get-in @app-state [:user :_id]))
                           (map #(get-in % [:user :_id]) originalPlayers)))
            [:button {:on-click #(join "rejoin")} "Rejoin"])
@@ -247,7 +259,11 @@
             [:p
              [:button {:type "button" :on-click #(join prompt)}
               prompt]
-             [:span.fake-link {:on-click #(do (swap! app-state dissoc :password-gameid) (om/set-state! owner :prompt false))}
+             [:span.fake-link {:on-click #(do
+                                            (swap! app-state dissoc :password-gameid)
+                                            (om/set-state! owner :prompt false)
+                                            (om/set-state! owner :error-msg nil)
+                                            (om/set-state! owner :password nil))}
               "Cancel"]]
             (when-let [error-msg (om/get-state owner :error-msg)]
               [:p.flash-message error-msg])])])))))
@@ -410,7 +426,7 @@
                    (when (:allowspectator game)
                      [:div.spectators
                       (let [c (count (:spectators game))]
-                        [:h3 (str c " Spectator" (when (> c 1) "s"))])
+                        [:h3 (str c " Spectator" (when (not= c 1) "s"))])
                       (for [spectator (:spectators game)]
                         (om/build player-view {:player spectator}))])]
                   (om/build chat-view messages {:state state})])))]

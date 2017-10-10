@@ -101,6 +101,18 @@
   [state pos]
   (get-in @state [:runner :rig :resource pos]))
 
+(defn get-scored
+  "Get a card from the score area. Can find by name or index.
+  If no index or name provided, get the first scored agenda."
+  ([state side] (get-scored state side 0))
+  ([state side x]
+   (if (number? x)
+     ;; Find by index
+     (get-in @state [side :scored x])
+     ;; Find by name
+     (when (string? x)
+       (find-card x (get-in @state [side :scored]))))))
+
 (defn get-counters
   "Get number of counters of specified type."
   [card type]

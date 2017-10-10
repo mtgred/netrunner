@@ -16,6 +16,11 @@
 (def zoom-channel (chan))
 (def INFINITY 2147483647)
 
+(defn num->percent
+  "Converts an input number to a percent of the second input number for display"
+  [num1 num2]
+  (gstring/format "%.0f" (* 100 (float (/ num1 num2)))))
+
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
     (every? #(= (:title %) name) cards)))
@@ -87,7 +92,7 @@
           (loop [i 2 matches cards]
             (let [subquery (subs q 0 i)]
               (cond (zero? (count matches)) card
-                    (or (= (count matches) 1) (identical-cards? matches)) (first matches)
+                    (or (= (count matches) 1) (identical-cards? matches)) (take-best-card matches)
                     (found? subquery matches) (found? subquery matches)
                     (<= i (count (:title card))) (recur (inc i) (search subquery matches))
                     :else card))))))
@@ -436,7 +441,7 @@
   "Returns true if deck is valid under Cache Refresh rules."
   [sets deck]
   (let [over-one-core (cards-over-one-core deck)
-        valid-sets (concat ["Core Set" "Terminal Directive"] (sets-in-two-newest-cycles sets))
+        valid-sets (concat ["Revised Core Set" "Terminal Directive"] (sets-in-two-newest-cycles sets))
         deck-with-id (assoc deck :cards (cons {:card (:identity deck) } (:cards deck))) ;identity should also be from valid sets
         restricted-sets (group-cards-from-restricted-sets sets valid-sets deck-with-id)
         restricted-bigboxes (rest (:bigboxes restricted-sets)) ;one big box is fine
@@ -614,13 +619,8 @@
         (try (js/ga "send" "event" "deckbuilder" "cleardeckstats") (catch js/Error e))
         (go (let [result (<! (POST "/data/decks/clearstats" data :json))]
               (om/update! cursor :decks (conj decks deck))
-              (om/set-state! owner :deck deck)))))))
-
-(defn refresh-deck-stats [cursor owner]
-  (authenticated
-    (fn [user]
-      (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-            (load-decks decks))))))
+              (om/set-state! owner :deck deck)
+              (.focus deck)))))))
 
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
@@ -787,11 +787,12 @@
                     [:h4 (:name deck)]
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                     [:p (get-in deck [:identity :title]) [:br]
-                     (when-let [stats (:stats deck)]
-                       [:span "  Games: " (:games stats)
-                        " - Win: " (or (:wins stats) 0)
-                        " - Lose: " (or (:loses stats) 0)
-                        " - Percent Win: " (gstring/format "%.0f" (* 100 (float (/ (:wins stats) (:games stats))))) "%"])]])])))))
+                     (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
+                       (let [stats (:stats deck)]
+                         [:span "  Games: " (:games stats)
+                          " - Win: " (or (:wins stats) 0)
+                          " - Lose: " (or (:loses stats) 0)
+                          " - Percent Win: " (num->percent (:wins stats) (:games stats)) "%"]))]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -915,8 +916,7 @@
                   :else [:div.button-bar
                          [:button {:on-click #(edit-deck owner)} "Edit"]
                          [:button {:on-click #(delete-deck owner)} "Delete"]
-                         [:button {:on-click #(refresh-deck-stats cursor owner)} "Refresh Stats"]
-                         (when (:stats deck)
+                         (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]
                 [:div.header
