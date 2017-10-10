@@ -267,6 +267,14 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
       when "watch"
         game = games[msg.gameid]
 
+        unless game
+          fn("unknown game")
+          return
+
+        unless game.allowspectator
+          fn("not allowed")
+          return
+
         unless user_allowed_in_game(getUsername(socket), game)
           fn("not allowed")
           return
