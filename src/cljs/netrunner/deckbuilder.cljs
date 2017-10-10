@@ -6,7 +6,7 @@
             [clojure.string :refer [split split-lines join escape] :as s]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art?] :as cb]
+            [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title] :as cb]
             [netrunner.account :refer [load-alt-arts alt-art-name]]
             [netrunner.ajax :refer [POST GET]]
             [goog.string :as gstring]
@@ -24,9 +24,6 @@
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
     (every? #(= (:title %) name) cards)))
-
-(defn found? [query cards]
-  (some #(if (= (.toLowerCase (:title %)) query) %) cards))
 
 (defn is-draft-id?
   "Check if the specified id is a draft identity"
@@ -59,9 +56,6 @@
   (or (= (:faction card) (:faction identity))
       (= 0 (:factioncost card)) (= INFINITY (id-inf-limit identity))))
 
-(defn search [query cards]
-  (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards))
-
 (defn alt-art?
   "Removes alt-art cards from the search if user is not :special"
   [card]
@@ -76,6 +70,12 @@
       (first non-rotated)
       (first cards))))
 
+(defn filter-exact-title [query cards]
+  (let [lcquery (.toLowerCase query)]
+    (filter #(or (= (.toLowerCase (:title %)) lcquery)
+                 (= (:normalizedtitle %) lcquery))
+            cards)))
+
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
   [side card]
@@ -83,7 +83,7 @@
         id (:id card)
         cards (filter #(and (= (:side %) side) (alt-art? %))
                       (:cards @app-state))
-        exact-matches (filter #(= (-> % :title .toLowerCase) q) cards)]
+        exact-matches (filter-exact-title q cards)]
     (cond (and id
                (first (filter #(= id (:code %)) cards)))
           (first (filter #(= id (:code %)) cards))
@@ -93,8 +93,7 @@
             (let [subquery (subs q 0 i)]
               (cond (zero? (count matches)) card
                     (or (= (count matches) 1) (identical-cards? matches)) (take-best-card matches)
-                    (found? subquery matches) (found? subquery matches)
-                    (<= i (count (:title card))) (recur (inc i) (search subquery matches))
+                    (<= i (count (:title card))) (recur (inc i) (filter-title subquery matches))
                     :else card))))))
 
 (defn- build-identity-name
@@ -697,14 +696,13 @@
           [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]])])))
 
 (defn match [identity query]
-  (if (empty? query)
-    []
-    (let [cards (->> (:cards @app-state)
-                     (filter #(and (allowed? % identity)
-                                   (not= "Special" (:setname %))
-                                   (alt-art? %)))
-                     (distinct-by :title))]
-      (take 10 (filter #(not= (.indexOf (.toLowerCase (:title %)) (.toLowerCase query)) -1) cards)))))
+  (->> (:cards @app-state)
+    (filter #(and (allowed? % identity)
+                  (not= "Special" (:setname %))
+                  (alt-art? %)))
+    (distinct-by :title)
+    (filter-title query)
+    (take 10)))
 
 (defn handle-keydown [owner event]
   (let [selected (om/get-state owner :selected)
