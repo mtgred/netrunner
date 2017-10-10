@@ -758,9 +758,10 @@
       (core/derez state :corp (refresh ti))
       (core/rez state :corp ti)
       (prompt-choice :corp "Yes") ; use alternative cost
+      (prompt-select :corp (get-in (get-corp) [:scored 0]))
       (is (= 3 (:credit (get-corp))) "Still on 3c")
       (is (= 0 (count (:scored (get-corp)))) "Agenda forfeited")
-      ; Can Host Conditions Counters
+      ;; Can Host Conditions Counters
       (play-from-hand state :corp "Patch")
       (prompt-select :corp (refresh ti))
       (is (= 1 (count (:hosted (refresh ti)))) "1 card on Tithonium")

@@ -545,7 +545,9 @@
   [state side reason]
   (system-msg state side "wins the game")
   (play-sfx state side "game-end")
-  (swap! state assoc :winner side
+  (swap! state assoc
+         :winner side
+         :loser (other-side side)
          :winning-user (get-in @state [side :user :username])
          :losing-user (get-in @state [(other-side side) :user :username])
          :reason reason :end-time (java.util.Date.)

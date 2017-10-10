@@ -424,8 +424,7 @@
                    (resolve-ability state side
                      {:prompt (msg "Choose an unrezzed piece of ICE protecting " serv " that you passed on your last run")
                       :choices {:req #(and (ice? %)
-                                           (not (rezzed? %))
-                                           (= runtgt (second (:zone %))))}
+                                           (not (rezzed? %)))}
                       :msg (msg "trash " (card-str state target))
                       :effect (effect (trash target))}
                     card nil)))}
@@ -700,7 +699,8 @@
    "Indexing"
    {:delayed-completion true
     :effect (effect (run :rd
-                         {:replace-access
+                         {:req (req (= target :rd))
+                          :replace-access
                           {:msg "rearrange the top 5 cards of R&D"
                            :delayed-completion true
                            :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of R&D")
