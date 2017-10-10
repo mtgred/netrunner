@@ -354,6 +354,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
         if not game.password or game.password.length is 0 or (msg.password and crypto.createHash('md5').update(msg.password).digest('hex') is game.password)
           if game
+            fn("watch ok")
             game.spectators.push({user: socket.request.user, id: socket.id})
             socket.join(msg.gameid)
             socket.gameid = msg.gameid
