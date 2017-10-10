@@ -9,7 +9,8 @@
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state toast launch-game]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
-            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks]]))
+            [netrunner.stats :refer [notnum->zero]]
+            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks num->percent]]))
 
 (def socket-channel (chan))
 (def socket (.connect js/io (str js/iourl "/lobby")))
@@ -108,9 +109,6 @@
 (defn leave-game []
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
-  ; Update decks to get new stats
-  (go (let [decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-        (load-decks decks)))
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid)
   (.removeItem js/localStorage "gameid")
@@ -167,12 +165,23 @@
       "Weyland Consortium" (icon-span "weyland")
       [:span.side "(Unknown)"])))
 
+(defn user-status-span
+  "Returns a [:span] showing players game completion rate"
+  [player]
+  (let [started (get-in player [:user :stats :games-started])
+        completed (get-in player [:user :stats :games-completed])
+        completion-rate (str (notnum->zero (num->percent completed started)) "%")
+        completion-rate (if (< started 10) "Too little data" completion-rate)]
+    [:span.deck-status (get-in player [:user :username])
+     [:div.status-tooltip.blue-shade
+      [:div "Game Completion Rate: " completion-rate]]]))
+
 (defn player-view [{:keys [player game] :as args}]
   (om/component
    (sab/html
     [:span.player
      (om/build avatar (:user player) {:opts {:size 22}})
-     (get-in player [:user :username])
+     (user-status-span player)
      (let [side (:side player)
            faction (:faction player)
            identity (:identity player)

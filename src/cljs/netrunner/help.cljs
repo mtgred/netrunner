@@ -151,10 +151,23 @@
                              "testing future spoilers, playing on a touchscreen, playing at work and likely to have to quit on short notice, etc. "
                              "All of these circumstances may cause needless frustration of players expecting to play a game in a competitive setting."])}
             {:id "aboutstats"
-             :title "Why are the deck & user stats not updated instantly??"
-             :content [:p "Deck & user stats are only updated when everyone has left a game."
-                       "This is to allow re-joining of games, and also clean detection of a finalised game"
-                       "Note: Games commenced are logged as soon as you start a game"]}
+             :title "What are the options for tracking Game and Deck Statistics, and what do they mean?"
+             :content (list [:p "Games Started vs. Completed is always logged and displayed.  We want to discourage people dropping in games. "
+                             "You can toggle between the modes listed below if you feel like being a casual player one moment then logging stats the next. "
+                             "No data is lost or cleared when you toggle between modes."
+                             [:ul
+                              [:li "Always - statistics are kept and displayed for all games you play"]
+                              [:li "Competitive lobby only - statistics are kept and displayed only for competitive games"]
+                              [:li "None - statistics are neither logged or displayed"]]]
+                            [:p "What do the game statistics mean?"
+                             [:ul
+                              [:li "Games Started - games you have entered. The same is used for deck stats."]
+                              [:li "Games Completed - games that had a winner, or games that did not complete but opponent dropped first."]
+                              [:li "Games Incomplete -  games with no winner where you dropped first, and did not concede."]
+                              [:li "Games Won - games won.  The percentage is compared to those games lost.  The same is used for deck stats."]
+                              [:li "Games Lost - games lost.  The percentage is compared to those games won. The same is used for deck stats."]]]
+                            [:p "Your game completion rate is visible in the player lobby so people can determine if they should play against you."
+                             " Don't quit during games - please concede if you have to leave."])}
             )}
     {:id "cards"
      :title "Cards and Specific Interactions"
