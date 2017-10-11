@@ -311,7 +311,7 @@ sendLobby = () ->
 setInterval(sendLobby, 1000)
 
 # Express config
-app.use favicon(__dirname + "/resources/public/img/jinteki.ico")
+app.use favicon(__dirname + "/resources/public/img/cardnum.ico")
 app.set 'port', 1042
 app.set 'ipaddr', "0.0.0.0"
 app.use methodOverride() # provide PUT DELETE
