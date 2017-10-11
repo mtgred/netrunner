@@ -4,7 +4,7 @@
          in-corp-scored? prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
          update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?)
 
-;;;; Functions for applying core Netrunner game rules.
+;;;; Functions for applying core Middle-earth CCG game rules.
 
 ;;; Playing cards.
 (defn play-instant

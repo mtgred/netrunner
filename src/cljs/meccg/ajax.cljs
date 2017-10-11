@@ -1,4 +1,4 @@
-(ns netrunner.ajax
+(ns meccg.ajax
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put!] :as async]
             [goog.net.XhrIo :as xhr]

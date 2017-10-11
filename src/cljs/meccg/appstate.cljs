@@ -1,4 +1,4 @@
-(ns netrunner.appstate)
+(ns meccg.appstate)
 
 (def app-state
   (atom {:active-page "/"

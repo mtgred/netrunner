@@ -1,11 +1,11 @@
-(ns netrunner.main
+(ns meccg.main
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [goog.events :as events]
             [goog.history.EventType :as EventType]
-            [netrunner.appstate :refer [app-state]]
-            [netrunner.gameboard :as gameboard]
-            [netrunner.gamelobby :as gamelobby])
+            [meccg.appstate :refer [app-state]]
+            [meccg.gameboard :as gameboard]
+            [meccg.gamelobby :as gamelobby])
   (:import goog.history.Html5History))
 
 (def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/about"])

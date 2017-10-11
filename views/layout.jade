@@ -4,9 +4,9 @@ html
     meta(charset="utf-8")
     meta(name="viewport", content="width=device-width, initial-scale=0.6, minimal-ui")
     meta(name="apple-mobile-web-app-capable", content="yes")
-    title Jinteki
+    title Cardnum
     link(rel='stylesheet', href='/css/carousel.css')
-    link(rel='stylesheet', href='/css/netrunner.css')
+    link(rel='stylesheet', href='/css/meccg.css')
     link(rel='stylesheet', href='/lib/toastr/toastr.min.css')
     link(rel='stylesheet', href='/lib/jqueryui/themes/base/jquery-ui.min.css')
   body
@@ -41,19 +41,19 @@ html
       script(src="/cljs/goog/base.js", type="text/javascript")
       script(src="/cljs/app.js?v=#{version}", type="text/javascript")
       script(type="text/javascript").
-        goog.require("netrunner.main");
-        goog.require("netrunner.ajax");
-        goog.require("netrunner.appstate");
-        goog.require("netrunner.auth");
-        goog.require("netrunner.chat");
-        goog.require("netrunner.gameboard");
-        goog.require("netrunner.gamelobby");
-        goog.require("netrunner.cardbrowser");
-        goog.require("netrunner.deckbuilder");
-        goog.require("netrunner.help");
-        goog.require("netrunner.about");
-        goog.require("netrunner.account");
-        goog.require("netrunner.news");
+        goog.require("meccg.main");
+        goog.require("meccg.ajax");
+        goog.require("meccg.appstate");
+        goog.require("meccg.auth");
+        goog.require("meccg.chat");
+        goog.require("meccg.gameboard");
+        goog.require("meccg.gamelobby");
+        goog.require("meccg.cardbrowser");
+        goog.require("meccg.deckbuilder");
+        goog.require("meccg.help");
+        goog.require("meccg.about");
+        goog.require("meccg.account");
+        goog.require("meccg.news");
         goog.require("dev.figwheel");
     else
       script(src="/js/app.js?v=#{version}", type="text/javascript")
@@ -63,7 +63,7 @@ html
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-        ga('create', 'UA-20250150-2', 'www.jinteki.net');
+        ga('create', 'UA-20250150-2', 'www.cardnum.net');
 
       if user
         script.
