@@ -223,6 +223,18 @@
     (for [option options]
       [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])))
 
+(defn filter-title [query cards]
+  (if (empty? query)
+    cards
+    (filter #(if (= (.indexOf (str/strip-accents (.toLowerCase (:NameEN %))) query) -1) false true) cards)))
+
+(defn show-alt-art?
+  "Is the current user allowed to use alternate art cards and do they want to see them?"
+  []
+  (and
+    (get-in @app-state [:options :show-alt-art] true)
+    (get-in @app-state [:user :special] false)))
+
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
     cards

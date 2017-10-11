@@ -93,7 +93,7 @@
             (let [subquery (subs q 0 i)]
               (cond (zero? (count matches)) card
                     (or (= (count matches) 1) (identical-cards? matches)) (take-best-card matches)
-                    (<= i (count (:title card))) (recur (inc i) (filter-title subquery matches))
+                    (<= i (count (:NameEN card))) (recur (inc i) (filter-title subquery matches))
                     :else card))))))
 
 (defn- build-identity-name
