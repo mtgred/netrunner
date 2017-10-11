@@ -295,8 +295,12 @@
    "Equivocation"
    (let [force-draw (fn [title]
                       {:optional {:prompt (str "Force the Corp to draw " title "?")
-                                  :yes-ability {:effect (effect (draw :corp 1)
-                                                                (system-msg :corp (str "is forced to draw " title)))}}})
+                                  :yes-ability {:delayed-completion true
+                                                :effect (req (show-wait-prompt state :runner "Corp to draw")
+                                                             (when-completed (draw state :corp 1 nil)
+                                                                             (do (system-msg state :corp (str "is forced to draw " title))
+                                                                                 (clear-wait-prompt state :runner)
+                                                                                 (effect-completed state side eid))))}}})
          reveal {:optional {:prompt "Reveal the top card of R&D?"
                             :yes-ability {:delayed-completion true
                                           :effect (req (let [topcard (-> corp :deck first :title)]
