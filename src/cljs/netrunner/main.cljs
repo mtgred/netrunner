@@ -34,8 +34,9 @@
                  ["Play" "/play" 3]
                  ["Help" "/help" 4]
                  (when (:user @app-state)
-                  ["Settings" "/account" 5]
-                  ["Stats" "/stats" 6])
+                  ["Settings" "/account" 5])
+                 (when (:user @app-state)
+                   ["Stats" "/stats" 6])
                  ["About" "/about" 7]]]
        (when-let [route (second page)]
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")

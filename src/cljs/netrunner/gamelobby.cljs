@@ -23,7 +23,7 @@
                                           (some (fn [p] (= p (get-in @app-state [:user :_id])))
                                                 (map (fn [g] (get-in g [:user :_id])) og))
                                           false))
-                       [:mygame :started :date]))
+                       [:started :date :mygame]))
            > games))
 
 (go (while true
