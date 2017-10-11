@@ -5,6 +5,7 @@ mongoskin = require('mongoskin')
 mkdirp = require('mkdirp')
 path = require('path')
 async = require('async')
+removeDiacritics = require('diacritics').remove
 
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
 mongoPassword = process.env.OPENSHIFT_MONGODB_DB_PASSWORD
@@ -192,7 +193,7 @@ fetchCards = (callback) ->
         db.collection("cards").insert cards, (err, result) ->
           fs.writeFile "meccg-cards.json", JSON.stringify(cards), ->
             console.log("#{cards.length} cards fetched")
-          callback(null, cards.length)
+            callback(null, cards.length)
 
 fetchBans = (callback) ->
   request.get baseurl + "bans", (error, response, body) ->

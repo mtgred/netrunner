@@ -490,6 +490,26 @@ nav ul
 .active-player
   border: 1px solid #ffa500
 
+// For Stats screens
+.stats-main
+  height: 220px
+
+.stats-left
+  width: 30%
+  float: left
+  padding: 5px 15px
+
+.stats-middle
+  width: 33%
+  float: left
+  padding: 5px 15px
+  margin: 0px 5px 5px 5px
+
+.stats-right
+  width: 30%
+  float: left
+  padding: 5px 15px
+
 // Influence dots
 
 .influence.neutral
@@ -559,6 +579,9 @@ nav ul
 
   .concede-button
     margin-right: 12px
+
+  .mute-button
+    margin-left: 12px
 
 // Auth
 
@@ -633,6 +656,9 @@ nav ul
 
 .reset-bg
   cover-img: url('/img/bg/Settings.jpg')
+
+.stats-bg
+  cover-img: url('/img/bg/RumorMill.jpg')
 
 .traffic-jam-bg
   cover-img: url('/img/bg/TrafficJam.jpg')
@@ -751,6 +777,12 @@ nav ul
 .cardbrowser
   display-flex()
 
+  .heading, .type
+    font-weight: bold
+
+  .pack
+    font-style: italic
+
 .filters
   flex(0 0 230px)
   margin: 10px
@@ -853,7 +885,7 @@ nav ul
   flex(1)
 
   .deckline
-    height: 49px
+    height: 65px
     padding: 5px 8px
     margin: 0 0 5px
     border: 1px solid white
@@ -1816,7 +1848,7 @@ nav ul
         -webkit-overflow-scrolling: touch
         position: absolute
         top: 0
-        bottom: 36px
+        bottom: 43px
         left: 0
         right: 4px
         margin: 0
@@ -1826,7 +1858,7 @@ nav ul
 
       > form
         position: absolute
-        bottom: 5px
+        bottom: 12px
         left: 0
         right: 4px
 
@@ -1886,6 +1918,32 @@ nav ul
     position: relative
     top: 9px
     left: 16px
+
+  #alt-art
+    div#my-alt-art
+      margin-top: 10px
+
+    div.alt-art-group
+      clear: both
+      margin: 5px 0
+
+      > div
+        float: left
+        margin: 5px
+
+        > div
+          text-align: center
+    #set-all
+      clear: both
+    img.alt-art-select
+      width: 150px
+      margin-top: 5px
+
+
+  p#update
+    clear: both
+    margin: 2em 0
+
 
 @keyframes highlight
   from

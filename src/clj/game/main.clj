@@ -150,9 +150,20 @@
              "remove" (do (swap! game-states dissoc gameid)
                           (swap! old-states dissoc gameid))
              "do" (handle-do user command state side args)
+             "finaluser-add" (swap! state assoc :final-user {:username (get-in user [:user :username])
+                                                             :side (clojure.string/lower-case (:side user))})
+             "finaluser-del" (swap! state dissoc :final-user)
              "notification" (when state
-                              (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
-
+                              (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))
+             "rejoin"
+             (when state
+               ;; when rejoining, there is probably a new socket ID that needs to be set into the user.
+               (let [side (cond
+                            (= (:_id user) (get-in @state [:corp :user :_id])) :corp
+                            (= (:_id user) (get-in @state [:runner :user :_id])) :runner
+                            :else nil)]
+                 (swap! state assoc-in [side :user] user)
+                 (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))))
            true)
        (catch Exception e
          (do (println "Error " action command (get-in args [:card :title]) e)
@@ -192,7 +203,7 @@
                     (let [[new-corp new-runner new-spect] (private-states new-state)]
                       (do
                         (swap! old-states assoc (:gameid msg) @new-state)
-                        (if (#{"start" "reconnect" "notification"} action)
+                        (if (#{"start" "reconnect" "notification" "rejoin"} action)
                           ;; send the whole state, not a diff
                           (.send socket (generate-string {:action      action
                                                           :runnerstate (strip new-runner)
@@ -219,6 +230,11 @@
 (def zmq-url (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
 
 (defn dev []
+  (Thread/setDefaultUncaughtExceptionHandler
+    (reify Thread$UncaughtExceptionHandler
+      (uncaughtException [_ thread ex]
+        (println "UNCAUGHT EXCEPTION " ex))))
+
   (println "[Dev] Listening on port 1043 for incoming commands...")
   (let [socket (.socket ctx ZMQ/REP)]
     (.bind socket zmq-url)

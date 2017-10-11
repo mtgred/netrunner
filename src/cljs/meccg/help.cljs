@@ -66,6 +66,7 @@
                         [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
                         [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
                         [:li [:code "/rfg"] " - Select a card to remove from the game"]
+                        [:li [:code "/roll n"] " - Roll an n-sided die"]
                         [:li [:code "/tag n"] " - Set your tags to n"]
                         [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
                         [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
@@ -97,9 +98,9 @@
                        "happy to play with a beginner should join after a while."]}
             {:id "finddecks"
              :title "Where can I find some good starting decks?"
-             :content (list [:p [:a {:href "https://netrunnerdb.com/"} "NetrunnerDB"] " is a good resource for finding decks of all kinds. "
+             :content (list [:p [:a {:href "https://meccgdb.com/"} "NetrunnerDB"] " is a good resource for finding decks of all kinds. "
                        "For finding decks consisting of core set only try setting some filters in "
-                       [:a {:href "http://netrunnerdb.com/en/decklists/search#allowed_packs"} "the decklist search"] "."]
+                       [:a {:href "http://meccgdb.com/en/decklists/search#allowed_packs"} "the decklist search"] "."]
                             [:p "Once you find a deck you like, export it in Cardnum.net's format (or plain text format if the "
                              "site doesn't offer the former), copy and paste it into the deckbuilder."])}
             {:id "communities"
@@ -149,7 +150,24 @@
                              "Some examples would be: learning the game, learning the site's interface, testing a completely new and crazy deck idea, "
                              "testing future spoilers, playing on a touchscreen, playing at work and likely to have to quit on short notice, etc. "
                              "All of these circumstances may cause needless frustration of players expecting to play a game in a competitive setting."])}
-
+            {:id "aboutstats"
+             :title "What are the options for tracking Game and Deck Statistics, and what do they mean?"
+             :content (list [:p "Games Started vs. Completed is always logged and displayed.  We want to discourage people dropping in games. "
+                             "You can toggle between the modes listed below if you feel like being a casual player one moment then logging stats the next. "
+                             "No data is lost or cleared when you toggle between modes."
+                             [:ul
+                              [:li "Always - statistics are kept and displayed for all games you play"]
+                              [:li "Competitive lobby only - statistics are kept and displayed only for competitive games"]
+                              [:li "None - statistics are neither logged or displayed"]]]
+                            [:p "What do the game statistics mean?"
+                             [:ul
+                              [:li "Games Started - games you have entered. The same is used for deck stats."]
+                              [:li "Games Completed - games that had a winner, or games that did not complete but opponent dropped first."]
+                              [:li "Games Incomplete -  games with no winner where you dropped first, and did not concede."]
+                              [:li "Games Won - games won.  The percentage is compared to those games lost.  The same is used for deck stats."]
+                              [:li "Games Lost - games lost.  The percentage is compared to those games won. The same is used for deck stats."]]]
+                            [:p "Your game completion rate is visible in the player lobby so people can determine if they should play against you."
+                             " Don't quit during games - please concede if you have to leave."])}
             )}
     {:id "cards"
      :title "Cards and Specific Interactions"

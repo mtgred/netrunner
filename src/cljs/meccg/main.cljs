@@ -8,7 +8,7 @@
             [meccg.gamelobby :as gamelobby])
   (:import goog.history.Html5History))
 
-(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/about"])
+(def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about"])
 
 (def history (Html5History.))
 
@@ -35,7 +35,9 @@
                  ["Help" "/help" 4]
                  (when (:user @app-state)
                   ["Settings" "/account" 5])
-                 ["About" "/about" 6]]]
+                 (when (:user @app-state)
+                   ["Stats" "/stats" 6])
+                 ["About" "/about" 7]]]
        (when-let [route (second page)]
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
                :on-click #(.setToken history route)
@@ -47,14 +49,17 @@
    (sab/html
     [:div
      [:div.float-right
-      (let [c (count (:games cursor))]
+      (let [c (count (gamelobby/filter-blocked-games (:user cursor) (:games cursor)))]
         (str c " Game" (when (not= c 1) "s")))]
      (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          [:div.float-right
           (when (not= (:side @app-state) :spectator)
             [:a.concede-button {:on-click #(gameboard/send-command "concede" {:user (:user @app-state)})} "Concede"])
-          [:a {:on-click #(gamelobby/leave-game)} "Leave game"]])
+          [:a.leave-button {:on-click #(gamelobby/leave-game)} "Leave game"]
+          (when (not= (:side @app-state) :spectator)
+            [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mutespectators game)))}
+             (if (:mutespectators game) "Unmute spectators" "Mute spectators")])])
        (when (= (:side @app-state) :spectator)
          [:div.float-right [:a {:on-click #(gamelobby/leave-game)} "Leave game"]]))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]

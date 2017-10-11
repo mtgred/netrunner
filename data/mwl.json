@@ -1,0 +1,249 @@
+[
+    {
+        "cards": {
+            "01012": {
+                "global_penalty": 1
+            },
+            "01014": {
+                "global_penalty": 1
+            },
+            "01024": {
+                "global_penalty": 1
+            },
+            "01081": {
+                "global_penalty": 1
+            },
+            "01092": {
+                "global_penalty": 1
+            },
+            "02110": {
+                "global_penalty": 1
+            },
+            "03038": {
+                "global_penalty": 1
+            },
+            "04029": {
+                "global_penalty": 1
+            },
+            "04119": {
+                "global_penalty": 1
+            },
+            "06061": {
+                "global_penalty": 1
+            },
+            "06099": {
+                "global_penalty": 1
+            }
+        },
+        "code": "NAPD_MWL_1.0",
+        "date_start": "2016-02-01",
+        "name": "NAPD MWL 1.0"
+    },
+    {
+        "cards": {
+            "01012": {
+                "global_penalty": 1
+            },
+            "01014": {
+                "global_penalty": 1
+            },
+            "01016": {
+                "global_penalty": 1
+            },
+            "01024": {
+                "global_penalty": 1
+            },
+            "01082": {
+                "global_penalty": 1
+            },
+            "01092": {
+                "global_penalty": 1
+            },
+            "02110": {
+                "global_penalty": 1
+            },
+            "03038": {
+                "global_penalty": 1
+            },
+            "04029": {
+                "global_penalty": 1
+            },
+            "04119": {
+                "global_penalty": 1
+            },
+            "06033": {
+                "global_penalty": 1
+            },
+            "06061": {
+                "global_penalty": 1
+            },
+            "06099": {
+                "global_penalty": 1
+            },
+            "08061": {
+                "global_penalty": 1
+            },
+            "10018": {
+                "global_penalty": 1
+            }
+        },
+        "code": "NAPD_MWL_1.1",
+        "date_start": "2016-08-01",
+        "name": "NAPD MWL 1.1"
+    },
+    {
+        "cards": {
+            "01012": {
+                "universal_faction_cost": 1
+            },
+            "01014": {
+                "universal_faction_cost": 1
+            },
+            "01016": {
+                "universal_faction_cost": 1
+            },
+            "01082": {
+                "universal_faction_cost": 1
+            },
+            "01092": {
+                "universal_faction_cost": 1
+            },
+            "03038": {
+                "universal_faction_cost": 1
+            },
+            "04089": {
+                "universal_faction_cost": 3
+            },
+            "04119": {
+                "universal_faction_cost": 1
+            },
+            "06033": {
+                "universal_faction_cost": 1
+            },
+            "06061": {
+                "universal_faction_cost": 1
+            },
+            "06099": {
+                "universal_faction_cost": 1
+            },
+            "08061": {
+                "universal_faction_cost": 3
+            },
+            "08103": {
+                "universal_faction_cost": 3
+            },
+            "10018": {
+                "universal_faction_cost": 1
+            },
+            "10050": {
+                "universal_faction_cost": 1
+            },
+            "10053": {
+                "universal_faction_cost": 3
+            },
+            "10055": {
+                "universal_faction_cost": 1
+            },
+            "11022": {
+                "universal_faction_cost": 3
+            },
+            "11026": {
+                "universal_faction_cost": 1
+            },
+            "11101": {
+                "universal_faction_cost": 3
+            }
+        },
+        "code": "NAPD_MWL_1.2",
+        "date_start": "2017-04-12",
+        "name": "NAPD MWL 1.2"
+    },
+    {
+        "cards": {
+            "03035": {
+                "is_restricted": 1
+            },
+            "03038": {
+                "is_restricted": 1
+            },
+            "08061": {
+                "deck_limit": 0
+            },
+            "08067": {
+                "is_restricted": 1
+            },
+            "08086": {
+                "is_restricted": 1
+            },
+            "09026": {
+                "is_restricted": 1
+            },
+            "09053": {
+                "is_restricted": 1
+            },
+            "10018": {
+                "is_restricted": 1
+            },
+            "10019": {
+                "is_restricted": 1
+            },
+            "10049": {
+                "deck_limit": 0
+            },
+            "10050": {
+                "is_restricted": 1
+            },
+            "10053": {
+                "deck_limit": 0
+            },
+            "10055": {
+                "deck_limit": 0
+            },
+            "11026": {
+                "deck_limit": 0
+            },
+            "11049": {
+                "is_restricted": 1
+            },
+            "11090": {
+                "deck_limit": 0
+            },
+            "11101": {
+                "deck_limit": 0
+            },
+            "11106": {
+                "deck_limit": 0
+            },
+            "12048": {
+                "is_restricted": 1
+            },
+            "12070": {
+                "is_restricted": 1
+            },
+            "12089": {
+                "deck_limit": 0
+            },
+            "12103": {
+                "deck_limit": 0
+            },
+            "13032": {
+                "is_restricted": 1
+            },
+            "13051": {
+                "is_restricted": 1
+            },
+            "20050": {
+                "is_restricted": 1
+            },
+            "20052": {
+                "is_restricted": 1
+            },
+            "11022": {
+                "deck_limit": 0
+            }
+        },
+        "code": "NAPD_MWL_2.0",
+        "date_start": "2017-10-01",
+        "name": "NAPD MWL 2.0"
+    }
+]

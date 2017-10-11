@@ -50,6 +50,33 @@
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
       (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
 
+(deftest ben-musashi-rd
+  ;; Ben Musashi - on R&D access
+  (do-game
+    (new-game (default-corp [(qty "Ben Musashi" 1) (qty "House of Knives" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Ben Musashi"])
+    (play-from-hand state :corp "Ben Musashi" "R&D")
+    (take-credits state :corp)
+    (let [bm (get-content state :rd 0)]
+      (core/rez state :corp bm)
+      (run-empty-server state "R&D")
+      ;; runner now chooses which to access.
+      (prompt-choice :runner "Card from deck")
+      ;; prompt should be asking for the 2 net damage cost
+      (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
+          "Prompt to pay 2 net damage")
+      (prompt-choice :runner "No")
+      (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
+      (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+      (prompt-choice :runner "Ben Musashi")
+      (prompt-choice :runner "No")
+      (run-empty-server state "R&D")
+      (prompt-choice :runner "Card from deck")
+      (prompt-choice :runner "Yes")
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
+      (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
+
 (deftest ben-musashi-trash
   ;; Ben Musashi - pay even when trashed
   (do-game
@@ -1100,6 +1127,38 @@
       (prompt-choice :corp "Yes")
       (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
       (is (= 1 (:brain-damage (get-runner)))))))
+
+(deftest tori-hanzo-hokusai
+  ;; Tori Hanzō + Hokusai Grid: Issue #2702
+  (do-game
+    (new-game (default-corp [(qty "Tori Hanzō" 1) (qty "Hokusai Grid" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 5)
+    (play-from-hand state :corp "Hokusai Grid" "Archives")
+    (play-from-hand state :corp "Tori Hanzō" "Archives")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (let [hg (get-content state :archives 0)
+          tori (get-content state :archives 1)]
+      (core/rez state :corp hg)
+      (core/rez state :corp tori)
+      (run-successful state)
+      (prompt-choice :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+      (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
+      (prompt-choice :runner "Hokusai Grid")
+      (prompt-choice :runner "No")
+      (prompt-choice :runner "Tori Hanzō")
+      (prompt-choice :runner "No")
+      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
+      (run-empty-server state "Archives")
+      (prompt-choice :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+      (is (= 2 (count (:discard (get-runner)))))
+      (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
+      (prompt-choice :runner "Hokusai Grid")
+      (prompt-choice :runner "No")
+      (prompt-choice :runner "Tori Hanzō")
+      (prompt-choice :runner "No")
+      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
 
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server

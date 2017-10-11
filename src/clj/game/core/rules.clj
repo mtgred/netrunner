@@ -118,8 +118,8 @@
            (prevent-draw state side))))
      (when (< draws-after-prevent draws-wanted)
        (let [prevented (- draws-wanted draws-after-prevent)]
-         (system-msg state (other-side side) (str "prevents " prevented " card"
-                                                  (when (> prevented 1) "s")
+         (system-msg state (other-side side) (str "prevents "
+                                                  (quantify prevented "card")
                                                   " from being drawn")))))))
 
 ;;; Damage
@@ -262,7 +262,7 @@
 (defn resolve-tag [state side eid n args]
   (if (pos? n)
     (do (gain state :runner :tag n)
-        (toast state :runner (str "Took " n " tag" (when (> n 1) "s") "!") "info")
+        (toast state :runner (str "Took " (quantify n "tag") "!") "info")
         (trigger-event-sync state side eid :runner-gain-tag n))
     (effect-completed state side eid)))
 
@@ -448,7 +448,13 @@
   "Forfeits the given agenda to the :rfg zone."
   ([state side card] (forfeit state side (make-eid state) card))
   ([state side eid card]
-   (let [c (if (in-corp-scored? state side card)
+   ;; Remove all hosted cards first
+   (doseq [h (:hosted card)]
+     (trash state side
+            (update-in h [:zone] #(map to-keyword %))
+            {:unpreventable true :suppress-event true}))
+   (let [card (get-card state card)
+         c (if (in-corp-scored? state side card)
              (deactivate state side card) card)]
      (system-msg state side (str "forfeits " (:title c)))
      (gain-agenda-point state side (- (get-agenda-points state side c)))
@@ -539,7 +545,14 @@
   [state side reason]
   (system-msg state side "wins the game")
   (play-sfx state side "game-end")
-  (swap! state assoc :winner side :reason reason :end-time (java.util.Date.)))
+  (swap! state assoc
+         :winner side
+         :loser (other-side side)
+         :winning-user (get-in @state [side :user :username])
+         :losing-user (get-in @state [(other-side side) :user :username])
+         :reason reason :end-time (java.util.Date.)
+         :winning-deck-id (get-in @state [side :deck-id])
+         :losing-deck-id (get-in @state [(other-side side) :deck-id])))
 
 (defn win-decked
   "Records a win via decking the corp."

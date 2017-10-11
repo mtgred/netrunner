@@ -128,9 +128,10 @@
                  :cost [:click 1]
                  :effect (req (let [handsize (count (:hand runner))]
                                 (resolve-ability state side
-                                  {:prompt "Choose any number of cards to trash from your Grip"
-                                   :choices {:max handsize :req #(and (= (:side %) "Runner")
-                                                                      (in-hand? %))}
+                                  {:prompt "Select any number of cards to trash from your Grip"
+                                   :choices {:max handsize
+                                             :req #(and (= (:side %) "Runner")
+                                                        (in-hand? %))}
                                    :effect (req (let [trashed (count targets)
                                                       remaining (- handsize trashed)]
                                                   (doseq [c targets]
@@ -157,7 +158,7 @@
                                                    (lose state side :tag 1)))} card nil))}]}
 
    "Clone Chip"
-   {:abilities [{:prompt "Choose a program to install from your Heap"
+   {:abilities [{:prompt "Select a program to install from your Heap"
                  :priority true :show-discard true
                  :req (req (and (not (seq (get-in @state [:runner :locked :discard])))
                                (not (install-locked? state side))))
@@ -175,7 +176,7 @@
                                                    (str "can play another event without spending a [Click] by clicking on Comet"))
                                        (update! state side (assoc card :comet-event true)))}}
     :abilities [{:req (req (:comet-event card))
-                 :prompt "Choose an Event in your Grip to play"
+                 :prompt "Select an Event in your Grip to play"
                  :choices {:req #(and (is-type? % "Event")
                                       (in-hand? %))}
                  :msg (msg "play " (:title target))
@@ -183,7 +184,7 @@
                                  (update! (dissoc (get-card state card) :comet-event)))}]}
 
    "Cortez Chip"
-   {:abilities [{:prompt "Choose a piece of ICE"
+   {:abilities [{:prompt "Select a piece of ICE"
                  :choices {:req ice?}
                  :effect (req (let [ice target]
                                 (update! state side (assoc card :cortez-target ice))
@@ -217,12 +218,9 @@
    "Dedicated Processor"
    {:implementation "Click Dedicated Processor to use ability"
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
-    :prompt "Choose Icebreaker on which to install Dedicated Processor"
-    :choices {:req #(and (has-subtype? % "Icebreaker")
+    :hosting {:req #(and (has-subtype? % "Icebreaker")
                          (not (has-subtype? % "AI"))
                          (installed? %))}
-    :msg (msg "host it on " (card-str state target))
-    :effect (effect (host target card))
     :abilities [{:cost [:credit 2]
                  :req (req run)
                  :effect (effect (pump (get-card state (:host card)) 4))
@@ -258,7 +256,7 @@
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card))) :cost [:click 1]
-                 :prompt "Choose a non-AI icebreaker in your Grip to install on Dinosaurus"
+                 :prompt "Select a non-AI icebreaker in your Grip to install on Dinosaurus"
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (in-hand? %))}
@@ -267,7 +265,7 @@
                                  (update! (assoc (get-card state card) :dino-breaker (:cid target))))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
-                 :prompt "Choose an installed non-AI icebreaker to host on Dinosaurus"
+                 :prompt "Select an installed non-AI icebreaker to host on Dinosaurus"
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
@@ -495,14 +493,14 @@
              {:delayed-completion true
               :req (req (= target :rd))
               :effect (effect (continue-ability
-                                {:prompt "Choose a card and replace 1 spent [Recurring Credits] on it"
+                                {:prompt "Select a card and replace 1 spent [Recurring Credits] on it"
                                  :choices {:req #(< (:rec-counter % 0) (:recurring (card-def %) 0))}
                                  :msg (msg "replace 1 spent [Recurring Credits] on " (:title target))
                                  :effect (effect (add-prop target :rec-counter 1))}
                                card nil))}}}
 
    "Monolith"
-   (let [mhelper (fn mh [n] {:prompt "Choose a program to install"
+   (let [mhelper (fn mh [n] {:prompt "Select a program to install"
                              :choices {:req #(and (is-type? % "Program")
                                                   (in-hand? %))}
                              :effect (req (install-cost-bonus state side [:credit -4])
@@ -539,8 +537,8 @@
                  :req (req (empty? (:hosted card)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
-                                  {:prompt "Choose a program in your Grip to install on NetChip"
-                                   :cost [:click 1]
+                                  {:cost [:click 1]
+                                   :prompt "Select a program in your Grip to install on NetChip"
                                    :choices {:req #(and (is-type? % "Program")
                                                         (runner-can-install? state side % false)
                                                         (<= (:memoryunits %) n)
@@ -556,7 +554,7 @@
                  :req (req (empty? (:hosted card)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
                                 (resolve-ability state side
-                                  {:prompt "Choose an installed program to host on NetChip"
+                                  {:prompt "Select an installed program to host on NetChip"
                                    :choices {:req #(and (is-type? % "Program")
                                                         (<= (:memoryunits %) n)
                                                         (installed? %))}
@@ -598,7 +596,7 @@
     :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-drive"
                  :req (req (empty? (:hosted card)))
                  :cost [:click 1]
-                 :prompt "Choose a program of 1[Memory Unit] or less to install on Omni-drive from your grip"
+                 :prompt "Select a program of 1[Memory Unit] or less to install on Omni-drive from your grip"
                  :choices {:req #(and (is-type? % "Program")
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
@@ -607,7 +605,7 @@
                                  (runner-install target {:host-card card})
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}
                 {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
-                 :prompt "Choose an installed program of 1[Memory Unit] or less to host on Omni-drive"
+                 :prompt "Select an installed program of 1[Memory Unit] or less to host on Omni-drive"
                  :choices {:req #(and (is-type? % "Program")
                                       (<= (:memoryunits %) 1)
                                       (installed? %))}
@@ -779,7 +777,7 @@
    "Rubicon Switch"
    {:abilities [{:cost [:click 1]
                  :once :per-turn
-                 :delayed-effect true
+                 :delayed-completion true
                  :prompt "How many [Credits]?" :choices :credit
                  :effect (effect (system-msg (str "spends a [Click] and " target " [Credit] on Rubicon Switch"))
                                  (resolve-ability {:choices {:req #(and (ice? %)
@@ -792,7 +790,7 @@
    {:abilities [{:label "[Trash]: Add [Link] strength to a non-Cloud icebreaker until the end of the run"
                  :msg (msg "add " (:link runner) " strength to " (:title target) " until the end of the run")
                  :req (req (:run @state))
-                 :prompt "Choose one non-Cloud icebreaker"
+                 :prompt "Select one non-Cloud icebreaker"
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "Cloud"))
                                       (installed? %))}
@@ -801,10 +799,11 @@
                 {:label "[Trash]: Add [Link] strength to any Cloud icebreakers until the end of the run"
                  :msg (msg "add " (:link runner) " strength to " (count targets) " Cloud icebreakers until the end of the run")
                  :req (req (:run @state))
-                 :prompt "Choose any number of Cloud icebreakers"
-                 :choices {:max 50 :req #(and (has-subtype? % "Icebreaker")
-                                              (has-subtype? % "Cloud")
-                                              (installed? %))}
+                 :prompt "Select any number of Cloud icebreakers"
+                 :choices {:max 50
+                           :req #(and (has-subtype? % "Icebreaker")
+                                      (has-subtype? % "Cloud")
+                                      (installed? %))}
                  :effect (req (doseq [t targets]
                                 (pump state side t (:link runner) :all-run)
                                 (update-breaker-strength state side t))
@@ -940,7 +939,8 @@
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
                      (when-completed (resolve-ability state side
                                        {:delayed-completion true
-                                        :prompt (msg "Choose " dmg " cards to trash for the " (name dtype) " damage") :player :runner
+                                        :prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
+                                        :player :runner
                                         :choices {:max dmg :all true :req #(and (in-hand? %) (= (:side %) "Runner"))}
                                         :msg (msg "trash " (join ", " (map :title targets)))
                                         :effect (req (clear-wait-prompt state :corp)
@@ -956,7 +956,7 @@
     :delayed-completion true
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
-                    (damage eid :meat 2 {:card card}))
+                    (damage eid :meat 2 {:unboostable true :card card}))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-runner))}
 
    "Top Hat"
@@ -991,7 +991,7 @@
                                :effect (req
                                          (continue-ability
                                            state side
-                                           {:prompt (str "Choose a scored Corp agenda to swap with " (:title stolen))
+                                           {:prompt (str "Select a scored Corp agenda to swap with " (:title stolen))
                                             :choices {:req #(in-corp-scored? state side %)}
                                             :effect (req (let [scored target]
                                                            (swap-agendas state side scored stolen)
@@ -1017,8 +1017,10 @@
 
    "Unregistered S&W 35"
    {:abilities
-    [{:cost [:click 2] :req (req (some #{:hq} (:successful-run runner-reg)))
-      :label "trash a Bioroid, Clone, Executive or Sysop" :prompt "Choose a Bioroid, Clone, Executive, or Sysop to trash"
+    [{:cost [:click 2]
+      :req (req (some #{:hq} (:successful-run runner-reg)))
+      :label "trash a Bioroid, Clone, Executive or Sysop"
+      :prompt "Select a Bioroid, Clone, Executive, or Sysop to trash"
       :choices {:req #(and (rezzed? %)
                            (or (has-subtype? % "Bioroid")
                                (has-subtype? % "Clone")

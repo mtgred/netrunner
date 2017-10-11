@@ -7,6 +7,7 @@
             [meccg.appstate :refer [app-state]]
             [meccg.auth :refer [avatar] :as auth]
             [meccg.cardbrowser :refer [add-symbols] :as cb]
+            [meccg.deckbuilder :refer [influence-dot]]
             [differ.core :as differ]
             [om.dom :as dom]))
 
@@ -15,12 +16,21 @@
 (defonce lock (atom false))
 
 (defn image-url [{:keys [side code] :as card}]
-  (let [alt-art (get-in @app-state [:alt-arts code])
-        version (when (and (get-in @game-state [(keyword (lower-case side)) :user :special])
-                           (get-in @app-state [:options :show-alt-art])
-                           alt-art)
-                  (first (:versions alt-art)))]
-    (str "/img/cards/" code (when version (str "-" version)) ".png")))
+  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
+                (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
+        art-options (:alt_art (get (:alt-arts @app-state) code))
+        special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
+        special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
+        viewer-wants-art (get-in @app-state [:options :show-alt-art])
+        show-art (and special-user special-wants-art viewer-wants-art)
+        art-available (and art-options (not-empty art-options))
+        has-art (and art-options
+                     art
+                     (contains? art-options (keyword art)))
+        version-path (if (and has-art show-art)
+                       (get art-options (keyword art) (:code card))
+                       (:code card))]
+    (str "/img/cards/" version-path ".png")))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
@@ -51,6 +61,20 @@
   (swap! game-state merge game)
   (swap! game-state assoc :side side)
   (swap! last-state #(identity @game-state)))
+
+
+(defn launch-game [game]
+  (let [user (:user @app-state)
+        side (if (= (get-in game [:runner :user :_id]) (:_id user))
+               :runner
+               (if (= (get-in game [:corp :user :_id]) (:_id user))
+                 :corp
+                 :spectator))]
+    (swap! app-state assoc :side side)
+    (init-game game side))
+  (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
+  (-> "#gamelobby" js/$ .fadeOut)
+  (-> "#gameboard" js/$ .fadeIn))
 
 (declare toast)
 
@@ -92,12 +116,13 @@
 
 (go (while true
       (let [msg (<! socket-channel)]
-        (reset! lock false)
         (case (:type msg)
+          "rejoin" (launch-game (:state msg))
           ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
                                                                  #(assoc (:state msg) :side (:side @game-state))))
                                            (swap! last-state #(identity @game-state)))
-          nil))))
+          nil)
+        (reset! lock false))))
 
 (defn send [msg]
   (.emit socket "meccg" (clj->js msg)))
@@ -107,10 +132,10 @@
 
 (defn send-command
   ([command] (send-command command nil))
-  ([command args]
-   (when-not @lock
+  ([command {:keys [no-lock] :as args}]
+   (when (or (not @lock) no-lock)
      (try (js/ga "send" "event" "game" command) (catch js/Error e))
-     (reset! lock true)
+     (when-not no-lock (reset! lock true))
      (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
             :user (:user @app-state)
             :command command :args args}))))
@@ -132,9 +157,13 @@
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
     (if (empty? text)
-      (send-command "typingstop" {:user (:user @app-state)})
+      (send-command "typingstop" {:user (:user @app-state) :no-lock true})
       (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
-        (send-command "typing" {:user (:user @app-state)})))))
+        (send-command "typing" {:user (:user @app-state) :no-lock true})))))
+
+(defn mute-spectators [mute-state]
+  (send {:action "mute-spectators" :gameid (:gameid @app-state)
+         :user (:user @app-state) :side (:side @game-state) :mutestate mute-state}))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]
@@ -242,10 +271,40 @@
                (get-in @game-state [:runner :rig (keyword (.toLowerCase (:type card)))]))]
     (some #(= (:title %) (:title card)) dest)))
 
+(defn has?
+  "Checks the string property of the card to see if it contains the given value"
+  [card property value]
+  (when-let [p (property card)]
+    (> (.indexOf p value) -1)))
+
+(defn has-subtype?
+  "Checks if the specified subtype is present in the card.
+  Mostly sugar for the has? function."
+  [card subtype]
+  (has? card :subtype subtype))
+
 (defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
         me (my-side @game-state)]
     (and (= (keyword (.toLowerCase side)) my-side)
+
+         (cond
+
+           (has-subtype? card "Double")
+           (if (>= (:click me) 2) true false)
+
+           (has-subtype? card "Triple")
+           (if (>= (:click me) 3) true false)
+
+           (= (:code card) "07036") ; Day Job
+           (if (>= (:click me) 4) true false)
+
+           (has-subtype? card "Priority")
+           (if (get-in @game-state [my-side :register :spent-click]) false true)
+
+           :else
+           true)
+
          (and (= zone ["hand"])
               (or (not uniqueness) (not (in-play? card)))
               (or (#{"Agenda" "Asset" "Upgrade" "ICE"} type) (>= (:credit me) cost))
@@ -287,10 +346,11 @@
 
 (defn prepare-cards []
   (->> (:cards @app-state)
-       (group-by :title)
-       (map get-non-alt-art)
-       (sort-by #(count (:title %1)))
-       (reverse)))
+    (filter #(not (:replaced_by %)))
+    (group-by :title)
+    (map get-non-alt-art)
+    (sort-by #(count (:title %1)))
+    (reverse)))
 
 (def prepared-cards (memoize prepare-cards))
 
@@ -341,7 +401,7 @@
     (put! channel false))
   nil)
 
-(defn log-pane [messages owner]
+(defn log-pane [cursor owner]
   (reify
     om/IDidUpdate
     (did-update [this prev-props prev-state]
@@ -362,7 +422,7 @@
        [:div.log {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                   :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
         [:div.panel.blue-shade.messages {:ref "msg-list"}
-         (for [msg messages]
+         (for [msg (:log cursor)]
            (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
              (if (= (:user msg) "__system__")
                [:div.system (for [item (get-message-parts (:text msg))] (create-span item))]
@@ -371,11 +431,14 @@
                 [:div.content
                  [:div.username (get-in msg [:user :username])]
                  [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
-        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing @game-state))))
-          [:div [:p.typing (for [i (range 10)] [:span " . "])]])
-        [:form {:on-submit #(send-msg % owner)
-                :on-input #(send-typing % owner)}
-         [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]]))))
+        (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing cursor))))
+          [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])
+        (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games @app-state))]
+          (when (or (not-spectator? game-state app-state)
+                    (not (:mutespectators game)))
+            [:form {:on-submit #(send-msg % owner)
+                    :on-input #(send-typing % owner)}
+             [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]]))]))))
 
 (defn handle-dragstart [e cursor]
   (-> e .-target js/$ (.addClass "dragged"))
@@ -1210,7 +1273,8 @@
                     (case implemented
                       nil [:span.unimplemented "Unimplemented"]
                       [:span.impl-msg implemented])])))
-             (om/build log-pane (:log cursor))]
+             (om/build log-pane cursor)]
+             ;; (om/build log-pane (:log cursor))]
 
             [:div.centralpane
              (om/build board-view {:player opponent :run run})

@@ -166,7 +166,7 @@
   "Checks if there is a trace to resolve"
   [state side {:keys [eid] :as ability} card targets]
   (when-let [trace (:trace ability)]
-    (if (can-trigger? state side trace card targets)
+    (if (can-trigger? state side ability card targets)
       (corp-trace-prompt state card (assoc trace :eid (:eid ability)))
       (effect-completed state side eid card))))
 
@@ -528,8 +528,8 @@
                                     m (count (filter #(not (:seen %)) targets))]
                                 (str (join ", " (map :title seen))
                                      (when (pos? m)
-                                       (str (when-not (empty? seen) " and ") m " card"
-                                            (when (> m 1) "s")))))
+                                       (str (when-not (empty? seen) " and ")
+                                            (quantify m "unseen card")))))
                               " into R&D")
                     :effect (req (doseq [c targets] (move state side c :deck))
                                  (shuffle! state side :deck))

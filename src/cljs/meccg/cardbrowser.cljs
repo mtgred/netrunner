@@ -25,10 +25,6 @@
 
 (defn make-span [text symbol class]
   (.replace text (apply str symbol) (str "<img src='" class "'style=\"width:16px;height:16px;\"></img>")))
-;;(.replace text (js/RegExp. symbol "gi") (str "<img src='" class "'style=\"width:12px;height:12px;\"></img>")))
-
-
-;;<img src="pic_mountain.jpg" alt="Mountain View" style="width:304px;height:228px;">
 
 (defn image-url [card]
   (str "/img/cards/" (:Set card) "/" (:ImageName card))) ;;had ".png"
