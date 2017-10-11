@@ -65,8 +65,9 @@ removePlayer = (socket) ->
     if game.players.length is 0 and game.spectators.length is 0
       # Store the list of player sockets for the game before we delete the game
       stats.sockets = []
-      for player in game.endingPlayers
-        stats.sockets.push(player.id)
+      if game.endingPlayers
+        for player in game.endingPlayers
+          stats.sockets.push(player.id)
       delete games[socket.gameid]
       requester.send(JSON.stringify({action: "remove", gameid: socket.gameid}))
       refreshLobby("delete", socket.gameid)
