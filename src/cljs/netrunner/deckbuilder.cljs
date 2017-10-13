@@ -681,7 +681,7 @@
                    "legal" "Tournament legal"
                    "casual" "Casual play only"
                    "invalid" "Invalid")]
-     [:span.deck-status {:class status} message
+     [:span.deck-status.shift-tooltip {:class status} message
       (when tooltip?
         [:div.status-tooltip.blue-shade
          [:div {:class (if valid "legal" "invalid")}
