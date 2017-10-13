@@ -1259,6 +1259,20 @@
          (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
+            (when (and (:winner @game-state) (not (:win-shown @app-state)))
+              [:div.win.centered.blue-shade
+               (:winning-user @game-state) " (" (-> @game-state :winner capitalize)
+               (cond
+                 (= "Decked" (@game-state :reason capitalize))
+                 ") wins due to the Corp being decked"
+
+                 (= "Flatline" (@game-state :reason capitalize))
+                 ") wins by flatlining the Runner"
+
+                 :else
+                 ") wins by scoring seven agenda points")
+
+               [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "x"]])
             [:div {:class (:background (:options @app-state))}]
             [:div.rightpane
              [:div.card-zoom
@@ -1274,7 +1288,6 @@
                       nil [:span.unimplemented "Unimplemented"]
                       [:span.impl-msg implemented])])))
              (om/build log-pane cursor)]
-             ;; (om/build log-pane (:log cursor))]
 
             [:div.centralpane
              (om/build board-view {:player opponent :run run})
