@@ -1101,7 +1101,7 @@
                                                      (doseq [c (take target cards)]
                                                        (trash state side c {:unpreventable true}))
                                                      (when (> (int target) 0)
-                                                       (system-msg state side (str "trashes " target
+                                                       (system-msg state side (str "trashes "
                                                                                    (quantify target "cop" "y" "ies")
                                                                                    " of " title)))))}}}))]
      {:events {:runner-install {:req (req (first-event? state side :runner-install))
