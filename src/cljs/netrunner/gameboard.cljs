@@ -1270,7 +1270,7 @@
                  ") wins by flatlining the Runner"
 
                  :else
-                 ") wins by scoring seven agenda points")
+                 ") wins by scoring agenda points")
 
                [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "x"]])
             [:div {:class (:background (:options @app-state))}]
