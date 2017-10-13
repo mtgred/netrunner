@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast damage mill installed? is-type?)
+(declare forfeit prompt! toast damage mill installed? is-type? is-scored?)
 
 (defn deduce
   "Deduct the value from the player's attribute."
@@ -55,8 +55,7 @@
                    {:prompt "Choose an Agenda to forfeit"
                     :delayed-completion true
                     :choices {:max n
-                              :req #(and (= (:side %) (side-str side))
-                                         (= (:zone %) [:scored]))}
+                              :req #(is-scored? state side %)}
                     :effect (effect (forfeit eid target))}
                    card nil)
   (when-let [cost-name (cost-names n :forfeit)]
