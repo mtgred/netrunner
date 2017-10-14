@@ -25,10 +25,13 @@
 
 (defn make-span [text symbol class]
   (.replace text (apply str symbol) (str "<img src='" class "'style=\"width:16px;height:16px;\"></img>")))
-;;(.replace text (js/RegExp. symbol "gi") (str "<img src='" class "'style=\"width:12px;height:12px;\"></img>")))
 
-
-;;<img src="pic_mountain.jpg" alt="Mountain View" style="width:304px;height:228px;">
+(defn show-alt-art?
+  "Is the current user allowed to use alternate art cards and do they want to see them?"
+  []
+  (and
+    (get-in @app-state [:options :show-alt-art] true)
+    (get-in @app-state [:user :special] false)))
 
 (defn image-url [card]
   (str "/img/cards/" (:Set card) "/" (:ImageName card))) ;;had ".png"
@@ -37,33 +40,48 @@
   (-> (if (nil? card-text) "" card-text)
       (make-span "Automatic-attacks" "img/dc/me_aa.png")
       (make-span "Automatic-attack" "img/dc/me_aa.png")
+      (make-span "automatic-attacks" "img/dc/me_aa.png")
+      (make-span "automatic-attack" "img/dc/me_aa.png")
       (make-span "Border-holds [B]" "img/dc/me_bh.png")
       (make-span "Border-lands [b]" "img/dc/me_bl.png")
       (make-span "Border-hold [B]" "img/dc/me_bh.png")
       (make-span "Border-land [b]" "img/dc/me_bl.png")
-      (make-span "corruption checks" "img/dc/me_cc.png")
-      (make-span "corruption check" "img/dc/me_cc.png")
       (make-span "company vs. company combat" "img/dc/me_ccc.png")
+      (make-span "CvCC" "img/dc/me_ccc.png")
+      (make-span "corruption checks" "img/dc/me_cp.png")
+      (make-span "corruption check" "img/dc/me_cp.png")
+      (make-span "CC" "img/dc/me_cp.png")
+      (make-span "corruption point (CP)" "img/dc/me_cp.png")
+      (make-span "CP" "img/dc/me_cp.png")
       (make-span "corruption points" "img/dc/me_cp.png")
       (make-span "corruption point" "img/dc/me_cp.png")
       (make-span "Coastal Seas [c]" "img/dc/me_cs.png")
       (make-span "Coastal Sea [c]" "img/dc/me_cs.png")
-      (make-span "Dark-Domains [d]" "img/dc/me_dd.png")
+      (make-span "Dark-domains [d]" "img/dc/me_dd.png")
       (make-span "Dark-holds [D]" "img/dc/me_dh.png")
-      (make-span "Dark-Domain [d]" "img/dc/me_dd.png")
+      (make-span "Dark-domain [d]" "img/dc/me_dd.png")
       (make-span "Dark-hold [D]" "img/dc/me_dh.png")
       (make-span "Darkhavens [V]" "img/dc/me_dha.png")
       (make-span "Darkhaven [V]" "img/dc/me_dha.png")
+      (make-span "Darkhaven" "img/dc/me_dha.png")
+      (make-span "Direct influence" "img/dc/me_di.png")
       (make-span "direct influence" "img/dc/me_di.png")
+      (make-span "DI" "img/dc/me_di.png")
       (make-span "Free-domains [f]" "img/dc/me_fd.png")
       (make-span "Free-holds [F]" "img/dc/me_fh.png")
       (make-span "Free-domain [f]" "img/dc/me_fd.png")
       (make-span "Free-hold [F]" "img/dc/me_fh.png")
+      (make-span "General influence" "img/dc/me_gi.png")
       (make-span "general influence" "img/dc/me_gi.png")
+      (make-span "GI" "img/dc/me_gi.png")
       (make-span "Havens [H]" "img/dc/me_ha.png")
       (make-span "Haven [H]" "img/dc/me_ha.png")
       (make-span "Jungles [j]" "img/dc/me_ju.png")
       (make-span "Jungle [j]" "img/dc/me_ju.png")
+      (make-span " MP." "img/dc/me_mp.png")
+      (make-span " MP " "img/dc/me_mp.png")
+      (make-span " mp." "img/dc/me_mp.png")
+      (make-span " mp " "img/dc/me_mp.png")
       (make-span "marshalling points" "img/dc/me_mp.png")
       (make-span "marshalling point" "img/dc/me_mp.png")
       (make-span "Ruins & Lairs [R]" "img/dc/me_rl.png")
@@ -71,54 +89,24 @@
       (make-span "Shadow-lands [s]" "img/dc/me_sl.png")
       (make-span "Shadow-hold [S]" "img/dc/me_sh.png")
       (make-span "Shadow-land [s]" "img/dc/me_sl.png")
+      (make-span "SPs" "img/dc/me_sp.png")
+      (make-span "SP" "img/dc/me_sp.png")
       (make-span "stage points" "img/dc/me_sp.png")
       (make-span "stage point" "img/dc/me_sp.png")
+      (make-span "tap:" "img/dc/me_tap.png")
+      (make-span "Tap " "img/dc/me_tap.png")
       (make-span " tapping" "img/dc/me_tap.png")
       (make-span " tap " "img/dc/me_tap.png")
       (make-span " tap." "img/dc/me_tap.png")
       (make-span "Wildernesses [w]" "img/dc/me_wi.png")
       (make-span "Wilderness [w]" "img/dc/me_wi.png")
-      (make-span "Border-holds [B]" "img/dc/me_bh.png")
-      (make-span "Border-lands [b]" "img/dc/me_bl.png")
-      (make-span "Border-hold [B]" "img/dc/me_bh.png")
-      (make-span "Border-land [b]" "img/dc/me_bl.png")
-      (make-span "corruption checks" "img/dc/me_cc.png")
-      (make-span "corruption check" "img/dc/me_cc.png")
-      (make-span "company vs. company combat" "img/dc/me_ccc.png")
-      (make-span "corruption points" "img/dc/me_cp.png")
-      (make-span "corruption point" "img/dc/me_cp.png")
-      (make-span "Coastal Seas [c]" "img/dc/me_cs.png")
-      (make-span "Coastal Sea [c]" "img/dc/me_cs.png")
-      (make-span "Dark-Domains [d]" "img/dc/me_dd.png")
-      (make-span "Dark-holds [D]" "img/dc/me_dh.png")
-      (make-span "Dark-Domain [d]" "img/dc/me_dd.png")
-      (make-span "Dark-hold [D]" "img/dc/me_dh.png")
-      (make-span "Darkhavens [V]" "img/dc/me_dha.png")
-      (make-span "Darkhaven [V]" "img/dc/me_dha.png")
-      (make-span "direct influence" "img/dc/me_di.png")
-      (make-span "Free-domains [f]" "img/dc/me_fd.png")
-      (make-span "Free-holds [F]" "img/dc/me_fh.png")
-      (make-span "Free-domain [f]" "img/dc/me_fd.png")
-      (make-span "Free-hold [F]" "img/dc/me_fh.png")
-      (make-span "general influence" "img/dc/me_gi.png")
-      (make-span "Havens [H]" "img/dc/me_ha.png")
-      (make-span "Haven [H]" "img/dc/me_ha.png")
-      (make-span "Jungles [j]" "img/dc/me_ju.png")
-      (make-span "Jungle [j]" "img/dc/me_ju.png")
-      (make-span "marshalling points" "img/dc/me_mp.png")
-      (make-span "marshalling point" "img/dc/me_mp.png")
-      (make-span "Ruins & Lairs [R]" "img/dc/me_rl.png")
-      (make-span "Shadow-holds [S]" "img/dc/me_sh.png")
-      (make-span "Shadow-lands [s]" "img/dc/me_sl.png")
-      (make-span "Shadow-hold [S]" "img/dc/me_sh.png")
-      (make-span "Shadow-land [s]" "img/dc/me_sl.png")
-      (make-span "stage points" "img/dc/me_sp.png")
-      (make-span "stage point" "img/dc/me_sp.png")
-      (make-span " tapping" "img/dc/me_tap.png")
-      (make-span " tap " "img/dc/me_tap.png")
-      (make-span " tap." "img/dc/me_tap.png")
-      (make-span "Wildernesses [w]" "img/dc/me_wi.png")
-      (make-span "Wilderness [w]" "img/dc/me_wi.png")))
+      (make-span "[b]" "img/dc/me_bl.png")
+      (make-span "[c]" "img/dc/me_cs.png")
+      (make-span "[d]" "img/dc/me_dd.png")
+      (make-span "[f]" "img/dc/me_fd.png")
+      (make-span "[j]" "img/dc/me_ju.png")
+      (make-span "[s]" "img/dc/me_sl.png")
+      (make-span "[w]" "img/dc/me_wi.png")))
 
 (defn- card-text
   "Generate text html representation a card"
@@ -153,7 +141,20 @@
     [:p [:span.type (str (:Primary card))] (if (= (.toLowerCase (:Primary card)) (:Secondary card))
                                              ""
                                              (str ": " (:Secondary card)))]
-    [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (add-symbols (:Text card)))}}]]
+    [:pre {:dangerouslySetInnerHTML #js {:__html
+                                         (add-symbols
+                                           (add-symbols
+                                             (add-symbols
+                                               (add-symbols
+                                                 (add-symbols
+                                                   (add-symbols
+                                                     (add-symbols
+                                                       (add-symbols
+                                                         (add-symbols
+                                                           (add-symbols
+                                                             (add-symbols
+                                                               (add-symbols
+                                                   (:Text card)))))))))))))}}]]
    ])
 
 (defn card-view [card owner]
@@ -198,7 +199,7 @@
 (def shared-secondaries ["Long-event" "Permanent-event" "Permanent-event/Short-event" "Short-event"])
 (def hazard-secondaries ["Creature" "Creature/Permanent-event" "Creature/Short-event"])
 (def general-alignments ["Hero" "Minion" "Balrog" "Fallen-wizard" "Elf-lord" "Dwarf-lord" "Dual"])
-(def set-order ["METW" "METD" "MEDM" "MELE" "MEAS" "MEWH" "MEBA" "MEFB" "MEDF" "MENE"])
+(def set-order ["METW" "METD" "MEDM" "MELE" "MEAS" "MEWH" "MEBA" "MEFB" "MEDF"])
 
 (defn secondaries [primary]
     (case primary
@@ -223,22 +224,18 @@
     (for [option options]
       [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])))
 
-(defn filter-title [query cards]
-  (if (empty? query)
-    cards
-    (filter #(if (= (.indexOf (str/strip-accents (.toLowerCase (:NameEN %))) query) -1) false true) cards)))
-
-(defn show-alt-art?
-  "Is the current user allowed to use alternate art cards and do they want to see them?"
-  []
-  (and
-    (get-in @app-state [:options :show-alt-art] true)
-    (get-in @app-state [:user :special] false)))
-
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
     cards
     (filter #(= (field %) filter-value) cards)))
+
+(defn filter-title [query cards]
+  (if (empty? query)
+    cards
+    (let [lcquery (.toLowerCase query)]
+      (filter #(or (not= (.indexOf (.toLowerCase (:title %)) lcquery) -1)
+                   (not= (.indexOf (:normalizedtitle %) lcquery) -1))
+              cards))))
 
 (defn match [query cards]
   (if (empty? query)

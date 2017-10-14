@@ -142,7 +142,8 @@ cardFields = {
   "codeFR": same,
   "codeGR": same,
   "codeSP": same,
-  "codeJP": same
+  "codeJP": same,
+  "Specific": same
 }
 
 baseurl = "http://192.168.1.180:8080/rez/"
