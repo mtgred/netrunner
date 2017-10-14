@@ -1118,7 +1118,7 @@
 (deftest scorched-earth-flatline
   ;; Scorched Earth - murderize 'em
   (do-game
-    (new-game (default-corp [(qty "Scorched Earth" 1)])
+    (new-game (default-corp [(qty "Scorched Earth" 10)])
               (default-runner))
     (core/gain state :runner :tag 1)
     (play-from-hand state :corp "Scorched Earth")
