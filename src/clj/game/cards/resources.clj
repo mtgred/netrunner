@@ -536,7 +536,7 @@
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
 
    "Dummy Box"
-   (letfn [dummy-prevent ([type] {:msg (str "prevent a " type " from being trashed")
+   (letfn [(dummy-prevent [type] {:msg (str "prevent a " type " from being trashed")
                                   :delayed-completion true
                                   :priority 15
                                   :prompt (str "Choose a " type " in your Grip")
