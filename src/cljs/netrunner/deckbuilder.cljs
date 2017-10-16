@@ -633,13 +633,13 @@
 (def rotated-dot (str "↻" zws))                             ; on the rotation list
 
 (def banned-span
-  [:span.invalid " " banned-dot])
+  [:span.invalid {:title "Removed"} " " banned-dot])
 
 (def restricted-span
-  [:span " " restricted-dot])
+  [:span {:title "Restricted"} " " restricted-dot])
 
 (def rotated-span
-  [:span.casual " " rotated-dot])
+  [:span.casual {:title "Rotated"} " " rotated-dot])
 
 (defn- make-dots
   "Returns string of specified dots and number. Uses number for n > 20"
