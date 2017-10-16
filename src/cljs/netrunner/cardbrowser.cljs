@@ -91,9 +91,9 @@
      {:class (if-let [faction (:faction card)]
                (-> faction .toLowerCase (.replace " " "-"))
                "neutral")}
-     (when (netrunner.deckbuilder/banned? card) netrunner.deckbuilder/banned-dot)
-     (when (netrunner.deckbuilder/restricted? card) netrunner.deckbuilder/restricted-dot)
-     (when (:rotated card) netrunner.deckbuilder/rotated-dot)]]
+     (when (netrunner.deckbuilder/banned? card) netrunner.deckbuilder/banned-span)
+     (when (netrunner.deckbuilder/restricted? card) netrunner.deckbuilder/restricted-span)
+     (when (:rotated card) netrunner.deckbuilder/rotated-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]
