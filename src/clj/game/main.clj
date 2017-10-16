@@ -150,8 +150,10 @@
              "remove" (do (swap! game-states dissoc gameid)
                           (swap! old-states dissoc gameid))
              "do" (handle-do user command state side args)
-             "finaluser-add" (swap! state assoc :final-user {:username (get-in user [:user :username])
-                                                             :side (clojure.string/lower-case (:side user))})
+             "finaluser-add" (swap! state assoc :final-user
+                                    {:username (get-in user [:user :username])
+                                     :deck-id (get-in user [:deck :_id])
+                                     :side (clojure.string/lower-case (:side user))})
              "finaluser-del" (swap! state dissoc :final-user)
              "notification" (when state
                               (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))

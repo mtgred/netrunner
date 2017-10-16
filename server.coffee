@@ -183,16 +183,16 @@ requester.on 'message', (data) ->
       # Handle Deck Statistics
       if response.state[winningSide]
         if response.state[winningSide].options.deckstats is "always"
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
+          db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games-completed" : 1, "stats.wins" : 1}}, (err) ->
             throw err if err
         else if response.state[winningSide].options.deckstats is "competitive" and room is "competitive"
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games" : 1, "stats.wins" : 1}}, (err) ->
+          db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games-completed" : 1, "stats.wins" : 1}}, (err) ->
             throw err if err
         if response.state[losingSide].options.deckstats is "always"
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
+          db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games-completed" : 1, "stats.loses" : 1}}, (err) ->
             throw err if err
         else if response.state[losingSide].options.deckstats is "competitive" and room is "competitive"
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games" : 1, "stats.loses" : 1}}, (err) ->
+          db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games-completed" : 1, "stats.loses" : 1}}, (err) ->
             throw err if err
 
       # Handle Game Statistics
@@ -235,12 +235,16 @@ requester.on 'message', (data) ->
           else
             db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1}}, (err) ->
               throw err if err
+      # Handle other player dropping without completing game by crediting last player with completions
       else if finalUser
         if finalUser.side is "corp"
           db.collection('users').update {username: finalUser.username}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1}}, (err) ->
             throw err if err
         if finalUser.side is "runner"
           db.collection('users').update {username: finalUser.username}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1}}, (err) ->
+            throw err if err
+        if finalUser["deck-id"]
+          db.collection('decks').update {_id: mongoskin.helper.toObjectID(finalUser["deck-id"])}, {$inc: {"stats.games-completed" : 1}}, (err) ->
             throw err if err
       db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
         throw err if err
@@ -476,6 +480,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
               }
               db.collection('gamestats').insert g, (err, data) ->
                 console.log(err) if err
+              # Handle user game stats
               db.collection('users').update {username: corp.user.username}, {$inc: {"stats.games-started" : 1, "stats.games-started-corp" : 1}}, (err) ->
                 console.log(err) if err
               db.collection('users').update {username: runner.user.username}, {$inc: {"stats.games-started" : 1, "stats.games-started-runner" : 1}}, (err) ->
@@ -488,9 +493,16 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
             msg.gameid = socket.gameid
             requester.send(JSON.stringify(msg))
             for player in game.players
+              if player.deck
+                db.collection('decks').update {_id: mongoskin.helper.toObjectID(player.deck._id)}, {$inc: {"stats.games-started" : 1}}, (err) ->
+                  throw err if err
               player.faction = if player.deck then player.deck.identity.faction else null
               player.identity = if player.deck then player.deck.identity.title else null
-              delete player.deck
+              if player.deck
+                deckid = player.deck._id
+                delete player.deck
+                player.deck = {}
+                player.deck._id = deckid
             refreshLobby("update", msg.gameid)
 
       when "do"
