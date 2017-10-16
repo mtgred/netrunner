@@ -421,6 +421,7 @@
                              :msg "do 1 net damage"
                              :effect (effect (damage eid :net 1 {:card card}))}
              :agenda-stolen {:msg "do 1 net damage"
+                             :delayed-completion true
                              :req (req (not (:winner @state)))
                              :effect (effect (damage eid :net 1 {:card card}))}}}
 
