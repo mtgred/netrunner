@@ -161,11 +161,11 @@
                               [:li "None - statistics are neither logged or displayed"]]]
                             [:p "What do the game statistics mean?"
                              [:ul
-                              [:li "Games Started - games you have entered. The same is used for deck stats."]
+                              [:li "Games Started - games you have entered."]
                               [:li "Games Completed - games that had a winner, or games that did not complete but opponent dropped first."]
                               [:li "Games Incomplete -  games with no winner where you dropped first, and did not concede."]
-                              [:li "Games Won - games won.  The percentage is compared to those games lost.  The same is used for deck stats."]
-                              [:li "Games Lost - games lost.  The percentage is compared to those games won. The same is used for deck stats."]]]
+                              [:li "Games Won - games won.  The percentage is compared to those games lost."]
+                              [:li "Games Lost - games lost.  The percentage is compared to those games won."]]]
                             [:p "Your game completion rate is visible in the player lobby so people can determine if they should play against you."
                              " Don't quit during games - please concede if you have to leave."])}
             )}

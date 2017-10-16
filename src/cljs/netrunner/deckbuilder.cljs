@@ -815,10 +815,11 @@
                     [:p (get-in deck [:identity :title]) [:br]
                      (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
                        (let [stats (:stats deck)]
-                         [:span "  Games: " (:games stats)
+                         ; adding key :games to handle legacy stats before adding started vs completed
+                         [:span "  Games: " (+ (:games-started stats) (:games stats))
+                          " - Completed: " (+ (:games-completed stats) (:games stats))
                           " - Win: " (or (:wins stats) 0)
-                          " - Lose: " (or (:loses stats) 0)
-                          " - Percent Win: " (num->percent (:wins stats) (:games stats)) "%"]))]])])))))
+                          " - Percent Win: " (num->percent (:wins stats) (+ (:wins stats) (:loses stats))) "%"]))]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
