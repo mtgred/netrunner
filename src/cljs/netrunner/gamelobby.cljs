@@ -175,7 +175,7 @@
         completed (get-in player [:user :stats :games-completed])
         completion-rate (str (notnum->zero (num->percent completed started)) "%")
         completion-rate (if (< started 10) "Too little data" completion-rate)]
-    [:span.deck-status (get-in player [:user :username])
+    [:span.user-status (get-in player [:user :username])
      [:div.status-tooltip.blue-shade
       [:div "Game Completion Rate: " completion-rate]]]))
 
