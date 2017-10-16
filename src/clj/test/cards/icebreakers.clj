@@ -196,7 +196,7 @@
   ;; Multiple sources of net damage vs. Deus X
   (do-game
     (new-game
-      (make-deck "Jinteki: Personal Evolution" [(qty "Fetal AI" 1)])
+      (make-deck "Jinteki: Personal Evolution" [(qty "Fetal AI" 6)])
       (default-runner [(qty "Deus X" 3) (qty "Sure Gamble" 2)]))
     (play-from-hand state :corp "Fetal AI" "New remote")
     (take-credits state :corp)

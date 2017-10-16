@@ -197,6 +197,7 @@
                                                                             ": " (get-card state target))))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/card-info command"} nil)
+          "/clear-win"  #(clear-win %1 %2)
           "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
           "/close-prompt" #(command-close-prompt %1 %2)
           "/counter"    #(command-counter %1 %2 args)

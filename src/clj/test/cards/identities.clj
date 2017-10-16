@@ -506,7 +506,7 @@
   ;; Personal Evolution - Prevent runner from running on remotes unless they first run on a central
   (do-game
     (new-game
-      (make-deck "Jinteki: Personal Evolution" [(qty "Braintrust" 1)])
+      (make-deck "Jinteki: Personal Evolution" [(qty "Braintrust" 6)])
       (default-runner [(qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Braintrust" "New remote")
     (take-credits state :corp)
@@ -1132,7 +1132,7 @@
   ;; Silhouette - Expose trigger ability resolves completely before access. Issue #2173.
   (do-game
     (new-game
-      (default-corp [(qty "Psychic Field" 1) (qty "Fetal AI" 3)])
+      (default-corp [(qty "Psychic Field" 1) (qty "Fetal AI" 10)])
       (make-deck "Silhouette: Stealth Operative" [(qty "Feedback Filter" 1) (qty "Inside Job" 1)]))
     (starting-hand state :corp ["Psychic Field" "Fetal AI"])
     (play-from-hand state :corp "Psychic Field" "New remote")

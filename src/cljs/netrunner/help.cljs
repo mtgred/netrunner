@@ -46,6 +46,7 @@
                         [:li [:code "/adv-counter n"] " - set advancement counters on a card to n (player's own cards only). Deprecated in favor of " [:code "/counter ad n"]]
                         [:li [:code "/bp n"] " - Set your bad publicity to n"]
                         [:li [:code "/card-info"] " - display debug info about a card (player's own cards only)"]
+                        [:li [:code "/clear-win"] " - requests game to clear the current win state.  Requires both players to request it"]
                         [:li [:code "/click n"] " - Set your clicks to n"]
                         [:li [:code "/close-prompt"] " - close an active prompt and show the next waiting prompt, or the core click actions"]
                         [:li [:code "/counter n"] " - set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."]
