@@ -113,7 +113,7 @@
   (send {:action "leave-game" :gameid (:gameid @app-state)
          :user (:user @app-state) :side (:side @game-state)})
   (reset! game-state nil)
-  (swap! app-state dissoc :gameid :side :password-gameid)
+  (swap! app-state dissoc :gameid :side :password-gameid :win-shown)
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
