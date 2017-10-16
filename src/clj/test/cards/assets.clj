@@ -157,6 +157,7 @@
               (default-runner))
     (play-from-hand state :corp "Chairman Hiro" "New remote")
     (play-from-hand state :corp "Chairman Hiro" "Server 1")
+    (prompt-choice :corp "OK")
     (is (= 1 (count (:discard (get-corp)))) "First Hiro trashed")
     (is (= 0 (:agenda-point (get-runner))) "No points for Runner if trashed by Corp")
     (let [hiro (get-content state :remote1 0)]
