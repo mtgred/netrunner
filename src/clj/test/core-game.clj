@@ -72,15 +72,13 @@
               (default-runner [(qty "Data Dealer" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Data Dealer")
-    (run-on state "HQ")
-    (run-successful state)
+    (run-empty-server state "HQ")
     (prompt-choice :runner "Steal")
     (is (= 2 (:agenda-point (get-runner))))
-    (let [dd (get-in @state [:runner :rig :resource 0])]
-      (card-ability state :runner dd 0)
-      (prompt-select :runner (get-in (get-runner) [:scored 0]))
-      (is (= 1 (:click (get-runner))) "Didn't lose a click")
-      (is (= 4 (:click-per-turn (get-runner))) "Still have 4 clicks per turn"))))
+    (card-ability state :runner (get-resource state 0) 0)
+    (prompt-select :runner (get-scored state :runner 0))
+    (is (= 1 (:click (get-runner))) "Didn't lose a click")
+    (is (= 4 (:click-per-turn (get-runner))) "Still have 4 clicks per turn")))
 
 (deftest agenda-forfeit-corp
   ;; forfeit - Deactivate agenda to trigger leave play effects if Corp forfeits a scored agenda
@@ -93,7 +91,7 @@
     (play-from-hand state :corp "Corporate Town" "New remote")
     (let [ctown (get-content state :remote2 0)]
       (core/rez state :corp ctown)
-      (prompt-select :corp (get-in (get-corp) [:scored 0]))
+      (prompt-select :corp (get-scored state :corp 0))
       (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn"))))
 
 (deftest refresh-recurring-credits-hosted

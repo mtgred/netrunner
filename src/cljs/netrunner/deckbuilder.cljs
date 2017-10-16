@@ -632,6 +632,15 @@
 (def alliance-dot (str "○" zws))                            ; alliance free-inf dot
 (def rotated-dot (str "↻" zws))                             ; on the rotation list
 
+(def banned-span
+  [:span.invalid " " banned-dot])
+
+(def restricted-span
+  [:span " " restricted-dot])
+
+(def rotated-span
+  [:span.casual " " rotated-dot])
+
 (defn- make-dots
   "Returns string of specified dots and number. Uses number for n > 20"
   [dot n]
@@ -654,7 +663,26 @@
   (for [factionkey (sort (keys cost-map))]
     [:span.influence {:class (name factionkey)} (make-dots dot (factionkey cost-map))]))
 
-(defn influence-html
+(defn card-influence-html
+  "Returns hiccup-ready vector with dots for influence as well as restricted / rotated / banned symbols"
+  [card qty in-faction allied?]
+  (let [influence (* (:factioncost card) qty)
+        banned (banned? card)
+        restricted (restricted? card)
+        rotated (:rotated card)]
+    (list " "
+          (when (and (not banned) (not in-faction))
+            [:span.influence {:class (faction-label card)}
+             (if allied?
+               (alliance-dots influence)
+               (influence-dots influence))])
+          (if banned
+            banned-span
+            [:span
+             (when restricted restricted-span)
+             (when rotated rotated-span)]))))
+
+(defn deck-influence-html
   "Returns hiccup-ready vector with dots colored appropriately to deck's influence."
   [deck]
   (dots-html influence-dot (influence-map deck)))
@@ -799,7 +827,6 @@
    (if-let [name (:title card)]
      (let [infaction (noinfcost? identity card)
            banned (banned? card)
-           restricted (restricted? card)
            allied (alliance-is-free? cards line)
            valid (and (allowed? card identity)
                       (legal-num-copies? identity line))
@@ -812,24 +839,12 @@
                          :else "invalid")
                 :on-mouse-enter #(put! zoom-channel line)
                 :on-mouse-leave #(put! zoom-channel false)} name]
-        (let [influence (* (:factioncost card) modqty)]
-          (list " "
-                [:span.influence
-                 {:class (faction-label card)
-                  :dangerouslySetInnerHTML
-                  #js {:__html
-                       (if banned
-                         banned-dot
-                         (str
-                           (when (and (not infaction) (not allied)) (influence-dots influence))
-                           (when allied (alliance-dots influence))
-                           (when restricted restricted-dot)
-                           (when (:rotated card) rotated-dot)))}}]))])
+        (card-influence-html card modqty infaction allied)])
      card)])
 
 (defn- create-identity
   [state target-value]
-  (let [side (get-in state [:deck :identity :side]) 
+  (let [side (get-in state [:deck :identity :side])
         json-map (.parse js/JSON (.. target-value -target -value))
         id-map (js->clj json-map :keywordize-keys true)
         card (lookup side id-map)]
@@ -921,7 +936,11 @@
                  [:img {:src (image-url identity)}]
                  [:h4 {:class (if (released? (:sets @app-state) identity) "fake-link" "casual")
                        :on-mouse-enter #(put! zoom-channel {:card identity :art (:art identity) :id (:id identity)})
-                       :on-mouse-leave #(put! zoom-channel false)} (:title identity)]
+                       :on-mouse-leave #(put! zoom-channel false)}
+                  (:title identity)
+                  (if (banned? identity)
+                    banned-span
+                    (when (:rotated identity) rotated-span))]
                  (let [count (card-count cards)
                        min-count (min-deck-size identity)]
                    [:div count " cards"
@@ -934,7 +953,7 @@
                     [:span {:class (if (> inf id-limit) (if (> inf id-limit) "invalid" "casual") "legal")} inf]
                     "/" (if (= INFINITY id-limit) "∞" id-limit)
                     (if (pos? inf)
-                      (list " " (influence-html deck)))])
+                      (list " " (deck-influence-html deck)))])
                  (when (= (:side identity) "Corp")
                    (let [min-point (min-agenda-points deck)
                          points (agenda-points deck)]

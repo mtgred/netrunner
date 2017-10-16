@@ -507,6 +507,26 @@
     (score-agenda state :corp (get-content state :remote2 0))
     (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site not removed from Corp score area")))
 
+(deftest fan-site-forfeit
+  ;; Fan Site - Runner can forfeit Fan Site
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1)])
+              (default-runner [(qty "Fan Site" 1) (qty "Data Dealer" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fan Site")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 0 (:agenda-point (get-runner))))
+    (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Data Dealer")
+    (let [credits (:credit (get-runner))]
+      (card-ability state :runner (get-resource state 0) 0)
+      (prompt-select :runner (get-scored state :runner 0))
+      (is (= 0 (count (:scored (get-runner)))) "Fan Site successfully forfeit to Data Dealer")
+      (is (= (+ credits 9) (:credit (get-runner))) "Gained 9 credits from Data Dealer"))))
+
 (deftest fester
   ;; Fester - Corp loses 2c (if able) when purging viruses
   (do-game
