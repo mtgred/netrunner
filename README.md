@@ -6,15 +6,15 @@ Play Middle-earth CCG in the browser.
 
 http://[no current live server]
 
-[Gameplay videos](https://www.youtube.com/results?search_query=jinteki.net)
+[Gameplay videos](https://[no current live videos])
 
-![screenshot](http://i.imgur.com/xkxOMHc.jpg)
+![screenshot](resources/public/img/tutorials/Screen-Shot-2017-10-16at7.35.29PM.png)
 
 
 ## Card implementation status
 
 
-[Card rules implementation status](https://docs.google.com/spreadsheets/d/1ICv19cNjSaW9C-DoEEGH3iFt09PBTob4CAutGex0gnE/pubhtml)
+[Card rules implementation status](https://[no current status doc)
 
 
 ## Dependencies
@@ -83,3 +83,4 @@ For more information refer to the [development guide](https://github.com/rezwits
 ## License
 
 Cardnum.net is released under the [MIT License](http://www.opensource.org/licenses/MIT).
+

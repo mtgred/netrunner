@@ -468,6 +468,31 @@
     (om/set-state! owner [:deck :cards] cards)))
 
 
+(defn wizard-edit [owner]
+  (if (om/get-state owner :vs-wizard)
+    (om/set-state! owner :vs-wizard false)
+    (om/set-state! owner :vs-wizard true))
+  (if (and (om/get-state owner :vs-wizard) (om/get-state owner :vs-minion))
+    (om/set-state! owner :vs-fallen true))
+  )
+
+(defn minion-edit [owner]
+  (if (om/get-state owner :vs-minion)
+    (om/set-state! owner :vs-minion false)
+    (om/set-state! owner :vs-minion true))
+  (if (and (om/get-state owner :vs-wizard) (om/get-state owner :vs-minion))
+    (om/set-state! owner :vs-fallen true))
+  )
+
+(defn fallen-edit [owner]
+  (if (and (om/get-state owner :vs-wizard) (om/get-state owner :vs-minion))
+    (om/set-state! owner :vs-fallen true)
+    (if (om/get-state owner :vs-fallen)
+      (om/set-state! owner :vs-fallen false)
+      (om/set-state! owner :vs-fallen true))
+    )
+  )
+
 (defn cancel-edit [owner]
   (end-edit owner)
   (go (let [deck (om/get-state owner :old-deck)
@@ -737,6 +762,9 @@
     om/IInitState
     (init-state [this]
       {:edit false
+       :vs-wizard false
+       :vs-minion false
+       :vs-fallen false
        :old-deck nil
        :edit-channel (chan)
        :deck nil
@@ -782,8 +810,8 @@
              [:button {:on-click #(new-deck "Minion" owner)} "New Minion deck"]
              [:button {:on-click #(new-deck "Balrog" owner)} "New Balrog deck"]
              [:button {:on-click #(new-deck "Fallen-wizard" owner)} "New Fallen deck"]
-             [:button {:on-click #(new-deck "ELf-lord" owner)} "New Elf deck"]
-             [:button {:on-click #(new-deck "Dwarf-lord" owner)} "New Elf deck"]]
+             [:button {:on-click #(new-deck "Elf-lord" owner)} "New Elf deck"]
+             [:button {:on-click #(new-deck "Dwarf-lord" owner)} "New Dwarf deck"]]
             [:div.deck-collection
              (om/build deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (om/get-state owner :deck)})]
             [:div {:class (when (:edit state) "edit")}
@@ -800,7 +828,20 @@
                  (cond
                    edit? [:div.button-bar
                           [:button {:on-click #(save-deck cursor owner)} "Save"]
-                          [:button {:on-click #(cancel-edit owner)} "Cancel"]]
+                          [:button {:on-click #(cancel-edit owner)} "Cancel"]
+                          (if (om/get-state owner :vs-wizard)
+                            [:button {:on-click #(wizard-edit owner)} "√ vs Wizard"]
+                            [:button {:on-click #(wizard-edit owner)} "? vs Wizard"]
+                            )
+                          (if (om/get-state owner :vs-minion)
+                            [:button {:on-click #(minion-edit owner)} "√ vs Minion"]
+                            [:button {:on-click #(minion-edit owner)} "? vs Minion"]
+                            )
+                          (if (om/get-state owner :vs-fallen)
+                            [:button {:on-click #(fallen-edit owner)} "√ vs Fallen"]
+                            [:button {:on-click #(fallen-edit owner)} "? vs Fallen"]
+                            )
+                          ]
                    delete? [:div.button-bar
                             [:button {:on-click #(handle-delete cursor owner)} "Confirm Delete"]
                             [:button {:on-click #(end-delete owner)} "Cancel"]]
@@ -882,9 +923,9 @@
                         :on-change #(handle-edit-t owner)}]
             [:div
              [:h3.lftlabel "Sideboard"
-              [:span.small "(Type/Paste)" ]]
+              [:span.small "(Type or paste)" ]]
              [:h3.rgtlabel "Pool"
-              [:span.small "(Type/Paste)" ]]
+              [:span.small "(Type or paste)" ]]
              ]
 
             [:textarea.txtbot {:ref "hazard-edit" :value (:hazard-edit state)
