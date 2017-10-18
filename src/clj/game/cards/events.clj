@@ -355,8 +355,9 @@
                                       (register-events state side
                                                        {:run-ends {:effect (req (let [hunt (:diana @state)]
                                                                                   (doseq [c hunt]
-                                                                                    (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
-                                                                                    (trash state side (find-cid (:cid c) (all-installed state side)) {:unpreventable true}))
+                                                                                    (when-let [installed (find-cid (:cid c) (all-installed state side))]
+                                                                                      (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
+                                                                                      (trash state side installed {:unpreventable true})))
                                                                                   (swap! state dissoc :diana)
                                                                                   (unregister-events state side card)
                                                                                   (trash state side c)))}} c)))}
