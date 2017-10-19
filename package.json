@@ -10,10 +10,11 @@
   "scripts": {
     "start": "coffee server.coffee",
     "postinstall": "bower install",
-    "fetch": "cd data/ && coffee fetch.coffee",
-    "promo": "cd data/ && mongo netrunner --eval \"db.altarts.drop()\" && mongoimport --db=netrunner --collection=altarts --file=promo.json --jsonArray",
+    "fetch": "cd data/ && coffee fetch.coffee && coffee link_cards.coffee",
+    "promo": "cd data/ && mongo netrunner --eval \"db.altarts.drop()\" && mongoimport --db=netrunner --collection=altarts --file=promo.json --jsonArray && coffee add_art.coffee",
     "rotate": "cd data/ && coffee rotate.coffee",
-    "link_cards": "cd data/ && coffee link_cards.coffee"
+    "link_cards": "cd data/ && coffee link_cards.coffee",
+    "add_art": "cd data/ && coffee add_art.coffee"
   },
   "devDependencies": {
     "bower": "^1.8.2",
@@ -26,6 +27,7 @@
     "connect-mongo": "^1.3.2",
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.1",
+    "diacritics": "^1.3.0",
     "express": "^4.14.0",
     "express-session": "^1.14.1",
     "jsonwebtoken": "^8.0.1",

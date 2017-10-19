@@ -67,7 +67,10 @@
         c (or c (get-card state (assoc card :side (other-side (to-keyword (:side card))))))
         last-zone (last (:zone c))
         src (name-zone (:side c) (:zone c))
-        from-str (when-not (nil? src) (str " from their " src))
+        from-str (when-not (nil? src)
+                   (if (= :content last-zone)
+                     (str " in " src) ; this string matches the message when a card is trashed via (trash)
+                     (str " from their " src)))
         label (if (and (not= last-zone :play-area)
                        (not (and (= (:side c) "Runner")
                                  (= last-zone :hand)
@@ -399,9 +402,8 @@
            :after-active-player {:effect (req (let [c (get-card state c)
                                                     points (or (get-agenda-points state :corp c) points)]
                                                 (set-prop state :corp (get-card state moved-card) :advance-counter 0)
-
-                                                (system-msg state :corp (str "scores " (:title c) " and gains " points
-                                                                             " agenda point" (when (> points 1) "s")))
+                                                (system-msg state :corp (str "scores " (:title c) " and gains "
+                                                                             (quantify points "agenda point")))
                                                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
                                                 (swap! state dissoc-in [:corp :disable-id])
                                                 (gain-agenda-point state :corp points)

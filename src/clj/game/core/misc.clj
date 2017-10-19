@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare set-prop)
+(declare set-prop get-nested-host get-nested-zone)
 
 (defn get-zones [state]
   (keys (get-in state [:corp :servers])))
@@ -34,6 +34,32 @@
       "Archives" [:servers :archives]
       "New remote" [:servers (keyword (str "remote" (make-rid state)))]
       [:servers (->> (split server #" ") last (str "remote") keyword)])))
+
+(defn same-server? [card1 card2]
+  "True if the two cards are IN or PROTECTING the same server."
+  (let [zone1 (get-nested-zone card1)
+        zone2 (get-nested-zone card2)]
+    (= (second zone1) (second zone2))))
+
+(defn protecting-same-server? [card ice]
+  "True if an ice is protecting the server that the card is in or protecting."
+  (let [zone1 (get-nested-zone card)
+        zone2 (get-nested-zone ice)]
+    (and (= (second zone1) (second zone2))
+         (= :ices (last zone2)))))
+
+(defn in-same-server? [card1 card2]
+  "True if the two cards are installed IN the same server, or hosted on cards IN the same server."
+  (let [zone1 (get-nested-zone card1)
+        zone2 (get-nested-zone card2)]
+    (and (= zone1 zone2)
+         (is-remote? (second zone1)) ; cards in centrals are in the server's root, not in the server.
+         (= :content (last zone1)))))
+
+(defn from-same-server? [upgrade target]
+  "True if the upgrade is in the root of the server that the target is in."
+  (= (central->zone (:zone target))
+     (butlast (get-nested-zone upgrade))))
 
 (defn all-installed
   "Returns a vector of all installed cards for the given side, including those hosted on other cards,

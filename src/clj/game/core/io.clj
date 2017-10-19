@@ -170,6 +170,9 @@
                                             (rez state side c {:ignore-cost :all-costs :force true}))))}}}
     {:title "/rez-all command"} nil))
 
+(defn command-roll [state side value]
+  (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value)))))
+
 (defn command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]
     (swap! state update-in [side :prompt] rest)
@@ -194,6 +197,7 @@
                                                                             ": " (get-card state target))))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/card-info command"} nil)
+          "/clear-win"  #(clear-win %1 %2)
           "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
           "/close-prompt" #(command-close-prompt %1 %2)
           "/counter"    #(command-counter %1 %2 args)
@@ -235,6 +239,7 @@
                                                           (move %1 %2 c :rfg)))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/rfg command"} nil)
+          "/roll"       #(command-roll %1 %2 value)
           "/tag"        #(swap! %1 assoc-in [%2 :tag] (max 0 value))
           "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
           "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
@@ -263,11 +268,8 @@
 (defn event-title
   "Gets a string describing the internal engine event keyword"
   [event]
-  (case event
-    :agenda-scored "agenda-scored"
-    :agenda-stolen "agenda-stolen"
-    :runner-install "runner-install"
-    :successful-run "successful-run"
+  (if (keyword? event)
+    (name event)
     (str event)))
 
 (defn show-error-toast

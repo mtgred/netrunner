@@ -295,8 +295,12 @@
    "Equivocation"
    (let [force-draw (fn [title]
                       {:optional {:prompt (str "Force the Corp to draw " title "?")
-                                  :yes-ability {:effect (effect (draw :corp 1)
-                                                                (system-msg :corp (str "is forced to draw " title)))}}})
+                                  :yes-ability {:delayed-completion true
+                                                :effect (req (show-wait-prompt state :runner "Corp to draw")
+                                                             (when-completed (draw state :corp 1 nil)
+                                                                             (do (system-msg state :corp (str "is forced to draw " title))
+                                                                                 (clear-wait-prompt state :runner)
+                                                                                 (effect-completed state side eid))))}}})
          reveal {:optional {:prompt "Reveal the top card of R&D?"
                             :yes-ability {:delayed-completion true
                                           :effect (req (let [topcard (-> corp :deck first :title)]
@@ -800,7 +804,7 @@
                                    (= (:zone %) (:zone cice))
                                    (= 1 (abs (- (ice-index state %)
                                                 (ice-index state cice)))))}
-              :msg "swap a piece of barrier ICE"
+              :msg "swap a piece of Barrier ICE"
               :effect (req (let [tgtndx (ice-index state target)
                                  cidx (ice-index state cice)]
                              (swap! state update-in (cons :corp (:zone cice))
@@ -814,7 +818,7 @@
                    :req (req (and (:run @state)
                                   (rezzed? current-ice)
                                   (has-subtype? current-ice "Barrier")))
-                   :label "Swap the barrier ICE currently being encountered with a piece of ICE directly before or after it"
+                   :label "Swap the Barrier ICE currently being encountered with a piece of ICE directly before or after it"
                    :effect (effect (resolve-ability (surf state current-ice) card nil))}]})
 
    "Tapwrm"

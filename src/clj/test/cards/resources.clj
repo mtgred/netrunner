@@ -456,6 +456,19 @@
     (is (= 3 (count (:hand (get-corp)))) "Corp drew 2 cards")
     (is (= 1 (count (:discard (get-runner)))) "Eden Shard trashed")))
 
+(deftest eden-shard-no-install-on-access
+  ;; Eden Shard - Do not install when accessing cards
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Eden Shard" 1)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (is (= 1 (count (:hand (get-corp)))))
+    (run-empty-server state :rd)
+    (play-from-hand state :runner "Eden Shard")
+    (is (not (get-resource state 0)) "Eden Shard not installed")
+    (is (= 1 (count (:hand (get-runner)))) "Eden Shard not installed")))
+
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (do-game
@@ -493,6 +506,26 @@
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (score-agenda state :corp (get-content state :remote2 0))
     (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site not removed from Corp score area")))
+
+(deftest fan-site-forfeit
+  ;; Fan Site - Runner can forfeit Fan Site
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1)])
+              (default-runner [(qty "Fan Site" 1) (qty "Data Dealer" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fan Site")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 0 (:agenda-point (get-runner))))
+    (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Data Dealer")
+    (let [credits (:credit (get-runner))]
+      (card-ability state :runner (get-resource state 0) 0)
+      (prompt-select :runner (get-scored state :runner 0))
+      (is (= 0 (count (:scored (get-runner)))) "Fan Site successfully forfeit to Data Dealer")
+      (is (= (+ credits 9) (:credit (get-runner))) "Gained 9 credits from Data Dealer"))))
 
 (deftest fester
   ;; Fester - Corp loses 2c (if able) when purging viruses

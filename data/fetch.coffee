@@ -5,6 +5,7 @@ mongoskin = require('mongoskin')
 mkdirp = require('mkdirp')
 path = require('path')
 async = require('async')
+removeDiacritics = require('diacritics').remove
 
 mongoUser = process.env.OPENSHIFT_MONGODB_DB_USERNAME
 mongoPassword = process.env.OPENSHIFT_MONGODB_DB_PASSWORD
@@ -71,6 +72,7 @@ mapCycles = {}
 cardFields = {
   "code" : same,
   "title" : same,
+  "normalized_title": (k, t) -> ["normalizedtitle", removeDiacritics(t).toLowerCase()],
   "type_code" : (k, t) -> ["type", if t is "ice" then "ICE" else capitalize(t)],
   "keywords": rename("subtype"),
   "text" : same,
@@ -153,6 +155,7 @@ fetchCards = (callback) ->
         d.set_code = d.pack_code
         d.cycle_code = mapSets[d.set_code].cycle_code
         d.rotated = mapSets[d.set_code].rotated
+        d.normalized_title = d.title
         d
       cards = selectFields(cardFields, data)
       imgDir = path.join(__dirname, "..", "resources", "public", "img", "cards")
@@ -172,16 +175,16 @@ fetchCards = (callback) ->
             callback(null, cards.length)
 
 fetchMWL = (callback) ->
-  # request.get baseurl + "mwl", (error, response, body) ->
-  #   if !error and response.statusCode is 200
-  fs.readFile "mwl.json", 'utf8', (err, body) ->
-    throw err if err
-    data = JSON.parse(body)
-    mwl = selectFields(mwlFields, data)
-    db.collection("mwl").remove ->
-      db.collection("mwl").insert mwl, (err, result) ->
-        fs.writeFile "andb-mwl.json", JSON.stringify(mwl), ->
-          console.log("#{mwl.length} MWL lists fetched")
-          callback(null, mwl.length)
+  request.get baseurl + "mwl", (error, response, body) ->
+    throw(error) if error
+    if !error and response.statusCode is 200
+      data = JSON.parse(body).data
+      mwl = selectFields(mwlFields, data)
+      db.collection("mwl").remove ->
+        db.collection("mwl").insert mwl, (err, result) ->
+          throw(err) if err
+          fs.writeFile "andb-mwl.json", JSON.stringify(mwl), ->
+            console.log("#{mwl.length} MWL lists fetched")
+            callback(null, mwl.length)
 
 async.series [fetchCycles, fetchSets, fetchCards, fetchMWL, () -> db.close()]

@@ -20,7 +20,7 @@
       (is (= 0 (:tag (get-runner)))) ; tags cleared
       (take-credits state :runner)
       (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-card :corp (find-card "Breaking News" (:scored (get-corp))))
+      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
       (is (= 1 (:agenda-point (get-corp))) "Forfeited Breaking News")
       (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags")
@@ -41,7 +41,7 @@
       (score-agenda state :corp ag2)
       (prompt-choice :corp "No")
       (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-card :corp (find-card "Posted Bounty" (:scored (get-corp))))
+      (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
       (is (= 1 (:agenda-point (get-corp))) "Forfeited Posted Bounty")
       (prompt-select :corp (find-card "Posted Bounty" (:scored (get-corp))))
       (prompt-choice :corp "Yes") ; "Forfeit Posted Bounty to give 1 tag?"
@@ -66,7 +66,7 @@
     (is (= 2 (:agenda-point (get-runner))))
     (take-credits state :runner)
     (play-from-hand state :corp "24/7 News Cycle")
-    (prompt-card :corp (find-card "Chronos Project" (:scored (get-corp))))
+    (prompt-select :corp (find-card "Chronos Project" (:scored (get-corp))))
     (is (= "Chronos Project" (:title (first (:rfg (get-corp))))))
     ;; shouldn't work on an agenda in the Runner's scored area
     (is (= 2 (count (:hand (get-runner)))))
@@ -247,7 +247,7 @@
         (prompt-choice :runner "1 [Credits]")
 		(prompt-choice :runner "1 tag")
 	    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
-		(is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))		
+		(is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))
 
 
 (deftest cerebral-static-chaos-theory
@@ -745,7 +745,7 @@
     (prompt-choice :corp 0) ; default trace
     (prompt-choice :runner 2) ; Runner matches
     (is (= 1 (:bad-publicity (get-corp))))))
-	
+
 (deftest ipo-terminal
   ;; IPO - credits with Terminal operations
   (do-game
@@ -756,7 +756,7 @@
     (take-credits state :runner)
     (play-from-hand state :corp "IPO")
 	(is (= 13 (:credit (get-corp))))
-	(is (= 0 (:click (get-corp))) "Terminal ends turns")))	
+	(is (= 0 (:click (get-corp))) "Terminal ends turns")))
 
 (deftest lag-time
   (do-game
@@ -783,7 +783,7 @@
     (is (= "Breaking News" (:title (get-content state :remote1 0)))
       "Breaking News installed by Lateral Growth")
     (is (= 7 (:credit (get-corp))))))
-	
+
 (deftest mass-commercialization
   ;; Mass Commercialization
   (do-game
@@ -1020,7 +1020,7 @@
 (deftest psychokinesis
   ;; Pyschokinesis - Terminal Event (end the turn); Look at R&D, install an Asset, Agenda, or Upgrade in a Remote Server
   (do-game
-    (new-game (default-corp [(qty "Psychokinesis" 3) (qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1) 
+    (new-game (default-corp [(qty "Psychokinesis" 3) (qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1)
                               (qty "Global Food Initiative" 1)])
               (default-runner))
     (starting-hand state :corp ["Psychokinesis","Psychokinesis","Psychokinesis"])
@@ -1118,7 +1118,7 @@
 (deftest scorched-earth-flatline
   ;; Scorched Earth - murderize 'em
   (do-game
-    (new-game (default-corp [(qty "Scorched Earth" 1)])
+    (new-game (default-corp [(qty "Scorched Earth" 10)])
               (default-runner))
     (core/gain state :runner :tag 1)
     (play-from-hand state :corp "Scorched Earth")
@@ -1347,7 +1347,7 @@
     (is (= 11 (:credit (get-corp))))))
 
 (deftest sub-boost
-  ;; Sub Boost - Give ice barrier
+  ;; Sub Boost - Give ICE Barrier
   (do-game
     (new-game (default-corp [(qty "Sub Boost" 1) (qty "Quandary" 1)])
               (default-runner))
@@ -1356,8 +1356,8 @@
     (let [qu (get-ice state :hq 0)]
       (core/rez state :corp qu)
       (prompt-select :corp qu)
-      (is (core/has-subtype? (refresh qu) "Code Gate") "Quandary has code gate")
-      (is (core/has-subtype? (refresh qu) "Barrier") "Quandary has barrier"))))
+      (is (core/has-subtype? (refresh qu) "Code Gate") "Quandary has Code Gate")
+      (is (core/has-subtype? (refresh qu) "Barrier") "Quandary ICE Barrier"))))
 
 (deftest subliminal-messaging
   ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
@@ -1502,6 +1502,7 @@
       (core/score state :corp {:card (refresh napd)})
       (is (= 2 (:agenda-point (get-corp))))
       (play-from-hand state :corp "Success")
+      (prompt-select :corp (get-scored state :corp 0))
       (is (= "NAPD Contract" (:title (first (:rfg (get-corp))))))
       (prompt-select :corp (refresh beale))
       (is (= 13 (:advance-counter (refresh beale))))
@@ -1519,6 +1520,7 @@
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Success")
+    (prompt-select :corp (get-scored state :corp))
     (is (= "Vanity Project" (:title (first (:rfg (get-corp))))))
     (let [oaktown (get-content state :remote1 0)]
       (prompt-select :corp (refresh oaktown))
@@ -1526,6 +1528,27 @@
       (is (= 19 (:credit (get-corp))) "Gain 2 + 2 + 2 + 2 + 3 + 3 = 14 credits for advancing Oaktown")
       (core/score state :corp {:card (refresh oaktown)})
       (is (= 2 (:agenda-point (get-corp)))))))
+
+(deftest success-jemison
+  ;; Success interaction with Jemison, regression test for issue #2704
+  (do-game
+    (new-game (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success."
+                         [(qty "Success" 1)
+                          (qty "High-Risk Investment" 1)
+                          (qty "Government Takeover" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (score-agenda state :corp (find-card "High-Risk Investment" (:hand (get-corp))))
+    (play-from-hand state :corp "Government Takeover" "New remote")
+    (play-from-hand state :corp "Success")
+    (prompt-select :corp (get-in (get-corp) [:scored 0]))
+    (let [gto (get-content state :remote1 0)]
+      ;; Prompt for Success
+      (prompt-select :corp (refresh gto))
+      (is (= 5 (:advance-counter (refresh gto))) "Advance 5 times from Success")
+      ;; Prompt for Jemison
+      (prompt-select :corp (refresh gto))
+      (is (= 9 (:advance-counter (refresh gto))) "Added 4 counters from Jemison trigger"))))
 
 (deftest successful-demonstration
   ;; Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits
@@ -1580,7 +1603,7 @@
       (is (= 5 (:credit (get-corp))) "Transparency initiative didn't fire"))))
 
 (deftest wetwork-refit
-  ;; Wetwork Refit - Only works on bioroid ice and adds a subroutine
+  ;; Wetwork Refit - Only works on Bioroid ICE and adds a subroutine
   (do-game
     (new-game (default-corp [(qty "Eli 1.0" 1)
                              (qty "Vanilla" 1)

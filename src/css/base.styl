@@ -490,6 +490,54 @@ nav ul
 .active-player
   border: 1px solid #ffa500
 
+// Win Message Box
+.win.centered
+  position: fixed
+  top: 30%
+  left: 45%
+  margin-top: -50px
+  margin-left: -100px
+  padding: 15px
+  border: 1px solid #ffa500
+  z-index: 2
+
+
+.win-right
+  position: absolute
+  top: 0px
+  right: -2px
+  border-radius: 0px
+  padding: 0
+  font-size: 12px
+  line-height: 14px
+  height: 15px
+  width: 15px
+  background-color: transparent
+
+  &:hover
+    background-color: transparent-orange
+    border-color: orange
+
+// For Stats screens
+.stats-main
+  height: 220px
+
+.stats-left
+  width: 30%
+  float: left
+  padding: 5px 15px
+
+.stats-middle
+  width: 33%
+  float: left
+  padding: 5px 15px
+  margin: 0px 5px 5px 5px
+
+.stats-right
+  width: 30%
+  float: left
+  padding: 5px 15px
+
 // Influence dots
 
 .influence.neutral
@@ -559,6 +607,9 @@ nav ul
 
   .concede-button
     margin-right: 12px
+
+  .mute-button
+    margin-left: 12px
 
 // Auth
 
@@ -633,6 +684,9 @@ nav ul
 
 .reset-bg
   cover-img: url('/img/bg/Logos.jpg')
+
+.stats-bg
+  cover-img: url('/img/bg/RumorMill.jpg')
 
 .traffic-jam-bg
   cover-img: url('/img/bg/TrafficJam.jpg')
@@ -732,6 +786,12 @@ nav ul
 // Card Browser
 .cardbrowser
   display-flex()
+
+  .heading, .type
+    font-weight: bold
+
+  .pack
+    font-style: italic
 
 .filters
   flex(0 0 180px)
@@ -1009,9 +1069,11 @@ nav ul
         line-height: 18px
         flex(1)
 
-.deck-status
+.deck-status.shift-tooltip
+    padding-right: 12px
+
+.deck-status, .user-status
   position: relative
-  padding-right: 12px
 
   .status-tooltip
     display: none
@@ -1869,6 +1931,32 @@ nav ul
     position: relative
     top: 9px
     left: 16px
+
+  #alt-art
+    div#my-alt-art
+      margin-top: 10px
+
+    div.alt-art-group
+      clear: both
+      margin: 5px 0
+
+      > div
+        float: left
+        margin: 5px
+
+        > div
+          text-align: center
+    #set-all
+      clear: both
+    img.alt-art-select
+      width: 150px
+      margin-top: 5px
+
+
+  p#update
+    clear: both
+    margin: 2em 0
+
 
 @keyframes highlight
   from
