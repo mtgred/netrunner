@@ -341,8 +341,7 @@
           [:span item])))))
 
 (defn get-non-alt-art [[title cards]]
-  (let [s (sort-by #(= (:setname %) "Alternates") cards)]
-    {:title title :code (:code (first s))}))
+  {:title title :code (:code (first cards))})
 
 (defn prepare-cards []
   (->> (:cards @app-state)

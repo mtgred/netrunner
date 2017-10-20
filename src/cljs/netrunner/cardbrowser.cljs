@@ -125,7 +125,9 @@
     [:div.pack
      (when-let [pack (:setname card)]
        (when-let [number (:number card)]
-         (str pack " " number)))]]
+         (str pack " " number
+              (when-let [art (:art card)]
+                (str " [" (netrunner.account/alt-art-name art) "]")))))]]
    ])
 
 (defn card-view [card owner]
@@ -140,7 +142,6 @@
            (card-text card)
            (when-let [url (image-url card)]
              [:img {:src url
-                    :title (str (:setname card) (when (:art card) (str " [" (netrunner.account/alt-art-name (:art card)) "]")))
                     :onClick #(do (.preventDefault %)
                                 (put! (:pub-chan (om/get-shared owner))
                                       {:topic :card-selected :data card})
