@@ -891,17 +891,25 @@
                    (str total " cards, " (- total face-up) " face-down."))]]
         (for [c discard] (draw-card c))]]))))
 
-(defn rfg-view [{:keys [cards name] :as cursor}]
+(defn rfg-view [{:keys [cards name popup] :as cursor} owner]
   (om/component
    (sab/html
     (when-not (empty? cards)
       (let [size (count cards)]
-        [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
+        [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")
+                                    :on-click (when popup #(-> (om/get-node owner "rfg-popup") js/$ .fadeToggle))}
          (map-indexed (fn [i card]
                         [:div.card-wrapper {:style {:left (* (/ 128 size) i)}}
                          [:div (om/build card-view card)]])
                       cards)
-         (om/build label cards {:opts {:name name}})])))))
+         (om/build label cards {:opts {:name name}})
+
+         (when popup
+           [:div.panel.blue-shade.popup {:ref "rfg-popup" :class "opponent"}
+            [:div
+             [:a {:on-click #(close-popup % owner "rfg-popup" nil false false)} "Close"]
+             [:label (str size " cards.")]]
+            (for [c cards] (om/build card-view c))])])))))
 
 (defn play-area-view [{:keys [name player] :as cursor}]
   (om/component
@@ -1322,12 +1330,12 @@
 
               [:div.right-inner-leftpane
                [:div
-                (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game"})
-                (om/build rfg-view {:cards (:rfg me) :name "Removed from the game"})
+                (om/build rfg-view {:cards (:rfg opponent) :name "Removed from the game" :popup true})
+                (om/build rfg-view {:cards (:rfg me) :name "Removed from the game" :popup true})
                 (om/build play-area-view {:player opponent :name "Temporary Zone"})
                 (om/build play-area-view {:player me :name "Temporary Zone"})
-                (om/build rfg-view {:cards (:current opponent) :name "Current"})
-                (om/build rfg-view {:cards (:current me) :name "Current"})]
+                (om/build rfg-view {:cards (:current opponent) :name "Current" :popup false})
+                (om/build rfg-view {:cards (:current me) :name "Current" :popup false})]
                (when-not (= side :spectator)
                  (om/build button-pane {:side side :active-player active-player :run run :end-turn end-turn :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12 :corp corp :runner runner :me me :opponent opponent}))]]
 
