@@ -192,6 +192,11 @@
     cards
     (filter #(= (field %) filter-value) cards)))
 
+(defn filter-rotated [should-filter cards]
+  (if should-filter
+    (filter-cards false :rotated cards)
+    cards))
+
 (defn filter-title [query cards]
   (if (empty? query)
     cards
@@ -208,6 +213,21 @@
     "Faction" (juxt :side :faction :code)
     "Type" (juxt :side :type)
     "Set number" :number))
+
+(defn selected-set-name [state]
+  (-> (:set-filter state)
+    (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
+    (.replace " Cycle" "")))
+
+(defn selected-set-rotated? [{:keys [sets cycles]} state]
+  (let [s (selected-set-name state)
+        combined (concat sets cycles)]
+    (if (= s "All")
+      false
+      (->> combined
+        (filter #(= s (:name %)))
+        (first)
+        (:rotated)))))
 
 (defn handle-scroll [e owner {:keys [page]}]
   (let [$cardlist (js/$ ".card-list")
@@ -230,6 +250,7 @@
        :type-filter "All"
        :side-filter "All"
        :faction-filter "All"
+       :hide-rotated true
        :page 1
        :filter-ch (chan)})
 
@@ -261,17 +282,20 @@
            (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
              [:option {:value field} field])]]
 
-         (let [cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
+         (let [hide-rotated (:hide-rotated state)
+               cycles-filtered (filter-rotated hide-rotated cycles)
+               cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
                                             :cycle_position (:position %)
                                             :position 0)
-                                    cycles)
+                                    cycles-filtered)
                cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
+               sets-filtered (filter-rotated hide-rotated sets)
                ;; Draft is specified as a cycle, but contains no set, nor is it marked as a bigbox
                ;; so we handled it specifically here for formatting purposes
                sets-list (map #(if (not (or (:bigbox %) (= (:name %) "Draft")))
                                   (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
                                   %)
-                               sets)]
+                               sets-filtered)]
            (for [filter [["Set" :set-filter (map :name
                                                  (sort-by (juxt :cycle_position :position)
                                                           (concat cycles-list sets-list)))]
@@ -284,15 +308,24 @@
                         :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
                (options (last filter))]]))
 
+         [:div.hide-rotated-div
+          [:label [:input.hide-rotated {:type "checkbox"
+                           :value true
+                           :checked (om/get-state owner :hide-rotated)
+                           :on-change #(let [hide (.. % -target -checked)]
+                                         (om/set-state! owner :hide-rotated hide)
+                                         (when (and hide (selected-set-rotated? cursor state))
+                                           (om/set-state! owner :set-filter "All"))
+                                         )}]
+           "Hide rotated cards"]]
+
          [:div.blue-shade.panel.filters
           (om/build card-info-view nil)
           ]]
 
         [:div.card-list {:on-scroll #(handle-scroll % owner state)}
          (om/build-all card-view
-                       (let [s (-> (:set-filter state)
-                                     (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
-                                     (.replace " Cycle" ""))
+                       (let [s (selected-set-name state)
                              cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
                              cards (if (= s "All")
                                      (:cards cursor)
@@ -303,6 +336,7 @@
                               (filter-cards (:side-filter state) :side)
                               (filter-cards (:faction-filter state) :faction)
                               (filter-cards (:type-filter state) :type)
+                              (filter-rotated (:hide-rotated state))
                               (filter-title (:search-query state))
                               (insert-alt-arts)
                               (sort-by (sort-field (:sort-field state)))
