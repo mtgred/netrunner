@@ -1319,6 +1319,20 @@
         (is (= 1 (count (:discard (get-runner)))) "Runner took only 1 meat damage from BoN total")
         (is (= 0 (count (:prompt (get-corp))))))))
 
+(deftest weyland-builder-cleaners
+  ;; Builder of Nations - 2 meat damage from ID ability when The Cleaners is scored
+  (do-game
+    (new-game
+      (make-deck "Weyland Consortium: Builder of Nations" [(qty "The Cleaners" 3) (qty "Ice Wall" 3)])
+      (default-runner [(qty "Sure Gamble" 2)]))
+    (play-from-hand state :corp "The Cleaners" "New remote")
+    (let [clean (get-content state :remote1 0)]
+      (score-agenda state :corp clean)
+    (let [bon (get-in @state [:corp :identity])]
+      (card-ability state :corp bon 0)
+      (prompt-choice :corp "Yes")
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo")))))
+
 (deftest whizzard
   ;; Whizzard - Recurring credits
   (do-game
