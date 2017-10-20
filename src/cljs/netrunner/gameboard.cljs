@@ -402,23 +402,27 @@
 
 (defn log-pane [cursor owner]
   (reify
-    om/IInitState
-    (init-state [this] {:scrolling false})
+    ;; om/IInitState
+    ;; (init-state [this] {:scrolling false})
 
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (let [div (om/get-node owner "msg-list")
-            curr-msg-count (count (:log cursor))
-            prev-msg-count (count (:log prev-props))
+            ;; curr-msg-count (count (:log cursor))
+            ;; prev-msg-count (count (:log prev-props))
             scrolltop (.-scrollTop div)
-            is-scrolled (om/get-state owner :scrolling)
-            scroll-top (.-scrollTop div)
-            scroll-height (.-scrollHeight div)]
-        (when (or (and (zero? scroll-top)
-                       (not is-scrolled))
-                  (and (not= curr-msg-count prev-msg-count)
-                       (not is-scrolled)))
-          (aset div "scrollTop" scroll-height))))
+            height (.-scrollHeight div)]
+        (when (or (zero? scrolltop)
+                  (< (- height scrolltop (.height (js/$ ".gameboard .log"))) 500))
+          (aset div "scrollTop" height))))
+        ;;     is-scrolled (om/get-state owner :scrolling)
+        ;;     scroll-top (.-scrollTop div)
+        ;;     scroll-height (.-scrollHeight div)]
+        ;; (when (or (and (zero? scroll-top)
+        ;;                (not is-scrolled))
+        ;;           (and (not= curr-msg-count prev-msg-count)
+        ;;                (not is-scrolled)))
+        ;;   (aset div "scrollTop" scroll-height))))
 
     om/IDidMount
     (did-mount [this]
@@ -429,13 +433,13 @@
       (sab/html
        [:div.log {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                   :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
-        [:div.panel.blue-shade.messages {:ref "msg-list"
-                                         :on-scroll #(let [currElt (.-currentTarget %)
-                                                           scroll-top (.-scrollTop currElt)
-                                                           scroll-height (.-scrollHeight currElt)
-                                                           client-height (.-clientHeight currElt)
-                                                           scrolling (< (+ scroll-top client-height) scroll-height)]
-                                                       (om/set-state! owner :scrolling scrolling))}
+        [:div.panel.blue-shade.messages {:ref "msg-list"}
+                                         ;; :on-scroll #(let [currElt (.-currentTarget %)
+                                         ;;                   scroll-top (.-scrollTop currElt)
+                                         ;;                   scroll-height (.-scrollHeight currElt)
+                                         ;;                   client-height (.-clientHeight currElt)
+                                         ;;                   scrolling (< (+ scroll-top client-height) scroll-height)]
+                                         ;;               (om/set-state! owner :scrolling scrolling))}
          (for [msg (:log cursor)]
            (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
              (if (= (:user msg) "__system__")
