@@ -810,7 +810,7 @@
              [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
         (:hand player)))))
 
-(defn hand-view [{:keys [player remotes popup] :as cursor} owner]
+(defn hand-view [{:keys [player remotes popup popup-direction] :as cursor} owner]
   (om/component
    (sab/html
     (let [side (get-in player [:identity :side])
@@ -828,7 +828,7 @@
            {:on-click #(-> (om/get-node owner "hand-popup") js/$ .fadeToggle)}
            "+"])]
        (when popup
-         [:div.panel.blue-shade.popup {:ref "hand-popup" :class "me"}
+         [:div.panel.blue-shade.popup {:ref "hand-popup" :class popup-direction}
           [:div
            [:a {:on-click #(close-popup % owner "hand-popup" nil false false)} "Close"]
            [:label (str size " card" (when (not= 1 size) "s") ".")]
@@ -1345,7 +1345,8 @@
 
             [:div.leftpane
              [:div.opponent
-              (om/build hand-view {:player opponent :remotes (get-remotes (:servers corp)) :popup false})]
+              (om/build hand-view {:player opponent :remotes (get-remotes (:servers corp))
+                                   :popup (= side :spectator) :popup-direction "opponent"})]
 
              [:div.inner-leftpane
               [:div.left-inner-leftpane
@@ -1368,6 +1369,7 @@
                  (om/build button-pane {:side side :active-player active-player :run run :end-turn end-turn :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12 :corp corp :runner runner :me me :opponent opponent}))]]
 
              [:div.me
-              (om/build hand-view {:player me :remotes (get-remotes (:servers corp)) :popup true})]]]))))))
+              (om/build hand-view {:player me :remotes (get-remotes (:servers corp))
+                                   :popup true :popup-direction "me"})]]]))))))
 
 (om/root gameboard game-state {:target (. js/document (getElementById "gameboard"))})
