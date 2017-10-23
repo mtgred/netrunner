@@ -144,109 +144,108 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-        [:div.container
-         [:div.account
-          [:div.panel.blue-shade.content-page#profile-form {:ref "profile-form"}
-           [:h2 "Settings"]
-           [:form {:on-submit #(handle-post % owner "/update-profile" "profile-form")}
-            [:section
-             [:h3 "Avatar"]
-             (om/build avatar user {:opts {:size 38}})
-             [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]]
+        [:div.account
+         [:div.panel.blue-shade.content-page#profile-form {:ref "profile-form"}
+          [:h2 "Settings"]
+          [:form {:on-submit #(handle-post % owner "/update-profile" "profile-form")}
+           [:section
+            [:h3 "Avatar"]
+            (om/build avatar user {:opts {:size 38}})
+            [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]]
 
-            [:section
-             [:h3 "Sounds"]
-             [:div
-              [:label [:input {:type "checkbox"
-                               :value true
-                               :checked (om/get-state owner :sounds)
-                               :on-change #(om/set-state! owner :sounds (.. % -target -checked))}]
-               "Enable sounds"]]
-             [:div "Volume"
-              [:input {:type "range"
-                       :min 1 :max 100 :step 1
-                       :on-change #(om/set-state! owner :volume (.. % -target -value))
-                       :value (om/get-state owner :volume)
-                       :disabled (not (om/get-state owner :sounds))}]]]
+           [:section
+            [:h3 "Sounds"]
+            [:div
+             [:label [:input {:type "checkbox"
+                              :value true
+                              :checked (om/get-state owner :sounds)
+                              :on-change #(om/set-state! owner :sounds (.. % -target -checked))}]
+              "Enable sounds"]]
+            [:div "Volume"
+             [:input {:type "range"
+                      :min 1 :max 100 :step 1
+                      :on-change #(om/set-state! owner :volume (.. % -target -value))
+                      :value (om/get-state owner :volume)
+                      :disabled (not (om/get-state owner :sounds))}]]]
 
-            [:section
-             [:h3  "Game board background"]
-             (for [option [{:name "The Root"        :ref "lobby-bg"}
-                           {:name "Freelancer"      :ref "freelancer-bg"}
-                           {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
-                           {:name "Traffic Jam"     :ref "traffic-jam-bg"}
-                           {:name "Rumor Mill"      :ref "rumor-mill-bg"}
-                           {:name "Find The Truth"  :ref "find-the-truth-bg"}
-                           {:name "Push Your Luck"  :ref "push-your-luck-bg"}
-                           {:name "Apex"            :ref "apex-bg"}
-                           {:name "Monochrome"      :ref "monochrome-bg"}]]
-               [:div.radio
-                [:label [:input {:type "radio"
-                                 :name "background"
-                                 :value (:ref option)
-                                 :on-change #(om/set-state! owner :background (.. % -target -value))
-                                 :checked (= (om/get-state owner :background) (:ref option))}]
-                 (:name option)]])]
+           [:section
+            [:h3  "Game board background"]
+            (for [option [{:name "The Root"        :ref "lobby-bg"}
+                          {:name "Freelancer"      :ref "freelancer-bg"}
+                          {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
+                          {:name "Traffic Jam"     :ref "traffic-jam-bg"}
+                          {:name "Rumor Mill"      :ref "rumor-mill-bg"}
+                          {:name "Find The Truth"  :ref "find-the-truth-bg"}
+                          {:name "Push Your Luck"  :ref "push-your-luck-bg"}
+                          {:name "Apex"            :ref "apex-bg"}
+                          {:name "Monochrome"      :ref "monochrome-bg"}]]
+              [:div.radio
+               [:label [:input {:type "radio"
+                                :name "background"
+                                :value (:ref option)
+                                :on-change #(om/set-state! owner :background (.. % -target -value))
+                                :checked (= (om/get-state owner :background) (:ref option))}]
+                (:name option)]])]
 
-            [:section
-             [:h3 " Game Win/Lose Statistics "]
-             (for [option [{:name "Always"                   :ref "always"}
-                           {:name "Competitive Lobby Only"   :ref "competitive"}
-                           {:name "None"                     :ref "none"}]]
-               [:div
-                [:label [:input {:type "radio"
-                                 :name "gamestats"
-                                 :value (:ref option)
-                                 :on-change #(om/set-state! owner :gamestats (.. % -target -value))
-                                 :checked (= (om/get-state owner :gamestats) (:ref option))}]
-                 (:name option)]])]
+           [:section
+            [:h3 " Game Win/Lose Statistics "]
+            (for [option [{:name "Always"                   :ref "always"}
+                          {:name "Competitive Lobby Only"   :ref "competitive"}
+                          {:name "None"                     :ref "none"}]]
+              [:div
+               [:label [:input {:type "radio"
+                                :name "gamestats"
+                                :value (:ref option)
+                                :on-change #(om/set-state! owner :gamestats (.. % -target -value))
+                                :checked (= (om/get-state owner :gamestats) (:ref option))}]
+                (:name option)]])]
 
-            [:section
-             [:h3 " Deck Statistics "]
-             (for [option [{:name "Always"                   :ref "always"}
-                           {:name "Competitive Lobby Only"   :ref "competitive"}
-                           {:name "None"                     :ref "none"}]]
-               [:div
-                [:label [:input {:type "radio"
-                                 :name "deckstats"
-                                 :value (:ref option)
-                                 :on-change #(om/set-state! owner :deckstats (.. % -target -value))
-                                 :checked (= (om/get-state owner :deckstats) (:ref option))}]
-                 (:name option)]])]
+           [:section
+            [:h3 " Deck Statistics "]
+            (for [option [{:name "Always"                   :ref "always"}
+                          {:name "Competitive Lobby Only"   :ref "competitive"}
+                          {:name "None"                     :ref "none"}]]
+              [:div
+               [:label [:input {:type "radio"
+                                :name "deckstats"
+                                :value (:ref option)
+                                :on-change #(om/set-state! owner :deckstats (.. % -target -value))
+                                :checked (= (om/get-state owner :deckstats) (:ref option))}]
+                (:name option)]])]
 
-            [:section {:id "alt-art"}
-             [:h3 "Alt arts"]
-             [:div
-              [:label [:input {:type "checkbox"
-                               :name "show-alt-art"
-                               :checked (om/get-state owner :show-alt-art)
-                               :on-change #(om/set-state! owner :show-alt-art (.. % -target -checked))}]
-               "Show alternate card arts"]]
+           [:section {:id "alt-art"}
+            [:h3 "Alt arts"]
+            [:div
+             [:label [:input {:type "checkbox"
+                              :name "show-alt-art"
+                              :checked (om/get-state owner :show-alt-art)
+                              :on-change #(om/set-state! owner :show-alt-art (.. % -target -checked))}]
+              "Show alternate card arts"]]
 
-             (when (and (:special user) (:alt-arts @app-state))
-               [:div {:id "my-alt-art"}
-                [:h4 "My alternate card arts"]
-                [:select {:on-change #(select-card owner (.. % -target -value))}
-                 (for [card (sort-by :title (vals (:alt-arts @app-state)))]
-                   [:option {:value (:code card)} (:title card)])]
+            (when (and (:special user) (:alt-arts @app-state))
+              [:div {:id "my-alt-art"}
+               [:h4 "My alternate card arts"]
+               [:select {:on-change #(select-card owner (.. % -target -value))}
+                (for [card (sort-by :title (vals (:alt-arts @app-state)))]
+                  [:option {:value (:code card)} (:title card)])]
 
-                [:div {:class "alt-art-group"}
-                 (for [version (conj (keys (get-in (:alt-arts @app-state) [(om/get-state owner :alt-card) :alt_art])) :default)]
-                   (let [url (image-url (om/get-state owner :alt-card) version)]
+               [:div {:class "alt-art-group"}
+                (for [version (conj (keys (get-in (:alt-arts @app-state) [(om/get-state owner :alt-card) :alt_art])) :default)]
+                  (let [url (image-url (om/get-state owner :alt-card) version)]
+                    [:div
                      [:div
-                      [:div
-                       [:div [:label [:input {:type "radio"
-                                              :name "alt-art-radio"
-                                              :value (name version)
-                                              :on-change #(set-card-art owner (.. % -target -value))
-                                              :checked (= (om/get-state owner :alt-card-version) (name version))}]
-                              (alt-art-name version)]]]
-                      [:div
-                       [:img {:class "alt-art-select"
-                              :src url
-                              :on-click #(set-card-art owner (name version))
-                              :onError #(-> % .-target js/$ .hide)
-                              :onLoad #(-> % .-target js/$ .show)}]]]))]
+                      [:div [:label [:input {:type "radio"
+                                             :name "alt-art-radio"
+                                             :value (name version)
+                                             :on-change #(set-card-art owner (.. % -target -value))
+                                             :checked (= (om/get-state owner :alt-card-version) (name version))}]
+                             (alt-art-name version)]]]
+                     [:div
+                      [:img {:class "alt-art-select"
+                             :src url
+                             :on-click #(set-card-art owner (name version))
+                             :onError #(-> % .-target js/$ .hide)
+                             :onLoad #(-> % .-target js/$ .show)}]]]))]
                [:div {:id "set-all"}
                 "Reset all cards to: "
                 [:select {:ref "all-art-select"}
@@ -259,29 +258,29 @@
                                (select-card owner (om/get-state owner :alt-card)))}
                  "Reset"]]])]
 
-            [:section
-             [:h3 "Blocked users"]
-             [:div
-              [:input.search {:on-key-down (fn [e]
-                                             (when (= e.keyCode 13)
-                                               (do
-                                                 (add-user-to-block-list owner user)
-                                                 (.preventDefault e))))
-                              :ref "block-user-input"
-                              :type "text" :placeholder "User name"}]
-              [:button.block-user-btn {:type "button"
-                                       :name "block-user-button"
-                                       :on-click #(add-user-to-block-list owner user)}
-               "Block user"]]
-             (for [bu (om/get-state owner :blocked-users)]
-               [:div.line
-                [:button.small.unblock-user {:type "button"
-                                             :on-click #(remove-user-from-block-list % owner)} "X" ]
-                [:span.blocked-user-name (str "  " bu)]])]
+           [:section
+            [:h3 "Blocked users"]
+            [:div
+             [:input.search {:on-key-down (fn [e]
+                                            (when (= e.keyCode 13)
+                                              (do
+                                                (add-user-to-block-list owner user)
+                                                (.preventDefault e))))
+                             :ref "block-user-input"
+                             :type "text" :placeholder "User name"}]
+             [:button.block-user-btn {:type "button"
+                                      :name "block-user-button"
+                                      :on-click #(add-user-to-block-list owner user)}
+              "Block user"]]
+            (for [bu (om/get-state owner :blocked-users)]
+              [:div.line
+               [:button.small.unblock-user {:type "button"
+                                            :on-click #(remove-user-from-block-list % owner)} "X" ]
+               [:span.blocked-user-name (str "  " bu)]])]
 
-            [:p {:id "update"}
-             [:button "Update Profile"]
-             [:span.flash-message (:flash-message state)]]]]]]))))
+           [:p
+            [:button "Update Profile"]
+            [:span.flash-message (:flash-message state)]]]]]))))
 
 
 (defn account [{:keys [user]} owner]

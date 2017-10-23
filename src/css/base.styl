@@ -28,12 +28,12 @@ h2
 
 h3
   font-size: 20px
-  margin: 0 0 4px
+  margin: 0 0 6px
 
 h4
   font-size: 14px
   line-height: 18px
-  margin: 0 0 2px
+  margin: 0 0 4px
 
 a
   text-decoration: none
@@ -108,7 +108,7 @@ button, a.button
   border-radius: 4px
   font-size: 12px
   padding: 4px 12px
-  margin: 0 2px
+  margin: 0 8px 0 0
   background-color: transparent-orange
   border: 1px solid orange
   color: white
@@ -518,25 +518,10 @@ nav ul
     background-color: transparent-orange
     border-color: orange
 
-// For Stats screens
-.stats-main
-  height: 220px
-
-.stats-left
-  width: 30%
-  float: left
-  padding: 5px 15px
-
-.stats-middle
-  width: 33%
-  float: left
-  padding: 5px 15px
-  margin: 0px 5px 5px 5px
-
-.stats-right
-  width: 30%
-  float: left
-  padding: 5px 15px
+#stats
+  .content-page
+    margin-top: 9px
+  
 
 // Influence dots
 
@@ -968,7 +953,6 @@ nav ul
 
         button
           width: 135px
-          margin-right: 5px
 
       .card-preview
         position: absolute
@@ -1944,6 +1928,9 @@ nav ul
     color: lawngreen
     margin-left: 16px
 
+  input, select
+    margin-right: 8px
+
   input[type="range"]
     position: relative
     top: 9px
@@ -1968,11 +1955,6 @@ nav ul
     img.alt-art-select
       width: 150px
       margin-top: 5px
-
-
-  p#update
-    clear: both
-    margin: 2em 0
 
 
 @keyframes highlight

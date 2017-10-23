@@ -44,7 +44,7 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-        (let [started (notnum->zero (:games-started stats))
+       (let [started (notnum->zero (:games-started stats))
               completed (notnum->zero (:games-completed stats))
               pc (notnum->zero (num->percent completed started))
               win (notnum->zero (:wins stats))
@@ -73,21 +73,19 @@
               pl-runner (notnum->zero (num->percent lose-runner (+ win-runner lose-runner)))
               incomplete-runner (notnum->zero (- started-runner completed-runner))
               pi-runner (notnum->zero (num->percent incomplete-runner started-runner))]
-          [:div.blue-shade.panel.stats-main
-            [:div.stats-left
-             [:h2 "Game Stats"]
-              [:section
-               [:div "Started: " started]
-               [:div "Completed: " completed " (" pc "%)"]
-               [:div "Not completed: " incomplete  " (" pi "%)"]
-               (if-not (= "none" (get-in @app-state [:options :gamestats]))
-                 [:div [:div "Won: " win  " (" pw "%)"]
-                  [:div "Lost: " lose  " (" pl "%)"]]
-                 [:div [:br] [:br]])]
-             [:div.button-bar
-              [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]
-           [:div.stats-middle
-            [:h2 "Corp Stats"]
+         [:div.blue-shade.content-page.panel
+          [:div
+           [:div
+            [:h3 "Game Stats"]
+            [:section
+             [:div "Started: " started]
+             [:div "Completed: " completed " (" pc "%)"]
+             [:div "Not completed: " incomplete  " (" pi "%)"]
+             (when-not (= "none" (get-in @app-state [:options :gamestats]))
+               [:div [:div "Won: " win  " (" pw "%)"]
+                [:div "Lost: " lose  " (" pl "%)"]])]]
+           [:div
+            [:h3 "Corp Stats"]
             [:section
              [:div "Started: " started-corp]
              [:div "Completed: " completed-corp " (" pc-corp "%)"]
@@ -95,14 +93,18 @@
              (when-not (= "none" (get-in @app-state [:options :gamestats]))
                [:div [:div "Won: " win-corp  " (" pw-corp "%)"]
                 [:div "Lost: " lose-corp  " (" pl-corp "%)"]])]]
-           [:div.stats-right
-            [:h2 "Runner Stats"]
+           [:div
+            [:h3 "Runner Stats"]
             [:section
              [:div "Started: " started-runner]
              [:div "Completed: " completed-runner " (" pc-runner "%)"]
              [:div "Not completed: " incomplete-runner  " (" pi-runner "%)"]
              (when-not (= "none" (get-in @app-state [:options :gamestats]))
                [:div [:div "Won: " win-runner  " (" pw-runner "%)"]
-                [:div "Lost: " lose-runner  " (" pl-runner "%)"]])]]])))))
+                [:div "Lost: " lose-runner  " (" pl-runner "%)"]])]]]
+
+          [:p
+           [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]])))))
 
 (om/root stats app-state {:target (. js/document (getElementById "stats"))})
+
