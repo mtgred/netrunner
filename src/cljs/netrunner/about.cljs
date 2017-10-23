@@ -32,7 +32,7 @@
            :target "_blank"} "status"] "."]
 
      [:h3 "Contributors"]
-     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Dominic Kexel (queueseven), Lukasz Dobrogowski (zaroth), Filip Gokstorp (Saintis) and Felix Laurie von Massenbach (erbridge) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
+     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Filip Gokstorp (Saintis), Dan Hutchins (danhut, xyz) and John Warwick (jwarwick, BobTomatoes) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
 
      [:h3 "Donations"]
      [:p "Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation."]
