@@ -773,41 +773,6 @@
                :on-drag-over #(.preventDefault %)
                :data-server server}))
 
-(defn label [cursor owner opts]
-  (om/component
-   (sab/html
-    (let [fn (or (:fn opts) count)]
-      [:div.header {:class (when (> (count cursor) 0) "darkbg")}
-       (str (:name opts) " (" (fn cursor) ")")]))))
-
-(defn hand-view [{:keys [player remotes] :as cursor}]
-  (om/component
-   (sab/html
-    (let [side (get-in player [:identity :side])
-          size (count (:hand player))
-          name (if (= side "Corp") "HQ" "Grip")]
-      [:div.panel.blue-shade.hand
-       (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
-       [:div
-        (map-indexed (fn [i card]
-                       [:div.card-wrapper {:class (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
-                                                           (= (:user player) (:user @app-state))
-                                                           (not (:selected card)) (playable? card))
-                                                    "playable" "")
-                                           :style {:left (* (/ 320 (dec size)) i)}}
-                        (if (or (= (:user player) (:user @app-state))
-                                (:openhand player)
-                                (spectator-view-hidden?))
-                          (om/build card-view (assoc card :remotes remotes))
-                          [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
-                     (:hand player))]
-       (om/build label (:hand player) {:opts {:name name}})]))))
-
-(defn show-deck [event owner ref]
-  (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
-  (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
-  (send-command "view-deck"))
-
 (defn close-popup [event owner ref msg shuffle? deck?]
   (-> (om/get-node owner ref) js/$ .fadeOut)
   (cond
@@ -815,6 +780,65 @@
     deck? (send-command "close-deck")
     msg (send-command "system-msg" {:msg msg}))
   (.stopPropagation event))
+
+(defn label [cursor owner opts]
+  (om/component
+   (sab/html
+    (let [fn (or (:fn opts) count)]
+      [:div.header {:class (when (> (count cursor) 0) "darkbg")}
+       (str (:name opts) " (" (fn cursor) ")")]))))
+
+(defn build-hand-card-view
+  [player remotes wrapper-class]
+  (let [side (get-in player [:identity :side])
+        size (count (:hand player))]
+    (sab/html
+      (map-indexed
+        (fn [i card]
+          [:div {:class (str
+                          (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
+                                   (= (:user player) (:user @app-state))
+                                   (not (:selected card)) (playable? card))
+                            "playable" "")
+                          " "
+                          wrapper-class)
+                 :style {:left (* (/ 320 (dec size)) i)}}
+           (if (or (= (:user player) (:user @app-state))
+                   (:openhand player)
+                   (spectator-view-hidden?))
+             (om/build card-view (assoc card :remotes remotes))
+             [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
+        (:hand player)))))
+
+(defn hand-view [{:keys [player remotes popup popup-direction] :as cursor} owner]
+  (om/component
+   (sab/html
+    (let [side (get-in player [:identity :side])
+          size (count (:hand player))
+          name (if (= side "Corp") "HQ" "Grip")]
+      [:div.hand-container
+       [:div.hand-controls
+        [:div.panel.blue-shade.hand
+         (drop-area (:side @game-state) name {:class (when (> size 6) "squeeze")})
+         [:div
+          (build-hand-card-view player remotes "card-wrapper")]
+         (om/build label (:hand player) {:opts {:name name}})]
+        (when popup
+          [:div.panel.blue-shade.hand-expand
+           {:on-click #(-> (om/get-node owner "hand-popup") js/$ .fadeToggle)}
+           "+"])]
+       (when popup
+         [:div.panel.blue-shade.popup {:ref "hand-popup" :class popup-direction}
+          [:div
+           [:a {:on-click #(close-popup % owner "hand-popup" nil false false)} "Close"]
+           [:label (str size " card" (when (not= 1 size) "s") ".")]
+           (build-hand-card-view player remotes "card-popup-wrapper")
+           ]])]))))
+
+(defn show-deck [event owner ref]
+  (-> (om/get-node owner (str ref "-content")) js/$ .fadeIn)
+  (-> (om/get-node owner (str ref "-menu")) js/$ .fadeOut)
+  (send-command "view-deck"))
 
 (defn identity-view [player owner]
   (om/component
@@ -912,7 +936,7 @@
            [:div.panel.blue-shade.popup {:ref "rfg-popup" :class "opponent"}
             [:div
              [:a {:on-click #(close-popup % owner "rfg-popup" nil false false)} "Close"]
-             [:label (str size " cards.")]]
+             [:label (str size " card" (when (not= 1 size) "s") ".")]]
             (for [c cards] (om/build card-view c))])])))))
 
 (defn play-area-view [{:keys [name player] :as cursor}]
@@ -1321,7 +1345,8 @@
 
             [:div.leftpane
              [:div.opponent
-              (om/build hand-view {:player opponent :remotes (get-remotes (:servers corp))})]
+              (om/build hand-view {:player opponent :remotes (get-remotes (:servers corp))
+                                   :popup (= side :spectator) :popup-direction "opponent"})]
 
              [:div.inner-leftpane
               [:div.left-inner-leftpane
@@ -1344,6 +1369,7 @@
                  (om/build button-pane {:side side :active-player active-player :run run :end-turn end-turn :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12 :corp corp :runner runner :me me :opponent opponent}))]]
 
              [:div.me
-              (om/build hand-view {:player me :remotes (get-remotes (:servers corp))})]]]))))))
+              (om/build hand-view {:player me :remotes (get-remotes (:servers corp))
+                                   :popup true :popup-direction "me"})]]]))))))
 
 (om/root gameboard game-state {:target (. js/document (getElementById "gameboard"))})
