@@ -1032,6 +1032,26 @@
       (is (= 10 (:credit (get-runner))) "10 credits siphoned")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
+(deftest off-campus-apartment-simultaneous
+  ;; Off-Campus Apartment - ability shows a simultaneous resolution prompt when appropriate
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 1) (qty "Off-Campus Apartment" 1)
+                               (qty "Underworld Contact" 1) (qty "Spy Camera" 6)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler" "Off-Campus Apartment" "Underworld Contact"])
+    (play-from-hand state :runner "Off-Campus Apartment")
+    (let [oca (get-resource state 0)]
+      (card-ability state :runner oca 0)
+      (prompt-select :runner (find-card "Underworld Contact" (:hand (get-runner))))
+      (is (= 2 (count (:hand (get-runner)))) "Drew a card from OCA")
+      (card-ability state :runner oca 0)
+      (prompt-select :runner (find-card "Street Peddler" (:hand (get-runner))))
+      ;; Make sure the simultaneous-resolution prompt is showing with 2 choices
+      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Simultaneous-resolution prompt is showing")
+      (prompt-choice :runner "Off-Campus Apartment")
+      (is (= 2 (count (:hand (get-runner)))) "Drew a card from OCA"))))
+
 (deftest off-campus-peddler
   ;; Off-Campus Apartment - second ability does not break cards that are hosting others, e.g., Street Peddler
   (do-game
@@ -1044,6 +1064,7 @@
     (let [oca (get-resource state 0)]
       (card-ability state :runner oca 0)
       (prompt-select :runner (find-card "Street Peddler" (:hand (get-runner))))
+      (prompt-choice :runner "Street Peddler")
       (let [ped1 (first (:hosted (refresh oca)))]
         (card-ability state :runner ped1 0)
         (prompt-card :runner (-> (get-runner) :prompt first :choices second)) ; choose Street Peddler
