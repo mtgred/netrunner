@@ -158,8 +158,10 @@
       (sab/html
         (if (nil? card)
           [:div {:display "none"}]
-          [:div.blue-shade.panel
-           (card-text card)])))))
+          [:div
+           [:h4 "Card text"]
+           [:div.blue-shade.panel
+            (card-text card)]])))))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
