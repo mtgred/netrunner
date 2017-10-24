@@ -86,9 +86,9 @@
 (defn selected-alt-art [card]
   (let [code (keyword (:code card))
         selected-alts (:alt-arts (:options @app-state))
-        selected-art (keyword (get selected-alts code))
+        selected-art (get selected-alts code "")
         card-art (:art card)]
-  (and card-art (= card-art selected-art))))
+  (= card-art (if (empty? selected-art) selected-art (keyword selected-art)))))
 
 (defn- card-text
   "Generate text html representation a card"
