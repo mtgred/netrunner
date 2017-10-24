@@ -184,6 +184,10 @@
     (for [option options]
       [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])))
 
+(defn filter-alt-art-cards [cards]
+  (let [alt-arts (:alt-arts @app-state)]
+    (filter #(contains? alt-arts (:code %)) cards)))
+
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
     cards
@@ -301,10 +305,13 @@
                sets-list (map #(if (not (or (:bigbox %) (= (:name %) "Draft")))
                                   (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
                                   %)
-                               sets-filtered)]
-           (for [filter [["Set" :set-filter (map :name
-                                                 (sort-by (juxt :cycle_position :position)
-                                                          (concat cycles-list sets-list)))]
+                               sets-filtered)
+               set-names (map :name
+                              (sort-by (juxt :cycle_position :position)
+                                       (concat cycles-list sets-list)))]
+           (for [filter [["Set" :set-filter (if (show-alt-art?)
+                                              (concat set-names (list "Alt Art"))
+                                              set-names)]
                          ["Side" :side-filter ["Corp" "Runner"]]
                          ["Faction" :faction-filter (factions (:side-filter state))]
                          ["Type" :type-filter (types (:side-filter state))]]]
@@ -332,8 +339,10 @@
          (om/build-all card-view
                        (let [s (selected-set-name state)
                              cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
-                             cards (if (= s "All")
-                                     (:cards cursor)
+                             cards (cond
+                                     (= s "All") (:cards cursor)
+                                     (= s "Alt Art") (filter-alt-art-cards (:cards cursor))
+                                     :else
                                      (if (= (.indexOf (:set-filter state) "Cycle") -1)
                                        (filter #(= (:setname %) s) (:cards cursor))
                                        (filter #(cycle-sets (:setname %)) (:cards cursor))))]
