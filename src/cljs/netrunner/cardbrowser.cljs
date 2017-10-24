@@ -139,6 +139,7 @@
     (render-state [_ state]
       (sab/html
         [:div.card-preview.blue-shade
+         {:class (when (:selected card) "selected")}
          (if (:showText state)
            (card-text card)
            (when-let [url (image-url card)]
@@ -152,21 +153,13 @@
 
 (defn card-info-view [card owner]
   (reify
-    om/IInitState
-    (init-state [_] {:selected-card nil})
-    om/IDidMount
-    (did-mount [_]
-      (let [events (sub (:notif-chan (om/get-shared owner)) :card-selected (chan))]
-        (go
-          (loop [e (<! events)]
-            (om/set-state! owner :selected-card (:data e))
-            (recur (<! events))))))
     om/IRenderState
     (render-state [_ {:keys [selected-card]}]
       (sab/html
-        (if (nil? selected-card)
-          [:div]
-          (card-text selected-card))))))
+        (if (nil? card)
+          [:div {:display "none"}]
+          [:div.blue-shade.panel
+           (card-text card)])))))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
@@ -254,13 +247,22 @@
        :faction-filter "All"
        :hide-rotated true
        :page 1
-       :filter-ch (chan)})
+       :filter-ch (chan)
+       :selected-card nil})
 
     om/IWillMount
     (will-mount [this]
       (go (while true
             (let [f (<! (om/get-state owner :filter-ch))]
               (om/set-state! owner (:filter f) (:value f))))))
+
+    om/IDidMount
+    (did-mount [_]
+      (let [events (sub (:notif-chan (om/get-shared owner)) :card-selected (chan))]
+        (go
+          (loop [e (<! events)]
+            (om/set-state! owner :selected-card (:data e))
+            (recur (<! events))))))
 
     om/IRenderState
     (render-state [this state]
@@ -321,9 +323,8 @@
                                          )}]
            "Hide rotated cards"]]
 
-         [:div.blue-shade.panel.filters
-          (om/build card-info-view nil)
-          ]]
+         (om/build card-info-view (:selected-card state))
+         ]
 
         [:div.card-list {:on-scroll #(handle-scroll % owner state)}
          (om/build-all card-view
@@ -343,7 +344,11 @@
                               (insert-alt-arts)
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))
-                       {:key-fn #(str (:setname %) (:code %) (:art %))})]]))))
+                       {:key-fn #(str (:setname %) (:code %) (:art %))
+                        :fn #(assoc % :selected (and (= (:setname %) (:setname (:selected-card state)))
+                                                     (= (:code %) (:code (:selected-card state)))
+                                                     (= (:art %) (:art (:selected-card state)))))
+                        })]]))))
 
 (om/root card-browser
          app-state
