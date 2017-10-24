@@ -83,6 +83,13 @@
       (make-span "\\[weyland\\]" "weyland-consortium")
       (make-span "\\[weyland-consortium\\]" "weyland-consortium")))
 
+(defn selected-alt-art [card]
+  (let [code (keyword (:code card))
+        selected-alts (:alt-arts (:options @app-state))
+        selected-art (keyword (get selected-alts code))
+        card-art (:art card)]
+  (and card-art (= card-art selected-art))))
+
 (defn- card-text
   "Generate text html representation a card"
   [card]
@@ -128,7 +135,10 @@
        (when-let [number (:number card)]
          (str pack " " number
               (when-let [art (:art card)]
-                (str " [" (netrunner.account/alt-art-name art) "]")))))]]
+                (str " [" (netrunner.account/alt-art-name art) "]")))))]
+     (when (selected-alt-art card)
+      [:div.selected-alt "Selected Alt Art"])
+    ]
    ])
 
 (defn card-view [card owner]
@@ -139,7 +149,8 @@
     (render-state [_ state]
       (sab/html
         [:div.card-preview.blue-shade
-         {:class (when (:selected card) "selected")}
+         {:class (cond (:selected card) "selected"
+                       (selected-alt-art card) "selected-alt")}
          (if (:showText state)
            (card-text card)
            (when-let [url (image-url card)]
