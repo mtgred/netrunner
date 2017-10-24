@@ -3,28 +3,58 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
+            [taoensso.sente  :as sente]
             [clojure.string :refer [join]]
             [netrunner.ajax :refer [GET]]
+            [netrunner.ws :as ws]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
-            [netrunner.gameboard :refer [init-game game-state toast launch-game]]
+            [netrunner.gameboard :refer [init-game game-state toast launch-game parse-state]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
             [netrunner.stats :refer [notnum->zero]]
             [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks num->percent]]))
 
 (def socket-channel (chan))
-(def socket (.connect js/io (str js/iourl "/lobby")))
-(.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
+
 
 
 (defn sort-games-list [games]
-   (sort-by #(vec (map (assoc % :started (not (:started %))
-                                :mygame (if-let [og (:originalPlayers %)]
-                                          (some (fn [p] (= p (get-in @app-state [:user :_id])))
-                                                (map (fn [g] (get-in g [:user :_id])) og))
-                                          false))
-                       [:started :date :mygame]))
+  (sort-by #(vec (map (assoc % :started (not (:started %))
+                               :mygame (if-let [og (:originalPlayers %)]
+                                         (some (fn [p] (= p (get-in @app-state [:user :_id])))
+                                               (map (fn [g] (get-in g [:user :_id])) og))
+                                         false))
+                      [:started :date :mygame]))
            > games))
+
+(ws/register-ws-handler!
+  :games/list
+  #(swap! app-state assoc :games (sort-games-list (vals %))))
+
+(ws/register-ws-handler!
+  :games/diff
+  (fn [{:keys [diff notification] :as msg}]
+    (swap! app-state update-in [:games]
+           (fn [games]
+             (let [gamemap (into {} (map #(assoc {} (:gameid %) %) games))
+                   create (merge gamemap (:create diff))
+                   update (merge create (:update diff))
+                   delete (apply dissoc update (keys (:delete diff)))]
+               (sort-games-list (vals delete)))))
+    (when (and notification (not (:gameid @app-state)))
+      (.play (.getElementById js/document notification)))))
+
+(ws/register-ws-handler!
+  :lobby/select
+  #(do (swap! app-state assoc :gameid (:gameid %))
+       (when (:started %) (launch-game (parse-state (:state %))))))
+
+(ws/register-ws-handler!
+  :lobby/message
+  (fn [{:keys [user text notification] :as msg}]
+    (swap! app-state update-in [:messages] #(conj % msg))
+    (when notification
+      (.play (.getElementById js/document notification)))))
 
 (go (while true
       (let [msg (<! socket-channel)]
@@ -57,7 +87,8 @@
   ([msg] (send msg nil))
   ([msg fn]
    (try (js/ga "send" "event" "lobby" msg) (catch js/Error e))
-   (.emit socket "netrunner" (clj->js msg) fn)))
+   ;(.emit socket "netrunner" (clj->js msg) fn)
+   ))
 
 (defn new-game [cursor owner]
   (authenticated
@@ -82,28 +113,33 @@
         (om/set-state! owner :flash-message "Please fill a password")
         (do (om/set-state! owner :editing false)
             (swap! app-state assoc :messages [])
-            (send {:action "create"
-                   :title (om/get-state owner :title)
-                   :password (om/get-state owner :password)
-                   :allowspectator (om/get-state owner :allowspectator)
-                   :spectatorhands (om/get-state owner :spectatorhands)
-                   :side (om/get-state owner :side)
-                   :room (om/get-state owner :current-room)
-                   :options (:options @app-state)})))))))
+            (ws/ws-send! [:lobby/create
+                          {:title          (om/get-state owner :title)
+                           :password       (om/get-state owner :password)
+                           :allowspectator (om/get-state owner :allowspectator)
+                           :spectatorhands (om/get-state owner :spectatorhands)
+                           :side           (om/get-state owner :side)
+                           :room           (om/get-state owner :current-room)
+                           :options        (:options @app-state)}])))))))
 
 (defn join-game [gameid owner action password]
   (authenticated
    (fn [user]
      (om/set-state! owner :editing false)
      (swap! app-state assoc :messages [])
-     (send {:action action :gameid gameid :password password :options (:options @app-state)}
-           #(cond
-              (= % "invalid password") (om/set-state! owner :error-msg "Invalid password")
-              (= % "not allowed") (om/set-state! owner :error-msg "Not allowed")
-              :else (om/set-state! owner :prompt false))))))
+     (prn action "!!!!")
+     (ws/ws-send! [(if (= "join" action) :lobby/join :lobby/watch)
+                   {:gameid gameid :password password :options (:options @app-state)}]
+                  8000
+                  #(if (sente/cb-success? %)
+                     (case %
+                       403 (om/set-state! owner :error-msg "Invalid password")
+                       404 (om/set-state! owner :error-msg "Not allowed")
+                       200 (om/set-state! owner :prompt false))
+                     (om/set-state! owner :error-msg "Connection aborted"))))))
 
 (defn leave-lobby [cursor owner]
-  (send {:action "leave-lobby" :gameid (:gameid @app-state)})
+  (ws/ws-send! [:lobby/leave (:gameid @app-state)])
   (om/update! cursor :gameid nil)
   (om/update! cursor :message [])
   (om/set-state! owner :prompt false)
@@ -129,7 +165,7 @@
         text (.-value input)
         $div (js/$ ".lobby .message-list")]
     (when-not (empty? text)
-      (send {:action "say" :gameid (:gameid @app-state) :text text})
+      (ws/ws-send! [:lobby/say {:gameid (:gameid @app-state) :msg text}])
       (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
@@ -145,12 +181,13 @@
              side (:side (some #(when (= (:user %) user) %) players))]
          [:div {:data-dismiss "modal"}
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
-            [:div.deckline {:on-click #(send {:action "deck" :gameid (:gameid @app-state) :deck deck})}
+            [:div.deckline {:on-click #(ws/ws-send! [:lobby/deck deck])}
              [:img {:src (image-url (:identity deck))}]
              [:div.float-right (deck-status-span sets deck)]
              [:h4 (:name deck)]
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
              [:p (get-in deck [:identity :title])]])])]]])))
+
 
 (defn faction-icon
   [faction identity]
@@ -398,11 +435,11 @@
                   [:div.button-bar
                    (when (= (-> players first :user) user)
                      (if (every? :deck players)
-                       [:button {:on-click #(send {:action "start" :gameid (:gameid @app-state)})} "Start"]
+                       [:button {:on-click #(ws/ws-send! [:netrunner/start gameid])} "Start"]
                        [:button {:class "disabled"} "Start"]))
                    [:button {:on-click #(leave-lobby cursor owner)} "Leave"]
                    (when (= (-> players first :user) user)
-                     [:button {:on-click #(send {:action "swap" :gameid gameid})} "Swap sides"])]
+                     [:button {:on-click #(ws/ws-send! [:lobby/swap gameid])} "Swap sides"])]
                   [:div.content
                    [:h2 (:title game)]
                    (when-not (every? :deck players)

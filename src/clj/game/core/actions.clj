@@ -50,7 +50,8 @@
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (let [kw (to-keyword key)]
+  (let [kw key
+        key (name key)]
     (if (neg? delta)
       (deduce state side [kw (- delta)])
       (swap! state update-in [side kw] (partial + delta)))

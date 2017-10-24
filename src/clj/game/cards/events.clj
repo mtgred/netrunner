@@ -482,7 +482,7 @@
      {:replace-access {:prompt "Advancements to remove from a card in or protecting this server?"
                        :choices ["0", "1", "2", "3"]
                        :delayed-completion true
-                       :effect (req (let [c (Integer/parseInt target)]
+                       :effect (req (let [c (str->int target)]
                                       (show-wait-prompt state :corp "Runner to remove advancements")
                                       (continue-ability state side
                                         {:choices {:req #(and (contains? % :advance-counter)
@@ -1190,7 +1190,7 @@
 
    "Queens Gambit"
    {:choices ["0", "1", "2", "3"] :prompt "How many advancement tokens?"
-    :effect (req (let [c (Integer/parseInt target)]
+    :effect (req (let [c (str->int target)]
                    (resolve-ability
                      state side
                      {:choices {:req #(and (is-remote? (second (:zone %)))
@@ -1291,7 +1291,7 @@
               :delayed-completion true
               :effect (effect (show-wait-prompt :runner "Corp to guess")
                               (clear-wait-prompt :corp)
-                              (continue-ability :corp (corp-choice (Integer/parseInt target)) card nil))})]
+                              (continue-ability :corp (corp-choice (str->int target)) card nil))})]
    {:effect (effect (show-wait-prompt :corp "Runner to spend credits")
                     (continue-ability (runner-choice (inc (min 2 (:credit runner)))) card nil))})
 
@@ -1649,7 +1649,7 @@
                               {:msg (msg "force the Corp to discard " target " cards from HQ at random")
                                :prompt "How many [Click] do you want to spend?"
                                :choices (req (map str (range 1 (inc (:click runner)))))
-                               :effect (req (let [n (Integer/parseInt target)]
+                               :effect (req (let [n (str->int target)]
                                               (when (pay state :runner card :click n)
                                                 (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
 

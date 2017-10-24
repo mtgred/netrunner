@@ -16,6 +16,12 @@
     (xhr/send url #(put! ch (parse %)))
     ch))
 
+(defn DELETE
+  [url]
+  (let [ch (chan)]
+    (xhr/send url #(put! ch (parse %)) "DELETE")
+    ch))
+
 (defn POST
   ([url params]
      (let [ch (chan)]
@@ -27,3 +33,15 @@
            content (if (= format :json) (json/serialize (clj->js params)) params)]
        (xhr/send url #(put! ch (parse %)) "POST" content headers)
        ch)))
+
+(defn PUT
+  ([url params]
+   (let [ch (chan)]
+     (xhr/send url #(put! ch (parse %)) "UPDATE" params)
+     ch))
+  ([url params format]
+   (let [ch (chan)
+         headers (when (= format :json) #js {"Content-Type" "application/json"})
+         content (if (= format :json) (json/serialize (clj->js params)) params)]
+     (xhr/send url #(put! ch (parse %)) "PUT" content headers)
+     ch)))

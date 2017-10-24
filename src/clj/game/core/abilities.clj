@@ -441,7 +441,7 @@
                                  all-amounts)]
        (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                     (map #(str % " [Credits]") valid-amounts)
-                    #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
+                    #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
                     {:priority 2})))))
 
 (defn resolve-psi

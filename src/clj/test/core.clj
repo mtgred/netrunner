@@ -3,7 +3,8 @@
                                 costs-to-symbol vdissoc distinct-by]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
-            [game.core :as core :refer [all-cards]]
+            [game.core :as core]
+            [jinteki.cards :refer [all-cards]]
             [test.utils :refer [load-card load-cards qty default-corp default-runner
                                 make-deck]]
             [test.macros :refer [do-game]]

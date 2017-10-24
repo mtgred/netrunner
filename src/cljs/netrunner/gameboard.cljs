@@ -9,11 +9,18 @@
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
             [netrunner.deckbuilder :refer [influence-dot]]
             [differ.core :as differ]
-            [om.dom :as dom]))
+            [om.dom :as dom]
+            [netrunner.ws :as ws]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
 (defonce lock (atom false))
+
+
+(defn parse-state [state]
+  (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
@@ -60,7 +67,7 @@
   (.setItem js/localStorage "gameid" (:gameid @app-state))
   (swap! game-state merge game)
   (swap! game-state assoc :side side)
-  (swap! last-state #(identity @game-state)))
+  (reset! last-state @game-state))
 
 
 (defn launch-game [game]
@@ -85,14 +92,25 @@
   (toast text severity nil))
 
 (def zoom-channel (chan))
-(def socket (.connect js/io (str js/iourl "/lobby")))
-(def socket-channel (chan))
-(.on socket "netrunner" #(put! socket-channel (js->clj % :keywordize-keys true)))
-(.on socket "disconnect" #(notify "Connection to the server lost. Attempting to reconnect."
-                                  "error"))
-(.on socket "reconnect" #(when (.-onbeforeunload js/window)
-                           (notify "Reconnected to the server." "success")
-                           (.emit socket "netrunner" #js {:action "reconnect" :gameid (:gameid @app-state)})))
+;(def socket (.connect js/io (str js/iourl "/lobby")))
+
+
+(defn handle-state [state]
+  (swap! game-state #(assoc state :side (:side @game-state)))
+  (reset! last-state @game-state)
+  (reset! lock false))
+
+(defn handle-diff [diff]
+
+  (swap! game-state #(differ/patch @last-state diff))
+  (swap! last-state #(identity @game-state))
+  (reset! lock false))
+
+
+(ws/register-ws-handler! :netrunner/state #(handle-state (parse-state %)))
+(ws/register-ws-handler! :netrunner/start #(launch-game (parse-state %)))
+(ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
+(ws/register-ws-handler! :netrunner/rejoin #(handle-state (parse-state %)))
 
 (def anr-icons {"[Credits]" "credit"
                 "[$]" "credit"
@@ -114,18 +132,8 @@
                 "[Trash]" "trash"
                 "[t]" "trash"})
 
-(go (while true
-      (let [msg (<! socket-channel)]
-        (case (:type msg)
-          "rejoin" (launch-game (:state msg))
-          ("do" "notification" "quit") (do (swap! game-state (if (:diff msg) #(differ/patch @last-state (:diff msg))
-                                                                 #(assoc (:state msg) :side (:side @game-state))))
-                                           (swap! last-state #(identity @game-state)))
-          nil)
-        (reset! lock false))))
-
 (defn send [msg]
-  (.emit socket "netrunner" (clj->js msg)))
+  (ws/ws-send! [:netrunner/action msg]))
 
 (defn not-spectator? [game-state app-state]
   (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state)))
@@ -136,9 +144,7 @@
    (when (or (not @lock) no-lock)
      (try (js/ga "send" "event" "game" command) (catch js/Error e))
      (when-not no-lock (reset! lock true))
-     (send {:action "do" :gameid (:gameid @game-state) :side (:side @game-state)
-            :user (:user @app-state)
-            :command command :args args}))))
+     (ws/ws-send! [:netrunner/action {:command command :args args}]))))
 
 (defn send-msg [event owner]
   (.preventDefault event)
@@ -192,7 +198,7 @@
   [sfx soundbank]
   (when-not (empty? sfx)
     (when-let [sfx-key (keyword (first sfx))]
-      (.volume (sfx-key soundbank) (/ (js/parseInt (get-in @app-state [:options :sounds-volume])) 100))
+      (.volume (sfx-key soundbank) (/ (str->int (get-in @app-state [:options :sounds-volume])) 100))
       (.play (sfx-key soundbank)))
     (play-sfx (rest sfx) soundbank)))
 
@@ -344,7 +350,7 @@
   {:title title :code (:code (first cards))})
 
 (defn prepare-cards []
-  (->> (:cards @app-state)
+  (->> @all-cards
     (filter #(not (:replaced_by %)))
     (group-by :title)
     (map get-non-alt-art)
@@ -390,7 +396,7 @@
 (defn card-preview-mouse-over [e channel]
   (.preventDefault e)
   (when-let [code (get-card-code e)]
-    (when-let [card (some #(when (= (:code %) code) %) (:cards @app-state))]
+    (when-let [card (some #(when (= (:code %) code) %) @all-cards)]
       (put! channel (assoc card :implementation :full))))
   nil)
 
@@ -451,7 +457,7 @@
                  [:div (for [item (get-message-parts (:text msg))] (create-span item))]]])))]
         (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing cursor))))
           [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])
-        (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games @app-state))]
+        (if-let [game (some #(when (= (:gameid cursor) (str (:gameid %))) %) (:games @app-state))]
           (when (or (not-spectator? game-state app-state)
                     (not (:mutespectators game)))
             [:form {:on-submit #(send-msg % owner)
@@ -530,7 +536,7 @@
                         (clojure.string/join "" (repeat (second c) (str "[" (capitalize (name (first c))) "]"))))))) ": ")))
 
 (defn remote->num [server]
-  (-> server str (clojure.string/split #":remote") last js/parseInt))
+  (-> server str (clojure.string/split #":remote") last str->int))
 
 (defn remote->name [server]
   (let [num (remote->num server)]
@@ -554,7 +560,7 @@
     :archives -3
     :rd -2
     :hq -1
-    (js/parseInt
+    (str->int
      (last (clojure.string/split (str zone) #":remote")))))
 
 (defn zones->sorted-names [zones]
@@ -664,7 +670,7 @@
                                                        (= (:side @game-state) (keyword (.toLowerCase side))))
                                                (put! zoom-channel cursor))
                             :on-mouse-leave #(put! zoom-channel false)
-                            :on-click #(handle-card-click @cursor owner)}
+                            :on-click #(handle-card-click cursor owner)}
       (when-let [url (image-url cursor)]
         (if (or (not code) flipped facedown)
           [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
@@ -1135,7 +1141,7 @@
                  (for [i (range (inc n))]
                    [:option {:value i} i])]]
                [:button {:on-click #(send-command "choice"
-                                                  {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                                  {:choice (-> "#credit" js/$ .val str->int)})}
                 "OK"]]
               (cond
                 ;; choice of number of credits
@@ -1150,7 +1156,7 @@
                   [:select#credit (for [i (range (inc (:credit me)))]
                                     [:option {:value i} i])] " credits"]
                  [:button {:on-click #(send-command "choice"
-                                                    {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                                    {:choice (-> "#credit" js/$ .val str->int)})}
                   "OK"]]
 
                 ;; auto-complete text box
@@ -1173,7 +1179,7 @@
                     [:select#credit (for [i (range (inc num-counters))]
                                       [:option {:value i} i])] " credits"]
                    [:button {:on-click #(send-command "choice"
-                                                      {:choice (-> "#credit" js/$ .val js/parseInt)})}
+                                                      {:choice (-> "#credit" js/$ .val str->int)})}
                     "OK"]])
                 ;; otherwise choice of all present choices
                 :else

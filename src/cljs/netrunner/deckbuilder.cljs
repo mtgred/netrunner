@@ -8,9 +8,11 @@
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title] :as cb]
             [netrunner.account :refer [load-alt-arts alt-art-name]]
-            [netrunner.ajax :refer [POST GET]]
+            [netrunner.ajax :refer [POST GET DELETE PUT]]
             [goog.string :as gstring]
-            [goog.string.format]))
+            [goog.string.format]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (def select-channel (chan))
 (def zoom-channel (chan))
@@ -69,8 +71,7 @@
   [side card]
   (let [q (.toLowerCase (:title card))
         id (:id card)
-        cards (filter #(= (:side %) side)
-                      (:cards @app-state))
+        cards (filter #(= (:side %) side) @all-cards)
         exact-matches (filter-exact-title q cards)]
     (cond (and id
                (first (filter #(= id (:code %)) cards)))
@@ -138,9 +139,9 @@
   (let [clean (s/trim line)
         [_ qty-str card-name _ card-params] (re-matches #"(\d+)[^\s]*\s+([^\[]+)(\[(.*)\])?" clean)]
     (if (and qty-str
-             (not (js/isNaN (js/parseInt qty-str)))
+             (not (js/isNaN (str->int qty-str)))
              card-name)
-      (let [result (assoc {} :qty (js/parseInt qty-str) :card (s/trim card-name))]
+      (let [result (assoc {} :qty (str->int qty-str) :card (s/trim card-name))]
         (add-params result card-params))
       nil)))
 
@@ -249,7 +250,7 @@
 
 (defn side-identities [side]
   (let [cards
-        (->> (:cards @app-state)
+        (->> @all-cards
           (filter #(and (= (:side %) side)
                         (= (:type %) "Identity")))
           (filter #(not (contains? %1 :replaced_by))))
@@ -553,7 +554,7 @@
    (fn [user]
      (let [deck (om/get-state owner :deck)]
        (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e))
-       (go (let [response (<! (POST "/data/decks/delete" deck :json))]))
+       (go (let [response (<! (DELETE (str "/data/decks/" (:_id deck))))]))
        (do
          (om/transact! cursor :decks (fn [ds] (remove #(= deck %) ds)))
          (om/set-state! owner :deck (first (sort-by :date > (:decks @cursor))))
@@ -585,7 +586,10 @@
                           identity)
            data (assoc deck :cards cards :identity identity-art)]
        (try (js/ga "send" "event" "deckbuilder" "save") (catch js/Error e))
-       (go (let [new-id (get-in (<! (POST "/data/decks/" data :json)) [:json :_id])
+       (go (let [new-id (get-in (<! (if (:_id deck)
+                                      (PUT "/data/decks" data :json)
+                                      (POST "/data/decks" data :json)))
+                                [:json :_id])
                  new-deck (if (:_id deck) deck (assoc deck :_id new-id))
                  all-decks (process-decks (:json (<! (GET (str "/data/decks")))))]
              (om/update! cursor :decks (conj decks new-deck))
@@ -723,7 +727,7 @@
    (deck-status-span-memoize sets deck tooltip? onesies-details?)))
 
 (defn match [identity query]
-  (->> (:cards @app-state)
+  (->> @all-cards
     (filter #(allowed? % identity))
     (distinct-by :title)
     (filter-title query)
@@ -745,7 +749,7 @@
 
 (defn handle-add [owner event]
   (.preventDefault event)
-  (let [qty (js/parseInt (om/get-state owner :quantity))
+  (let [qty (str->int (om/get-state owner :quantity))
         card (nth (om/get-state owner :matches) (om/get-state owner :selected))
         best-card (lookup (:side card) card)]
     (if (js/isNaN qty)

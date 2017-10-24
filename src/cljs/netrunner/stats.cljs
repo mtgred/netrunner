@@ -11,8 +11,8 @@
             [goog.string.format]))
 
 (def stats-channel (chan))
-(def stats-socket (.connect js/io (str js/iourl "/stats")))
-(.on stats-socket "netrunner" #(put! stats-channel (js->clj % :keywordize-keys true)))
+;(def stats-socket (.connect js/io (str js/iourl "/stats")))
+;(.on stats-socket "netrunner" #(put! stats-channel (js->clj % :keywordize-keys true)))
 
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"

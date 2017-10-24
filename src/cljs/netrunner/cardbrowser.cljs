@@ -4,7 +4,8 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! >! sub pub] :as async]
             [netrunner.appstate :refer [app-state]]
-            [netrunner.ajax :refer [GET]]))
+            [netrunner.ajax :refer [GET]]
+            [jinteki.cards :refer [all-cards]]))
 
 (def cards-channel (chan))
 (def pub-chan (chan))
@@ -21,7 +22,7 @@
       (swap! app-state assoc :sets sets :mwl latest_mwl :cycles cycles)))
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
-      (swap! app-state assoc :cards cards)
+      (reset! all-cards cards)
       (swap! app-state assoc :cards-loaded true)
       (put! cards-channel cards)))
 
@@ -50,7 +51,8 @@
 (defn insert-alt-arts
   "Add copies of all alt art cards to the list of cards"
   [cards]
-  (reduce netrunner.deckbuilder/expand-alts () (reverse cards)))
+  cards)
+  ;(reduce netrunner.deckbuilder/expand-alts () (reverse cards)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -382,12 +384,12 @@
                        (let [s (selected-set-name state)
                              cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
                              cards (cond
-                                     (= s "All") (:cards cursor)
-                                     (= s "Alt Art") (filter-alt-art-cards (:cards cursor))
+                                     (= s "All") @all-cards
+                                     (= s "Alt Art") (filter-alt-art-cards @all-cards)
                                      :else
                                      (if (= (.indexOf (:set-filter state) "Cycle") -1)
-                                       (filter #(= (:setname %) s) (:cards cursor))
-                                       (filter #(cycle-sets (:setname %)) (:cards cursor))))]
+                                       (filter #(= (:setname %) s) @all-cards)
+                                       (filter #(cycle-sets (:setname %)) @all-cards)))]
                          (->> cards
                               (filter-cards (:side-filter state) :side)
                               (filter-cards (:faction-filter state) :faction)

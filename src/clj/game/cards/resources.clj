@@ -1085,7 +1085,7 @@
                         :yes-ability {:prompt "How many would you like to trash?"
                                       :choices (take (inc num) ["0" "1" "2" "3" "4" "5"])
                                       :msg "shuffle their Stack"
-                                      :effect (req (let [target (Integer/parseInt target)]
+                                      :effect (req (let [target (str->int target)]
                                                      (trigger-event state side :searched-stack nil)
                                                      (shuffle! state :runner :deck)
                                                      (doseq [c (take target cards)]

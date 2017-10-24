@@ -1189,7 +1189,7 @@
    {:choices ["0", "1", "2"]
     :prompt "How many advancement tokens?"
     :delayed-completion true
-    :effect (req (let [c (Integer/parseInt target)]
+    :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
                      {:choices {:req can-be-advanced?}
@@ -1410,7 +1410,7 @@
                      {:prompt "Move how many advancement tokens?"
                       :choices (take (inc (:advance-counter fr)) ["0" "1" "2"])
                       :delayed-completion true
-                      :effect (req (let [c (Integer/parseInt target)]
+                      :effect (req (let [c (str->int target)]
                                      (continue-ability
                                        state side
                                        {:prompt  "Move to where?"
