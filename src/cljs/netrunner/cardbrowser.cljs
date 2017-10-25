@@ -83,6 +83,13 @@
       (make-span "\\[weyland\\]" "weyland-consortium")
       (make-span "\\[weyland-consortium\\]" "weyland-consortium")))
 
+(defn- post-response [cursor response]
+  (if (= 200 (:status response))
+    (let [new-alts (get-in response [:json :altarts] {})]
+      (swap! app-state assoc-in [:user :options :alt-arts] new-alts)
+      (netrunner.gameboard/toast "Updated Art" "success" nil))
+    (netrunner.gameboard/toast "Failed to Update Art" "error" nil)))
+
 (defn selected-alt-art [card cursor]
   (let [code (keyword (:code card))
         alt-card (get (:alt-arts @app-state) (name code) nil)
@@ -105,7 +112,8 @@
           new-alts (if (keyword? art)
                      (assoc alts code (name art))
                      (dissoc alts code))]
-      (om/update! cursor [:options :alt-arts] new-alts))))
+      (om/update! cursor [:options :alt-arts] new-alts)
+      (netrunner.account/post-options "/update-profile" (partial post-response cursor)))))
 
 (defn- card-text
   "Generate text html representation a card"
