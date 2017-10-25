@@ -94,6 +94,8 @@
          (= card-art selected-art) true
          (and (nil? selected-art)
               (not (keyword? card-art))) true
+         (and (= :default selected-art)
+              (not (keyword? card-art))) true
          :else false))))
 
 (defn select-alt-art [card cursor]
