@@ -83,16 +83,31 @@
       (make-span "\\[weyland\\]" "weyland-consortium")
       (make-span "\\[weyland-consortium\\]" "weyland-consortium")))
 
-(defn selected-alt-art [card]
+(defn selected-alt-art [card cursor]
   (let [code (keyword (:code card))
-        selected-alts (:alt-arts (:options @app-state))
-        selected-art (get selected-alts code "")
+        alt-card (get (:alt-arts @app-state) (name code) nil)
+        selected-alts (:alt-arts (:options cursor))
+        selected-art (keyword (get selected-alts code nil))
         card-art (:art card)]
-  (= card-art (if (empty? selected-art) selected-art (keyword selected-art)))))
+  (and alt-card
+       (cond
+         (= card-art selected-art) true
+         (and (nil? selected-art)
+              (not (keyword? card-art))) true
+         :else false))))
+
+(defn select-alt-art [card cursor]
+  (when-let [art (:art card)]
+    (let [code (keyword (:code card))
+          alts (:alt-arts (:options cursor))
+          new-alts (if (keyword? art)
+                     (assoc alts code (name art))
+                     (dissoc alts code))]
+      (om/update! cursor [:options :alt-arts] new-alts))))
 
 (defn- card-text
   "Generate text html representation a card"
-  [card]
+  [card cursor]
   [:div
    [:h4 (str (:title card) " ")
     [:span.influence
@@ -136,10 +151,13 @@
          (str pack " " number
               (when-let [art (:art card)]
                 (str " [" (netrunner.account/alt-art-name art) "]")))))]
-     (when (selected-alt-art card)
-      [:div.selected-alt "Selected Alt Art"])
-    ]
-   ])
+     (if (selected-alt-art card cursor)
+      [:div.selected-alt "Selected Alt Art"]
+      (when (:art card)
+        [:button.alt-art-selector
+         {:on-click #(select-alt-art card cursor)}
+         "Select Art"]))
+    ]])
 
 (defn card-view [card owner]
   (reify
@@ -147,12 +165,14 @@
     (init-state [_] {:showText false})
     om/IRenderState
     (render-state [_ state]
+      (let [cursor (om/get-state owner :cursor)]
       (sab/html
         [:div.card-preview.blue-shade
-         {:class (cond (:selected card) "selected"
-                       (selected-alt-art card) "selected-alt")}
+         (when (om/get-state owner :decorate-card)
+           {:class (cond (:selected card) "selected"
+                         (selected-alt-art card cursor) "selected-alt")})
          (if (:showText state)
-           (card-text card)
+           (card-text card cursor)
            (when-let [url (image-url card)]
              [:img {:src url
                     :onClick #(do (.preventDefault %)
@@ -160,19 +180,20 @@
                                       {:topic :card-selected :data card})
                                 nil)
                     :onError #(-> (om/set-state! owner {:showText true}))
-                    :onLoad #(-> % .-target js/$ .show)}]))]))))
+                    :onLoad #(-> % .-target js/$ .show)}]))])))))
 
-(defn card-info-view [card owner]
+(defn card-info-view [cursor owner]
   (reify
     om/IRenderState
-    (render-state [_ {:keys [selected-card]}]
+    (render-state [_ state]
       (sab/html
-        (if (nil? card)
+        (let [selected-card (om/get-state owner :selected-card)]
+        (if (nil? selected-card)
           [:div {:display "none"}]
           [:div
            [:h4 "Card text"]
            [:div.blue-shade.panel
-            (card-text card)]])))))
+            (card-text selected-card cursor)]]))))))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
@@ -343,7 +364,7 @@
                                          )}]
            "Hide rotated cards"]]
 
-         (om/build card-info-view (:selected-card state))
+         (om/build card-info-view cursor {:state {:selected-card (:selected-card state)}})
          ]
 
         [:div.card-list {:on-scroll #(handle-scroll % owner state)}
@@ -370,6 +391,7 @@
                         :fn #(assoc % :selected (and (= (:setname %) (:setname (:selected-card state)))
                                                      (= (:code %) (:code (:selected-card state)))
                                                      (= (:art %) (:art (:selected-card state)))))
+                        :state {:cursor cursor :decorate-card true}
                         })]]))))
 
 (om/root card-browser

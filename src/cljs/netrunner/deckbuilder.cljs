@@ -894,7 +894,7 @@
               (let [art (:art line)
                     id (:id line)
                     updated-card (add-params-to-card (:card line) id art)]
-              (om/build card-view updated-card)))]]
+              (om/build card-view updated-card {:state {:cursor cursor}})))]]
 
           [:div.decklist
            (when-let [deck (:deck state)]
