@@ -284,13 +284,13 @@
            [:section
             [:h3 "Blocked users"]
             [:div
-             [:input.search {:on-key-down (fn [e]
-                                            (when (= e.keyCode 13)
-                                              (do
-                                                (add-user-to-block-list owner user)
-                                                (.preventDefault e))))
-                             :ref "block-user-input"
-                             :type "text" :placeholder "User name"}]
+             [:input {:on-key-down (fn [e]
+                                     (when (= e.keyCode 13)
+                                       (do
+                                         (add-user-to-block-list owner user)
+                                         (.preventDefault e))))
+                      :ref "block-user-input"
+                      :type "text" :placeholder "User name"}]
              [:button.block-user-btn {:type "button"
                                       :name "block-user-button"
                                       :on-click #(add-user-to-block-list owner user)}
