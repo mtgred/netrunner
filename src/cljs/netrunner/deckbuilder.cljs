@@ -672,41 +672,53 @@
   [deck]
   (dots-html influence-dot (influence-map deck)))
 
-(defn deck-status-label
-  [sets deck]
+(defn- deck-status
+  [mwl-legal valid in-rotation]
   (cond
-    (and (mwl-legal? deck) (valid? deck) (only-in-rotation? sets deck)) "legal"
-    (valid? deck) "casual"
+    (and mwl-legal valid in-rotation) "legal"
+    valid "casual"
     :else "invalid"))
 
-(defn deck-status-span
-  "Returns a [:span] with standardized message and colors depending on the deck validity."
-  ([sets deck] (deck-status-span sets deck false))
-  ([sets deck tooltip?] (deck-status-span sets deck tooltip? false))
-  ([sets deck tooltip? onesies-details?]
-   (let [status (deck-status-label sets deck)
-         valid (valid? deck)
+(defn deck-status-label
+  [sets deck]
+  (let [valid (valid? deck)
+        mwl (mwl-legal? deck)
+        rotation (only-in-rotation? sets deck)]
+    (deck-status mwl valid rotation)))
+
+(defn deck-status-span-impl [sets deck tooltip? onesies-details?]
+   (let [valid (valid? deck)
          mwl (mwl-legal? deck)
          rotation (only-in-rotation? sets deck)
-         cache-refresh (cache-refresh-legal sets deck)
-         onesies (onesies-legal sets deck)
+         status (deck-status mwl valid rotation)
          message (case status
                    "legal" "Tournament legal"
                    "casual" "Casual play only"
                    "invalid" "Invalid")]
      [:span.deck-status.shift-tooltip {:class status} message
       (when tooltip?
-        [:div.status-tooltip.blue-shade
-         [:div {:class (if valid "legal" "invalid")}
-          [:span.tick (if valid "✔" "✘")] "Basic deckbuilding rules"]
-         [:div {:class (if mwl "legal" "invalid")}
-          [:span.tick (if mwl "✔" "✘")] (:name (:mwl @app-state))]
-         [:div {:class (if rotation "legal" "invalid")}
-          [:span.tick (if rotation "✔" "✘")] "Only released cards"]
-         [:div {:class (if (:legal cache-refresh) "legal" "invalid") :title (if onesies-details? (:reason cache-refresh)) }
-          [:span.tick (if (:legal cache-refresh) "✔" "✘")] "Cache Refresh compliant"]
-         [:div {:class (if (:legal onesies) "legal" "invalid") :title (if onesies-details? (:reason onesies))}
-          [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]])])))
+        (let [cache-refresh (cache-refresh-legal sets deck)
+              onesies (onesies-legal sets deck)]
+          [:div.status-tooltip.blue-shade
+           [:div {:class (if valid "legal" "invalid")}
+            [:span.tick (if valid "✔" "✘")] "Basic deckbuilding rules"]
+           [:div {:class (if mwl "legal" "invalid")}
+            [:span.tick (if mwl "✔" "✘")] (:name (:mwl @app-state))]
+           [:div {:class (if rotation "legal" "invalid")}
+            [:span.tick (if rotation "✔" "✘")] "Only released cards"]
+           [:div {:class (if (:legal cache-refresh) "legal" "invalid") :title (if onesies-details? (:reason cache-refresh)) }
+            [:span.tick (if (:legal cache-refresh) "✔" "✘")] "Cache Refresh compliant"]
+           [:div {:class (if (:legal onesies) "legal" "invalid") :title (if onesies-details? (:reason onesies))}
+            [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]]))]))
+
+(def deck-status-span-memoize (memoize deck-status-span-impl))
+
+(defn deck-status-span
+  "Returns a [:span] with standardized message and colors depending on the deck validity."
+  ([sets deck] (deck-status-span sets deck false))
+  ([sets deck tooltip?] (deck-status-span sets deck tooltip? false))
+  ([sets deck tooltip? onesies-details?]
+   (deck-status-span-memoize sets deck tooltip? onesies-details?)))
 
 (defn match [identity query]
   (->> (:cards @app-state)
@@ -888,7 +900,9 @@
             [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
             [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]]
            [:div.deck-collection
-              (om/build deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (om/get-state owner :deck)})]
+            (when-not (:edit state)
+              (om/build deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (om/get-state owner :deck)}))
+            ]
            [:div {:class (when (:edit state) "edit")}
             (when-let [line (om/get-state owner :zoom)]
               (let [art (:art line)
