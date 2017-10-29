@@ -42,6 +42,19 @@
   (let [alt (first (filter #(= (name version) (:version %)) (:alt-info @app-state)))]
     (get alt :name "Official")))
 
+(defn post-response [owner response]
+  (if (= (:status response) 200)
+    (om/set-state! owner :flash-message "Profile updated - Please refresh your browser")
+    (case (:status response)
+      401 (om/set-state! owner :flash-message "Invalid login or password")
+      421 (om/set-state! owner :flash-message "No account with that email address exists")
+      :else (om/set-state! owner :flash-message "Profile updated - Please refresh your browser"))))
+
+(defn post-options [url callback]
+  (let [params (:options @app-state)]
+    (go (let [response (<! (POST url params :json))]
+          (callback response)))))
+
 (defn handle-post [event owner url ref]
   (.preventDefault event)
   (om/set-state! owner :flash-message "Updating profile...")
@@ -55,15 +68,7 @@
   (swap! app-state assoc-in [:options :deckstats] (om/get-state owner :deckstats))
   (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
   (.setItem js/localStorage "sounds_volume" (om/get-state owner :volume))
-
-  (let [params (:options @app-state)]
-    (go (let [response (<! (POST url params :json))]
-          (if (= (:status response) 200)
-            (om/set-state! owner :flash-message "Profile updated - Please refresh your browser")
-            (case (:status response)
-              401 (om/set-state! owner :flash-message "Invalid login or password")
-              421 (om/set-state! owner :flash-message "No account with that email address exists")
-              :else (om/set-state! owner :flash-message "Profile updated - Please refresh your browser")))))))
+  (post-options url (partial post-response owner)))
 
 (defn add-user-to-block-list
   [owner user]

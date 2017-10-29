@@ -778,6 +778,13 @@ nav ul
   .pack
     font-style: italic
 
+  .selected-alt
+    font-style: italic
+    color: orange
+
+  .alt-art-selector
+    margin-top: 10px
+
 .filters
   flex(0 0 180px)
   margin: 10px
@@ -792,6 +799,7 @@ nav ul
 
   .hide-rotated-div
     margin-top: 10px
+    margin-bottom: 20px
 
   h4
     margin-top: 5px
@@ -851,9 +859,15 @@ nav ul
   position: relative
   height: 348px
   width: 250px
-  margin: 0 10px 10px 0
+  margin: 0 10px 10px 2px
   border-radius: 8px
   padding: 10px
+
+  &.selected
+    box-shadow(0 0 1px 2px limegreen)
+
+  &.selected-alt
+    box-shadow(0 0 1px 2px orange)
 
   > h4
     margin-bottom: 5px
