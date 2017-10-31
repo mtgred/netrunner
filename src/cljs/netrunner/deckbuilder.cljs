@@ -19,7 +19,9 @@
 (defn num->percent
   "Converts an input number to a percent of the second input number for display"
   [num1 num2]
-  (gstring/format "%.0f" (* 100 (float (/ num1 num2)))))
+  (if (zero? num2)
+    "0"
+    (gstring/format "%.0f" (* 100 (float (/ num1 num2))))))
 
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
