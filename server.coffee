@@ -161,12 +161,12 @@ inc_game_end = (username, side, outcome) ->
       {$inc: {"stats.#{outcome}": 1, "stats.#{outcome}-#{side}" : 1}}, (err) ->
         throw err if err
 
-inc_game = (user, room, deck_outcome, game_outcome) ->
+inc_game = (user, room, outcome) ->
   if user and user.user
     # deck stats
     if save_stats(user.options.deckstats, room)
       deckID = user['deck-id']
-      inc_deck_end(deckID, deck_outcome) if deckID
+      inc_deck_end(deckID, outcome) if deckID
 
     # user game stats
     username = user.user.username
@@ -174,13 +174,13 @@ inc_game = (user, room, deck_outcome, game_outcome) ->
     inc_game_complete(username, side) # everyone gets game completion stats
 
     if save_stats(user.options.gamestats, room)
-      inc_game_end(username, side, game_outcome)
+      inc_game_end(username, side, outcome)
 
 inc_game_win = (winner, room) ->
-  inc_game(winner, room, "wins", "wins")
+  inc_game(winner, room, "wins")
 
 inc_game_loss = (loser, room) ->
-  inc_game(loser, room, "loses", "loses")
+  inc_game(loser, room, "loses")
 
 inc_game_final_user = (user) ->
   if user.username
