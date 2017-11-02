@@ -19,7 +19,7 @@
   [input]
   (if (pos? (int input)) input 0))
 
-(defn clear-user-stats [owner]
+(defn clear-user-stats []
   (authenticated
     (fn [user]
       (let [data (:user @app-state)]
@@ -30,9 +30,8 @@
 ;; Go loop to receive messages from node server to refresh stats on game-end
 (go (while true
       (let [msg (<! stats-channel)
-            result (-> (<! (GET (str "/user"))) :json first :stats)
-            decks (process-decks (:json (<! (GET (str "/data/decks")))))]
-        (try (js/ga "send" "event" "user" "refreshstats") (catch js/Error e))
+            result (-> (<! (GET "/user")) :json first :stats)
+            decks (process-decks (:json (<! (GET "/data/decks"))))]
         (swap! app-state assoc :stats result)
         (swap! app-state assoc :decks decks))))
 
@@ -79,6 +78,6 @@
                                 :start-key :games-started-runner :complete-key :games-completed-runner
                                 :win-key :wins-runner :lose-key :loses-runner})]]
          [:p
-          [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]))))
+          [:button {:on-click #(clear-user-stats)} "Clear Stats"]]]))))
 
 (om/root stats app-state {:target (. js/document (getElementById "stats"))})
