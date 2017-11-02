@@ -36,75 +36,49 @@
         (swap! app-state assoc :stats result)
         (swap! app-state assoc :decks decks))))
 
+(defn stat-view [{:keys [start-key complete-key win-key lose-key stats]} owner]
+  (om/component
+    (sab/html
+      (let [started (notnum->zero (start-key stats))
+            completed (notnum->zero (complete-key stats))
+            pc (notnum->zero (num->percent completed started))
+            win (notnum->zero (win-key stats))
+            lose (notnum->zero (lose-key stats))
+            pw (notnum->zero (num->percent win (+ win lose)))
+            pl (notnum->zero (num->percent lose (+ win lose)))
+            incomplete (notnum->zero (- started completed))
+            pi (notnum->zero (num->percent incomplete started))]
+        [:section
+         [:div "Started: " started]
+         [:div "Completed: " completed " (" pc "%)"]
+         [:div "Not completed: " incomplete  " (" pi "%)"]
+         (when-not (= "none" (get-in @app-state [:options :gamestats]))
+           [:div [:div "Won: " win  " (" pw "%)"]
+            [:div "Lost: " lose  " (" pl "%)"]])]))))
+
 (defn stats [{:keys [stats] :as cursor} owner]
   (reify
-    om/IInitState
-    (init-state [this] {:flash-message ""})
-
     om/IRenderState
-    (render-state [this state]
+    (render-state [_ state]
       (sab/html
-       (let [started (notnum->zero (:games-started stats))
-              completed (notnum->zero (:games-completed stats))
-              pc (notnum->zero (num->percent completed started))
-              win (notnum->zero (:wins stats))
-              lose (notnum->zero (:loses stats))
-              pw (notnum->zero (num->percent win (+ win lose)))
-              pl (notnum->zero (num->percent lose (+ win lose)))
-              incomplete (notnum->zero (- started completed))
-              pi (notnum->zero (num->percent incomplete started))
-              ;; Corp Stats
-              started-corp (notnum->zero (:games-started-corp stats))
-              completed-corp (notnum->zero (:games-completed-corp stats))
-              pc-corp (notnum->zero (num->percent completed-corp started-corp))
-              win-corp (notnum->zero (:wins-corp stats))
-              lose-corp (notnum->zero (:loses-corp stats))
-              pw-corp (notnum->zero (num->percent win-corp (+ win-corp lose-corp)))
-              pl-corp (notnum->zero (num->percent lose-corp (+ win-corp lose-corp)))
-              incomplete-corp (notnum->zero (- started-corp completed-corp))
-              pi-corp (notnum->zero (num->percent incomplete-corp started-corp))
-              ;; Runner Stats
-              started-runner (notnum->zero (:games-started-runner stats))
-              completed-runner (notnum->zero (:games-completed-runner stats))
-              pc-runner (notnum->zero (num->percent completed-runner started-runner))
-              win-runner (notnum->zero (:wins-runner stats))
-              lose-runner (notnum->zero (:loses-runner stats))
-              pw-runner (notnum->zero (num->percent win-runner (+ win-runner lose-runner)))
-              pl-runner (notnum->zero (num->percent lose-runner (+ win-runner lose-runner)))
-              incomplete-runner (notnum->zero (- started-runner completed-runner))
-              pi-runner (notnum->zero (num->percent incomplete-runner started-runner))]
-         [:div.blue-shade.content-page.panel
+        [:div.blue-shade.content-page.panel
+         [:div
           [:div
-           [:div
-            [:h3 "Game Stats"]
-            [:section
-             [:div "Started: " started]
-             [:div "Completed: " completed " (" pc "%)"]
-             [:div "Not completed: " incomplete  " (" pi "%)"]
-             (when-not (= "none" (get-in @app-state [:options :gamestats]))
-               [:div [:div "Won: " win  " (" pw "%)"]
-                [:div "Lost: " lose  " (" pl "%)"]])]]
-           [:div
-            [:h3 "Corp Stats"]
-            [:section
-             [:div "Started: " started-corp]
-             [:div "Completed: " completed-corp " (" pc-corp "%)"]
-             [:div "Not completed: " incomplete-corp  " (" pi-corp "%)"]
-             (when-not (= "none" (get-in @app-state [:options :gamestats]))
-               [:div [:div "Won: " win-corp  " (" pw-corp "%)"]
-                [:div "Lost: " lose-corp  " (" pl-corp "%)"]])]]
-           [:div
-            [:h3 "Runner Stats"]
-            [:section
-             [:div "Started: " started-runner]
-             [:div "Completed: " completed-runner " (" pc-runner "%)"]
-             [:div "Not completed: " incomplete-runner  " (" pi-runner "%)"]
-             (when-not (= "none" (get-in @app-state [:options :gamestats]))
-               [:div [:div "Won: " win-runner  " (" pw-runner "%)"]
-                [:div "Lost: " lose-runner  " (" pl-runner "%)"]])]]]
-
-          [:p
-           [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]])))))
+           [:h3 "Game Stats"]
+           (om/build stat-view {:stats stats
+                                :start-key :games-started :complete-key :games-completed
+                                :win-key :wins :lose-key :loses})]
+          [:div
+           [:h3 "Corp Stats"]
+           (om/build stat-view {:stats stats
+                                :start-key :games-started-corp :complete-key :games-completed-corp
+                                :win-key :wins-corp :lose-key :loses-corp})]
+          [:div
+           [:h3 "Runner Stats"]
+           (om/build stat-view {:stats stats
+                                :start-key :games-started-runner :complete-key :games-completed-runner
+                                :win-key :wins-runner :lose-key :loses-runner})]]
+         [:p
+          [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]))))
 
 (om/root stats app-state {:target (. js/document (getElementById "stats"))})
-
