@@ -60,7 +60,7 @@ removePlayer = (socket) ->
       if spectator.id is socket.id
         game.spectators.splice(i, 1)
         break
-    if game.players.length is 1
+    if game.started and game.players.length is 1
       requester.send(JSON.stringify({action: "finaluser-add", user: game.players[0], gameid: socket.gameid}))
     if game.players.length is 0 and game.spectators.length is 0
       # Store the list of player sockets for the game before we delete the game
