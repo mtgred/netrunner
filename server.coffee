@@ -130,23 +130,10 @@ user_allowed_in_game = (username, game) ->
 save_stats = (option, room) ->
   (option is "always") or ((option is "competitive") and (room is "competitive"))
 
-inc_deck_start = (deck) ->
-  if deck
-    db.collection('decks').update {_id: mongoskin.helper.toObjectID(deck._id)},
-      {$inc: {"stats.games-started" : 1}}, (err) ->
-        throw err if err
-
-inc_deck_complete = (deck) ->
+inc_deck = (deck, key) ->
   if deck
     db.collection('decks').update {_id: mongoskin.helper.toObjectID(deck)},
-      {$inc: {"stats.games-completed" : 1}}, (err) ->
-        throw err if err
-
-inc_deck_end = (deck, outcome) ->
-  if deck
-    inc_deck_complete(deck)
-    db.collection('decks').update {_id: mongoskin.helper.toObjectID(deck)},
-      {$inc: {"stats.#{outcome}" : 1}}, (err) ->
+      {$inc: {"#{key}" : 1}}, (err) ->
         throw err if err
 
 inc_game_complete = (username, side) ->
@@ -166,7 +153,7 @@ inc_game = (user, room, outcome) ->
     # deck stats
     if save_stats(user.options.deckstats, room)
       deckID = user['deck-id']
-      inc_deck_end(deckID, outcome) if deckID
+      inc_deck(deckID, "stats.#{outcome}") if deckID
 
     # user game stats
     username = user.user.username
@@ -185,12 +172,10 @@ inc_game_loss = (loser, room) ->
 inc_game_final_user = (user) ->
   if user.username
     inc_game_complete(user.username, user.side)
-    inc_deck_complete(user.deck)
 
 inc_game_start = (user, side) ->
   if user
-    inc_deck_start(user.deck)
-    db.collection('users').update {username: user.user.username},
+    db.collection('users').update {username: user.username},
       {$inc: {"stats.games-started" : 1, "stats.games-started-#{side}" : 1}}, (err) ->
         console.log(err) if err
 
@@ -253,6 +238,8 @@ requester.on 'message', (data) ->
         throw err if err
 
       if response.state.corp.user and response.state.runner.user # have two users in the game
+        inc_corp_game_start(response.state.corp.user)
+        inc_runner_game_start(response.state.runner.user)
         if response.state.winner # and someone won
           inc_game_win(response.state[response.state.winner], response.state.room)
           inc_game_loss(response.state[response.state.loser], response.state.room)
@@ -491,9 +478,6 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
               }
               db.collection('gamestats').insert g, (err, data) ->
                 console.log(err) if err
-              # Handle user/deck stats
-              inc_corp_game_start(corp) if corp
-              inc_runner_game_start(runner) if runner
             game.started = true
             game.originalPlayers = game.players.slice(0)
             game.endingPlayers = game.players.slice(0)

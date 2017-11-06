@@ -811,12 +811,12 @@
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                     [:p (get-in deck [:identity :title]) [:br]
                      (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
-                       (let [stats (:stats deck)]
-                         ; adding key :games to handle legacy stats before adding started vs completed
-                         [:span "  Games: " (+ (:games-started stats) (:games stats))
-                          " - Completed: " (+ (:games-completed stats) (:games stats))
-                          " - Win: " (or (:wins stats) 0)
-                          " - Percent Win: " (num->percent (:wins stats) (+ (:wins stats) (:loses stats))) "%"]))]])])))))
+                       (let [stats (:stats deck)
+                             wins (or (:wins stats) 0)
+                             loses (or (:loses stats) 0)]
+                         [:span "  Won: " wins
+                          " - Lost: " loses
+                          " - Winning Percentage: " (num->percent wins (+ wins loses)) "%"]))]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
