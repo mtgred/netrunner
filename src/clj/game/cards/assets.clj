@@ -972,9 +972,11 @@
                                 :effect (req (if (= target "Add News Team to score area")
                                                (do (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point"))
                                                    (as-trashed-agenda state :runner card -1 {:force true})
+                                                   (trigger-event state side :no-trash card)
                                                    (effect-completed state side eid))
                                                (do (system-msg state :runner (str "takes 2 tags from News Team"))
-                                                   (tag-runner state :runner eid 2))))}
+                                                   (tag-runner state :runner eid 2)
+                                                   (trigger-event state side :no-trash card))))}
                                card targets))}}
 
    "Open Forum"
