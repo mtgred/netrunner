@@ -1320,9 +1320,11 @@
                                                                     (req (if (= target "Add Shi.Kyū to score area")
                                                                            (do (as-trashed-agenda state :runner card -1)
                                                                                (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
+                                                                               (trigger-event state side :no-trash card)
                                                                                (effect-completed state side eid))
                                                                            (do (damage state :corp eid :net dmg {:card card})
-                                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))))))}
+                                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))
+                                                                               (trigger-event state side :no-trash card)))))}
                                                         card targets))}
                          :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                       card targets))}}
