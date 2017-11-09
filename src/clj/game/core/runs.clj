@@ -127,24 +127,26 @@
                             card nil)
           ;; Otherwise, show the option to pay to trash the card.
           (when-not (and (is-type? card "Operation")
+                         ;; Don't show the option if Edward Kim's auto-trash flag is true.
                          (card-flag? card :can-trash-operation true))
-            ;; Don't show the option if Edward Kim's auto-trash flag is true.
-            (continue-ability state :runner
-                              {:optional
-                               {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
-                                :no-ability {:effect (req
-                                                       ;; toggle access flag to prevent Hiro issue #2638
-                                                       (swap! state dissoc :access)
-                                                       (trigger-event state side :no-trash c)
-                                                       (swap! state assoc :access true))}
-                                :yes-ability {:cost [:credit trash-cost]
-                                              :delayed-completion true
-                                              :effect (req (trash state side eid card nil)
-                                                           (when (:run @state)
-                                                             (swap! state assoc-in [:run :did-trash] true))
-                                                           (swap! state assoc-in [:runner :register :trashed-card] true)
-                                                           (system-msg state side (str "pays " trash-msg)))}}}
-                              card nil))))
+            ;; If card has already been trashed this access don't show option to pay to trash (eg. Ed Kim)
+            (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
+              (continue-ability state :runner
+                                {:optional
+                                 {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
+                                  :no-ability {:effect (req
+                                                         ;; toggle access flag to prevent Hiro issue #2638
+                                                         (swap! state dissoc :access)
+                                                         (trigger-event state side :no-trash c)
+                                                         (swap! state assoc :access true))}
+                                  :yes-ability {:cost [:credit trash-cost]
+                                                :delayed-completion true
+                                                :effect (req (trash state side eid card nil)
+                                                             (when (:run @state)
+                                                               (swap! state assoc-in [:run :did-trash] true))
+                                                             (swap! state assoc-in [:runner :register :trashed-card] true)
+                                                             (system-msg state side (str "pays " trash-msg)))}}}
+                                card nil)))))
       ;; The card does not have a trash cost
       (do (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid})
           ;; TODO: Trigger :no-trash after hit "OK" on access

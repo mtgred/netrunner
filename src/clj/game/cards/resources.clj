@@ -1307,6 +1307,7 @@
 
    "Salsette Slums"
    {:flags {:slow-trash (req true)}
+    :implementation "Will not trigger Maw when used on card already trashed (2nd ability)"
     :events {:runner-install
              {:req (req (= card target))
               :silent (req true)
@@ -1334,7 +1335,7 @@
                                 (deactivate state side c)
                                 (move state :corp c :rfg)
                                 (pay state :runner card :credit (trash-cost state side c))
-                                (swap! state update-in [:turn-events] #(cons [:runner-trash c] %))
+                                (trigger-event state side :no-trash c)
                                 (update! state side (dissoc card :slums-active))
                                 (close-access-prompt state side)
                                 (when-not (:run @state)
@@ -1349,8 +1350,8 @@
                                                           (map first (turn-events state side :runner-trash)))}
                                     :msg (msg "remove " (:title target) " from the game")
                                     :effect (req (deactivate state side target)
+                                                 (trigger-event state side :no-trash target)
                                                  (move state :corp target :rfg)
-                                                 (swap! state update-in [:turn-events] #(cons [:runner-trash target] %))
                                                  (update! state side (dissoc card :slums-active)))}
                                    card nil))}]}
 
