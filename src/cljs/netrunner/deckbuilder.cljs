@@ -19,7 +19,9 @@
 (defn num->percent
   "Converts an input number to a percent of the second input number for display"
   [num1 num2]
-  (gstring/format "%.0f" (* 100 (float (/ num1 num2)))))
+  (if (zero? num2)
+    "0"
+    (gstring/format "%.0f" (* 100 (float (/ num1 num2))))))
 
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
@@ -811,12 +813,18 @@
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                     [:p (get-in deck [:identity :title]) [:br]
                      (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
-                       (let [stats (:stats deck)]
+                       (let [stats (:stats deck)
+                             games (or (:games stats) 0)
+                             started (or (:games-started stats) 0)
+                             completed (or (:games-completed stats) 0)
+                             wins (or (:wins stats) 0)
+                             losses (or (:loses stats) 0)]
                          ; adding key :games to handle legacy stats before adding started vs completed
-                         [:span "  Games: " (+ (:games-started stats) (:games stats))
-                          " - Completed: " (+ (:games-completed stats) (:games stats))
-                          " - Win: " (or (:wins stats) 0)
-                          " - Percent Win: " (num->percent (:wins stats) (+ (:wins stats) (:loses stats))) "%"]))]])])))))
+                         [:span "  Games: " (+ started games)
+                          " - Completed: " (+ completed games)
+                          " - Won: " wins
+                          " - Lost: " losses
+                          " - Percent Won: " (num->percent wins (+ wins losses)) "%"]))]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"

@@ -60,7 +60,7 @@ removePlayer = (socket) ->
       if spectator.id is socket.id
         game.spectators.splice(i, 1)
         break
-    if game.players.length is 1
+    if game.started and game.players.length is 1
       requester.send(JSON.stringify({action: "finaluser-add", user: game.players[0], gameid: socket.gameid}))
     if game.players.length is 0 and game.spectators.length is 0
       # Store the list of player sockets for the game before we delete the game
@@ -123,6 +123,79 @@ user_allowed_in_game = (username, game) ->
   not_allowed = username in users_blocked_from_game(game)
   not not_allowed
 
+##
+## User/Deck Stats
+##
+
+save_stats = (option, room) ->
+  (option is "always") or ((option is "competitive") and (room is "competitive"))
+
+inc_deck = (deck, key) ->
+  if deck
+    db.collection('decks').update {_id: mongoskin.helper.toObjectID(deck)},
+      {$inc: {"#{key}" : 1}}, (err) ->
+        throw err if err
+
+inc_game_complete = (username, side) ->
+  if username
+    db.collection('users').update {username: username},
+      {$inc: {"stats.games-completed" : 1, "stats.games-completed-#{side}" : 1}}, (err) ->
+        throw err if err
+
+inc_game_end = (username, side, outcome) ->
+  if username
+    db.collection('users').update {username: username},
+      {$inc: {"stats.#{outcome}": 1, "stats.#{outcome}-#{side}" : 1}}, (err) ->
+        throw err if err
+
+inc_game = (user, room, outcome) ->
+  if user and user.user
+    # deck stats
+    if save_stats(user.options.deckstats, room)
+      deckID = user['deck-id']
+      if deckID
+        inc_deck(deckID, "stats.#{outcome}")
+        inc_deck(deckID, "stats.games-completed")
+
+    # user game stats
+    username = user.user.username
+    side = user.identity.side.toLowerCase()
+    inc_game_complete(username, side) # everyone gets game completion stats
+
+    if save_stats(user.options.gamestats, room)
+      inc_game_end(username, side, outcome)
+
+inc_game_win = (winner, room) ->
+  inc_game(winner, room, "wins")
+
+inc_game_loss = (loser, room) ->
+  inc_game(loser, room, "loses")
+
+inc_game_final_user = (user, room) ->
+  if user
+    side = user.identity.side.toLowerCase()
+    inc_game_complete(user.user.username, side)
+
+  if save_stats(user.options.deckstats, room)
+    deckID = user['deck-id']
+    inc_deck(deckID, "stats.games-completed") if deckID
+
+inc_game_start = (user, side, room) ->
+  if user
+    db.collection('users').update {username: user.user.username},
+      {$inc: {"stats.games-started" : 1, "stats.games-started-#{side}" : 1}}, (err) ->
+        console.log(err) if err
+
+  if save_stats(user.options.deckstats, room)
+    deckID = user['deck-id']
+    inc_deck(deckID, "stats.games-started") if deckID
+
+inc_corp_game_start = (user, room) ->
+  inc_game_start(user, "corp", room)
+
+inc_runner_game_start = (user, room) ->
+  inc_game_start(user, "runner", room)
+
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
 requester_connected = false
@@ -164,14 +237,6 @@ requester.on 'message', (data) ->
   response = JSON.parse(data)
   if response.action is "remove"
     if response.state
-      winningDeck = response.state["winning-deck-id"]
-      losingDeck = response.state["losing-deck-id"]
-      winner = response.state["winning-user"]
-      loser = response.state["losing-user"]
-      winningSide = response.state.winner
-      losingSide = response.state.loser
-      room = response.state.room
-      finalUser = response.state["final-user"]
       g = {
         winner: response.state.winner
         reason: response.state.reason
@@ -180,74 +245,20 @@ requester.on 'message', (data) ->
         runnerAgenda: response.state.runner["agenda-point"]
         corpAgenda: response.state.corp["agenda-point"]
       }
-      # Handle Deck Statistics
-      if response.state[winningSide]
-        if response.state[winningSide].options.deckstats is "always"
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games-completed" : 1, "stats.wins" : 1}}, (err) ->
-            throw err if err
-        else if response.state[winningSide].options.deckstats is "competitive" and room is "competitive"
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(winningDeck)}, {$inc: {"stats.games-completed" : 1, "stats.wins" : 1}}, (err) ->
-            throw err if err
-        if response.state[losingSide].options.deckstats is "always"
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games-completed" : 1, "stats.loses" : 1}}, (err) ->
-            throw err if err
-        else if response.state[losingSide].options.deckstats is "competitive" and room is "competitive"
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(losingDeck)}, {$inc: {"stats.games-completed" : 1, "stats.loses" : 1}}, (err) ->
-            throw err if err
-
-      # Handle Game Statistics
-      if winningSide
-        if winningSide is "corp"
-          if response.state[winningSide].options.gamestats is "always"
-            db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.wins": 1, "stats.wins-corp" : 1}}, (err) ->
-              throw err if err
-          else if response.state[winningSide].options.gamestats is "competitive" and room is "competitive"
-            db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.wins": 1, "stats.wins-corp" : 1}}, (err) ->
-              throw err if err
-          else
-            db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1}}, (err) ->
-              throw err if err
-          if response.state[losingSide].options.gamestats is "always"
-            db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.loses": 1, "stats.loses-runner" : 1}}, (err) ->
-              throw err if err
-          else if response.state[losingSide].options.gamestats is "competitive" and room is "competitive"
-            db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.loses": 1, "stats.loses-runner" : 1}}, (err) ->
-              throw err if err
-          else
-            db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1}}, (err) ->
-              throw err if err
-        else if winningSide is "runner"
-          if response.state[winningSide].options.gamestats is "always"
-            db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.wins": 1, "stats.wins-runner" : 1}}, (err) ->
-              throw err if err
-          else if response.state[winningSide].options.gamestats is "competitive" and room is "competitive"
-            db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1, "stats.wins": 1, "stats.wins-runner" : 1}}, (err) ->
-              throw err if err
-          else
-            db.collection('users').update {username: winner}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1}}, (err) ->
-              throw err if err
-          if response.state[losingSide].options.gamestats is "always"
-            db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.loses": 1, "stats.loses-corp" : 1}}, (err) ->
-              throw err if err
-          else if response.state[losingSide].options.gamestats is "competitive" and room is "competitive"
-            db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1, "stats.loses": 1, "stats.loses-corp" : 1}}, (err) ->
-              throw err if err
-          else
-            db.collection('users').update {username: loser}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1}}, (err) ->
-              throw err if err
-      # Handle other player dropping without completing game by crediting last player with completions
-      else if finalUser
-        if finalUser.side is "corp"
-          db.collection('users').update {username: finalUser.username}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-corp" : 1}}, (err) ->
-            throw err if err
-        if finalUser.side is "runner"
-          db.collection('users').update {username: finalUser.username}, {$inc: {"stats.games-completed" : 1, "stats.games-completed-runner" : 1}}, (err) ->
-            throw err if err
-        if finalUser["deck-id"]
-          db.collection('decks').update {_id: mongoskin.helper.toObjectID(finalUser["deck-id"])}, {$inc: {"stats.games-completed" : 1}}, (err) ->
-            throw err if err
       db.collection('gamestats').update {gameid: response.gameid}, {$set: g}, (err) ->
         throw err if err
+
+      if response.state.corp.user and response.state.runner.user # have two users in the game
+        room = response.state.room
+        inc_corp_game_start(response.state.corp, room)
+        inc_runner_game_start(response.state.runner, room)
+        if response.state.winner # and someone won
+          inc_game_win(response.state[response.state.winner], room)
+          inc_game_loss(response.state[response.state.loser], room)
+        else if response.state["final-user"] # someone left before the game was won
+          final_side = response.state["final-user"].side
+          inc_game_final_user(response.state[final_side], room)
+
   else
     if (games[response.gameid])
       sendGameResponse(games[response.gameid], response)
@@ -480,11 +491,6 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
               }
               db.collection('gamestats').insert g, (err, data) ->
                 console.log(err) if err
-              # Handle user game stats
-              db.collection('users').update {username: corp.user.username}, {$inc: {"stats.games-started" : 1, "stats.games-started-corp" : 1}}, (err) ->
-                console.log(err) if err
-              db.collection('users').update {username: runner.user.username}, {$inc: {"stats.games-started" : 1, "stats.games-started-runner" : 1}}, (err) ->
-                console.log(err) if err
             game.started = true
             game.originalPlayers = game.players.slice(0)
             game.endingPlayers = game.players.slice(0)
@@ -493,9 +499,6 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
             msg.gameid = socket.gameid
             requester.send(JSON.stringify(msg))
             for player in game.players
-              if player.deck
-                db.collection('decks').update {_id: mongoskin.helper.toObjectID(player.deck._id)}, {$inc: {"stats.games-started" : 1}}, (err) ->
-                  throw err if err
               player.faction = if player.deck then player.deck.identity.faction else null
               player.identity = if player.deck then player.deck.identity.title else null
               if player.deck
