@@ -1281,6 +1281,7 @@
               :effect (req (system-msg state :runner (str "spends " spent "[Credit]. "
                                        (-> corp :user :username) " guesses " target "[Credit]"))
                            (clear-wait-prompt state :runner)
+                           (lose state :runner :credit spent)
                            (if (not= (str spent) target)
                              (continue-ability state :runner (choose-ice) card nil)
                              (effect-completed state side eid)))})
