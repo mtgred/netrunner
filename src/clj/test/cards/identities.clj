@@ -244,6 +244,25 @@
     (run-empty-server state "HQ")
     (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw")))
 
+
+(deftest exile-customized-secretary
+  ;; Exile - simultaneous-resolution prompt shown for interaction with Customized Secretary
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Exile: Streethawk" [(qty "Customized Secretary" 3) (qty "Clone Chip" 3)
+                                      (qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Customized Secretary" "Clone Chip"])
+    (trash-from-hand state :runner "Customized Secretary")
+    (play-from-hand state :runner "Clone Chip")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (prompt-select :runner (find-card "Customized Secretary" (:discard (get-runner))))
+    ;; Make sure the simultaneous-resolution prompt is showing with 2 choices
+    (is (= 2 (-> (get-runner) :prompt first :choices count)) "Simultaneous-resolution prompt is showing")
+    (prompt-choice :runner "Exile: Streethawk")
+    (is (= 1 (count (:hand (get-runner)))) "Exile drew a card")))
+
 (deftest gabriel-santiago
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
   (do-game

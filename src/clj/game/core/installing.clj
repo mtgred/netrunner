@@ -364,6 +364,7 @@
        (continue-ability state side
                          {:choices hosting
                           :prompt (str "Choose a card to host " (:title card) " on")
+                          :delayed-completion true
                           :effect (effect (runner-install eid card (assoc params :host-card target)))}
                          card nil)
        (do (trigger-event state side :pre-install card facedown)
@@ -377,7 +378,7 @@
                        c (assoc c :installed true :new true)
                        installed-card (if facedown
                                         (update! state side c)
-                                        (card-init state side c true))]
+                                        (card-init state side c false))]
                    (runner-install-message state side (:title card) cost-str params)
                    (play-sfx state side "install-runner")
                    (when (and (is-type? card "Program") (neg? (get-in @state [:runner :memory])))
@@ -388,7 +389,7 @@
                    (when (has-subtype? c "Icebreaker")
                      (update-breaker-strength state side c))
                    (trigger-event-simult state side eid :runner-install
-                                         nil
+                                         {:card-ability (card-as-handler installed-card)}
                                          installed-card))
                  (effect-completed state side eid))
                (effect-completed state side eid)))

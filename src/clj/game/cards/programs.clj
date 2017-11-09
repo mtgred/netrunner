@@ -132,6 +132,7 @@
                                  (continue-ability state side (custsec-host (remove-once #(not= % target) cards))
                                                    card nil))))})]
      {:delayed-completion true
+      :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
       :msg (msg "reveal the top 5 cards of their Stack: " (join ", " (map :title (take 5 (:deck runner)))))
       :effect (req (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
                    (let [from (take 5 (:deck runner))]
