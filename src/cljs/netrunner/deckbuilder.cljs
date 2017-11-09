@@ -748,8 +748,10 @@
         best-card (lookup (:side card) card)]
     (if (js/isNaN qty)
       (om/set-state! owner :quantity 3)
-      (do (put! (om/get-state owner :edit-channel)
-                {:qty qty
+      (let [max-qty (or (:limited best-card) 3)
+            limit-qty (if (> qty max-qty) max-qty qty)]
+        (put! (om/get-state owner :edit-channel)
+                {:qty limit-qty
                  :card best-card})
           (om/set-state! owner :quantity 3)
           (om/set-state! owner :query "")
