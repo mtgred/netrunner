@@ -153,7 +153,9 @@ inc_game = (user, room, outcome) ->
     # deck stats
     if save_stats(user.options.deckstats, room)
       deckID = user['deck-id']
-      inc_deck(deckID, "stats.#{outcome}") if deckID
+      if deckID
+        inc_deck(deckID, "stats.#{outcome}")
+        inc_deck(deckID, "stats.games-completed")
 
     # user game stats
     username = user.user.username
@@ -169,21 +171,30 @@ inc_game_win = (winner, room) ->
 inc_game_loss = (loser, room) ->
   inc_game(loser, room, "loses")
 
-inc_game_final_user = (user) ->
-  if user.username
-    inc_game_complete(user.username, user.side)
-
-inc_game_start = (user, side) ->
+inc_game_final_user = (user, room) ->
   if user
-    db.collection('users').update {username: user.username},
+    side = user.identity.side.toLowerCase()
+    inc_game_complete(user.user.username, side)
+
+  if save_stats(user.options.deckstats, room)
+    deckID = user['deck-id']
+    inc_deck(deckID, "stats.games-completed") if deckID
+
+inc_game_start = (user, side, room) ->
+  if user
+    db.collection('users').update {username: user.user.username},
       {$inc: {"stats.games-started" : 1, "stats.games-started-#{side}" : 1}}, (err) ->
         console.log(err) if err
 
-inc_corp_game_start = (user) ->
-  inc_game_start(user, "corp")
+  if save_stats(user.options.deckstats, room)
+    deckID = user['deck-id']
+    inc_deck(deckID, "stats.games-started") if deckID
 
-inc_runner_game_start = (user) ->
-  inc_game_start(user, "runner")
+inc_corp_game_start = (user, room) ->
+  inc_game_start(user, "corp", room)
+
+inc_runner_game_start = (user, room) ->
+  inc_game_start(user, "runner", room)
 
 # ZeroMQ
 clojure_hostname = process.env['CLOJURE_HOST'] || "127.0.0.1"
@@ -238,13 +249,15 @@ requester.on 'message', (data) ->
         throw err if err
 
       if response.state.corp.user and response.state.runner.user # have two users in the game
-        inc_corp_game_start(response.state.corp.user)
-        inc_runner_game_start(response.state.runner.user)
+        room = response.state.room
+        inc_corp_game_start(response.state.corp, room)
+        inc_runner_game_start(response.state.runner, room)
         if response.state.winner # and someone won
-          inc_game_win(response.state[response.state.winner], response.state.room)
-          inc_game_loss(response.state[response.state.loser], response.state.room)
+          inc_game_win(response.state[response.state.winner], room)
+          inc_game_loss(response.state[response.state.loser], room)
         else if response.state["final-user"] # someone left before the game was won
-          inc_game_final_user(response.state["final-user"])
+          final_side = response.state["final-user"].side
+          inc_game_final_user(response.state[final_side], room)
 
   else
     if (games[response.gameid])
