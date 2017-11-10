@@ -313,6 +313,10 @@
                                 :interactive (req true)
                                 :effect (effect (continue-ability reveal card nil))}}})
 
+   "eXer"
+   {:in-play [:rd-access 1]
+    :events {:purge {:effect (effect (trash card))}} }
+
    "Expert Schedule Analyzer"
    {:abilities [{:cost [:click 1]
                  :msg "make a run on HQ"
