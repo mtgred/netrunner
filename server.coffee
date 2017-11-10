@@ -26,6 +26,7 @@ LocalStrategy = require('passport-local').Strategy
 io = require('socket.io')(server)
 stylus = require('stylus')
 zmq = require('zmq')
+got = require('got')
 
 config = require('./config')
 
@@ -923,12 +924,30 @@ app.get '/nrdb/config', (req, res) ->
     res.status(401).send({message: 'Unauthorized'})
 
 app.get '/nrdb/token_callback', (req, res) ->
+  console.log("GET")
+  console.log("token body: ")
+  console.log(req.body)
+  res.status(200).send({message: 'ok'})
+
+app.post '/nrdb/token_callback', (req, res) ->
+  console.log("POST")
   console.log("token body: ")
   console.log(req.body)
   res.status(200).send({message: 'ok'})
 
 handle_nrdb_callback = (auth_code, req) ->
   console.log("Auth code: " + auth_code)
+  # got.post("#{config.nrdb_auth_url}",
+  got.get("https://netrunnerdb.com/oauth/v2/token"
+    {#json: true,
+    query: "client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&grant_type=authorization_code&code=#{auth_code}&redirect_uri=#{config.nrdb_callback_url}"}).then( (response) ->
+      console.log("Got response")
+      console.log(response)
+    ).catch( (error) ->
+      console.log("Got error")
+      console.log(error)
+    )
+
   # https://cloud.digitalocean.com/v1/oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
 
 
@@ -944,9 +963,13 @@ if env == 'development'
   console.log("Client Callback url " + config.nrdb_callback_url)
 
   app.get '/callback', (req, res) ->
+    console.log("CALLBACK GET")
     handle_nrdb_callback(req.query.code, req)
     # Hacky redirect for dev work. Running the server on localhost, not the domain in the callback_url
     res.redirect("http://localhost:#{app.get('port')}/nrdb")
+
+  app.post '/callback', (req, res) ->
+    console.log("CALLBACK POST")
 
   app.get '/*', (req, res) ->
     if req.user
