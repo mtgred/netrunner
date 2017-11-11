@@ -42,7 +42,9 @@
                     (when (:games msg)
                       (swap! app-state assoc :games (sort-games-list (vals (:games msg)))))
                     (when (:blockNewGames msg)
-                      (swap! app-state assoc :block-new-games true))
+                      (swap! app-state assoc :block-new-games true)
+                      (when (:blockMessage msg)
+                        (swap! app-state assoc :block-message (:blockMessage msg))))
                     (when-let [sound (:notification msg)]
                       (when-not (:gameid @app-state)
                         (.play (.getElementById js/document sound)))))

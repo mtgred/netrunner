@@ -196,7 +196,7 @@
                   (doseq [side [:runner :corp]]
                     (toast state side (:message command) "warning" {:time-out 0 :close-button true})))
               (if (:blockgames command)
-                (.send socket (generate-string {:action "block-games"}))
+                (.send socket (generate-string {:action "block-games" :message (:message command)}))
                 (.send socket (generate-string "ok"))))
             (let [state (@game-states (:gameid msg))
                   old-state (when state (@old-states (:gameid msg)))

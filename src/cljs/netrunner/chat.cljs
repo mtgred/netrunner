@@ -129,31 +129,38 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-         [:div.chat-app
+        [:div.chat-app
+         (when (:block-new-games cursor)
+           [:div.blue-shade.panel.server-message
+            [:h3 "Server Maintenance"]
+            (when-let [msg (:block-message cursor)]
+              [:span msg])
+            [:div "No new games may be started until maintenance is completed."]])
+         [:div.chat-interface
           [:div.blue-shade.panel.channel-list
-           [:h4 "Channels"]
-           (for [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska :português :sverige :stimhack-league]]
-             (om/build channel-view {:channel ch :active-channel (:channel state)}
-                       {:init-state {:channel-ch (:channel-ch state)}}))]
-          [:div.chat-container
-           [:div.chat-card-zoom
-            (when-let [card (om/get-state owner :zoom)]
-              (om/build card-zoom card))]
-           [:div.chat-box
-            [:div.blue-shade.panel.message-list {:ref "message-list"
-                                                 :on-scroll #(let [currElt (.-currentTarget %)
-                                                                   scroll-top (.-scrollTop currElt)
-                                                                   scroll-height (.-scrollHeight currElt)
-                                                                   client-height (.-clientHeight currElt)
-                                                                   scrolling (< (+ scroll-top client-height) scroll-height)]
-                                                               (om/set-state! owner :scrolling scrolling))}
-             (if (not (:cards-loaded cursor))
-               [:h4 "Loading cards..."]
-               (om/build-all message-view (get-in cursor [:channels (:channel state)])
-                             {:init-state {:zoom-ch (:zoom-ch state)}}))
-             ]
-            (when (:user @app-state)
-              [:div
-               (om/build msg-input-view state)])]]]))))
+            [:h4 "Channels"]
+            (for [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska :português :sverige :stimhack-league]]
+              (om/build channel-view {:channel ch :active-channel (:channel state)}
+                        {:init-state {:channel-ch (:channel-ch state)}}))]
+           [:div.chat-container
+            [:div.chat-card-zoom
+             (when-let [card (om/get-state owner :zoom)]
+               (om/build card-zoom card))]
+            [:div.chat-box
+             [:div.blue-shade.panel.message-list {:ref "message-list"
+                                                  :on-scroll #(let [currElt (.-currentTarget %)
+                                                                    scroll-top (.-scrollTop currElt)
+                                                                    scroll-height (.-scrollHeight currElt)
+                                                                    client-height (.-clientHeight currElt)
+                                                                    scrolling (< (+ scroll-top client-height) scroll-height)]
+                                                                (om/set-state! owner :scrolling scrolling))}
+              (if (not (:cards-loaded cursor))
+                [:h4 "Loading cards..."]
+                (om/build-all message-view (get-in cursor [:channels (:channel state)])
+                              {:init-state {:zoom-ch (:zoom-ch state)}}))
+              ]
+             (when (:user @app-state)
+               [:div
+                (om/build msg-input-view state)])]]]]))))
 
 (om/root chat app-state {:target (. js/document (getElementById "chat"))})

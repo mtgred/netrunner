@@ -701,13 +701,27 @@ nav ul
   cover-color: obsidian
 
 // Chat
+#chat
+  .server-message
+    flex(0)
+    margin-left: 0
+    margin-right: 0
+    margin-top: 0
+    padding-bottom: 20px
+    background-color: rgba(30, 130, 30, 0.85)
+    font-weight: bold
 
 .chat-app
   display-flex()
   position: absolute
+  flex-direction(column)
   top: 196px
   bottom: 15px
   width: 995px
+
+  .chat-interface
+    flex(2)
+    display-flex()
 
 .channel-list
   flex(0 0 180px)

@@ -39,6 +39,7 @@ games = {}
 lobbyUpdate = false
 lobbyUpdates = {"create" : {}, "update" : {}, "delete" : {}}
 blockNewGames = false
+blockMessage = ""
 
 swapSide = (side) ->
   if side is "Corp" then "Runner" else "Corp"
@@ -262,6 +263,7 @@ requester.on 'message', (data) ->
 
   else if response.action is "block-games"
     blockNewGames = true
+    blockMessage = response.message
     lobbyUpdate = true
 
   else
@@ -295,7 +297,7 @@ chat = io.of('/chat').on 'connection', (socket) ->
       db.collection('messages').insert msg, (err, result) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
-  socket.emit("netrunner", {type: "games", games: games, blockNewGames: blockNewGames})
+  socket.emit("netrunner", {type: "games", games: games, blockNewGames: blockNewGames, blockMessage: blockMessage})
 
   socket.on 'disconnect', () ->
     gid = socket.gameid
@@ -526,7 +528,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
 sendLobby = () ->
   if lobby and lobbyUpdate
-    lobby.emit('netrunner', {type: "games", gamesdiff: lobbyUpdates, blockNewGames: blockNewGames})
+    lobby.emit('netrunner', {type: "games", gamesdiff: lobbyUpdates, blockNewGames: blockNewGames, blockMessage: blockMessage})
     lobbyUpdate = false
     lobbyUpdates["create"] = {}
     lobbyUpdates["update"] = {}
