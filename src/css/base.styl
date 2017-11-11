@@ -608,13 +608,16 @@ nav ul
   button
     margin-right: 5px
 
-.reset-form
+.reset-form, .announce-form
   position: absolute
   top: 50%
   left: 50%
   padding: 10px 20px
   width: 282px
   margin: -92px 0 0 -141px
+
+.announce-form
+  color: white
 
 .flash-message
   color: orangered
@@ -1146,6 +1149,11 @@ nav ul
   .games .button-bar
     box-sizing: initial
     padding: 0 15px 15px
+
+    .server-message
+      line-height: 24px
+      color: red
+      font-weight: bold
 
     .rooms .roomtab
       display: block

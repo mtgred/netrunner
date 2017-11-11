@@ -38,6 +38,7 @@ db = mongoskin.db(mongoUrl)
 games = {}
 lobbyUpdate = false
 lobbyUpdates = {"create" : {}, "update" : {}, "delete" : {}}
+blockNewGames = false
 
 swapSide = (side) ->
   if side is "Corp" then "Runner" else "Corp"
@@ -259,6 +260,10 @@ requester.on 'message', (data) ->
           final_side = response.state["final-user"].side
           inc_game_final_user(response.state[final_side], room)
 
+  else if response.action is "block-games"
+    blockNewGames = true
+    lobbyUpdate = true
+
   else
     if (games[response.gameid])
       sendGameResponse(games[response.gameid], response)
@@ -290,7 +295,7 @@ chat = io.of('/chat').on 'connection', (socket) ->
       db.collection('messages').insert msg, (err, result) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
-  socket.emit("netrunner", {type: "games", games: games})
+  socket.emit("netrunner", {type: "games", games: games, blockNewGames: blockNewGames})
 
   socket.on 'disconnect', () ->
     gid = socket.gameid
@@ -521,7 +526,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
 sendLobby = () ->
   if lobby and lobbyUpdate
-    lobby.emit('netrunner', {type: "games", gamesdiff: lobbyUpdates})
+    lobby.emit('netrunner', {type: "games", gamesdiff: lobbyUpdates, blockNewGames: blockNewGames})
     lobbyUpdate = false
     lobbyUpdates["create"] = {}
     lobbyUpdates["update"] = {}
@@ -886,8 +891,8 @@ app.get '/admin/announce', (req, res) ->
 
 app.post '/admin/announce', (req, res) ->
   if req.user and req.user.isadmin
-    requester.send(JSON.stringify({action: "alert", command: req.body.message}))
-    res.status(200).send({text: req.body.message, result: "ok"})
+    requester.send(JSON.stringify({action: "alert", command: req.body}))
+    res.redirect("/")
   else
     res.status(401).send({message: 'Unauthorized'})
 

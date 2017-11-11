@@ -191,10 +191,13 @@
       (try
         (let [{:keys [gameid action command args] :as msg} (convert (.recv socket))]
           (if (= action "alert")
-            (do (doseq [state (vals @game-states)]
+            (do
+              (doseq [state (vals @game-states)]
                   (doseq [side [:runner :corp]]
-                    (toast state side command "warning" {:time-out 0 :close-button true})))
-                (.send socket (generate-string "ok")))
+                    (toast state side (:message command) "warning" {:time-out 0 :close-button true})))
+              (if (:blockgames command)
+                (.send socket (generate-string {:action "block-games"}))
+                (.send socket (generate-string "ok"))))
             (let [state (@game-states (:gameid msg))
                   old-state (when state (@old-states (:gameid msg)))
                   [old-corp old-runner old-spect] (when old-state (private-states (atom old-state)))]

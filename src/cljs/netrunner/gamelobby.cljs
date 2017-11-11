@@ -30,7 +30,7 @@
       (let [msg (<! socket-channel)]
         (case (:type msg)
           "game" (do (swap! app-state assoc :gameid (:gameid msg))
-                     (when (:started msg) (launch-game nil)))
+                   (when (:started msg) (launch-game nil)))
           "games" (do (when (:gamesdiff msg)
                         (swap! app-state update-in [:games]
                                (fn [games]
@@ -39,15 +39,17 @@
                                        update (merge create (get-in msg [:gamesdiff :update]))
                                        delete (apply dissoc update (map keyword (keys (get-in msg [:gamesdiff :delete]))))]
                                    (sort-games-list (vals delete))))))
-                      (when (:games msg)
-                        (swap! app-state assoc :games (sort-games-list (vals (:games msg)))))
-                      (when-let [sound (:notification msg)]
-                        (when-not (:gameid @app-state)
-                          (.play (.getElementById js/document sound)))))
+                    (when (:games msg)
+                      (swap! app-state assoc :games (sort-games-list (vals (:games msg)))))
+                    (when (:blockNewGames msg)
+                      (swap! app-state assoc :block-new-games true))
+                    (when-let [sound (:notification msg)]
+                      (when-not (:gameid @app-state)
+                        (.play (.getElementById js/document sound)))))
           "say" (do (swap! app-state update-in [:messages]
                            #(conj % {:user (:user msg) :text (:text msg)}))
-                    (when-let [sound (:notification msg)]
-                      (.play (.getElementById js/document sound ))))
+                  (when-let [sound (:notification msg)]
+                    (.play (.getElementById js/document sound ))))
           "start" (launch-game (:state msg))
           "Invalid password" (js/console.log "pwd" (:gameid msg))
           "lobby-notification" (toast (:text msg) (:severity msg) nil)
@@ -315,7 +317,7 @@
      room-name " (" open-games open-games-symbol " "
      closed-games closed-games-symbol ")"]))
 
-(defn game-lobby [{:keys [games gameid messages sets user password-gameid] :as cursor} owner]
+(defn game-lobby [{:keys [block-new-games games gameid messages sets user password-gameid] :as cursor} owner]
   (reify
     om/IInitState
     (init-state [this]
@@ -330,10 +332,13 @@
          [:div.lobby.panel.blue-shade
           [:div.games
            [:div.button-bar
-            (if gameid
-              [:button.float-left {:class "disabled"} "New game"]
-              [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
+            (when-not block-new-games
+              (if gameid
+                [:button.float-left {:class "disabled"} "New game"]
+                [:button.float-left {:on-click #(new-game cursor owner)} "New game"]))
             [:div.rooms
+             (if block-new-games
+               [:span.float-left.server-message.room-tab "Server Maintenance: No new games"])
              (room-tab cursor owner games "competitive" "Competitive")
              (room-tab cursor owner games "casual" "Casual")]]
            (let [password-game (some #(when (= password-gameid (:gameid %)) %) games)]
