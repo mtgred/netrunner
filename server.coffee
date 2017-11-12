@@ -261,11 +261,6 @@ requester.on 'message', (data) ->
           final_side = response.state["final-user"].side
           inc_game_final_user(response.state[final_side], room)
 
-  else if response.action is "block-games"
-    blockNewGames = true
-    blockMessage = response.message
-    lobbyUpdate = true
-
   else
     if (games[response.gameid])
       sendGameResponse(games[response.gameid], response)
@@ -887,14 +882,25 @@ app.get '/data/:collection/:field/:value', (req, res) ->
 
 app.get '/admin/announce', (req, res) ->
   if req.user and req.user.isadmin
-    res.render('announce.pug', {user : req.user})
+    res.render('announce.pug', {user : req.user, blockNewGames: blockNewGames, blockMessage: blockMessage})
   else
     res.status(401).send({message: 'Unauthorized'})
 
 app.post '/admin/announce', (req, res) ->
   if req.user and req.user.isadmin
-    requester.send(JSON.stringify({action: "alert", command: req.body}))
-    res.redirect("/")
+
+    if req.body.message
+      requester.send(JSON.stringify({action: "alert", command: req.body.message}))
+
+    if req.body.blockgames is "block"
+      blockNewGames = true
+      blockMessage = req.body.message ? ""
+    else
+      blockNewGames = false
+      blockMessage = ""
+
+    lobbyUpdate = true
+    res.redirect("/admin/announce")
   else
     res.status(401).send({message: 'Unauthorized'})
 
