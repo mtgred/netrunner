@@ -1,10 +1,11 @@
-(ns test.cards.resources
+(ns game-test.cards.resources
   (:require [game.core :as core]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(use-fixtures :once load-all-cards)
 
 (deftest activist-support
   ;; Activist Support - Take tag if you have none; Corp gains bad pub if they have none
@@ -1246,7 +1247,7 @@
     (is (= 3 (count (:hand (get-runner)))) "Drew no cards, at maximum")))
 
 (deftest salsette-slums
-  ;; Salsette Slums - Once per turn, when the trash cost of a card is paid, optionally remove from the game
+  ;; Salsette Slums - Once per turn, when the trash cost of a card is paid, optionally remove from the game_test
   (do-game
     (new-game (default-corp [(qty "Hostile Infrastructure" 1) (qty "Tech Startup" 1) (qty "Thomas Haas" 1)
                              (qty "Hedge Fund" 3)])
@@ -1275,7 +1276,7 @@
       (card-ability state :runner salsette1 0)
       (is (empty? (:prompt (get-runner))) "All prompts done")
       (is (= 3 (count (:hand (get-runner)))) "On-trash ability of other Hostile didn't fire")
-      (is (= (:cid ts1) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game")
+      (is (= (:cid ts1) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game_test")
       (is (= 2 (:credit (get-runner))) "Runner paid the trash cost.")
       (is (not (:run @state)) "Run is over")
       (run-empty-server state :remote2)
@@ -1295,11 +1296,11 @@
       ;; Can only use that first Slums once
       (card-ability state :runner salsette1 1)
       (is (empty? (:prompt (get-runner))) "Not prompting the runner")
-      (is (not (= (:cid th3) (:cid (last (:rfg (get-corp)))))) "Card was not removed from the game")
+      (is (not (= (:cid th3) (:cid (last (:rfg (get-corp)))))) "Card was not removed from the game_test")
       (card-ability state :runner salsette2 1)
       (is (not (empty? (:prompt (get-runner)))) "Prompting the runner to choose a card")
       (prompt-select :runner (find-card "Thomas Haas" (:discard (get-corp))))
-      (is (= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was removed from the game"))
+      (is (= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was removed from the game_test"))
     ;; Set things up so we can trash the Hostile and then make sure we can't "oops I forgot on a later turn"
     (core/gain state :runner :credit 5)
     (run-empty-server state :remote2)
@@ -1310,7 +1311,7 @@
           hostile2 (get-content state :remote2 0)]
       (card-ability state :runner salsette1 1)
       (prompt-select :runner (find-card "Hostile Infrastructure" (:discard (get-corp))))
-      (is (not (= (:cid hostile2) (:cid (last (:rfg (get-corp)))))) "Did not remove card from game"))))
+      (is (not (= (:cid hostile2) (:cid (last (:rfg (get-corp)))))) "Did not remove card from game_test"))))
 
 (deftest security-testing
   ;; Security Testing - Ability
@@ -1802,7 +1803,7 @@
       (is (= 2 (get-in (refresh bf) [:counter :power])) "2 power counters on The Black File")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game")
+      (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game_test")
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
 

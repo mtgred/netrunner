@@ -1,7 +1,7 @@
-(ns test.utils
+(ns game-test.utils
   (:require [monger.core :as mg]
             [monger.collection :as mc]
-            [game.core :refer [all-cards]]))
+            [jinteki.cards :refer [all-cards]]))
 
 (defn load-card [title]
   (let [conn (mg/connect {:host "127.0.0.1" :port 27017})

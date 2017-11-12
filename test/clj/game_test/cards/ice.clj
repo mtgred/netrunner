@@ -1,11 +1,12 @@
-(ns test.cards.ice
+(ns game-test.cards.ice
   (:require [game.core :as core]
             [game.utils :refer :all]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(use-fixtures :once load-all-cards)
 
 (deftest end-the-run
   ;; Since all ETR ice share a common ability, we only need one test
@@ -703,7 +704,7 @@
              (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
 
 (deftest snowflake
-  ;; Snowflake - Win a psi game to end the run
+  ;; Snowflake - Win a psi game_test to end the run
   (do-game
     (new-game (default-corp [(qty "Snowflake" 1)])
               (default-runner))

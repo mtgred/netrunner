@@ -1,13 +1,14 @@
-(ns test.games.scenarios
+(ns game-test.games.scenarios
   (:require [game.core :as core]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(use-fixtures :once load-all-cards)
 
 (deftest minigame-prevent-netdmg-resourcetrash
-  "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
+  "Mini-game_test testing prevention of net damage and resource trashing, with hosted Fall Guy"
   (do-game
     (new-game
       (default-corp [(qty "Neural EMP" 1) (qty "Hedge Fund" 3) (qty "SEA Source" 1)])
@@ -125,7 +126,7 @@
         (run-on state "Server 1") ; letting Runner in this time to use Caprice
         (core/rez state :corp cap)
         (run-continue state)
-        ;; Caprice psi game started automatically
+        ;; Caprice psi game_test started automatically
         (prompt-choice :corp "1 [Credits]")
         (prompt-choice :runner "2 [Credits]")
-        (is (not (:run @state)) "Corp won Caprice psi game and ended the run")))))
+        (is (not (:run @state)) "Corp won Caprice psi game_test and ended the run")))))

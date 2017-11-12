@@ -1,10 +1,11 @@
-(ns test.cards.icebreakers
+(ns game-test.cards.icebreakers
   (:require [game.core :as core]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(use-fixtures :once load-all-cards)
 
 (deftest atman-install-0
   ;; Atman - Installing with 0 power counters

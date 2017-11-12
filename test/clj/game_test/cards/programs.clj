@@ -1,11 +1,12 @@
-(ns test.cards.programs
+(ns game-test.cards.programs
   (:require [game.core :as core]
             [game.utils :refer :all]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(use-fixtures :once load-all-cards)
 
 (deftest au-revoir
   ;; Au Revoir - Gain 1 credit every time you jack out
@@ -254,7 +255,7 @@
     (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown")))
 
 (deftest hyperdriver
-  ;; Hyperdriver - Remove from game to gain 3 clicks
+  ;; Hyperdriver - Remove from game_test to gain 3 clicks
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Hyperdriver" 1)]))
@@ -268,10 +269,10 @@
       (card-ability state :runner hyp 0)
       (core/end-phase-12 state :runner nil)
       (is (= 7 (:click (get-runner))) "Gained 3 clicks")
-      (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
+      (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game_test"))))
 
 (deftest imp-the-future-perfect
-  ;; Trashing TFP with Imp should not trigger psi-game -- Issue #1844
+  ;; Trashing TFP with Imp should not trigger psi-game_test -- Issue #1844
   (do-game
     (new-game (default-corp [(qty "The Future Perfect" 1)])
               (default-runner [(qty "Imp" 1)]))
@@ -281,19 +282,19 @@
       (run-empty-server state "HQ")
       ;; Should access TFP at this point
       (card-ability state :runner (get-program state 0) 0)
-      (is (empty? (get-in @state [:runner :prompt])) "Should be no psi-game prompt for TFP")
+      (is (empty? (get-in @state [:runner :prompt])) "Should be no psi-game_test prompt for TFP")
       (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
       (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")
       (core/move state :corp (find-card "The Future Perfect" (:discard (get-corp))) :hand))
     (take-credits state :runner)
     (take-credits state :corp)
-    (testing "Trashing after lose psi game"
+    (testing "Trashing after lose psi game_test"
       (run-empty-server state "HQ")
       ;; Access prompt for TFP
       (prompt-choice :runner "Access")
       (prompt-choice :corp "0 [Credit]")
       (prompt-choice :runner "1 [Credit]")
-      ;; Fail psi game
+      ;; Fail psi game_test
       (card-ability state :runner (get-program state 0) 0)
       (is (empty? (get-in @state [:runner :prompt])) "Should be no steal prompt for TFP")
       (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
@@ -342,8 +343,8 @@
       (is (= 6 (:credit (get-corp))) "Corp paid 1 credit to rezz Snowflake")
       (prompt-choice :corp "1")
       (prompt-choice :runner "1")
-      (is (= 5 (:credit (get-corp))) "Corp paid 1 credit to psi game")
-      (is (= 2 (:credit (get-runner))) "Runner did not gain 1 credit from Ixodidae when corp spent on psi game")
+      (is (= 5 (:credit (get-corp))) "Corp paid 1 credit to psi game_test")
+      (is (= 2 (:credit (get-runner))) "Runner did not gain 1 credit from Ixodidae when corp spent on psi game_test")
       (run-continue state)
       (run-successful state)
       (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")

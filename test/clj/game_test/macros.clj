@@ -1,4 +1,4 @@
-(ns test.macros
+(ns game-test.macros
   (:require [game.core :as core]
             [clojure.test :refer :all]))
 

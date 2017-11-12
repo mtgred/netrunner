@@ -1,14 +1,16 @@
-(ns test.core
+(ns game-test.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
                                 costs-to-symbol vdissoc distinct-by]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [game.core :as core]
             [jinteki.cards :refer [all-cards]]
-            [test.utils :refer [load-card load-cards qty default-corp default-runner
+            [game-test.utils :refer [load-card load-cards qty default-corp default-runner
                                 make-deck]]
-            [test.macros :refer [do-game]]
+            [game-test.macros :refer [do-game]]
             [clojure.test :refer :all]))
+
+
 
 ;;; Click action functions
 (defn take-credits
@@ -28,15 +30,14 @@
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
   ([corp runner] (new-game corp runner nil))
   ([corp runner {:keys [mulligan start-as dont-start-turn dont-start-game] :as args}]
-    (let [states (core/init-game
+    (let [state (core/init-game
                    {:gameid 1
                     :players [{:side "Corp"
                                :deck {:identity (@all-cards (:identity corp))
                                       :cards (:deck corp)}}
                               {:side "Runner"
                                :deck {:identity (@all-cards (:identity runner))
-                                      :cards (:deck runner)}}]})
-          state (second (last states))]
+                                      :cards (:deck runner)}}]})]
       (when-not dont-start-game
         (if (#{:both :corp} mulligan)
           (core/resolve-prompt state :corp {:choice "Mulligan"})
@@ -48,9 +49,12 @@
         (when (= start-as :runner) (take-credits state :corp)))
       state)))
 
-(defn load-all-cards []
-  (reset! game.core/all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
-(load-all-cards)
+
+(defn load-all-cards [tests]
+  (when (empty? @all-cards)
+    (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
+  (tests))
+(use-fixtures :once load-all-cards)
 
 ;;; Card related functions
 (defn find-card
@@ -226,5 +230,3 @@
   "Checks to see if the runner has a prompt accessing the given card title"
   [state title]
   (= title (-> @state :runner :prompt first :card :title)))
-
-(load "core-game")

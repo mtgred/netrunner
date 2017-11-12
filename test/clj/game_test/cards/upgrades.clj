@@ -1,10 +1,11 @@
-(ns test.cards.upgrades
+(ns game-test.cards.upgrades
   (:require [game.core :as core]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(use-fixtures :once load-all-cards)
 
 (deftest amazon-industrial-zone
   ;; Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount
@@ -218,7 +219,7 @@
        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
 
 (deftest caprice-nisei
-  ;; Caprice Nisei - Psi game for ETR after runner passes last ice
+  ;; Caprice Nisei - Psi game_test for ETR after runner passes last ice
   (do-game
    (new-game (default-corp [(qty "Caprice Nisei" 3) (qty "Quandary" 3)])
              (default-runner))
@@ -618,7 +619,7 @@
     (let [slums (get-resource state 0)]
       (card-ability state :runner slums 0)
       (is (= "Mumbad Virtual Tour" (:title (first (:rfg (get-corp)))))
-          "MVT removed from game with Salsette Slums")
+          "MVT removed from game_test with Salsette Slums")
       (is (= 0 (:credit (get-runner))) "Runner paid trash cost with Slums"))))
 
 (deftest neotokyo-grid

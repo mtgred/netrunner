@@ -1,4 +1,11 @@
-(in-ns 'test.core)
+(ns game-test.rules
+  (:require [game.core :as core]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
+            [clojure.test :refer :all]))
+
+(use-fixtures :once load-all-cards)
 
 (deftest corp-rez-unique
   ;; Rezzing a second copy of a unique Corp card
@@ -453,8 +460,8 @@
       (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
       (prompt-choice :corp "2 [Credits]")
       (prompt-choice :runner "1 [Credits]")
-      (is (= 5 (:credit (get-runner))) "Runner spend bad pub credit on psi game")
-      (is (= 3 (:credit (get-corp))) "Corp spent 2 on psi game"))))
+      (is (= 5 (:credit (get-runner))) "Runner spend bad pub credit on psi game_test")
+      (is (= 3 (:credit (get-corp))) "Corp spent 2 on psi game_test"))))
 
 (deftest purge-nested
   ;; Purge nested-hosted virus counters

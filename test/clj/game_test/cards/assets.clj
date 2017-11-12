@@ -1,9 +1,11 @@
-(ns test.cards.assets
+(ns game-test.cards.assets
   (:require [game.core :as core]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
+
+(use-fixtures :once load-all-cards)
 
 (deftest adonis-campaign
   (do-game
@@ -1618,8 +1620,8 @@
 
 ;(deftest sundew-dirty-laundry
 ;  "Sundew - Dirty Laundry"
-;  (do-game
-;    (new-game (default-corp [(qty "Sundew" 1)])
+;  (do-game_test
+;    (new-game_test (default-corp [(qty "Sundew" 1)])
 ;              (default-runner [(qty "Dirty Laundry" 1)]))
 ;    (play-from-hand state :corp "Sundew" "New remote")
 ;    (let [sund (first (get-in @state [:corp :servers :remote1 :content]))]

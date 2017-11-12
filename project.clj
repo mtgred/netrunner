@@ -42,6 +42,8 @@
         jinteki.utils]
   :main web.core
 
+  :test-paths ["test/clj"]
+
   :plugins [[lein-cljsbuild "1.1.4"]
             [lein-figwheel "0.5.11"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]

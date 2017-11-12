@@ -1,9 +1,11 @@
-(ns test.cards.agendas
+(ns game-test.cards.agendas
   (:require [game.core :as core]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
+
+(use-fixtures :once load-all-cards)
 
 (deftest fifteen-minutes
   ;; 15 Minutes - check if it works correctly from both sides
@@ -783,7 +785,7 @@
           (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))))
 
 (deftest puppet-master
-  ;; Puppet Master - game progresses if no valid targets. Issue #1661.
+  ;; Puppet Master - game_test progresses if no valid targets. Issue #1661.
   (do-game
     (new-game (default-corp [(qty "Puppet Master" 1)])
               (default-runner))
@@ -939,14 +941,14 @@
     (is (= 1 (count (:hand (get-runner)))) "Only 1 damage dealt to Runner from Cybernetics")))
 
 (deftest the-future-perfect
-  ;; The Future Perfect - cannot steal on failed psi game (if not installed)
+  ;; The Future Perfect - cannot steal on failed psi game_test (if not installed)
   (do-game
     (new-game (default-corp [(qty "The Future Perfect" 2)])
               (default-runner))
     (play-from-hand state :corp "The Future Perfect" "New remote")
     (take-credits state :corp)
 
-    (testing "No steal on not-equal Psi game"
+    (testing "No steal on not-equal Psi game_test"
       (run-empty-server state "HQ")
       (prompt-choice :runner "Access")
       (prompt-choice :corp "1 [Credits]")
@@ -955,7 +957,7 @@
       (prompt-choice :runner "OK")
       (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))
 
-    (testing "Successful steal on equal Psi game"
+    (testing "Successful steal on equal Psi game_test"
       (run-empty-server state "HQ")
       (prompt-choice :runner "Access")
       (prompt-choice :corp "1 [Credits]")
@@ -963,10 +965,10 @@
       (prompt-choice :runner "Steal")
       (is (= 3 (:agenda-point (get-runner))) "Runner stole TFP"))
 
-    (testing "No Psi game and successful steal when installed"
+    (testing "No Psi game_test and successful steal when installed"
       (run-empty-server state "Server 1")
       (prompt-choice :runner "Steal")
-      (is (= 6 (:agenda-point (get-runner))) "Runner stole TFP - no Psi game on installed TFP"))))
+      (is (= 6 (:agenda-point (get-runner))) "Runner stole TFP - no Psi game_test on installed TFP"))))
 
 (deftest underway-renovation
   ;; Underway Renovation - Mill the Runner when advanced

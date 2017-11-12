@@ -1,10 +1,11 @@
-(ns test.cards.events
+(ns game-test.cards.events
   (:require [game.core :as core]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
+(use-fixtures :once load-all-cards)
 
 (deftest account-siphon-ability
   ;; Account Siphon - Use ability
@@ -220,7 +221,7 @@
       (is (get-in (refresh iwall1) [:rezzed]) "First Ice Wall is rezzed"))))
 
 (deftest blackmail-tmi-interaction
-  ;; Regression test for a rezzed tmi breaking game state on a blackmail run
+  ;; Regression test for a rezzed tmi breaking game_test state on a blackmail run
   (do-game
     (new-game (default-corp [(qty "TMI" 3)])
               (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
@@ -480,7 +481,7 @@
           "Project Atlas not trashed from Server 3"))))
 
 (deftest drive-by-psychic-field
-  ;; Drive By - Psychic Field trashed after psi game. Issue #2127.
+  ;; Drive By - Psychic Field trashed after psi game_test. Issue #2127.
   (do-game
     (new-game (default-corp [(qty "Psychic Field" 1)])
               (default-runner [(qty "Drive By" 3)]))
@@ -538,7 +539,7 @@
     (is (= 3 (count (:discard (get-runner)))) "Discard is 3 cards - 2 from Philotic, 1 EStrike.  Nothing from PU mill")))
 
 (deftest encore
-  ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.
+  ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game_test.
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 1)])
               (default-runner [(qty "Encore" 1)]))
@@ -548,7 +549,7 @@
     (run-empty-server state "R&D")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Encore")
-    (is (= 1 (count (:rfg (get-runner)))) "Encore removed from game")
+    (is (= 1 (count (:rfg (get-runner)))) "Encore removed from game_test")
     (take-credits state :runner)
     (take-credits state :runner)
     ; only get one extra turn
@@ -568,7 +569,7 @@
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Encore")
     (play-from-hand state :runner "Encore")
-    (is (= 2 (count (:rfg (get-runner)))) "2 Encores removed from game")
+    (is (= 2 (count (:rfg (get-runner)))) "2 Encores removed from game_test")
     (take-credits state :runner)
     (take-credits state :runner)
     ;; Two extra turns
@@ -1085,7 +1086,7 @@
       (core/advance state :corp {:card (refresh underway)}))
     (is (= 6 (count (:discard (get-runner)))))
     (take-credits state :corp)
-    ;; remove 5 Out of the Ashes from the game
+    ;; remove 5 Out of the Ashes from the game_test
     (dotimes [_ 5]
       (is (not (empty? (get-in @state [:runner :prompt]))))
       (prompt-choice :runner "Yes")
@@ -1097,7 +1098,7 @@
     (is (= 5 (count (:rfg (get-runner)))))
     (take-credits state :runner)
     (take-credits state :corp)
-    ;; ensure that if you decline the rfg, game will still ask the next turn
+    ;; ensure that if you decline the rfg, game_test will still ask the next turn
     (is (not (empty? (get-in @state [:runner :prompt]))))
     (prompt-choice :runner "Yes")
     (prompt-choice :runner "Archives")
@@ -1678,7 +1679,7 @@
         (is (= "Morning Star" (:title (get-in @state [:runner :rig :program 0]))) "Morning Star still installed")))))
 
 (deftest the-price-of-freedom
-  ;; The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn
+  ;; The Price of Freedom - A connection must be trashed, the card is removed from game_test, then the corp can't advance cards next turn
   (do-game
     (new-game (default-corp [(qty "NAPD Contract" 1)])
               (default-runner [(qty "Kati Jones" 1) (qty "The Price of Freedom" 1)]))
@@ -1695,7 +1696,7 @@
     (let [kj (find-card "Kati Jones" (:resource (:rig (get-runner))))]
       (prompt-choice :runner kj)
       (is (= 0 (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed wth The Price of Freedom")
-      (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game, and only Kati Jones is in the discard"))
+      (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game_test, and only Kati Jones is in the discard"))
     (take-credits state :runner)
     (let [napd (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh napd)})

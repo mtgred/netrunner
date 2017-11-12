@@ -1,9 +1,11 @@
-(ns test.cards.identities
+(ns game-test.cards.identities
   (:require [game.core :as core]
-            [test.core :refer :all]
-            [test.utils :refer :all]
-            [test.macros :refer :all]
+            [game-test.core :refer :all]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]
             [clojure.test :refer :all]))
+
+(use-fixtures :once load-all-cards)
 
 (deftest adam-directives
   ;; Adam - Allow runner to choose directives
@@ -302,7 +304,7 @@
     (is (last-log-contains? state "Caprice") "Accessed card name was logged")))
 
 (deftest grndl-power-unleashed
-  ;; GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub.
+  ;; GRNDL: Power Unleashed - start game_test with 10 credits and 1 bad pub.
   (do-game
     (new-game
       (make-deck "GRNDL: Power Unleashed" [(qty "Hedge Fund" 3)])
@@ -879,7 +881,7 @@
     (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall back in play")))
 
 (deftest nisei-division
-  ;; Nisei Division - Gain 1 credit from every psi game
+  ;; Nisei Division - Gain 1 credit from every psi game_test
   (do-game
     (new-game
       (make-deck "Nisei Division: The Next Generation" [(qty "Snowflake" 2)])
@@ -895,14 +897,14 @@
       (card-subroutine state :corp s2 0)
       (prompt-choice :corp "0 [Credits]")
       (prompt-choice :runner "0 [Credits]")
-      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game")
+      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game_test")
       (core/no-action state :corp nil)
       (core/rez state :corp s1)
       (is (= 4 (:credit (get-corp))))
       (card-subroutine state :corp s1 0)
       (prompt-choice :corp "0 [Credits]")
       (prompt-choice :runner "1 [Credits]")
-      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game"))))
+      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game_test"))))
 
 (deftest noise-ability
   ;; Noise: Hacker Extraordinaire - Ability
