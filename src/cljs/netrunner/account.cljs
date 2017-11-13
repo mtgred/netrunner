@@ -60,6 +60,7 @@
   (om/set-state! owner :flash-message "Updating profile...")
   (swap! app-state assoc-in [:options :sounds] (om/get-state owner :sounds))
   (swap! app-state assoc-in [:options :background] (om/get-state owner :background))
+  (swap! app-state assoc-in [:options :background-img] (om/get-state owner :background-img))
   (swap! app-state assoc-in [:options :show-alt-art] (om/get-state owner :show-alt-art))
   (swap! app-state assoc-in [:options :sounds-volume] (om/get-state owner :volume))
   (swap! app-state assoc-in [:options :blocked-users] (om/get-state owner :blocked-users))
@@ -139,6 +140,31 @@
    (doseq [card (vals (:alt-arts @app-state))]
      (update-card-art owner card art))))
 
+(def legacy-images
+  {
+   "lobby-bg" "/img/bg/TheRoot.jpg"
+   "deckbuilder-bg" "/img/bg/ProjectAtlas.jpg"
+   "cardbrowser-bg" "/img/bg/DysonMemChip.jpg"
+   "help-bg" "/img/bg/Grimoire.jpg"
+   "about-bg" "/img/bg/FastTrack.jpg"
+   "account-bg" "/img/bg/Logos.jpg"
+   "reset-bg" "/img/bg/Logos.jpg"
+   "stats-bg" "/img/bg/RumorMill.jpg"
+   "traffic-jam-bg" "/img/bg/TrafficJam.jpg"
+   "rumor-mill-bg" "/img/bg/RumorMill.jpg"
+   "find-the-truth-bg" "/img/bg/FindTheTruth.jpg"
+   "push-your-luck-bg" "/img/bg/PushYourLuck.jpg"
+   "apex-bg" "/img/bg/Apex.jpg"
+   "mushin-no-shin-bg" "/img/bg/MushinNoShin.jpg"
+   "freelancer-bg" "/img/bg/Freelancer.jpg"
+   })
+
+(defn get-current-background
+  [owner]
+  (if-let [img (om/get-state owner :background-img)]
+    img
+    (get legacy-images (om/get-state owner :background) "obsidian")))
+
 (defn account-view [user owner]
   (reify
     om/IInitState
@@ -147,6 +173,7 @@
     om/IWillMount
     (will-mount [this]
       (om/set-state! owner :background (get-in @app-state [:options :background]))
+      (om/set-state! owner :background-img (get-in @app-state [:options :background-img]))
       (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
       (om/set-state! owner :show-alt-art (get-in @app-state [:options :show-alt-art]))
       (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume]))
@@ -190,22 +217,21 @@
 
            [:section
             [:h3  "Game board background"]
-            (for [option [{:name "The Root"        :ref "lobby-bg"}
-                          {:name "Freelancer"      :ref "freelancer-bg"}
-                          {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
-                          {:name "Traffic Jam"     :ref "traffic-jam-bg"}
-                          {:name "Rumor Mill"      :ref "rumor-mill-bg"}
-                          {:name "Find The Truth"  :ref "find-the-truth-bg"}
-                          {:name "Push Your Luck"  :ref "push-your-luck-bg"}
-                          {:name "Apex"            :ref "apex-bg"}
-                          {:name "Monochrome"      :ref "monochrome-bg"}]]
-              [:div.radio
-               [:label [:input {:type "radio"
-                                :name "background"
-                                :value (:ref option)
-                                :on-change #(om/set-state! owner :background (.. % -target -value))
-                                :checked (= (om/get-state owner :background) (:ref option))}]
-                (:name option)]])]
+            [:div.background-images
+             (let [curr-img (get-current-background owner)]
+               (for [option [{:name "The Root"        :ref "/img/bg/TheRoot.jpg"}
+                             {:name "Freelancer"      :ref "/img/bg/Freelancer.jpg"}
+                             {:name "Mushin No Shin"  :ref "/img/bg/MushinNoShin.jpg"}
+                             {:name "Traffic Jam"     :ref "/img/bg/TrafficJam.jpg"}
+                             {:name "Rumor Mill"      :ref "/img/bg/RumorMill.jpg"}
+                             {:name "Find The Truth"  :ref "/img/bg/FindTheTruth.jpg"}
+                             {:name "Push Your Luck"  :ref "/img/bg/PushYourLuck.jpg"}
+                             {:name "Apex"            :ref "/img/bg/Apex.jpg"}]]
+                 [:img.background-thumbnail
+                  {:src (:ref option)
+                   :alt (:name option)
+                   :class (when (= curr-img (:ref option)) "selected-bg")
+                   :on-click #(om/set-state! owner :background-img (:ref option))}]))]]
 
            [:section
             [:h3 " Game Win/Lose Statistics "]
