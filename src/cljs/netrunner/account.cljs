@@ -187,7 +187,10 @@
               (om/set-state! owner :alt-arts (get-in @app-state [:options :alt-arts]))
               (om/set-state! owner :alt-card (:code first-alt))
               (om/set-state! owner :alt-card-version (get-in @app-state [:options :alt-arts (keyword (:code first-alt))]
-                                                             "default"))))))
+                                                             "default")))))
+      (go (let [backgrounds (->> (<! (GET "/data/backgrounds"))
+                              (:json))]
+                              (om/set-state! owner :background-paths backgrounds))))
 
     om/IRenderState
     (render-state [this state]
@@ -220,20 +223,13 @@
             [:h3  "Game board background"]
             [:div.background-images
              (let [curr-img (get-current-background owner)]
-               (for [option [{:name "The Root"        :ref "/img/bg/TheRoot.jpg"}
-                             {:name "Freelancer"      :ref "/img/bg/Freelancer.jpg"}
-                             {:name "Mushin No Shin"  :ref "/img/bg/MushinNoShin.jpg"}
-                             {:name "Traffic Jam"     :ref "/img/bg/TrafficJam.jpg"}
-                             {:name "Rumor Mill"      :ref "/img/bg/RumorMill.jpg"}
-                             {:name "Find The Truth"  :ref "/img/bg/FindTheTruth.jpg"}
-                             {:name "Push Your Luck"  :ref "/img/bg/PushYourLuck.jpg"}
-                             {:name "Apex"            :ref "/img/bg/Apex.jpg"}
-                             {:name "Monochrome"      :ref "/img/bg/obsidian.jpg"}]]
-                 [:img.background-thumbnail
-                  {:src (:ref option)
-                   :alt (:name option)
-                   :class (when (= curr-img (:ref option)) "selected-bg")
-                   :on-click #(om/set-state! owner :background-img (:ref option))}]))]]
+               (for [option (om/get-state owner :background-paths)]
+                 (let [path (:path option)]
+                   [:img.background-thumbnail
+                    {:src path
+                     :alt path
+                     :class (when (= curr-img path) "selected-bg")
+                     :on-click #(om/set-state! owner :background-img path)}])))]]
 
            [:section
             [:h3 " Game Win/Lose Statistics "]
