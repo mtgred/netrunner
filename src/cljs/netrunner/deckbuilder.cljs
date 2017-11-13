@@ -822,9 +822,8 @@
                          ; adding key :games to handle legacy stats before adding started vs completed
                          [:span "  Games: " (+ started games)
                           " - Completed: " (+ completed games)
-                          " - Won: " wins
-                          " - Lost: " losses
-                          " - Percent Won: " (num->percent wins (+ wins losses)) "%"]))]])])))))
+                          " - Won: " wins " (" (num->percent wins (+ wins losses)) "%)"
+                          " - Lost: " losses]))]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
