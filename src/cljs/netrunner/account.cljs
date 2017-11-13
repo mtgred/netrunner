@@ -157,13 +157,14 @@
    "apex-bg" "/img/bg/Apex.jpg"
    "mushin-no-shin-bg" "/img/bg/MushinNoShin.jpg"
    "freelancer-bg" "/img/bg/Freelancer.jpg"
+   "monochrome-bg" "/img/bg/obsidian.jpg"
    })
 
 (defn get-current-background
   [owner]
   (if-let [img (om/get-state owner :background-img)]
     img
-    (get legacy-images (om/get-state owner :background) "obsidian")))
+    (get legacy-images (om/get-state owner :background) "unknown-bg")))
 
 (defn account-view [user owner]
   (reify
@@ -226,7 +227,8 @@
                              {:name "Rumor Mill"      :ref "/img/bg/RumorMill.jpg"}
                              {:name "Find The Truth"  :ref "/img/bg/FindTheTruth.jpg"}
                              {:name "Push Your Luck"  :ref "/img/bg/PushYourLuck.jpg"}
-                             {:name "Apex"            :ref "/img/bg/Apex.jpg"}]]
+                             {:name "Apex"            :ref "/img/bg/Apex.jpg"}
+                             {:name "Monochrome"      :ref "/img/bg/obsidian.jpg"}]]
                  [:img.background-thumbnail
                   {:src (:ref option)
                    :alt (:name option)

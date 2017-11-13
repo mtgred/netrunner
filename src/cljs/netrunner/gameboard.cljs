@@ -37,7 +37,7 @@
   []
   (if-let [img (get-in @app-state [:options :background-img])]
     img
-    (get legacy-images (:background @app-state) "obsidian")))
+    (get legacy-images (:background @app-state) "unknown.jpg")))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
