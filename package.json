@@ -14,7 +14,8 @@
     "promo": "cd data/ && mongo netrunner --eval \"db.altarts.drop()\" && mongoimport --db=netrunner --collection=altarts --file=promo.json --jsonArray && coffee add_art.coffee",
     "rotate": "cd data/ && coffee rotate.coffee",
     "link_cards": "cd data/ && coffee link_cards.coffee",
-    "add_art": "cd data/ && coffee add_art.coffee"
+    "add_art": "cd data/ && coffee add_art.coffee",
+    "add_bg": "cd data/ && coffee add_bg.coffee"
   },
   "devDependencies": {
     "bower": "^1.8.2",
