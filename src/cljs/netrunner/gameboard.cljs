@@ -35,9 +35,11 @@
 
 (defn get-background-image
   []
-  (if-let [img (get-in @app-state [:options :background-img])]
-    img
-    (get legacy-images (get-in @app-state [:options :background]) "unknown.jpg")))
+  (if-let [custom-img (get-in @app-state [:options :custom-background])]
+    custom-img
+    (if-let [img (get-in @app-state [:options :background-img])]
+      img
+      (get legacy-images (get-in @app-state [:options :background]) "unknown.jpg"))))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
@@ -1330,7 +1332,8 @@
                  ") wins by scoring agenda points")
 
                [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "x"]])
-            [:div.background-image.lobby-bg.gameboard-bg {:style {:background-image (str "url(" (get-background-image) ")")
+            [:div.background-image.lobby-bg.gameboard-bg {:style {:background-image
+                                                                  (str "url(" (.encodeURI js/window (get-background-image)) ")")
                                                                   :background-color "#282828"}}]
             [:div.rightpane
              [:div.card-zoom

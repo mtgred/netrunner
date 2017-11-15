@@ -61,6 +61,7 @@
   (swap! app-state assoc-in [:options :sounds] (om/get-state owner :sounds))
   (swap! app-state assoc-in [:options :background] (om/get-state owner :background))
   (swap! app-state assoc-in [:options :background-img] (om/get-state owner :background-img))
+  (swap! app-state assoc-in [:options :custom-background] (om/get-state owner :custom-background))
   (swap! app-state assoc-in [:options :show-alt-art] (om/get-state owner :show-alt-art))
   (swap! app-state assoc-in [:options :sounds-volume] (om/get-state owner :volume))
   (swap! app-state assoc-in [:options :blocked-users] (om/get-state owner :blocked-users))
@@ -70,6 +71,19 @@
   (.setItem js/localStorage "sounds" (om/get-state owner :sounds))
   (.setItem js/localStorage "sounds_volume" (om/get-state owner :volume))
   (post-options url (partial post-response owner)))
+
+(defn add-custom-background
+  [owner]
+  (let [name-node (om/get-node owner "custom-background-input")
+        background-name (.-value name-node)]
+    (when (not (s/blank? background-name))
+      (om/set-state! owner :custom-background background-name))))
+
+(defn remove-custom-background
+  [owner]
+  (let [name-node (om/get-node owner "custom-background-input")]
+    (set! (.-value name-node) "")
+    (om/set-state! owner :custom-background nil)))
 
 (defn add-user-to-block-list
   [owner user]
@@ -169,12 +183,15 @@
 (defn account-view [user owner]
   (reify
     om/IInitState
-    (init-state [this] {:flash-message ""})
+    (init-state [this] {:flash-message ""
+                        :custom-text ""})
 
     om/IWillMount
     (will-mount [this]
       (om/set-state! owner :background (get-in @app-state [:options :background]))
       (om/set-state! owner :background-img (get-in @app-state [:options :background-img]))
+      (om/set-state! owner :custom-background (get-in @app-state [:options :custom-background]))
+      (om/set-state! owner :custom-text (om/get-state owner :custom-background))
       (om/set-state! owner :sounds (get-in @app-state [:options :sounds]))
       (om/set-state! owner :show-alt-art (get-in @app-state [:options :show-alt-art]))
       (om/set-state! owner :volume (get-in @app-state [:options :sounds-volume]))
@@ -219,17 +236,45 @@
                       :value (om/get-state owner :volume)
                       :disabled (not (om/get-state owner :sounds))}]]]
 
-           [:section
-            [:h3  "Game board background"]
-            [:div.background-images
-             (let [curr-img (get-current-background owner)]
-               (for [option (om/get-state owner :background-paths)]
-                 (let [path (:path option)]
+           (let [custom-background (om/get-state owner :custom-background)]
+             [:section
+              [:h3  "Game board background"]
+              [:div
+               [:input.custom-background-input {:on-key-down (fn [e]
+                                                               (when (= e.keyCode 13)
+                                                                 (do
+                                                                   (add-custom-background owner)
+                                                                   (.preventDefault e))))
+                                                :on-change (fn [e] (om/set-state! owner :custom-text (.. e -target -value)))
+                                                :ref "custom-background-input"
+                                                :value (:custom-text state)
+                                                :type "text" :placeholder "URL of background image"}]
+               [:button.custom-background-btn {:type "button"
+                                               :name "custom-background-button"
+                                               :on-click #(add-custom-background owner)}
+                "Custom Background"]]
+              (if custom-background
+                [:div.custom-background
+                 (let [custom-uri (.encodeURI js/window custom-background)]
                    [:img.background-thumbnail
-                    {:src path
-                     :alt path
-                     :class (when (= curr-img path) "selected-bg")
-                     :on-click #(om/set-state! owner :background-img path)}])))]]
+                    {:src custom-uri
+                     :alt (str "Image URL: " custom-uri)
+                     :class "selected-bg"}])
+                 [:div
+                  [:button.unlink-custom-background-btn {:type "button"
+                                                         :name "unlink-custom-background-button"
+                                                         :on-click #(remove-custom-background owner)}
+                   "Unlink Custom Background"]]]
+                ;; else case - display stock background images
+                [:div.background-images
+                 (let [curr-img (get-current-background owner)]
+                   (for [option (om/get-state owner :background-paths)]
+                     (let [path (:path option)]
+                       [:img.background-thumbnail
+                        {:src path
+                         :alt path
+                         :class (when (= curr-img path) "selected-bg")
+                         :on-click #(om/set-state! owner :background-img path)}])))])])
 
            [:section
             [:h3 " Game Win/Lose Statistics "]
