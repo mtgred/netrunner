@@ -419,7 +419,7 @@
 
    "Financial Collapse"
    {:delayed-completion true
-    :req (req (>= (:credit runner) 6))
+    :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-installed state :runner)))))
     :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-installed state :runner)))]
                    (if (pos? rcount)
                      (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
