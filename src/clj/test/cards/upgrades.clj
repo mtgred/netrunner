@@ -591,7 +591,7 @@
   ;; Tests that Mumbad Virtual Tour does not force trash with :slow-trash
   (do-game
     (new-game (default-corp [(qty "Mumbad Virtual Tour" 2)])
-              (default-runner [(qty "Imp" 1) (qty "Salsette Slums" 1)]))
+              (default-runner [(qty "Imp" 1)]))
     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
     (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
     (take-credits state :corp)
@@ -608,18 +608,7 @@
           "MVT trashed with Imp")
       ;; Trash Imp to reset :slow-trash flag
       (core/move state :runner (refresh imp) :discard)
-      (is (not (core/any-flag-fn? state :runner :slow-trash true))))
-    (play-from-hand state :runner "Salsette Slums")
-    ;; Reset credits to 5
-    (core/gain state :runner :credit 2)
-    (run-empty-server state "Server 2")
-    ;; Runner not force to trash since Salsette Slums is installed
-    (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Slums installed")
-    (let [slums (get-resource state 0)]
-      (card-ability state :runner slums 0)
-      (is (= "Mumbad Virtual Tour" (:title (first (:rfg (get-corp)))))
-          "MVT removed from game with Salsette Slums")
-      (is (= 0 (:credit (get-runner))) "Runner paid trash cost with Slums"))))
+      (is (not (core/any-flag-fn? state :runner :slow-trash true))))))
 
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement

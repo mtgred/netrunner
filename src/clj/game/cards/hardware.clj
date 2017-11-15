@@ -2,7 +2,7 @@
 
 (def cards-hardware
   {"Adjusted Matrix"
-   {:implementation "Click Adjusted Matrix to use ability. Strength of breaker not validated."
+   {:implementation "Click Adjusted Matrix to use ability."
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
     :prompt "Choose Icebreaker on which to install Adjusted Matrix"
     :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Icebreaker") (installed? %))}

@@ -1183,9 +1183,8 @@
                       [:button {:on-click #(send-command "choice" {:choice c})}
                        (for [item (get-message-parts c)] (create-span item))]
                       (let [[title code] (extract-card-info (add-image-codes (:title c)))]
-                        (if (:rotated c)
-                          [:button.rotated {:on-click #(send-command "choice" {:card @c}) :id code} title]
-                          [:button {:on-click #(send-command "choice" {:card @c}) :id code} title])))))))]
+                        [:button {:class (when (:rotated c) :rotated)
+                                  :on-click #(send-command "choice" {:card @c}) :id code} title]))))))]
            (if run
              (let [s (:server run)
                    kw (keyword (first s))

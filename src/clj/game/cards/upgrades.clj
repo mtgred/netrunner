@@ -450,7 +450,8 @@
    {:implementation "Only forces trash if runner has no Imps and enough credits in the credit pool"
     :access {:req (req installed)
              :effect (req (let [trash-cost (trash-cost state side card)
-                                slow-trash (any-flag-fn? state :runner :slow-trash true)]
+                                no-salsette (remove #(= (:title %) "Salsette Slums") (all-active state :runner))
+                                slow-trash (any-flag-fn? state :runner :slow-trash true no-salsette)]
                             (if (and (can-pay? state :runner nil :credit trash-cost)
                                      (not slow-trash))
                               (do (toast state :runner "You have been forced to trash Mumbad Virtual Tour" "info")
