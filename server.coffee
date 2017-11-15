@@ -738,14 +738,31 @@ app.post '/reset/:token', (req, res) ->
     throw err if err
     res.redirect('/')
 
+trim = (s) ->
+  s.replace /^\s*|\s*$/g, ''
+
+insert_img_path = (username, key, path) ->
+  if path?
+    path = encodeURI(trim(path))
+
+  if path? and path
+    db.collection('users').update {username: username}, {$set: {"options.#{key}": path}},
+      (err) ->
+        console.log(err) if err
+  else
+    db.collection('users').update {username: username}, {$unset: {"options.#{key}": ""}},
+      (err) ->
+        console.log(err) if err
+
 app.post '/update-profile', (req, res) ->
   if req.user
     db.collection('users').update {username: req.user.username}, {$set: {options: {background: req.body.background,\
       'show-alt-art': req.body['show-alt-art'], 'blocked-users': req.body['blocked-users'], \
-      'alt-arts': req.body['alt-arts'], deckstats: req.body['deckstats'], gamestats: req.body['gamestats'], \
-      'background-img': encodeURI(req.body['background-img']), 'custom-background': encodeURI(req.body['custom-background'])}}},
+      'alt-arts': req.body['alt-arts'], deckstats: req.body['deckstats'], gamestats: req.body['gamestats']}}},
       (err) ->
         console.log(err) if err
+        insert_img_path(req.user.username, 'background-img', req.body['background-img'])
+        insert_img_path(req.user.username, 'custom-background', req.body['custom-background'])
         res.status(200).send({message: 'OK', background: req.body.background, \
           altarts: req.body['alt-arts'], \
           blockedusers: req.body['blocked-users'], \

@@ -1332,9 +1332,9 @@
                  ") wins by scoring agenda points")
 
                [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "x"]])
-            [:div.background-image.lobby-bg.gameboard-bg {:style {:background-image
-                                                                  (str "url(" (.encodeURI js/window (get-background-image)) ")")
-                                                                  :background-color "#282828"}}]
+            [:div.background-image.gameboard-bg {:style {:background-image
+                                                         (str "url(" (.encodeURI js/window (get-background-image)) ")")
+                                                         :background-color "#282828"}}]
             [:div.rightpane
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]

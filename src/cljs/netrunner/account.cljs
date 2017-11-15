@@ -75,7 +75,7 @@
 (defn add-custom-background
   [owner]
   (let [name-node (om/get-node owner "custom-background-input")
-        background-name (.-value name-node)]
+        background-name (s/trim (.-value name-node))]
     (when (not (s/blank? background-name))
       (om/set-state! owner :custom-background background-name))))
 
@@ -258,7 +258,7 @@
                  (let [custom-uri (.encodeURI js/window custom-background)]
                    [:img.background-thumbnail
                     {:src custom-uri
-                     :alt (str "Image URL: " custom-uri)
+                     :alt (str "Failed to load image URL: " custom-uri)
                      :class "selected-bg"}])
                  [:div
                   [:button.unlink-custom-background-btn {:type "button"
