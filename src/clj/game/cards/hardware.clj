@@ -288,7 +288,8 @@
              :runner-turn-begins
              {:effect (effect (update! (assoc card :dopp-active true)))}
              :successful-run-ends
-             {:optional
+             {:interactive (req true)
+              :optional
               {:req (req (:dopp-active card))
                :player :runner
                :prompt "Use Doppelgänger to run again?"

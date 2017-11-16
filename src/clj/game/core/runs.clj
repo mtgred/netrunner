@@ -697,7 +697,7 @@
     (:successful run)
     (do
       (play-sfx state side "run-successful")
-      (trigger-event-sync state side eid :successful-run-ends run))
+      (trigger-event-simult state side eid :successful-run-ends nil run))
     ;; Unsuccessful
     (:unsuccessful run)
     (do

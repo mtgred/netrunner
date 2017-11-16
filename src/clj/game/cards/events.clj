@@ -1006,7 +1006,8 @@
                                      (effect-completed state side eid))
                                    (update! state side (dissoc card :run-again)))))
     :events {:successful-run nil
-             :successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
+             :successful-run-ends {:interactive (req true)
+                                   :optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
 
