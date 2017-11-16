@@ -919,37 +919,36 @@ app.post '/admin/version', (req, res) ->
 #
 app.get '/nrdb/config', (req, res) ->
   if req.user
-    res.status(200).send({auth_url: "#{config.nrdb_auth_url}?response_type=code&client_id=#{config.nrdb_client_id}&redirect_uri=#{config.nrdb_callback_url}"})
+    # XXX FIXME - it's a TERRIBLE idea to use the username as the nonce/state, should generate somthing random for each request
+    # and verify when the callback request comes in. But this just makes development easier for now.
+    res.status(200).send({auth_url: "#{config.nrdb_auth_url}?response_type=code&client_id=#{config.nrdb_client_id}&redirect_uri=#{config.nrdb_callback_url}&state=#{req.user.username}"})
   else
     res.status(401).send({message: 'Unauthorized'})
 
-app.get '/nrdb/token_callback', (req, res) ->
-  console.log("GET")
-  console.log("token body: ")
-  console.log(req.body)
-  res.status(200).send({message: 'ok'})
-
-app.post '/nrdb/token_callback', (req, res) ->
-  console.log("POST")
-  console.log("token body: ")
-  console.log(req.body)
-  res.status(200).send({message: 'ok'})
-
-handle_nrdb_callback = (auth_code, req) ->
-  console.log("Auth code: " + auth_code)
-  # got.post("#{config.nrdb_auth_url}",
-  got.get("https://netrunnerdb.com/oauth/v2/token"
-    {#json: true,
+handle_nrdb_callback = (auth_code, state, req) ->
+  # XXX FIXME - need to verify the state is from something we requested. Now it's the username which IS NOT SAFE.
+  got.get(config.nrdb_token_url,
+    {json: true,
     query: "client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&grant_type=authorization_code&code=#{auth_code}&redirect_uri=#{config.nrdb_callback_url}"}).then( (response) ->
-      console.log("Got response")
-      console.log(response)
+      console.log("Got token response")
+      console.log(response.body)
+      got.get("https://netrunnerdb.com/api/2.0/private/decks",
+        {json: true,
+        headers: {
+          'Authorization': "Bearer #{response.body.access_token}"
+        }}).then( (decks_response) ->
+          console.log("get decks response:")
+          console.log(decks_response.body)
+          console.log(decks_response.body.data[0].name)
+          console.log(decks_response.body.data[0].cards)
+      ).catch( (deck_error) ->
+        console.log("Got deck error")
+        console.log(deck_error)
+      )
     ).catch( (error) ->
-      console.log("Got error")
+      console.log("Got token error")
       console.log(error)
     )
-
-  # https://cloud.digitalocean.com/v1/oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
-
 
 env = process.env['NODE_ENV'] || 'development'
 
@@ -963,13 +962,15 @@ if env == 'development'
   console.log("Client Callback url " + config.nrdb_callback_url)
 
   app.get '/callback', (req, res) ->
-    console.log("CALLBACK GET")
-    handle_nrdb_callback(req.query.code, req)
+    if req.query.code? and req.query.state?
+      handle_nrdb_callback(req.query.code, req.query.state, req)
+    else
+      # FIXME - user denied access or another error occurred, handle it
+      console.log("Failed to authorize NRDB:")
+      console.log(req.query)
+
     # Hacky redirect for dev work. Running the server on localhost, not the domain in the callback_url
     res.redirect("http://localhost:#{app.get('port')}/nrdb")
-
-  app.post '/callback', (req, res) ->
-    console.log("CALLBACK POST")
 
   app.get '/*', (req, res) ->
     if req.user
@@ -981,7 +982,12 @@ if env == 'production'
   console.log "Prod environment"
 
   app.get '/callback', (req, res) ->
-    handle_nrdb_callback(req.query.code, req)
+    if req.query.code? and req.query.state?
+      handle_nrdb_callback(req.query.code, req.query.state, req)
+    else
+      # FIXME - user denied access or another error occurred, handle it
+      console.log("Failed to authorize NRDB:")
+      console.log(req.query)
     res.redirect("/nrdb")
 
   app.get '/*', (req, res) ->
