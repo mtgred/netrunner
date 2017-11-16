@@ -114,7 +114,7 @@ getUsername = (socket) ->
 users_blocked_from_game = (game) ->
   blocked_users = []
   for user in game.players
-    if user.options['blocked-users']
+    if user.options? and user.options['blocked-users']
       for blocked in user.options['blocked-users']
         blocked_users.push(blocked)
   blocked_users
