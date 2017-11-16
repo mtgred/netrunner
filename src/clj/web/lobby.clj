@@ -1,7 +1,9 @@
 (ns web.lobby
-  (:require [web.db :refer [db]]
+  (:require [web.db :refer [db object-id]]
             [web.utils :refer [response tick remove-once]]
             [web.ws :as ws]
+            [monger.collection :as mc]
+            [monger.result :refer [acknowledged?]]
             [game.main]
             [game.core :as core]
             [crypto.password.bcrypt :as bcrypt])
@@ -73,6 +75,34 @@
     (or (player? client-id gameid)
         (spectator? client-id gameid))))
 
+(defn game-started?
+  "Returns true if game has started"
+  [gameid]
+  (get-in @all-games [gameid :started]))
+
+(defn inc-deck-stats
+  "Update deck stats for a given counter"
+  [deck-id key]
+  (mc/update db "decks" {:_id (object-id deck-id)} {"$inc" {key 1}})
+  (response 200 {:message "OK"}))
+
+(defn inc-game-stats
+  "Update user's game stats for a given counter"
+  [user-id key]
+  (mc/update db "users" {:_id (object-id user-id)} {"$inc" {key 1}})
+  (response 200 {:message "OK"}))
+
+(defn update-player-stats
+  "Update stats for player decks on game ending"
+  [gameid]
+  (let [players (get-in @all-games [gameid :players])] ;likely needs to be ending playe
+        (doseq [p players]
+          (prn (get-in p [:deck :id]))
+          (when-let [enable-deckstats (get-in p [:user :options :deckstats])])
+            (if-let [deck-id (get-in p [:deck :_id])]
+              (inc-deck-stats deck-id :stats.games-completed)
+              (response 409 {:message "Deck is missing _id"})))))
+
 (defn remove-user
   "Removes the given client-id from the given gameid, whether it is a player or a spectator.
   Deletes the game from the lobby if all players have left."
@@ -85,9 +115,18 @@
 
   (when-let [{:keys [players spectators] :as game} (get @all-games gameid)]
     (swap! client-gameids dissoc client-id)
+
+    ;; TODO: danhut
+    ; create finalUser when dropping to one player to credit a completion
+    ; delete this if other player rejoints
+    (when (and (= 1 (count players)) (game-started? gameid))
+      (update-player-stats gameid)
+      )
+
     (if (and (empty? players) (empty? spectators))
       (do
         ;; TODO: stats update goes here
+        (update-player-stats gameid)
 
         ;; TODO: send "remove" to game server to get the "player has left the game" note
 
