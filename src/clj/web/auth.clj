@@ -25,6 +25,12 @@
   (try (jwt/unsign token (:secret auth-config) {:alg :hs512})
        (catch Exception e (prn "Received invalid cookie " token))))
 
+(defn wrap-authentication [handler]
+  (fn [{user :user :as req}]
+    (if (:isadmin user)
+      (handler req)
+      (response 401 {:message "Not authorized"}))))
+
 (defn wrap-user [handler]
   (fn [{:keys [cookies] :as req}]
     (let [auth-cookie (get cookies "session")

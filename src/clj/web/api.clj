@@ -1,11 +1,12 @@
 (ns web.api
   (:require [web.utils :refer [response]]
             [web.data :as data]
-            [web.index :as index]
+            [web.pages :as pages]
             [web.auth :as auth]
             [web.ws :as ws]
+            [web.game :as game]
             [web.chat :as chat]
-            [immutant.web]
+            [web.admin :as admin]
             [cheshire.core :refer [generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.core :refer [defroutes GET POST DELETE PUT]]
@@ -21,7 +22,7 @@
 
 (add-encoder org.bson.types.ObjectId encode-str)
 
-(defroutes routes
+(defroutes public-routes
            (route/resources "/")
            (POST "/register" [] auth/register-handler)
            (POST "/login" [] auth/login-handler)
@@ -49,20 +50,31 @@
            (GET "/ws" req ws/handshake-handler)
            (POST "/ws" req ws/post-handler)
 
-
-
-
-           (GET "/*" [] index/index-page)
+           (GET "/" [] pages/index-page)
            )
 
-(immutant.util/set-log-level! :WARN)
+(defroutes admin-routes
+           (GET "/admin/announce" [] pages/announce-page)
+           (POST "/admin/announce" [] admin/announcement-handler)
+           (GET "/admin/version" [] pages/version-page)
+           (POST "/admin/version" [] admin/version-handler))
+
+(defroutes routes
+
+           (-> public-routes
+               auth/wrap-user)
+           (-> admin-routes
+               auth/wrap-authentication
+               auth/wrap-user)
+           )
+
 (def app
   (-> routes
       wrap-keyword-params
       wrap-params
       wrap-json-response
-      (auth/wrap-user)
-      (wrap-session)
+      wrap-session
       (wrap-json-body {:keywords? true})
-      (wrap-stacktrace)
+      admin/wrap-version
+      wrap-stacktrace
       ))

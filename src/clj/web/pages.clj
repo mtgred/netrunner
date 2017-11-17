@@ -1,11 +1,11 @@
-(ns web.index
+(ns web.pages
   (:require [web.utils :refer [response]]
             [hiccup.page :as hiccup]
             [cheshire.core :as json]
             ))
 
 
-(defn layout [req & content]
+(defn layout [{:keys [version] :as req} & content]
   (hiccup/html5
     [:head
      [:meta {:charset "utf-8"}]
@@ -31,7 +31,7 @@
      [:script (str "var iourl = window.location.origin;")]
 
      (hiccup/include-js "/cljs/goog/base.js")
-     (hiccup/include-js "/js/app.js")
+     (hiccup/include-js (str "js/app.js?v=" version))
      [:script
       (for [req ["netrunner.appstate"
                  "netrunner.main"
@@ -95,3 +95,32 @@
       [:source {:src "/sound/ting.mp3" :type "audio/mp3"}]
      [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]
     ))
+
+(defn announce-page [req]
+  (hiccup/html5
+    [:head
+     [:title "Announce"]
+     (hiccup/include-css "/css/netrunner.css")]
+    [:body
+     [:div.reset-bg]
+     [:form.panel.blue-shade.reset-form {:method "POST"}
+      [:h3 "Announcement"]
+      [:p
+       [:textarea.form-control {:rows 5 :style "height: 80px; width: 250px"
+                                :name "message" :autofocus true :required "required"}]]
+      [:p
+       [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
+
+(defn version-page [{:keys [version] :as req}]
+  (hiccup/html5
+    [:head
+     [:title "App Version"]
+     (hiccup/include-css "/css/netrunner.css")]
+    [:body
+     [:div.reset-bg]
+     [:form.panel.blue-shade.reset-form {:method "POST"}
+      [:h3 "App Version"]
+      [:p
+       [:input {:type "text" :name "version" :value version}]]
+      [:p
+       [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
