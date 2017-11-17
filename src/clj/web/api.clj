@@ -17,14 +17,14 @@
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [hiccup.page :as hiccup]
             [web.db :refer [db]]
-            [monger.collection :as mc]
-            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]))
+            [monger.collection :as mc]))
 
 (add-encoder org.bson.types.ObjectId encode-str)
 
 (defroutes routes
            (route/resources "/")
            (POST "/login" [] auth/login-handler)
+           (POST "/logout" [] auth/logout-handler)
            (GET "/check/:username" [] auth/check-username-handler)
            (PUT "/profile" [] auth/update-profile-handler)
 
@@ -61,8 +61,6 @@
       wrap-params
       wrap-json-response
       (auth/wrap-user)
-      (wrap-authentication auth/backend)
-      (wrap-authorization auth/backend)
       (wrap-session)
       (wrap-json-body {:keywords? true})
       (wrap-stacktrace)
