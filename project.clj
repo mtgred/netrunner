@@ -27,6 +27,8 @@
                  [binaryage/devtools "0.9.7"]
                  [digest "1.4.6"]
                  [http-kit "2.2.0"]
+                 [org.slf4j/slf4j-nop "1.7.12"]
+
                  ]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
@@ -53,7 +55,7 @@
 
   :ring {:handler web.api/app}
 
-  :source-paths ["src/clj" "src/cljs"]
+  :source-paths ["src/clj" "src/cljs" "src/cljc"]
 
   :jar-name "netrunner.jar"
   :uberjar-name "netrunner-standalone.jar"

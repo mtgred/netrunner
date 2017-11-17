@@ -124,3 +124,19 @@
        [:input {:type "text" :name "version" :value version}]]
       [:p
        [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
+
+(defn reset-password-page [req]
+  (hiccup/html5
+    [:head
+     [:title "Jinteki"]
+     (hiccup/include-css "/css/netrunner.css")]
+    [:body
+     [:div.reset-bg]
+     [:form.panel.blue-shade.reset-form {:method "POST"}
+      [:h3 "Password Reset"]
+      [:p
+       [:input.form-control {:type "password" :name "password" :value "" :placeholder "New password" :autofocus true :required "required"}]]
+      [:p
+       [:input.form-control {:type "password" :name "confirm" :value "" :placeholder "Confirm password" :required "required"}]]
+      [:p
+       [:button.btn.btn-primary {:type "submit"} "Update Password"]]]]))
