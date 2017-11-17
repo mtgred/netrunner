@@ -23,6 +23,7 @@
 
 (defroutes routes
            (route/resources "/")
+           (POST "/register" [] auth/register-handler)
            (POST "/login" [] auth/login-handler)
            (POST "/logout" [] auth/logout-handler)
            (GET "/check/:username" [] auth/check-username-handler)

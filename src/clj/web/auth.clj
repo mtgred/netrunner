@@ -5,7 +5,9 @@
             [clj-time.core :refer [days from-now]]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
+            [monger.operators :refer :all]
             [buddy.sign.jwt :as jwt]
+            [digest]
             [buddy.auth :refer [authenticated?]]
             [buddy.auth.backends.session :refer [session-backend]]
             [crypto.password.bcrypt :as password]))
@@ -33,6 +35,31 @@
                      (assoc :user (select-keys u [:_id :username :emailhash :isadmin :special :options]))
                      (update-in [:user :_id] str)))
         (handler req)))))
+
+(defn register-handler [{{:keys [username password email]} :params
+                         :as                               request}]
+  (if (< 20 (count username))
+    (response 423 {:message "Usernames are limited to 20 characters"})
+    (if-let [_ (mc/find-one-as-map db "users" {:username {$regex (str "^" email "$") $options "i"}})]
+      (response 422 {:message "Username taken"})
+      (let [emailhash (digest/md5 email)
+            registrationDate (java.util.Date.)
+            lastConnection registrationDate
+            hash-pw (password/encrypt password)
+            new-user (mc/insert-and-return db "users" {:username         username
+                                                       :email            email
+                                                       :emailhash        emailhash
+                                                       :registrationDate registrationDate
+                                                       :lastConnection   lastConnection
+                                                       :password         hash-pw
+                                                       :options          {}})
+            demo-decks (mc/find-maps db "decks" {:username "__demo__"})]
+        (when (not-empty demo-decks)
+          (mc/insert db "decks" (map #(-> %
+                                          (dissoc :_id)
+                                          (assoc :username username))
+                                     demo-decks)))
+        (response 200 {:message "ok"})))))
 
 (defn login-handler [{{:keys [username password]} :params
                       :as request}]
