@@ -30,6 +30,7 @@
            (PUT "/profile" [] auth/update-profile-handler)
 
            (POST "/user/clearstats" [] stats/clear-user-stats)
+           (POST "/data/decks/clearstats" [] stats/clear-deck-stats)
 
            (GET "/data/cards" [] data/cards-handler)
            (GET "/data/altarts" [] data/alt-arts-handler)
