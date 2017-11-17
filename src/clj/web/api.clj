@@ -5,6 +5,7 @@
             [web.auth :as auth]
             [web.ws :as ws]
             [web.chat :as chat]
+            [web.stats :as stats]
             [immutant.web]
             [cheshire.core :refer [generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
@@ -27,6 +28,8 @@
            (POST "/login" [] auth/login-handler)
            (GET "/check/:username" [] auth/check-username-handler)
            (PUT "/profile" [] auth/update-profile-handler)
+
+           (POST "/user/clearstats" [] stats/clear-user-stats)
 
            (GET "/data/cards" [] data/cards-handler)
            (GET "/data/altarts" [] data/alt-arts-handler)

@@ -6,7 +6,8 @@
             [monger.result :refer [acknowledged?]]
             [game.main]
             [game.core :as core]
-            [crypto.password.bcrypt :as bcrypt])
+            [crypto.password.bcrypt :as bcrypt]
+            [game.main :as main])
   (:import org.bson.types.ObjectId))
 
 ;; All games active on the server.
@@ -95,13 +96,31 @@
 (defn update-player-stats
   "Update stats for player decks on game ending"
   [gameid]
-  (let [players (get-in @all-games [gameid :players])] ;likely needs to be ending playe
-        (doseq [p players]
-          (prn (get-in p [:deck :id]))
-          (when-let [enable-deckstats (get-in p [:user :options :deckstats])])
-            (if-let [deck-id (get-in p [:deck :_id])]
-              (inc-deck-stats deck-id :stats.games-completed)
-              (response 409 {:message "Deck is missing _id"})))))
+  (let [orig-players (get-in @all-games [gameid :original-players])
+        end-players (get-in @all-games [gameid :ending-players])
+        no-id (response 409 {:message "Deck is missing _id"})] ;likely needs to be ending playe
+
+    (doseq [p orig-players]
+      (when-let [enable-deckstats (get-in p [:user :options :deckstats])]
+        (if-let [deck-id (get-in p [:deck :_id])]
+          (inc-deck-stats deck-id :stats.games-started)
+          no-id)))
+    (doseq [p end-players]
+      (when-let [enable-deckstats (get-in p [:user :options :deckstats])]
+        (if-let [deck-id (get-in p [:deck :_id])]
+          (inc-deck-stats deck-id :stats.games-completed)
+          no-id)))))
+
+;; if response.state.corp.user and response.state.runner.user # have two users in the game
+;; room = response.state.room
+;; inc_corp_game_start(response.state.corp, room)
+;; inc_runner_game_start(response.state.runner, room)
+;; if response.state.winner # and someone won
+;; inc_game_win(response.state[response.state.winner], room)
+;; inc_game_loss(response.state[response.state.loser], room)
+;; else if response.state["final-user"] # someone left before the game was won
+;; final_side = response.state["final-user"].side
+;; inc_game_final_user(response.state[final_side], room)
 
 (defn remove-user
   "Removes the given client-id from the given gameid, whether it is a player or a spectator.

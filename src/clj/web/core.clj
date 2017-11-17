@@ -4,8 +4,8 @@
             [web.ws :as ws]
             [web.chat :as chat]
             [web.lobby :as lobby]
-            [web.game :as game]))
-
+            [web.game :as game]
+            [web.stats :as stats]))
 
 (defonce server (atom nil))
 
