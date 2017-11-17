@@ -10,8 +10,6 @@
             [goog.string :as gstring]
             [goog.string.format]))
 
-(go (swap! app-state assoc :nrdb_auth_url (:auth_url (:json (<! (GET "/nrdb/config"))))))
-
 (defn nrdb [{:keys [nrdb_auth_url] :as cursor} owner]
   (reify
     om/IRenderState
@@ -19,7 +17,8 @@
       (sab/html
         [:div.blue-shade.content-page.panel
          [:h3 "NetrunnerDB Integration"]
-         [:a {:href nrdb_auth_url} "Authorize"]
+         [:div [:a {:href "/nrdb/authorize"} "Authorize"]]
+         [:div [:a {:href "/nrdb/deauthorize"} "Deauthorize"]]
          ]))))
 
 (om/root nrdb app-state {:target (. js/document (getElementById "nrdb"))})

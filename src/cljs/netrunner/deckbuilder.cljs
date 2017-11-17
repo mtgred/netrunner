@@ -809,7 +809,7 @@
                                    :on-click #(put! select-channel deck)}
                     [:img {:src (image-url (:identity deck))}]
                     [:div.float-right (deck-status-span sets deck)]
-                    [:h4 (:name deck)]
+                    [:h4 (str (:name deck) (when (:nrdb_id deck) " [NRDB]"))]
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                     [:p (get-in deck [:identity :title]) [:br]
                      (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
@@ -908,7 +908,8 @@
           [:div.decks
            [:div.button-bar
             [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
-            [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]]
+            [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]
+            [:button {:on-click #(set! (.-location js/document) "/nrdb/import_decks")} "Get NRDB Decks"]]
            [:div.deck-collection
             (when-not (:edit state)
               (om/build deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (om/get-state owner :deck)}))
@@ -938,7 +939,12 @@
                          [:button {:on-click #(edit-deck owner)} "Edit"]
                          [:button {:on-click #(delete-deck owner)} "Delete"]
                          (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
-                           [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
+                           [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])
+                         (when (:nrdb_id deck)
+                           [:button  "Pull NRDB"])
+                         (when (:nrdb_id deck)
+                           [:button  "Push NRDB"])
+                           ])
                 [:h3 (:name deck)]
                 [:div.header
                  [:img {:src (image-url identity)}]

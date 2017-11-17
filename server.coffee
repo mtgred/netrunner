@@ -860,7 +860,7 @@ app.get '/data/news', (req, res) ->
     res.status(200).json([{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
 app.get '/data/:collection', (req, res) ->
-  if req.params.collection != 'users' && req.params.collection != 'games'
+  if req.params.collection != 'users' && req.params.collection != 'games' && req.params.collection != 'nrdb_tokens'
     db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
       throw err if err
       delete d._id for d in data
@@ -869,7 +869,7 @@ app.get '/data/:collection', (req, res) ->
     res.status(401).send({message: 'Unauthorized'})
 
 app.get '/data/:collection/:field/:value', (req, res) ->
-  if req.params.collection != 'users' && req.params.collection != 'games'
+  if req.params.collection != 'users' && req.params.collection != 'games' && req.params.collection != 'nrdb_tokens'
     filter = {}
     filter[req.params.field] = req.params.value
     db.collection(req.params.collection).find(filter).toArray (err, data) ->
@@ -916,39 +916,106 @@ app.post '/admin/version', (req, res) ->
 
 ## NetrunnerDB integration
 ##
-#
-app.get '/nrdb/config', (req, res) ->
+app.get '/nrdb/authorize', (req, res) ->
   if req.user
-    # XXX FIXME - it's a TERRIBLE idea to use the username as the nonce/state, should generate somthing random for each request
-    # and verify when the callback request comes in. But this just makes development easier for now.
-    res.status(200).send({auth_url: "#{config.nrdb_auth_url}?response_type=code&client_id=#{config.nrdb_client_id}&redirect_uri=#{config.nrdb_callback_url}&state=#{req.user.username}"})
+    nonce = uuid.v4()
+    db.collection('nrdb_tokens').updateOne {userID: req.user._id}, {userID: req.user._id, nonce: nonce}, {upsert: true}, (err) ->
+      throw(err) if err
+      auth_url = "#{config.nrdb_auth_url}?response_type=code&client_id=#{config.nrdb_client_id}&redirect_uri=#{config.nrdb_callback_url}&state=#{nonce}"
+      res.redirect(auth_url)
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.get '/nrdb/deauthorize', (req, res) ->
+  if req.user
+    db.collection('nrdb_tokens').remove {userID: req.user._id}, (err) ->
+      throw(err) if err
+    res.redirect('/nrdb')
   else
     res.status(401).send({message: 'Unauthorized'})
 
 handle_nrdb_callback = (auth_code, state, req) ->
-  # XXX FIXME - need to verify the state is from something we requested. Now it's the username which IS NOT SAFE.
-  got.get(config.nrdb_token_url,
-    {json: true,
-    query: "client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&grant_type=authorization_code&code=#{auth_code}&redirect_uri=#{config.nrdb_callback_url}"}).then( (response) ->
-      console.log("Got token response")
-      console.log(response.body)
-      got.get("https://netrunnerdb.com/api/2.0/private/decks",
+  # verify the authorization request came from us
+  db.collection('nrdb_tokens').findOne {nonce: state}, (err, entry) ->
+    throw(err) if err
+    unless entry is null
+      got.get(config.nrdb_token_url,
         {json: true,
-        headers: {
-          'Authorization': "Bearer #{response.body.access_token}"
-        }}).then( (decks_response) ->
-          console.log("get decks response:")
-          console.log(decks_response.body)
-          console.log(decks_response.body.data[0].name)
-          console.log(decks_response.body.data[0].cards)
-      ).catch( (deck_error) ->
-        console.log("Got deck error")
-        console.log(deck_error)
-      )
-    ).catch( (error) ->
-      console.log("Got token error")
-      console.log(error)
-    )
+        query: "client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&grant_type=authorization_code&code=#{auth_code}&redirect_uri=#{config.nrdb_callback_url}"}).then( (response) ->
+        new_entry = {userID: entry.userID, access_token: response.body.access_token, \
+        refresh_token: response.body.refresh_token, expires: response.body.expires_in}
+        db.collection('nrdb_tokens').updateOne {userID: entry.userID}, new_entry, (err) ->
+          throw(err) if err
+        ).catch( (error) ->
+          console.log("Get token error")
+          console.log(error)
+        )
+    else
+      console.log("Unknown nonce in auth_code callback")
+
+handle_nrdb_callback_check = (req) ->
+  if req.query.code? and req.query.state?
+    handle_nrdb_callback(req.query.code, req.query.state, req)
+  else
+    console.log("Failed to authorize NRDB:")
+    console.log(req.query)
+    if req.query? and req.query.state?
+      # remove the nonce from the db so it can't be reused later
+      db.collection('nrdb_tokens').remove {nonce: req.query.state}, (err) ->
+
+app.get '/nrdb/import_decks', (req, res) ->
+  if req.user
+    db.collection('nrdb_tokens').findOne {userID: req.user._id}, (err, entry) ->
+      throw(err) if err
+      if entry is null
+        console.log("Not authorized for NRDB")
+        res.redirect('/nrdb/authorize')
+      else
+        import_nrdb_decks(entry.access_token, req.user)
+        res.redirect("/deckbuilder")
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+insert_nrdb_card = (nrdb_id, username, card_id, qty, callback) ->
+  if card_id and qty
+    db.collection('cards').findOne {code: card_id}, (err, card) ->
+      throw(err) if err
+      if card
+        if card.type is "Identity"
+          identity = { "title" : card.title, "side" : card.side, "code" : card.code }
+          db.collection('decks').updateOne {nrdb_id: nrdb_id, username: username}, {$set: {identity: identity}}, (err) ->
+            throw(err) if err
+            callback()
+        else
+          entry = { "qty" : qty, "card" : card.title }
+          db.collection('decks').updateOne {nrdb_id: nrdb_id, username: username}, {$push: {cards: entry}}, (err) ->
+            throw(err) if err
+            callback()
+      else
+        callback()
+  else
+    callback()
+
+insert_nrdb_deck = (deck, user) ->
+  new_deck = {name: deck.name, username: user.username, nrdb_id: deck.id, date: deck.date_update, cards: [], identity: {} }
+  db.collection('decks').updateOne {nrdb_id: deck.id, username: user.username}, new_deck, {upsert: true}, (err) ->
+    throw(err) if err
+    keys = (k for own k,v of deck.cards)
+    async.eachSeries keys, (card_id, key_callback) ->
+      insert_nrdb_card(deck.id, user.username, card_id, deck.cards[card_id], key_callback)
+    , (key_err) ->
+      throw(key_err) if key_err
+
+import_nrdb_decks = (token, user) ->
+  got.get(config.nrdb_decks_url,
+    {json: true,
+    headers: {'Authorization': "Bearer #{token}"}}).then( (response) ->
+      for deck in response.body.data
+        insert_nrdb_deck(deck, user)
+  ).catch( (error) ->
+    console.log("Got deck error")
+    console.log(error)
+  )
 
 env = process.env['NODE_ENV'] || 'development'
 
@@ -962,13 +1029,7 @@ if env == 'development'
   console.log("Client Callback url " + config.nrdb_callback_url)
 
   app.get '/callback', (req, res) ->
-    if req.query.code? and req.query.state?
-      handle_nrdb_callback(req.query.code, req.query.state, req)
-    else
-      # FIXME - user denied access or another error occurred, handle it
-      console.log("Failed to authorize NRDB:")
-      console.log(req.query)
-
+    handle_nrdb_callback_check(req)
     # Hacky redirect for dev work. Running the server on localhost, not the domain in the callback_url
     res.redirect("http://localhost:#{app.get('port')}/nrdb")
 
@@ -982,12 +1043,7 @@ if env == 'production'
   console.log "Prod environment"
 
   app.get '/callback', (req, res) ->
-    if req.query.code? and req.query.state?
-      handle_nrdb_callback(req.query.code, req.query.state, req)
-    else
-      # FIXME - user denied access or another error occurred, handle it
-      console.log("Failed to authorize NRDB:")
-      console.log(req.query)
+    handle_nrdb_callback_check(req)
     res.redirect("/nrdb")
 
   app.get '/*', (req, res) ->
