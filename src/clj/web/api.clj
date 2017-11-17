@@ -64,7 +64,7 @@
            (-> public-routes
                auth/wrap-user)
            (-> admin-routes
-               auth/wrap-authentication
+               auth/wrap-authorization
                auth/wrap-user)
            )
 
