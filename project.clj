@@ -25,6 +25,7 @@
                  [buddy/buddy-auth "1.4.1"]
                  [crypto-password "0.2.0"]
                  [binaryage/devtools "0.9.7"]
+                 [digest "1.4.6"]
                  ]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
