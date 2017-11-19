@@ -3,7 +3,7 @@
             [aero.core :refer [read-config]]
             [buddy.sign.jwt :as jwt]
             [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.immutant :refer (get-sch-adapter)]))
+            [taoensso.sente.server-adapters.http-kit :refer (get-sch-adapter)]))
 
 (defonce ws-router (atom nil))
 

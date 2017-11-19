@@ -289,3 +289,9 @@
   [state text]
   (when state
     (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
+
+(defn handle-announcement
+  [state text]
+  (when state
+    (doseq [side [:runner :corp]]
+      (toast state side text "warning" {:time-out 0 :close-button true}))))

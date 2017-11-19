@@ -1,5 +1,6 @@
 (ns web.auth
-  (:require [web.db :refer [db object-id]]
+  (:require [jinteki.config :refer [server-config]]
+            [web.db :refer [db object-id]]
             [web.utils :refer [response]]
             [aero.core :refer [read-config]]
             [clj-time.core :refer [days from-now]]
@@ -12,7 +13,7 @@
             [buddy.auth.backends.session :refer [session-backend]]
             [crypto.password.bcrypt :as password]))
 
-(def auth-config (:auth (read-config "dev.edn")))
+(def auth-config (:auth server-config))
 
 (defn create-token [{:keys [_id emailhash]}]
   (let [claims {:_id _id
@@ -24,6 +25,12 @@
 (defn unsign-token [token]
   (try (jwt/unsign token (:secret auth-config) {:alg :hs512})
        (catch Exception e (prn "Received invalid cookie " token))))
+
+(defn wrap-authorization [handler]
+  (fn [{user :user :as req}]
+    (if (:isadmin user)
+      (handler req)
+      (response 401 {:message "Not authorized"}))))
 
 (defn wrap-user [handler]
   (fn [{:keys [cookies] :as req}]

@@ -19,13 +19,16 @@
                  [ring/ring-json "0.4.0"]
                  [compojure "1.6.0"]
                  [hiccup "1.0.5"]
-                 [org.immutant/web "2.1.9"]
+                 ;[org.immutant/web "2.1.9"]
                  [aero "1.1.2"]
                  [buddy/buddy-sign "2.2.0"]
                  [buddy/buddy-auth "1.4.1"]
                  [crypto-password "0.2.0"]
                  [binaryage/devtools "0.9.7"]
                  [digest "1.4.6"]
+                 [http-kit "2.2.0"]
+                 [org.slf4j/slf4j-nop "1.7.12"]
+
                  ]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
@@ -52,7 +55,7 @@
 
   :ring {:handler web.api/app}
 
-  :source-paths ["src/clj" "src/cljs"]
+  :source-paths ["src/clj" "src/cljs" "src/cljc"]
 
   :jar-name "netrunner.jar"
   :uberjar-name "netrunner-standalone.jar"
