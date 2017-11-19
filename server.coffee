@@ -919,9 +919,12 @@ app.post '/admin/version', (req, res) ->
 app.get '/nrdb/authorize', (req, res) ->
   if req.user
     nonce = uuid.v4()
+    state = nonce
+    if req.query? and req.query.redirect?
+      state = nonce + ':' + req.query.redirect
     db.collection('nrdb_tokens').updateOne {userID: req.user._id}, {userID: req.user._id, nonce: nonce}, {upsert: true}, (err) ->
       throw(err) if err
-      auth_url = "#{config.nrdb_auth_url}?response_type=code&client_id=#{config.nrdb_client_id}&redirect_uri=#{config.nrdb_callback_url}&state=#{nonce}"
+      auth_url = "#{config.nrdb_auth_url}?response_type=code&client_id=#{config.nrdb_client_id}&redirect_uri=#{config.nrdb_callback_url}&state=#{state}"
       res.redirect(auth_url)
   else
     res.status(401).send({message: 'Unauthorized'})
@@ -934,9 +937,12 @@ app.get '/nrdb/deauthorize', (req, res) ->
   else
     res.status(401).send({message: 'Unauthorized'})
 
-handle_nrdb_callback = (auth_code, state, req) ->
+handle_nrdb_callback = (auth_code, state, req, res) ->
+  split_state = state.split(":")
+  nonce = split_state[0]
+  redirect = split_state[1] or "/"
   # verify the authorization request came from us
-  db.collection('nrdb_tokens').findOne {nonce: state}, (err, entry) ->
+  db.collection('nrdb_tokens').findOne {nonce: nonce}, (err, entry) ->
     throw(err) if err
     unless entry is null
       got.get(config.nrdb_token_url,
@@ -946,22 +952,28 @@ handle_nrdb_callback = (auth_code, state, req) ->
         refresh_token: response.body.refresh_token, expires: response.body.expires_in}
         db.collection('nrdb_tokens').updateOne {userID: entry.userID}, new_entry, (err) ->
           throw(err) if err
+          res.redirect(redirect)
         ).catch( (error) ->
           console.log("Get token error")
           console.log(error)
+          res.status(400).send({message: 'Bad Request'})
         )
     else
       console.log("Unknown nonce in auth_code callback")
+      res.status(400).send({message: 'Bad Request'})
 
-handle_nrdb_callback_check = (req) ->
+handle_nrdb_callback_check = (req, res) ->
   if req.query.code? and req.query.state?
-    handle_nrdb_callback(req.query.code, req.query.state, req)
+    handle_nrdb_callback(req.query.code, req.query.state, req, res)
   else
     console.log("Failed to authorize NRDB:")
     console.log(req.query)
     if req.query? and req.query.state?
       # remove the nonce from the db so it can't be reused later
-      db.collection('nrdb_tokens').remove {nonce: req.query.state}, (err) ->
+      split_state = req.query.state.split(":")
+      nonce = split_state[0]
+      db.collection('nrdb_tokens').remove {nonce: nonce}, (err) ->
+    res.redirect('/')
 
 app.get '/nrdb/import_decks', (req, res) ->
   if req.user
@@ -969,10 +981,9 @@ app.get '/nrdb/import_decks', (req, res) ->
       throw(err) if err
       if entry is null
         console.log("Not authorized for NRDB")
-        res.redirect('/nrdb/authorize')
+        res.redirect('/nrdb/authorize?redirect=/deckbuilder')
       else
-        import_nrdb_decks(entry.access_token, req.user)
-        res.redirect("/deckbuilder")
+        import_nrdb_decks(entry, req.user, res)
   else
     res.status(401).send({message: 'Unauthorized'})
 
@@ -996,7 +1007,7 @@ insert_nrdb_card = (nrdb_id, username, card_id, qty, callback) ->
   else
     callback()
 
-insert_nrdb_deck = (deck, user) ->
+upsert_nrdb_deck = (deck, user) ->
   new_deck = {name: deck.name, username: user.username, nrdb_id: deck.id, date: deck.date_update, cards: [], identity: {} }
   db.collection('decks').updateOne {nrdb_id: deck.id, username: user.username}, new_deck, {upsert: true}, (err) ->
     throw(err) if err
@@ -1006,15 +1017,39 @@ insert_nrdb_deck = (deck, user) ->
     , (key_err) ->
       throw(key_err) if key_err
 
-import_nrdb_decks = (token, user) ->
+refresh_nrdb_token = (user, token_entry, res) ->
+  got.get(config.nrdb_token_url,
+    {json: true,
+    query: "grant_type=refresh_token&client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&refresh_token=#{token_entry.refresh_token}"}).then( (response) ->
+    new_entry = {userID: user._id, access_token: response.body.access_token, \
+    refresh_token: response.body.refresh_token, expires: response.body.expires_in}
+    db.collection('nrdb_tokens').updateOne {userID: user._id}, new_entry, (err) ->
+      throw(err) if err
+      import_nrdb_decks(new_entry, user, res)
+  ).catch( (error) ->
+    console.log("Get token error")
+    console.log(error)
+    if error.statusCode is 400
+      res.redirect("/nrdb/authorize?redirect=/deckbuilder")
+    else
+      res.status(400).send({message: 'Bad Request'})
+  )
+
+import_nrdb_decks = (token_entry, user, res) ->
   got.get(config.nrdb_decks_url,
     {json: true,
-    headers: {'Authorization': "Bearer #{token}"}}).then( (response) ->
+    headers: {'Authorization': "Bearer #{token_entry.access_token}"}}).then( (response) ->
       for deck in response.body.data
-        insert_nrdb_deck(deck, user)
+        upsert_nrdb_deck(deck, user)
+      res.redirect("/deckbuilder")
   ).catch( (error) ->
     console.log("Got deck error")
     console.log(error)
+    console.log(error.statusCode)
+    if error.statusCode is 401
+      refresh_nrdb_token(user, token_entry, res)
+    else
+      res.status(400).send({message: 'Bad Request'})
   )
 
 env = process.env['NODE_ENV'] || 'development'
@@ -1029,9 +1064,9 @@ if env == 'development'
   console.log("Client Callback url " + config.nrdb_callback_url)
 
   app.get '/callback', (req, res) ->
-    handle_nrdb_callback_check(req)
+    handle_nrdb_callback_check(req, res)
     # Hacky redirect for dev work. Running the server on localhost, not the domain in the callback_url
-    res.redirect("http://localhost:#{app.get('port')}/nrdb")
+    # res.redirect("http://localhost:#{app.get('port')}/nrdb")
 
   app.get '/*', (req, res) ->
     if req.user
@@ -1043,8 +1078,8 @@ if env == 'production'
   console.log "Prod environment"
 
   app.get '/callback', (req, res) ->
-    handle_nrdb_callback_check(req)
-    res.redirect("/nrdb")
+    handle_nrdb_callback_check(req, res)
+    # res.redirect("/nrdb")
 
   app.get '/*', (req, res) ->
     if req.user
