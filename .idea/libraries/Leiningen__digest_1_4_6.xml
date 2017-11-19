@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Leiningen: digest:1.4.6">
-    <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/digest/digest/1.4.6/digest-1.4.6.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
