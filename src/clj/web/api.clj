@@ -7,7 +7,6 @@
             [web.game :as game]
             [web.chat :as chat]
             [web.stats :as stats]
-            [immutant.web]
             [web.admin :as admin]
             [cheshire.core :refer [generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
