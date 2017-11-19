@@ -53,7 +53,6 @@
     client-id                           :client-id}]
   (let [{:keys [players gameid] :as game} (lobby/game-for-client client-id)]
     (when (lobby/first-player? client-id gameid)
-      ;; todo: stats
       (let [strip-deck (fn [player] (update-in player [:deck] #(select-keys % [:_id])))
             game (as-> game g
                        (assoc g :started true
