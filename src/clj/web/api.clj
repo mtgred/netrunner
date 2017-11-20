@@ -30,6 +30,7 @@
            (POST "/logout" [] auth/logout-handler)
            (GET "/check/:username" [] auth/check-username-handler)
            (PUT "/profile" [] auth/update-profile-handler)
+           (GET "/user" [] data/get-user)
 
            (POST "/user/clearstats" [] stats/clear-user-stats)
            (POST "/data/decks/clearstats" [] stats/clear-deck-stats)

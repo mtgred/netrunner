@@ -3,8 +3,6 @@
             [web.utils :refer [response tick remove-once]]
             [web.ws :as ws]
             [web.stats :as stats]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
             [game.main]
             [game.core :as core]
             [crypto.password.bcrypt :as bcrypt]
@@ -87,24 +85,22 @@
         (spectator? client-id gameid)
         (swap! all-games update-in [gameid :spectators] #(remove-once (fn [p] (not= client-id (:id p))) %)))
 
-  ;; update ending-players when someone drops to credit a completion properly
+  ;; update ending-players when someone drops to credit a completion properly.  Not if game is over.
   ; TODO add other player back in if other player rejoins
-  (let [players (get-in @all-games [gameid :players])]
-    (when (and (= 1 (count players)) (stats/game-started? all-games gameid))
+  (let [players (get-in @all-games [gameid :players])
+        winner (:winning-user @(get-in @all-games [gameid :state]))]
+    (when (and (= 1 (count players)) (stats/game-started? all-games gameid) (not winner))
       (swap! all-games assoc-in [gameid :ending-players] players)))
 
-  (when-let [{:keys [players spectators] :as game} (get @all-games gameid)]
+  (when-let [{:keys [players spectators ending-players] :as game} (get @all-games gameid)]
     (swap! client-gameids dissoc client-id)
 
     (if (and (empty? players) (empty? spectators))
-      (do
-        (stats/update-deck-stats all-games gameid)
-        (stats/update-game-stats all-games gameid)
-        ;; TODO SEND Web Socket message forcing client to update its stats
-        ;; old node code
-        ;  # Send a message to players telling browser to pull updated stats
-        ;; for id in stats.sockets
-        ;; stats.to(id).emit("netrunner", {channel: 'stats', msg: 'updatestats'})
+      (do (stats/update-deck-stats all-games gameid)
+          (stats/update-game-stats all-games gameid)
+          ; Get clients to refresh their stats from Mongo
+          (doseq [p ending-players]
+            (ws/send! (:id p) [:stats/update "update"]))
 
         ;; TODO: send "remove" to game server to get the "player has left the game" note
 

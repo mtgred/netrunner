@@ -12,11 +12,13 @@
 (defn alt-arts-handler [req]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "altarts" nil))))
 
+(defn get-user [req]
+  (response 200 (mc/find-maps db "users" {:username (get-in req [:user :username])})))
+
 (defn decks-handler [req]
   (if-let [user (:user req)]
     (response 200 (mc/find-maps db "decks" {:username (:username user)}))
-    (response 200 (mc/find-maps db "decks" {:username "__demo__"}))
-    ))
+    (response 200 (mc/find-maps db "decks" {:username "__demo__"}))))
 
 (defn decks-create-handler [{{username :username} :user
                              deck                 :body}]

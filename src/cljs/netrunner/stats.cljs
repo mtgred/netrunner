@@ -7,12 +7,16 @@
             [netrunner.deckbuilder :refer [process-decks num->percent]]
             [netrunner.auth :refer [authenticated] :as auth]
             [netrunner.ajax :refer [POST GET]]
+            [netrunner.ws :as ws]
             [goog.string :as gstring]
             [goog.string.format]))
 
-(def stats-channel (chan))
-;(def stats-socket (.connect js/io (str js/iourl "/stats")))
-;(.on stats-socket "netrunner" #(put! stats-channel (js->clj % :keywordize-keys true)))
+(ws/register-ws-handler!
+  :stats/update
+  #(go (let [result (-> (<! (GET "/user")) :json first :stats)
+             decks (process-decks (:json (<! (GET "/data/decks"))))]
+         (swap! app-state assoc :stats result)
+         (swap! app-state assoc :decks decks))))
 
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
@@ -26,14 +30,6 @@
         (try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
         (go (let [result (<! (POST "/user/clearstats" data :json))]
               (swap! app-state assoc :stats result)))))))
-
-;; Go loop to receive messages from node server to refresh stats on game-end
-(go (while true
-      (let [msg (<! stats-channel)
-            result (-> (<! (GET "/user")) :json first :stats)
-            decks (process-decks (:json (<! (GET "/data/decks"))))]
-        (swap! app-state assoc :stats result)
-        (swap! app-state assoc :decks decks))))
 
 (defn stat-view [{:keys [start-key complete-key win-key lose-key stats]} owner]
   (om/component
