@@ -942,9 +942,15 @@
                          (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])
                          (when (:nrdb_id deck)
-                           [:button  "Pull NRDB"])
+                           [:button
+                            {:on-click #(set! (.-location js/document)
+                                              (str "/nrdb/import_deck?deck=" (:nrdb_id deck)))}
+                            "Pull NRDB"])
                          (when (:nrdb_id deck)
-                           [:button  "Push NRDB"])
+                           [:button
+                            {:on-click #(set! (.-location js/document)
+                                              (str "/nrdb/export_deck?deck=" (:nrdb_id deck)))}
+                            "Push NRDB"])
                            ])
                 [:h3 (:name deck)]
                 [:div.header

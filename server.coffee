@@ -987,6 +987,38 @@ app.get '/nrdb/import_decks', (req, res) ->
   else
     res.status(401).send({message: 'Unauthorized'})
 
+app.get '/nrdb/import_deck', (req, res) ->
+  if req.user
+    db.collection('nrdb_tokens').findOne {userID: req.user._id}, (err, entry) ->
+      throw(err) if err
+      nrdb_id = req.query['deck']
+      unless nrdb_id
+        res.status(400).send({message: 'Bad Request'})
+      else
+        if entry is null
+          console.log("Not authorized for NRDB")
+          res.redirect('/nrdb/authorize?redirect=/deckbuilder')
+        else
+          import_nrdb_deck(entry, nrdb_id, req.user, res)
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.get '/nrdb/export_deck', (req, res) ->
+  if req.user
+    db.collection('nrdb_tokens').findOne {userID: req.user._id}, (err, entry) ->
+      throw(err) if err
+      nrdb_id = req.query['deck']
+      unless nrdb_id
+        res.status(400).send({message: 'Bad Request'})
+      else
+        if entry is null
+          console.log("Not authorized for NRDB")
+          res.redirect('/nrdb/authorize?redirect=/deckbuilder')
+        else
+          export_nrdb_deck(entry, nrdb_id, req.user, res)
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
 insert_nrdb_card = (nrdb_id, username, card_id, qty, callback) ->
   if card_id and qty
     db.collection('cards').findOne {code: card_id}, (err, card) ->
@@ -1017,7 +1049,7 @@ upsert_nrdb_deck = (deck, user) ->
     , (key_err) ->
       throw(key_err) if key_err
 
-refresh_nrdb_token = (user, token_entry, res) ->
+refresh_nrdb_token = (user, token_entry, redirect_url, res) ->
   got.get(config.nrdb_token_url,
     {json: true,
     query: "grant_type=refresh_token&client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&refresh_token=#{token_entry.refresh_token}"}).then( (response) ->
@@ -1025,7 +1057,7 @@ refresh_nrdb_token = (user, token_entry, res) ->
     refresh_token: response.body.refresh_token, expires: response.body.expires_in}
     db.collection('nrdb_tokens').updateOne {userID: user._id}, new_entry, (err) ->
       throw(err) if err
-      import_nrdb_decks(new_entry, user, res)
+      res.redirect(redirect_url)
   ).catch( (error) ->
     console.log("Get token error")
     console.log(error)
@@ -1040,6 +1072,61 @@ insert_deck_if_not_exists = (deck, user) ->
     throw(err) if err
     upsert_nrdb_deck(deck, user) unless curr_deck
 
+make_nrdb_card = (entry, callback) ->
+  db.collection('cards').findOne {title: entry.card, replaced_by: {$exists: false}}, (err, card) ->
+    throw(err) if err
+    if card
+      callback(null, {code: "#{card.code}", qty: entry.qty})
+    else
+      callback("unknown card: #{entry.card}", {})
+
+make_nrdb_deck = (deck, token_entry, res) ->
+  async.map(deck.cards, make_nrdb_card, (err, results) ->
+    throw(err) if err
+    nrdb_deck = {deck_id: deck.nrdb_id, name: deck.name, content: {}}
+    for entry in results
+      nrdb_deck.content[entry.code] = entry.qty
+    nrdb_deck.content["#{deck.identity.code}"] = 1
+    got.post(config.nrdb_deck_save_url,
+      {json: true,
+      body: nrdb_deck,
+      headers: {'Authorization': "Bearer #{token_entry.access_token}"}}).then( (response) ->
+        res.redirect("/deckbuilder")
+    ).catch( (error) ->
+      console.log("Got deck error")
+      console.log(error)
+      console.log(error.statusCode)
+      if error.statusCode is 401
+        refresh_nrdb_token(user, token_entry, "/nrdb/export_deck?deck=#{nrdb_id}", res)
+      else
+        res.status(400).send({message: 'Bad Request'})
+    ))
+
+export_nrdb_deck = (token_entry, nrdb_id, user, res) ->
+  db.collection('decks').findOne {nrdb_id: parseInt(nrdb_id, 10), username: user.username}, (err, deck) ->
+    throw(err) if err
+    if deck
+      make_nrdb_deck(deck, token_entry, res)
+    else
+      res.status(400).send({message: 'Bad Request: Unknown deck'})
+      
+import_nrdb_deck = (token_entry, nrdb_id, user, res) ->
+  got.get("#{config.nrdb_deck_url}/#{nrdb_id}",
+    {json: true,
+    headers: {'Authorization': "Bearer #{token_entry.access_token}"}}).then( (response) ->
+      if response.body.success
+        upsert_nrdb_deck(response.body.data[0], user)
+      res.redirect("/deckbuilder")
+  ).catch( (error) ->
+    console.log("Got deck error")
+    console.log(error)
+    console.log(error.statusCode)
+    if error.statusCode is 401
+      refresh_nrdb_token(user, token_entry, "/nrdb/import_deck?deck=#{nrdb_id}", res)
+    else
+      res.status(400).send({message: 'Bad Request'})
+  )
+
 import_nrdb_decks = (token_entry, user, res) ->
   got.get(config.nrdb_decks_url,
     {json: true,
@@ -1051,7 +1138,7 @@ import_nrdb_decks = (token_entry, user, res) ->
     console.log(error)
     console.log(error.statusCode)
     if error.statusCode is 401
-      refresh_nrdb_token(user, token_entry, res)
+      refresh_nrdb_token(user, token_entry, "/nrdb/import_decks", res)
     else
       res.status(400).send({message: 'Bad Request'})
   )
