@@ -67,7 +67,7 @@
 (defn lookup
   "Lookup the card title (query) looking at all cards on specified side"
   [side card]
-  (let [q (.toLowerCase (:title card))
+  (let [q (.toLowerCase (or (:title card) ""))
         id (:id card)
         cards (filter #(= (:side %) side)
                       (:cards @app-state))
@@ -201,7 +201,8 @@
 
 (defn load-decks [decks]
   (swap! app-state assoc :decks decks)
-  (put! select-channel (first (sort-by :date > decks)))
+  (when (not-empty decks)
+    (put! select-channel (first (sort-by :date > decks))))
   (swap! app-state assoc :decks-loaded true))
 
 (defn process-decks

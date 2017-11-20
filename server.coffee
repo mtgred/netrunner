@@ -1035,12 +1035,16 @@ refresh_nrdb_token = (user, token_entry, res) ->
       res.status(400).send({message: 'Bad Request'})
   )
 
+insert_deck_if_not_exists = (deck, user) ->
+  db.collection('decks').findOne {nrdb_id: deck.id, username: user.username}, {_id: 1}, (err, curr_deck) ->
+    throw(err) if err
+    upsert_nrdb_deck(deck, user) unless curr_deck
+
 import_nrdb_decks = (token_entry, user, res) ->
   got.get(config.nrdb_decks_url,
     {json: true,
     headers: {'Authorization': "Bearer #{token_entry.access_token}"}}).then( (response) ->
-      for deck in response.body.data
-        upsert_nrdb_deck(deck, user)
+      insert_deck_if_not_exists(deck, user) for deck in response.body.data
       res.redirect("/deckbuilder")
   ).catch( (error) ->
     console.log("Got deck error")
