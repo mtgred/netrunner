@@ -1,5 +1,5 @@
 (ns web.auth
-  (:require [jinteki.config :refer [server-config]]
+  (:require [web.config :refer [server-config]]
             [web.db :refer [db object-id]]
             [web.utils :refer [response]]
             [aero.core :refer [read-config]]
@@ -26,9 +26,15 @@
   (try (jwt/unsign token (:secret auth-config) {:alg :hs512})
        (catch Exception e (prn "Received invalid cookie " token))))
 
-(defn wrap-authorization [handler]
+(defn wrap-authorization-required [handler]
   (fn [{user :user :as req}]
     (if (:isadmin user)
+      (handler req)
+      (response 401 {:message "Not authorized"}))))
+
+(defn wrap-authentication-required [handler]
+  (fn [{user :user :as req}]
+    (if user
       (handler req)
       (response 401 {:message "Not authorized"}))))
 

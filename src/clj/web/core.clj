@@ -2,12 +2,15 @@
   (:require [web.api :refer [app]]
             [monger.collection :as mc]
             [jinteki.cards :refer [all-cards]]
-            [jinteki.config :refer [frontend-version]]
+            [web.config :refer [frontend-version]]
             [web.ws :as ws]
             [web.db :refer [db]]
             [web.chat :as chat]
             [web.lobby :as lobby]
-            [web.game :as game]))
+            [web.game :as game]
+
+            [jinteki.nav :as nav]
+            ))
 
 
 (defonce server (atom nil))
