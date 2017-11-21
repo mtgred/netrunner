@@ -1,22 +1,29 @@
 (ns web.stats
   (:require [web.db :refer [db object-id]]
             [monger.collection :as mc]
+            [monger.result :refer [acknowledged?]]
             [web.utils :refer [response]])
   (:import org.bson.types.ObjectId))
 
-(defn clear-user-stats
-  "Clear any statistics for a given user-id contained in a request"
-  [req]
-  (when-let [user-id (-> req :user :_id)]
-    (mc/update db "users" {:_id (object-id user-id)} {"$unset" {:stats ""}})
-    (response 200 {:message "OK"})))
+(defn clear-userstats-handler
+      "Clear any statistics for a given user-id contained in a request"
+      [{{username :username} :user
+        {id :id}             :params}]
+      (if (and username id)
+        (if (acknowledged? (mc/update db "users" {:_id (object-id id)} {"$unset" {:stats ""}}))
+          (response 200 {:message "Deleted"})
+          (response 403 {:message "Forbidden"}))
+        (response 401 {:message "Unauthorized"})))
 
-(defn clear-deck-stats
+(defn clear-deckstats-handler
   "Clear any statistics for a given deck-id contained in a request"
-  [req]
-  (when-let [deck-id (-> req :body :_id)]
-    (mc/update db "decks" {:_id (object-id deck-id)} {"$unset" {:stats ""}})
-    (response 200 {:message "OK"})))
+  [{{username :username} :user
+    {id :id}             :params}]
+   (if (and username id)
+     (if (acknowledged? (mc/update db "decks" {:_id (object-id id)} {"$unset" {:stats ""}}))
+       (response 200 {:message "Deleted"})
+       (response 403 {:message "Forbidden"}))
+     (response 401 {:message "Unauthorized"})))
 
 (defn game-started?
   "Returns true if game has started"

@@ -6,7 +6,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.deckbuilder :refer [process-decks num->percent]]
             [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.ajax :refer [POST GET]]
+            [netrunner.ajax :refer [GET DELETE]]
             [netrunner.ws :as ws]
             [goog.string :as gstring]
             [goog.string.format]))
@@ -26,9 +26,9 @@
 (defn clear-user-stats []
   (authenticated
     (fn [user]
-      (let [data (:user @app-state)]
+      (let [id (get-in @app-state [:user :_id])]
         (try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
-        (go (let [result (<! (POST "/user/clearstats" data :json))]
+        (go (let [result (<! (DELETE (str "/profile/stats/user/" id)))]
               (swap! app-state assoc :stats result)))))))
 
 (defn stat-view [{:keys [start-key complete-key win-key lose-key stats]} owner]

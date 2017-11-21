@@ -32,8 +32,6 @@
 
 
            (GET "/user" [] data/get-user)
-           (POST "/user/clearstats" [] stats/clear-user-stats)
-           (POST "/data/decks/clearstats" [] stats/clear-deck-stats)
 
            (GET "/data/cards" [] data/cards-handler)
            (GET "/data/altarts" [] data/alt-arts-handler)
@@ -60,6 +58,9 @@
 (defroutes user-routes
            (POST "/logout" [] auth/logout-handler)
            (PUT "/profile" [] auth/update-profile-handler)
+
+           (DELETE "/profile/stats/user/:id" [] stats/clear-userstats-handler)
+           (DELETE "/profile/stats/deck/:id" [] stats/clear-deckstats-handler)
 
            (GET "/data/decks" [] data/decks-handler)
            (POST "/data/decks" [] data/decks-create-handler)
