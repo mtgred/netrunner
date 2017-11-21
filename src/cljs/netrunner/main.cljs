@@ -5,7 +5,8 @@
             [goog.history.EventType :as EventType]
             [netrunner.appstate :refer [app-state]]
             [netrunner.gameboard :as gameboard]
-            [netrunner.gamelobby :as gamelobby])
+            [netrunner.gamelobby :as gamelobby]
+            [jinteki.nav :as nav])
   (:import goog.history.Html5History))
 
 (def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about"])
@@ -28,21 +29,12 @@
   (om/component
    (sab/html
     [:ul.carousel-indicator {}
-     (for [page [["Chat" "/" 0]
-                 ["Cards" "/cards" 1]
-                 ["Deck Builder" "/deckbuilder" 2]
-                 ["Play" "/play" 3]
-                 ["Help" "/help" 4]
-                 (when (:user @app-state)
-                  ["Settings" "/account" 5])
-                 (when (:user @app-state)
-                   ["Stats" "/stats" 6])
-                 ["About" "/about" 7]]]
-       (when-let [route (second page)]
+     (for [[name route ndx show-fn?] nav/navbar-links]
+       (when (or (not show-fn?) (show-fn? @app-state))
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
                :on-click #(.setToken history route)
-               :data-target "#main" :data-slide-to (last page)}
-          [:a {:href route} (first page)]]))])))
+               :data-target "#main" :data-slide-to ndx}
+          [:a {:href route} name]]))])))
 
 (defn status [cursor owner]
   (om/component

@@ -5,7 +5,7 @@
             [web.utils :refer [response]]
             [monger.collection :as mc]
             [monger.operators :refer :all]
-            [jinteki.config :refer [frontend-version]]))
+            [web.config :refer [frontend-version]]))
 
 (defn wrap-version [handler]
   (fn [request]

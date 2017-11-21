@@ -1,7 +1,7 @@
 (ns web.db
   (:require [aero.core :refer [read-config]]
             [monger.core :as mg]
-            [jinteki.config :refer [server-config]])
+            [web.config :refer [server-config]])
 
   (:import org.bson.types.ObjectId))
 
