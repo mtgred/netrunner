@@ -999,15 +999,15 @@ app.get '/nrdb/export_deck', (req, res) ->
   if req.user
     db.collection('nrdb_tokens').findOne {userID: req.user._id}, (err, entry) ->
       throw(err) if err
-      nrdb_id = req.query['deck']
-      unless nrdb_id
+      deck_id = req.query['deck']
+      unless deck_id
         res.status(400).send({message: 'Bad Request'})
       else
         if entry is null
           console.log("Not authorized for NRDB")
           res.redirect('/nrdb/authorize?redirect=/deckbuilder')
         else
-          export_nrdb_deck(entry, nrdb_id, req.user, res)
+          export_nrdb_deck(entry, deck_id, req.user, res)
   else
     res.status(401).send({message: 'Unauthorized'})
 
@@ -1075,7 +1075,12 @@ make_nrdb_card = (entry, callback) ->
 make_nrdb_deck = (deck, token_entry, res) ->
   async.map(deck.cards, make_nrdb_card, (err, results) ->
     throw(err) if err
-    nrdb_deck = {deck_id: deck.nrdb_id, name: deck.name, content: {}}
+    # nrdb_deck = {deck_id: deck.nrdb_id, name: deck.name, content: {}}
+    nrdb_deck = {name: deck.name, content: {}}
+    if deck.nrdb_id?
+      nrdb_deck.deck_id = deck.nrdb_id
+    else
+      nrdb_deck.deck_id = 0
     for entry in results
       nrdb_deck.content[entry.code] = entry.qty
     nrdb_deck.content["#{deck.identity.code}"] = 1
@@ -1083,19 +1088,25 @@ make_nrdb_deck = (deck, token_entry, res) ->
       {json: true,
       body: nrdb_deck,
       headers: {'Authorization': "Bearer #{token_entry.access_token}"}}).then( (response) ->
-        res.redirect("/deckbuilder")
+        if response.body? and response.body.success
+          db.collection('decks').updateOne {_id: mongoskin.helper.toObjectID(deck._id)}, {$set: {nrdb_id: response.body.data[0].id}}, (err, result) ->
+            throw(err) if err
+            res.redirect("/deckbuilder")
+        else
+          console.log("Failed to write deck to NRDB")
+          res.redirect("/deckbuilder")
     ).catch( (error) ->
       console.log("Got deck error")
       console.log(error)
       console.log(error.statusCode)
       if error.statusCode is 401
-        refresh_nrdb_token(user, token_entry, "/nrdb/export_deck?deck=#{nrdb_id}", res)
+        refresh_nrdb_token(user, token_entry, "/nrdb/export_deck?deck=#{deck._id}", res)
       else
         res.status(400).send({message: 'Bad Request'})
     ))
 
-export_nrdb_deck = (token_entry, nrdb_id, user, res) ->
-  db.collection('decks').findOne {nrdb_id: parseInt(nrdb_id, 10), username: user.username}, (err, deck) ->
+export_nrdb_deck = (token_entry, deck_id, user, res) ->
+  db.collection('decks').findOne {_id: mongoskin.helper.toObjectID(deck_id), username: user.username}, (err, deck) ->
     throw(err) if err
     if deck
       make_nrdb_deck(deck, token_entry, res)
