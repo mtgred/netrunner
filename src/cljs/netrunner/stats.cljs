@@ -11,12 +11,18 @@
             [goog.string :as gstring]
             [goog.string.format]))
 
+(defn update-deck-stats
+  "Update the local app-state with a new version of deck stats"
+  [deck-id stats]
+  (let [deck (first (filter #(= (:_id %) deck-id) (:decks @app-state)))
+        deck (assoc deck :stats stats)
+        others (remove #(= (:_id %) deck-id) (:decks @app-state))]
+    (swap! app-state assoc :decks (conj others deck))))
+
 (ws/register-ws-handler!
   :stats/update
-  #(go (let [result (-> (<! (GET "/user")) :json first :stats)
-             decks (process-decks (:json (<! (GET "/data/decks"))))]
-         (swap! app-state assoc :stats result)
-         (swap! app-state assoc :decks decks))))
+  #(do (swap! app-state assoc :stats (-> % :userstats))
+       (update-deck-stats (-> % :deck-id) (-> % :deckstats))))
 
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"

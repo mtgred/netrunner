@@ -98,9 +98,7 @@
     (if (and (empty? players) (empty? spectators))
       (do (stats/update-deck-stats all-games gameid)
           (stats/update-game-stats all-games gameid)
-          ; Get clients to refresh their stats from Mongo
-          (doseq [p ending-players]
-            (ws/send! (:id p) [:stats/update "update"]))
+          (stats/push-stats-update all-games gameid)
 
         ;; TODO: send "remove" to game server to get the "player has left the game" note
 

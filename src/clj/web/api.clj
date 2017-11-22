@@ -30,9 +30,6 @@
            (POST "/login" [] auth/login-handler)
            (GET "/check/:username" [] auth/check-username-handler)
 
-
-           (GET "/user" [] data/get-user)
-
            (GET "/data/cards" [] data/cards-handler)
            (GET "/data/altarts" [] data/alt-arts-handler)
 

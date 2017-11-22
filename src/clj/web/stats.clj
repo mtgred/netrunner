@@ -2,6 +2,7 @@
   (:require [web.db :refer [db object-id]]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
+            [web.ws :as ws]
             [web.utils :refer [response]])
   (:import org.bson.types.ObjectId))
 
@@ -24,6 +25,16 @@
        (response 200 {:message "Deleted"})
        (response 403 {:message "Forbidden"}))
      (response 401 {:message "Unauthorized"})))
+
+(defn get-deckstats-handler
+  "Get statistics for a given deck id"
+  [deck-id]
+  (response 200 (mc/find-one-as-map db "decks" {:_id (object-id deck-id)} ["stats"])))
+
+(defn get-userstats-handler
+  "Get statistics for a given user id"
+  [user-id]
+  (response 200 (mc/find-one-as-map db "users" {:_id (object-id user-id)} ["stats"])))
 
 (defn game-started?
   "Returns true if game has started"
@@ -62,15 +73,11 @@
   [all-games gameid]
   (let [start-players (get-in @all-games [gameid :original-players])
         end-players (get-in @all-games [gameid :ending-players])]
-
-    ;; Increment games commenced stats for each deck that started the game
     (doseq [p start-players]
       (let [enable-deckstats (get-in p [:user :options :deckstats])
             deck-id (get-in p [:deck :_id])]
         (when (and enable-deckstats deck-id)
           (inc-deck-stats deck-id '{:stats.games-started 1}))))
-
-    ;; Increment games completed stats for each deck that ended the game
     (doseq [p end-players]
       (inc-deck-stats (get-in p [:deck :_id]) (deck-record-end all-games gameid p)))))
 
@@ -109,11 +116,22 @@
   [all-games gameid]
   (let [start-players (get-in @all-games [gameid :original-players])
         end-players (get-in @all-games [gameid :ending-players])]
-
-    ;; Increment games commenced stats for each player that started the game
     (doseq [p start-players]
       (inc-game-stats (get-in p [:user :_id]) (game-record-start all-games gameid p)))
-
-    ;; Increment games completed stats for each player that ended the game
     (doseq [p end-players]
       (inc-game-stats (get-in p [:user :_id]) (game-record-end all-games gameid p)))))
+
+
+(defn push-stats-update
+  "Gather updated deck and user stats and send via web socket to clients"
+  [all-games gameid]
+      ;; TODO Test again once we don't need to refresh page to end game session
+    (let [end-players (get-in @all-games [gameid :ending-players])]
+      (doseq [p end-players]
+        (let [user-id   (get-in p [:user :_id])
+              deck-id   (get-in p [:deck :_id])
+              userstats (get-in (get-userstats-handler user-id) [:body :stats])
+              deckstats (get-in (get-deckstats-handler deck-id) [:body :stats])]
+        (ws/send! (:id p) [:stats/update {:userstats userstats
+                                          :deck-id   deck-id
+                                          :deckstats deckstats}])))))
