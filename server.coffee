@@ -929,14 +929,6 @@ app.get '/nrdb/authorize', (req, res) ->
   else
     res.status(401).send({message: 'Unauthorized'})
 
-app.get '/nrdb/deauthorize', (req, res) ->
-  if req.user
-    db.collection('nrdb_tokens').remove {userID: req.user._id}, (err) ->
-      throw(err) if err
-    res.redirect('/nrdb')
-  else
-    res.status(401).send({message: 'Unauthorized'})
-
 handle_nrdb_callback = (auth_code, state, req, res) ->
   split_state = state.split(":")
   nonce = split_state[0]
