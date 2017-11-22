@@ -810,7 +810,8 @@
                                    :on-click #(put! select-channel deck)}
                     [:img {:src (image-url (:identity deck))}]
                     [:div.float-right (deck-status-span sets deck)]
-                    [:h4 (str (:name deck) (when (:nrdb_id deck) " [NRDB]"))]
+                    [:h4 (when (:nrdb_id deck) [:img {:class "nrdb-logo" :src "/img/nrdb.png"}])
+                     (str (:name deck))]
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                     [:p (get-in deck [:identity :title]) [:br]
                      (when (and (:stats deck) (not= "none" (get-in @app-state [:options :deckstats])))
