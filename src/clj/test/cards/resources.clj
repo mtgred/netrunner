@@ -1554,9 +1554,9 @@
     (take-credits state :corp)
     (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
     (play-from-hand state :runner "Street Peddler")
-    (let [sp (get-in @state [:runner :rig :resource 0])]
-      (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 cards")
-      (card-ability state :runner sp 0)
+    (let [street-peddler (get-in @state [:runner :rig :resource 0])]
+      (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
+      (card-ability state :runner street-peddler 0)
       (trash-resource state "Street Peddler")
       (is (zero? (count (get-in @state [:runner :prompt])))))))
 
