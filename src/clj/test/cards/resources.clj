@@ -1544,7 +1544,7 @@
 
 (deftest street-peddler-trash-while-choosing-card
   ;; Street Peddler - trashing Street Peddler while choosing which card to
-  ;; discard shouldn't duplicate cards. Issue #587.
+  ;; discard should dismiss the choice prompt. Issue #587.
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Street Peddler" 1)
@@ -1557,13 +1557,8 @@
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (is (= 3 (count (:hosted sp))) "Street Peddler is hosting 3 cards")
       (card-ability state :runner sp 0)
-      (println "Before trash")
       (trash-resource state "Street Peddler")
-      (println "After trash")
-      (prompt-card :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
-      (is (= 4 (count (:discard (get-runner)))) "Street Peddler and hosted cards trashed")
-      (is (zero? (count (get-in @state [:runner :rig :program])))
-          "Gordian Blade was not installed"))))
+      (is (zero? (count (get-in @state [:runner :prompt])))))))
 
 (deftest symmetrical-visage
   ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn
