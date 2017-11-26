@@ -952,7 +952,9 @@
                                             (str "/nrdb/export_deck?deck=" (:_id deck)))}
                           "Push NRDB"]
                            ])
-                [:h3 (:name deck)]
+                [:h3 (:name deck)
+                 (when (:nrdb_id deck) [:a {:href (str "https://netrunnerdb.com/en/deck/view/" (:nrdb_id deck))}
+                                        [:img {:class "nrdb-logo" :src "/img/nrdb.png"}]])]
                 [:div.header
                  [:img {:src (image-url identity)}]
                  [:h4 {:class (if (released? (:sets @app-state) identity) "fake-link" "casual")
