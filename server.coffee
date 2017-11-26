@@ -930,6 +930,10 @@ app.get '/nrdb/authorize', (req, res) ->
     res.status(401).send({message: 'Unauthorized'})
 
 handle_nrdb_callback = (auth_code, state, req, res) ->
+  unless req.user?
+    res.status(401).send({message: 'Unauthorized'})
+    return
+
   split_state = state.split(":")
   nonce = split_state[0]
   redirect = split_state[1] or "/"
@@ -940,8 +944,10 @@ handle_nrdb_callback = (auth_code, state, req, res) ->
       got.get(config.nrdb_token_url,
         {json: true,
         query: "client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&grant_type=authorization_code&code=#{auth_code}&redirect_uri=#{config.nrdb_callback_url}"}).then( (response) ->
-        new_entry = {userID: entry.userID, access_token: response.body.access_token, \
-        refresh_token: response.body.refresh_token, expires: response.body.expires_in}
+        enc_access = encrypt_token(response.body.access_token)
+        enc_refresh = encrypt_token(response.body.refresh_token)
+        new_entry = {userID: req.user._id, access_token: enc_access.encrypted, access_iv: enc_access.iv, \
+        refresh_token: enc_refresh.encrypted, refresh_iv: enc_refresh.iv}
         db.collection('nrdb_tokens').updateOne {userID: entry.userID}, new_entry, (err) ->
           throw(err) if err
           res.redirect(redirect)
@@ -953,6 +959,34 @@ handle_nrdb_callback = (auth_code, state, req, res) ->
     else
       console.log("Unknown nonce in auth_code callback")
       res.status(400).send({message: 'Bad Request'})
+
+# For encrypting the OAuth2 access and refresh tokens in the database
+# The encryption key is stored in an environment variable
+token_encryption_algo = 'aes-256-ctr'
+iv_length = 16
+
+encryption_key = config.nrdb_encryption_key
+if encryption_key.length < 32
+  console.log("******** nrdb_encryption_key must be 32 bytes long, padding it\n")
+  while(encryption_key.length < 32)
+    encryption_key = encryption_key + "0"
+else if encryption_key.length > 32
+  console.log("******** nrdb_encryption_key must be 32 bytes long, truncating it\n")
+  encryption_key = encryption_key.slice(0, 32)
+
+encrypt_token = (token) ->
+  iv = crypto.randomBytes(iv_length)
+  iv_string = iv.toString('hex').slice(0, 16)
+  cipher = crypto.createCipheriv(token_encryption_algo, encryption_key, iv_string)
+  encrypted = cipher.update(token, 'utf8', 'hex')
+  encrypted += cipher.final('hex')
+  {encrypted: encrypted, iv: iv_string}
+
+decrypt_token = (encrypted_token, iv) ->
+  decipher = crypto.createDecipheriv(token_encryption_algo, encryption_key, iv)
+  dec = decipher.update(encrypted_token, 'hex', 'utf8')
+  dec += decipher.final('utf8')
+  return dec
 
 handle_nrdb_callback_check = (req, res) ->
   if req.query.code? and req.query.state?
@@ -1042,11 +1076,14 @@ upsert_nrdb_deck = (deck, user) ->
       throw(key_err) if key_err
 
 refresh_nrdb_token = (user, token_entry, redirect_url, res) ->
+  refresh_token = decrypt_token(token_entry.refresh_token, token_entry.refresh_iv)
   got.get(config.nrdb_token_url,
     {json: true,
-    query: "grant_type=refresh_token&client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&refresh_token=#{token_entry.refresh_token}"}).then( (response) ->
-    new_entry = {userID: user._id, access_token: response.body.access_token, \
-    refresh_token: response.body.refresh_token, expires: response.body.expires_in}
+    query: "grant_type=refresh_token&client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&refresh_token=#{refresh_token}"}).then( (response) ->
+    enc_access = encrypt_token(response.body.access_token)
+    enc_refresh = encrypt_token(response.body.refresh_token)
+    new_entry = {userID: user._id, access_token: enc_access.encrypted, access_iv: enc_access.iv, \
+    refresh_token: enc_refresh.encrypted, refresh_iv: enc_refresh.iv}
     db.collection('nrdb_tokens').updateOne {userID: user._id}, new_entry, (err) ->
       throw(err) if err
       res.redirect(redirect_url)
@@ -1084,10 +1121,11 @@ make_nrdb_deck = (deck, token_entry, res) ->
     for entry in results
       nrdb_deck.content[entry.code] = entry.qty
     nrdb_deck.content["#{deck.identity.code}"] = 1
+    access_token = decrypt_token(token_entry.access_token, token_entry.access_iv)
     got.post(config.nrdb_deck_save_url,
       {json: true,
       body: nrdb_deck,
-      headers: {'Authorization': "Bearer #{token_entry.access_token}"}}).then( (response) ->
+      headers: {'Authorization': "Bearer #{access_token}"}}).then( (response) ->
         if response.body? and response.body.success
           db.collection('decks').updateOne {_id: mongoskin.helper.toObjectID(deck._id)}, {$set: {nrdb_id: response.body.data[0].id}}, (err, result) ->
             throw(err) if err
@@ -1114,9 +1152,10 @@ export_nrdb_deck = (token_entry, deck_id, user, res) ->
       res.status(400).send({message: 'Bad Request: Unknown deck'})
       
 import_nrdb_deck = (token_entry, nrdb_id, user, res) ->
+  access_token = decrypt_token(token_entry.access_token, token_entry.access_iv)
   got.get("#{config.nrdb_deck_url}/#{nrdb_id}",
     {json: true,
-    headers: {'Authorization': "Bearer #{token_entry.access_token}"}}).then( (response) ->
+    headers: {'Authorization': "Bearer #{access_token}"}}).then( (response) ->
       if response.body.success
         upsert_nrdb_deck(response.body.data[0], user)
       res.redirect("/deckbuilder")
@@ -1131,9 +1170,10 @@ import_nrdb_deck = (token_entry, nrdb_id, user, res) ->
   )
 
 import_nrdb_decks = (token_entry, user, res) ->
+  access_token = decrypt_token(token_entry.access_token, token_entry.access_iv)
   got.get(config.nrdb_decks_url,
     {json: true,
-    headers: {'Authorization': "Bearer #{token_entry.access_token}"}}).then( (response) ->
+    headers: {'Authorization': "Bearer #{access_token}"}}).then( (response) ->
       insert_deck_if_not_exists(deck, user) for deck in response.body.data
       res.redirect("/deckbuilder")
   ).catch( (error) ->
@@ -1150,12 +1190,6 @@ env = process.env['NODE_ENV'] || 'development'
 
 if env == 'development'
   console.log "Dev environment"
-
-  # NRDB debugging
-  console.log("NRDB url " + config.nrdb_auth_url)
-  console.log("Client ID " + config.nrdb_client_id)
-  console.log("Client Secret " + config.nrdb_secret)
-  console.log("Client Callback url " + config.nrdb_callback_url)
 
   app.get '/callback', (req, res) ->
     handle_nrdb_callback_check(req, res)
