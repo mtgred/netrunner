@@ -867,7 +867,7 @@
    "Mr. Stone"
    {:events {:runner-gain-tag {:delayed-completion true
                                :msg "do 1 meat damage"
-                               :effect (effect (damage eid :meat 1 {:card card}))}}}
+                               :effect (effect (damage :corp eid :meat 1 {:card card}))}}}
 
    "Mumba Temple"
    {:recurring 2}
