@@ -294,11 +294,13 @@
                :player :runner
                :prompt "Use Doppelgänger to run again?"
                :yes-ability {:prompt "Choose a server"
+                             :delayed-completion true
                              :choices (req runnable-servers)
                              :msg (msg "make a run on " target)
                              :makes-run true
                              :effect (effect (update! (dissoc card :dopp-active))
-                                             (run target))}}}}}
+                                             (clear-wait-prompt :corp)
+                                             (run eid target))}}}}}
 
    "Dorm Computer"
    {:data {:counter {:power 4}}
