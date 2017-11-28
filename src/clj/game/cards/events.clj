@@ -1018,7 +1018,7 @@
                                    :optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                            (update! (assoc card :run-again true)))}}}}}
+                                                                            (update! (assoc card :run-again true)))}}}})}
 
    "Modded"
    {:prompt "Select a program or piece of hardware to install from your Grip"
