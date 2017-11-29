@@ -37,7 +37,7 @@
                   ["Settings" "/account" 5])
                  (when (:user @app-state)
                    ["Stats" "/stats" 6])
-                 ["About" "/about" 8]]]
+                 ["About" "/about" 7]]]
        (when-let [route (second page)]
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
                :on-click #(.setToken history route)
