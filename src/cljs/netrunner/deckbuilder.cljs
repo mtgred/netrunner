@@ -199,11 +199,13 @@
        (or (not= code "03002") ; Custom Biotics: Engineered for Success
            (not= (:faction card) "Jinteki"))))
 
-(defn load-decks [decks]
-  (swap! app-state assoc :decks decks)
-  (when (not-empty decks)
-    (put! select-channel (first (sort-by :date > decks))))
-  (swap! app-state assoc :decks-loaded true))
+(defn load-decks
+  ([decks] (load-decks decks true))
+  ([decks select-first-deck]
+   (swap! app-state assoc :decks decks)
+   (when (and select-first-deck (not-empty decks))
+     (put! select-channel (first (sort-by :date > decks))))
+   (swap! app-state assoc :decks-loaded true)))
 
 (defn process-decks
   "Process the raw deck from the database into a more useful format"
@@ -864,6 +866,16 @@
   [card]
   (.stringify js/JSON (clj->js {:title (:title card) :id (:code card) :art (:art card)})))
 
+(defn reload-select-nrdb-deck
+  [all-decks msg]
+  (let [nrdb-id (:nrdb_id msg)]
+    (load-decks all-decks false)
+    (let [updated-deck (->> all-decks
+                         (filter #(= nrdb-id (:nrdb_id %)))
+                         first)]
+      (when updated-deck
+        (put! select-channel updated-deck)))))
+
 (defn deck-builder
   "Make the deckbuilder view"
   [{:keys [decks decks-loaded sets] :as cursor} owner]
@@ -873,11 +885,46 @@
       {:edit false
        :old-deck nil
        :edit-channel (chan)
+       :deckbuilder-channel (chan)
        :deck nil})
 
     om/IWillMount
     (will-mount [this]
       (let [edit-channel (om/get-state owner :edit-channel)]
+        (om/set-state! owner :deckbuilder-socket (.connect js/io (str js/iourl "/deckbuilder")))
+        (.on (om/get-state owner :deckbuilder-socket) "netrunner"
+             #(put! (om/get-state owner :deckbuilder-channel) (js->clj % :keywordize-keys true)))
+
+        (go (while true
+              (let [msg (<! (om/get-state owner :deckbuilder-channel))
+                    action (:msg msg)]
+                (cond
+                  (= "not_authorized_nrdb" action)
+                  (set! (.-location js/document) "/nrdb/authorize?redirect=/deckbuilder")
+
+                  (= "unknown_deck" action)
+                  (netrunner.gameboard/toast "Deck missing from NetrunnerDB" "error" nil)
+
+                  (= "imported_decks" action)
+                  (let [all-decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+                    (load-decks all-decks)
+                    (netrunner.gameboard/toast "Imported all new NetrunnerDB decks" "success" nil))
+
+                  (= "imported_deck" action)
+                  (let [all-decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+                    (reload-select-nrdb-deck all-decks msg)
+                    (netrunner.gameboard/toast "Updated deck from NetrunnerDB" "success" nil))
+
+                  (= "exported_deck" action)
+                  (let [all-decks (process-decks (:json (<! (GET (str "/data/decks")))))]
+                    (reload-select-nrdb-deck all-decks msg)
+                    (netrunner.gameboard/toast "Saved deck to NetrunnerDB" "success" nil))
+
+                  (= "unknown_error" action)
+                  (netrunner.gameboard/toast "Error accessing NetrunnerDB" "error" nil)
+
+                  ))))
+
         (go (while true
             (let [card (<! zoom-channel)]
               (om/set-state! owner :zoom card))))
@@ -911,7 +958,9 @@
            [:div.button-bar
             [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
             [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]
-            [:button {:on-click #(set! (.-location js/document) "/nrdb/import_decks")} "Get NRDB Decks"]]
+            [:button {:on-click #(.emit (om/get-state owner :deckbuilder-socket)
+                                        "netrunner" #js {:action "import_all_decks"})}
+             "Get NRDB Decks"]]
            [:div.deck-collection
             (when-not (:edit state)
               (om/build deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (om/get-state owner :deck)}))
@@ -944,14 +993,17 @@
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])
                          (when (:nrdb_id deck)
                            [:button
-                            {:on-click #(set! (.-location js/document)
-                                              (str "/nrdb/import_deck?deck=" (:nrdb_id deck)))}
+                            {:on-click #(.emit (om/get-state owner :deckbuilder-socket)
+                                               "netrunner" #js {:action "import_deck"
+                                                                :nrdb_id (:nrdb_id deck)
+                                                                :deck_id (:_id deck)})}
                             "Pull NRDB"])
                          [:button
-                          {:on-click #(set! (.-location js/document)
-                                            (str "/nrdb/export_deck?deck=" (:_id deck)))}
+                          {:on-click #(.emit (om/get-state owner :deckbuilder-socket)
+                                             "netrunner" #js {:action "export_deck"
+                                                              :deck_id (:_id deck)})}
                           "Push NRDB"]
-                           ])
+                         ])
                 [:h3 (:name deck)
                  (when (:nrdb_id deck) [:a {:href (str "https://netrunnerdb.com/en/deck/view/" (:nrdb_id deck))}
                                         [:img {:class "nrdb-logo" :src "/img/nrdb.png"}]])]
