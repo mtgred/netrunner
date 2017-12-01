@@ -8,33 +8,29 @@
 
 (defn clear-userstats-handler
       "Clear any statistics for a given user-id contained in a request"
-      [{{username :username} :user
-        {id :id}             :params}]
-      (if (and username id)
-        (if (acknowledged? (mc/update db "users" {:_id (object-id id)} {"$unset" {:stats ""}}))
-          (response 200 {:message "Deleted"})
-          (response 403 {:message "Forbidden"}))
-        (response 401 {:message "Unauthorized"})))
+      [{{:keys [username _id]} :user}]
+  (if (acknowledged? (mc/update db "users" {:_id (object-id _id)} {"$unset" {:stats ""}}))
+    (response 200 {:message "Deleted"})
+    (response 403 {:message "Forbidden"})))
 
 (defn clear-deckstats-handler
   "Clear any statistics for a given deck-id contained in a request"
-  [{{username :username} :user
-    {id :id}             :params}]
-   (if (and username id)
+  [{{id :id}             :params}]
+   (if id
      (if (acknowledged? (mc/update db "decks" {:_id (object-id id)} {"$unset" {:stats ""}}))
        (response 200 {:message "Deleted"})
        (response 403 {:message "Forbidden"}))
      (response 401 {:message "Unauthorized"})))
 
-(defn get-deckstats-handler
+(defn stats-for-deck
   "Get statistics for a given deck id"
   [deck-id]
-  (response 200 (mc/find-one-as-map db "decks" {:_id (object-id deck-id)} ["stats"])))
+  (mc/find-one-as-map db "decks" {:_id (object-id deck-id)} ["stats"]))
 
-(defn get-userstats-handler
+(defn stats-for-user
   "Get statistics for a given user id"
   [user-id]
-  (response 200 (mc/find-one-as-map db "users" {:_id (object-id user-id)} ["stats"])))
+  (mc/find-one-as-map db "users" {:_id (object-id user-id)} ["stats"]))
 
 (defn game-started?
   "Returns true if game has started"
@@ -49,8 +45,7 @@
 (defn inc-deck-stats
   "Update deck stats for a given counter"
   [deck-id record]
-  (mc/update db "decks" {:_id (object-id deck-id)} {"$inc" record})
-  (response 200 {:message "OK"}))
+  (mc/update db "decks" {:_id (object-id deck-id)} {"$inc" record}))0
 
 (defn deck-record-end
   [all-games gameid p]
@@ -84,8 +79,7 @@
 (defn inc-game-stats
   "Update user's game stats for a given counter"
   [user-id record]
-  (mc/update db "users" {:_id (object-id user-id)} {"$inc" record})
-  (response 200 {:message "OK"}))
+  (mc/update db "users" {:_id (object-id user-id)} {"$inc" record}))
 
 (defn game-record-start
   [all-games gameid p]
@@ -130,8 +124,8 @@
       (doseq [p end-players]
         (let [user-id   (get-in p [:user :_id])
               deck-id   (get-in p [:deck :_id])
-              userstats (get-in (get-userstats-handler user-id) [:body :stats])
-              deckstats (get-in (get-deckstats-handler deck-id) [:body :stats])]
+              userstats (:stats (stats-for-user user-id))
+              deckstats (:stats (stats-for-deck deck-id))]
         (ws/send! (:id p) [:stats/update {:userstats userstats
                                           :deck-id   deck-id
                                           :deckstats deckstats}])))))

@@ -56,7 +56,7 @@
            (POST "/logout" [] auth/logout-handler)
            (PUT "/profile" [] auth/update-profile-handler)
 
-           (DELETE "/profile/stats/user/:id" [] stats/clear-userstats-handler)
+           (DELETE "/profile/stats/user" [] stats/clear-userstats-handler)
            (DELETE "/profile/stats/deck/:id" [] stats/clear-deckstats-handler)
 
            (GET "/data/decks" [] data/decks-handler)
