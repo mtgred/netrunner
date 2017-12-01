@@ -7,6 +7,7 @@
             [web.ws :as ws]
             [web.game :as game]
             [web.chat :as chat]
+            [web.stats :as stats]
             [web.admin :as admin]
             [cheshire.core :refer [generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
@@ -54,6 +55,9 @@
 (defroutes user-routes
            (POST "/logout" [] auth/logout-handler)
            (PUT "/profile" [] auth/update-profile-handler)
+
+           (DELETE "/profile/stats/user/:id" [] stats/clear-userstats-handler)
+           (DELETE "/profile/stats/deck/:id" [] stats/clear-deckstats-handler)
 
            (GET "/data/decks" [] data/decks-handler)
            (POST "/data/decks" [] data/decks-create-handler)

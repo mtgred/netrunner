@@ -2,9 +2,11 @@
   (:require [web.db :refer [db]]
             [web.utils :refer [response tick remove-once]]
             [web.ws :as ws]
+            [web.stats :as stats]
             [game.main]
             [game.core :as core]
-            [crypto.password.bcrypt :as bcrypt])
+            [crypto.password.bcrypt :as bcrypt]
+            [game.main :as main])
   (:import org.bson.types.ObjectId))
 
 ;; All games active on the server.
@@ -83,11 +85,20 @@
         (spectator? client-id gameid)
         (swap! all-games update-in [gameid :spectators] #(remove-once (fn [p] (not= client-id (:id p))) %)))
 
-  (when-let [{:keys [players spectators] :as game} (get @all-games gameid)]
+  ;; update ending-players when someone drops to credit a completion properly.  Not if game is over.
+  ; TODO add other player back in if other player rejoins
+  (let [players (get-in @all-games [gameid :players])
+        winner (:winning-user @(get-in @all-games [gameid :state]))]
+    (when (and (= 1 (count players)) (stats/game-started? all-games gameid) (not winner))
+      (swap! all-games assoc-in [gameid :ending-players] players)))
+
+  (when-let [{:keys [players spectators ending-players] :as game} (get @all-games gameid)]
     (swap! client-gameids dissoc client-id)
+
     (if (and (empty? players) (empty? spectators))
-      (do
-        ;; TODO: stats update goes here
+      (do (stats/update-deck-stats all-games gameid)
+          (stats/update-game-stats all-games gameid)
+          (stats/push-stats-update all-games gameid)
 
         ;; TODO: send "remove" to game server to get the "player has left the game" note
 

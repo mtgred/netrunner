@@ -600,14 +600,9 @@
   (authenticated
     (fn [user]
       (let [deck (dissoc (om/get-state owner :deck) :stats)
-            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))
-            cards (for [card (:cards deck) :when (get-in card [:card :title])]
-                    {:qty (:qty card) :card (get-in card [:card :title])})
-            ;; only include keys that are relevant, currently title and side, includes code for future-proofing
-            identity (select-keys (:identity deck) [:title :side :code])
-            data (assoc deck :cards cards :identity identity)]
+            decks (remove #(= (:_id deck) (:_id %)) (:decks @app-state))]
         (try (js/ga "send" "event" "deckbuilder" "cleardeckstats") (catch js/Error e))
-        (go (let [result (<! (POST "/data/decks/clearstats" data :json))]
+        (go (let [result (<! (DELETE (str "/profile/stats/deck/" (:_id deck))))]
               (om/update! cursor :decks (conj decks deck))
               (om/set-state! owner :deck deck)
               (.focus deck)))))))

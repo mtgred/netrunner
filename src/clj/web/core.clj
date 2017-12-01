@@ -8,10 +8,8 @@
             [web.chat :as chat]
             [web.lobby :as lobby]
             [web.game :as game]
-
-            [jinteki.nav :as nav]
-            ))
-
+            [web.stats :as stats]
+            [jinteki.nav :as nav]))
 
 (defonce server (atom nil))
 
