@@ -14,13 +14,11 @@
 ;(def ctx (ZMQ/context 1))
 
 (def spectator-commands
-  {"say" core/say
-   "typing" core/typing
+  {"typing" core/typing
    "typingstop" core/typingstop})
 
 (def commands
-  {"say" core/say
-   "typing" core/typing
+  {"typing" core/typing
    "typingstop" core/typingstop
    "concede" core/concede
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
@@ -284,6 +282,12 @@
   [state side]
   (when (and state side)
     (core/concede state side nil)))
+
+(defn handle-say
+  "Adds a message from a user to the chat log."
+  [state side user msg]
+  (when (and state side)
+    (core/say state side {:user user :text msg})))
 
 (defn handle-notification
   [state text]

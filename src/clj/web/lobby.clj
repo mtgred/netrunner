@@ -65,7 +65,7 @@
   "True if the given client-id is a player in the given gameid"
   [client-id gameid]
   (when-let [game (get @all-games gameid)]
-    (some #(= client-id (:ws-id %)) (:players game))))
+    (some #(when (= client-id (:ws-id %)) %) (:players game))))
 
 (defn first-player?
   "True if the given client-id is the first player in the given gameid"
@@ -77,7 +77,7 @@
   "True if the given client-id is a spectator in the given gameid"
   [client-id gameid]
   (when-let [game (get @all-games gameid)]
-    (some #(= client-id (:ws-id %)) (:spectators game))))
+    (some #(when (= client-id (:ws-id %)) %) (:spectators game))))
 
 (defn player-or-spectator
   "True if the given client-id is a player or spectator in the given gameid"
@@ -185,7 +185,7 @@
               :title          title
               :allowspectator allowspectator
               :spectatorhands spectatorhands
-              :mutespectators false
+              :mute-spectators false
               :password       (when (not-empty password) (bcrypt/encrypt password))
               :room           room
               :players        [{:user    user

@@ -50,8 +50,8 @@
             [:a.concede-button {:on-click gamelobby/concede} "Concede"])
           [:a.leave-button {:on-click gamelobby/leave-game} "Leave game"]
           (when (not= (:side @app-state) :spectator)
-            [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mutespectators game)))}
-             (if (:mutespectators game) "Unmute spectators" "Mute spectators")])])
+            [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mute-spectators game)))}
+             (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])])
        (when (= (:side @app-state) :spectator)
          [:div.float-right [:a {:on-click gamelobby/leave-game} "Leave game"]]))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]

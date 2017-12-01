@@ -152,7 +152,7 @@
         text (.-value input)
         $div (js/$ ".gameboard .messages")]
     (when-not (empty? text)
-      (send-command "say" {:user (:user @app-state) :text text})
+      (ws/ws-send! [:netrunner/say text])
       (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
@@ -168,8 +168,7 @@
         (send-command "typing" {:user (:user @app-state) :no-lock true})))))
 
 (defn mute-spectators [mute-state]
-  (send {:action "mute-spectators" :gameid (:gameid @app-state)
-         :user (:user @app-state) :side (:side @game-state) :mutestate mute-state}))
+  (ws/ws-send! [:netrunner/mute-spectators mute-state]))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]

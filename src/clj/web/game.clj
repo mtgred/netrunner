@@ -87,10 +87,26 @@
       (main/handle-concede state (side-from-str side))
       (swap-and-send-diffs! game))))
 
+(defn handle-mute-spectators
+  [{{{:keys [username] :as user} :user} :ring-req
+    client-id                           :client-id
+    mute-state                          :?data}]
+  (let [{:keys [gameid started state] :as game} (lobby/game-for-client client-id)
+        message (if mute-state "muted" "unmuted")]
+    (when (lobby/player? client-id gameid)
+      (swap! all-games assoc-in [gameid :mute-spectators] mute-state)
+      (main/handle-notification state (str username " " message " specatators."))
+      (lobby/refresh-lobby :update gameid)
+      (swap-and-send-diffs! game)
+      (ws/broadcast-to! (lobby/lobby-clients gameid)
+                        :games/diff
+                        {:diff {:update {gameid (lobby/game-public-view (get @all-games gameid))}}})
+      )))
 
-(defn handle-game-action [{{{:keys [username] :as user} :user} :ring-req
-                           client-id                           :client-id
-                           {:keys [command args] :as msg}      :?data}]
+(defn handle-game-action
+  [{{{:keys [username] :as user} :user} :ring-req
+    client-id                           :client-id
+    {:keys [command args] :as msg}      :?data}]
 
   (let [{:keys [players state gameid] :as game} (lobby/game-for-client client-id)
         old-state (get @old-states gameid)
@@ -129,10 +145,24 @@
       (reply-fn 404)
       false)))
 
+(defn handle-game-say
+  [{{{:keys [username] :as user} :user} :ring-req
+    client-id                           :client-id
+    msg                                 :?data}]
+  (when-let [{:keys [gameid state mute-spectators] :as game} (lobby/game-for-client client-id)]
+    (if-let [{:keys [side user] :as player} (lobby/player? client-id gameid)]
+      (do (main/handle-say state (jinteki.utils/side-from-str side) user  msg)
+          (swap-and-send-diffs! game))
+      (let [{:keys [user] :as spect} (lobby/spectator? client-id gameid)]
+        (when (and spect (not mute-spectators))
+          (main/handle-say state :spectator user msg)
+          (swap-and-send-diffs! game))))))
 
 (ws/register-ws-handlers!
   :netrunner/start handle-game-start
   :netrunner/action handle-game-action
   :netrunner/leave handle-game-leave
   :netrunner/concede handle-game-concede
+  :netrunner/mute-spectators handle-mute-spectators
+  :netrunner/say handle-game-say
   :lobby/watch handle-game-watch)
