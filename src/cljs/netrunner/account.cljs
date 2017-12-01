@@ -53,7 +53,7 @@
 
 (defn post-options [url callback]
   (let [params (:options @app-state)]
-    (go (let [response (<! (POST url params :json))]
+    (go (let [response (<! (PUT url params :json))]
           (callback response)))))
 
 (defn handle-post [event owner url ref]
