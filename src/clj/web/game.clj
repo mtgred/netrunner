@@ -158,6 +158,15 @@
           (main/handle-say state :spectator user msg)
           (swap-and-send-diffs! game))))))
 
+(defn handle-game-typing
+  [{{{:keys [username] :as user} :user} :ring-req
+    client-id                           :client-id
+    typing                              :?data}]
+  (when-let [{:keys [gameid state mute-spectators] :as game} (lobby/game-for-client client-id)]
+    (when-let [{:keys [side user] :as player} (lobby/player? client-id gameid)]
+      (main/handle-typing state (jinteki.utils/side-from-str side) user typing)
+      (swap-and-send-diffs! game))))
+
 (ws/register-ws-handlers!
   :netrunner/start handle-game-start
   :netrunner/action handle-game-action
@@ -165,4 +174,5 @@
   :netrunner/concede handle-game-concede
   :netrunner/mute-spectators handle-mute-spectators
   :netrunner/say handle-game-say
+  :netrunner/typing handle-game-typing
   :lobby/watch handle-game-watch)

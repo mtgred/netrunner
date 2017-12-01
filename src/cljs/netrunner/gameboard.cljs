@@ -163,9 +163,9 @@
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
     (if (empty? text)
-      (send-command "typingstop" {:user (:user @app-state) :no-lock true})
+      (ws/ws-send! [:netrunner/typing false])
       (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
-        (send-command "typing" {:user (:user @app-state) :no-lock true})))))
+        (ws/ws-send! [:netrunner/typing true])))))
 
 (defn mute-spectators [mute-state]
   (ws/ws-send! [:netrunner/mute-spectators mute-state]))
