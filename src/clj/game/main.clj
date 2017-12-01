@@ -274,11 +274,16 @@
 (defn handle-action
   "Ensures the user is allowed to do command they are trying to do"
   [user command state side args]
-  (prn user command state side args (commands command))
   (if (not-spectator? state user)
-    ((commands command) state (keyword side) args)
+    ((commands command) state side args)
     (when-let [cmd (spectator-commands command)]
-      (cmd state (keyword side) args))))
+      (cmd state side args))))
+
+(defn handle-concede
+  "Concedes victory from the given player."
+  [state side]
+  (when (and state side)
+    (core/concede state side nil)))
 
 (defn handle-notification
   [state text]

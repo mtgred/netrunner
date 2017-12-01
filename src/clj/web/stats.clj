@@ -15,12 +15,12 @@
 
 (defn clear-deckstats-handler
   "Clear any statistics for a given deck-id contained in a request"
-  [{{id :id}             :params}]
-   (if id
-     (if (acknowledged? (mc/update db "decks" {:_id (object-id id)} {"$unset" {:stats ""}}))
-       (response 200 {:message "Deleted"})
-       (response 403 {:message "Forbidden"}))
-     (response 401 {:message "Unauthorized"})))
+  [{{id :id} :params}]
+  (if id
+    (if (acknowledged? (mc/update db "decks" {:_id (object-id id)} {"$unset" {:stats ""}}))
+      (response 200 {:message "Deleted"})
+      (response 403 {:message "Forbidden"}))
+    (response 401 {:message "Unauthorized"})))
 
 (defn stats-for-deck
   "Get statistics for a given deck id"
@@ -45,7 +45,8 @@
 (defn inc-deck-stats
   "Update deck stats for a given counter"
   [deck-id record]
-  (mc/update db "decks" {:_id (object-id deck-id)} {"$inc" record}))0
+  (when record
+    (mc/update db "decks" {:_id (object-id deck-id)} {"$inc" record})))
 
 (defn deck-record-end
   [all-games gameid p]
@@ -126,6 +127,6 @@
               deck-id   (get-in p [:deck :_id])
               userstats (:stats (stats-for-user user-id))
               deckstats (:stats (stats-for-deck deck-id))]
-        (ws/send! (:id p) [:stats/update {:userstats userstats
-                                          :deck-id   deck-id
-                                          :deckstats deckstats}])))))
+        (ws/send! (:ws-id p) [:stats/update {:userstats userstats
+                                             :deck-id   deck-id
+                                             :deckstats deckstats}])))))

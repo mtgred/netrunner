@@ -23,11 +23,22 @@
   [client-id]
   (get @all-games (get @client-gameids client-id)))
 
+(defn user-public-view
+  "Strips private server information from a player map."
+  [player]
+  (-> player
+      (dissoc :ws-id)
+      ))
+
 (defn game-public-view
   "Strips private server information from a game map, preparing to send the game to clients."
   [game]
   (-> game
-      (dissoc :state)))
+      (dissoc :state)
+      (update-in [:players] #(map user-public-view %))
+      (update-in [:original-players] #(map user-public-view %))
+      (update-in [:ending-players] #(map user-public-view %))
+      (update-in [:spectators] #(map user-public-view %))))
 
 (let [lobby-update (atom true)
       lobby-updates (atom {})]
@@ -54,19 +65,19 @@
   "True if the given client-id is a player in the given gameid"
   [client-id gameid]
   (when-let [game (get @all-games gameid)]
-    (some #(= client-id (:id %)) (:players game))))
+    (some #(= client-id (:ws-id %)) (:players game))))
 
 (defn first-player?
   "True if the given client-id is the first player in the given gameid"
   [client-id gameid]
   (when-let [game (get @all-games gameid)]
-    (= client-id (-> game :players first :id))))
+    (= client-id (-> game :players first :ws-id))))
 
 (defn spectator?
   "True if the given client-id is a spectator in the given gameid"
   [client-id gameid]
   (when-let [game (get @all-games gameid)]
-    (some #(= client-id (:id %)) (:spectators game))))
+    (some #(= client-id (:ws-id %)) (:spectators game))))
 
 (defn player-or-spectator
   "True if the given client-id is a player or spectator in the given gameid"
@@ -75,48 +86,51 @@
     (or (player? client-id gameid)
         (spectator? client-id gameid))))
 
+(defn close-lobby
+  "Closes the given game lobby, booting all players and updating stats."
+  [{:keys [started gameid] :as game}]
+  (when started
+    (stats/update-deck-stats all-games gameid)
+    (stats/update-game-stats all-games gameid)
+    (stats/push-stats-update all-games gameid))
+
+  (refresh-lobby :delete gameid)
+  (swap! all-games dissoc gameid)
+  (swap! old-states dissoc gameid))
+
 (defn remove-user
   "Removes the given client-id from the given gameid, whether it is a player or a spectator.
   Deletes the game from the lobby if all players have left."
   [client-id gameid]
-  (cond (player? client-id gameid)
-        (swap! all-games update-in [gameid :players] #(remove-once (fn [p] (not= client-id (:id p))) %))
+  (when-let [{:keys [players started state] :as game} (get @all-games gameid)]
+    (cond (player? client-id gameid)
+          (swap! all-games update-in [gameid :players] #(remove-once (fn [p] (not= client-id (:ws-id p))) %))
 
-        (spectator? client-id gameid)
-        (swap! all-games update-in [gameid :spectators] #(remove-once (fn [p] (not= client-id (:id p))) %)))
+          (spectator? client-id gameid)
+          (swap! all-games update-in [gameid :spectators] #(remove-once (fn [p] (not= client-id (:ws-id p))) %)))
 
-  ;; update ending-players when someone drops to credit a completion properly.  Not if game is over.
-  ; TODO add other player back in if other player rejoins
-  (let [players (get-in @all-games [gameid :players])
-        winner (:winning-user @(get-in @all-games [gameid :state]))]
-    (when (and (= 1 (count players)) (stats/game-started? all-games gameid) (not winner))
-      (swap! all-games assoc-in [gameid :ending-players] players)))
+    ;; update ending-players when someone drops to credit a completion properly.  Not if game is over.
+    ; TODO add other player back in if other player rejoins
 
-  (when-let [{:keys [players spectators ending-players] :as game} (get @all-games gameid)]
-    (swap! client-gameids dissoc client-id)
+    (let [winner (:winning-user @state)]
+      (when (and (= 1 (count players)) started (not winner))
+        (swap! all-games assoc-in [gameid :ending-players] players)))
 
-    (if (and (empty? players) (empty? spectators))
-      (do (stats/update-deck-stats all-games gameid)
-          (stats/update-game-stats all-games gameid)
-          (stats/push-stats-update all-games gameid)
+    (let [{:keys [players] :as game} (get @all-games gameid)]
+      (swap! client-gameids dissoc client-id)
 
-        ;; TODO: send "remove" to game server to get the "player has left the game" note
-
-        (refresh-lobby :delete gameid)
-        (swap! all-games dissoc gameid)
-        (swap! old-states dissoc gameid))
-      (refresh-lobby :update gameid))))
+      (if (empty? players)
+        (close-lobby game)
+        (refresh-lobby :update gameid)))))
 
 (defn lobby-clients
   "Returns a seq of all client-ids playing or spectating a gameid."
   [gameid]
   (let [game (get @all-games gameid)]
-    (map :id (concat (:players game) (:spectators game)))))
-
+    (map :ws-id (concat (:players game) (:spectators game)))))
 
 (defn join-game
   "Adds the given user as a player in the given gameid."
-  ; TODO: does this need a lock to prevent simultaneous joins? Wasn't a problem in single-threaded Node.
   [{options :options :as user} client-id gameid]
   (let [{players :players :as game} (get @all-games gameid)]
     (when (< (count players) 2)
@@ -124,7 +138,7 @@
             new-side (if (= "Corp" side) "Runner" "Corp")]
         (swap! all-games update-in [gameid :players]
                #(conj % {:user    user
-                         :id      client-id
+                         :ws-id      client-id
                          :side    new-side
                          :options options}))
         (swap! client-gameids assoc client-id gameid)
@@ -135,8 +149,8 @@
   [user client-id gameid]
   (when-let [{:keys [started spectators] :as game} (get @all-games gameid)]
     (swap! all-games update-in [gameid :spectators]
-           #(conj % {:user    user
-                         :id      client-id}))
+           #(conj % {:user  user
+                     :ws-id client-id}))
     (swap! client-gameids assoc client-id gameid)
     (refresh-lobby :update gameid)))
 
@@ -153,8 +167,7 @@
   true)
 
 (defn handle-ws-connect [{:keys [client-id] :as msg}]
-  (println client-id " connected")
-  (ws/send! client-id [:games/list (map game-public-view @all-games)]))
+  (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))
 
 (defn handle-ws-close [{:keys [client-id] :as msg}]
   (println client-id " disconnected")
@@ -176,7 +189,7 @@
               :password       (when (not-empty password) (bcrypt/encrypt password))
               :room           room
               :players        [{:user    user
-                                :id      client-id
+                                :ws-id      client-id
                                 :side    side
                                 :options options}]
               :spectators     []}]
@@ -187,14 +200,14 @@
 
 (defn handle-lobby-leave
   [{{{:keys [username emailhash] :as user} :user} :ring-req
-    client-id                                     :client-id
-    gameid                                        :?data}]
-  (when (player-or-spectator client-id gameid)
-    (remove-user client-id gameid)
-    (ws/broadcast-to! (lobby-clients gameid)
-                      :lobby/message
-                      {:user "__system__"
-                       :text (str username " left the game.")})))
+    client-id                                     :client-id}]
+  (when-let [{gameid :gameid} (game-for-client client-id)]
+    (when (player-or-spectator client-id gameid)
+      (remove-user client-id gameid)
+      (ws/broadcast-to! (lobby-clients gameid)
+                        :lobby/message
+                        {:user "__system__"
+                         :text (str username " left the game.")}))))
 
 (defn handle-lobby-say
   [{{{:keys [username] :as user} :user} :ring-req
@@ -203,7 +216,7 @@
   (when (player-or-spectator client-id gameid)
     (let [game (get @all-games gameid)]
       (ws/broadcast-to!
-        (map :id (concat (:players game) (:spectators game)))
+        (map :ws-id (concat (:players game) (:spectators game)))
         :lobby/message
         {:user user
          :text msg}))))
@@ -214,7 +227,7 @@
     gameid                              :?data}]
   (let [game (get @all-games gameid)
         fplayer (first (:players game))]
-    (when (= (:id fplayer) client-id)
+    (when (= (:ws-id fplayer) client-id)
       (swap! all-games update-in [gameid :players] (partial mapv swap-side))
       (refresh-lobby :update gameid)
       (ws/broadcast-to! (lobby-clients gameid)
@@ -248,7 +261,6 @@
     client-id                           :client-id
     {:keys [gameid password options]}   :?data
     reply-fn                            :?reply-fn}]
-  (prn "watch lobby")
   (if-let [{game-password :password state :state started :started :as game}
            (@all-games gameid)]
     (when (and user game (allowed-in-game game user))
@@ -282,7 +294,7 @@
         gameid (:gameid game)]
     (when (player? client-id gameid)
       (swap! all-games update-in [gameid :players
-                              (if (= client-id (:id fplayer)) 0 1)]
+                              (if (= client-id (:ws-id fplayer)) 0 1)]
              (fn [p] (assoc p :deck deck)))
       (ws/broadcast-to! (lobby-clients gameid)
                         :games/diff

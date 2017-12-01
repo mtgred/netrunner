@@ -29,7 +29,7 @@
 
 (ws/register-ws-handler!
   :games/list
-  #(swap! app-state assoc :games (sort-games-list (vals %))))
+  #(swap! app-state assoc :games (sort-games-list %)))
 
 (ws/register-ws-handler!
   :games/diff
@@ -127,7 +127,6 @@
    (fn [user]
      (om/set-state! owner :editing false)
      (swap! app-state assoc :messages [])
-     (prn action "!!!!")
      (ws/ws-send! [(if (= "join" action) :lobby/join :lobby/watch)
                    {:gameid gameid :password password :options (:options @app-state)}]
                   8000
@@ -139,15 +138,14 @@
                      (om/set-state! owner :error-msg "Connection aborted"))))))
 
 (defn leave-lobby [cursor owner]
-  (ws/ws-send! [:lobby/leave (:gameid @app-state)])
+  (ws/ws-send! [:lobby/leave])
   (om/update! cursor :gameid nil)
   (om/update! cursor :message [])
   (om/set-state! owner :prompt false)
   (swap! app-state dissoc :password-gameid))
 
 (defn leave-game []
-  (send {:action "leave-game" :gameid (:gameid @app-state)
-         :user (:user @app-state) :side (:side @game-state)})
+  (ws/ws-send! [:netrunner/leave])
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid :win-shown)
   (.removeItem js/localStorage "gameid")
@@ -156,8 +154,7 @@
   (-> "#gamelobby" js/$ .fadeIn))
 
 (defn concede []
-  (send {:action "concede" :gameid (:gameid @app-state)
-         :user (:user @app-state) :side (:side @game-state)}))
+  (ws/ws-send! [:netrunner/concede]))
 
 (defn send-msg [event owner]
   (.preventDefault event)

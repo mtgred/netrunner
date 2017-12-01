@@ -47,13 +47,13 @@
        (when (:started game)
          [:div.float-right
           (when (not= (:side @app-state) :spectator)
-            [:a.concede-button {:on-click #(gameboard/send-command "concede" {:user (:user @app-state)})} "Concede"])
-          [:a.leave-button {:on-click #(gamelobby/leave-game)} "Leave game"]
+            [:a.concede-button {:on-click gamelobby/concede} "Concede"])
+          [:a.leave-button {:on-click gamelobby/leave-game} "Leave game"]
           (when (not= (:side @app-state) :spectator)
             [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mutespectators game)))}
              (if (:mutespectators game) "Unmute spectators" "Mute spectators")])])
        (when (= (:side @app-state) :spectator)
-         [:div.float-right [:a {:on-click #(gamelobby/leave-game)} "Leave game"]]))
+         [:div.float-right [:a {:on-click gamelobby/leave-game} "Leave game"]]))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          (let [c (count (:spectators game))]
