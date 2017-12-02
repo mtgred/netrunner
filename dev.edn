@@ -1,5 +1,8 @@
-{:db {:address "localhost"
-      :port 27017
-      :name "netrunner"}
+{:trello-auth
+       {:key   nil
+        :token nil}
+ :db   {:address "localhost"
+        :port    27017
+        :name    "netrunner"}
  :auth {:expiration 60
-        :secret "Dev salt"}}
+        :secret     "Dev salt"}}

@@ -3,7 +3,7 @@
             [web.utils :refer [response]]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
-            [clojure.pprint]))
+            [web.config :refer [server-config]]))
 
 (defn cards-handler [req]
   (let [r (map #(dissoc % :_id) (mc/find-maps db "cards" nil))]
@@ -58,6 +58,3 @@
 
 (defn donors-handler [req]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "donators" nil))))
-
-(defn news-handler [request]
-  (response 200 [{:title "Test" :date "10/23/2017"}]))

@@ -9,6 +9,7 @@
             [web.chat :as chat]
             [web.stats :as stats]
             [web.admin :as admin]
+            [web.news :as news]
             [cheshire.core :refer [generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.route :as route]
@@ -33,7 +34,7 @@
            (GET "/data/cards" [] data/cards-handler)
            (GET "/data/altarts" [] data/alt-arts-handler)
 
-           (GET "/data/news" [] data/news-handler)
+           (GET "/data/news" [] news/news-handler)
            (GET "/data/sets" [] data/sets-handler)
            (GET "/data/mwl" [] data/mwl-handler)
            (GET "/data/cycles" [] data/cycles-handler)
