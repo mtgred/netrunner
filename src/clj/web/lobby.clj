@@ -112,9 +112,10 @@
     ;; update ending-players when someone drops to credit a completion properly.  Not if game is over.
     ; TODO add other player back in if other player rejoins
 
-    (let [winner (:winning-user @state)]
-      (when (and (= 1 (count players)) started (not winner))
-        (swap! all-games assoc-in [gameid :ending-players] players)))
+    (when state
+      (let [winner (:winning-user @state)]
+        (when (and (= 1 (count players)) started (not winner))
+          (swap! all-games assoc-in [gameid :ending-players] players))))
 
     (let [{:keys [players] :as game} (get @all-games gameid)]
       (swap! client-gameids dissoc client-id)
@@ -138,7 +139,7 @@
             new-side (if (= "Corp" side) "Runner" "Corp")]
         (swap! all-games update-in [gameid :players]
                #(conj % {:user    user
-                         :ws-id      client-id
+                         :ws-id   client-id
                          :side    new-side
                          :options options}))
         (swap! client-gameids assoc client-id gameid)
@@ -163,15 +164,17 @@
                             "Corp"))
       (dissoc :deck)))
 
-(defn allowed-in-game [user game]
-  true)
+(defn blocked-users
+  [{:keys [players] :as game}]
+  (mapcat #(get-in % [:user :options :blocked-users]) players))
+
+(defn allowed-in-game [{:keys [username]} game]
+  (not (some #(= username (:username %)) (blocked-users game))))
 
 (defn handle-ws-connect [{:keys [client-id] :as msg}]
   (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))
 
 (defn handle-ws-close [{:keys [client-id] :as msg}]
-  (println client-id " disconnected")
-  ;; this can be improved somehow
   (when-let [game (game-for-client client-id)]
     (remove-user client-id (:gameid game))))
 

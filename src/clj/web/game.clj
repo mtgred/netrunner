@@ -40,9 +40,8 @@
 (defn swap-and-send-state! [{:keys [gameid state] :as game}]
   "Updates the old-states atom with the new game state, then sends a :netrunner/state
   message to game clients."
-  (let [old-state (get @old-states gameid)]
-    (swap! old-states assoc gameid @state)
-    (send-state! game (main/public-states state))))
+  (swap! old-states assoc gameid @state)
+  (send-state! game (main/public-states state)))
 
 (defn swap-and-send-diffs! [{:keys [gameid state] :as game}]
   "Updates the old-states atom with the new game state, then sends a :netrunner/diff
@@ -71,9 +70,8 @@
 (defn handle-game-leave
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
-  (let [{:keys [started players gameid state] :as game} (lobby/game-for-client client-id)
-        old-state @state]
-    (when started
+  (let [{:keys [started players gameid state] :as game} (lobby/game-for-client client-id)]
+    (when (and started state)
       (lobby/remove-user client-id gameid)
       (main/handle-notification state (str username " has left the game."))
       (swap-and-send-diffs! game))))
@@ -132,10 +130,10 @@
             ;; add a chat message, then send full states to all players.
             ; TODO: this would be better if a full state was only sent to the new spectator, and diffs sent to the existing players.
             (lobby/spectate-game user client-id gameid)
+            (main/handle-notification state (str username " joined the game as a spectator."))
+            (swap-and-send-state! (get @all-games gameid))
             (ws/send! client-id [:lobby/select {:gameid gameid
                                                 :started started}])
-            (main/handle-notification state (str username " joined the game as a spectator."))
-            (swap-and-send-state! game)
             (when reply-fn (reply-fn 200))
             true)
           (when reply-fn
