@@ -168,9 +168,11 @@
                                   :effect (effect (system-msg (str "decides not to pay to steal " (:title card)))
                                                   (trigger-event :no-steal card)
                                                   (resolve-steal-events eid card))} card nil)
-               (let [chosen (cons target chosen)
-                     kw (to-keyword (join "-" (rest (split target #" "))))
-                     val (string->num (first (split target #" ")))]
+               (let [name (:title card)
+                     chosen (cons target chosen)
+                     clicks (count (re-seq #"\[Click\]+" target))
+                     kw (if (pos? clicks) :click (to-keyword (join "-" (rest (split target #" ")))))
+                     val (if (pos? clicks) clicks (string->num (first (split target #" "))))]
                  (if (can-pay? state side name [kw val])
                    (do (pay state side nil [kw val])
                        (system-msg state side (str "pays " target
