@@ -5,7 +5,7 @@
   :license {:name "The MIT License (MIT)"
             :url "https://opensource.org/licenses/MIT"}
 
-  :dependencies [[org.clojure/clojure "1.9.0-beta3"]
+  :dependencies [[org.clojure/clojure "1.9.0-RC2"]
                  [org.clojure/clojurescript "1.9.229"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
@@ -29,22 +29,17 @@
                  [http-kit "2.2.0"]
                  [org.slf4j/slf4j-nop "1.7.12"]
                  [me.bsima/trello "0.3.0"]
-                 [clj-time "0.14.2"]
-                 ]
+                 [clj-time "0.14.2"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
-                                  [com.cemerick/piggieback "0.2.1"]
-                                  [binaryage/devtools "0.9.4"]]
+                                  [com.cemerick/piggieback "0.2.1"]]
                    :plugins [[lein-figwheel "0.5.11"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
   ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test namespaces
-  :aot [game.utils
-        game.main
-        game.macros
-        game.core
-        web.core
-        jinteki.utils]
+  :aot [#"game\.*"
+        #"web\.*"
+        #"jinteki\.*"]
   :main web.core
 
   :test-paths ["test/clj"]
@@ -95,5 +90,5 @@
   ;; Set timeout to 2 min to allow for full compilation after a clean.
   :repl-options {:timeout 120000
                  :init-ns web.core
-                 ;:init (-main)
+                 :init (-main)
                  })

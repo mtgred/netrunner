@@ -4,8 +4,7 @@
             [game.core :refer [card-is-public? game-states show-error-toast toast] :as core]
             [game.utils :refer [private-card]]
             [jinteki.cards :refer [all-cards]]
-            [differ.core :as differ])
-  (:gen-class :main true))
+            [differ.core :as differ]))
 
 (def old-states (atom {}))
 

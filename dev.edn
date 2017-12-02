@@ -5,4 +5,5 @@
         :port    27017
         :name    "netrunner"}
  :auth {:expiration 60
-        :secret     "Dev salt"}}
+        :secret     "Dev salt"}
+ :web {:port 1042}}

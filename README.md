@@ -40,7 +40,7 @@ $ mongod
 $ npm run fetch
 ```
 
-Compile and watch client side Clojurescript files:
+Compile and watch client side ClojureScript files:
 
 ```
 $ lein figwheel
@@ -52,29 +52,24 @@ Compile server side Clojure files:
 $ lein uberjar
 ```
 
-Launch game server:
+Launch web server:
 
 ```
 $ java -jar target/netrunner-standalone.jar
 ```
 
-Launch the Node server:
-
-```
-$ npm start
-```
 
 ## Tests
 
 To run all tests:
 
 ```
-$ lein test test.all
+$ lein test
 ```
 
 To run a single test file:
 ```
-$ lein test test.cards.agendas
+$ lein test game-test.cards.agendas
 ```
 
 

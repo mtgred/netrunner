@@ -2,14 +2,15 @@
   (:require [web.api :refer [app]]
             [monger.collection :as mc]
             [jinteki.cards :refer [all-cards]]
-            [web.config :refer [frontend-version]]
+            [web.config :refer [frontend-version server-config]]
             [web.ws :as ws]
             [web.db :refer [db]]
             [web.chat :as chat]
             [web.lobby :as lobby]
             [web.game :as game]
             [web.stats :as stats]
-            [jinteki.nav :as nav]))
+            [jinteki.nav :as nav])
+  (:gen-class :main true))
 
 (defonce server (atom nil))
 
@@ -20,7 +21,7 @@
     (reset! server nil)))
 
 (defn -main [& args]
-  (let [port (or (first args) 4141)]
+  (let [port (or (-> server-config :web :port) 4141)]
     (web.db/connect)
     (let [cards (mc/find-maps db "cards" nil)]
       (reset! all-cards (into {} (map (juxt :title identity) cards))))
