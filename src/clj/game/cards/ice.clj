@@ -1664,13 +1664,13 @@
     :implementation "Does not handle UFAQ for Pawn or Blackguard interaction"
     :cannot-host true
     :subroutines [trash-program
+                  end-the-run
                   {:label "Trash a resource and end the run"
-                   :msg (msg "trash " (:title target) " and end the run")
+                   :msg (msg "trash " (:title target))
                    :delayed-completion true
                    :choices {:req #(and (installed? %)
                                         (is-type? % "Resource"))}
-                   :effect (effect (trash target {:reason :subroutine})
-                                   (end-run))}]}
+                   :effect (effect (trash target {:reason :subroutine}))}]}
 
    "TL;DR"
    {:subroutines [{:msg "duplicate subroutines on next piece of ICE encountered this run"}]}
