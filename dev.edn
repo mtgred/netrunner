@@ -6,4 +6,8 @@
         :name    "netrunner"}
  :auth {:expiration 60
         :secret     "Dev salt"}
- :web {:port 1042}}
+ :web {:port 1042}
+ :email {:host nil
+         :user nil
+         :pass nil
+         :ssl nil}}
