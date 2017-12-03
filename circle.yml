@@ -31,6 +31,9 @@ test:
     - lein compile game-test.cards.programs
     - lein compile game-test.cards.resources
     - lein compile game-test.cards.upgrades
+    - lein compile web.pages
+    - lein compile web.game
+    - lein compile web.api
     - lein compile web.core
     - lein test game-test.core
     - lein test game-test.cards.agendas
