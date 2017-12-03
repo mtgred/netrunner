@@ -155,6 +155,7 @@
                                       (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
          check-type {:req (req (is-type? target (:az-target card)))
                      :effect (effect (gain :corp :credit 2))
+                     :once :per-turn
                      :msg (msg "gain 2 [Credits] from " (:az-target card))}]
      {:events {:corp-turn-ends choose-type
                :runner-install check-type
