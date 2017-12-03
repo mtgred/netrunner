@@ -1,7 +1,14 @@
 (in-ns 'game.core)
 
 (def cards-hardware
-  {"Adjusted Matrix"
+  {"Acacia"
+   {:events {:pre-purge {:effect (req (let [virus (filter #(has-subtype? % "Virus") (all-installed state :runner))
+                                            counters (reduce + (map #(get-virus-counters state :runner %) virus))]
+                                        (gain state :runner :credit counters)
+                                        (system-msg state :runner (str "trashes Acacia and gains " counters "[Credit]"))
+                                        (trash state :runner card {:unpreventable true})))}}}
+
+   "Adjusted Matrix"
    {:implementation "Click Adjusted Matrix to use ability."
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
     :prompt "Choose Icebreaker on which to install Adjusted Matrix"
