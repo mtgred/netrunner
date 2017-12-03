@@ -11,7 +11,12 @@
             [digest]
             [buddy.auth :refer [authenticated?]]
             [buddy.auth.backends.session :refer [session-backend]]
-            [crypto.password.bcrypt :as password]))
+            [crypto.password.bcrypt :as password]
+            [clj-time.core :as t]
+            [clj-time.coerce :as c]
+            [postal.core :as mail]
+            [ring.util.response :refer [redirect]])
+  (:import java.security.SecureRandom))
 
 (def auth-config (:auth server-config))
 
@@ -109,5 +114,66 @@
       (response 404 {:message "Account not found"}))
     (response 401 {:message "Unauthorized"})))
 
-(defn is-authenticated? [{user :user :as req}]
-  (not (nil? user)))
+(defn generate-secure-token
+  [size]
+  (let [seed (byte-array size)]
+    (.nextBytes (SecureRandom/getInstance "SHA1PRNG") seed)
+    seed))
+
+(defn hexadecimalize
+  "Converts a byte array to a hex string"
+  [a-byte-array]
+  (clojure.string/lower-case (apply str (map #(format "%02X" %) a-byte-array))))
+
+(defn set-password-reset-code!
+  "Generates a password-reset code for the given email address. Updates the user's info in the database with the code,
+  and returns the code."
+  [email]
+  (let [reset-code (hexadecimalize (generate-secure-token 20))
+        reset-expires (t/plus (t/now) (t/hours 1))]
+    (mc/update db "users"
+               {:email email}
+               {"$set" {:resetPasswordToken reset-code
+                        :resetPasswordExpires (c/to-date reset-expires)}})
+    reset-code))
+
+(defn forgot-password-handler
+  [{{:keys [email]} :params
+    headers         :headers}]
+  (if-let [user (mc/find-one-as-map db "users" {:email email})]
+    (let [code (set-password-reset-code! email)
+          msg (mail/send-message
+                (:email server-config)
+                {:from    "support@jinteki.net"
+                 :to      email
+                 :subject "Jinteki Password Reset"
+                 :body    (str "You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n"
+                               "Please click on the following link, or paste this into your browser to complete the process:\n\n"
+                               "http://" (headers "host") "/reset/" code "\n\n"
+                               "If you did not request this, please ignore this email and your password will remain unchanged.\n")})]
+      (if (zero? (:code msg))
+        (response 200 {:message "Email sent"})
+        (response 500 {:message (:message msg)})))
+    (response 421 {:message "No account with that email address"})))
+
+(defn reset-password-handler
+  [{{:keys [password confirm token]} :params}]
+  (if-let [{:keys [username email]} (mc/find-one-as-map db "users" {:resetPasswordToken   token
+                                                                    :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
+    (if (= password confirm)
+      (let [hash-pw (password/encrypt password)]
+        (mc/update db "users"
+                   {:username username}
+                   {"$set" {:password             hash-pw
+                            :resetPasswordExpires nil
+                            :resetPasswordToken   nil}})
+        (mail/send-message
+          (:email server-config)
+          {:from    "support@jinteki.net"
+           :to      email
+           :subject "Your password has been changed"
+           :body    (str "Hello,\n\n"
+                         "This is a confirmation that the password for your account " email " has just been changed.\n")})
+        (redirect "/"))
+      (response 422 {:message "New Password and Confirm Password did not match"}))
+    (response 404 {:message "No reset token found"})))

@@ -29,7 +29,8 @@
                  [http-kit "2.2.0"]
                  [org.slf4j/slf4j-nop "1.7.12"]
                  [me.bsima/trello "0.3.0"]
-                 [clj-time "0.14.2"]]
+                 [clj-time "0.14.2"]
+                 [com.draines/postal "2.0.2"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
                                   [com.cemerick/piggieback "0.2.1"]]

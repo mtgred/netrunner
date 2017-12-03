@@ -1,8 +1,13 @@
 (ns web.pages
   (:require [web.utils :refer [response]]
+            [web.db :refer [db object-id]]
+            [monger.collection :as mc]
+            [monger.result :refer [acknowledged?]]
+            [monger.operators :refer :all]
+            [clj-time.core :as t]
+            [clj-time.coerce :as c]
             [hiccup.page :as hiccup]
-            [cheshire.core :as json]
-            ))
+            [cheshire.core :as json]))
 
 
 (defn layout [{:keys [version] :as req} & content]
@@ -125,18 +130,22 @@
       [:p
        [:button.btn.btn-primary {:type "submit"} "Submit"]]]]))
 
-(defn reset-password-page [req]
-  (hiccup/html5
-    [:head
-     [:title "Jinteki"]
-     (hiccup/include-css "/css/netrunner.css")]
-    [:body
-     [:div.reset-bg]
-     [:form.panel.blue-shade.reset-form {:method "POST"}
-      [:h3 "Password Reset"]
-      [:p
-       [:input.form-control {:type "password" :name "password" :value "" :placeholder "New password" :autofocus true :required "required"}]]
-      [:p
-       [:input.form-control {:type "password" :name "confirm" :value "" :placeholder "Confirm password" :required "required"}]]
-      [:p
-       [:button.btn.btn-primary {:type "submit"} "Update Password"]]]]))
+(defn reset-password-page
+  [{{:keys [token]} :params}]
+  (if-let [user (mc/find-one-as-map db "users" {:resetPasswordToken   token
+                                                :resetPasswordExpires {"$gt" (c/to-date (t/now))}})]
+    (hiccup/html5
+      [:head
+       [:title "Jinteki"]
+       (hiccup/include-css "/css/netrunner.css")]
+      [:body
+       [:div.reset-bg]
+       [:form.panel.blue-shade.reset-form {:method "POST"}
+        [:h3 "Password Reset"]
+        [:p
+         [:input.form-control {:type "password" :name "password" :value "" :placeholder "New password" :autofocus true :required "required"}]]
+        [:p
+         [:input.form-control {:type "password" :name "confirm" :value "" :placeholder "Confirm password" :required "required"}]]
+        [:p
+         [:button.btn.btn-primary {:type "submit"} "Update Password"]]]])
+    (response 404 {:message "Sorry, but that reset token is invalid or has expired."})))
