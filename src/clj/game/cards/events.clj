@@ -91,7 +91,8 @@
     :effect (effect (resolve-ability (run-event) card nil))}
 
    "Brute-Force-Hack"
-   {:prompt "How many [Credits]?" :choices :credit
+   {:implementation "Runner must calculate the right number of credits including other game effects for the planned target ICE"
+    :prompt "How many [Credits]?" :choices :credit
     :effect (effect (system-msg (str "spends " target " [Credit] on Brute-Force-Hack"))
                     (resolve-ability {:choices {:req #(and (ice? %)
                                                            (rezzed? %)
