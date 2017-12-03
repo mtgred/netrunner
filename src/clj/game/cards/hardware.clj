@@ -900,7 +900,8 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "The Gauntlet"
-   {:in-play [:memory 2]
+   {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
+    :in-play [:memory 2]
     :events {:pre-access {:req (req (and (= :hq target)
                                          run))
                           :silent (req true)
