@@ -1483,6 +1483,16 @@
    "Turtlebacks"
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
+   "Urban Renewal"
+   {:effect (effect (add-counter card :power 3))
+    :derezzed-events {:runner-turn-ends corp-rez-toast}
+    :events {:corp-turn-begins
+             {:effect (req (add-counter state side card :power -1)
+                           (when (<= (get-in card [:counter :power]) 1)
+                             (system-msg state :corp "uses Urban Renewal to do 4 meat damage")
+                             (trash state side card {:cause :ability-cost})
+                             (damage state side eid :meat 4 {:card card})))}}}
+
    "Victoria Jenkins"
    {:effect (req (lose state :runner :click-per-turn 1)
                  (when (= (:active-player @state) :runner)

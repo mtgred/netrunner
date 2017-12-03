@@ -1864,6 +1864,41 @@
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (is (= 5 (:credit (get-corp))) "Gained 1 credit for new server created"))))
 
+(deftest urban-renewal
+  ;; Urban renewal meat damage
+  (do-game
+    (new-game (default-corp [(qty "Urban Renewal" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Easy Mark" 2)]))
+    ;; Corp turn 1, install and rez urban renewal
+    (play-from-hand state :corp "Urban Renewal" "New remote")
+    (let [ur (get-content state :remote1 0)]
+      (core/rez state :corp (refresh ur))
+      (take-credits state :corp)
+      ;; Runner turn 1, creds
+      (is (= 3 (get-counters (refresh ur) :power)))
+      (take-credits state :runner)
+
+      ;; Corp turn 2
+      (is (= 2 (get-counters (refresh ur) :power)))
+      (take-credits state :corp)
+
+      ;; Runner turn 2
+      (is (= 2 (get-counters (refresh ur) :power)))
+      (take-credits state :runner)
+
+      ;; Corp turn 3
+      (is (= 1 (get-counters (refresh ur) :power)))
+      (take-credits state :corp)
+
+      ;; Runner turn 3
+      (is (= 0 (count (:discard (get-corp)))) "Nothing in Corp trash")
+      (is (= 0 (count (:discard (get-runner)))) "Nothing in Runner trash")
+      (take-credits state :runner)
+
+      ;; Corp turn 4 - damage fires
+      (is (= 1 (count (:discard (get-corp)))) "Urban Renewal got trashed")
+      (is (= 4 (count (:discard (get-runner)))) "Urban Renewal did 4 meat damage"))))
+
 (deftest watchdog
   ;; Watchdog - Reduce rez cost of first ICE per turn by number of Runner tags
   (do-game
@@ -1901,5 +1936,4 @@
         (prompt-choice :corp "Global Food Initiative") ;; into archives
         (prompt-select :corp (first (:discard (get-corp)))) ;; into R&D
         (is (= 0 (count (:discard (get-corp)))) "Only card in discard placed in bottom of R&D")
-        (is (= "Global Food Initiative" (:title (last (:deck (get-corp))))) "GFI last card in deck")
-        ))))
+        (is (= "Global Food Initiative" (:title (last (:deck (get-corp))))) "GFI last card in deck")))))
