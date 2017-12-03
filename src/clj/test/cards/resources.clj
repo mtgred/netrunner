@@ -40,6 +40,24 @@
    (take-credits state :corp)
    (is (= 3 (:click (get-runner))) "Should have lost 2 clicks and gained 1 click")))
 
+(deftest adjusted-chronotype-mca
+  ;; Chronotype to cancel out MCA click loss
+  (do-game
+    (new-game
+      (default-corp [(qty "MCA Austerity Policy" 1)])
+      (default-runner [(qty "Adjusted Chronotype" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Adjusted Chronotype")
+    (take-credits state :runner)
+    (play-from-hand state :corp "MCA Austerity Policy" "New remote")
+    (let [mca (get-content state :remote1 0)]
+      (core/rez state :corp mca)
+      (card-ability state :corp mca 0)
+      (is (= 1 (get-counters (refresh mca) :power)))
+      (take-credits state :corp)
+      ; runner does not lose a click
+      (is (= 4 (:click (get-runner)))))))
+
 (deftest adjusted-chronotype-gcs
   ;; Ensure adjusted chronotype gains 2 clicks when 2 clicks are lost and GCS is installed
   (do-game

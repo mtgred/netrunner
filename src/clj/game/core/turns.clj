@@ -174,15 +174,25 @@
   "End phase 1.2 and trigger appropriate events for the player."
   [state side args]
   (turn-message state side true)
-  (gain state side :click (+ (get-in @state [side :click-per-turn]) (or (get-in @state [side :extra-click-temp]) 0)))
-  (swap! state dissoc-in [side :extra-click-temp])
-  (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-                  (do (when (= side :corp)
-                        (draw state side)
-                        (trigger-event state side :corp-mandatory-draw))
-                      (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-                      (when (= side :corp)
-                        (update-all-advancement-costs state side)))))
+  (let [extra-clicks (or (get-in @state [side :extra-click-temp]) 0)]
+    (gain state side :click (get-in @state [side :click-per-turn]))
+    (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
+                    (do (when (= side :corp)
+                          (draw state side)
+                          (trigger-event state side :corp-mandatory-draw))
+
+                        (cond
+
+                          (< extra-clicks 0)
+                          (lose state side :click (abs extra-clicks))
+
+                          (> extra-clicks 0)
+                          (gain state side :click extra-clicks))
+
+                        (swap! state dissoc-in [side :extra-click-temp])
+                        (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+                        (when (= side :corp)
+                          (update-all-advancement-costs state side))))))
 
 (defn start-turn
   "Start turn."
