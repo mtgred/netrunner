@@ -4,9 +4,20 @@
   {"Acacia"
    {:events {:pre-purge {:effect (req (let [virus (filter #(has-subtype? % "Virus") (all-installed state :runner))
                                             counters (reduce + (map #(get-virus-counters state :runner %) virus))]
-                                        (gain state :runner :credit counters)
-                                        (system-msg state :runner (str "trashes Acacia and gains " counters "[Credit]"))
-                                        (trash state :runner card {:unpreventable true})))}}}
+                                        (update! state side (assoc-in (get-card state card) [:special :numpurged] counters))))}
+             :purge {:delayed-completion true
+                     :effect (effect (show-wait-prompt  :corp "Runner to decide if they will use Acacia")
+                                  (continue-ability {:optional
+                                                     {:player :runner
+                                                      :prompt "Use Acacia?"
+                                                      :yes-ability {:effect (req (let [counters (get-in (get-card state card) [:special :numpurged])]
+                                                                                   (gain state side :credit counters)
+                                                                                   (system-msg state side (str "trashes Acacia and gains " counters "[Credit]"))
+                                                                                   (trash state side card {:unpreventable true})
+                                                                                   (clear-wait-prompt state :corp)
+                                                                                   (effect-completed state side eid)))}
+                                                      :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                                   (effect-completed eid))}}} card nil))}}}
 
    "Adjusted Matrix"
    {:implementation "Click Adjusted Matrix to use ability."
