@@ -1603,16 +1603,16 @@
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
 
    "The Turning Wheel"
-   {:events {:run {:effect (effect (update! (dissoc card :agenda-stolen :counters-spent)))}
-             :agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
+   {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
                              :silent (req true)}
              :pre-access {:req (req (and (:counters-spent card) (#{:hq :rd} target)))
                           :effect (effect (access-bonus (:counters-spent card 0)))
                           :silent (req true)}
-             :run-ends {:req (req (and (not (:agenda-stolen card))
-                                       (#{:hq :rd} target)))
-                        :effect (effect (add-counter card :power 1)
-                                        (system-msg :runner (str "places a power counter on " (:title card))))
+             :run-ends {:effect (req (when (and (not (:agenda-stolen card))
+                                                (#{:hq :rd} target))
+                                       (add-counter state side card :power 1)
+                                       (system-msg state :runner (str "places a power counter on " (:title card))))
+                                     (update! state side (dissoc (get-card state card) :agenda-stolen :counters-spent)))
                         :silent (req true)}}
     :abilities [{:counter-cost [:power 2]
                  :req (req (:run @state))
