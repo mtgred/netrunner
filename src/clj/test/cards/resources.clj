@@ -470,6 +470,7 @@
     (core/no-action state :corp nil)
     (play-from-hand state :runner "Eden Shard")
     (is (= 5 (:credit (get-runner))) "Eden Shard installed for 0c")
+    (is (not (:run @state)) "Run is over")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 3 (count (:hand (get-corp)))) "Corp drew 2 cards")
     (is (= 1 (count (:discard (get-runner)))) "Eden Shard trashed")))

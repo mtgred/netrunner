@@ -17,13 +17,15 @@
                                                 (= (:server run) [target-server])
                                                 (zero? (:position run))
                                                 (not (:access @state))))]
-     {:abilities [(merge {:effect (effect (trash card {:cause :ability-cost}) (effect-fn eid card target))
+     {:implementation "Click Shard to install when last ICE is passed, but before hitting Successful Run button"
+      :abilities [(merge {:effect (effect (trash card {:cause :ability-cost}) (effect-fn eid card target))
                           :msg message}
                          ability-options)]
       :install-cost-bonus (req (when (can-install-shard? state run) [:credit -15 :click -1]))
       :effect (req (when (can-install-shard? state run)
                      (when-completed (register-successful-run state side (:server run))
-                                     (do (swap! state update-in [:runner :prompt] rest)
+                                     (do (clear-wait-prompt state :corp)
+                                         (swap! state update-in [:runner :prompt] rest)
                                          (handle-end-run state side)))))})))
 
 ;;; Card definitions
@@ -419,7 +421,7 @@
                   :msg "gain 1 [Credits]"
                   :req (req (< (get-in @state [:runner :credit]) 6))
                   :effect (req (gain state :runner :credit 1))}]
-     {:effect (req (if (= 0 (get-in @state [:runner :credit]))
+     {:effect (req (if (zero? (get-in @state [:runner :credit]))
                      (resolve-ability state side trashme card nil)
                      (add-watch state :dadiana
                                 (fn [k ref old new]
