@@ -367,7 +367,9 @@
                                                                  (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
                                                                 true))))}
                                     :run-ends {:effect (effect (unregister-events card))}} (assoc card :zone '(:discard)))
-                                 (trash card {:cause :ability-cost}))}]}
+                                 (trash card {:cause :ability-cost}))}]
+    :events {:rez nil
+             :run-ends nil}}
 
    "Feedback Filter"
    {:prevent {:damage [:net :brain]}
