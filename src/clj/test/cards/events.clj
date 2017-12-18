@@ -1726,6 +1726,26 @@
         (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
         (is (= "Morning Star" (:title (get-in @state [:runner :rig :program 0]))) "Morning Star still installed")))))
 
+(deftest makers-eye
+  (do-game
+    (new-game (default-corp [(qty "Quandary" 5)])
+              (default-runner [(qty "The Maker's Eye" 1)]))
+    (dotimes [_ 5] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Maker's Eye")
+    (is (= :rd (get-in @state [:run :server 0])))
+    (run-successful state)
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "1st quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "2nd quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "3rd quandary")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)))))
+
 (deftest the-price-of-freedom
   ;; The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn
   (do-game

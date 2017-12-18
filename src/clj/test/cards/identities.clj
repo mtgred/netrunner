@@ -1147,6 +1147,38 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
 
+(deftest skorpios
+  ; Remove a card from game when it moves to discard once per round
+  (do-game
+    (new-game (make-deck "Skorpios Defense Systems: Persuasive Power" [(qty "Hedge Fund" 1) (qty "Quandary" 4)])
+              (default-runner [(qty "The Maker's Eye" 1) (qty "Lucky Find" 1)]))
+    (play-from-hand state :corp "Hedge Fund")
+    (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lucky Find")
+    (play-from-hand state :runner "The Maker's Eye")
+    (is (= :rd (get-in @state [:run :server 0])))
+    ; Don't allow a run-event in progress to be targeted #2963
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (is (empty? (filter #(= "The Maker's Eye" (:title %)) (-> (get-corp) :prompt first :choices))) "No Maker's Eye choice")
+    (prompt-choice :corp "Cancel")
+    (run-successful state)
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "1st quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "2nd quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "3rd quandary")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)))
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (prompt-choice :corp (find-card "The Maker's Eye" (:discard (get-runner))))
+    (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (is (empty? (:prompt (get-corp))) "Cannot use Skorpios twice")))
+
 (deftest silhouette-expose-trigger-before-access
   ;; Silhouette - Expose trigger ability resolves completely before access. Issue #2173.
   (do-game
