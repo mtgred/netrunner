@@ -964,26 +964,6 @@
     (is (= 2 (count (:scored (get-runner)))) "Mad Dash moved to score area")
     (is (= 3 (:agenda-point (get-runner))) "Mad Dash scored for 1 agenda point")))
 
-(deftest makers-eye
-  (do-game
-    (new-game (default-corp [(qty "Quandary" 5)])
-              (default-runner [(qty "The Maker's Eye" 1)]))
-    (dotimes [_ 5] (core/move state :corp (first (:hand (get-corp))) :deck))
-    (take-credits state :corp)
-    (play-from-hand state :runner "The Maker's Eye")
-    (is (= :rd (get-in @state [:run :server 0])))
-    (run-successful state)
-    (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "1st quandary")
-    (prompt-choice :runner "OK")
-    (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "2nd quandary")
-    (prompt-choice :runner "OK")
-    (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "3rd quandary")
-    (prompt-choice :runner "OK")
-    (is (not (:run @state)))))
-
 (deftest making-an-entrance
   ;; Making an Entrance - Full test
   (do-game

@@ -772,10 +772,9 @@
                                                 card nil))}}}
 
    "Skorpios Defense Systems: Persuasive Power"
-   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted.  Cannot use during a run"
+   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                  :delayed-completion true
-                 :req  (req (not (:run @state)))
                  :effect (effect (show-wait-prompt :runner "Corp to use Skorpios' ability")
                                  (continue-ability {:prompt "Choose a card in the Runner's Heap that was just trashed"
                                                     :once :per-turn
