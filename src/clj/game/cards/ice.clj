@@ -1665,7 +1665,7 @@
     :cannot-host true
     :subroutines [trash-program
                   end-the-run
-                  {:label "Trash a resource and end the run"
+                  {:label "Trash a resource"
                    :msg (msg "trash " (:title target))
                    :delayed-completion true
                    :choices {:req #(and (installed? %)

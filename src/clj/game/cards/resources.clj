@@ -1321,7 +1321,7 @@
              {:effect (effect (update! (assoc card :slums-active true)))}
              :pre-trash
              {:req (req (and (:slums-active card)
-                             (not (= (:title target) "Mumbad Virtual Tour"))
+                             (-> target card-def :must-trash not)
                              (:trash target)
                              (= (:side target) "Corp")))
               :effect (req (toast state :runner (str "Click Salsette Slums to remove " (:title target)
