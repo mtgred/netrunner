@@ -91,7 +91,8 @@
     :effect (effect (resolve-ability (run-event) card nil))}
 
    "Brute-Force-Hack"
-   {:prompt "How many [Credits]?" :choices :credit
+   {:implementation "Runner must calculate the right number of credits including other game effects for the planned target ICE"
+    :prompt "How many [Credits]?" :choices :credit
     :effect (effect (system-msg (str "spends " target " [Credit] on Brute-Force-Hack"))
                     (resolve-ability {:choices {:req #(and (ice? %)
                                                            (rezzed? %)
@@ -192,6 +193,7 @@
 
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
+    :implementation "No enforcement that this Bad Pub cannot be removed"
     :effect (req (swap! state update-in [:corp :has-bad-pub] inc))
     :leave-play (req (swap! state update-in [:corp :has-bad-pub] dec))}
 
@@ -247,18 +249,22 @@
 
    "Data Breach"
    {:delayed-completion true
-    :effect (req (register-events state side (:events (card-def card))
-                                  (assoc card :zone '(:discard)))
-                 (when-completed (game.core/run state side :rd nil card)
-                                 (let [card (get-card state (assoc card :zone '(:discard)))]
-                                   (unregister-events state side card)
-                                   (if (:run-again card)
-                                     (game.core/run state side eid :rd nil card)
-                                     (effect-completed state side eid))
-                                   (update! state side (dissoc card :run-again)))))
-    :events {:successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
+    :effect (req (let [db-eid (make-eid state)
+                       events (:events (card-def card))]
+                   (register-events state side
+                                    (assoc-in events [:successful-run-ends :eid] db-eid)
+                                    (assoc card :zone '(:discard)))
+                   (when-completed (game.core/run state side db-eid :rd nil card)
+                                   (let [card (get-card state (assoc card :zone '(:discard)))]
+                                     (unregister-events state side card)
+                                     (when (:run-again card)
+                                       (game.core/run state side db-eid :rd nil card))
+                                     (update! state side (dissoc card :run-again))))))
+    :events {:successful-run-ends
+             {:optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
-                                              :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
+                                              :yes-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                            (update! (assoc card :run-again true)))}}}}}
 
    "Day Job"
    {:additional-cost [:click 3]
@@ -989,25 +995,31 @@
 
    "Möbius"
    {:delayed-completion true
-    :effect (req (register-events state side (:events (card-def card))
-                                  (assoc card :zone '(:discard)))
-                 (when-completed (game.core/run state side :rd nil card)
-                                 (let [card (get-card state (assoc card :zone '(:discard)))]
-                                   (unregister-events state side card)
-                                   (if (:run-again card)
-                                     (do (game.core/run state side eid :rd nil card)
-                                         (register-events state side {:successful-run
-                                                                      {:req (req (= target :rd))
-                                                                       :msg "gain 4 [Credits]"
-                                                                       :effect (effect (gain :credit 4)
-                                                                                       (unregister-events card))}}
-                                                                     (assoc card :zone '(:discard))))
-                                     (effect-completed state side eid))
-                                   (update! state side (dissoc card :run-again)))))
+    :effect (req (let [mob-eid (make-eid state)
+                       events (:events (card-def card))]
+                   (register-events state side
+                                    (assoc-in events [:successful-run-ends :eid] mob-eid)
+                                    (assoc card :zone '(:discard)))
+                   (when-completed (game.core/run state side mob-eid :rd nil card)
+                                   (let [card (get-card state (assoc card :zone '(:discard)))]
+                                     (unregister-events state side card)
+                                     (when (:run-again card)
+                                       (game.core/run state side mob-eid :rd nil card)
+                                       (register-events state side {:successful-run
+                                                                   {:req (req (= target :rd))
+                                                                    :msg "gain 4 [Credits]"
+                                                                     :effect (effect (gain :credit 4)
+                                                                                     (unregister-events card))}}
+
+                                                        (assoc card :zone '(:discard))))
+                                     (update! state side (dissoc card :run-again))))))
     :events {:successful-run nil
-             :successful-run-ends {:optional {:req (req (= [:rd] (:server target)))
+             :successful-run-ends {
+                                   :interactive (req true)
+                                   :optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
-                                              :yes-ability {:effect (effect (update! (assoc card :run-again true)))}}}}}
+                                              :yes-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                            (update! (assoc card :run-again true)))}}}}}
 
    "Modded"
    {:prompt "Select a program or piece of hardware to install from your Grip"
@@ -1536,6 +1548,7 @@
    {:effect (effect (run :rd nil card)
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
+                              :req (req (= target :rd))
                               :effect (effect (access-bonus 2))}
              :run-ends {:effect (effect (unregister-events card))}}}
 

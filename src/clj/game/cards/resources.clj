@@ -17,13 +17,15 @@
                                                 (= (:server run) [target-server])
                                                 (zero? (:position run))
                                                 (not (:access @state))))]
-     {:abilities [(merge {:effect (effect (trash card {:cause :ability-cost}) (effect-fn eid card target))
+     {:implementation "Click Shard to install when last ICE is passed, but before hitting Successful Run button"
+      :abilities [(merge {:effect (effect (trash card {:cause :ability-cost}) (effect-fn eid card target))
                           :msg message}
                          ability-options)]
       :install-cost-bonus (req (when (can-install-shard? state run) [:credit -15 :click -1]))
       :effect (req (when (can-install-shard? state run)
                      (when-completed (register-successful-run state side (:server run))
-                                     (do (swap! state update-in [:runner :prompt] rest)
+                                     (do (clear-wait-prompt state :corp)
+                                         (swap! state update-in [:runner :prompt] rest)
                                          (handle-end-run state side)))))})))
 
 ;;; Card definitions
@@ -412,17 +414,20 @@
                  :effect (effect (trash card {:cause :ability-cost}) (damage-prevent :meat 3))}]}
 
    "Dadiana Chacon"
-   (let [ability {:once :per-turn
+   (let [trashme {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
+                                  (damage eid :meat 3 {:unboostable true :card card})
+                                  (trash card {:cause :ability-cost}))}
+         ability {:once :per-turn
                   :msg "gain 1 [Credits]"
                   :req (req (< (get-in @state [:runner :credit]) 6))
                   :effect (req (gain state :runner :credit 1))}]
-     {:effect (req (add-watch state :dadiana
-                              (fn [k ref old new]
-                                (when (and (not (zero? (get-in old [:runner :credit])))
-                                           (zero? (get-in new [:runner :credit])))
-                                  (resolve-ability ref side {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
-                                                                             (damage eid :meat 3 {:unboostable true :card card})
-                                                                             (trash card {:cause :ability-cost}))} card nil)))))
+     {:effect (req (if (zero? (get-in @state [:runner :credit]))
+                     (resolve-ability state side trashme card nil)
+                     (add-watch state :dadiana
+                                (fn [k ref old new]
+                                  (when (and (not (zero? (get-in old [:runner :credit])))
+                                             (zero? (get-in new [:runner :credit])))
+                                    (resolve-ability ref side trashme card nil))))))
       :leave-play (req (remove-watch state :dadiana))
       :flags {:drip-economy true}
       :events {:runner-turn-begins ability}})
@@ -1316,6 +1321,7 @@
              {:effect (effect (update! (assoc card :slums-active true)))}
              :pre-trash
              {:req (req (and (:slums-active card)
+                             (-> target card-def :flags :must-trash not)
                              (:trash target)
                              (= (:side target) "Corp")))
               :effect (req (toast state :runner (str "Click Salsette Slums to remove " (:title target)
@@ -1551,13 +1557,14 @@
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
    "The Shadow Net"
-   {:abilities [{:cost [:click 1 :forfeit]
-                 :req (req (< 0 (count (filter #(is-type? % "Event") (:discard runner)))))
-                 :label "Play an event from your Heap, ignoring all costs"
-                 :prompt "Choose an event to play"
-                 :msg (msg "play " (:title target) " from the Heap, ignoring all costs")
-                 :choices (req (cancellable (filter #(is-type? % "Event") (:discard runner)) :sorted))
-                 :effect (effect (play-instant nil target {:ignore-cost true}))}]}
+   (letfn [(events [runner] (filter #(and (is-type? % "Event") (not (has-subtype? % "Priority"))) (:discard runner)))]
+     {:abilities [{:cost [:click 1 :forfeit]
+                   :req (req (< 0 (count (events runner))))
+                   :label "Play an event from your Heap, ignoring all costs"
+                   :prompt "Choose an event to play"
+                   :msg (msg "play " (:title target) " from the Heap, ignoring all costs")
+                   :choices (req (cancellable (events runner) :sorted))
+                   :effect (effect (play-instant nil target {:ignore-cost true}))}]})
 
    "The Supplier"
    (let [ability  {:label "Install a hosted card (start of turn)"
@@ -1601,16 +1608,16 @@
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
 
    "The Turning Wheel"
-   {:events {:run {:effect (effect (update! (dissoc card :agenda-stolen :counters-spent)))}
-             :agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
+   {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
                              :silent (req true)}
              :pre-access {:req (req (and (:counters-spent card) (#{:hq :rd} target)))
                           :effect (effect (access-bonus (:counters-spent card 0)))
                           :silent (req true)}
-             :run-ends {:req (req (and (not (:agenda-stolen card))
-                                       (#{:hq :rd} target)))
-                        :effect (effect (add-counter card :power 1)
-                                        (system-msg :runner (str "places a power counter on " (:title card))))
+             :run-ends {:effect (req (when (and (not (:agenda-stolen card))
+                                                (#{:hq :rd} target))
+                                       (add-counter state side card :power 1)
+                                       (system-msg state :runner (str "places a power counter on " (:title card))))
+                                     (update! state side (dissoc (get-card state card) :agenda-stolen :counters-spent)))
                         :silent (req true)}}
     :abilities [{:counter-cost [:power 2]
                  :req (req (:run @state))

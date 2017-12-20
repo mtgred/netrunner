@@ -778,9 +778,10 @@
         (core/derez state :corp (refresh ti))
         (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
         (run-on state "HQ")
-        (card-subroutine state :corp ti 1)
+        (card-subroutine state :corp ti 2)
         (prompt-select :corp (refresh wast))
         (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
+        (card-subroutine state :corp ti 1)
         (is (not (:run @state)) "Run ended")))))
 
 (deftest tithonium-oversight-ai

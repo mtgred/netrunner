@@ -841,8 +841,7 @@
       (take-credits state :corp)
 	  (run-empty-server state :remote2)
       (prompt-choice :runner "Yes")
-      (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash")
-	)))
+      (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash"))))
 
 (deftest it-department
   ;; IT Department - Add strength to rezzed ICE until end of turn
@@ -1018,6 +1017,34 @@
         (card-ability state :corp yale 0)
         (is (= 15 (:credit (get-corp))) "Gained 2 credits")
         (is (= 1 (count (:discard (get-corp)))) "Mark Yale trashed")))))
+
+(deftest mca-austerity-policy
+  (do-game
+    (new-game
+      (default-corp [(qty "MCA Austerity Policy" 1)])
+      (default-runner))
+    (play-from-hand state :corp "MCA Austerity Policy" "New remote")
+    (let [mca (get-content state :remote1 0)]
+      (core/rez state :corp mca)
+      (card-ability state :corp mca 0)
+      (is (= 1 (get-counters (refresh mca) :power)))
+      ; once per turn only
+      (card-ability state :corp mca 0)
+      (is (= 1 (get-counters (refresh mca) :power)))
+      (take-credits state :corp)
+      ; runner loses a click
+      (is (= 3 (:click (get-runner))))
+      (take-credits state :runner)
+      (card-ability state :corp mca 0)
+      (is (= 2 (get-counters (refresh mca) :power)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp mca 0)
+      (is (= 3 (get-counters (refresh mca) :power)))
+      ; Fire MCA
+      (is (= 2 (:click (get-corp))))
+      (card-ability state :corp (refresh mca) 1)
+      (is (= 5 (:click (get-corp)))))))
 
 (deftest mental-health-clinic
   ;; Mental Health Clinic - Gain 1 credit when turn begins; Runner max hand size increased by 1
@@ -1837,6 +1864,41 @@
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (is (= 5 (:credit (get-corp))) "Gained 1 credit for new server created"))))
 
+(deftest urban-renewal
+  ;; Urban renewal meat damage
+  (do-game
+    (new-game (default-corp [(qty "Urban Renewal" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Easy Mark" 2)]))
+    ;; Corp turn 1, install and rez urban renewal
+    (play-from-hand state :corp "Urban Renewal" "New remote")
+    (let [ur (get-content state :remote1 0)]
+      (core/rez state :corp (refresh ur))
+      (take-credits state :corp)
+      ;; Runner turn 1, creds
+      (is (= 3 (get-counters (refresh ur) :power)))
+      (take-credits state :runner)
+
+      ;; Corp turn 2
+      (is (= 2 (get-counters (refresh ur) :power)))
+      (take-credits state :corp)
+
+      ;; Runner turn 2
+      (is (= 2 (get-counters (refresh ur) :power)))
+      (take-credits state :runner)
+
+      ;; Corp turn 3
+      (is (= 1 (get-counters (refresh ur) :power)))
+      (take-credits state :corp)
+
+      ;; Runner turn 3
+      (is (= 0 (count (:discard (get-corp)))) "Nothing in Corp trash")
+      (is (= 0 (count (:discard (get-runner)))) "Nothing in Runner trash")
+      (take-credits state :runner)
+
+      ;; Corp turn 4 - damage fires
+      (is (= 1 (count (:discard (get-corp)))) "Urban Renewal got trashed")
+      (is (= 4 (count (:discard (get-runner)))) "Urban Renewal did 4 meat damage"))))
+
 (deftest watchdog
   ;; Watchdog - Reduce rez cost of first ICE per turn by number of Runner tags
   (do-game
@@ -1874,5 +1936,4 @@
         (prompt-choice :corp "Global Food Initiative") ;; into archives
         (prompt-select :corp (first (:discard (get-corp)))) ;; into R&D
         (is (= 0 (count (:discard (get-corp)))) "Only card in discard placed in bottom of R&D")
-        (is (= "Global Food Initiative" (:title (last (:deck (get-corp))))) "GFI last card in deck")
-        ))))
+        (is (= "Global Food Initiative" (:title (last (:deck (get-corp))))) "GFI last card in deck")))))

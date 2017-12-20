@@ -343,6 +343,30 @@
     (run-jack-out state)
     (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
 
+(deftest data-breach-doppelganger
+  ;; FAQ 4.1 - ensure runner gets choice of activation order
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Doppelgänger" 1) (qty "Data Breach" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Doppelgänger")
+    (play-from-hand state :runner "Data Breach")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Doppelgänger")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "HQ")
+    (is (:run @state) "New run started")
+    (is (= [:hq] (:server (:run @state))) "Running on HQ via Doppelgänger")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second Data Breach run on R&D triggered")
+    (core/no-action state :corp nil)
+    (run-successful state)))
+
 (deftest deja-vu
   ;; Deja Vu - recur one non-virus or two virus cards
   (do-game
@@ -421,7 +445,6 @@
     (prompt-choice :runner "0")
     (prompt-choice :runner "Steal")
     (is (= 1 (count (:scored (get-runner)))) "TFP stolen")
-
     (core/gain state :runner :tag 1)
     (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
     (prompt-choice :runner "Remove 1 tag")
@@ -1001,6 +1024,32 @@
     (play-from-hand state :runner "Mars for Martians")
     (is (= 3 (count (:hand (get-runner)))) "3 clan resources, +3 cards but -1 for playing Mars for Martians")
     (is (= 7 (:credit (get-runner))) "5 tags, +5 credits")))
+
+(deftest mobius
+  ;; Mobius
+  (do-game
+    (new-game
+      (default-corp)
+      (default-runner [(qty "Möbius" 3)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))))
+    (play-from-hand state :runner "Möbius")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (is (= 5 (:credit (get-runner))))
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (is (= 9 (:credit (get-runner))))
+    (is (empty? (:prompt (get-runner))) "No prompt to run a third time")
+    (is (not (:run @state)) "Run is over")
+    (play-from-hand state :runner "Möbius")
+    (run-jack-out state)
+    (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
 
 (deftest modded
   ;; Modded - Install a program or piece of hardware at a 3 credit discount
@@ -1676,6 +1725,26 @@
         (take-credits state :runner)
         (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
         (is (= "Morning Star" (:title (get-in @state [:runner :rig :program 0]))) "Morning Star still installed")))))
+
+(deftest makers-eye
+  (do-game
+    (new-game (default-corp [(qty "Quandary" 5)])
+              (default-runner [(qty "The Maker's Eye" 1)]))
+    (dotimes [_ 5] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Maker's Eye")
+    (is (= :rd (get-in @state [:run :server 0])))
+    (run-successful state)
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "1st quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "2nd quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "3rd quandary")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)))))
 
 (deftest the-price-of-freedom
   ;; The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn

@@ -423,7 +423,9 @@
                          [:div.float-right (deck-status-span sets deck true false)])
                        (when (= (:user player) user)
                          [:span.fake-link.deck-load
-                          {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
+                          {:data-target "#deck-select" :data-toggle "modal"
+                           :on-click (fn [] (send {:action "deck" :gameid (:gameid @app-state) :deck nil}))
+                           } "Select deck"])])]
                    (when (:allowspectator game)
                      [:div.spectators
                       (let [c (count (:spectators game))]

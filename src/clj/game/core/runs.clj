@@ -168,9 +168,11 @@
                                   :effect (effect (system-msg (str "decides not to pay to steal " (:title card)))
                                                   (trigger-event :no-steal card)
                                                   (resolve-steal-events eid card))} card nil)
-               (let [chosen (cons target chosen)
-                     kw (to-keyword (join "-" (rest (split target #" "))))
-                     val (string->num (first (split target #" ")))]
+               (let [name (:title card)
+                     chosen (cons target chosen)
+                     clicks (count (re-seq #"\[Click\]+" target))
+                     kw (if (pos? clicks) :click (to-keyword (join "-" (rest (split target #" ")))))
+                     val (if (pos? clicks) clicks (string->num (first (split target #" "))))]
                  (if (can-pay? state side name [kw val])
                    (do (pay state side nil [kw val])
                        (system-msg state side (str "pays " target
@@ -697,7 +699,7 @@
     (:successful run)
     (do
       (play-sfx state side "run-successful")
-      (trigger-event-sync state side eid :successful-run-ends run))
+      (trigger-event-simult state side eid :successful-run-ends nil run))
     ;; Unsuccessful
     (:unsuccessful run)
     (do
@@ -715,7 +717,6 @@
         eid (:eid run)]
     (swap! state assoc-in [:run :ending] true)
     (trigger-event state side :run-ends (first server))
-
     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))

@@ -13,6 +13,7 @@ pom.xml
 .repl
 .nrepl-port
 .nrepl-history
+.idea
 
 /resources/public/js/
 /resources/public/cljs/
