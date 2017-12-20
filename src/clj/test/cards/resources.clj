@@ -1542,6 +1542,24 @@
           "Tech Trader was installed")
       (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
 
+(deftest street-peddler-trash-while-choosing-card
+  ;; Street Peddler - trashing Street Peddler while choosing which card to
+  ;; discard should dismiss the choice prompt. Issue #587.
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Gordian Blade" 1)
+                               (qty "Torch" 1)
+                               (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
+    (play-from-hand state :runner "Street Peddler")
+    (let [street-peddler (get-in @state [:runner :rig :resource 0])]
+      (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
+      (card-ability state :runner street-peddler 0)
+      (trash-resource state "Street Peddler")
+      (is (zero? (count (get-in @state [:runner :prompt])))))))
+
 (deftest symmetrical-visage
   ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn
   (do-game

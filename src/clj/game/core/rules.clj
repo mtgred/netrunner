@@ -308,7 +308,13 @@
   [state side eid {:keys [zone type disabled] :as card}
    {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
   (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
+        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})
+        card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
+
+    (if (not (zero? (count card-prompts))) (do
+       ;remove all prompts associated with the trashed card (or another card of the same name)
+       (swap! state update-in [side :prompt] #(filter (fn [p] (not= (get-in p [:card :title]) (get moved-card :title))) %))
+       (map #(effect-completed state side (:eid %)) card-prompts)))
     (when-let [trash-effect (:trash-effect cdef)]
       (when (and (not disabled) (or (and (= (:side card) "Runner")
                                          (:installed card))
