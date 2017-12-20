@@ -203,6 +203,7 @@
            (card-text card cursor)
            (when-let [url (image-url card)]
              [:img {:src url
+                    :alt (:title card)
                     :onClick #(do (.preventDefault %)
                                 (put! (:pub-chan (om/get-shared owner))
                                       {:topic :card-selected :data card})

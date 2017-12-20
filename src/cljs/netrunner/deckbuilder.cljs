@@ -791,7 +791,8 @@
                  (for [deck (sort-by :date > decks)]
                    [:div.deckline {:class (when (= active-deck deck) "active")
                                    :on-click #(put! select-channel deck)}
-                    [:img {:src (image-url (:identity deck))}]
+                    [:img {:src (image-url (:identity deck))
+                           :alt (get-in deck [:identity :title] "")}]
                     [:div.float-right (deck-status-span sets deck)]
                     [:h4 (:name deck)]
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
@@ -924,7 +925,8 @@
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]
                 [:div.header
-                 [:img {:src (image-url identity)}]
+                 [:img {:src (image-url identity)
+                        :alt (:title identity)}]
                  [:h4 {:class (if (released? (:sets @app-state) identity) "fake-link" "casual")
                        :on-mouse-enter #(put! zoom-channel {:card identity :art (:art identity) :id (:id identity)})
                        :on-mouse-leave #(put! zoom-channel false)}
