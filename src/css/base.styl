@@ -608,13 +608,16 @@ nav ul
   button
     margin-right: 5px
 
-.reset-form
+.reset-form, .announce-form
   position: absolute
   top: 50%
   left: 50%
   padding: 10px 20px
   width: 282px
   margin: -92px 0 0 -141px
+
+.announce-form
+  color: white
 
 .flash-message
   color: orangered
@@ -698,13 +701,27 @@ nav ul
   cover-color: obsidian
 
 // Chat
+#chat
+  .server-message
+    flex(0)
+    margin-left: 0
+    margin-right: 0
+    margin-top: 0
+    padding-bottom: 20px
+    background-color: rgba(30, 130, 30, 0.85)
+    font-weight: bold
 
 .chat-app
   display-flex()
   position: absolute
+  flex-direction(column)
   top: 196px
   bottom: 15px
   width: 995px
+
+  .chat-interface
+    flex(2)
+    display-flex()
 
 .channel-list
   flex(0 0 180px)
@@ -1146,6 +1163,11 @@ nav ul
   .games .button-bar
     box-sizing: initial
     padding: 0 15px 15px
+
+    .server-message
+      line-height: 24px
+      color: red
+      font-weight: bold
 
     .rooms .roomtab
       display: block

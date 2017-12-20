@@ -6,9 +6,25 @@ html
     link(rel='stylesheet', href='/css/netrunner.css')
   body
     div.reset-bg
-    form.panel.blue-shade.reset-form(method='POST')
+    form.panel.blue-shade.announce-form(method='POST')
       h3 Announcement
-      p
-        textarea.form-control(rows=5, style='height: 80px; width: 250px', name='message', value='', autofocus=true required)
-      p
-        button.btn.btn-primary(type='submit') Submit
+      if !blockNewGames
+        p
+          textarea.form-control(rows=5, style='height: 80px; width: 250px', name='message', value='', autofocus=true required)
+        div
+          input(type='checkbox' id='block' name='blockgames' value='block' checked)
+          label(for='block') Prevent new games from starting
+          div
+            p Once new games are blocked, restarting the Node.js server will allow games to be started again.
+        p
+          button.btn.btn-primary(type='submit') Submit
+      else
+        p
+          em New games are currently blocked.
+        div
+          h4 Current Message:
+        div
+          p= blockMessage
+        input(type='hidden' id='unblock' name='blockgames' value='unblock')
+        p
+          button.btn.btn-primary(type='submit') Unblock

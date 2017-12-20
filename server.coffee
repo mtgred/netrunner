@@ -38,6 +38,8 @@ db = mongoskin.db(mongoUrl)
 games = {}
 lobbyUpdate = false
 lobbyUpdates = {"create" : {}, "update" : {}, "delete" : {}}
+blockNewGames = false
+blockMessage = ""
 
 swapSide = (side) ->
   if side is "Corp" then "Runner" else "Corp"
@@ -290,7 +292,7 @@ chat = io.of('/chat').on 'connection', (socket) ->
       db.collection('messages').insert msg, (err, result) ->
 
 lobby = io.of('/lobby').on 'connection', (socket) ->
-  socket.emit("netrunner", {type: "games", games: games})
+  socket.emit("netrunner", {type: "games", games: games, blockNewGames: blockNewGames, blockMessage: blockMessage})
 
   socket.on 'disconnect', () ->
     gid = socket.gameid
@@ -521,7 +523,7 @@ lobby = io.of('/lobby').on 'connection', (socket) ->
 
 sendLobby = () ->
   if lobby and lobbyUpdate
-    lobby.emit('netrunner', {type: "games", gamesdiff: lobbyUpdates})
+    lobby.emit('netrunner', {type: "games", gamesdiff: lobbyUpdates, blockNewGames: blockNewGames, blockMessage: blockMessage})
     lobbyUpdate = false
     lobbyUpdates["create"] = {}
     lobbyUpdates["update"] = {}
@@ -880,14 +882,25 @@ app.get '/data/:collection/:field/:value', (req, res) ->
 
 app.get '/admin/announce', (req, res) ->
   if req.user and req.user.isadmin
-    res.render('announce.pug', {user : req.user})
+    res.render('announce.pug', {user : req.user, blockNewGames: blockNewGames, blockMessage: blockMessage})
   else
     res.status(401).send({message: 'Unauthorized'})
 
 app.post '/admin/announce', (req, res) ->
   if req.user and req.user.isadmin
-    requester.send(JSON.stringify({action: "alert", command: req.body.message}))
-    res.status(200).send({text: req.body.message, result: "ok"})
+
+    if req.body.message
+      requester.send(JSON.stringify({action: "alert", command: req.body.message}))
+
+    if req.body.blockgames is "block"
+      blockNewGames = true
+      blockMessage = req.body.message ? ""
+    else
+      blockNewGames = false
+      blockMessage = ""
+
+    lobbyUpdate = true
+    res.redirect("/admin/announce")
   else
     res.status(401).send({message: 'Unauthorized'})
 
