@@ -6,8 +6,8 @@
             [clojure.string :refer [split split-lines join escape] :as s]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title] :as cb]
-            [netrunner.account :refer [load-alt-arts alt-art-name]]
+            [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title expand-alts] :as cb]
+            [netrunner.account :refer [load-alt-arts]]
             [netrunner.ajax :refer [POST GET]]
             [goog.string :as gstring]
             [goog.string.format]))
@@ -230,22 +230,6 @@
       (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
       (assoc card :display-name (:title card)))))
 
-(defn expand-alts
-  [acc card]
-  (let [alt-card (get (:alt-arts @app-state) (:code card))
-        alt-arts (keys (:alt_art alt-card))]
-    (if (and alt-arts
-             (show-alt-art?))
-    (->> alt-arts
-      (concat [""])
-      (map (fn [art] (if art
-                       (assoc card :art art)
-                       card)))
-      (map (fn [c] (if (:art c)
-                     (assoc c :display-name (str (:display-name c) " [" (alt-art-name (:art c)) "]"))
-                     c)))
-      (concat acc))
-    (conj acc card))))
 
 (defn side-identities [side]
   (let [cards
