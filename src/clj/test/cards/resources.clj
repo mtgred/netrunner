@@ -1561,7 +1561,7 @@
           "Tech Trader was installed")
       (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
 
-(deftest street-peddler-trash-while-choosing-card
+(deftest-pending street-peddler-trash-while-choosing-card
   ;; Street Peddler - trashing Street Peddler while choosing which card to
   ;; discard should dismiss the choice prompt. Issue #587.
   (do-game
