@@ -76,6 +76,23 @@
       (main/handle-notification state (str username " has left the game."))
       (swap-and-send-diffs! game))))
 
+(defn handle-game-rejoin
+  [{{{:keys [username _id] :as user} :user} :ring-req
+    client-id                           :client-id
+    {:keys [gameid]}   :?data
+    reply-fn                            :?reply-fn}]
+  (let [{:keys [original-players started players state] :as game} (get @all-games gameid)]
+    (if (and started
+             (< (count players) 2)
+             (some #(= _id (:_id %)) (map :user original-players)))
+      (let [player (lobby/join-game user client-id gameid)]
+        (main/handle-rejoin state (:user player))
+        (lobby/refresh-lobby :update gameid)
+        (ws/send! client-id [:lobby/select {:gameid gameid
+                                            :started started}])
+        (swap-and-send-state! (get @all-games gameid))
+        ))))
+
 (defn handle-game-concede
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id}]
@@ -98,8 +115,7 @@
       (swap-and-send-diffs! game)
       (ws/broadcast-to! (lobby/lobby-clients gameid)
                         :games/diff
-                        {:diff {:update {gameid (lobby/game-public-view (get @all-games gameid))}}})
-      )))
+                        {:diff {:update {gameid (lobby/game-public-view (get @all-games gameid))}}}))))
 
 (defn handle-game-action
   [{{{:keys [username] :as user} :user} :ring-req
@@ -169,6 +185,7 @@
   :netrunner/start handle-game-start
   :netrunner/action handle-game-action
   :netrunner/leave handle-game-leave
+  :netrunner/rejoin handle-game-rejoin
   :netrunner/concede handle-game-concede
   :netrunner/mute-spectators handle-mute-spectators
   :netrunner/say handle-game-say

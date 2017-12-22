@@ -23,6 +23,8 @@
   (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (defn image-url [{:keys [side code] :as card}]
+  (when (not side)
+    (prn "CARD IMAGE_URL???" card))
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
         art-options (:alt_art (get (:alt-arts @app-state) code))
@@ -71,6 +73,7 @@
 
 
 (defn launch-game [game]
+  (prn "LAUNCH" (keys @app-state))
   (let [user (:user @app-state)
         side (if (= (get-in game [:runner :user :_id]) (:_id user))
                :runner
@@ -1260,7 +1263,8 @@
                                     sfx-list)) [] sfx)]
         (play-sfx sfx-to-play (om/get-state owner :soundbank)))))
   ;; Remember the most recent sfx id as last played so we don't repeat it later
-  (om/set-state! owner :sfx-last-played {:gameid gameid :id sfx-current-id}))
+  (when sfx-current-id
+    (om/set-state! owner :sfx-last-played {:gameid gameid :id sfx-current-id})))
 
 (defn gameboard [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 turn corp runner] :as cursor} owner]
   (reify

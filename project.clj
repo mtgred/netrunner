@@ -5,7 +5,7 @@
   :license {:name "The MIT License (MIT)"
             :url "https://opensource.org/licenses/MIT"}
 
-  :dependencies [[org.clojure/clojure "1.9.0-RC2"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.9.229"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]

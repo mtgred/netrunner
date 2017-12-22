@@ -127,7 +127,10 @@
    (fn [user]
      (om/set-state! owner :editing false)
      (swap! app-state assoc :messages [])
-     (ws/ws-send! [(if (= "join" action) :lobby/join :lobby/watch)
+     (ws/ws-send! [(case action
+                     "join" :lobby/join
+                     "watch" :lobby/watch
+                     "rejoin" :netrunner/rejoin)
                    {:gameid gameid :password password :options (:options @app-state)}]
                   8000
                   #(if (sente/cb-success? %)
@@ -148,6 +151,9 @@
   (ws/ws-send! [:netrunner/leave])
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid :win-shown)
+
+  (prn "LEAVE" (keys @app-state))
+
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
@@ -255,10 +261,12 @@
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
-(defn game-view [{:keys [title password started players gameid current-game password-game originalPlayers] :as game} owner]
+(defn game-view [{:keys [title password started players gameid current-game password-game original-players] :as game} owner]
   (reify
     om/IRenderState
     (render-state [this state]
+      (prn "OG" (map #(get-in % [:user :_id]) original-players)
+           (get-in @app-state [:user :_id]))
      (letfn [(join [action]
                 (let [password (:password password-game password)]
                  (if (empty? password)
@@ -274,7 +282,7 @@
            [:button {:on-click #(join "join")} "Join"])
          (when (and (not current-game) started (not password-game)
                     (some #(= % (get-in @app-state [:user :_id]))
-                          (map #(get-in % [:user :_id]) originalPlayers)))
+                          (map #(get-in % [:user :_id]) original-players)))
            [:button {:on-click #(join "rejoin")} "Rejoin"])
          (let [c (count (:spectators game))]
            [:h4 (str (when-not (empty? (:password game))
