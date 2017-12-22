@@ -41,7 +41,6 @@
            text (.-value input)
            $div (js/$ ".chat-app .message-list")]
        (when-not (empty? text)
-         (prn "SENDING")
          (ws/ws-send! [:chat/say {:channel   (name channel)
                                   :msg       text
                                   :username  (:username user)

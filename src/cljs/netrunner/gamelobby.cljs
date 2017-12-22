@@ -151,9 +151,6 @@
   (ws/ws-send! [:netrunner/leave])
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid :win-shown)
-
-  (prn "LEAVE" (keys @app-state))
-
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
@@ -265,8 +262,6 @@
   (reify
     om/IRenderState
     (render-state [this state]
-      (prn "OG" (map #(get-in % [:user :_id]) original-players)
-           (get-in @app-state [:user :_id]))
      (letfn [(join [action]
                 (let [password (:password password-game password)]
                  (if (empty? password)

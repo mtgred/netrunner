@@ -18,6 +18,11 @@
 ;; A map from client-id to gameid of the game the client is playing or spectating.
 (defonce client-gameids (atom {}))
 
+(defn game-for-id
+  "Returns the game map for the given gameid."
+  [gameid]
+  (get @all-games gameid))
+
 (defn game-for-client
   "Returns the game map that the given client-id is playing or spectating."
   [client-id]
@@ -51,7 +56,7 @@
     (swap! lobby-updates assoc-in [type gameid]
            (if (= type :delete)
              "0"
-             (game-public-view (get @all-games gameid)))))
+             (game-public-view (game-for-id gameid)))))
 
   (defn send-lobby
     "Called by a background thread to periodically send game lobby updates to all clients."
@@ -64,25 +69,25 @@
 (defn player?
   "True if the given client-id is a player in the given gameid"
   [client-id gameid]
-  (when-let [game (get @all-games gameid)]
+  (when-let [game (game-for-id gameid)]
     (some #(when (= client-id (:ws-id %)) %) (:players game))))
 
 (defn first-player?
   "True if the given client-id is the first player in the given gameid"
   [client-id gameid]
-  (when-let [game (get @all-games gameid)]
+  (when-let [game (game-for-id gameid)]
     (= client-id (-> game :players first :ws-id))))
 
 (defn spectator?
   "True if the given client-id is a spectator in the given gameid"
   [client-id gameid]
-  (when-let [game (get @all-games gameid)]
+  (when-let [game (game-for-id gameid)]
     (some #(when (= client-id (:ws-id %)) %) (:spectators game))))
 
 (defn player-or-spectator
   "True if the given client-id is a player or spectator in the given gameid"
   [client-id gameid]
-  (when-let [game (get @all-games gameid)]
+  (when-let [game (game-for-id gameid)]
     (or (player? client-id gameid)
         (spectator? client-id gameid))))
 
@@ -102,7 +107,7 @@
   "Removes the given client-id from the given gameid, whether it is a player or a spectator.
   Deletes the game from the lobby if all players have left."
   [client-id gameid]
-  (when-let [{:keys [players started state] :as game} (get @all-games gameid)]
+  (when-let [{:keys [players started state] :as game} (game-for-id gameid)]
     (cond (player? client-id gameid)
           (swap! all-games update-in [gameid :players] #(remove-once (fn [p] (not= client-id (:ws-id p))) %))
 
@@ -117,7 +122,7 @@
         (when (and (= 1 (count players)) started (not winner))
           (swap! all-games assoc-in [gameid :ending-players] players))))
 
-    (let [{:keys [players] :as game} (get @all-games gameid)]
+    (let [{:keys [players] :as game} (game-for-id gameid)]
       (swap! client-gameids dissoc client-id)
 
       (if (empty? players)
@@ -127,28 +132,29 @@
 (defn lobby-clients
   "Returns a seq of all client-ids playing or spectating a gameid."
   [gameid]
-  (let [game (get @all-games gameid)]
+  (let [game (game-for-id gameid)]
     (map :ws-id (concat (:players game) (:spectators game)))))
 
 (defn join-game
   "Adds the given user as a player in the given gameid."
   [{options :options :as user} client-id gameid]
-  (let [{players :players :as game} (get @all-games gameid)]
+  (let [{players :players :as game} (game-for-id gameid)]
     (when (< (count players) 2)
       (let [{side :side :as fplayer} (first players)
-            new-side (if (= "Corp" side) "Runner" "Corp")]
-        (swap! all-games update-in [gameid :players]
-               #(conj % {:user    user
-                         :ws-id   client-id
-                         :side    new-side
-                         :options options}))
+            new-side (if (= "Corp" side) "Runner" "Corp")
+            new-player {:user    user
+                        :ws-id   client-id
+                        :side    new-side
+                        :options options}]
+        (swap! all-games update-in [gameid :players] #(conj % new-player))
         (swap! client-gameids assoc client-id gameid)
-        (refresh-lobby :update gameid)))))
+        (refresh-lobby :update gameid)
+        new-player))))
 
 (defn spectate-game
   "Adds the given user as a spectator in the given gameid"
   [user client-id gameid]
-  (when-let [{:keys [started spectators] :as game} (get @all-games gameid)]
+  (when-let [{:keys [started spectators] :as game} (game-for-id gameid)]
     (swap! all-games update-in [gameid :spectators]
            #(conj % {:user  user
                      :ws-id client-id}))
@@ -173,10 +179,6 @@
 
 (defn handle-ws-connect [{:keys [client-id] :as msg}]
   (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))
-
-(defn handle-ws-close [{:keys [client-id] :as msg}]
-  (when-let [game (game-for-client client-id)]
-    (remove-user client-id (:gameid game))))
 
 (defn handle-lobby-create
   [{{{:keys [username emailhash] :as user} :user} :ring-req
@@ -217,7 +219,7 @@
     client-id                           :client-id
     {:keys [msg gameid]}                :?data}]
   (when (player-or-spectator client-id gameid)
-    (let [game (get @all-games gameid)]
+    (let [game (game-for-id gameid)]
       (ws/broadcast-to!
         (map :ws-id (concat (:players game) (:spectators game)))
         :lobby/message
@@ -228,14 +230,14 @@
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
     gameid                              :?data}]
-  (let [game (get @all-games gameid)
+  (let [game (game-for-id gameid)
         fplayer (first (:players game))]
     (when (= (:ws-id fplayer) client-id)
       (swap! all-games update-in [gameid :players] (partial mapv swap-side))
       (refresh-lobby :update gameid)
       (ws/broadcast-to! (lobby-clients gameid)
                         :games/diff
-                        {:diff {:update {gameid (game-public-view (get @all-games gameid))}}}))))
+                        {:diff {:update {gameid (game-public-view (game-for-id gameid))}}}))))
 
 (defn handle-lobby-join
   [{{{:keys [username] :as user} :user} :ring-req
@@ -301,12 +303,11 @@
              (fn [p] (assoc p :deck deck)))
       (ws/broadcast-to! (lobby-clients gameid)
                         :games/diff
-                        {:diff {:update {gameid (game-public-view (get @all-games gameid))}}}))))
+                        {:diff {:update {gameid (game-public-view (game-for-id gameid))}}}))))
 
 
 (ws/register-ws-handlers!
   :chsk/uidport-open handle-ws-connect
-  :chsk/uidport-close handle-ws-close
   :lobby/create handle-lobby-create
   :lobby/leave handle-lobby-leave
   :lobby/join handle-lobby-join
