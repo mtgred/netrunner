@@ -17,7 +17,7 @@
     (is (= 5 (:memory (get-runner))) "Gain 1 memory")))
 
 (deftest archives-interface
-  ;; Archives Interface - Remove 1 card in Archives from the game_test instead of accessing it
+  ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
   (do-game
     (new-game (default-corp [(qty "Shock!" 1) (qty "Launch Campaign" 1)])
               (default-runner [(qty "Archives Interface" 1) (qty "Imp" 1)]))
@@ -28,7 +28,7 @@
     (run-empty-server state :archives)
     (prompt-choice :runner "Yes")
     (prompt-choice :runner (find-card "Shock!" (:discard (get-corp))))
-    (is (= "Shock!" (:title (first (:rfg (get-corp))))) "Shock! removed from game_test")
+    (is (= "Shock!" (:title (first (:rfg (get-corp))))) "Shock! removed from game")
     (is (empty? (:discard (get-runner))) "Didn't access Shock!, no net damage taken")))
 
 (deftest astrolabe-memory
@@ -684,7 +684,7 @@
 
 (deftest sifr
   ;; Once per turn drop encountered ICE to zero strenght
-  ;; Also handle archangel then re-install sifr should not break the game_test #2576
+  ;; Also handle archangel then re-install sifr should not break the game #2576
   (do-game
     (new-game (default-corp [(qty "Archangel" 1) (qty "IP Block" 1) (qty "Hedge Fund" 1)])
               (default-runner [(qty "Modded" 1) (qty "Clone Chip" 1) (qty "Şifr" 1) (qty "Parasite" 1)]))

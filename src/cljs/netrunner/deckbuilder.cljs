@@ -6,8 +6,8 @@
             [clojure.string :refer [split split-lines join escape] :as s]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title] :as cb]
-            [netrunner.account :refer [load-alt-arts alt-art-name]]
+            [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title expand-alts] :as cb]
+            [netrunner.account :refer [load-alt-arts]]
             [netrunner.ajax :refer [POST GET DELETE PUT]]
             [goog.string :as gstring]
             [goog.string.format]
@@ -231,22 +231,6 @@
       (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
       (assoc card :display-name (:title card)))))
 
-(defn expand-alts
-  [acc card]
-  (let [alt-card (get (:alt-arts @app-state) (:code card))
-        alt-arts (keys (:alt_art alt-card))]
-    (if (and alt-arts
-             (show-alt-art?))
-    (->> alt-arts
-      (concat [""])
-      (map (fn [art] (if art
-                       (assoc card :art art)
-                       card)))
-      (map (fn [c] (if (:art c)
-                     (assoc c :display-name (str (:display-name c) " [" (alt-art-name (:art c)) "]"))
-                     c)))
-      (concat acc))
-    (conj acc card))))
 
 (defn side-identities [side]
   (let [cards
@@ -806,7 +790,8 @@
                  (for [deck (sort-by :date > decks)]
                    [:div.deckline {:class (when (= active-deck deck) "active")
                                    :on-click #(put! select-channel deck)}
-                    [:img {:src (image-url (:identity deck))}]
+                    [:img {:src (image-url (:identity deck))
+                           :alt (get-in deck [:identity :title] "")}]
                     [:div.float-right (deck-status-span sets deck)]
                     [:h4 (:name deck)]
                     [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
@@ -821,9 +806,8 @@
                          ; adding key :games to handle legacy stats before adding started vs completed
                          [:span "  Games: " (+ started games)
                           " - Completed: " (+ completed games)
-                          " - Won: " wins
-                          " - Lost: " losses
-                          " - Percent Won: " (num->percent wins (+ wins losses)) "%"]))]])])))))
+                          " - Won: " wins " (" (num->percent wins (+ wins losses)) "%)"
+                          " - Lost: " losses]))]])])))))
 
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
@@ -940,7 +924,8 @@
                            [:button {:on-click #(clear-deck-stats cursor owner)} "Clear Stats"])])
                 [:h3 (:name deck)]
                 [:div.header
-                 [:img {:src (image-url identity)}]
+                 [:img {:src (image-url identity)
+                        :alt (:title identity)}]
                  [:h4 {:class (if (released? (:sets @app-state) identity) "fake-link" "casual")
                        :on-mouse-enter #(put! zoom-channel {:card identity :art (:art identity) :id (:id identity)})
                        :on-mouse-leave #(put! zoom-channel false)}

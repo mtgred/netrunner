@@ -304,7 +304,7 @@
     (is (last-log-contains? state "Caprice") "Accessed card name was logged")))
 
 (deftest grndl-power-unleashed
-  ;; GRNDL: Power Unleashed - start game_test with 10 credits and 1 bad pub.
+  ;; GRNDL: Power Unleashed - start game with 10 credits and 1 bad pub.
   (do-game
     (new-game
       (make-deck "GRNDL: Power Unleashed" [(qty "Hedge Fund" 3)])
@@ -881,7 +881,7 @@
     (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall back in play")))
 
 (deftest nisei-division
-  ;; Nisei Division - Gain 1 credit from every psi game_test
+  ;; Nisei Division - Gain 1 credit from every psi game
   (do-game
     (new-game
       (make-deck "Nisei Division: The Next Generation" [(qty "Snowflake" 2)])
@@ -897,14 +897,14 @@
       (card-subroutine state :corp s2 0)
       (prompt-choice :corp "0 [Credits]")
       (prompt-choice :runner "0 [Credits]")
-      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game_test")
+      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game")
       (core/no-action state :corp nil)
       (core/rez state :corp s1)
       (is (= 4 (:credit (get-corp))))
       (card-subroutine state :corp s1 0)
       (prompt-choice :corp "0 [Credits]")
       (prompt-choice :runner "1 [Credits]")
-      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game_test"))))
+      (is (= 5 (:credit (get-corp))) "Gained 1 credit from psi game"))))
 
 (deftest noise-ability
   ;; Noise: Hacker Extraordinaire - Ability
@@ -1148,6 +1148,38 @@
       (card-ability state :runner k 0)
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
+
+(deftest skorpios
+  ; Remove a card from game when it moves to discard once per round
+  (do-game
+    (new-game (make-deck "Skorpios Defense Systems: Persuasive Power" [(qty "Hedge Fund" 1) (qty "Quandary" 4)])
+              (default-runner [(qty "The Maker's Eye" 1) (qty "Lucky Find" 1)]))
+    (play-from-hand state :corp "Hedge Fund")
+    (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lucky Find")
+    (play-from-hand state :runner "The Maker's Eye")
+    (is (= :rd (get-in @state [:run :server 0])))
+    ; Don't allow a run-event in progress to be targeted #2963
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (is (empty? (filter #(= "The Maker's Eye" (:title %)) (-> (get-corp) :prompt first :choices))) "No Maker's Eye choice")
+    (prompt-choice :corp "Cancel")
+    (run-successful state)
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "1st quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "2nd quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "3rd quandary")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)))
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (prompt-choice :corp (find-card "The Maker's Eye" (:discard (get-runner))))
+    (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (is (empty? (:prompt (get-corp))) "Cannot use Skorpios twice")))
 
 (deftest silhouette-expose-trigger-before-access
   ;; Silhouette - Expose trigger ability resolves completely before access. Issue #2173.

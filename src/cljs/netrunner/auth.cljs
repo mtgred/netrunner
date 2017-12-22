@@ -28,12 +28,13 @@
   (go (let [response (<! (POST "/logout" nil))]
         (-> js/document .-location (.reload true)))))
 
-(defn avatar [{:keys [emailhash]} owner opts]
+(defn avatar [{:keys [emailhash username]} owner opts]
   (om/component
    (sab/html
     (when emailhash
       [:img.avatar
-       {:src (str "https://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))}]))))
+       {:src (str "https://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))
+        :alt username}]))))
 
 (defn authenticated [f]
   (if-let [user (:user @app-state)]

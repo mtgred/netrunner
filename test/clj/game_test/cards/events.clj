@@ -221,7 +221,7 @@
       (is (get-in (refresh iwall1) [:rezzed]) "First Ice Wall is rezzed"))))
 
 (deftest blackmail-tmi-interaction
-  ;; Regression test for a rezzed tmi breaking game_test state on a blackmail run
+  ;; Regression test for a rezzed tmi breaking game state on a blackmail run
   (do-game
     (new-game (default-corp [(qty "TMI" 3)])
               (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Blackmail" 3)]))
@@ -344,6 +344,30 @@
     (run-jack-out state)
     (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
 
+(deftest data-breach-doppelganger
+  ;; FAQ 4.1 - ensure runner gets choice of activation order
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Doppelgänger" 1) (qty "Data Breach" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Doppelgänger")
+    (play-from-hand state :runner "Data Breach")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Doppelgänger")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "HQ")
+    (is (:run @state) "New run started")
+    (is (= [:hq] (:server (:run @state))) "Running on HQ via Doppelgänger")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second Data Breach run on R&D triggered")
+    (core/no-action state :corp nil)
+    (run-successful state)))
+
 (deftest deja-vu
   ;; Deja Vu - recur one non-virus or two virus cards
   (do-game
@@ -422,7 +446,6 @@
     (prompt-choice :runner "0")
     (prompt-choice :runner "Steal")
     (is (= 1 (count (:scored (get-runner)))) "TFP stolen")
-
     (core/gain state :runner :tag 1)
     (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
     (prompt-choice :runner "Remove 1 tag")
@@ -481,7 +504,7 @@
           "Project Atlas not trashed from Server 3"))))
 
 (deftest drive-by-psychic-field
-  ;; Drive By - Psychic Field trashed after psi game_test. Issue #2127.
+  ;; Drive By - Psychic Field trashed after psi game. Issue #2127.
   (do-game
     (new-game (default-corp [(qty "Psychic Field" 1)])
               (default-runner [(qty "Drive By" 3)]))
@@ -539,7 +562,7 @@
     (is (= 3 (count (:discard (get-runner)))) "Discard is 3 cards - 2 from Philotic, 1 EStrike.  Nothing from PU mill")))
 
 (deftest encore
-  ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game_test.
+  ;; Encore - Run all 3 central servers successfully to take another turn.  Remove Encore from game.
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 1)])
               (default-runner [(qty "Encore" 1)]))
@@ -549,7 +572,7 @@
     (run-empty-server state "R&D")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Encore")
-    (is (= 1 (count (:rfg (get-runner)))) "Encore removed from game_test")
+    (is (= 1 (count (:rfg (get-runner)))) "Encore removed from game")
     (take-credits state :runner)
     (take-credits state :runner)
     ; only get one extra turn
@@ -569,7 +592,7 @@
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Encore")
     (play-from-hand state :runner "Encore")
-    (is (= 2 (count (:rfg (get-runner)))) "2 Encores removed from game_test")
+    (is (= 2 (count (:rfg (get-runner)))) "2 Encores removed from game")
     (take-credits state :runner)
     (take-credits state :runner)
     ;; Two extra turns
@@ -1003,6 +1026,32 @@
     (is (= 3 (count (:hand (get-runner)))) "3 clan resources, +3 cards but -1 for playing Mars for Martians")
     (is (= 7 (:credit (get-runner))) "5 tags, +5 credits")))
 
+(deftest mobius
+  ;; Mobius
+  (do-game
+    (new-game
+      (default-corp)
+      (default-runner [(qty "Möbius" 3)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))))
+    (play-from-hand state :runner "Möbius")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (is (= 5 (:credit (get-runner))))
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+    (core/no-action state :corp nil)
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (is (= 9 (:credit (get-runner))))
+    (is (empty? (:prompt (get-runner))) "No prompt to run a third time")
+    (is (not (:run @state)) "Run is over")
+    (play-from-hand state :runner "Möbius")
+    (run-jack-out state)
+    (is (empty? (:prompt (get-runner))) "No option to run again on unsuccessful run")))
+
 (deftest modded
   ;; Modded - Install a program or piece of hardware at a 3 credit discount
   (do-game
@@ -1086,7 +1135,7 @@
       (core/advance state :corp {:card (refresh underway)}))
     (is (= 6 (count (:discard (get-runner)))))
     (take-credits state :corp)
-    ;; remove 5 Out of the Ashes from the game_test
+    ;; remove 5 Out of the Ashes from the game
     (dotimes [_ 5]
       (is (not (empty? (get-in @state [:runner :prompt]))))
       (prompt-choice :runner "Yes")
@@ -1098,7 +1147,7 @@
     (is (= 5 (count (:rfg (get-runner)))))
     (take-credits state :runner)
     (take-credits state :corp)
-    ;; ensure that if you decline the rfg, game_test will still ask the next turn
+    ;; ensure that if you decline the rfg, game will still ask the next turn
     (is (not (empty? (get-in @state [:runner :prompt]))))
     (prompt-choice :runner "Yes")
     (prompt-choice :runner "Archives")
@@ -1678,8 +1727,28 @@
         (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
         (is (= "Morning Star" (:title (get-in @state [:runner :rig :program 0]))) "Morning Star still installed")))))
 
+(deftest makers-eye
+  (do-game
+    (new-game (default-corp [(qty "Quandary" 5)])
+              (default-runner [(qty "The Maker's Eye" 1)]))
+    (dotimes [_ 5] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Maker's Eye")
+    (is (= :rd (get-in @state [:run :server 0])))
+    (run-successful state)
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "1st quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "2nd quandary")
+    (prompt-choice :runner "OK")
+    (prompt-choice :runner "Card from deck")
+    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "3rd quandary")
+    (prompt-choice :runner "OK")
+    (is (not (:run @state)))))
+
 (deftest the-price-of-freedom
-  ;; The Price of Freedom - A connection must be trashed, the card is removed from game_test, then the corp can't advance cards next turn
+  ;; The Price of Freedom - A connection must be trashed, the card is removed from game, then the corp can't advance cards next turn
   (do-game
     (new-game (default-corp [(qty "NAPD Contract" 1)])
               (default-runner [(qty "Kati Jones" 1) (qty "The Price of Freedom" 1)]))
@@ -1696,7 +1765,7 @@
     (let [kj (find-card "Kati Jones" (:resource (:rig (get-runner))))]
       (prompt-choice :runner kj)
       (is (= 0 (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed wth The Price of Freedom")
-      (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game_test, and only Kati Jones is in the discard"))
+      (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game, and only Kati Jones is in the discard"))
     (take-credits state :runner)
     (let [napd (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh napd)})

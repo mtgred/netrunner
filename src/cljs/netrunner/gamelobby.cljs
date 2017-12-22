@@ -182,7 +182,8 @@
          [:div {:data-dismiss "modal"}
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
             [:div.deckline {:on-click #(ws/ws-send! [:lobby/deck deck])}
-             [:img {:src (image-url (:identity deck))}]
+             [:img {:src (image-url (:identity deck))
+                    :alt (get-in deck [:identity :title] "")}]
              [:div.float-right (deck-status-span sets deck)]
              [:h4 (:name deck)]
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
@@ -459,7 +460,9 @@
                          [:div.float-right (deck-status-span sets deck true false)])
                        (when (= (:user player) user)
                          [:span.fake-link.deck-load
-                          {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
+                          {:data-target "#deck-select" :data-toggle "modal"
+                           :on-click (fn [] (send {:action "deck" :gameid (:gameid @app-state) :deck nil}))
+                           } "Select deck"])])]
                    (when (:allowspectator game)
                      [:div.spectators
                       (let [c (count (:spectators game))]

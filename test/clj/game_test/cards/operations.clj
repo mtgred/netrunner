@@ -215,7 +215,7 @@
           (is (= 2 (:tag (get-runner))) "Runner took 2 tags from accessing agenda with Casting Call hosted on it"))))))
 
 (deftest cerebral-cast-runner-wins
-  ;; Cerebral Cast: if the runner succefully ran last turn, psi game_test to give runner choice of tag or BD
+  ;; Cerebral Cast: if the runner succefully ran last turn, psi game to give runner choice of tag or BD
   (do-game
     (new-game (default-corp [(qty "Cerebral Cast" 1)])
               (default-runner))
@@ -231,7 +231,7 @@
 		(is (= 0 (:tag (get-runner))) "Runner took no tags")))
 
 (deftest cerebral-cast-corp-wins
-  ;; Cerebral Cast: if the runner succefully ran last turn, psi game_test to give runner choice of tag or BD
+  ;; Cerebral Cast: if the runner succefully ran last turn, psi game to give runner choice of tag or BD
   (do-game
     (new-game (default-corp [(qty "Cerebral Cast" 2)])
               (default-runner))
@@ -990,7 +990,7 @@
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
 (deftest preemptive-action
-  ;; Preemptive Action - Shuffles cards into R&D and removes itself from game_test
+  ;; Preemptive Action - Shuffles cards into R&D and removes itself from game
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 3)
                              (qty "Preemptive Action" 1)])
@@ -1449,7 +1449,7 @@
         "Subliminal prompt cleared - there will be a second prompt if flag not cleared")))
 
 (deftest subliminal-messaging-made-run
-  ;; Subliminal Messaging - Runner made run, ensure game_test asks again next turn
+  ;; Subliminal Messaging - Runner made run, ensure game asks again next turn
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 2)])
               (default-runner))
@@ -1468,7 +1468,7 @@
   (is (= 0 (count (:discard (get-corp)))) "No Subliminals in Archives")))
 
 (deftest subliminal-messaging-no
-  ;; Subliminal Messaging - User declines to return to hand, ensure game_test asks again next turn
+  ;; Subliminal Messaging - User declines to return to hand, ensure game asks again next turn
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 2)])
               (default-runner))

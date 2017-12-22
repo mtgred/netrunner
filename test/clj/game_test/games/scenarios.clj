@@ -8,7 +8,7 @@
 (use-fixtures :once load-all-cards)
 
 (deftest minigame-prevent-netdmg-resourcetrash
-  "Mini-game_test testing prevention of net damage and resource trashing, with hosted Fall Guy"
+  "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
   (do-game
     (new-game
       (default-corp [(qty "Neural EMP" 1) (qty "Hedge Fund" 3) (qty "SEA Source" 1)])
@@ -126,7 +126,7 @@
         (run-on state "Server 1") ; letting Runner in this time to use Caprice
         (core/rez state :corp cap)
         (run-continue state)
-        ;; Caprice psi game_test started automatically
+        ;; Caprice psi game started automatically
         (prompt-choice :corp "1 [Credits]")
         (prompt-choice :runner "2 [Credits]")
-        (is (not (:run @state)) "Corp won Caprice psi game_test and ended the run")))))
+        (is (not (:run @state)) "Corp won Caprice psi game and ended the run")))))

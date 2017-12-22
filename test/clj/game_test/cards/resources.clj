@@ -41,6 +41,24 @@
    (take-credits state :corp)
    (is (= 3 (:click (get-runner))) "Should have lost 2 clicks and gained 1 click")))
 
+(deftest adjusted-chronotype-mca
+  ;; Chronotype to cancel out MCA click loss
+  (do-game
+    (new-game
+      (default-corp [(qty "MCA Austerity Policy" 1)])
+      (default-runner [(qty "Adjusted Chronotype" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Adjusted Chronotype")
+    (take-credits state :runner)
+    (play-from-hand state :corp "MCA Austerity Policy" "New remote")
+    (let [mca (get-content state :remote1 0)]
+      (core/rez state :corp mca)
+      (card-ability state :corp mca 0)
+      (is (= 1 (get-counters (refresh mca) :power)))
+      (take-credits state :corp)
+      ; runner does not lose a click
+      (is (= 4 (:click (get-runner)))))))
+
 (deftest adjusted-chronotype-gcs
   ;; Ensure adjusted chronotype gains 2 clicks when 2 clicks are lost and GCS is installed
   (do-game
@@ -453,6 +471,7 @@
     (core/no-action state :corp nil)
     (play-from-hand state :runner "Eden Shard")
     (is (= 5 (:credit (get-runner))) "Eden Shard installed for 0c")
+    (is (not (:run @state)) "Run is over")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 3 (count (:hand (get-corp)))) "Corp drew 2 cards")
     (is (= 1 (count (:discard (get-runner)))) "Eden Shard trashed")))
@@ -1247,7 +1266,7 @@
     (is (= 3 (count (:hand (get-runner)))) "Drew no cards, at maximum")))
 
 (deftest salsette-slums
-  ;; Salsette Slums - Once per turn, when the trash cost of a card is paid, optionally remove from the game_test
+  ;; Salsette Slums - Once per turn, when the trash cost of a card is paid, optionally remove from the game
   (do-game
     (new-game (default-corp [(qty "Hostile Infrastructure" 1) (qty "Tech Startup" 1) (qty "Thomas Haas" 1)
                              (qty "Hedge Fund" 3)])
@@ -1276,7 +1295,7 @@
       (card-ability state :runner salsette1 0)
       (is (empty? (:prompt (get-runner))) "All prompts done")
       (is (= 3 (count (:hand (get-runner)))) "On-trash ability of other Hostile didn't fire")
-      (is (= (:cid ts1) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game_test")
+      (is (= (:cid ts1) (:cid (last (:rfg (get-corp))))) "Tech Startup was removed from game")
       (is (= 2 (:credit (get-runner))) "Runner paid the trash cost.")
       (is (not (:run @state)) "Run is over")
       (run-empty-server state :remote2)
@@ -1296,11 +1315,11 @@
       ;; Can only use that first Slums once
       (card-ability state :runner salsette1 1)
       (is (empty? (:prompt (get-runner))) "Not prompting the runner")
-      (is (not (= (:cid th3) (:cid (last (:rfg (get-corp)))))) "Card was not removed from the game_test")
+      (is (not (= (:cid th3) (:cid (last (:rfg (get-corp)))))) "Card was not removed from the game")
       (card-ability state :runner salsette2 1)
       (is (not (empty? (:prompt (get-runner)))) "Prompting the runner to choose a card")
       (prompt-select :runner (find-card "Thomas Haas" (:discard (get-corp))))
-      (is (= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was removed from the game_test"))
+      (is (= (:cid th3) (:cid (last (:rfg (get-corp))))) "Card was removed from the game"))
     ;; Set things up so we can trash the Hostile and then make sure we can't "oops I forgot on a later turn"
     (core/gain state :runner :credit 5)
     (run-empty-server state :remote2)
@@ -1311,7 +1330,7 @@
           hostile2 (get-content state :remote2 0)]
       (card-ability state :runner salsette1 1)
       (prompt-select :runner (find-card "Hostile Infrastructure" (:discard (get-corp))))
-      (is (not (= (:cid hostile2) (:cid (last (:rfg (get-corp)))))) "Did not remove card from game_test"))))
+      (is (not (= (:cid hostile2) (:cid (last (:rfg (get-corp)))))) "Did not remove card from game"))))
 
 (deftest security-testing
   ;; Security Testing - Ability
@@ -1542,6 +1561,24 @@
       (is (= "Tech Trader" (:title (get-in @state [:runner :rig :resource 0])))
           "Tech Trader was installed")
       (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
+
+(deftest-pending street-peddler-trash-while-choosing-card
+  ;; Street Peddler - trashing Street Peddler while choosing which card to
+  ;; discard should dismiss the choice prompt. Issue #587.
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Gordian Blade" 1)
+                               (qty "Torch" 1)
+                               (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
+    (play-from-hand state :runner "Street Peddler")
+    (let [street-peddler (get-in @state [:runner :rig :resource 0])]
+      (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
+      (card-ability state :runner street-peddler 0)
+      (trash-resource state "Street Peddler")
+      (is (zero? (count (get-in @state [:runner :prompt])))))))
 
 (deftest symmetrical-visage
   ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn
@@ -1803,7 +1840,7 @@
       (is (= 2 (get-in (refresh bf) [:counter :power])) "2 power counters on The Black File")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game_test")
+      (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game")
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
 

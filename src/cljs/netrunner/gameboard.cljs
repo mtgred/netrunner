@@ -590,6 +590,22 @@
       (> (.indexOf (:subtype card) "Virus") -1) "Virus"
       :else "Power")))
 
+(defn facedown-card
+  "Sab image element of a facedown card"
+  ([side] (facedown-card side [] nil))
+  ([side class-list alt-alt-text]
+  (let [s (.toLowerCase side)
+        alt (if (nil? alt-alt-text)
+              (str "Facedown " s " card")
+              alt-alt-text)
+        tag (->> class-list
+              vec
+              (concat ["img" "card"])
+              (join ".")
+              keyword)]
+    [tag {:src (str "/img/" s ".png")
+          :alt alt}])))
+
 (defn card-img
   "Build an image of the card (is always face-up). Only shows the zoomed card image, does not do any interaction."
   [{:keys [code title] :as cursor}]
@@ -602,7 +618,7 @@
         (when-let [url (image-url cursor)]
           [:div
            [:span.cardname title]
-           [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]])]]))))
+           [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]])]]))))
 
 (defn face-down?
   "Returns true if the installed card should be drawn face down."
@@ -647,7 +663,7 @@
                                             "" (str ": " (:subtype card)))]
       [:pre {:dangerouslySetInnerHTML #js {:__html (add-symbols (:text card))}}]]
      (when-let [url (image-url card)]
-       [:img {:src url :onLoad #(-> % .-target js/$ .show)}])])))
+       [:img {:src url :alt (:title card) :onLoad #(-> % .-target js/$ .show)}])])))
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
@@ -672,10 +688,14 @@
                             :on-click #(handle-card-click cursor owner)}
       (when-let [url (image-url cursor)]
         (if (or (not code) flipped facedown)
-          [:img.card.bg {:src (str "/img/" (.toLowerCase side) ".png")}]
+          (let [facedown-but-known (or (not (or (not code) flipped facedown))
+                                       (spectator-view-hidden?)
+                                       (= (:side @game-state) (keyword (.toLowerCase side))))
+                alt-str (if facedown-but-known (str "Facedown " title) nil)]
+            (facedown-card side ["bg"] alt-str))
           [:div
            [:span.cardname title]
-           [:img.card.bg {:src url :onError #(-> % .-target js/$ .hide)}]]))
+           [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
       [:div.counters
        (when counter
          (map (fn [[type num-counters]]
@@ -812,7 +832,7 @@
                    (:openhand player)
                    (spectator-view-hidden?))
              (om/build card-view (assoc card :remotes remotes))
-             [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
+             (facedown-card side))])
         (:hand player)))))
 
 (defn hand-view [{:keys [player remotes popup popup-direction] :as cursor} owner]
@@ -863,8 +883,8 @@
       [:div.blue-shade.deck
        (drop-area (:side @game-state) name
                   {:on-click #(-> (om/get-node owner menu-ref) js/$ .toggle)})
-       (if (pos? (count deck))
-         [:img.card.bg {:src (if is-runner "/img/runner.png" "/img/corp.png")}])
+       (when (pos? (count deck))
+         (facedown-card (:side identity) ["bg"] nil))
        (om/build label deck {:opts {:name name}})
        (when (= (:side @game-state) side)
          [:div.panel.blue-shade.menu {:ref menu-ref}
@@ -904,7 +924,7 @@
                        (if (or (= (:side @game-state) :corp)
                                (spectator-view-hidden?))
                          [:div.unseen (om/build card-view %)]
-                         [:img.card {:src "/img/corp.png"}]))]
+                         (facedown-card "corp")))]
       [:div.blue-shade.discard
        (drop-area :corp "Archives" {:on-click #(-> (om/get-node owner "popup") js/$ .fadeToggle)})
 
@@ -956,7 +976,7 @@
                         [:div.card-wrapper {:style {:left (* (/ 128 size) i)}}
                          (if (= (:user player) (:user @app-state))
                            (om/build card-view card)
-                           [:img.card {:src (str "/img/" (.toLowerCase side) ".png")}])])
+                           (facedown-card side))])
                       cards)
          (om/build label cards {:opts {:name name}})])))))
 
@@ -1188,7 +1208,8 @@
                       [:button {:on-click #(send-command "choice" {:choice c})}
                        (for [item (get-message-parts c)] (create-span item))]
                       (let [[title code] (extract-card-info (add-image-codes (:title c)))]
-                        [:button {:on-click #(send-command "choice" {:card @c}) :id code} title]))))))]
+                        [:button {:class (when (:rotated c) :rotated)
+                                  :on-click #(send-command "choice" {:card @c}) :id code} title]))))))]
            (if run
              (let [s (:server run)
                    kw (keyword (first s))
