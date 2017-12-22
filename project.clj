@@ -19,7 +19,6 @@
                  [ring/ring-json "0.4.0"]
                  [compojure "1.6.0"]
                  [hiccup "1.0.5"]
-                 ;[org.immutant/web "2.1.9"]
                  [aero "1.1.2"]
                  [buddy/buddy-sign "2.2.0"]
                  [buddy/buddy-auth "1.4.1"]
@@ -30,34 +29,40 @@
                  [org.slf4j/slf4j-nop "1.7.12"]
                  [me.bsima/trello "0.3.0"]
                  [clj-time "0.14.2"]
-                 [com.draines/postal "2.0.2"]]
+                 [com.draines/postal "2.0.2"]
+                 [clj-http "3.7.0"]]
+
+  :plugins [[lein-cljsbuild "1.1.4"]
+            [lein-figwheel "0.5.11"]
+            [com.gfredericks/lein-sha-version "0.1.1-p1"]
+            [lein-ring "0.9.7"]
+            [lein-exec "0.3.7"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
                                   [com.cemerick/piggieback "0.2.1"]]
                    :plugins [[lein-figwheel "0.5.11"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
-  ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test namespaces
+  ;; These can be run as "lein ____", ex. "lein fetch"
+  :aliases {"fetch" ["exec" "-ep" "(use 'tasks.fetch) (fetch-data)"]}
+
+
+  ;; Compilation.
+  :source-paths ["src/clj" "src/cljs" "src/cljc"]
+    ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test and task namespaces.
   :aot [#"game\.*"
         #"web\.*"
         #"jinteki\.*"]
-  :main web.core
-
-  :test-paths ["test/clj"]
-
-  :plugins [[lein-cljsbuild "1.1.4"]
-            [lein-figwheel "0.5.11"]
-            [com.gfredericks/lein-sha-version "0.1.1-p1"]
-            [lein-ring "0.9.7"]]
-
-  :ring {:handler web.api/app}
-
-  :source-paths ["src/clj" "src/cljs" "src/cljc"]
-
   :jar-name "netrunner.jar"
   :uberjar-name "netrunner-standalone.jar"
-
   :omit-source true
+  :main web.core
+
+
+  ;; Misc
+  :test-paths ["test/clj"]
+
+  :ring {:handler web.api/app}
 
   :cljsbuild {
     :builds [
@@ -68,7 +73,6 @@
                   :output-dir "resources/public/cljs"
                   :optimizations :none
                   :source-map-timestamp true
-                  :preloads [devmode.core]
                   :external-config {:devtools/config {:features-to-install :all}}}}
       {:id "prod"
        :source-paths ["src/cljs/netrunner" "src/cljc"]
@@ -91,5 +95,4 @@
   ;; Set timeout to 2 min to allow for full compilation after a clean.
   :repl-options {:timeout 120000
                  :init-ns web.core
-                 :init (-main)
-                 })
+                 :init (-main)})
