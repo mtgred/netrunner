@@ -37,6 +37,8 @@
                    :plugins [[lein-figwheel "0.5.11"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
+  :aliases {"fetch" ["run" "-m" "tasks.nrdb/fetch"]}
+
   ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test namespaces
   :aot [#"game\.*"
         #"web\.*"
