@@ -23,3 +23,6 @@
 
 (defn donors-handler [req]
   (response 200 (map #(dissoc % :_id) (mc/find-maps db "donators" nil))))
+
+(defn cards-version-handler [req]
+  (response 200 {:version (int (:cards-version (mc/find-one-as-map db "config" nil)))}))

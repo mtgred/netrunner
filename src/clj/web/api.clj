@@ -33,7 +33,8 @@
            (GET "/check/:username" [] auth/check-username-handler)
 
            (GET "/data/cards" [] data/cards-handler)
-           (GET "/data/altarts" [] data/alt-arts-handler)
+           (GET "/data/cards/version" [] data/cards-version-handler)
+           (GET "/data/cards/altarts" [] data/alt-arts-handler)
 
            (GET "/data/news" [] news/news-handler)
            (GET "/data/sets" [] data/sets-handler)

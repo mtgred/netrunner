@@ -12,7 +12,7 @@
 
 (def alt-arts-channel (chan))
 (defn load-alt-arts []
-  (go (let [alt_info (->> (<! (GET "/data/altarts"))
+  (go (let [alt_info (->> (<! (GET "/data/cards/altarts"))
                        (:json)
                        (map #(select-keys % [:version :name])))
             cards (->> @all-cards

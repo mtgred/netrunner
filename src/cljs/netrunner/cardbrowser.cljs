@@ -27,7 +27,15 @@
       (reset! cards/cycles cycles)
       (swap! app-state assoc :sets sets :cycles cycles)))
 
-(go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
+(go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
+          local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
+          need-update? (or (not local-cards) (not= server-version (:version local-cards)))
+          cards (sort-by :code
+                         (if need-update?
+                           (:json (<! (GET "/data/cards")))
+                           (:cards local-cards)))]
+      (when need-update?
+        (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
       (reset! all-cards cards)
       (swap! app-state assoc :cards-loaded true)
       (put! cards-channel cards)))

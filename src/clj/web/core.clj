@@ -35,7 +35,7 @@
     (if-let [config (mc/find-one-as-map db "config" nil)]
       (reset! frontend-version (:version config))
       (do (mc/create db "config" nil)
-          (mc/insert db "config" {:version "0.1.0"})))
+          (mc/insert db "config" {:version "0.1.0" :cards-version 0})))
 
 
     (web.utils/tick lobby/send-lobby 1000)
