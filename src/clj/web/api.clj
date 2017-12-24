@@ -10,6 +10,7 @@
             [web.stats :as stats]
             [web.admin :as admin]
             [web.news :as news]
+            [web.decks :as decks]
             [cheshire.core :refer [generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.route :as route]
@@ -64,10 +65,10 @@
            (DELETE "/profile/stats/user" [] stats/clear-userstats-handler)
            (DELETE "/profile/stats/deck/:id" [] stats/clear-deckstats-handler)
 
-           (GET "/data/decks" [] data/decks-handler)
-           (POST "/data/decks" [] data/decks-create-handler)
-           (PUT "/data/decks" [] data/decks-save-handler)
-           (DELETE "/data/decks/:id" [] data/decks-delete-handler))
+           (GET "/data/decks" [] decks/decks-handler)
+           (POST "/data/decks" [] decks/decks-create-handler)
+           (PUT "/data/decks" [] decks/decks-save-handler)
+           (DELETE "/data/decks/:id" [] decks/decks-delete-handler))
 
 (defroutes routes
            (-> user-routes

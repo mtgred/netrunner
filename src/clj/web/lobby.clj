@@ -1,12 +1,15 @@
 (ns web.lobby
-  (:require [web.db :refer [db]]
+  (:require [web.db :refer [db object-id]]
             [web.utils :refer [response tick remove-once]]
             [web.ws :as ws]
             [web.stats :as stats]
             [game.main]
             [game.core :as core]
             [crypto.password.bcrypt :as bcrypt]
-            [game.main :as main])
+            [game.main :as main]
+            [monger.collection :as mc]
+            [jinteki.cards :refer [all-cards]]
+            [jinteki.decks :as decks])
   (:import org.bson.types.ObjectId))
 
 ;; All games active on the server.
@@ -31,8 +34,12 @@
 (defn user-public-view
   "Strips private server information from a player map."
   [player]
-  (-> player
-      (dissoc :ws-id)
+  (as-> player p
+        (dissoc p :ws-id)
+        (if-let [{:keys [_id] :as deck} (:deck p)]
+          (assoc p :deck (select-keys (assoc deck :_id (str _id))
+                                      [:_id :status :name]))
+          p)
       ))
 
 (defn game-public-view
@@ -293,11 +300,19 @@
 (defn handle-select-deck
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
-    deck                                :?data}]
+    deck-id                             :?data}]
   (let [game (game-for-client client-id)
         fplayer (first (:players game))
-        gameid (:gameid game)]
-    (when (player? client-id gameid)
+        gameid (:gameid game)
+
+        map-card (fn [c] (update-in c [:card] @all-cards))
+        deck (as-> (mc/find-one-as-map db "decks" {:_id (object-id deck-id) :username username}) d
+                   (update-in d [:cards] #(mapv map-card %))
+                   (update-in d [:identity] #(@all-cards (:title %)))
+                   (if (:status d)
+                     d
+                     (assoc d :status (decks/check-deck-status d))))]
+    (when (and deck (player? client-id gameid))
       (swap! all-games update-in [gameid :players
                               (if (= client-id (:ws-id fplayer)) 0 1)]
              (fn [p] (assoc p :deck deck)))

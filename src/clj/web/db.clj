@@ -17,4 +17,6 @@
   (mc/disconnect conn))
 
 (defn object-id [id]
-  (org.bson.types.ObjectId. id))
+  (if (string? id)
+    (org.bson.types.ObjectId. id)
+    id))

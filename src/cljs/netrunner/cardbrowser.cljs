@@ -6,7 +6,8 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.account :refer [alt-art-name]]
             [netrunner.ajax :refer [GET]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.cards :refer [all-cards] :as cards]
+            [jinteki.decks :as decks]))
 
 (def cards-channel (chan))
 (def pub-chan (chan))
@@ -20,7 +21,11 @@
                        (map (fn [e] (update e :date_start #(js/Date %))))
                        (sort-by :date_start)
                        (last))]
-      (swap! app-state assoc :sets sets :mwl latest_mwl :cycles cycles)))
+
+      (reset! cards/mwl latest_mwl)
+      (reset! cards/sets sets)
+      (reset! cards/cycles cycles)
+      (swap! app-state assoc :sets sets :cycles cycles)))
 
 (go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
       (reset! all-cards cards)
@@ -144,8 +149,8 @@
      {:class (if-let [faction (:faction card)]
                (-> faction .toLowerCase (.replace " " "-"))
                "neutral")}
-     (when (netrunner.deckbuilder/banned? card) netrunner.deckbuilder/banned-span)
-     (when (netrunner.deckbuilder/restricted? card) netrunner.deckbuilder/restricted-span)
+     (when (decks/banned? card) netrunner.deckbuilder/banned-span)
+     (when (decks/restricted? card) netrunner.deckbuilder/restricted-span)
      (when (:rotated card) netrunner.deckbuilder/rotated-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
