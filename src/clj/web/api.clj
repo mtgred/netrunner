@@ -11,17 +11,13 @@
             [web.admin :as admin]
             [web.news :as news]
             [web.decks :as decks]
-            [cheshire.core :refer [generate-string]]
-            [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-params wrap-json-response]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
-            [hiccup.page :as hiccup]
             [web.db :refer [db]]
-            [monger.collection :as mc]
             [compojure.core :refer [defroutes wrap-routes GET POST DELETE PUT]]            ))
 
 (add-encoder org.bson.types.ObjectId encode-str)
