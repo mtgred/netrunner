@@ -4,6 +4,7 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! >! sub pub] :as async]
             [netrunner.appstate :refer [app-state]]
+            [netrunner.account :refer [alt-art-name]]
             [netrunner.ajax :refer [GET]]))
 
 (def cards-channel (chan))
@@ -47,10 +48,27 @@
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
+(defn expand-alts
+  [acc card]
+  (let [alt-card (get (:alt-arts @app-state) (:code card))
+        alt-arts (keys (:alt_art alt-card))]
+    (if (and alt-arts
+             (show-alt-art?))
+    (->> alt-arts
+      (concat [""])
+      (map (fn [art] (if art
+                       (assoc card :art art)
+                       card)))
+      (map (fn [c] (if (:art c)
+                     (assoc c :display-name (str (:display-name c) " [" (alt-art-name (:art c)) "]"))
+                     c)))
+      (concat acc))
+    (conj acc card))))
+
 (defn insert-alt-arts
   "Add copies of all alt art cards to the list of cards"
   [cards]
-  (reduce netrunner.deckbuilder/expand-alts () (reverse cards)))
+  (reduce expand-alts () (reverse cards)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -160,7 +178,7 @@
        (when-let [number (:number card)]
          (str pack " " number
               (when-let [art (:art card)]
-                (str " [" (netrunner.account/alt-art-name art) "]")))))]
+                (str " [" (alt-art-name art) "]")))))]
      (if (selected-alt-art card cursor)
       [:div.selected-alt "Selected Alt Art"]
       (when (:art card)
@@ -185,6 +203,7 @@
            (card-text card cursor)
            (when-let [url (image-url card)]
              [:img {:src url
+                    :alt (:title card)
                     :onClick #(do (.preventDefault %)
                                 (put! (:pub-chan (om/get-shared owner))
                                       {:topic :card-selected :data card})

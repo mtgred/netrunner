@@ -40,6 +40,24 @@
    (take-credits state :corp)
    (is (= 3 (:click (get-runner))) "Should have lost 2 clicks and gained 1 click")))
 
+(deftest adjusted-chronotype-mca
+  ;; Chronotype to cancel out MCA click loss
+  (do-game
+    (new-game
+      (default-corp [(qty "MCA Austerity Policy" 1)])
+      (default-runner [(qty "Adjusted Chronotype" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Adjusted Chronotype")
+    (take-credits state :runner)
+    (play-from-hand state :corp "MCA Austerity Policy" "New remote")
+    (let [mca (get-content state :remote1 0)]
+      (core/rez state :corp mca)
+      (card-ability state :corp mca 0)
+      (is (= 1 (get-counters (refresh mca) :power)))
+      (take-credits state :corp)
+      ; runner does not lose a click
+      (is (= 4 (:click (get-runner)))))))
+
 (deftest adjusted-chronotype-gcs
   ;; Ensure adjusted chronotype gains 2 clicks when 2 clicks are lost and GCS is installed
   (do-game
@@ -452,6 +470,7 @@
     (core/no-action state :corp nil)
     (play-from-hand state :runner "Eden Shard")
     (is (= 5 (:credit (get-runner))) "Eden Shard installed for 0c")
+    (is (not (:run @state)) "Run is over")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 3 (count (:hand (get-corp)))) "Corp drew 2 cards")
     (is (= 1 (count (:discard (get-runner)))) "Eden Shard trashed")))
@@ -1541,6 +1560,24 @@
       (is (= "Tech Trader" (:title (get-in @state [:runner :rig :resource 0])))
           "Tech Trader was installed")
       (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
+
+(deftest-pending street-peddler-trash-while-choosing-card
+  ;; Street Peddler - trashing Street Peddler while choosing which card to
+  ;; discard should dismiss the choice prompt. Issue #587.
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Street Peddler" 1)
+                               (qty "Gordian Blade" 1)
+                               (qty "Torch" 1)
+                               (qty "Sure Gamble" 2)]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
+    (play-from-hand state :runner "Street Peddler")
+    (let [street-peddler (get-in @state [:runner :rig :resource 0])]
+      (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
+      (card-ability state :runner street-peddler 0)
+      (trash-resource state "Street Peddler")
+      (is (zero? (count (get-in @state [:runner :prompt])))))))
 
 (deftest symmetrical-visage
   ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn

@@ -251,7 +251,7 @@
     :effect (final-effect (gain :credit (* 2 (count targets))))}
 
    "Cerebral Cast"
-   {:req (req (:successful-run runner-reg))
+   {:req (req (:successful-run runner-reg-last))
     :psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
                       :choices ["1 tag" "1 brain damage"] :msg (msg "give the Runner " target)
                       :delayed-completion true
@@ -419,7 +419,7 @@
 
    "Financial Collapse"
    {:delayed-completion true
-    :req (req (>= (:credit runner) 6))
+    :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-installed state :runner)))))
     :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-installed state :runner)))]
                    (if (pos? rcount)
                      (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
@@ -488,7 +488,7 @@
     :effect (effect (gain :credit 3) (draw))}
 
    "Hard-Hitting News"
-   {:req (req (:made-run runner-reg))
+   {:req (req (:made-run runner-reg-last))
     :trace {:base 4
             :delayed-completion true
             :msg "give the Runner 4 tags"
@@ -535,7 +535,7 @@
    {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
 
    "Hellion Alpha Test"
-   {:req (req (:installed-resource runner-reg))
+   {:req (req (:installed-resource runner-reg-last))
     :trace {:base 2
             :choices {:req #(and (installed? %)
                                  (is-type? % "Resource"))}
@@ -546,7 +546,7 @@
                            :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Hellion Beta Test"
-   {:req (req (:trashed-card runner-reg))
+   {:req (req (:trashed-card runner-reg-last))
     :trace {:base 2
             :label "Trash 2 installed non-program cards"
             :choices {:max (req (min 2 (count (filter #(not (is-type? % "Program")) (concat (all-installed state :corp)
@@ -580,7 +580,7 @@
                               :effect (effect (trash target {:unpreventable true}))}}}
 
    "Hunter Seeker"
-   {:req (req (:stole-agenda runner-reg))
+   {:req (req (:stole-agenda runner-reg-last))
     :delayed-completion true
     :prompt "Choose a card to trash"
     :choices {:req installed?}
@@ -710,7 +710,7 @@
     :effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
    "Midseason Replacements"
-   {:req (req (:stole-agenda runner-reg))
+   {:req (req (:stole-agenda runner-reg-last))
     :trace {:base 6
             :msg "give the Runner X tags"
             :label "Give the Runner X tags"
@@ -766,7 +766,7 @@
                                            (unregister-events state side card)))}}}
 
    "Neural EMP"
-   {:req (req (:made-run runner-reg))
+   {:req (req (:made-run runner-reg-last))
     :msg "do 1 net damage"
     :effect (effect (damage eid :net 1 {:card card}))}
 
@@ -829,7 +829,8 @@
                                   0 (flatten (seq (:servers corp))))))}
 
    "Power Grid Overload"
-   {:trace {:base 2
+   {:req (req (:made-run runner-reg-last))
+    :trace {:base 2
             :msg "trash 1 piece of hardware"
             :delayed-completion true
             :effect (req (let [max-cost (- target (second targets))]
@@ -842,7 +843,7 @@
                          (system-msg state :corp (str "trashes 1 piece of hardware with install cost less than or equal to " (- target (second targets)))))}}
 
    "Power Shutdown"
-   {:req (req (:made-run runner-reg))
+   {:req (req (:made-run runner-reg-last))
     :prompt "Trash how many cards from the top R&D?"
     :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-installed state :runner)))))}
     :msg (msg "trash " target " cards from the top of R&D")
@@ -941,8 +942,8 @@
    "Punitive Counterstrike"
    {:trace {:base 5
             :delayed-completion true
-            :msg (msg "do " (:stole-agenda runner-reg 0) " meat damage")
-            :effect (effect (damage eid :meat (:stole-agenda runner-reg 0) {:card card}))}}
+            :msg (msg "do " (:stole-agenda runner-reg-last 0) " meat damage")
+            :effect (effect (damage eid :meat (:stole-agenda runner-reg-last 0) {:card card}))}}
 
    "Reclamation Order"
    {:prompt "Select a card from Archives"
@@ -1137,7 +1138,7 @@
     :effect (effect (damage eid :meat 4 {:card card}))}
 
    "SEA Source"
-   {:req (req (:successful-run runner-reg))
+   {:req (req (:successful-run runner-reg-last))
     :trace {:base 3
             :msg "give the Runner 1 tag"
             :label "Give the Runner 1 tag"
@@ -1199,7 +1200,7 @@
 
    "Shipment from Tennin"
    {:delayed-completion true
-    :req (req (not (:successful-run runner-reg)))
+    :req (req (not (:successful-run runner-reg-last)))
     :choices {:req #(and (installed? %) (= (:side %) "Corp"))}
     :msg (msg "place 2 advancement tokens on " (card-str state target))
     :effect (effect (add-prop target :advance-counter 2 {:placed true}))}
@@ -1280,7 +1281,7 @@
    (letfn [(subliminal []
              {:corp-phase-12
               {:effect
-               (req (if (not (:made-run runner-reg))
+               (req (if (not (:made-run runner-reg-last))
                       (do (resolve-ability state side
                                            {:optional
                                             {:prompt "Add Subliminal Messaging to HQ?"
@@ -1313,7 +1314,7 @@
                                                   (advance state :corp target :no-cost)))} card nil))}
 
    "Successful Demonstration"
-   {:req (req (:unsuccessful-run runner-reg))
+   {:req (req (:unsuccessful-run runner-reg-last))
     :msg "gain 7 [Credits]"
     :effect (effect (gain :credit 7))}
 
