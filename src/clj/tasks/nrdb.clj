@@ -6,6 +6,9 @@
             [clojure.string :as string]
             [cheshire.core :as json]))
 
+(def ^:const baseurl "http://netrunnerdb.com/api/2.0/public/")
+(def ^:const base-path "data/netrunner-cards-json/")
+
 (defn rename
   "Rename field"
   [new-name [k v]]
@@ -33,8 +36,6 @@
   "neutral-runner"  "Neutral"
   "neutral-corp"  "Neutral"
    })
-
-(def ^:const baseurl "http://netrunnerdb.com/api/2.0/public/")
 
 (def ^:const cycle-fields
   {
@@ -101,29 +102,20 @@
                  m))
              {} data))
 
-(defn- get-data
-  "Fetch json data from NRDB"
-  [path]
-  (let [{:keys [status headers body error] :as resp} @(http/get (str baseurl path))]
-    (if (or error (not= status 200))
-      (do
-        (println "Failed to fetch data from NRDB" path ", exception: " error " Status:" status)
-        nil)
-      (:data (json/parse-string body true)))))
-
-(defn- import-data
-  "Download and translate data from NRDB"
+(defn- read-nrdb-data
+  "Translate data from NRDB"
   [path fields]
   (->> path
-    get-data
+    (str base-path)
+    slurp
+    (#(json/parse-string % true))
     (map (partial translate-fields fields))))
 
 (defn- replace-collection
   "Remove existing collection and insert new data"
   [collection data]
-  (when-not (nil? data)
-    (mc/remove db collection)
-    (mc/insert-batch db collection data)))
+  (mc/remove db collection)
+  (mc/insert-batch db collection data))
 
 (defn- make-map-by-code
   "Make a map of the items in the list using the :code as the key"
@@ -150,22 +142,39 @@
            :set_code (:pack_code c))))
 
 (defn fetch-data
-  "Import json data from NRDB. Modify function is mapped to all elements in the data collection."
+  "Read NRDB json data. Modify function is mapped to all elements in the data collection."
   ([path fields collection] (fetch-data path fields collection identity))
-  ([path fields collection modify-function]
-  (let [data-list (->> (import-data path fields)
+  ([path fields collection modify-function] (fetch-data path fields collection modify-function replace-collection))
+  ([path fields collection modify-function collection-function]
+  (let [data-list (->> (read-nrdb-data path fields)
                     (map modify-function))]
-    (replace-collection collection data-list)
+    (collection-function collection data-list)
     (make-map-by-code data-list))))
+
+(defn fetch-cards
+  "Find the NRDB card json files and import them."
+  [set-future]
+  (let [collection "clj_cards"]
+    (mc/remove db collection)
+    (->> "pack"
+      (str base-path)
+      clojure.java.io/file
+      .list
+      (map (partial str "pack/"))
+      (map #(fetch-data % card-fields collection
+                        (partial add-card-fields @set-future)
+                        (fn [c d] (mc/insert-batch db c d))))
+      (apply merge))))
 
 (defn fetch
   "Import data from NetrunnerDB"
   []
   (webdb/connect)
-  (let [cycle-future (future (fetch-data "cycles" cycle-fields "clj_cycles"))
-        mwl-future (future (fetch-data "mwl" mwl-fields "clj_mwl"))
-        set-future (future (fetch-data "packs" set-fields "clj_sets" (partial add-set-fields @cycle-future)))
-        card-future (future (fetch-data "cards" card-fields "clj_cards" (partial add-card-fields @set-future)))]
+  (let [cycle-future (future (fetch-data "cycles.json" cycle-fields "clj_cycles"))
+        mwl-future (future (fetch-data "mwl.json" mwl-fields "clj_mwl"))
+        set-future (future (fetch-data "packs.json" set-fields "clj_sets" (partial add-set-fields @cycle-future)))
+        card-future (future (fetch-cards set-future))
+        ]
     (println (count @cycle-future) "cycles imported")
     (println (count @set-future) "sets imported")
     (println (count @mwl-future) "MWL versions imported")
