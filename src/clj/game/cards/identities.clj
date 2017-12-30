@@ -117,6 +117,24 @@
                             :msg "draw a card"
                             :effect (effect (draw 1))}}}
 
+   "Asa Group: Security Through Vigilance"
+   {:events {:corp-install
+             {:delayed-completion true
+              :req (req (and (first-event? state :corp :corp-install)
+                             ;; doesn't fire when installing ice on a central server
+                             (not (and (ice? target)
+                                       (is-central? (:zone target))))))
+              :effect (req (let [installed-card target]
+                             (continue-ability
+                               state side
+                               {:prompt "Select a non-agenda card in HQ to install (optional)"
+                                :delayed-completion true
+                                :choices {:req #(and (in-hand? %)
+                                                 (= (:side %) "Corp")
+                                                 (not (is-type? % "Agenda")))}
+                                :effect (effect (corp-install eid target (zone->name installed-card) nil))}
+                               card nil)))}}}
+
    "Ayla \"Bios\" Rahim: Simulant Specialist"
    {:abilities [{:label "[:click] Add 1 card from NVRAM to your grip"
                  :cost [:click 1]
