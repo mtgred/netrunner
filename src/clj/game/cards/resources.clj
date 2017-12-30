@@ -139,6 +139,20 @@
                                  (shuffle! :deck)
                                  (runner-install target))}]}
 
+   "Assimilator"
+   {:abilities [{:label "Turn a facedown card faceup"
+                 :cost [:click 2]
+                 :prompt "Select a facedown installed card"
+                 :choices {:req #(and (facedown? %)
+                                      (installed? %)
+                                      (= "Runner" (:side %)))}
+                 :effect (req (let [temp (move state side target :play-area)
+                                    moved (move state side temp (type->rig-zone (:type temp)))]
+                                (card-init state side moved false)))
+                 :msg (msg (str "turn" (:title target) "faceup"))}
+
+                 ]}
+
    "Bhagat"
    {:events {:successful-run {:req (req (and (= target :hq)
                                              (first-successful-run-on-server? state :hq)))

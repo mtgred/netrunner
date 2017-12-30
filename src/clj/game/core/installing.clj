@@ -88,7 +88,9 @@
          abilities (ability-init cdef)
          run-abs (runner-ability-init cdef)
          subroutines (subroutines-init cdef)
-         c (merge card (:data cdef) {:abilities abilities :subroutines subroutines :runner-abilities run-abs})
+         c (merge card
+                  (when resolve (:data cdef))
+                  {:abilities abilities :subroutines subroutines :runner-abilities run-abs})
          c (if (number? recurring) (assoc c :rec-counter recurring) c)
          c (if (string? (:strength c)) (assoc c :strength 0) c)]
      (when recurring
