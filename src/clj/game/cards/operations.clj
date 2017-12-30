@@ -1145,6 +1145,16 @@
             :delayed-completion true
             :effect (effect (tag-runner :runner eid 1))}}
 
+   "Self-Growth Program"
+   {:req (req tagged)
+    :prompt "Select two installed Runner cards"
+    :choices {:req #(and (installed? %)
+                         (= "Runner" (:side %)))
+              :max 2}
+    :msg (msg (str "move " (join ", " (map :title targets)) " to the Runner's grip"))
+    :effect (req (doseq [c targets]
+                   (move state :runner c :hand)))}
+
    "Service Outage"
    (let [add-effect (fn [state side card]
                       (update! state side (assoc card :so-activated true))
