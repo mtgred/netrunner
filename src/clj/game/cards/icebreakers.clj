@@ -720,7 +720,11 @@
    "Paperclip"
    (conspiracy "Paperclip" "Barrier"
                [{:label (str "X [Credits]: +X strength, break X subroutines")
-                 :choices :credit
+                 :choices {:number (req (:credit runner))
+                           :default (req (if current-ice
+                                           (- (:current-strength current-ice)
+                                              (:current-strength card))
+                                           1))}
                  :prompt "How many credits?"
                  :effect (effect (pump card target))
                  :msg (msg "spend " target " [Credits], increase strength by " target ", and break "
