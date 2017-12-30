@@ -86,10 +86,15 @@
 
 (defn do-psi
   "Start a psi game, if not equal do ability"
-  [{:keys [label] :as ability}]
+  ([{:keys [label] :as ability}]
   {:label (str "Psi Game - " label)
    :msg (str "start a psi game (" label ")")
    :psi {:not-equal ability}})
+  ([{:keys [label-neq] :as neq-ability} {:keys [label-eq] :as eq-ability}]
+   {:label (str "Psi Game - " label-neq " / " label-eq)
+    :msg (str "start a psi game (" label-neq " / " label-eq ")")
+    :psi {:not-equal neq-ability
+          :equal     eq-ability}}))
 
 (def take-bad-pub
   "Bad pub on rez effect."
@@ -1236,6 +1241,18 @@
                                                                                (swap-installed state side (first targets) (second targets))
                                                                                (effect-completed state side eid card)))} card nil)))}]}
 
+   "Mganga"
+   {:subroutines [(do-psi {:label "do 2 net damage"
+                           :delayed-completion true
+                           :player :corp
+                           :effect (req (when-completed (damage state :corp :net 2 {:card card})
+                                                        (trash state :corp eid card nil)))}
+                          {:label "do 1 net damage"
+                           :delayed-completion true
+                           :player :corp
+                           :effect (req (when-completed (damage state :corp :net 1 {:card card})
+                                                        (trash state :corp eid card nil)))})]}
+
    "Mind Game"
    {:subroutines [(do-psi {:label "Redirect the run to another server"
                            :player :corp
@@ -1305,6 +1322,10 @@
                   (tag-trace 2)
                   (tag-trace 3)
                   end-the-run-if-tagged]}
+
+   "Najja 1.0"
+   {:subroutines [end-the-run]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Nebula"
    (space-ice trash-program)
