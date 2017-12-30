@@ -148,10 +148,9 @@
                                       (= "Runner" (:side %)))}
                  :effect (req (let [temp (move state side target :play-area)
                                     moved (move state side temp (type->rig-zone (:type temp)))]
-                                (card-init state side moved false)))
-                 :msg (msg (str "turn" (:title target) "faceup"))}
-
-                 ]}
+                                (card-init state side (make-eid state) moved {:resolve-effect false
+                                                                              :init-data false})))
+                 :msg (msg (str "turn" (:title target) "faceup"))}]}
 
    "Bhagat"
    {:events {:successful-run {:req (req (and (= target :hq)

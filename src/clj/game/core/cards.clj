@@ -238,4 +238,4 @@
     (let [c (dissoc card :disabled)]
       (update! state side c)
       (when (active? card)
-        (card-init state side c false)))))
+        (card-init state side c {:resolve-effect false})))))

@@ -757,7 +757,7 @@
                                                (swap! state assoc-in (cons :corp (:zone target)) newices)
                                                (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(not= (:cid %) (:cid newice)) coll)))
                                                (trigger-event state side :corp-install newice)
-                                               (card-init state side newice false)
+                                               (card-init state side newice {:resolve-effect false})
                                                (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
                                                (trigger-event state side :rez newice))
                                              (system-msg state side (str "does not find any ICE to install from R&D")))

@@ -184,7 +184,7 @@
       :recurring 4
       :choices (req runnable-servers)
       :effect (req (let [c (move state side (assoc card :zone '(:discard)) :play-area {:force true})]
-                     (card-init state side c false)
+                     (card-init state side c {:resolve-effect false})
                      (game.core/run state side (make-eid state) target
                                     {:end-run {:delayed-completion true
                                                :effect (effect (trash c)
@@ -298,7 +298,7 @@
                     (prompt! card (str "Click Demolition Run in the Temporary Zone to trash a card being accessed at no cost") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
-                                      (card-init state side c false)
+                                      (card-init state side c {:resolve-effect false})
                                       (register-events state side
                                                        {:run-ends {:effect (effect (trash c))}} c)))}
                      card nil))
@@ -357,7 +357,7 @@
                     (prompt! card (str "Click Diana's Hunt in the Temporary Zone to install a Program") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
-                                      (card-init state side c false)
+                                      (card-init state side c {:resolve-effect false})
                                       (register-events state side
                                                        {:run-ends {:effect (req (let [hunt (:diana @state)]
                                                                                   (doseq [c hunt]

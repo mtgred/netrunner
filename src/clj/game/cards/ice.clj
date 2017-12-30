@@ -364,7 +364,8 @@
                                (swap! state assoc-in (cons :corp (:zone card)) newices)
                                (swap! state update-in (cons :corp (:zone target))
                                       (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
-                               (card-init state side newice false)
+                               (card-init state side newice {:resolve-effect false
+                                                             :init-data true})
                                (trigger-event state side :corp-install newice)))}]})
 
    "Brainstorm"
@@ -964,7 +965,8 @@
                                                         (swap! state update-in (cons :corp (:zone target))
                                                                (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
                                                         (update! state side (assoc card :howler-target newice))
-                                                        (card-init state side newice false)
+                                                        (card-init state side newice {:resolve-effect false
+                                                                                      :init-data true})
                                                         (trigger-event state side :corp-install newice)))} card nil)))}]
       :events {:run-ends {:req (req (:howler-target card))
                           :effect (effect (trash card {:cause :self-trash})

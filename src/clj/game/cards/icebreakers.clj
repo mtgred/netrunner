@@ -129,7 +129,8 @@
                                  :msg (msg "swap in " (:title target) " from their Grip")
                                  :effect (req (if-let [hostcard (:host card)]
                                                 (let [hosted (host state side (get-card state hostcard) target)]
-                                                  (card-init state side hosted false))
+                                                  (card-init state side hosted {:resolve-effect false
+                                                                                :init-data true}))
                                                 (let [devavec (get-in @state [:runner :rig :program])
                                                       devaindex (first (keep-indexed #(when (= (:cid %2) (:cid card)) %1) devavec))
                                                       newdeva (assoc target :zone (:zone card) :installed true)
@@ -137,7 +138,8 @@
                                                   (lose state :runner :memory (:memoryunits card))
                                                   (swap! state assoc-in [:runner :rig :program] newvec)
                                                   (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
-                                                  (card-init state side newdeva false)))
+                                                  (card-init state side newdeva {:resolve-effect false
+                                                                                 :init-data true})))
                                               (move state side card :hand))}]}))
 
 (defn- conspiracy
@@ -898,6 +900,48 @@
                                                                   (auto-pump state side eid card targets)))}
                                 :pass-ice wy
                                 :run-ends wy})})
+
+   "Yusuf"
+   {:events {:successful-run {:silent (req true)
+                              :effect (effect (system-msg "adds 1 virus counter to Yusuf")
+                                              (add-counter card :virus 1))}}
+    :abilities [{:label "Add strength"
+                 :prompt "Choose a card with virus counters"
+                 :choices {:req #(pos? (get-in % [:counter :virus] 0))}
+                 :effect (req (let [selected-virus target
+                                    yusuf card
+                                    counters (get-in selected-virus [:counter :virus] 0)]
+                                (resolve-ability state side
+                                                 {:prompt "Spend how many counters?"
+                                                  :choices {:number (req counters)
+                                                            :default (req 1)}
+                                                  :effect (req (let [cost target]
+                                                                 (resolve-ability
+                                                                   state side
+                                                                   {:counter-cost [:virus cost]
+                                                                    :effect (effect (pump yusuf cost)
+                                                                                    (system-msg (str "spends " cost (pluralize " counter" cost) " from " (:title selected-virus)
+                                                                                                     " to add " cost " strength to Yusuf")))}
+                                                                   selected-virus nil)))}
+                                                 yusuf nil)))}
+                {:label "Break barrier subroutine(s)"
+                 :prompt "Choose a card with virus counters"
+                 :choices {:req #(pos? (get-in % [:counter :virus] 0))}
+                 :effect (req (let [selected-virus target
+                                    yusuf card
+                                    counters (get-in selected-virus [:counter :virus] 0)]
+                                (resolve-ability state side
+                                                 {:prompt "Spend how many counters?"
+                                                  :choices {:number (req counters)
+                                                            :default (req 1)}
+                                                  :effect (req (let [cost target]
+                                                                 (resolve-ability
+                                                                   state side
+                                                                   {:counter-cost [:virus cost]
+                                                                    :effect (effect (system-msg (str "spends " cost (pluralize " counter" cost) " from " (:title selected-virus)
+                                                                                                     " to break " cost (pluralize " barrier subroutine" cost) " with Yusuf")))}
+                                                                   selected-virus nil)))}
+                                                 yusuf nil)))}]}
 
    "Yog.0"
    {:abilities [(break-sub 0 1 "Code Gate")]}
