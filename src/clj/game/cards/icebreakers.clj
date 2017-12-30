@@ -767,6 +767,21 @@
                     {:abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 2 1 :all-run)]})
 
+   "Puffer"
+   (auto-icebreaker ["Sentry"]
+                    {:implementation "Memory use must be manually tracked by the Runner"
+                     :abilities [(break-sub 1 1 "Sentry")
+                                 (strength-pump 2 1)
+                                 {:cost [:click 1]
+                                  :label "Place 1 power counter"
+                                  :effect (effect (add-counter card :power 1)
+                                                  (update-breaker-strength card))}
+                                 {:cost [:click 1]
+                                  :label "Remove 1 power counter"
+                                  :effect (effect (add-counter card :power -1)
+                                                  (update-breaker-strength card))}]
+                     :strength-bonus (req (get-in card [:counter :power] 0))})
+
    "Refractor"
    (auto-icebreaker ["Code Gate"]
                     {:implementation "Stealth credit restriction not enforced"
