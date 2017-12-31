@@ -146,11 +146,15 @@
                  :choices {:req #(and (facedown? %)
                                       (installed? %)
                                       (= "Runner" (:side %)))}
-                 :effect (req (let [temp (move state side target :play-area)
-                                    moved (move state side temp (type->rig-zone (:type temp)))]
-                                (card-init state side (make-eid state) moved {:resolve-effect false
-                                                                              :init-data false})))
-                 :msg (msg (str "turn" (:title target) "faceup"))}]}
+                 :effect (req (if (or (is-type? target "Event")
+                                      (has-subtype? target "Console"))
+                                ;; Consoles and events are immediately unpreventably trashed.
+                                (trash state side target {:unpreventable true})
+                                ;; Other cards are moved to rig and have events wired.
+                                (let [temp (move state side target :play-area)
+                                      moved (move state side temp (type->rig-zone (:type temp)))]
+                                  (card-init state side (make-eid state) moved {:resolve-effect false :init-data false}))))
+                 :msg (msg "turn " (:title target) " faceup")}]}
 
    "Bhagat"
    {:events {:successful-run {:req (req (and (= target :hq)

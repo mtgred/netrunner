@@ -120,18 +120,17 @@
    "Asa Group: Security Through Vigilance"
    {:events {:corp-install
              {:delayed-completion true
-              :req (req (and (first-event? state :corp :corp-install)
-                             ;; doesn't fire when installing ice on a central server
-                             (not (and (ice? target)
-                                       (is-central? (:zone target))))))
+              :req (req (first-event? state :corp :corp-install))
               :effect (req (let [installed-card target]
                              (continue-ability
                                state side
                                {:prompt "Select a non-agenda card in HQ to install (optional)"
                                 :delayed-completion true
                                 :choices {:req #(and (in-hand? %)
-                                                 (= (:side %) "Corp")
-                                                 (not (is-type? % "Agenda")))}
+                                                     (= (:side %) "Corp")
+                                                     (not (is-type? % "Agenda"))
+                                                     (or (is-remote? (:zone installed-card))
+                                                         (ice? %)))}
                                 :effect (effect (corp-install eid target (zone->name installed-card) nil))}
                                card nil)))}}}
 
