@@ -873,5 +873,4 @@
                    :counter-cost [:power 3]
                    :once :per-turn
                    :msg "gain [Click][Click]"
-                   :effect (effect (gain :click 2)) }] }
-  })
+                   :effect (effect (gain :click 2))}]}})

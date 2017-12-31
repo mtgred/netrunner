@@ -12,7 +12,7 @@
 
 (def alt-arts-channel (chan))
 (defn load-alt-arts []
-  (go (let [alt_info (->> (<! (GET "/data/altarts"))
+  (go (let [alt_info (->> (<! (GET "/data/cards/altarts"))
                        (:json)
                        (map #(select-keys % [:version :name])))
             cards (->> @all-cards
@@ -252,7 +252,9 @@
 
                [:div {:class "alt-art-group"}
                 (for [version (conj (keys (get-in (:alt-arts @app-state) [(om/get-state owner :alt-card) :alt_art])) :default)]
-                  (let [url (image-url (om/get-state owner :alt-card) version)]
+                  (let [curr-alt (om/get-state owner :alt-card)
+                        url (image-url curr-alt version)
+                        alt (get (:alt-arts @app-state) curr-alt)]
                     [:div
                      [:div
                       [:div [:label [:input {:type "radio"
@@ -264,6 +266,7 @@
                      [:div
                       [:img {:class "alt-art-select"
                              :src url
+                             :alt (str (:title alt) " (" (alt-art-name version) ")")
                              :on-click #(set-card-art owner (name version))
                              :onError #(-> % .-target js/$ .hide)
                              :onLoad #(-> % .-target js/$ .show)}]]]))]

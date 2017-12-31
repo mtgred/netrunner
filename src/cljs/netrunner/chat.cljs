@@ -41,7 +41,6 @@
            text (.-value input)
            $div (js/$ ".chat-app .message-list")]
        (when-not (empty? text)
-         (prn "SENDING")
          (ws/ws-send! [:chat/say {:channel   (name channel)
                                   :msg       text
                                   :username  (:username user)
@@ -85,14 +84,11 @@
            ]]]))))
 
 (defn fetch-messages [owner]
-  (prn "FETCHING MESSAGES")
   (let [channel (om/get-state owner :channel)
         messages (get-in @app-state [:channels channel])]
     (when (empty? messages)
       (go (let [x (<! (GET (str "/messages/" (name channel))))
-                data (:json x)
-                ]
-            (prn "GOT A MESSAGE")
+                data (:json x)]
             (update-message-channel channel data))))))
 
 (defn chat [cursor owner]

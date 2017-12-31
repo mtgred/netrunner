@@ -127,7 +127,10 @@
    (fn [user]
      (om/set-state! owner :editing false)
      (swap! app-state assoc :messages [])
-     (ws/ws-send! [(if (= "join" action) :lobby/join :lobby/watch)
+     (ws/ws-send! [(case action
+                     "join" :lobby/join
+                     "watch" :lobby/watch
+                     "rejoin" :netrunner/rejoin)
                    {:gameid gameid :password password :options (:options @app-state)}]
                   8000
                   #(if (sente/cb-success? %)
@@ -178,8 +181,9 @@
              side (:side (some #(when (= (:user %) user) %) players))]
          [:div {:data-dismiss "modal"}
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
-            [:div.deckline {:on-click #(ws/ws-send! [:lobby/deck deck])}
-             [:img {:src (image-url (:identity deck))}]
+            [:div.deckline {:on-click #(ws/ws-send! [:lobby/deck (:_id deck)])}
+             [:img {:src (image-url (:identity deck))
+                    :alt (get-in deck [:identity :title] "")}]
              [:div.float-right (deck-status-span sets deck)]
              [:h4 (:name deck)]
              [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
@@ -255,7 +259,7 @@
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
-(defn game-view [{:keys [title password started players gameid current-game password-game originalPlayers] :as game} owner]
+(defn game-view [{:keys [title password started players gameid current-game password-game original-players] :as game} owner]
   (reify
     om/IRenderState
     (render-state [this state]
@@ -274,7 +278,7 @@
            [:button {:on-click #(join "join")} "Join"])
          (when (and (not current-game) started (not password-game)
                     (some #(= % (get-in @app-state [:user :_id]))
-                          (map #(get-in % [:user :_id]) originalPlayers)))
+                          (map #(get-in % [:user :_id]) original-players)))
            [:button {:on-click #(join "rejoin")} "Rejoin"])
          (let [c (count (:spectators game))]
            [:h4 (str (when-not (empty? (:password game))
@@ -446,17 +450,19 @@
                     (for [player (:players game)]
                       [:div
                        (om/build player-view {:player player})
-                       (when-let [deck (:deck player)]
+                       (when-let [{:keys [_id name] :as deck} (:deck player)]
                          [:span {:class (deck-status-label sets deck)}
                           [:span.label
                            (if (= (:user player) user)
-                             (:name deck)
+                             name
                              "Deck selected")]])
                        (when-let [deck (:deck player)]
                          [:div.float-right (deck-status-span sets deck true false)])
                        (when (= (:user player) user)
                          [:span.fake-link.deck-load
-                          {:data-target "#deck-select" :data-toggle "modal"} "Select deck"])])]
+                          {:data-target "#deck-select" :data-toggle "modal"
+                           :on-click (fn [] (send {:action "deck" :gameid (:gameid @app-state) :deck nil}))
+                           } "Select deck"])])]
                    (when (:allowspectator game)
                      [:div.spectators
                       (let [c (count (:spectators game))]

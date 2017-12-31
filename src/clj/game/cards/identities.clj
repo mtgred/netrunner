@@ -54,9 +54,9 @@
 
    "AgInfusion: New Miracles for a New World"
    {:abilities [{:once :per-turn
-                 :req (req (and (:run @state) (not (rezzed? current-ice))))
+                 :req (req (and (:run @state) (not (rezzed? current-ice)) (can-rez? state side current-ice)))
                  :prompt "Choose another server and redirect the run to its outermost position"
-                 :choices (req (cancellable servers))
+                 :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                  :msg (msg "trash the approached ICE. The Runner is now running on " target)
                  :effect (req (let [dest (server->zone state target)]
                                 (trash state side current-ice)
@@ -146,6 +146,19 @@
                                                              (shuffle! state side :deck)
                                                              (clear-wait-prompt state :corp)
                                                              (effect-completed state side eid card))} card nil))}}}
+
+   "Azmari EdTech: Shaping the Future"
+   (let [choose-type {:prompt "Name a Runner card type"
+                      :choices ["Event" "Resource" "Program" "Hardware"]
+                      :effect (effect (update! (assoc card :az-target target))
+                                      (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
+         check-type {:req (req (is-type? target (:az-target card)))
+                     :effect (effect (gain :corp :credit 2))
+                     :once :per-turn
+                     :msg (msg "gain 2 [Credits] from " (:az-target card))}]
+     {:events {:corp-turn-ends choose-type
+               :runner-install check-type
+               :play-event check-type}})
 
    "Blue Sun: Powering the Future"
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
@@ -759,13 +772,16 @@
                                                 card nil))}}}
 
    "Skorpios Defense Systems: Persuasive Power"
-   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted"
+   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted.  Cannot use on in progress run event"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
-                 :once :per-turn
                  :delayed-completion true
                  :effect (effect (show-wait-prompt :runner "Corp to use Skorpios' ability")
                                  (continue-ability {:prompt "Choose a card in the Runner's Heap that was just trashed"
-                                                    :choices (req (cancellable (:discard runner)))
+                                                    :once :per-turn
+                                                    :choices (req (cancellable
+                                                                    ; do not allow a run event in progress to get nuked #2963
+                                                                    (remove #(= (:cid %) (get-in @state [:run :run-effect :card :cid]))
+                                                                            (:discard runner))))
                                                     :msg (msg "remove " (:title target) " from the game")
                                                     :effect (req (move state :runner target :rfg)
                                                                  (clear-wait-prompt state :runner)

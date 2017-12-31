@@ -18,6 +18,10 @@ dependencies:
 
 test:
   override:
+    - lein compile jinteki.cards
+    - lein compile jinteki.decks
+    - lein compile jinteki.nav
+    - lein compile jinteki.utils
     - lein compile game.main
     - lein compile game-test.core
     - lein compile game-test.cards.agendas
@@ -31,8 +35,20 @@ test:
     - lein compile game-test.cards.programs
     - lein compile game-test.cards.resources
     - lein compile game-test.cards.upgrades
+    - lein compile web.db
+    - lein compile web.ws
+    - lein compile web.data
+    - lein compile web.admin
     - lein compile web.pages
+    - lein compile web.decks
+    - lein compile web.lobby
     - lein compile web.game
+    - lein compile web.chat
+    - lein compile web.auth
+    - lein compile web.news
+    - lein compile web.config
+    - lein compile web.stats
+    - lein compile web.utils
     - lein compile web.api
     - lein compile web.core
     - lein test game-test.core

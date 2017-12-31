@@ -305,3 +305,12 @@
     (if typing
       (core/typing state side {:user user})
       (core/typingstop state side {:user user}))))
+
+(defn handle-rejoin
+  [state {:keys [_id username] :as user}]
+  (when-let [side (cond
+                    (= _id (get-in @state [:corp :user :_id])) :corp
+                    (= _id (get-in @state [:runner :user :_id])) :runner
+                    :else nil)]
+    (swap! state assoc-in [side :user] user)
+    (handle-notification state (str username " rejoined the game."))))

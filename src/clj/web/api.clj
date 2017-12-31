@@ -10,17 +10,15 @@
             [web.stats :as stats]
             [web.admin :as admin]
             [web.news :as news]
-            [cheshire.core :refer [generate-string]]
-            [cheshire.generate :refer [add-encoder encode-str]]
+            [web.decks :as decks]
             [compojure.route :as route]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-params wrap-json-response]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
-            [hiccup.page :as hiccup]
             [web.db :refer [db]]
-            [monger.collection :as mc]
+            [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.core :refer [defroutes wrap-routes GET POST DELETE PUT]]            ))
 
 (add-encoder org.bson.types.ObjectId encode-str)
@@ -32,7 +30,8 @@
            (GET "/check/:username" [] auth/check-username-handler)
 
            (GET "/data/cards" [] data/cards-handler)
-           (GET "/data/altarts" [] data/alt-arts-handler)
+           (GET "/data/cards/version" [] data/cards-version-handler)
+           (GET "/data/cards/altarts" [] data/alt-arts-handler)
 
            (GET "/data/news" [] news/news-handler)
            (GET "/data/sets" [] data/sets-handler)
@@ -64,10 +63,10 @@
            (DELETE "/profile/stats/user" [] stats/clear-userstats-handler)
            (DELETE "/profile/stats/deck/:id" [] stats/clear-deckstats-handler)
 
-           (GET "/data/decks" [] data/decks-handler)
-           (POST "/data/decks" [] data/decks-create-handler)
-           (PUT "/data/decks" [] data/decks-save-handler)
-           (DELETE "/data/decks/:id" [] data/decks-delete-handler))
+           (GET "/data/decks" [] decks/decks-handler)
+           (POST "/data/decks" [] decks/decks-create-handler)
+           (PUT "/data/decks" [] decks/decks-save-handler)
+           (DELETE "/data/decks/:id" [] decks/decks-delete-handler))
 
 (defroutes routes
            (-> user-routes

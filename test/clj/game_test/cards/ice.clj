@@ -704,7 +704,7 @@
              (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
 
 (deftest snowflake
-  ;; Snowflake - Win a psi game_test to end the run
+  ;; Snowflake - Win a psi game to end the run
   (do-game
     (new-game (default-corp [(qty "Snowflake" 1)])
               (default-runner))
@@ -779,9 +779,10 @@
         (core/derez state :corp (refresh ti))
         (is (= 2 (count (:hosted (refresh ti)))) "2 cards on Tithonium")
         (run-on state "HQ")
-        (card-subroutine state :corp ti 1)
+        (card-subroutine state :corp ti 2)
         (prompt-select :corp (refresh wast))
         (is (= 1 (count (:discard (get-runner)))) "1 card trashed")
+        (card-subroutine state :corp ti 1)
         (is (not (:run @state)) "Run ended")))))
 
 (deftest tithonium-oversight-ai

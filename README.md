@@ -19,10 +19,8 @@ http://www.jinteki.net
 
 ## Dependencies
 
-* Node.js, Node Package Manager
 * Leiningen (version 2+)
 * MongoDB
-* Zero MQ
 
 
 ## Installation
@@ -37,7 +35,7 @@ Launch MongoDB and fetch card data:
 
 ```
 $ mongod
-$ npm run fetch
+$ lein fetch
 ```
 
 Compile and watch client side ClojureScript files:
@@ -54,9 +52,14 @@ $ lein uberjar
 
 Launch web server:
 
-```
-$ java -jar target/netrunner-standalone.jar
-```
+* As a standalone process:
+    ```
+    $ java -jar target/netrunner-standalone.jar
+    ```
+* OR (recommended for development) as  REPL process:
+    ```
+    $ lein repl
+    ```
 
 
 ## Tests

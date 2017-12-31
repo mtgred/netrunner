@@ -217,6 +217,11 @@
   [state side title]
   (core/trash state side (find-card title (get-in @state [side :hand]))))
 
+(defn trash-resource
+  "Trash specified card from rig of the runner"
+  [state title]
+  (core/trash state :runner (find-card title (get-in @state [:runner :rig :resource]))))
+
 (defn starting-hand
   "Moves all cards in the player's hand to their draw pile, then moves the specified card names
   back into the player's hand."

@@ -460,8 +460,8 @@
       (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
       (prompt-choice :corp "2 [Credits]")
       (prompt-choice :runner "1 [Credits]")
-      (is (= 5 (:credit (get-runner))) "Runner spend bad pub credit on psi game_test")
-      (is (= 3 (:credit (get-corp))) "Corp spent 2 on psi game_test"))))
+      (is (= 5 (:credit (get-runner))) "Runner spend bad pub credit on psi game")
+      (is (= 3 (:credit (get-corp))) "Corp spent 2 on psi game"))))
 
 (deftest purge-nested
   ;; Purge nested-hosted virus counters
