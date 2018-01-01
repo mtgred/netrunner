@@ -866,6 +866,32 @@
    "Laguna Velasco District"
    {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
 
+   "Lewi Guilherme"
+   (let [ability {:once :per-turn
+                  :delayed-completion true
+                  :effect (req (if (zero? (:credit runner))
+                                 (do (trash state side card)
+                                     (system-msg state side "must trash Lewi Guilherme")
+                                     (effect-completed state side eid))
+                                 (continue-ability
+                                   state side
+                                   {:optional {:once :per-turn
+                                               :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
+                                               :yes-ability {:effect (effect (lose :credit 1)
+                                                                             (system-msg "pays 1 [Credits] to keep Lewi Guilherme"))}
+                                               :no-ability {:effect (effect (trash card)
+                                                                            (system-msg "trashed Lewi Guilherme"))}}}
+                                   card nil)))}]
+   {:flags {:drip-economy true ;; for Drug Dealer
+            :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
+                                                      (all-installed state :runner)))))}
+
+    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
+    :effect (effect (lose :corp :hand-size-modification 1))
+    :leave-play (effect (gain :corp :hand-size-modification 1))
+    :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
+    :events {:runner-turn-begins ability}})
+
    "Levy Advanced Research Lab"
    (letfn [(lab-keep [cards]
              {:prompt "Choose a Program to keep"
