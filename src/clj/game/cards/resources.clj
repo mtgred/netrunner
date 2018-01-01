@@ -147,7 +147,8 @@
                                       (installed? %)
                                       (= "Runner" (:side %)))}
                  :effect (req (if (or (is-type? target "Event")
-                                      (has-subtype? target "Console"))
+                                      (and (has-subtype? target "Console")
+                                           (some #(has-subtype? % "Console") (all-installed state :runner))))
                                 ;; Consoles and events are immediately unpreventably trashed.
                                 (trash state side target {:unpreventable true})
                                 ;; Other cards are moved to rig and have events wired.
@@ -869,19 +870,15 @@
    "Lewi Guilherme"
    (let [ability {:once :per-turn
                   :delayed-completion true
-                  :effect (req (if (zero? (:credit runner))
-                                 (do (trash state side card)
-                                     (system-msg state side "must trash Lewi Guilherme")
-                                     (effect-completed state side eid))
-                                 (continue-ability
-                                   state side
-                                   {:optional {:once :per-turn
-                                               :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
-                                               :yes-ability {:effect (effect (lose :credit 1)
-                                                                             (system-msg "pays 1 [Credits] to keep Lewi Guilherme"))}
-                                               :no-ability {:effect (effect (trash card)
-                                                                            (system-msg "trashed Lewi Guilherme"))}}}
-                                   card nil)))}]
+                  :optional {:once :per-turn
+                             :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
+                             :yes-ability {:effect (req (if (pos? (:credit runner))
+                                                          (do (lose state side :credit 1)
+                                                              (system-msg state side "pays 1 [Credits] to keep Lewi Guilherme"))
+                                                          (do (trash state side card)
+                                                              (system-msg state side "must trash Lewi Guilherme"))))}
+                             :no-ability {:effect (effect (trash card)
+                                                          (system-msg "chooses to trash Lewi Guilherme"))}}}]
    {:flags {:drip-economy true ;; for Drug Dealer
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                       (all-installed state :runner)))))}
