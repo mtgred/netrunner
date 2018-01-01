@@ -1073,4 +1073,10 @@
 
    "Window"
    {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of their Stack"
-                 :effect (effect (move (last (:deck runner)) :hand))}]}})
+                 :effect (effect (move (last (:deck runner)) :hand))}]}
+
+   "Zamba"
+   {:in-play [:memory 2]
+    :events {:expose {:optional {:prompt "Gain 1 [Credits] from Zamba?"
+                                 :yes-ability {:effect (effect (gain :credit 1))
+                                               :msg "gain 1 [Credits]"}}}}}})
