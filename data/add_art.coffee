@@ -75,6 +75,9 @@ add_replacement_art = (callback) ->
           throw(err) if err
           replaced = replaced_card[0]
           if replaced and replaced.alt_art
+            if card.alt_art
+              Object.assign(replaced.alt_art, card.alt_art)
+
             db.collection('cards').update {code: card.code}, {'$set': {alt_art: replaced.alt_art}},
               (err, update_result) ->
                 throw(err) if err
