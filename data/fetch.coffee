@@ -95,7 +95,8 @@ cardFields = {
   "trash_cost" : rename("trash"),
   "deck_limit" : rename("limited"),
   "quantity" : rename("packquantity"),
-  "rotated" : same
+  "rotated" : same,
+  "image_url" : same
 }
 
 baseurl = "http://netrunnerdb.com/api/2.0/public/"
@@ -140,11 +141,11 @@ fetchSets = (callback) ->
             console.log("#{sets.length} sets fetched")
           callback(null, sets.length)
 
-fetchImg = (urlPath, code, imgPath, t) ->
+fetchImg = (urlTemplate, card, localPath, t) ->
   setTimeout ->
-    console.log("Downloading image for " + code)
-    url = urlPath.replace("{code}", code)
-    request(url).pipe(fs.createWriteStream(imgPath))
+    console.log("Downloading image for " + card.code)
+    url = if card.image_url then card.image_url else urlTemplate.replace("{code}", card.code)
+    request(url).pipe(fs.createWriteStream(localPath))
   , t
 
 fetchCards = (callback) ->
@@ -166,7 +167,7 @@ fetchCards = (callback) ->
       for card in cards
         imgPath = path.join(imgDir, "#{card.code}.png")
         if !fs.existsSync(imgPath)
-          fetchImg(res.imageUrlTemplate, card.code, imgPath, i++ * 200)
+          fetchImg(res.imageUrlTemplate, card, imgPath, i++ * 200)
 
       db.collection("cards").remove ->
         db.collection("cards").insert cards, (err, result) ->
