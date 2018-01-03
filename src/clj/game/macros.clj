@@ -44,6 +44,9 @@
                                                         (get-card state (:host card)) card)))]
                             (empty? (get-in @state [:corp :servers server :ices])))
             'runnable-servers '(zones->sorted-names (get-runnable-zones @state))
+            'hq-runnable '(not (:hq (get-in runner [:register :cannot-run-on-server])))
+            'rd-runnable '(not (:rd (get-in runner [:register :cannot-run-on-server])))
+            'archives-runnable '(not (:archives (get-in runner [:register :cannot-run-on-server])))
             'tagged '(or (> (:tagged runner) 0) (> (:tag runner) 0))
             'has-bad-pub '(or (> (:bad-publicity corp) 0) (> (:has-bad-pub corp) 0))
             'this-server '(let [s (-> card :zone rest butlast)
