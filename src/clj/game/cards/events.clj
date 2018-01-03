@@ -104,6 +104,16 @@
    {:msg "gain 1 [Credits] and draw 2 cards"
     :effect (effect (gain :credit 1) (draw 2))}
 
+   "By Any Means"
+   {:effect (effect (register-events (:events (card-def card))
+                                     (assoc card :zone '(:discard))))
+    :events {:runner-turn-ends {:effect (effect (unregister-events card))}
+             :pre-access-card {:req (req (not= [:discard] (:zone target)))
+                               :delayed-completion true
+                               :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
+                               :effect (effect (trash (assoc target :seen true))
+                                               (damage :runner eid :meat 1 {:unboostable true}))}}}
+
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
                                      (all-installed state :runner))) " [Credits]")
