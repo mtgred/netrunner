@@ -121,17 +121,23 @@
    {:events {:corp-install
              {:delayed-completion true
               :req (req (first-event? state :corp :corp-install))
-              :effect (req (let [installed-card target]
+              :effect (req (let [installed-card target
+                                 z (butlast (:zone installed-card))]
+                             (prn z)
                              (continue-ability
                                state side
-                               {:prompt "Select a non-agenda card in HQ to install (optional)"
+                               {:prompt (str "Select a "
+                                             (if (is-remote? z)
+                                               "non-agenda"
+                                               "piece of ice")
+                                             " in HQ to install with Asa Group: Security Through Vigilance (optional)")
                                 :delayed-completion true
                                 :choices {:req #(and (in-hand? %)
                                                      (= (:side %) "Corp")
                                                      (not (is-type? % "Agenda"))
-                                                     (or (is-remote? (:zone installed-card))
+                                                     (or (is-remote? z)
                                                          (ice? %)))}
-                                :effect (effect (corp-install eid target (zone->name installed-card) nil))}
+                                :effect (effect (corp-install eid target (zone->name z) nil))}
                                card nil)))}}}
 
    "Ayla \"Bios\" Rahim: Simulant Specialist"
