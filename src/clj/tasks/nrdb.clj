@@ -61,7 +61,7 @@
   :faction_code (fn [[k v]] [:faction (faction-map v)])
   :faction_cost (rename :factioncost)
   :position (rename :number)
-  :pack_code identity
+  :pack_code (rename :set_code)
   :cycle_code  identity
   :side_code  (fn [[k v]] [:side (string/capitalize v)])
   :uniqueness  identity
@@ -141,15 +141,25 @@
   (let [normalized (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)]
     (string/replace normalized #"\p{InCombiningDiacriticalMarks}+" "")))
 
+(defn- prune-null-fields
+  "Remove specified fields if the value is nil"
+  [c fields]
+  (reduce (fn [acc k]
+            (if (nil? (c k))
+              (dissoc acc k)
+              acc))
+          c fields))
+
 (defn- add-card-fields
   "Add additional fields to the card documents"
   [set-map c]
-  (let [s (set-map (:pack_code c))]
-    (assoc c :setname (:name s)
-           :cycle_code (:cycle_code s)
-           :rotated (:rotated s)
-           :normalizedtitle (string/lower-case (deaccent (:title c)))
-           :set_code (:pack_code c))))
+  (let [s (set-map (:set_code c))]
+    (-> c
+      (prune-null-fields [:influencelimit :strength])
+      (assoc :setname (:name s)
+             :cycle_code (:cycle_code s)
+             :rotated (:rotated s)
+             :normalizedtitle (string/lower-case (deaccent (:title c)))))))
 
 (defn fetch-data
   "Read NRDB json data. Modify function is mapped to all elements in the data collection."
@@ -161,34 +171,52 @@
     (collection-function collection data-list)
     (make-map-by-code data-list))))
 
+(defn rotate-cards
+  "Added rotation fields to cards"
+  [acc [_title prev curr]]
+  (-> acc
+    (assoc-in [prev :replaced_by] curr)
+    (assoc-in [curr :replaces] prev)))
+
 (defn fetch-cards
   "Find the NRDB card json files and import them."
-  [{:keys [collection path] :as card-table} set-future]
-  (do
+  [{:keys [collection path] :as card-table} sets]
+  (let [cards (->> "pack"
+                (str base-path)
+                clojure.java.io/file
+                .list
+                (map (partial str "pack/"))
+                (map #(fetch-data (assoc card-table :path %)
+                                  (partial add-card-fields sets)
+                                  (fn [c d] true)))
+                (apply merge))
+        cards-replaced (->> cards
+                         vals
+                         (group-by :title)
+                         (filter (fn [[k v]] (>= (count v) 2)))
+                         vals
+                         (map (fn [[c1 c2]] [(:title c1)
+                                             (if (:rotated c1) (:code c1) (:code c2))
+                                             (if (:rotated c1) (:code c2) (:code c1))]))
+                         (reduce rotate-cards cards)
+                           )]
     (mc/remove db collection)
-    (->> "pack"
-      (str base-path)
-      clojure.java.io/file
-      .list
-      (map (partial str "pack/"))
-      (map #(fetch-data (assoc card-table :path %)
-                        (partial add-card-fields @set-future)
-                        (fn [c d] (mc/insert-batch db c d))))
-      (apply merge))))
+    (mc/insert-batch db collection (vals cards-replaced))
+    cards-replaced))
 
 (defn fetch
   "Import data from NetrunnerDB"
   []
   (webdb/connect)
   (try
-    (let [cycle-future (future (fetch-data (:cycle tables)))
-          mwl-future (future (fetch-data (:mwl tables)))
-          set-future (future (fetch-data (:set tables) (partial add-set-fields @cycle-future)))
-          card-future (future (fetch-cards (:card tables) set-future))]
-      (println (count @cycle-future) "cycles imported")
-      (println (count @set-future) "sets imported")
-      (println (count @mwl-future) "MWL versions imported")
-      (println (count @card-future) "cards imported"))
+    (let [cycles (fetch-data (:cycle tables))
+          mwls (fetch-data (:mwl tables))
+          sets (fetch-data (:set tables) (partial add-set-fields cycles))
+          cards (fetch-cards (:card tables) sets)]
+      (println (count cycles) "cycles imported")
+      (println (count sets) "sets imported")
+      (println (count mwls) "MWL versions imported")
+      (println (count cards) "cards imported"))
     (catch Exception e (println "Import data failed:" (.getMessage e)))
     (finally (webdb/disconnect))))
 
@@ -198,14 +226,13 @@
     (do
       (println "Different number of elements in collections")
       false)
-    (let [c1-data (sort-by k (map #(dissoc % :_id) (mc/find-maps db c1)))
-          c2-data (sort-by k (map #(dissoc % :_id) (mc/find-maps db c2)))]
-      (if (not= c2-data c1-data)
-        (let [[c1-uniq c2-uniq both] (data/diff c1-data c2-data)]
-          (println "Only in" c1 "(" (count c1-uniq) ")")
-          (pprint c1-uniq)
-          (println "\n\nOnly in" c2 "(" (count c2-uniq) ")")
-          (pprint c2-uniq)
+    (let [c1-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id) (mc/find-maps db c1))))
+          c2-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id) (mc/find-maps db c2))))
+          zipped (filter (fn [[x y]] (not= x y)) (map vector c1-data c2-data))]
+      (if (not-empty zipped)
+        (do
+          (println "First mismatch:")
+          (pprint (first zipped))
           false)
         true))))
 
@@ -224,7 +251,7 @@
     (println "\tOK")
     (println "\tFailed"))
   (println "Cards")
-  (if (compare-collections "cards" "clj_cards" :title)
+  (if (compare-collections "cards" "clj_cards" :code)
     (println "\tOK")
     (println "\tFailed"))
   )
