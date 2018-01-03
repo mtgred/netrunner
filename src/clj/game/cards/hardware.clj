@@ -1076,7 +1076,7 @@
                  :effect (effect (move (last (:deck runner)) :hand))}]}
 
    "Zamba"
-   {:in-play [:memory 2]
-    :events {:expose {:optional {:prompt "Gain 1 [Credits] from Zamba?"
-                                 :yes-ability {:effect (effect (gain :credit 1))
-                                               :msg "gain 1 [Credits]"}}}}}})
+   {:implementation "Credit gain is automatic"
+    :in-play [:memory 2]
+    :events {:expose {:effect (effect (gain :credit 1))
+                      :msg "gain 1 [Credits]"}}}})

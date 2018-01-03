@@ -123,7 +123,6 @@
               :req (req (first-event? state :corp :corp-install))
               :effect (req (let [installed-card target
                                  z (butlast (:zone installed-card))]
-                             (prn z)
                              (continue-ability
                                state side
                                {:prompt (str "Select a "
