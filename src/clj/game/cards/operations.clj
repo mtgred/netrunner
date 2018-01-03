@@ -873,8 +873,7 @@
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
    "Preemptive Action"
-   {:msg "remove Preemptive Action from the game"
-    :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
+   {:effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
 
    "Priority Construction"
    (letfn [(install-card [chosen]
