@@ -483,6 +483,12 @@
      {:delayed-completion true
       :effect (effect (continue-ability (fhelper 1) card nil))})
 
+   "Genotyping"
+   {:delayed-completion true
+    :effect (effect (mill 2)
+                    (system-msg "trashes the top 2 cards of R&D")
+                    (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4))}
+
    "Green Level Clearance"
    {:msg "gain 3 [Credits] and draw 1 card"
     :effect (effect (gain :credit 3) (draw))}
