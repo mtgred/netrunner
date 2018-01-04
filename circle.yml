@@ -9,7 +9,7 @@ jobs:
       - checkout
       - restore_cache:
           key: card-images
-      - run: sudo 'npm install --global coffee-script'
+      - run: npm install coffee-script
       - run: npm run fetch
       - save_cache:
           paths:
