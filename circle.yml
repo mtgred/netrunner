@@ -8,14 +8,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: card-images
+          key: card-images-{{ checksum "package.json" }}
       - run: npm install coffee-script
+      - run: npm install bower
       - run: npm install
       - run: npm run fetch
       - save_cache:
           paths:
-            - ~/resources/public/img/cards
-          key: card-images
+            - ~/project/node_modules
+            - ~/project/resources/public/img/cards
+            - /data/db
+          key: card-images-{{ checksum "package.json" }}
 
   build:
     docker:
@@ -28,11 +31,13 @@ jobs:
       - checkout
       - restore_cache:
           key: lein-deps-{{ checksum "project.clj" }}
+      - restore_cache:
+          key: card-images-{{ checksum "package.json" }}
       - run: lein deps
       - save_cache:
           paths:
-            - ~/.m2
-            - ~/.lein
+            - ~/project/.m2
+            - ~/project/.lein
           key: lein-deps-{{ checksum "project.clj" }}
       - run: lein do test, uberjar
       - store_artifacts:

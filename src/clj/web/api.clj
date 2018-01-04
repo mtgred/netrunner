@@ -18,6 +18,7 @@
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
             [web.db :refer [db]]
+            [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.core :refer [defroutes wrap-routes GET POST DELETE PUT]]            ))
 
 (add-encoder org.bson.types.ObjectId encode-str)
