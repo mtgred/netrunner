@@ -382,7 +382,9 @@
                                                                          (trash state side card {:cause :self-trash}))
                                                                        (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
                                {:pass-ice encounter-ends-effect
-                                :run-ends encounter-ends-effect})})
+                                :run-ends encounter-ends-effect})
+                     :move-zone (req (when (= [:discard] (:zone card))
+                                       (update! state side (dissoc card :crypsis-broke))))})
 
    "Cyber-Cypher"
    (auto-icebreaker ["Code Gate"]

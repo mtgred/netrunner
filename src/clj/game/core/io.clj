@@ -130,7 +130,9 @@
                                      (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter c-type)]
                     (cond advance (set-adv-counter state side target value)
-                          (not c-type) (toast state side "You need to specify a counter type for that card." "error"
+                          (not c-type) (toast state side (str "Could not infer what counter type you mean. Please specify one manually, by typing "
+                                                              "'/counter TYPE " value "', where TYPE is advance, agenda, credit, power, or virus.")
+                                              "error"
                                               {:time-out 0 :close-button true})
                           :else (do (set-prop state side target :counter (merge (:counter target) {c-type value}))
                                     (system-msg state side (str "sets " (name c-type) " counters to " value " on "

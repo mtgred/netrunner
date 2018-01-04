@@ -1611,7 +1611,8 @@
                    :prompt "Choose a card hosted on The Supplier to install"
                    :req (req (some #(can-pay? state side nil (modified-install-cost state side % [:credit -2]))
                                         (:hosted card)))
-                   :choices {:req #(= "The Supplier" (:title (:host %)))}
+                   :choices {:req #(and (= "The Supplier" (:title (:host %)))
+                                        (= "Runner" (:side %)))}
                    :effect (req
                              (runner-can-install? state side target nil)
                              (when (and (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
