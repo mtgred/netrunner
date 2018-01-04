@@ -57,7 +57,8 @@
                        (trash state side current)))
                    (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
                          moved-card (move state side c :current)]
-                     (card-init state side eid moved-card true)))
+                     (card-init state side eid moved-card {:resolve-effect true
+                                                           :init-data true})))
                (do (resolve-ability state side (assoc cdef :eid eid) card nil)
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
                      (move state side c :discard))

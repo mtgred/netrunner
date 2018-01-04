@@ -265,6 +265,15 @@
 (defn ice? [card]
   (is-type? card "ICE"))
 
+(defn program? [card]
+  (is-type? card "Program"))
+
+(defn hardware? [card]
+  (is-type? card "Hardware"))
+
+(defn resource? [card]
+  (is-type? card "Resource"))
+
 (defn rezzed? [card]
   (:rezzed card))
 
@@ -324,7 +333,7 @@
 (defn can-rez?
   "Checks if the card can be rezzed. Toasts the reason if not."
   ([state side card] (can-rez? state side card nil))
-  ([state side card _]
+  ([state side card {:keys [ignore-unique] :as args}]
    (let [reason (can-rez-reason state side card)
          reason-toast #(do (toast state side %) false)
          title (:title card)]
@@ -337,8 +346,9 @@
        :run-flag false
        :turn-flag false
        ;; Uniqueness
-       :unique (reason-toast (str "Cannot rez a second copy of " title " since it is unique. Please trash the other"
-                                  " copy first"))
+       :unique (or ignore-unique
+                   (reason-toast (str "Cannot rez a second copy of " title " since it is unique. Please trash the other"
+                                      " copy first")))
        ;; Rez requirement
        :req (reason-toast (str "Rez requirements for " title " are not fulfilled"))))))
 
