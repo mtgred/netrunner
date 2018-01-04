@@ -67,6 +67,7 @@
                         [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]
                         [:li [:code "/rez-all"] " - Rez all cards, ignoring all costs and flip cards in archives faceup (Corp only). For revealing your servers at the end of a game."]
                         [:li [:code "/rfg"] " - Select a card to remove from the game"]
+                        [:li [:code "/facedown"] " - Select a card to install facedown in your rig (Runner only)"]
                         [:li [:code "/roll n"] " - Roll an n-sided die"]
                         [:li [:code "/tag n"] " - Set your tags to n"]
                         [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]

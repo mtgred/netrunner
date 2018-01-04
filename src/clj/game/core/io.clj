@@ -140,6 +140,14 @@
      :choices {:req (fn [t] (card-is? t :side side))}}
     {:title "/counter command"} nil))
 
+(defn command-facedown [state side]
+  (resolve-ability state side
+                   {:prompt "Select a card to install facedown"
+                    :choices {:req #(and (= (:side %) "Runner")
+                                         (in-hand? %))}
+                    :effect (effect (runner-install target {:facedown true}))}
+                   {:title "/faceup command"} nil))
+
 (defn command-counter [state side args]
   (if (= 1 (count args))
     (command-counter-smart state side args)
@@ -241,6 +249,8 @@
                                                           (move %1 %2 c :rfg)))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/rfg command"} nil)
+          "/facedown"   #(when (= %2 :runner)
+                           (command-facedown %1 %2))
           "/roll"       #(command-roll %1 %2 value)
           "/tag"        #(swap! %1 assoc-in [%2 :tag] (max 0 value))
           "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
