@@ -10,6 +10,7 @@ jobs:
       - restore_cache:
           key: card-images
       - run: npm install coffee-script
+      - run: npm install
       - run: npm run fetch
       - save_cache:
           paths:
