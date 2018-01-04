@@ -105,6 +105,16 @@
    {:msg "gain 1 [Credits] and draw 2 cards"
     :effect (effect (gain :credit 1) (draw 2))}
 
+   "By Any Means"
+   {:effect (effect (register-events (:events (card-def card))
+                                     (assoc card :zone '(:discard))))
+    :events {:runner-turn-ends {:effect (effect (unregister-events card))}
+             :pre-access-card {:req (req (not= [:discard] (:zone target)))
+                               :delayed-completion true
+                               :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
+                               :effect (effect (trash (assoc target :seen true))
+                                               (damage :runner eid :meat 1 {:unboostable true}))}}}
+
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
                                      (all-installed state :runner))) " [Credits]")
@@ -187,7 +197,7 @@
       :recurring 4
       :choices (req runnable-servers)
       :effect (req (let [c (move state side (assoc card :zone '(:discard)) :play-area {:force true})]
-                     (card-init state side c false)
+                     (card-init state side c {:resolve-effect false})
                      (game.core/run state side (make-eid state) target
                                     {:end-run {:delayed-completion true
                                                :effect (effect (trash c)
@@ -304,7 +314,7 @@
                     (prompt! card (str "Click Demolition Run in the Temporary Zone to trash a card being accessed at no cost") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
-                                      (card-init state side c false)
+                                      (card-init state side c {:resolve-effect false})
                                       (register-events state side
                                                        {:run-ends {:effect (effect (trash c))}} c)))}
                      card nil))
@@ -363,7 +373,7 @@
                     (prompt! card (str "Click Diana's Hunt in the Temporary Zone to install a Program") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
-                                      (card-init state side c false)
+                                      (card-init state side c {:resolve-effect false})
                                       (register-events state side
                                                        {:run-ends {:effect (req (let [hunt (:diana @state)]
                                                                                   (doseq [c hunt]

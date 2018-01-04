@@ -265,6 +265,15 @@
 (defn ice? [card]
   (is-type? card "ICE"))
 
+(defn program? [card]
+  (is-type? card "Program"))
+
+(defn hardware? [card]
+  (is-type? card "Hardware"))
+
+(defn resource? [card]
+  (is-type? card "Resource"))
+
 (defn rezzed? [card]
   (:rezzed card))
 

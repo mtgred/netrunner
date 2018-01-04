@@ -254,6 +254,11 @@
     :deck [:servers :rd]
     nil))
 
+(defn type->rig-zone
+  "Converts a runner's card type to a vector zone, e.g. 'Program' -> [:rig :program]"
+  [type]
+  (vec [:rig (-> type .toLowerCase keyword)]))
+
 (defn get-server-type [zone]
   (or (#{:hq :rd :archives} zone) :remote))
 

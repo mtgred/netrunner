@@ -217,6 +217,13 @@
                                                     (get-card state card)))}
     :events {:pre-rez nil :runner-turn-ends nil :corp-turn-ends nil}}
 
+   "Cyberdelia"
+   {:implementation "Credit gain is manually triggered."
+    :in-play [:memory 1]
+    :abilities [{:msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
+                 :once :per-turn
+                 :effect (effect (gain :credit 1))}]}
+
    "Cyberfeeder"
    {:recurring 1}
 
@@ -1066,4 +1073,10 @@
 
    "Window"
    {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of their Stack"
-                 :effect (effect (move (last (:deck runner)) :hand))}]}})
+                 :effect (effect (move (last (:deck runner)) :hand))}]}
+
+   "Zamba"
+   {:implementation "Credit gain is automatic"
+    :in-play [:memory 2]
+    :events {:expose {:effect (effect (gain :credit 1))
+                      :msg "gain 1 [Credits]"}}}})

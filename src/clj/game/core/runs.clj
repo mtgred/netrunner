@@ -252,8 +252,13 @@
                      (do (let [acost (access-cost state side c)
                                ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
                                anon-card (dissoc c :title)]
-                           (if (or (empty? acost) (pay state side anon-card acost))
+                           (cond
+                             ;; Check if a pre-access-card effect trashed the card (By Any Means)
+                             (not (get-card state c))
+                             (effect-completed state side eid)
+
                              ;; Either there were no access costs, or the runner could pay them.
+                             (or (empty? acost) (pay state side anon-card acost))
                              (let [cdef (card-def c)
                                    c (assoc c :seen true)
                                    access-effect (:access cdef)]
@@ -282,6 +287,8 @@
                                                            (access-non-agenda state side eid c)
                                                            (effect-completed state side eid))))
                                      (access-non-agenda state side eid c)))))
+
+                             :else
                              ;; The runner cannot afford the cost to access the card
                              (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})))
                          (trigger-event state side :post-access-card c))))))
