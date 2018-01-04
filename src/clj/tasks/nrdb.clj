@@ -3,6 +3,7 @@
   (:require [org.httpkit.client :as http]
             [web.db :refer [db] :as webdb]
             [monger.collection :as mc]
+            [throttler.core :refer [throttle-fn]]
             [clojure.string :as string]
             [clojure.data :as data]
             [clojure.java.io :as io]
@@ -204,7 +205,10 @@
 (defn- download-card-image
   "Download a single card image from NRDB"
   [acc card]
-  (conj acc [card (http/get (:image_url card) {:as :byte-array})]))
+  (println "Downloading: " (:title card))
+  (concat acc (list [card (http/get (:image_url card) {:as :byte-array :timeout 120000})])))
+
+(def download-card-image-throttled (throttle-fn download-card-image 5 :second))
 
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
@@ -218,7 +222,7 @@
            missing (count missing-cards)]
        (when (> missing 0)
          (println "Downloading art for" missing "cards...")
-         (let [futures (reduce download-card-image nil missing-cards)]
+         (let [futures (reduce download-card-image-throttled nil missing-cards)]
            (doseq [[card resp] futures]
              (let [status (:status @resp)]
                (cond

@@ -30,6 +30,7 @@
                  [me.bsima/trello "0.3.0"]
                  [clj-time "0.14.2"]
                  [com.draines/postal "2.0.2"]
+                 [throttler "1.0.0"]
                  [clj-http "3.7.0"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
