@@ -5,6 +5,7 @@
             [monger.collection :as mc]
             [clojure.string :as string]
             [clojure.data :as data]
+            [clojure.java.io :as io]
             [clojure.pprint :refer [pprint] :as pprint]
             [cheshire.core :as json]))
 
@@ -47,30 +48,31 @@
 
 (def card-fields
   {
-  :code identity
-  :title identity
-  :type_code  (fn [[k v]] [:type (if (= v "ice") "ICE" (string/capitalize v))])
-  :keywords (rename :subtype)
-  :text  identity
-  :cost  (fn [[k v]] [:cost (if (nil? v) 0 v)])
-  :advancement_cost (rename :advancementcost)
-  :agenda_points (rename :agendapoints)
-  :base_link (rename :baselink)
-  :influence_limit (rename :influencelimit)
-  :minimum_deck_size (rename :minimumdecksize)
-  :faction_code (fn [[k v]] [:faction (faction-map v)])
-  :faction_cost (rename :factioncost)
-  :position (rename :number)
-  :pack_code (rename :set_code)
-  :cycle_code  identity
-  :side_code  (fn [[k v]] [:side (string/capitalize v)])
-  :uniqueness  identity
-  :memory_cost (rename :memoryunits)
-  :strength  identity
-  :trash_cost (rename :trash)
-  :deck_limit (rename :limited)
-  :quantity (rename :packquantity)
-  :rotated  identity
+   :code identity
+   :title identity
+   :type_code  (fn [[k v]] [:type (if (= v "ice") "ICE" (string/capitalize v))])
+   :keywords (rename :subtype)
+   :text  identity
+   :cost  (fn [[k v]] [:cost (if (nil? v) 0 v)])
+   :advancement_cost (rename :advancementcost)
+   :agenda_points (rename :agendapoints)
+   :base_link (rename :baselink)
+   :influence_limit (rename :influencelimit)
+   :minimum_deck_size (rename :minimumdecksize)
+   :faction_code (fn [[k v]] [:faction (faction-map v)])
+   :faction_cost (rename :factioncost)
+   :position (rename :number)
+   :pack_code (rename :set_code)
+   :cycle_code  identity
+   :side_code  (fn [[k v]] [:side (string/capitalize v)])
+   :uniqueness  identity
+   :memory_cost (rename :memoryunits)
+   :strength  identity
+   :trash_cost (rename :trash)
+   :deck_limit (rename :limited)
+   :quantity (rename :packquantity)
+   :rotated  identity
+   :image_url identity
    })
 
 (def ^:const faction-map
@@ -178,12 +180,52 @@
     (assoc-in [prev :replaced_by] curr)
     (assoc-in [curr :replaces] prev)))
 
+(defn- get-uri
+  "Figure out the card art image uri"
+  [card]
+  (if (contains? card :image_url)
+    (:image_url card)
+    (str "https://netrunnerdb.com/card_image/" (:code card) ".png")))
+
+(defn- download-card-image
+  "Download a single card image (if necessary) from NRDB"
+  [acc card]
+  (let [code (:code card)
+        img-path (io/file "resources" "public" "img" "cards" (str code ".png"))
+        uri (get-uri card)]
+    (if-not (.exists img-path)
+      (conj acc [code (.getPath img-path) (http/get uri {:as :byte-array})])
+      acc)))
+
+(defn download-card-images
+  "Download card images (if necessary) from NRDB"
+  [card-map]
+   (let [img-dir (io/file "resources" "public" "img" "cards")
+         cards (vals card-map)]
+     (when-not (.isDirectory img-dir)
+       (println "Creating card images directory [" (.getPath img-dir) "]")
+       (.mkdir img-dir))
+     (let [futures (reduce download-card-image nil cards)
+           missing (count futures)]
+       (when (> missing 0)
+         (println "Downloading art for" missing "cards...")
+         (doseq [[code path resp] futures]
+           (let [status (:status @resp)]
+             (cond
+               (= 404 status) (println "No image for card" code)
+               (= 200 status) (with-open [w (io/output-stream path)]
+                                (println @resp)
+                                (.write w (:body @resp))
+                                (println "Downloaded art for card" code))
+               :else (println "Error downloading art for card" code status))))
+         (println "Finished downloading card art")))))
+  
 (defn fetch-cards
   "Find the NRDB card json files and import them."
   [{:keys [collection path] :as card-table} sets]
   (let [cards (->> "pack"
                 (str base-path)
-                clojure.java.io/file
+                io/file
                 .list
                 (map (partial str "pack/"))
                 (map #(fetch-data (assoc card-table :path %)
@@ -198,10 +240,10 @@
                          (map (fn [[c1 c2]] [(:title c1)
                                              (if (:rotated c1) (:code c1) (:code c2))
                                              (if (:rotated c1) (:code c2) (:code c1))]))
-                         (reduce rotate-cards cards)
-                           )]
+                         (reduce rotate-cards cards))]
     (mc/remove db collection)
     (mc/insert-batch db collection (vals cards-replaced))
+    (download-card-images cards-replaced)
     cards-replaced))
 
 (defn fetch
@@ -217,7 +259,9 @@
       (println (count sets) "sets imported")
       (println (count mwls) "MWL versions imported")
       (println (count cards) "cards imported"))
-    (catch Exception e (println "Import data failed:" (.getMessage e)))
+    (catch Exception e (do
+                         (println "Import data failed:" (.getMessage e))
+                         (.printStackTrace e)))
     (finally (webdb/disconnect))))
 
 (defn compare-collections
