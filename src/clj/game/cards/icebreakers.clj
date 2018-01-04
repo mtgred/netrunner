@@ -724,11 +724,13 @@
                [{:label (str "X [Credits]: +X strength, break X subroutines")
                  :choices {:number (req (:credit runner))
                            :default (req (if current-ice
-                                           (- (:current-strength current-ice)
-                                              (:current-strength card))
+                                           (max (- (:current-strength current-ice)
+                                                   (:current-strength card))
+                                                1)
                                            1))}
                  :prompt "How many credits?"
-                 :effect (effect (pump card target))
+                 :effect (effect (lose :credit target)
+                                 (pump card target))
                  :msg (msg "spend " target " [Credits], increase strength by " target ", and break "
                            (quantify target "Barrier subroutine"))}])
 
