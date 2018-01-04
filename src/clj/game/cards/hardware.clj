@@ -395,16 +395,10 @@
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
 
    "GPI Net Tap"
-   {:abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
+   {:implementation "Trash and jack out effect is manual"
+    :abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
                  :delayed-completion true
-                 :effect (req (when-completed (expose state side current-ice)
-                                              (continue-ability
-                                                state side
-                                                {:optional {:prompt "Trash GPI Net Tap to jack out?"
-                                                            :yes-ability {:msg "trash it and jack out"
-                                                                          :effect (effect (trash card {:unpreventable true})
-                                                                                          (jack-out nil))}}}
-                                                card nil)))}]}
+                 :effect (effect (expose eid current-ice))}]}
 
    "Grimoire"
    {:in-play [:memory 2]
