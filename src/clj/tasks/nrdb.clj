@@ -11,8 +11,8 @@
 
 (declare faction-map)
 
-(def ^:const baseurl "http://netrunnerdb.com/api/2.0/public/")
-(def ^:const base-path "data/netrunner-cards-json/")
+(def ^:const base-url "http://netrunnerdb.com/api/2.0/public/")
+(def ^:const base-image-url "https://netrunnerdb.com/card_image/")
 
 (defmacro rename
   "Rename a card field"
@@ -92,10 +92,10 @@
    })
 
 (def tables
-  {:cycle {:path "cycles.json" :fields cycle-fields :collection "clj_cycles"}
-   :mwl   {:path "mwl.json"    :fields mwl-fields   :collection "clj_mwl"}
-   :set   {:path "packs.json"  :fields set-fields   :collection "clj_sets"}
-   :card  {:path "pack"        :fields card-fields  :collection "clj_cards"}})
+  {:cycle {:path "cycles" :fields cycle-fields :collection "clj_cycles"}
+   :mwl   {:path "mwl"    :fields mwl-fields   :collection "clj_mwl"}
+   :set   {:path "packs"  :fields set-fields   :collection "clj_sets"}
+   :card  {:path "cards"  :fields card-fields  :collection "clj_cards"}})
 
 (defn- translate-fields
   "Modify NRDB json data to our schema"
@@ -107,14 +107,23 @@
                  m))
              {} data))
 
+(defn- parse-response
+  "Parse the http response sent from NRDB"
+  [body fields]
+  (->> body
+    (#(json/parse-string % true))
+    :data
+    (map (partial translate-fields fields))))
+
 (defn- read-nrdb-data
   "Translate data from NRDB"
   [path fields]
-  (->> path
-    (str base-path)
-    slurp
-    (#(json/parse-string % true))
-    (map (partial translate-fields fields))))
+  (println "Downloading" path)
+  (let [{:keys [status body error] :as resp} @(http/get (str base-url path))]
+    (cond
+      error (throw (.Exception (str "Failed to download file" error)))
+      (= 200 status) (parse-response body fields)
+      :else (throw (.Exception (str "Failed to download file, status" status))))))
 
 (defn- replace-collection
   "Remove existing collection and insert new data"
@@ -136,9 +145,8 @@
            :cycle_position (:position c)
            :cycle (:name c))))
 
-;; from http://www.matt-reid.co.uk/blog_post.php?id=69
 (defn deaccent
-  "Remove diacritical marks from a string"
+  "Remove diacritical marks from a string, from http://www.matt-reid.co.uk/blog_post.php?id=69"
   [s]
   (let [normalized (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)]
     (string/replace normalized #"\p{InCombiningDiacriticalMarks}+" "")))
@@ -152,6 +160,13 @@
               acc))
           c fields))
 
+(defn- get-uri
+  "Figure out the card art image uri"
+  [card]
+  (if (contains? card :image_url)
+    (:image_url card)
+    (str base-image-url (:code card) ".png")))
+
 (defn- add-card-fields
   "Add additional fields to the card documents"
   [set-map c]
@@ -161,6 +176,7 @@
       (assoc :setname (:name s)
              :cycle_code (:cycle_code s)
              :rotated (:rotated s)
+             :image_url (get-uri c)
              :normalizedtitle (string/lower-case (deaccent (:title c)))))))
 
 (defn fetch-data
@@ -180,22 +196,15 @@
     (assoc-in [prev :replaced_by] curr)
     (assoc-in [curr :replaces] prev)))
 
-(defn- get-uri
-  "Figure out the card art image uri"
+(defn- card-image-file
+  "Returns the path to a card's image as a File"
   [card]
-  (if (contains? card :image_url)
-    (:image_url card)
-    (str "https://netrunnerdb.com/card_image/" (:code card) ".png")))
+  (io/file "resources" "public" "img" "cards" (str (:code card) ".png")))
 
 (defn- download-card-image
-  "Download a single card image (if necessary) from NRDB"
+  "Download a single card image from NRDB"
   [acc card]
-  (let [code (:code card)
-        img-path (io/file "resources" "public" "img" "cards" (str code ".png"))
-        uri (get-uri card)]
-    (if-not (.exists img-path)
-      (conj acc [code (.getPath img-path) (http/get uri {:as :byte-array})])
-      acc)))
+  (conj acc [card (http/get (:image_url card) {:as :byte-array})]))
 
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
@@ -205,33 +214,27 @@
      (when-not (.isDirectory img-dir)
        (println "Creating card images directory [" (.getPath img-dir) "]")
        (.mkdir img-dir))
-     (let [futures (reduce download-card-image nil cards)
-           missing (count futures)]
+     (let [missing-cards (remove #(.exists (card-image-file %)) cards)
+           missing (count missing-cards)]
        (when (> missing 0)
          (println "Downloading art for" missing "cards...")
-         (doseq [[code path resp] futures]
-           (let [status (:status @resp)]
-             (cond
-               (= 404 status) (println "No image for card" code)
-               (= 200 status) (with-open [w (io/output-stream path)]
-                                (println @resp)
-                                (.write w (:body @resp))
-                                (println "Downloaded art for card" code))
-               :else (println "Error downloading art for card" code status))))
-         (println "Finished downloading card art")))))
+         (let [futures (reduce download-card-image nil missing-cards)]
+           (doseq [[card resp] futures]
+             (let [status (:status @resp)]
+               (cond
+                 (= 404 status) (println "No image for card" (:code card) (:title card))
+                 (= 200 status) (with-open [w (io/output-stream (.getPath (card-image-file card)))]
+                                  (.write w (:body @resp))
+                                  (println "Downloaded art for card" (:code card) (:title card)))
+                 :else (println "Error downloading art for card" (:code card) (:error @resp)))))
+           (println "Finished downloading card art"))))))
   
 (defn fetch-cards
   "Find the NRDB card json files and import them."
   [{:keys [collection path] :as card-table} sets]
-  (let [cards (->> "pack"
-                (str base-path)
-                io/file
-                .list
-                (map (partial str "pack/"))
-                (map #(fetch-data (assoc card-table :path %)
-                                  (partial add-card-fields sets)
-                                  (fn [c d] true)))
-                (apply merge))
+  (let [cards (fetch-data card-table
+                          (partial add-card-fields sets)
+                          (fn [c d] true))
         cards-replaced (->> cards
                          vals
                          (group-by :title)
