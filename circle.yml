@@ -1,66 +1,54 @@
-machine:
-  node:
-    version: 5.5.0
+version: 2
 
-dependencies:
-  cache_directories:
-    - mongodb-linux-x86_64-2.6.4
-    - resources/public/img/cards
-  pre:
-    - if [[ ! -d mongodb-linux-x86_64-2.6.4 ]]; then wget http://downloads.mongodb.org/linux/mongodb-linux-x86_64-2.6.4.tgz && tar xvzf mongodb-linux-x86_64-2.6.4.tgz; fi
-    - sudo /etc/init.d/mongodb stop
-    - sudo cp mongodb-linux-x86_64-2.6.4/bin/* /usr/bin
-    - sudo /etc/init.d/mongodb start
+jobs:
+  fetch:
+    docker:
+      - image: circleci/node:4.8.2
+      - image: mongo:3.4.4
+    steps:
+      - checkout
+      - restore_cache:
+          key: card-images-{{ checksum "package.json" }}
+      - run: npm install coffee-script
+      - run: npm install bower
+      - run: npm install
+      - run: npm run fetch
+      - save_cache:
+          paths:
+            - ~/project/node_modules
+            - ~/project/resources/public/img/cards
+            - /data/db
+          key: card-images-{{ checksum "package.json" }}
 
-  post:
-    - cd data; coffee fetch.coffee
+  build:
+    docker:
+      - image: circleci/clojure:lein-2.7.1
+      - image: mongo:3.4.4
+    environment:
+      LEIN_ROOT: nbd
+      JVM_OPTS: -Xmx3200m
+    steps:
+      - checkout
+      - restore_cache:
+          key: lein-deps-{{ checksum "project.clj" }}
+      - restore_cache:
+          key: card-images-{{ checksum "package.json" }}
+      - run: lein deps
+      - save_cache:
+          paths:
+            - ~/project/.m2
+            - ~/project/.lein
+          key: lein-deps-{{ checksum "project.clj" }}
+      - run: lein do test, uberjar
+      - store_artifacts:
+          path: target/uberjar/netrunner-standalone.jar
+          destination: uberjar
 
-
-test:
-  override:
-    - lein compile jinteki.cards
-    - lein compile jinteki.decks
-    - lein compile jinteki.nav
-    - lein compile jinteki.utils
-    - lein compile game.main
-    - lein compile game-test.core
-    - lein compile game-test.cards.agendas
-    - lein compile game-test.cards.assets
-    - lein compile game-test.cards.events
-    - lein compile game-test.cards.hardware
-    - lein compile game-test.cards.ice
-    - lein compile game-test.cards.icebreakers
-    - lein compile game-test.cards.identities
-    - lein compile game-test.cards.operations
-    - lein compile game-test.cards.programs
-    - lein compile game-test.cards.resources
-    - lein compile game-test.cards.upgrades
-    - lein compile web.db
-    - lein compile web.ws
-    - lein compile web.data
-    - lein compile web.admin
-    - lein compile web.pages
-    - lein compile web.decks
-    - lein compile web.lobby
-    - lein compile web.game
-    - lein compile web.chat
-    - lein compile web.auth
-    - lein compile web.news
-    - lein compile web.config
-    - lein compile web.stats
-    - lein compile web.utils
-    - lein compile web.api
-    - lein compile web.core
-    - lein test game-test.core
-    - lein test game-test.cards.agendas
-    - lein test game-test.cards.assets
-    - lein test game-test.cards.events
-    - lein test game-test.cards.hardware
-    - lein test game-test.cards.ice
-    - lein test game-test.cards.icebreakers
-    - lein test game-test.cards.identities
-    - lein test game-test.cards.operations
-    - lein test game-test.cards.programs
-    - lein test game-test.cards.resources
-    - lein test game-test.cards.upgrades
-
+workflows:
+  version: 2
+  fetch-build-and-test:
+    jobs:
+        - fetch
+        - build:
+            requires:
+              - fetch

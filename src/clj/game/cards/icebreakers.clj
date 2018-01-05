@@ -129,7 +129,8 @@
                                  :msg (msg "swap in " (:title target) " from their Grip")
                                  :effect (req (if-let [hostcard (:host card)]
                                                 (let [hosted (host state side (get-card state hostcard) target)]
-                                                  (card-init state side hosted false))
+                                                  (card-init state side hosted {:resolve-effect false
+                                                                                :init-data true}))
                                                 (let [devavec (get-in @state [:runner :rig :program])
                                                       devaindex (first (keep-indexed #(when (= (:cid %2) (:cid card)) %1) devavec))
                                                       newdeva (assoc target :zone (:zone card) :installed true)
@@ -137,7 +138,8 @@
                                                   (lose state :runner :memory (:memoryunits card))
                                                   (swap! state assoc-in [:runner :rig :program] newvec)
                                                   (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
-                                                  (card-init state side newdeva false)))
+                                                  (card-init state side newdeva {:resolve-effect false
+                                                                                 :init-data true})))
                                               (move state side card :hand))}]}))
 
 (defn- conspiracy
@@ -380,7 +382,9 @@
                                                                          (trash state side card {:cause :self-trash}))
                                                                        (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
                                {:pass-ice encounter-ends-effect
-                                :run-ends encounter-ends-effect})})
+                                :run-ends encounter-ends-effect})
+                     :move-zone (req (when (= [:discard] (:zone card))
+                                       (update! state side (dissoc card :crypsis-broke))))})
 
    "Cyber-Cypher"
    (auto-icebreaker ["Code Gate"]
@@ -718,7 +722,11 @@
    "Paperclip"
    (conspiracy "Paperclip" "Barrier"
                [{:label (str "X [Credits]: +X strength, break X subroutines")
-                 :choices :credit
+                 :choices {:number (req (:credit runner))
+                           :default (req (if current-ice
+                                           (- (:current-strength current-ice)
+                                              (:current-strength card))
+                                           1))}
                  :prompt "How many credits?"
                  :effect (effect (pump card target))
                  :msg (msg "spend " target " [Credits], increase strength by " target ", and break "
@@ -766,6 +774,21 @@
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 2 1 :all-run)]})
+
+   "Puffer"
+   (auto-icebreaker ["Sentry"]
+                    {:implementation "Memory use must be manually tracked by the Runner"
+                     :abilities [(break-sub 1 1 "Sentry")
+                                 (strength-pump 2 1)
+                                 {:cost [:click 1]
+                                  :label "Place 1 power counter"
+                                  :effect (effect (add-counter card :power 1)
+                                                  (update-breaker-strength card))}
+                                 {:cost [:click 1]
+                                  :label "Remove 1 power counter"
+                                  :effect (effect (add-counter card :power -1)
+                                                  (update-breaker-strength card))}]
+                     :strength-bonus (req (get-in card [:counter :power] 0))})
 
    "Refractor"
    (auto-icebreaker ["Code Gate"]
@@ -883,6 +906,48 @@
                                                                   (auto-pump state side eid card targets)))}
                                 :pass-ice wy
                                 :run-ends wy})})
+
+   "Yusuf"
+   {:events {:successful-run {:silent (req true)
+                              :effect (effect (system-msg "adds 1 virus counter to Yusuf")
+                                              (add-counter card :virus 1))}}
+    :abilities [{:label "Add strength"
+                 :prompt "Choose a card with virus counters"
+                 :choices {:req #(pos? (get-in % [:counter :virus] 0))}
+                 :effect (req (let [selected-virus target
+                                    yusuf card
+                                    counters (get-in selected-virus [:counter :virus] 0)]
+                                (resolve-ability state side
+                                                 {:prompt "Spend how many counters?"
+                                                  :choices {:number (req counters)
+                                                            :default (req 1)}
+                                                  :effect (req (let [cost target]
+                                                                 (resolve-ability
+                                                                   state side
+                                                                   {:counter-cost [:virus cost]
+                                                                    :effect (effect (pump yusuf cost)
+                                                                                    (system-msg (str "spends " cost (pluralize " counter" cost) " from " (:title selected-virus)
+                                                                                                     " to add " cost " strength to Yusuf")))}
+                                                                   selected-virus nil)))}
+                                                 yusuf nil)))}
+                {:label "Break barrier subroutine(s)"
+                 :prompt "Choose a card with virus counters"
+                 :choices {:req #(pos? (get-in % [:counter :virus] 0))}
+                 :effect (req (let [selected-virus target
+                                    yusuf card
+                                    counters (get-in selected-virus [:counter :virus] 0)]
+                                (resolve-ability state side
+                                                 {:prompt "Spend how many counters?"
+                                                  :choices {:number (req counters)
+                                                            :default (req 1)}
+                                                  :effect (req (let [cost target]
+                                                                 (resolve-ability
+                                                                   state side
+                                                                   {:counter-cost [:virus cost]
+                                                                    :effect (effect (system-msg (str "spends " cost (pluralize " counter" cost) " from " (:title selected-virus)
+                                                                                                     " to break " cost (pluralize " barrier subroutine" cost) " with Yusuf")))}
+                                                                   selected-virus nil)))}
+                                                 yusuf nil)))}]}
 
    "Yog.0"
    {:abilities [(break-sub 0 1 "Code Gate")]}

@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
-(declare active? all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run has-subtype? ice?
-         make-eid register-events remove-from-host remove-icon reset-card rezzed? trash trigger-event update-hosted!
+(declare active? all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run hardware? has-subtype? ice?
+         make-eid program? register-events remove-from-host remove-icon reset-card resource? rezzed? trash trigger-event update-hosted!
          update-ice-strength unregister-events)
 
 ;;; Functions for loading card information.
@@ -238,4 +238,4 @@
     (let [c (dissoc card :disabled)]
       (update! state side c)
       (when (active? card)
-        (card-init state side c false)))))
+        (card-init state side c {:resolve-effect false})))))

@@ -483,6 +483,12 @@
      {:delayed-completion true
       :effect (effect (continue-ability (fhelper 1) card nil))})
 
+   "Genotyping"
+   {:delayed-completion true
+    :effect (effect (mill 2)
+                    (system-msg "trashes the top 2 cards of R&D")
+                    (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4))}
+
    "Green Level Clearance"
    {:msg "gain 3 [Credits] and draw 1 card"
     :effect (effect (gain :credit 3) (draw))}
@@ -757,7 +763,7 @@
                                                (swap! state assoc-in (cons :corp (:zone target)) newices)
                                                (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(not= (:cid %) (:cid newice)) coll)))
                                                (trigger-event state side :corp-install newice)
-                                               (card-init state side newice false)
+                                               (card-init state side newice {:resolve-effect false})
                                                (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
                                                (trigger-event state side :rez newice))
                                              (system-msg state side (str "does not find any ICE to install from R&D")))
@@ -873,8 +879,7 @@
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
    "Preemptive Action"
-   {:msg "remove Preemptive Action from the game"
-    :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
+   {:effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
 
    "Priority Construction"
    (letfn [(install-card [chosen]
@@ -1144,6 +1149,16 @@
             :label "Give the Runner 1 tag"
             :delayed-completion true
             :effect (effect (tag-runner :runner eid 1))}}
+
+   "Self-Growth Program"
+   {:req (req tagged)
+    :prompt "Select two installed Runner cards"
+    :choices {:req #(and (installed? %)
+                         (= "Runner" (:side %)))
+              :max 2}
+    :msg (msg (str "move " (join ", " (map :title targets)) " to the Runner's grip"))
+    :effect (req (doseq [c targets]
+                   (move state :runner c :hand)))}
 
    "Service Outage"
    (let [add-effect (fn [state side card]
@@ -1448,6 +1463,30 @@
                                            (is-type? % "Resource"))}
                       :msg (msg "trash " (:title target))
                       :effect (effect (trash target))}}}
+
+   "Wake Up Call"
+   {:req (req (:trashed-card runner-reg-last))
+    :prompt "Select a piece of hardware or non-virtual resource"
+    :choices {:req #(or (hardware? %)
+                        (and (resource? %) (not (has-subtype? % "Virtual"))))}
+    :delayed-completion true
+    :effect (req (let [chosen target
+                       wake card]
+                   (show-wait-prompt state side "Runner to resolve Wake Up Call")
+                   (continue-ability state :runner
+                                     {:prompt (str "Trash " (:title chosen) " or suffer 4 meat damage?")
+                                      :choices [(str "Trash " (:title chosen))
+                                                "4 meat damage"]
+                                      :delayed-completion true
+                                      :effect (req (clear-wait-prompt state :corp)
+                                                   (move state side (last (:discard corp)) :rfg)
+                                                   (if (.startsWith target "Trash")
+                                                     (do (system-msg state side (str "chooses to trash " (:title chosen)))
+                                                         (trash state side eid chosen nil))
+                                                     (do (system-msg state side "chooses to suffer meat damage")
+                                                         (damage state side eid :meat 4 {:card wake
+                                                                                         :unboostable true}))))}
+                                     card nil)))}
 
    "Wetwork Refit"
    {:choices {:req #(and (ice? %)

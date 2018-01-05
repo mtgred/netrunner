@@ -217,6 +217,13 @@
                                                     (get-card state card)))}
     :events {:pre-rez nil :runner-turn-ends nil :corp-turn-ends nil}}
 
+   "Cyberdelia"
+   {:implementation "Credit gain is manually triggered."
+    :in-play [:memory 1]
+    :abilities [{:msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
+                 :once :per-turn
+                 :effect (effect (gain :credit 1))}]}
+
    "Cyberfeeder"
    {:recurring 1}
 
@@ -922,17 +929,17 @@
    "The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
     :in-play [:memory 2]
-    :events {:pre-access {:req (req (and (= :hq target)
+    :events {:successful-run {:req (req (and (= :hq target)
                                          run))
-                          :silent (req true)
-                          :delayed-completion true
-                          :effect (effect (continue-ability
-                                            {:prompt "How many ICE protecting HQ did you break all subroutines on?"
-                                             ;; Makes number of ice on server (HQ) the upper limit.
-                                             ;; This should work since trashed ice do not count according to UFAQ
-                                             :choices {:number (req (count (get-in @state [:corp :servers :hq :ices])))}
-                                             :effect (effect (access-bonus target))}
-                                            card nil))}}}
+                              :silent (req true)
+                              :delayed-completion true
+                              :effect (effect (continue-ability
+                                                {:prompt "How many ICE protecting HQ did you break all subroutines on?"
+                                                 ;; Makes number of ice on server (HQ) the upper limit.
+                                                 ;; This should work since trashed ice do not count according to UFAQ
+                                                 :choices {:number (req (count (get-in @state [:corp :servers :hq :ices])))}
+                                                 :effect (effect (access-bonus target))}
+                                                card nil))}}}
 
    "The Personal Touch"
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
@@ -1066,4 +1073,10 @@
 
    "Window"
    {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of their Stack"
-                 :effect (effect (move (last (:deck runner)) :hand))}]}})
+                 :effect (effect (move (last (:deck runner)) :hand))}]}
+
+   "Zamba"
+   {:implementation "Credit gain is automatic"
+    :in-play [:memory 2]
+    :events {:expose {:effect (effect (gain :credit 1))
+                      :msg "gain 1 [Credits]"}}}})

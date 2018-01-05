@@ -54,7 +54,7 @@
 
    "AgInfusion: New Miracles for a New World"
    {:abilities [{:once :per-turn
-                 :req (req (and (:run @state) (not (rezzed? current-ice)) (can-rez? state side current-ice)))
+                 :req (req (and (:run @state) (not (rezzed? current-ice)) (can-rez? state side current-ice {:ignore-unique true})))
                  :prompt "Choose another server and redirect the run to its outermost position"
                  :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                  :msg (msg "trash the approached ICE. The Runner is now running on " target)
@@ -116,6 +116,28 @@
    {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
                             :msg "draw a card"
                             :effect (effect (draw 1))}}}
+
+   "Asa Group: Security Through Vigilance"
+   {:events {:corp-install
+             {:delayed-completion true
+              :req (req (first-event? state :corp :corp-install))
+              :effect (req (let [installed-card target
+                                 z (butlast (:zone installed-card))]
+                             (continue-ability
+                               state side
+                               {:prompt (str "Select a "
+                                             (if (is-remote? z)
+                                               "non-agenda"
+                                               "piece of ice")
+                                             " in HQ to install with Asa Group: Security Through Vigilance (optional)")
+                                :delayed-completion true
+                                :choices {:req #(and (in-hand? %)
+                                                     (= (:side %) "Corp")
+                                                     (not (is-type? % "Agenda"))
+                                                     (or (is-remote? z)
+                                                         (ice? %)))}
+                                :effect (effect (corp-install eid target (zone->name z) nil))}
+                               card nil)))}}}
 
    "Ayla \"Bios\" Rahim: Simulant Specialist"
    {:abilities [{:label "[:click] Add 1 card from NVRAM to your grip"
@@ -339,7 +361,9 @@
 
    "Haas-Bioroid: Stronger Together"
    {:events {:pre-ice-strength {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
-                                :effect (effect (ice-strength-bonus 1 target))}}}
+                                :effect (effect (ice-strength-bonus 1 target))}}
+    :leave-play (effect (update-all-ice))
+    :effect (effect (update-all-ice))}
 
    "Harishchandra Ent.: Where Youre the Star"
    {:effect (req (when tagged

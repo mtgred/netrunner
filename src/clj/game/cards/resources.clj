@@ -139,6 +139,24 @@
                                  (shuffle! :deck)
                                  (runner-install target))}]}
 
+   "Assimilator"
+   {:abilities [{:label "Turn a facedown card faceup"
+                 :cost [:click 2]
+                 :prompt "Select a facedown installed card"
+                 :choices {:req #(and (facedown? %)
+                                      (installed? %)
+                                      (= "Runner" (:side %)))}
+                 :effect (req (if (or (is-type? target "Event")
+                                      (and (has-subtype? target "Console")
+                                           (some #(has-subtype? % "Console") (all-installed state :runner))))
+                                ;; Consoles and events are immediately unpreventably trashed.
+                                (trash state side target {:unpreventable true})
+                                ;; Other cards are moved to rig and have events wired.
+                                (let [temp (move state side target :play-area)
+                                      moved (move state side temp (type->rig-zone (:type temp)))]
+                                  (card-init state side (make-eid state) moved {:resolve-effect false :init-data false}))))
+                 :msg (msg "turn " (:title target) " faceup")}]}
+
    "Bhagat"
    {:events {:successful-run {:req (req (and (= target :hq)
                                              (first-successful-run-on-server? state :hq)))
@@ -848,6 +866,28 @@
 
    "Laguna Velasco District"
    {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
+
+   "Lewi Guilherme"
+   (let [ability {:once :per-turn
+                  :delayed-completion true
+                  :optional {:once :per-turn
+                             :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
+                             :yes-ability {:effect (req (if (pos? (:credit runner))
+                                                          (do (lose state side :credit 1)
+                                                              (system-msg state side "pays 1 [Credits] to keep Lewi Guilherme"))
+                                                          (do (trash state side card)
+                                                              (system-msg state side "must trash Lewi Guilherme"))))}
+                             :no-ability {:effect (effect (trash card)
+                                                          (system-msg "chooses to trash Lewi Guilherme"))}}}]
+   {:flags {:drip-economy true ;; for Drug Dealer
+            :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
+                                                      (all-installed state :runner)))))}
+
+    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
+    :effect (effect (lose :corp :hand-size-modification 1))
+    :leave-play (effect (gain :corp :hand-size-modification 1))
+    :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
+    :events {:runner-turn-begins ability}})
 
    "Levy Advanced Research Lab"
    (letfn [(lab-keep [cards]
@@ -1571,7 +1611,8 @@
                    :prompt "Choose a card hosted on The Supplier to install"
                    :req (req (some #(can-pay? state side nil (modified-install-cost state side % [:credit -2]))
                                         (:hosted card)))
-                   :choices {:req #(= "The Supplier" (:title (:host %)))}
+                   :choices {:req #(and (= "The Supplier" (:title (:host %)))
+                                        (= "Runner" (:side %)))}
                    :effect (req
                              (runner-can-install? state side target nil)
                              (when (and (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
