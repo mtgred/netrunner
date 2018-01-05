@@ -94,10 +94,10 @@
    })
 
 (def tables
-  {:cycle {:path "cycles" :fields cycle-fields :collection "clj_cycles"}
-   :mwl   {:path "mwl"    :fields mwl-fields   :collection "clj_mwl"}
-   :set   {:path "packs"  :fields set-fields   :collection "clj_sets"}
-   :card  {:path "cards"  :fields card-fields  :collection "clj_cards"}
+  {:cycle {:path "cycles" :fields cycle-fields :collection "cycles"}
+   :mwl   {:path "mwl"    :fields mwl-fields   :collection "mwl"}
+   :set   {:path "packs"  :fields set-fields   :collection "sets"}
+   :card  {:path "cards"  :fields card-fields  :collection "cards"}
    :config {:collection "config"}})
 
 (defn- translate-fields
@@ -283,42 +283,44 @@
                          (.printStackTrace e)))
     (finally (webdb/disconnect))))
 
-(defn compare-collections
-  [c1 c2 k]
-  (if (not= (mc/count db c1) (mc/count db c2))
-    (do
-      (println "Different number of elements in collections")
-      false)
-    (let [c1-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c1))))
-          c2-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c2))))
-          zipped (filter (fn [[x y]] (not= x y)) (map vector c1-data c2-data))]
-      (if (not-empty zipped)
-        (do
-          (println "First mismatch:")
-          (pprint zipped)
-          false)
-        true))))
+(comment
+  (defn compare-collections
+    [c1 c2 k]
+    (if (not= (mc/count db c1) (mc/count db c2))
+      (do
+        (println "Different number of elements in collections")
+        false)
+      (let [c1-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c1))))
+            c2-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c2))))
+            zipped (filter (fn [[x y]] (not= x y)) (map vector c1-data c2-data))]
+        (if (not-empty zipped)
+          (do
+            (println "First mismatch:")
+            (pprint zipped)
+            false)
+          true))))
 
-(defn test-import
-  []
-  (println "MWL")
-  (if (compare-collections "mwl" "clj_mwl" :name)
-    (println "\tOK")
-    (println "\tFailed"))
-  (println "Cycles")
-  (if (compare-collections "cycles" "clj_cycles" :name)
-    (println "\tOK")
-    (println "\tFailed"))
-  (println "Sets")
-  (if (compare-collections "sets" "clj_sets" :name)
-    (println "\tOK")
-    (println "\tFailed"))
-  (println "Cards")
-  (if (compare-collections "cards" "clj_cards" :code)
-    (println "\tOK")
-    (println "\tFailed"))
-  (println "AltArts")
-  (if (compare-collections "altarts" "clj_altarts" :name)
-    (println "\tOK")
-    (println "\tFailed"))
+  (defn test-import
+    []
+    (println "MWL")
+    (if (compare-collections "mwl" "clj_mwl" :name)
+      (println "\tOK")
+      (println "\tFailed"))
+    (println "Cycles")
+    (if (compare-collections "cycles" "clj_cycles" :name)
+      (println "\tOK")
+      (println "\tFailed"))
+    (println "Sets")
+    (if (compare-collections "sets" "clj_sets" :name)
+      (println "\tOK")
+      (println "\tFailed"))
+    (println "Cards")
+    (if (compare-collections "cards" "clj_cards" :code)
+      (println "\tOK")
+      (println "\tFailed"))
+    (println "AltArts")
+    (if (compare-collections "altarts" "clj_altarts" :name)
+      (println "\tOK")
+      (println "\tFailed"))
+    )
   )

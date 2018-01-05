@@ -11,7 +11,7 @@
 (def ^:const alt-art-sets "data/promo.json")
 (def ^:const img-directory ["resources" "public" "img" "cards"])
 
-(def ^:const alt-collection "clj_altarts")
+(def ^:const alt-collection "altarts")
 (def ^:const card-collection (:collection (:card tables)))
 
 (defn read-alt-sets
