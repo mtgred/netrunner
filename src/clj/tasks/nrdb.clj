@@ -3,6 +3,7 @@
   (:require [org.httpkit.client :as http]
             [web.db :refer [db] :as webdb]
             [monger.collection :as mc]
+            [monger.operators :refer :all]
             [throttler.core :refer [throttle-fn]]
             [clojure.string :as string]
             [clojure.data :as data]
@@ -96,7 +97,8 @@
   {:cycle {:path "cycles" :fields cycle-fields :collection "clj_cycles"}
    :mwl   {:path "mwl"    :fields mwl-fields   :collection "clj_mwl"}
    :set   {:path "packs"  :fields set-fields   :collection "clj_sets"}
-   :card  {:path "cards"  :fields card-fields  :collection "clj_cards"}})
+   :card  {:path "cards"  :fields card-fields  :collection "clj_cards"}
+   :config {:collection "config"}})
 
 (defn- translate-fields
   "Modify NRDB json data to our schema"
@@ -253,6 +255,15 @@
     (download-card-images cards-replaced)
     cards-replaced))
 
+(defn update-config
+  "Store import meta info in the db"
+  [{:keys [collection]}]
+  (mc/update db collection
+             {:cards-version {$exists true}}
+             {$inc {:cards-version 1}
+              $currentDate {:last-updated true}}
+             {:upsert true}))
+
 (defn fetch
   "Import data from NetrunnerDB"
   []
@@ -265,7 +276,8 @@
       (println (count cycles) "cycles imported")
       (println (count sets) "sets imported")
       (println (count mwls) "MWL versions imported")
-      (println (count cards) "cards imported"))
+      (println (count cards) "cards imported")
+      (update-config (:config tables)))
     (catch Exception e (do
                          (println "Import data failed:" (.getMessage e))
                          (.printStackTrace e)))
