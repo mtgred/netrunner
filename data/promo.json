@@ -7,5 +7,10 @@
   {
     "version": "wc2015",
     "name": "World Champion"
+  },
+
+  {
+    "version": "core1",
+    "name": "Original Core Set"
   }
 ]

@@ -126,7 +126,7 @@
       (= 200 status) (parse-response body fields)
       :else (throw (.Exception (str "Failed to download file, status" status))))))
 
-(defn- replace-collection
+(defn replace-collection
   "Remove existing collection and insert new data"
   [collection data]
   (mc/remove db collection)
@@ -303,6 +303,10 @@
     (println "\tFailed"))
   (println "Cards")
   (if (compare-collections "cards" "clj_cards" :code)
+    (println "\tOK")
+    (println "\tFailed"))
+  (println "AltArts")
+  (if (compare-collections "altarts" "clj_altarts" :name)
     (println "\tOK")
     (println "\tFailed"))
   )
