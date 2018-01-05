@@ -2,16 +2,17 @@
   "Alternative and Promo card art import tasks"
   (:require [web.db :refer [db] :as webdb]
             [monger.collection :as mc]
-            [tasks.nrdb :refer [replace-collection]]
+            [monger.operators :refer :all]
+            [tasks.nrdb :refer [replace-collection tables]]
             [clojure.string :as string]
             [clojure.java.io :as io]
-            [clojure.pprint :refer [pprint] :as pprint]
             [cheshire.core :as json]))
 
 (def ^:const alt-art-sets "data/promo.json")
 (def ^:const img-directory ["resources" "public" "img" "cards"])
 
 (def ^:const alt-collection "clj_altarts")
+(def ^:const card-collection (:collection (:card tables)))
 
 (defn read-alt-sets
   "Read in the alt art set information"
@@ -41,8 +42,24 @@
                           (map first)
                           sort)]
             (conj acc (assoc v :cards cards))))
-             nil
-             alt-sets))
+             nil alt-sets))
+
+(defn remove-old-alt-art
+  "Remove any alt art attached to cards in the db"
+  []
+  (println "Removing old alt arts")
+  (mc/update db card-collection {} {$unset {:alt_art 1}} {:multi true}))
+
+(defn add-alt-art
+  "Add single alt art set to cards"
+  [{:keys [version name cards] :as alt-set}]
+  (let [k (keyword (str "alt_art." version))
+        cnt (reduce (fn [acc code]
+                      (mc/update db card-collection {:code code} {$set {k (str code "-" version)}})
+                      (mc/update db card-collection {:replaces code} {$set {k (str code "-" version)}})
+                      (inc acc))
+                    0 cards)]
+    (println "Added" cnt "alt art cards to set" name)))
 
 (defn add_art
   "Add alt art card images to the database"
@@ -54,9 +71,10 @@
           alt-sets-cards (add-cards alt-sets alt-files)]
       (replace-collection alt-collection alt-sets-cards)
       (println (count alt-sets-cards) "alt art sets imported")
+      (remove-old-alt-art)
+      (doall (map add-alt-art alt-sets-cards))
       )
     (catch Exception e (do
                          (println "Alt art import failed:" (.getMessage e))
                          (.printStackTrace e)))
     (finally (webdb/disconnect))))
-
