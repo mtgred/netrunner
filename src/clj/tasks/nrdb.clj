@@ -173,7 +173,7 @@
   [set-map c]
   (let [s (set-map (:set_code c))]
     (-> c
-      (prune-null-fields [:influencelimit :strength])
+      (prune-null-fields [:influencelimit :strength :factioncost])
       (assoc :setname (:name s)
              :cycle_code (:cycle_code s)
              :rotated (:rotated s)
@@ -277,13 +277,13 @@
     (do
       (println "Different number of elements in collections")
       false)
-    (let [c1-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id) (mc/find-maps db c1))))
-          c2-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id) (mc/find-maps db c2))))
+    (let [c1-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c1))))
+          c2-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c2))))
           zipped (filter (fn [[x y]] (not= x y)) (map vector c1-data c2-data))]
       (if (not-empty zipped)
         (do
           (println "First mismatch:")
-          (pprint (first zipped))
+          (pprint zipped)
           false)
         true))))
 
