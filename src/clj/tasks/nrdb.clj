@@ -13,8 +13,8 @@
 
 (declare faction-map)
 
-(def ^:const base-url "http://netrunnerdb.com/api/2.0/public/")
-(def ^:const base-image-url "https://netrunnerdb.com/card_image/")
+(def ^:const base-url "http://www.netrunnerdb.com/api/2.0/public/")
+(def ^:const base-image-url "http://www.netrunnerdb.com/card_image/")
 
 (defmacro rename
   "Rename a card field"
@@ -124,9 +124,9 @@
   (println "Downloading" path)
   (let [{:keys [status body error] :as resp} @(http/get (str base-url path))]
     (cond
-      error (throw (.Exception (str "Failed to download file" error)))
+      error (throw (Exception. (str "Failed to download file" error)))
       (= 200 status) (parse-response body fields)
-      :else (throw (.Exception (str "Failed to download file, status" status))))))
+      :else (throw (Exception. (str "Failed to download file, status" status))))))
 
 (defn replace-collection
   "Remove existing collection and insert new data"
@@ -237,7 +237,7 @@
   
 (defn fetch-cards
   "Find the NRDB card json files and import them."
-  [{:keys [collection path] :as card-table} sets]
+  [{:keys [collection path] :as card-table} sets download-images]
   (let [cards (fetch-data card-table
                           (partial add-card-fields sets)
                           (fn [c d] true))
@@ -250,9 +250,11 @@
                                              (if (:rotated c1) (:code c1) (:code c2))
                                              (if (:rotated c1) (:code c2) (:code c1))]))
                          (reduce rotate-cards cards))]
+    (spit "data/cards.json" (str cards))
     (mc/remove db collection)
     (mc/insert-batch db collection (vals cards-replaced))
-    (download-card-images cards-replaced)
+    (when download-images
+      (download-card-images cards-replaced))
     cards-replaced))
 
 (defn update-config
@@ -266,13 +268,13 @@
 
 (defn fetch
   "Import data from NetrunnerDB"
-  []
+  [& args]
   (webdb/connect)
   (try
     (let [cycles (fetch-data (:cycle tables))
           mwls (fetch-data (:mwl tables))
           sets (fetch-data (:set tables) (partial add-set-fields cycles))
-          cards (fetch-cards (:card tables) sets)]
+          cards (fetch-cards (:card tables) sets (not (some #{"--no-card-images"} args)))]
       (println (count cycles) "cycles imported")
       (println (count sets) "sets imported")
       (println (count mwls) "MWL versions imported")

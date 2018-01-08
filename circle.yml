@@ -1,25 +1,6 @@
 version: 2
 
 jobs:
-  fetch:
-    docker:
-      - image: circleci/node:4.8.2
-      - image: mongo:3.4.4
-    steps:
-      - checkout
-      - restore_cache:
-          key: card-images-{{ checksum "package.json" }}
-      - run: npm install coffee-script
-      - run: npm install bower
-      - run: npm install
-      - run: npm run fetch
-      - save_cache:
-          paths:
-            - ~/project/node_modules
-            - ~/project/resources/public/img/cards
-            - /data/db
-          key: card-images-{{ checksum "package.json" }}
-
   build:
     docker:
       - image: circleci/clojure:lein-2.7.1
@@ -31,24 +12,13 @@ jobs:
       - checkout
       - restore_cache:
           key: lein-deps-{{ checksum "project.clj" }}
-      - restore_cache:
-          key: card-images-{{ checksum "package.json" }}
       - run: lein deps
       - save_cache:
           paths:
             - ~/project/.m2
             - ~/project/.lein
           key: lein-deps-{{ checksum "project.clj" }}
-      - run: lein do test, uberjar
+      - run: lein do fetch --no-card-images, test, uberjar
       - store_artifacts:
           path: target/uberjar/netrunner-standalone.jar
           destination: uberjar
-
-workflows:
-  version: 2
-  fetch-build-and-test:
-    jobs:
-        - fetch
-        - build:
-            requires:
-              - fetch
