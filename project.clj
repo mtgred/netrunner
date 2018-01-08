@@ -30,6 +30,7 @@
                  [me.bsima/trello "0.3.0"]
                  [clj-time "0.14.2"]
                  [com.draines/postal "2.0.2"]
+                 [throttler "1.0.0"]
                  [clj-http "3.7.0"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
@@ -43,8 +44,11 @@
                    :plugins [[lein-figwheel "0.5.11"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
+  :aliases {"fetch" ["run" "-m" "tasks.nrdb/fetch"]
+            "add_art" ["run" "-m" "tasks.altart/add_art"]}
+
   ;; These can be run as "lein ____", ex. "lein fetch"
-  :aliases {"fetch" ["exec" "-ep" "(use 'tasks.fetch) (fetch-data)"]}
+  ;; :aliases {"fetch" ["exec" "-ep" "(use 'tasks.fetch) (fetch-data)"]}
 
 
   ;; Compilation.
