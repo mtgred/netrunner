@@ -1,27 +1,23 @@
 (ns game.main
-  (:import [org.zeromq ZMQ ZMQQueue])
   (:require [cheshire.core :refer [parse-string generate-string]]
             [cheshire.generate :refer [add-encoder encode-str]]
-            [game.core :refer [all-cards card-is-public? game-states show-error-toast toast] :as core]
+            [game.core :refer [card-is-public? game-states show-error-toast toast] :as core]
             [game.utils :refer [private-card]]
-            [environ.core :refer [env]]
-            [differ.core :as differ])
-  (:gen-class :main true))
+            [jinteki.cards :refer [all-cards]]
+            [differ.core :as differ]))
 
 (def old-states (atom {}))
 
 (add-encoder java.lang.Object encode-str)
 
-(def ctx (ZMQ/context 1))
+;(def ctx (ZMQ/context 1))
 
 (def spectator-commands
-  {"say" core/say
-   "typing" core/typing
+  {"typing" core/typing
    "typingstop" core/typingstop})
 
 (def commands
-  {"say" core/say
-   "typing" core/typing
+  {"typing" core/typing
    "typingstop" core/typingstop
    "concede" core/concede
    "system-msg" #(core/system-msg %1 %2 (:msg %3))
@@ -76,13 +72,6 @@
   [state user]
   (and state (#{(get-in @state [:corp :user]) (get-in @state [:runner :user])} user)))
 
-(defn handle-do
-  "Ensures the user is allowed to do command they are trying to do"
-  [user command state side args]
-  (if (not-spectator? state user)
-    ((commands command) state (keyword side) args)
-    (when-let [cmd (spectator-commands command)]
-      (cmd state (keyword side) args))))
 
 (defn- private-card-vector [state side cards]
   (vec (map (fn [card]
@@ -149,7 +138,7 @@
              "start" (core/init-game msg)
              "remove" (do (swap! game-states dissoc gameid)
                           (swap! old-states dissoc gameid))
-             "do" (handle-do user command state side args)
+             ;"do" (handle-do user command state side args)
              "notification" (when state
                               (swap! state update-in [:log] #(conj % {:user "__system__" :text text})))
              "rejoin"
@@ -212,9 +201,9 @@
                                 corp-diff (differ/diff (strip old-corp) (strip new-corp))
                                 spect-diff (differ/diff (strip old-spect) (strip new-spect))]
                             (.send socket (generate-string {:action     action
-                                                            :runnerdiff runner-diff
-                                                            :corpdiff   corp-diff
-                                                            :spectdiff  spect-diff
+                                                            :runner-diff runner-diff
+                                                            :corpd-iff   corp-diff
+                                                            :spect-diff  spect-diff
                                                             :gameid     gameid}))))))
                     (.send socket (generate-string {:action action :state old-state :gameid gameid}))))
                 (.send socket (generate-string "error"))))))
@@ -224,34 +213,104 @@
                (catch Exception e
                  (println "Socket Error " e)))))))
 
-(def zmq-url (str "tcp://" (or (env :zmq-host) "127.0.0.1") ":1043"))
+(comment
+  (defn dev []
+    (Thread/setDefaultUncaughtExceptionHandler
+      (reify Thread$UncaughtExceptionHandler
+        (uncaughtException [_ thread ex]
+          (println "UNCAUGHT EXCEPTION " ex))))
 
-(defn dev []
-  (Thread/setDefaultUncaughtExceptionHandler
-    (reify Thread$UncaughtExceptionHandler
-      (uncaughtException [_ thread ex]
-        (println "UNCAUGHT EXCEPTION " ex))))
+    (println "[Dev] Listening on port 1043 for incoming commands...")
+    (let [socket (.socket ctx ZMQ/REP)]
+      (.bind socket zmq-url)
+      (run socket)))
 
-  (println "[Dev] Listening on port 1043 for incoming commands...")
-  (let [socket (.socket ctx ZMQ/REP)]
-    (.bind socket zmq-url)
-    (run socket)))
+  (defn -main []
+    (Thread/setDefaultUncaughtExceptionHandler
+      (reify Thread$UncaughtExceptionHandler
+        (uncaughtException [_ thread ex]
+          (println "UNCAUGHT EXCEPTION " ex))))
 
-(defn -main []
-  (Thread/setDefaultUncaughtExceptionHandler
-    (reify Thread$UncaughtExceptionHandler
-      (uncaughtException [_ thread ex]
-        (println "UNCAUGHT EXCEPTION " ex))))
 
-  (println "[Prod] Listening on port 1043 for incoming commands...")
-  (let [worker-url "inproc://responders"
-        router (doto (.socket ctx ZMQ/ROUTER) (.bind zmq-url))
-        dealer (doto (.socket ctx ZMQ/DEALER) (.bind worker-url))]
-    (.start
-      (Thread.
-        (fn []
-          (let [socket (.socket ctx ZMQ/REP)]
-            (.connect socket worker-url)
-            (run socket)))))
+    (println "[Prod] Listening on port 1043 for incoming commands...")
+    (let [worker-url "inproc://responders"
+          router (doto (.socket ctx ZMQ/ROUTER) (.bind zmq-url))
+          dealer (doto (.socket ctx ZMQ/DEALER) (.bind worker-url))]
+      (.start
+        (Thread.
+          (fn []
+            (let [socket (.socket ctx ZMQ/REP)]
+              (.connect socket worker-url)
+              (run socket)))))
 
-    (.start (Thread. #(.run (ZMQQueue. ctx router dealer))))))
+      (.start (Thread. #(.run (ZMQQueue. ctx router dealer)))))))
+
+
+
+
+
+
+(defn public-states [state]
+  (let [[new-corp new-runner new-spect] (private-states state)]
+    {:runner-state (strip new-runner)
+     :corp-state   (strip new-corp)
+     :spect-state  (strip new-spect)}))
+
+(defn public-diffs [old-state new-state]
+  (let [[old-corp old-runner old-spect] (when old-state (private-states (atom old-state)))
+        [new-corp new-runner new-spect] (private-states new-state)
+
+        runner-diff (differ/diff (strip old-runner) (strip new-runner))
+        corp-diff (differ/diff (strip old-corp) (strip new-corp))
+        spect-diff (differ/diff (strip old-spect) (strip new-spect))]
+    {:runner-diff runner-diff
+     :corp-diff   corp-diff
+     :spect-diff  spect-diff}))
+
+
+(defn handle-action
+  "Ensures the user is allowed to do command they are trying to do"
+  [user command state side args]
+  (if (not-spectator? state user)
+    ((commands command) state side args)
+    (when-let [cmd (spectator-commands command)]
+      (cmd state side args))))
+
+(defn handle-concede
+  "Concedes victory from the given player."
+  [state side]
+  (when (and state side)
+    (core/concede state side nil)))
+
+(defn handle-say
+  "Adds a message from a user to the chat log."
+  [state side user msg]
+  (when (and state side)
+    (core/say state side {:user user :text msg})))
+
+(defn handle-notification
+  [state text]
+  (when state
+    (swap! state update-in [:log] #(conj % {:user "__system__" :text text}))))
+
+(defn handle-announcement
+  [state text]
+  (when state
+    (doseq [side [:runner :corp]]
+      (toast state side text "warning" {:time-out 0 :close-button true}))))
+
+(defn handle-typing
+  [state side user typing]
+  (when (and state side)
+    (if typing
+      (core/typing state side {:user user})
+      (core/typingstop state side {:user user}))))
+
+(defn handle-rejoin
+  [state {:keys [_id username] :as user}]
+  (when-let [side (cond
+                    (= _id (get-in @state [:corp :user :_id])) :corp
+                    (= _id (get-in @state [:runner :user :_id])) :runner
+                    :else nil)]
+    (swap! state assoc-in [side :user] user)
+    (handle-notification state (str username " rejoined the game."))))

@@ -4,7 +4,10 @@
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! >! sub pub] :as async]
             [netrunner.appstate :refer [app-state]]
-            [netrunner.ajax :refer [GET]]))
+            [netrunner.account :refer [alt-art-name]]
+            [netrunner.ajax :refer [GET]]
+            [jinteki.cards :refer [all-cards] :as cards]
+            [jinteki.decks :as decks]))
 
 (def cards-channel (chan))
 (def pub-chan (chan))
@@ -18,10 +21,22 @@
                        (map (fn [e] (update e :date_start #(js/Date %))))
                        (sort-by :date_start)
                        (last))]
-      (swap! app-state assoc :sets sets :mwl latest_mwl :cycles cycles)))
 
-(go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
-      (swap! app-state assoc :cards cards)
+      (reset! cards/mwl latest_mwl)
+      (reset! cards/sets sets)
+      (reset! cards/cycles cycles)
+      (swap! app-state assoc :sets sets :cycles cycles)))
+
+(go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
+          local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
+          need-update? (or (not local-cards) (not= server-version (:version local-cards)))
+          cards (sort-by :code
+                         (if need-update?
+                           (:json (<! (GET "/data/cards")))
+                           (:cards local-cards)))]
+      (when need-update?
+        (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
+      (reset! all-cards cards)
       (swap! app-state assoc :cards-loaded true)
       (put! cards-channel cards)))
 
@@ -47,10 +62,28 @@
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
+(defn expand-alts
+  [acc card]
+  (let [alt-card (get (:alt-arts @app-state) (:code card))
+        alt-arts (keys (:alt_art alt-card))]
+    (if (and alt-arts
+             (show-alt-art?))
+    (->> alt-arts
+      (concat [""])
+      (map (fn [art] (if art
+                       (assoc card :art art)
+                       card)))
+      (map (fn [c] (if (:art c)
+                     (assoc c :display-name (str (:display-name c) " [" (alt-art-name (:art c)) "]"))
+                     c)))
+      (concat acc))
+    (conj acc card))))
+
 (defn insert-alt-arts
   "Add copies of all alt art cards to the list of cards"
   [cards]
-  (reduce netrunner.deckbuilder/expand-alts () (reverse cards)))
+  cards)
+  ;(reduce expand-alts () (reverse cards)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -74,7 +107,8 @@
       (make-span "\\[anarch\\]" "anarch")
       (make-span "\\[apex\\]" "apex")
       (make-span "\\[criminal\\]" "criminal")
-      (make-span "\\[hb\\]" "hb")
+      (make-span "\\[hb\\]" "haas-bioroid")
+      (make-span "\\[haas-bioroid\\]" "haas-bioroid")
       (make-span "\\[jinteki\\]" "jinteki")
       (make-span "\\[nbn\\]" "nbn")
       (make-span "\\[shaper\\]" "shaper")
@@ -82,18 +116,50 @@
       (make-span "\\[weyland\\]" "weyland-consortium")
       (make-span "\\[weyland-consortium\\]" "weyland-consortium")))
 
+(defn- post-response [cursor response]
+  (if (= 200 (:status response))
+    (let [new-alts (get-in response [:json :altarts] {})]
+      (swap! app-state assoc-in [:user :options :alt-arts] new-alts)
+      (netrunner.gameboard/toast "Updated Art" "success" nil))
+    (netrunner.gameboard/toast "Failed to Update Art" "error" nil)))
+
+(defn selected-alt-art [card cursor]
+  (let [code (keyword (:code card))
+        alt-card (get (:alt-arts @app-state) (name code) nil)
+        selected-alts (:alt-arts (:options cursor))
+        selected-art (keyword (get selected-alts code nil))
+        card-art (:art card)]
+  (and alt-card
+       (cond
+         (= card-art selected-art) true
+         (and (nil? selected-art)
+              (not (keyword? card-art))) true
+         (and (= :default selected-art)
+              (not (keyword? card-art))) true
+         :else false))))
+
+(defn select-alt-art [card cursor]
+  (when-let [art (:art card)]
+    (let [code (keyword (:code card))
+          alts (:alt-arts (:options cursor))
+          new-alts (if (keyword? art)
+                     (assoc alts code (name art))
+                     (dissoc alts code))]
+      (om/update! cursor [:options :alt-arts] new-alts)
+      (netrunner.account/post-options "/update-profile" (partial post-response cursor)))))
+
 (defn- card-text
   "Generate text html representation a card"
-  [card]
+  [card cursor]
   [:div
    [:h4 (str (:title card) " ")
     [:span.influence
      {:class (if-let [faction (:faction card)]
                (-> faction .toLowerCase (.replace " " "-"))
                "neutral")}
-     (when (netrunner.deckbuilder/banned? card) netrunner.deckbuilder/banned-dot)
-     (when (netrunner.deckbuilder/restricted? card) netrunner.deckbuilder/restricted-dot)
-     (when (:rotated card) netrunner.deckbuilder/rotated-dot)]]
+     (when (decks/banned? card) netrunner.deckbuilder/banned-span)
+     (when (decks/restricted? card) netrunner.deckbuilder/restricted-span)
+     (when (:rotated card) netrunner.deckbuilder/rotated-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -125,8 +191,16 @@
     [:div.pack
      (when-let [pack (:setname card)]
        (when-let [number (:number card)]
-         (str pack " " number)))]]
-   ])
+         (str pack " " number
+              (when-let [art (:art card)]
+                (str " [" (alt-art-name art) "]")))))]
+     (if (selected-alt-art card cursor)
+      [:div.selected-alt "Selected Alt Art"]
+      (when (:art card)
+        [:button.alt-art-selector
+         {:on-click #(select-alt-art card cursor)}
+         "Select Art"]))
+    ]])
 
 (defn card-view [card owner]
   (reify
@@ -134,37 +208,36 @@
     (init-state [_] {:showText false})
     om/IRenderState
     (render-state [_ state]
+      (let [cursor (om/get-state owner :cursor)]
       (sab/html
         [:div.card-preview.blue-shade
+         (when (om/get-state owner :decorate-card)
+           {:class (cond (:selected card) "selected"
+                         (selected-alt-art card cursor) "selected-alt")})
          (if (:showText state)
-           (card-text card)
+           (card-text card cursor)
            (when-let [url (image-url card)]
              [:img {:src url
-                    :title (str (:setname card) (when (:art card) (str " [" (netrunner.account/alt-art-name (:art card)) "]")))
+                    :alt (:title card)
                     :onClick #(do (.preventDefault %)
                                 (put! (:pub-chan (om/get-shared owner))
                                       {:topic :card-selected :data card})
                                 nil)
                     :onError #(-> (om/set-state! owner {:showText true}))
-                    :onLoad #(-> % .-target js/$ .show)}]))]))))
+                    :onLoad #(-> % .-target js/$ .show)}]))])))))
 
-(defn card-info-view [card owner]
+(defn card-info-view [cursor owner]
   (reify
-    om/IInitState
-    (init-state [_] {:selected-card nil})
-    om/IDidMount
-    (did-mount [_]
-      (let [events (sub (:notif-chan (om/get-shared owner)) :card-selected (chan))]
-        (go
-          (loop [e (<! events)]
-            (om/set-state! owner :selected-card (:data e))
-            (recur (<! events))))))
     om/IRenderState
-    (render-state [_ {:keys [selected-card]}]
+    (render-state [_ state]
       (sab/html
+        (let [selected-card (om/get-state owner :selected-card)]
         (if (nil? selected-card)
-          [:div]
-          (card-text selected-card))))))
+          [:div {:display "none"}]
+          [:div
+           [:h4 "Card text"]
+           [:div.blue-shade.panel
+            (card-text selected-card cursor)]]))))))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
@@ -187,15 +260,27 @@
     (for [option options]
       [:option {:value option :dangerouslySetInnerHTML #js {:__html option}}])))
 
+(defn filter-alt-art-cards [cards]
+  (let [alt-arts (:alt-arts @app-state)]
+    (filter #(contains? alt-arts (:code %)) cards)))
+
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
     cards
     (filter #(= (field %) filter-value) cards)))
 
-(defn match [query cards]
+(defn filter-rotated [should-filter cards]
+  (if should-filter
+    (filter-cards false :rotated cards)
+    cards))
+
+(defn filter-title [query cards]
   (if (empty? query)
     cards
-    (filter #(if (= (.indexOf (.toLowerCase (:title %)) query) -1) false true) cards)))
+    (let [lcquery (.toLowerCase query)]
+      (filter #(or (not= (.indexOf (.toLowerCase (:title %)) lcquery) -1)
+                   (not= (.indexOf (:normalizedtitle %) lcquery) -1))
+              cards))))
 
 (defn sort-field [fieldname]
   (case fieldname
@@ -205,6 +290,21 @@
     "Faction" (juxt :side :faction :code)
     "Type" (juxt :side :type)
     "Set number" :number))
+
+(defn selected-set-name [state]
+  (-> (:set-filter state)
+    (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
+    (.replace " Cycle" "")))
+
+(defn selected-set-rotated? [{:keys [sets cycles]} state]
+  (let [s (selected-set-name state)
+        combined (concat sets cycles)]
+    (if (= s "All")
+      false
+      (->> combined
+        (filter #(= s (:name %)))
+        (first)
+        (:rotated)))))
 
 (defn handle-scroll [e owner {:keys [page]}]
   (let [$cardlist (js/$ ".card-list")
@@ -227,14 +327,24 @@
        :type-filter "All"
        :side-filter "All"
        :faction-filter "All"
+       :hide-rotated true
        :page 1
-       :filter-ch (chan)})
+       :filter-ch (chan)
+       :selected-card nil})
 
     om/IWillMount
     (will-mount [this]
       (go (while true
             (let [f (<! (om/get-state owner :filter-ch))]
               (om/set-state! owner (:filter f) (:value f))))))
+
+    om/IDidMount
+    (did-mount [_]
+      (let [events (sub (:notif-chan (om/get-shared owner)) :card-selected (chan))]
+        (go
+          (loop [e (<! events)]
+            (om/set-state! owner :selected-card (:data e))
+            (recur (<! events))))))
 
     om/IRenderState
     (render-state [this state]
@@ -258,20 +368,26 @@
            (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
              [:option {:value field} field])]]
 
-         (let [cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
+         (let [hide-rotated (:hide-rotated state)
+               cycles-filtered (filter-rotated hide-rotated cycles)
+               cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
                                             :cycle_position (:position %)
                                             :position 0)
-                                    cycles)
+                                    cycles-filtered)
                cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
+               sets-filtered (filter-rotated hide-rotated sets)
                ;; Draft is specified as a cycle, but contains no set, nor is it marked as a bigbox
                ;; so we handled it specifically here for formatting purposes
                sets-list (map #(if (not (or (:bigbox %) (= (:name %) "Draft")))
                                   (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
                                   %)
-                               sets)]
-           (for [filter [["Set" :set-filter (map :name
-                                                 (sort-by (juxt :cycle_position :position)
-                                                          (concat cycles-list sets-list)))]
+                               sets-filtered)
+               set-names (map :name
+                              (sort-by (juxt :cycle_position :position)
+                                       (concat cycles-list sets-list)))]
+           (for [filter [["Set" :set-filter (if (show-alt-art?)
+                                              (concat set-names (list "Alt Art"))
+                                              set-names)]
                          ["Side" :side-filter ["Corp" "Runner"]]
                          ["Faction" :faction-filter (factions (:side-filter state))]
                          ["Type" :type-filter (types (:side-filter state))]]]
@@ -281,30 +397,46 @@
                         :on-change #(om/set-state! owner (second filter) (.. % -target -value))}
                (options (last filter))]]))
 
-         [:div.blue-shade.panel.filters
-          (om/build card-info-view nil)
-          ]]
+         [:div.hide-rotated-div
+          [:label [:input.hide-rotated {:type "checkbox"
+                           :value true
+                           :checked (om/get-state owner :hide-rotated)
+                           :on-change #(let [hide (.. % -target -checked)]
+                                         (om/set-state! owner :hide-rotated hide)
+                                         (when (and hide (selected-set-rotated? cursor state))
+                                           (om/set-state! owner :set-filter "All"))
+                                         )}]
+           "Hide rotated cards"]]
+
+         (om/build card-info-view cursor {:state {:selected-card (:selected-card state)}})
+         ]
 
         [:div.card-list {:on-scroll #(handle-scroll % owner state)}
          (om/build-all card-view
-                       (let [s (-> (:set-filter state)
-                                     (.replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
-                                     (.replace " Cycle" ""))
+                       (let [s (selected-set-name state)
                              cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
-                             cards (if (= s "All")
-                                     (:cards cursor)
+                             cards (cond
+                                     (= s "All") @all-cards
+                                     (= s "Alt Art") (filter-alt-art-cards @all-cards)
+                                     :else
                                      (if (= (.indexOf (:set-filter state) "Cycle") -1)
-                                       (filter #(= (:setname %) s) (:cards cursor))
-                                       (filter #(cycle-sets (:setname %)) (:cards cursor))))]
+                                       (filter #(= (:setname %) s) @all-cards)
+                                       (filter #(cycle-sets (:setname %)) @all-cards)))]
                          (->> cards
                               (filter-cards (:side-filter state) :side)
                               (filter-cards (:faction-filter state) :faction)
                               (filter-cards (:type-filter state) :type)
-                              (match (.toLowerCase (:search-query state)))
+                              (filter-rotated (:hide-rotated state))
+                              (filter-title (:search-query state))
                               (insert-alt-arts)
                               (sort-by (sort-field (:sort-field state)))
                               (take (* (:page state) 28))))
-                       {:key-fn #(str (:setname %) (:code %) (:art %))})]]))))
+                       {:key-fn #(str (:setname %) (:code %) (:art %))
+                        :fn #(assoc % :selected (and (= (:setname %) (:setname (:selected-card state)))
+                                                     (= (:code %) (:code (:selected-card state)))
+                                                     (= (:art %) (:art (:selected-card state)))))
+                        :state {:cursor cursor :decorate-card true}
+                        })]]))))
 
 (om/root card-browser
          app-state

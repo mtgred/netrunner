@@ -6,7 +6,7 @@
 
 (def app-state (atom {}))
 
-(go (swap! app-state assoc :donators (:json (<! (GET "/data/donators")))))
+(go (swap! app-state assoc :donators (:json (<! (GET "/data/donors")))))
 
 (defn about [cursor owner]
   (om/component
@@ -32,13 +32,13 @@
            :target "_blank"} "status"] "."]
 
      [:h3 "Contributors"]
-     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Dominic Kexel (queueseven), Lukasz Dobrogowski (zaroth), Filip Gokstorp (Saintis) and Felix Laurie von Massenbach (erbridge) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
+     [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Filip Gokstorp (Saintis), Dan Hutchins (danhut, wozzit) and John Warwick (jwarwick, BobTomatoes) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
 
      [:h3 "Donations"]
      [:p "Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation."]
      [:ul.list.compact
       [:li "PayPal: mtgred@gmail.com or " [:a {:href "https://www.paypal.me/mtgred" :title "PayPal" :target "_blank"} "paypal.me/mtgred"]]
-      [:li "Bitcoin: " [:span.bitcoin "371AEPFnNVhBDohVhRngVncb8mmgRYzmrh" [:img.qr {:src "/img/bitcoin.png"}]]]
+      [:li "Bitcoin: " [:span.bitcoin "371AEPFnNVhBDohVhRngVncb8mmgRYzmrh" [:img.qr {:src "/img/bitcoin.png" :alt "Bitcoin QR Code"}]]]
       ]
 
      [:p "Many thanks to all the donors. Your contributions and kind words are greatly appreciated. You help finance fast servers and keep the developer motivated."]

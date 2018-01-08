@@ -13,6 +13,7 @@ pom.xml
 .repl
 .nrepl-port
 .nrepl-history
+.idea
 
 /resources/public/js/
 /resources/public/cljs/
@@ -22,3 +23,5 @@ pom.xml
 /data/andb-*.json
 /data/img
 /.lein-failures
+
+config.edn

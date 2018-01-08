@@ -251,7 +251,7 @@
     :effect (final-effect (gain :credit (* 2 (count targets))))}
 
    "Cerebral Cast"
-   {:req (req (:successful-run runner-reg))
+   {:req (req (:successful-run runner-reg-last))
     :psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"
                       :choices ["1 tag" "1 brain damage"] :msg (msg "give the Runner " target)
                       :delayed-completion true
@@ -419,7 +419,7 @@
 
    "Financial Collapse"
    {:delayed-completion true
-    :req (req (>= (:credit runner) 6))
+    :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-installed state :runner)))))
     :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-installed state :runner)))]
                    (if (pos? rcount)
                      (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
@@ -483,12 +483,18 @@
      {:delayed-completion true
       :effect (effect (continue-ability (fhelper 1) card nil))})
 
+   "Genotyping"
+   {:delayed-completion true
+    :effect (effect (mill 2)
+                    (system-msg "trashes the top 2 cards of R&D")
+                    (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4))}
+
    "Green Level Clearance"
    {:msg "gain 3 [Credits] and draw 1 card"
     :effect (effect (gain :credit 3) (draw))}
 
    "Hard-Hitting News"
-   {:req (req (:made-run runner-reg))
+   {:req (req (:made-run runner-reg-last))
     :trace {:base 4
             :delayed-completion true
             :msg "give the Runner 4 tags"
@@ -535,7 +541,7 @@
    {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
 
    "Hellion Alpha Test"
-   {:req (req (:installed-resource runner-reg))
+   {:req (req (:installed-resource runner-reg-last))
     :trace {:base 2
             :choices {:req #(and (installed? %)
                                  (is-type? % "Resource"))}
@@ -546,7 +552,7 @@
                            :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Hellion Beta Test"
-   {:req (req (:trashed-card runner-reg))
+   {:req (req (:trashed-card runner-reg-last))
     :trace {:base 2
             :label "Trash 2 installed non-program cards"
             :choices {:max (req (min 2 (count (filter #(not (is-type? % "Program")) (concat (all-installed state :corp)
@@ -580,7 +586,7 @@
                               :effect (effect (trash target {:unpreventable true}))}}}
 
    "Hunter Seeker"
-   {:req (req (:stole-agenda runner-reg))
+   {:req (req (:stole-agenda runner-reg-last))
     :delayed-completion true
     :prompt "Choose a card to trash"
     :choices {:req installed?}
@@ -710,7 +716,7 @@
     :effect (effect (gain :credit 8) (gain :runner :credit 3))}
 
    "Midseason Replacements"
-   {:req (req (:stole-agenda runner-reg))
+   {:req (req (:stole-agenda runner-reg-last))
     :trace {:base 6
             :msg "give the Runner X tags"
             :label "Give the Runner X tags"
@@ -757,7 +763,7 @@
                                                (swap! state assoc-in (cons :corp (:zone target)) newices)
                                                (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(not= (:cid %) (:cid newice)) coll)))
                                                (trigger-event state side :corp-install newice)
-                                               (card-init state side newice false)
+                                               (card-init state side newice {:resolve-effect false})
                                                (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
                                                (trigger-event state side :rez newice))
                                              (system-msg state side (str "does not find any ICE to install from R&D")))
@@ -766,7 +772,7 @@
                                            (unregister-events state side card)))}}}
 
    "Neural EMP"
-   {:req (req (:made-run runner-reg))
+   {:req (req (:made-run runner-reg-last))
     :msg "do 1 net damage"
     :effect (effect (damage eid :net 1 {:card card}))}
 
@@ -829,7 +835,8 @@
                                   0 (flatten (seq (:servers corp))))))}
 
    "Power Grid Overload"
-   {:trace {:base 2
+   {:req (req (:made-run runner-reg-last))
+    :trace {:base 2
             :msg "trash 1 piece of hardware"
             :delayed-completion true
             :effect (req (let [max-cost (- target (second targets))]
@@ -842,7 +849,7 @@
                          (system-msg state :corp (str "trashes 1 piece of hardware with install cost less than or equal to " (- target (second targets)))))}}
 
    "Power Shutdown"
-   {:req (req (:made-run runner-reg))
+   {:req (req (:made-run runner-reg-last))
     :prompt "Trash how many cards from the top R&D?"
     :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-installed state :runner)))))}
     :msg (msg "trash " target " cards from the top of R&D")
@@ -872,8 +879,7 @@
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
    "Preemptive Action"
-   {:msg "remove Preemptive Action from the game"
-    :effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
+   {:effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
 
    "Priority Construction"
    (letfn [(install-card [chosen]
@@ -941,8 +947,8 @@
    "Punitive Counterstrike"
    {:trace {:base 5
             :delayed-completion true
-            :msg (msg "do " (:stole-agenda runner-reg 0) " meat damage")
-            :effect (effect (damage eid :meat (:stole-agenda runner-reg 0) {:card card}))}}
+            :msg (msg "do " (:stole-agenda runner-reg-last 0) " meat damage")
+            :effect (effect (damage eid :meat (:stole-agenda runner-reg-last 0) {:card card}))}}
 
    "Reclamation Order"
    {:prompt "Select a card from Archives"
@@ -1137,12 +1143,22 @@
     :effect (effect (damage eid :meat 4 {:card card}))}
 
    "SEA Source"
-   {:req (req (:successful-run runner-reg))
+   {:req (req (:successful-run runner-reg-last))
     :trace {:base 3
             :msg "give the Runner 1 tag"
             :label "Give the Runner 1 tag"
             :delayed-completion true
             :effect (effect (tag-runner :runner eid 1))}}
+
+   "Self-Growth Program"
+   {:req (req tagged)
+    :prompt "Select two installed Runner cards"
+    :choices {:req #(and (installed? %)
+                         (= "Runner" (:side %)))
+              :max 2}
+    :msg (msg (str "move " (join ", " (map :title targets)) " to the Runner's grip"))
+    :effect (req (doseq [c targets]
+                   (move state :runner c :hand)))}
 
    "Service Outage"
    (let [add-effect (fn [state side card]
@@ -1189,7 +1205,7 @@
    {:choices ["0", "1", "2"]
     :prompt "How many advancement tokens?"
     :delayed-completion true
-    :effect (req (let [c (Integer/parseInt target)]
+    :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
                      {:choices {:req can-be-advanced?}
@@ -1199,7 +1215,7 @@
 
    "Shipment from Tennin"
    {:delayed-completion true
-    :req (req (not (:successful-run runner-reg)))
+    :req (req (not (:successful-run runner-reg-last)))
     :choices {:req #(and (installed? %) (= (:side %) "Corp"))}
     :msg (msg "place 2 advancement tokens on " (card-str state target))
     :effect (effect (add-prop target :advance-counter 2 {:placed true}))}
@@ -1280,7 +1296,7 @@
    (letfn [(subliminal []
              {:corp-phase-12
               {:effect
-               (req (if (not (:made-run runner-reg))
+               (req (if (not (:made-run runner-reg-last))
                       (do (resolve-ability state side
                                            {:optional
                                             {:prompt "Add Subliminal Messaging to HQ?"
@@ -1305,16 +1321,15 @@
 
    "Success"
    {:additional-cost [:forfeit]
-    :effect (req (let [adv (advancement-cost state side (last (:rfg corp)))]
-                   (resolve-ability
-                     state side
-                     {:choices {:req can-be-advanced?}
-                      :msg (msg "advance " (card-str state target) " " adv " times")
-                      :effect (req (dotimes [_ adv]
-                                     (advance state :corp target :no-cost)))} card nil)))}
+    :effect (req (resolve-ability state side
+                                  {:choices {:req can-be-advanced?}
+                                   :msg (msg "advance " (card-str state target) " "
+                                             (advancement-cost state side (last (:rfg corp))) " times")
+                                   :effect (req (dotimes [_ (advancement-cost state side (last (:rfg corp)))]
+                                                  (advance state :corp target :no-cost)))} card nil))}
 
    "Successful Demonstration"
-   {:req (req (:unsuccessful-run runner-reg))
+   {:req (req (:unsuccessful-run runner-reg-last))
     :msg "gain 7 [Credits]"
     :effect (effect (gain :credit 7))}
 
@@ -1411,7 +1426,7 @@
                      {:prompt "Move how many advancement tokens?"
                       :choices (take (inc (:advance-counter fr)) ["0" "1" "2"])
                       :delayed-completion true
-                      :effect (req (let [c (Integer/parseInt target)]
+                      :effect (req (let [c (str->int target)]
                                      (continue-ability
                                        state side
                                        {:prompt  "Move to where?"
@@ -1448,6 +1463,30 @@
                                            (is-type? % "Resource"))}
                       :msg (msg "trash " (:title target))
                       :effect (effect (trash target))}}}
+
+   "Wake Up Call"
+   {:req (req (:trashed-card runner-reg-last))
+    :prompt "Select a piece of hardware or non-virtual resource"
+    :choices {:req #(or (hardware? %)
+                        (and (resource? %) (not (has-subtype? % "Virtual"))))}
+    :delayed-completion true
+    :effect (req (let [chosen target
+                       wake card]
+                   (show-wait-prompt state side "Runner to resolve Wake Up Call")
+                   (continue-ability state :runner
+                                     {:prompt (str "Trash " (:title chosen) " or suffer 4 meat damage?")
+                                      :choices [(str "Trash " (:title chosen))
+                                                "4 meat damage"]
+                                      :delayed-completion true
+                                      :effect (req (clear-wait-prompt state :corp)
+                                                   (move state side (last (:discard corp)) :rfg)
+                                                   (if (.startsWith target "Trash")
+                                                     (do (system-msg state side (str "chooses to trash " (:title chosen)))
+                                                         (trash state side eid chosen nil))
+                                                     (do (system-msg state side "chooses to suffer meat damage")
+                                                         (damage state side eid :meat 4 {:card wake
+                                                                                         :unboostable true}))))}
+                                     card nil)))}
 
    "Wetwork Refit"
    {:choices {:req #(and (ice? %)

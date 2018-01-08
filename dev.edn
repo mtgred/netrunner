@@ -1,0 +1,13 @@
+{:trello-auth
+       {:key   nil
+        :token nil}
+ :db   {:address "localhost"
+        :port    27017
+        :name    "netrunner"}
+ :auth {:expiration 60
+        :secret     "Dev salt"}
+ :web {:port 1042}
+ :email {:host nil
+         :user nil
+         :pass nil
+         :ssl nil}}

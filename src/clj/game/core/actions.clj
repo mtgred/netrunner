@@ -50,7 +50,8 @@
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (let [kw (to-keyword key)]
+  (let [kw key
+        key (name key)]
     (if (neg? delta)
       (deduce state side [kw (- delta)])
       (swap! state update-in [side kw] (partial + delta)))
@@ -67,7 +68,10 @@
         c (or c (get-card state (assoc card :side (other-side (to-keyword (:side card))))))
         last-zone (last (:zone c))
         src (name-zone (:side c) (:zone c))
-        from-str (when-not (nil? src) (str " from their " src))
+        from-str (when-not (nil? src)
+                   (if (= :content last-zone)
+                     (str " in " src) ; this string matches the message when a card is trashed via (trash)
+                     (str " from their " src)))
         label (if (and (not= last-zone :play-area)
                        (not (and (= (:side c) "Runner")
                                  (= last-zone :hand)
@@ -385,7 +389,8 @@
 
       ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
       (let [moved-card (move state :corp card :scored)
-            c (card-init state :corp moved-card false)
+            c (card-init state :corp moved-card {:resolve-effect false
+                                                 :init-data true})
             points (get-agenda-points state :corp c)]
         (trigger-event-simult
           state :corp (make-eid state) :agenda-scored

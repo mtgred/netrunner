@@ -6,12 +6,35 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.ajax :refer [POST GET]]))
 
-(defn avatar [{:keys [emailhash]} owner opts]
+
+(defn handle-post [event owner url ref]
+  (.preventDefault event)
+  (om/set-state! owner :flash-message "")
+  (let [params (-> event .-target js/$ .serialize)
+        _ (.-serialize (js/$ (.-target event)))] ;; params is nil when built in :advanced mode. This fixes the issue.
+    (go (let [response (<! (POST url params))]
+          (if (and (= (:status response) 200) (= (:owner "/forgot") "/forgot") )
+            (om/set-state! owner :flash-message "Reset password sent")
+            (case (:status response)
+              401 (om/set-state! owner :flash-message "Invalid login or password")
+              421 (om/set-state! owner :flash-message "No account with that email address exists")
+              422 (om/set-state! owner :flash-message "Username taken")
+              423 (om/set-state! owner :flash-message "Username too long")
+              424 (om/set-state! owner :flash-message "Email already used")
+              (-> js/document .-location (.reload true))))))))
+
+(defn handle-logout [event owner]
+  (.preventDefault event)
+  (go (let [response (<! (POST "/logout" nil))]
+        (-> js/document .-location (.reload true)))))
+
+(defn avatar [{:keys [emailhash username]} owner opts]
   (om/component
    (sab/html
     (when emailhash
       [:img.avatar
-       {:src (str "https://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))}]))))
+       {:src (str "https://www.gravatar.com/avatar/" emailhash "?d=retro&s=" (:size opts))
+        :alt username}]))))
 
 (defn authenticated [f]
   (if-let [user (:user @app-state)]
@@ -29,7 +52,7 @@
         [:b.caret]]
        [:div.dropdown-menu.blue-shade.float-right
         [:a.block-link {:href "/account"} "Settings"]
-        [:a.block-link {:href "/logout"} "Logout"]]]])))
+        [:a.block-link {:on-click #(handle-logout % owner)} "Logout"]]]])))
 
 (defn unlogged-menu [user owner]
   (om/component
@@ -47,21 +70,6 @@
      (om/build logged-menu user)
      (om/build unlogged-menu user))))
 
-(defn handle-post [event owner url ref]
-  (.preventDefault event)
-  (om/set-state! owner :flash-message "")
-  (let [params (-> event .-target js/$ .serialize)
-        _ (.-serialize (js/$ (.-target event)))] ;; params is nil when built in :advanced mode. This fixes the issue.
-    (go (let [response (<! (POST url params))]
-          (if (and (= (:status response) 200) (= (:owner "/forgot") "/forgot") )
-            (om/set-state! owner :flash-message "Reset password sent")
-            (case (:status response)
-                401 (om/set-state! owner :flash-message "Invalid login or password")
-                421 (om/set-state! owner :flash-message "No account with that email address exists")
-                422 (om/set-state! owner :flash-message "Username taken")
-                423 (om/set-state! owner :flash-message "Username too long")
-                424 (om/set-state! owner :flash-message "Email already used")
-                (-> js/document .-location (.reload true))))))))
 
 (defn check-username [event owner]
   (go (let [response (<! (GET (str "/check/" (.-value (om/get-node owner "username")))))]

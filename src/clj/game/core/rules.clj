@@ -57,7 +57,8 @@
                        (trash state side current)))
                    (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
                          moved-card (move state side c :current)]
-                     (card-init state side eid moved-card true)))
+                     (card-init state side eid moved-card {:resolve-effect true
+                                                           :init-data true})))
                (do (resolve-ability state side (assoc cdef :eid eid) card nil)
                    (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
                      (move state side c :discard))
@@ -89,9 +90,10 @@
 
 (defn draw
   "Draw n cards from :deck to :hand."
-  ([state side] (draw state side 1 nil))
-  ([state side n] (draw state side n nil))
-  ([state side n {:keys [suppress-event] :as args}]
+  ([state side] (draw state side (make-eid state) 1 nil))
+  ([state side n] (draw state side (make-eid state) n nil))
+  ([state side n args] (draw state side (make-eid state) n args))
+  ([state side eid n {:keys [suppress-event] :as args}]
    (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
    (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
    (let [active-player (get-in @state [:active-player])
@@ -110,10 +112,11 @@
          (swap! state assoc-in [side :register :most-recent-drawn] drawn)
          (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
          (swap! state update-in [:bonus] dissoc :draw)
-         (when (and (not suppress-event) (pos? deck-count))
+         (if (and (not suppress-event) (pos? deck-count))
            (when-completed
              (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
-             (trigger-event state side (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent)))
+             (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
+           (effect-completed state side eid))
          (when (= 0 (remaining-draws state side))
            (prevent-draw state side))))
      (when (< draws-after-prevent draws-wanted)
@@ -304,14 +307,16 @@
 
 (defn- resolve-trash-end
   [state side eid {:keys [zone type disabled] :as card}
-   {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
+   {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args} & targets]
   (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
+        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})
+        card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
+
     (when-let [trash-effect (:trash-effect cdef)]
       (when (and (not disabled) (or (and (= (:side card) "Runner")
                                          (:installed card))
-                                    (:rezzed card)
-                                    (:when-inactive trash-effect)))
+                                    (and (:rezzed card) (not host-trashed))
+                                    (and (:when-inactive trash-effect) (not host-trashed))))
         (resolve-ability state side trash-effect moved-card (cons cause targets))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
     (effect-completed state side eid)))
@@ -540,17 +545,30 @@
   [state side]
   (swap! state update-in [side] dissoc :openhand))
 
+(defn clear-win
+  "Clears the current win condition.  Requires both sides to have issued the command"
+  [state side]
+  (swap! state assoc-in [side :clear-win] true)
+  (when (and (-> @state :runner :clear-win) (-> @state :corp :clear-win))
+    (system-msg state side "cleared the win condition")
+    (swap! state dissoc-in [:runner :clear-win])
+    (swap! state dissoc-in [:corp :clear-win])
+    (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
+
 (defn win
   "Records a win reason for statistics."
   [state side reason]
-  (system-msg state side "wins the game")
-  (play-sfx state side "game-end")
-  (swap! state assoc :winner side
-         :winning-user (get-in @state [side :user :username])
-         :losing-user (get-in @state [(other-side side) :user :username])
-         :reason reason :end-time (java.util.Date.)
-         :winning-deck-id (get-in @state [side :deck-id])
-         :losing-deck-id (get-in @state [(other-side side) :deck-id])))
+  (when-not (:winner @state)
+    (system-msg state side "wins the game")
+    (play-sfx state side "game-end")
+    (swap! state assoc
+           :winner side
+           :loser (other-side side)
+           :winning-user (get-in @state [side :user :username])
+           :losing-user (get-in @state [(other-side side) :user :username])
+           :reason reason :end-time (java.util.Date.)
+           :winning-deck-id (get-in @state [side :deck-id])
+           :losing-deck-id (get-in @state [(other-side side) :deck-id]))))
 
 (defn win-decked
   "Records a win via decking the corp."

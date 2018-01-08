@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
-(declare active? all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run has-subtype? ice?
-         make-eid register-events remove-from-host remove-icon reset-card rezzed? trash trigger-event update-hosted!
+(declare active? all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run hardware? has-subtype? ice?
+         make-eid program? register-events remove-from-host remove-icon reset-card resource? rezzed? trash trigger-event update-hosted!
          update-ice-strength unregister-events)
 
 ;;; Functions for loading card information.
@@ -73,7 +73,10 @@
              trash-hosted (fn [h]
                              (trash state side
                                     (update-in h [:zone] #(map to-keyword %))
-                                    {:unpreventable true :suppress-event true})
+                                    {:unpreventable true
+                                     :suppress-event true
+                                     ;; this handles executives getting trashed before World's Plaza #2949
+                                     :host-trashed true})
                                ())
              update-hosted (fn [h]
                              (let [newz (flatten (list (if (vector? to) to [to])))
@@ -121,7 +124,7 @@
            (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card moved-card)
          (when (#{:discard :hand} to) (reset-card state side moved-card))
-         (when-let [icon-card (get-in moved-card [:icon :card])]
+         (when-let [icon-card (get-card state (get-in moved-card [:icon :card]))]
            ;; remove icon if card moved to :discard or :hand
            (when (#{:discard :hand} to) (remove-icon state side icon-card moved-card)))
          moved-card)))))
@@ -235,4 +238,4 @@
     (let [c (dissoc card :disabled)]
       (update! state side c)
       (when (active? card)
-        (card-init state side c false)))))
+        (card-init state side c {:resolve-effect false})))))

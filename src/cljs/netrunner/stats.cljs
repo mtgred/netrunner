@@ -2,87 +2,84 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [<!] :as async]
+            [cljs.core.async :refer [chan put! <!] :as async]
             [netrunner.appstate :refer [app-state]]
+            [netrunner.deckbuilder :refer [process-decks num->percent]]
             [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.ajax :refer [POST GET]]
+            [netrunner.ajax :refer [GET DELETE]]
+            [netrunner.ws :as ws]
             [goog.string :as gstring]
             [goog.string.format]))
 
-(defn num->percent
-  "Converts an input number to a percent of the second input number for display"
-  [num1 num2]
-  (gstring/format "%.0f" (* 100 (float (/ num1 num2)))))
+(defn update-deck-stats
+  "Update the local app-state with a new version of deck stats"
+  [deck-id stats]
+  (let [deck (first (filter #(= (:_id %) deck-id) (:decks @app-state)))
+        deck (assoc deck :stats stats)
+        others (remove #(= (:_id %) deck-id) (:decks @app-state))]
+    (swap! app-state assoc :decks (conj others deck))))
+
+(ws/register-ws-handler!
+  :stats/update
+  #(do (swap! app-state assoc :stats (-> % :userstats))
+       (update-deck-stats (-> % :deck-id) (-> % :deckstats))))
 
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
   [input]
   (if (pos? (int input)) input 0))
 
-(defn clear-user-stats [owner]
+(defn clear-user-stats []
   (authenticated
     (fn [user]
-      (let [data (:user @app-state)]
-        (try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
-        (go (let [result (<! (POST "/user/clearstats" data :json))])
-            (om/set-state! owner :games-started 0)
-            (om/set-state! owner :games-completed 0)
-            (om/set-state! owner :wins 0)
-            (om/set-state! owner :loses 0)
-            (om/set-state! owner :dnf 0))))))
+      (let [id (get-in @app-state [:user :_id])]
+        ;(try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
+        (go (let [result (<! (DELETE "/profile/stats/user"))]
+              (swap! app-state assoc :stats result)))))))
 
-(defn refresh-user-stats [owner]
-  (authenticated
-    (fn [user]
-      (try (js/ga "send" "event" "user" "refreshstats") (catch js/Error e))
-      (go (let [result (-> (<! (GET (str "/user"))) :json first :stats)]
-            (om/set-state! owner :games-started (:games-started result))
-            (om/set-state! owner :games-completed (:games-completed result))
-            (om/set-state! owner :wins (:wins result))
-            (om/set-state! owner :loses (:loses result))
-            (om/set-state! owner :dnf (- (:games-started result) (:games-completed result))))))))
-
-(defn stats-view [user owner]
-  (reify
-    om/IInitState
-    (init-state [this] {:flash-message ""})
-
-    om/IWillMount
-    (will-mount [this]
-      (om/set-state! owner :games-started (get-in @app-state [:stats :games-started]))
-      (om/set-state! owner :games-completed (get-in @app-state [:stats :games-completed]))
-      (om/set-state! owner :wins (get-in @app-state [:stats :wins]))
-      (om/set-state! owner :loses (get-in @app-state [:stats :loses]))
-      (om/set-state! owner :dnf (- (om/get-state owner :games-started) (om/get-state owner :games-completed))))
-
-    om/IRenderState
-    (render-state [this state]
-      (sab/html
-        (let [started (notnum->zero (om/get-state owner :games-started))
-              completed (notnum->zero (om/get-state owner :games-completed))
-              pc (notnum->zero (num->percent completed started))
-              win (notnum->zero (om/get-state owner :wins))
-              pw (notnum->zero (num->percent win started))
-              lose (notnum->zero (om/get-state owner :loses))
-              pl (notnum->zero (num->percent lose started))
-              incomplete (notnum->zero (om/get-state owner :dnf))
-              pi (notnum->zero (num->percent incomplete started))]
-          [:div
-            [:div.panel.blue-shade
-             [:h2 "Game Stats"]
-              [:section
-               [:div "Started: " started]
-               [:div "Completed: " completed " (" pc "%)"]
-               [:div "Not completed: " incomplete  " (" pi "%)"]
-               [:div "Won: " win  " (" pw "%)"]
-               [:div "Lost: " lose  " (" pl "%)"]]
-             [:div.button-bar
-              [:button {:on-click #(refresh-user-stats owner)} "Refresh Stats"]
-              [:button {:on-click #(clear-user-stats owner)} "Clear Stats"]]]])))))
-
-(defn stats [{:keys [user]} owner]
+(defn stat-view [{:keys [start-key complete-key win-key lose-key stats]} owner]
   (om/component
-    (when user
-      (om/build stats-view user))))
+    (sab/html
+      (let [started (notnum->zero (start-key stats))
+            completed (notnum->zero (complete-key stats))
+            pc (notnum->zero (num->percent completed started))
+            win (notnum->zero (win-key stats))
+            lose (notnum->zero (lose-key stats))
+            pw (notnum->zero (num->percent win (+ win lose)))
+            pl (notnum->zero (num->percent lose (+ win lose)))
+            incomplete (notnum->zero (- started completed))
+            pi (notnum->zero (num->percent incomplete started))]
+        [:section
+         [:div "Started: " started]
+         [:div "Completed: " completed " (" pc "%)"]
+         [:div "Not completed: " incomplete  " (" pi "%)"]
+         (when-not (= "none" (get-in @app-state [:options :gamestats]))
+           [:div [:div "Won: " win  " (" pw "%)"]
+            [:div "Lost: " lose  " (" pl "%)"]])]))))
+
+(defn stats [{:keys [stats] :as cursor} owner]
+  (reify
+    om/IRenderState
+    (render-state [_ state]
+      (sab/html
+        [:div.blue-shade.content-page.panel
+         [:div
+          [:div
+           [:h3 "Game Stats"]
+           (om/build stat-view {:stats stats
+                                :start-key :games-started :complete-key :games-completed
+                                :win-key :wins :lose-key :loses})]
+          [:div
+           [:h3 "Corp Stats"]
+           (om/build stat-view {:stats stats
+                                :start-key :games-started-corp :complete-key :games-completed-corp
+                                :win-key :wins-corp :lose-key :loses-corp})]
+          [:div
+           [:h3 "Runner Stats"]
+           (om/build stat-view {:stats stats
+                                :start-key :games-started-runner :complete-key :games-completed-runner
+                                :win-key :wins-runner :lose-key :loses-runner})]]
+         [:p
+          [:button {:on-click #(clear-user-stats)} "Clear Stats"]]]))))
 
 (om/root stats app-state {:target (. js/document (getElementById "stats"))})

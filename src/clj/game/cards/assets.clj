@@ -867,7 +867,7 @@
    "Mr. Stone"
    {:events {:runner-gain-tag {:delayed-completion true
                                :msg "do 1 meat damage"
-                               :effect (effect (damage eid :meat 1 {:card card}))}}}
+                               :effect (effect (damage :corp eid :meat 1 {:card card}))}}}
 
    "Mumba Temple"
    {:recurring 2}
@@ -972,9 +972,11 @@
                                 :effect (req (if (= target "Add News Team to score area")
                                                (do (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point"))
                                                    (as-trashed-agenda state :runner card -1 {:force true})
+                                                   (trigger-event state side :no-trash card)
                                                    (effect-completed state side eid))
                                                (do (system-msg state :runner (str "takes 2 tags from News Team"))
-                                                   (tag-runner state :runner eid 2))))}
+                                                   (tag-runner state :runner eid 2)
+                                                   (trigger-event state side :no-trash card))))}
                                card targets))}}
 
    "Open Forum"
@@ -1111,20 +1113,20 @@
                              (as-agenda state :corp (dissoc card :counter) 1)))} }}
 
    "Quarantine System"
-   (letfn [(rez-ice [cnt ap] {:prompt "Select an ICE to rez"
-                              :delayed-completion true
-                              :choices {:req #(and (ice? %) (complement rezzed?))}
-                              :msg (msg "rez " (:title target))
-                              :effect (req (rez-cost-bonus state side (* ap -2))
-                                           (rez state side target {:no-warning true})
-                                           (if (< cnt 3) (continue-ability state side (rez-ice (inc cnt) ap) card nil)
-                                                         (effect-completed state side eid)))})]
+   (letfn [(rez-ice [cnt] {:prompt "Select an ICE to rez"
+                           :delayed-completion true
+                           :choices {:req #(and (ice? %) (not (rezzed? %)))}
+                           :msg (msg "rez " (:title target))
+                           :effect (req (let [agenda (last (:rfg corp))
+                                              ap (:agendapoints agenda 0)]
+                                          (rez-cost-bonus state side (* ap -2))
+                                          (rez state side target {:no-warning true})
+                                          (if (< cnt 3) (continue-ability state side (rez-ice (inc cnt)) card nil)
+                                                        (effect-completed state side eid))))})]
      {:abilities [{:label "Forfeit agenda to rez up to 3 ICE with a 2 [Credit] discount per agenda point"
                    :req (req (pos? (count (:scored corp))))
                    :cost [:forfeit]
-                   :effect (req (let [agenda (last (:rfg corp))
-                                      ap (if (is-type? agenda "Agenda") (:agendapoints agenda) 0)]
-                                  (continue-ability state side (rez-ice 1 ap) card nil)))}]})
+                   :effect (req (continue-ability state side (rez-ice 1) card nil))}]})
 
    "Raman Rai"
    {:abilities [{:once :per-turn
@@ -1165,6 +1167,29 @@
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins ability}
     :abilities [ability]})
+
+   "Reconstruction Contract"
+   {:events {:damage {:req (req (pos? (nth targets 2)))
+                      :effect (effect (add-counter card :advancement 1)
+                                      (system-msg "adds 1 advancement token to Reconstruction Contract"))}}
+    :abilities [{:label "[Trash]: Move advancement tokens to another card"
+                 :prompt "Select a card that can be advanced"
+                 :choices {:req can-be-advanced?}
+                 :effect (req (let [move-to target
+                                    recon card]
+                                (resolve-ability
+                                  state side
+                                  {:prompt "Move how many tokens?"
+                                   :choices {:number (req (:advance-counter recon 0))
+                                             :default (req (:advance-counter recon 0))}
+                                   :effect (effect (add-counter move-to :advancement target)
+                                                   (system-msg (str "trashes Reconstruction Contract to move " target
+                                                                    (pluralize " advancement token" target) " to "
+                                                                    (card-str state move-to)))
+                                                   (trash recon {:cause :ability-cost}))}
+
+                                  card nil)
+                                ))}]}
 
    "Reversed Accounts"
    {:advanceable :always
@@ -1320,9 +1345,11 @@
                                                                     (req (if (= target "Add Shi.Kyū to score area")
                                                                            (do (as-trashed-agenda state :runner card -1)
                                                                                (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
+                                                                               (trigger-event state side :no-trash card)
                                                                                (effect-completed state side eid))
                                                                            (do (damage state :corp eid :net dmg {:card card})
-                                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))))))}
+                                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))
+                                                                               (trigger-event state side :no-trash card)))))}
                                                         card targets))}
                          :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                       card targets))}}
@@ -1478,6 +1505,19 @@
 
    "Turtlebacks"
    {:events {:server-created {:msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+
+   "Urban Renewal"
+   {:effect (effect (add-counter card :power 3))
+    :derezzed-events {:runner-turn-ends corp-rez-toast}
+    :events {:corp-turn-begins
+             {:delayed-completion true
+              :effect (req (add-counter state side card :power -1)
+                           (if (<= (get-in card [:counter :power]) 1)
+                             (when-completed
+                               (trash state side card {:cause :ability-cost})
+                               (do (system-msg state :corp "uses Urban Renewal to do 4 meat damage")
+                                   (damage state side eid :meat 4 {:card card})))
+                             (effect-completed state side eid)))}}}
 
    "Victoria Jenkins"
    {:effect (req (lose state :runner :click-per-turn 1)

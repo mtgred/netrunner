@@ -54,9 +54,9 @@
 
    "AgInfusion: New Miracles for a New World"
    {:abilities [{:once :per-turn
-                 :req (req (and (:run @state) (not (rezzed? current-ice))))
+                 :req (req (and (:run @state) (not (rezzed? current-ice)) (can-rez? state side current-ice {:ignore-unique true})))
                  :prompt "Choose another server and redirect the run to its outermost position"
-                 :choices (req (cancellable servers))
+                 :choices (req (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                  :msg (msg "trash the approached ICE. The Runner is now running on " target)
                  :effect (req (let [dest (server->zone state target)]
                                 (trash state side current-ice)
@@ -117,6 +117,28 @@
                             :msg "draw a card"
                             :effect (effect (draw 1))}}}
 
+   "Asa Group: Security Through Vigilance"
+   {:events {:corp-install
+             {:delayed-completion true
+              :req (req (first-event? state :corp :corp-install))
+              :effect (req (let [installed-card target
+                                 z (butlast (:zone installed-card))]
+                             (continue-ability
+                               state side
+                               {:prompt (str "Select a "
+                                             (if (is-remote? z)
+                                               "non-agenda"
+                                               "piece of ice")
+                                             " in HQ to install with Asa Group: Security Through Vigilance (optional)")
+                                :delayed-completion true
+                                :choices {:req #(and (in-hand? %)
+                                                     (= (:side %) "Corp")
+                                                     (not (is-type? % "Agenda"))
+                                                     (or (is-remote? z)
+                                                         (ice? %)))}
+                                :effect (effect (corp-install eid target (zone->name z) nil))}
+                               card nil)))}}}
+
    "Ayla \"Bios\" Rahim: Simulant Specialist"
    {:abilities [{:label "[:click] Add 1 card from NVRAM to your grip"
                  :cost [:click 1]
@@ -146,6 +168,19 @@
                                                              (shuffle! state side :deck)
                                                              (clear-wait-prompt state :corp)
                                                              (effect-completed state side eid card))} card nil))}}}
+
+   "Azmari EdTech: Shaping the Future"
+   (let [choose-type {:prompt "Name a Runner card type"
+                      :choices ["Event" "Resource" "Program" "Hardware"]
+                      :effect (effect (update! (assoc card :az-target target))
+                                      (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
+         check-type {:req (req (is-type? target (:az-target card)))
+                     :effect (effect (gain :corp :credit 2))
+                     :once :per-turn
+                     :msg (msg "gain 2 [Credits] from " (:az-target card))}]
+     {:events {:corp-turn-ends choose-type
+               :runner-install check-type
+               :play-event check-type}})
 
    "Blue Sun: Powering the Future"
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
@@ -233,7 +268,9 @@
                       :req (req (and (is-type? target "Operation")
                                      (turn-flag? state side card :can-trash-operation)))
                       :effect (req (trash state side target)
-                                   (swap! state assoc-in [:runner :register :trashed-card] true))
+                                   (swap! state assoc-in [:run :did-trash] true)
+                                   (swap! state assoc-in [:runner :register :trashed-card] true)
+                                   (register-turn-flag! state side card :can-trash-operation (constantly false)))
                       :msg (msg "trash " (:title target))}
              :successful-run-ends {:req (req (and (= (:server target) [:archives])
                                                   (nil? (:replace-access (:run-effect target)))
@@ -245,10 +282,14 @@
    {:recurring 1}
 
    "Exile: Streethawk"
-   {:events {:runner-install {:req (req (and (is-type? target "Program")
+   {:flags {:runner-install-draw true}
+    :events {:runner-install {:silent (req (not (and (is-type? target "Program")
+                                                     (some #{:discard} (:previous-zone target)))))
+                              :delayed-completion true
+                              :req (req (and (is-type? target "Program")
                                              (some #{:discard} (:previous-zone target))))
                               :msg (msg "draw a card")
-                              :effect (effect (draw 1))}}}
+                              :effect (req (draw state side eid 1 nil))}}}
 
    "Fringe Applications: Tomorrow, Today"
    {:events
@@ -320,7 +361,9 @@
 
    "Haas-Bioroid: Stronger Together"
    {:events {:pre-ice-strength {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
-                                :effect (effect (ice-strength-bonus 1 target))}}}
+                                :effect (effect (ice-strength-bonus 1 target))}}
+    :leave-play (effect (update-all-ice))
+    :effect (effect (update-all-ice))}
 
    "Harishchandra Ent.: Where Youre the Star"
    {:effect (req (when tagged
@@ -417,9 +460,13 @@
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:interactive (req true)
                              :delayed-completion true
+                             :req (req (not (:winner @state)))
                              :msg "do 1 net damage"
                              :effect (effect (damage eid :net 1 {:card card}))}
-             :agenda-stolen {:msg "do 1 net damage" :effect (effect (damage eid :net 1 {:card card}))}}}
+             :agenda-stolen {:msg "do 1 net damage"
+                             :delayed-completion true
+                             :req (req (not (:winner @state)))
+                             :effect (effect (damage eid :net 1 {:card card}))}}}
 
    "Jinteki: Potential Unleashed"
    {:events {:pre-resolve-damage
@@ -749,13 +796,16 @@
                                                 card nil))}}}
 
    "Skorpios Defense Systems: Persuasive Power"
-   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted"
+   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted.  Cannot use on in progress run event"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
-                 :once :per-turn
                  :delayed-completion true
                  :effect (effect (show-wait-prompt :runner "Corp to use Skorpios' ability")
                                  (continue-ability {:prompt "Choose a card in the Runner's Heap that was just trashed"
-                                                    :choices (req (cancellable (:discard runner)))
+                                                    :once :per-turn
+                                                    :choices (req (cancellable
+                                                                    ; do not allow a run event in progress to get nuked #2963
+                                                                    (remove #(= (:cid %) (get-in @state [:run :run-effect :card :cid]))
+                                                                            (:discard runner))))
                                                     :msg (msg "remove " (:title target) " from the game")
                                                     :effect (req (move state :runner target :rfg)
                                                                  (clear-wait-prompt state :runner)
@@ -921,7 +971,7 @@
                  :choices (cancellable ["Yes"])
                  :delayed-completion true
                  :effect (req (when (= target "Yes")
-                                (damage state :runner eid :meat 1 {:card card})
+                                (damage state side eid :meat 1 {:card card})
                                 (system-msg state side "uses Weyland Consortium: Builder of Nations to do 1 meat damage")))}]}
 
    "Weyland Consortium: Building a Better World"

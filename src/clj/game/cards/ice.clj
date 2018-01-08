@@ -86,10 +86,15 @@
 
 (defn do-psi
   "Start a psi game, if not equal do ability"
-  [{:keys [label] :as ability}]
+  ([{:keys [label] :as ability}]
   {:label (str "Psi Game - " label)
    :msg (str "start a psi game (" label ")")
    :psi {:not-equal ability}})
+  ([{:keys [label-neq] :as neq-ability} {:keys [label-eq] :as eq-ability}]
+   {:label (str "Psi Game - " label-neq " / " label-eq)
+    :msg (str "start a psi game (" label-neq " / " label-eq ")")
+    :psi {:not-equal neq-ability
+          :equal     eq-ability}}))
 
 (def take-bad-pub
   "Bad pub on rez effect."
@@ -359,7 +364,8 @@
                                (swap! state assoc-in (cons :corp (:zone card)) newices)
                                (swap! state update-in (cons :corp (:zone target))
                                       (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
-                               (card-init state side newice false)
+                               (card-init state side newice {:resolve-effect false
+                                                             :init-data true})
                                (trigger-event state side :corp-install newice)))}]})
 
    "Brainstorm"
@@ -959,7 +965,8 @@
                                                         (swap! state update-in (cons :corp (:zone target))
                                                                (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
                                                         (update! state side (assoc card :howler-target newice))
-                                                        (card-init state side newice false)
+                                                        (card-init state side newice {:resolve-effect false
+                                                                                      :init-data true})
                                                         (trigger-event state side :corp-install newice)))} card nil)))}]
       :events {:run-ends {:req (req (:howler-target card))
                           :effect (effect (trash card {:cause :self-trash})
@@ -1236,6 +1243,18 @@
                                                                                (swap-installed state side (first targets) (second targets))
                                                                                (effect-completed state side eid card)))} card nil)))}]}
 
+   "Mganga"
+   {:subroutines [(do-psi {:label "do 2 net damage"
+                           :delayed-completion true
+                           :player :corp
+                           :effect (req (when-completed (damage state :corp :net 2 {:card card})
+                                                        (trash state :corp eid card nil)))}
+                          {:label "do 1 net damage"
+                           :delayed-completion true
+                           :player :corp
+                           :effect (req (when-completed (damage state :corp :net 1 {:card card})
+                                                        (trash state :corp eid card nil)))})]}
+
    "Mind Game"
    {:subroutines [(do-psi {:label "Redirect the run to another server"
                            :player :corp
@@ -1305,6 +1324,10 @@
                   (tag-trace 2)
                   (tag-trace 3)
                   end-the-run-if-tagged]}
+
+   "Najja 1.0"
+   {:subroutines [end-the-run]
+    :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Nebula"
    (space-ice trash-program)
@@ -1664,13 +1687,13 @@
     :implementation "Does not handle UFAQ for Pawn or Blackguard interaction"
     :cannot-host true
     :subroutines [trash-program
-                  {:label "Trash a resource and end the run"
-                   :msg (msg "trash " (:title target) " and end the run")
+                  end-the-run
+                  {:label "Trash a resource"
+                   :msg (msg "trash " (:title target))
                    :delayed-completion true
                    :choices {:req #(and (installed? %)
                                         (is-type? % "Resource"))}
-                   :effect (effect (trash target {:reason :subroutine})
-                                   (end-run))}]}
+                   :effect (effect (trash target {:reason :subroutine}))}]}
 
    "TL;DR"
    {:subroutines [{:msg "duplicate subroutines on next piece of ICE encountered this run"}]}

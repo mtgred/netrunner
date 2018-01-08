@@ -80,7 +80,8 @@
          (when-let [events (:events tdef)]
            (register-events state side events c))
          (when (or (:recurring tdef) (:prevent tdef))
-           (card-init state side c false)))
+           (card-init state side c {:resolve-effect false
+                                    :init-data true})))
 
        (when-let [events (:events tdef)]
          (when (and installed (:recurring tdef))

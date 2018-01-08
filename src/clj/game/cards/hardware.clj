@@ -1,8 +1,26 @@
 (in-ns 'game.core)
 
 (def cards-hardware
-  {"Adjusted Matrix"
-   {:implementation "Click Adjusted Matrix to use ability"
+  {"Acacia"
+   {:events {:pre-purge {:effect (req (let [virus (filter #(has-subtype? % "Virus") (all-installed state :runner))
+                                            counters (reduce + (map #(get-virus-counters state :runner %) virus))]
+                                        (update! state side (assoc-in (get-card state card) [:special :numpurged] counters))))}
+             :purge {:delayed-completion true
+                     :effect (effect (show-wait-prompt  :corp "Runner to decide if they will use Acacia")
+                                  (continue-ability {:optional
+                                                     {:player :runner
+                                                      :prompt "Use Acacia?"
+                                                      :yes-ability {:effect (req (let [counters (get-in (get-card state card) [:special :numpurged])]
+                                                                                   (gain state side :credit counters)
+                                                                                   (system-msg state side (str "trashes Acacia and gains " counters "[Credit]"))
+                                                                                   (trash state side card {:unpreventable true})
+                                                                                   (clear-wait-prompt state :corp)
+                                                                                   (effect-completed state side eid)))}
+                                                      :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                                   (effect-completed eid))}}} card nil))}}}
+
+   "Adjusted Matrix"
+   {:implementation "Click Adjusted Matrix to use ability."
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
     :prompt "Choose Icebreaker on which to install Adjusted Matrix"
     :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Icebreaker") (installed? %))}
@@ -199,6 +217,13 @@
                                                     (get-card state card)))}
     :events {:pre-rez nil :runner-turn-ends nil :corp-turn-ends nil}}
 
+   "Cyberdelia"
+   {:implementation "Credit gain is manually triggered."
+    :in-play [:memory 1]
+    :abilities [{:msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
+                 :once :per-turn
+                 :effect (effect (gain :credit 1))}]}
+
    "Cyberfeeder"
    {:recurring 1}
 
@@ -218,12 +243,9 @@
    "Dedicated Processor"
    {:implementation "Click Dedicated Processor to use ability"
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
-    :prompt "Choose Icebreaker on which to install Dedicated Processor"
-    :choices {:req #(and (has-subtype? % "Icebreaker")
+    :hosting {:req #(and (has-subtype? % "Icebreaker")
                          (not (has-subtype? % "AI"))
                          (installed? %))}
-    :msg (msg "host it on " (card-str state target))
-    :effect (effect (host target card))
     :abilities [{:cost [:credit 2]
                  :req (req run)
                  :effect (effect (pump (get-card state (:host card)) 4))
@@ -291,16 +313,19 @@
              :runner-turn-begins
              {:effect (effect (update! (assoc card :dopp-active true)))}
              :successful-run-ends
-             {:optional
+             {:interactive (req true)
+              :optional
               {:req (req (:dopp-active card))
                :player :runner
                :prompt "Use Doppelgänger to run again?"
                :yes-ability {:prompt "Choose a server"
+                             :delayed-completion true
                              :choices (req runnable-servers)
                              :msg (msg "make a run on " target)
                              :makes-run true
                              :effect (effect (update! (dissoc card :dopp-active))
-                                             (run target))}}}}}
+                                             (clear-wait-prompt :corp)
+                                             (run eid target))}}}}}
 
    "Dorm Computer"
    {:data {:counter {:power 4}}
@@ -349,7 +374,9 @@
                                                                  (toast state :corp "Cannot rez ICE the rest of this run due to EMP Device"))
                                                                 true))))}
                                     :run-ends {:effect (effect (unregister-events card))}} (assoc card :zone '(:discard)))
-                                 (trash card {:cause :ability-cost}))}]}
+                                 (trash card {:cause :ability-cost}))}]
+    :events {:rez nil
+             :run-ends nil}}
 
    "Feedback Filter"
    {:prevent {:damage [:net :brain]}
@@ -368,16 +395,10 @@
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
 
    "GPI Net Tap"
-   {:abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
+   {:implementation "Trash and jack out effect is manual"
+    :abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
                  :delayed-completion true
-                 :effect (req (when-completed (expose state side current-ice)
-                                              (continue-ability
-                                                state side
-                                                {:optional {:prompt "Trash GPI Net Tap to jack out?"
-                                                            :yes-ability {:msg "trash it and jack out"
-                                                                          :effect (effect (trash card {:unpreventable true})
-                                                                                          (jack-out nil))}}}
-                                                card nil)))}]}
+                 :effect (effect (expose eid current-ice))}]}
 
    "Grimoire"
    {:in-play [:memory 2]
@@ -900,18 +921,19 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "The Gauntlet"
-   {:in-play [:memory 2]
-    :events {:pre-access {:req (req (and (= :hq target)
+   {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
+    :in-play [:memory 2]
+    :events {:successful-run {:req (req (and (= :hq target)
                                          run))
-                          :silent (req true)
-                          :delayed-completion true
-                          :effect (effect (continue-ability
-                                            {:prompt "How many ICE protecting HQ did you break all subroutines on?"
-                                             ;; Makes number of ice on server (HQ) the upper limit.
-                                             ;; This should work since trashed ice do not count according to UFAQ
-                                             :choices {:number (req (count (get-in @state [:corp :servers :hq :ices])))}
-                                             :effect (effect (access-bonus target))}
-                                            card nil))}}}
+                              :silent (req true)
+                              :delayed-completion true
+                              :effect (effect (continue-ability
+                                                {:prompt "How many ICE protecting HQ did you break all subroutines on?"
+                                                 ;; Makes number of ice on server (HQ) the upper limit.
+                                                 ;; This should work since trashed ice do not count according to UFAQ
+                                                 :choices {:number (req (count (get-in @state [:corp :servers :hq :ices])))}
+                                                 :effect (effect (access-bonus target))}
+                                                card nil))}}}
 
    "The Personal Touch"
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
@@ -968,8 +990,8 @@
               :mandatory true
               :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
               :choices (take n ["1" "2" "3" "4" "5"])
-              :effect (effect (system-msg (str "accesses the card at position " (Integer/parseInt target) " of R&D"))
-                              (handle-access eid [(nth (:deck corp) (dec (Integer/parseInt target)))] "an unseen card"))})]
+              :effect (effect (system-msg (str "accesses the card at position " (str->int target) " of R&D"))
+                              (handle-access eid [(nth (:deck corp) (dec (str->int target)))] "an unseen card"))})]
      {:events {:successful-run
                {:req (req (= target :rd))
                 :interactive (req true)
@@ -1045,4 +1067,10 @@
 
    "Window"
    {:abilities [{:cost [:click 1] :msg "draw 1 card from the bottom of their Stack"
-                 :effect (effect (move (last (:deck runner)) :hand))}]}})
+                 :effect (effect (move (last (:deck runner)) :hand))}]}
+
+   "Zamba"
+   {:implementation "Credit gain is automatic"
+    :in-play [:memory 2]
+    :events {:expose {:effect (effect (gain :credit 1))
+                      :msg "gain 1 [Credits]"}}}})

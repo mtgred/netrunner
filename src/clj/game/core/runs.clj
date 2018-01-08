@@ -127,24 +127,26 @@
                             card nil)
           ;; Otherwise, show the option to pay to trash the card.
           (when-not (and (is-type? card "Operation")
+                         ;; Don't show the option if Edward Kim's auto-trash flag is true.
                          (card-flag? card :can-trash-operation true))
-            ;; Don't show the option if Edward Kim's auto-trash flag is true.
-            (continue-ability state :runner
-                              {:optional
-                               {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
-                                :no-ability {:effect (req
-                                                       ;; toggle access flag to prevent Hiro issue #2638
-                                                       (swap! state dissoc :access)
-                                                       (trigger-event state side :no-trash c)
-                                                       (swap! state assoc :access true))}
-                                :yes-ability {:cost [:credit trash-cost]
-                                              :delayed-completion true
-                                              :effect (req (trash state side eid card nil)
-                                                           (when (:run @state)
-                                                             (swap! state assoc-in [:run :did-trash] true))
-                                                           (swap! state assoc-in [:runner :register :trashed-card] true)
-                                                           (system-msg state side (str "pays " trash-msg)))}}}
-                              card nil))))
+            ;; If card has already been trashed this access don't show option to pay to trash (eg. Ed Kim)
+            (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
+              (continue-ability state :runner
+                                {:optional
+                                 {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
+                                  :no-ability {:effect (req
+                                                         ;; toggle access flag to prevent Hiro issue #2638
+                                                         (swap! state dissoc :access)
+                                                         (trigger-event state side :no-trash c)
+                                                         (swap! state assoc :access true))}
+                                  :yes-ability {:cost [:credit trash-cost]
+                                                :delayed-completion true
+                                                :effect (req (trash state side eid card nil)
+                                                             (when (:run @state)
+                                                               (swap! state assoc-in [:run :did-trash] true))
+                                                             (swap! state assoc-in [:runner :register :trashed-card] true)
+                                                             (system-msg state side (str "pays " trash-msg)))}}}
+                                card nil)))))
       ;; The card does not have a trash cost
       (do (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid})
           ;; TODO: Trigger :no-trash after hit "OK" on access
@@ -166,9 +168,11 @@
                                   :effect (effect (system-msg (str "decides not to pay to steal " (:title card)))
                                                   (trigger-event :no-steal card)
                                                   (resolve-steal-events eid card))} card nil)
-               (let [chosen (cons target chosen)
-                     kw (to-keyword (join "-" (rest (split target #" "))))
-                     val (string->num (first (split target #" ")))]
+               (let [name (:title card)
+                     chosen (cons target chosen)
+                     clicks (count (re-seq #"\[Click\]+" target))
+                     kw (if (pos? clicks) :click (to-keyword (join "-" (rest (split target #" ")))))
+                     val (if (pos? clicks) clicks (string->num (first (split target #" "))))]
                  (if (can-pay? state side name [kw val])
                    (do (pay state side nil [kw val])
                        (system-msg state side (str "pays " target
@@ -248,8 +252,13 @@
                      (do (let [acost (access-cost state side c)
                                ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
                                anon-card (dissoc c :title)]
-                           (if (or (empty? acost) (pay state side anon-card acost))
+                           (cond
+                             ;; Check if a pre-access-card effect trashed the card (By Any Means)
+                             (not (get-card state c))
+                             (effect-completed state side eid)
+
                              ;; Either there were no access costs, or the runner could pay them.
+                             (or (empty? acost) (pay state side anon-card acost))
                              (let [cdef (card-def c)
                                    c (assoc c :seen true)
                                    access-effect (:access cdef)]
@@ -278,6 +287,8 @@
                                                            (access-non-agenda state side eid c)
                                                            (effect-completed state side eid))))
                                      (access-non-agenda state side eid c)))))
+
+                             :else
                              ;; The runner cannot afford the cost to access the card
                              (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})))
                          (trigger-event state side :post-access-card c))))))
@@ -695,7 +706,7 @@
     (:successful run)
     (do
       (play-sfx state side "run-successful")
-      (trigger-event-sync state side eid :successful-run-ends run))
+      (trigger-event-simult state side eid :successful-run-ends nil run))
     ;; Unsuccessful
     (:unsuccessful run)
     (do
@@ -713,7 +724,6 @@
         eid (:eid run)]
     (swap! state assoc-in [:run :ending] true)
     (trigger-event state side :run-ends (first server))
-
     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))

@@ -441,7 +441,7 @@
                                  all-amounts)]
        (show-prompt state s card (str "Choose an amount to spend for " (:title card))
                     (map #(str % " [Credits]") valid-amounts)
-                    #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
+                    #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
                     {:priority 2})))))
 
 (defn resolve-psi
@@ -516,22 +516,24 @@
     (show-trace-prompt state :corp card "Boost trace strength?"
                        #(init-trace state :corp card trace %) {:priority 2 :base base-trace :bonus bonus})))
 
-(defn rfg-and-shuffle-rd-effect [state side card n]
-  (move state side card :rfg)
-  (resolve-ability state side
-                   {:show-discard true
-                    :choices {:max n
-                              :req #(and (= (:side %) "Corp")
-                                         (= (:zone %) [:discard]))}
-                    :msg (msg "shuffle "
-                              (let [seen (filter :seen targets)
-                                    m (count (filter #(not (:seen %)) targets))]
-                                (str (join ", " (map :title seen))
-                                     (when (pos? m)
-                                       (str (when-not (empty? seen) " and ")
-                                            (quantify m "unseen card")))))
-                              " into R&D")
-                    :effect (req (doseq [c targets] (move state side c :deck))
-                                 (shuffle! state side :deck))
-                    :cancel-effect (req (shuffle! state side :deck))}
-                   card nil))
+(defn rfg-and-shuffle-rd-effect
+  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n))
+  ([state side eid card n]
+   (move state side card :rfg)
+   (continue-ability state side
+                    {:show-discard  true
+                     :choices       {:max n
+                                     :req #(and (= (:side %) "Corp")
+                                                (= (:zone %) [:discard]))}
+                     :msg           (msg "shuffle "
+                                         (let [seen (filter :seen targets)
+                                               m (count (filter #(not (:seen %)) targets))]
+                                           (str (join ", " (map :title seen))
+                                                (when (pos? m)
+                                                  (str (when-not (empty? seen) " and ")
+                                                       (quantify m "unseen card")))))
+                                         " into R&D")
+                     :effect        (req (doseq [c targets] (move state side c :deck))
+                                         (shuffle! state side :deck))
+                     :cancel-effect (req (shuffle! state side :deck))}
+                    card nil)))

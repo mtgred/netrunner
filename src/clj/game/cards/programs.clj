@@ -132,6 +132,7 @@
                                  (continue-ability state side (custsec-host (remove-once #(not= % target) cards))
                                                    card nil))))})]
      {:delayed-completion true
+      :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
       :msg (msg "reveal the top 5 cards of their Stack: " (join ", " (map :title (take 5 (:deck runner)))))
       :effect (req (show-wait-prompt state :corp "Runner to host programs on Customized Secretary")
                    (let [from (take 5 (:deck runner))]
@@ -295,8 +296,12 @@
    "Equivocation"
    (let [force-draw (fn [title]
                       {:optional {:prompt (str "Force the Corp to draw " title "?")
-                                  :yes-ability {:effect (effect (draw :corp 1)
-                                                                (system-msg :corp (str "is forced to draw " title)))}}})
+                                  :yes-ability {:delayed-completion true
+                                                :effect (req (show-wait-prompt state :runner "Corp to draw")
+                                                             (when-completed (draw state :corp 1 nil)
+                                                                             (do (system-msg state :corp (str "is forced to draw " title))
+                                                                                 (clear-wait-prompt state :runner)
+                                                                                 (effect-completed state side eid))))}}})
          reveal {:optional {:prompt "Reveal the top card of R&D?"
                             :yes-ability {:delayed-completion true
                                           :effect (req (let [topcard (-> corp :deck first :title)]
@@ -307,6 +312,10 @@
                                 :delayed-completion true
                                 :interactive (req true)
                                 :effect (effect (continue-ability reveal card nil))}}})
+
+   "eXer"
+   {:in-play [:rd-access 1]
+    :events {:purge {:effect (effect (trash card))}} }
 
    "Expert Schedule Analyzer"
    {:abilities [{:cost [:click 1]
@@ -868,5 +877,4 @@
                    :counter-cost [:power 3]
                    :once :per-turn
                    :msg "gain [Click][Click]"
-                   :effect (effect (gain :click 2)) }] }
-  })
+                   :effect (effect (gain :click 2))}]}})
