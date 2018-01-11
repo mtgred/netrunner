@@ -156,6 +156,11 @@
       :ice
       (reason-toast (str "Unable to install " title ": can only install 1 piece of ICE per turn")))))
 
+(defn corp-installable-type?
+  "Is the card of an acceptable type to be installed in a server"
+  [card]
+  (some? (#{"Asset" "Agenda" "ICE" "Upgrade"} (:type card))))
+
 (defn- corp-install-asset-agenda
   "Forces the corp to trash an existing asset or agenda if a second was just installed."
   [state side eid card dest-zone server]
