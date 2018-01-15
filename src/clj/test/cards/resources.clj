@@ -1095,6 +1095,34 @@
           ;; the fact that we got this far means the bug is fixed
           (is (= 1 (count (get-hardware state))) "Spy Camera installed"))))))
 
+(deftest officer-frank
+  ;; Officer Frank - meat damage to trash 2 from HQ
+  (do-game
+      (new-game (default-corp [(qty "Swordsman" 1) (qty "Hedge Fund" 2)])
+                (default-runner [(qty "Officer Frank" 1) (qty "Skulljack" 1) (qty "Respirocytes" 4)]))
+   (play-from-hand state :corp "Swordsman" "Archives")
+   (take-credits state :corp)
+   (core/move state :runner (find-card "Respirocytes" (:deck (get-runner))) :hand)
+   (play-from-hand state :runner "Officer Frank")
+   (card-ability state :runner (get-resource state 0) 0)
+   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (play-from-hand state :runner "Skulljack")
+   (is (= 3 (count (:hand (get-runner)))) "Took 1 brain damage")
+   (card-ability state :runner (get-resource state 0) 0)
+   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (let [sm (get-ice state :archives 0)]
+     (run-on state :archives)
+     (core/rez state :corp sm)
+     (card-subroutine state :corp sm 0)
+     (run-jack-out state))
+   (is (= 2 (count (:hand (get-runner)))) "Took 1 net damage")
+   (card-ability state :runner (get-resource state 0) 0)
+   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (play-from-hand state :runner "Respirocytes")
+   (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")
+   (card-ability state :runner (get-resource state 0) 0)
+   (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
+
 (deftest paige-piper-frantic-coding
   ;; Paige Piper - interaction with Frantic Coding. Issue #2190.
   (do-game
