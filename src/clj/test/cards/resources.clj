@@ -1102,7 +1102,7 @@
                 (default-runner [(qty "Officer Frank" 1) (qty "Skulljack" 1) (qty "Respirocytes" 4)]))
    (play-from-hand state :corp "Swordsman" "Archives")
    (take-credits state :corp)
-   (core/move state :runner (find-card "Respirocytes" (:deck (get-runner))) :hand)
+   (starting-hand state :runner ["Officer Frank" "Skulljack" "Respirocytes" "Respirocytes" "Respirocytes" "Respirocytes"])
    (play-from-hand state :runner "Officer Frank")
    (card-ability state :runner (get-resource state 0) 0)
    (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
