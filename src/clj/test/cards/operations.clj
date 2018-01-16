@@ -448,6 +448,27 @@
       (is (= 2 (:click (get-runner)))
           "Runner spends 1 additional click to make a run"))))
 
+(deftest enhanced-login-protocol-new-angeles-sol
+  ;; Enahcned Login Protocol trashed and reinstalled on steal doesn't double remove penalty
+  (do-game
+    (new-game
+      (make-deck "New Angeles Sol: Your News" [(qty "Enhanced Login Protocol" 1) (qty "Breaking News" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (play-from-hand state :corp "Enhanced Login Protocol")
+    (take-credits state :corp)
+
+    (run-on state :remote1)
+    (run-successful state)
+    (prompt-choice :runner "Steal")
+
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Enhanced Login Protocol"
+                                    (:discard (get-corp))))
+
+    (run-on state :archives)
+    (is (= 1 (:click (get-runner))) "Runner has 1 click")))
+
 (deftest enhanced-login-protocol-run-events
   ;; Enhanced Login Protocol - Run event don't cost additional clicks
   (do-game
