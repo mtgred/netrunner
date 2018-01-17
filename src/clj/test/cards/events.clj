@@ -238,6 +238,35 @@
       (run-jack-out state)
       (run-on state "Archives"))))
 
+(deftest by-any-means
+  ;; By Any Means - Full test
+  (do-game
+   (new-game (default-corp [(qty "Hedge Fund" 1) (qty "Ice Wall" 1) (qty "Paper Trail" 1) (qty "PAD Campaign" 1)])
+             (default-runner [(qty "By Any Means" 1), (qty "Sure Gamble" 4)]))
+   (take-credits state :corp)
+   (run-empty-server state "Archives")
+   (play-from-hand state :runner "By Any Means")
+   (is (= 3 (:click (get-runner))) "Card not played, priority restriction")
+   (take-credits state :runner)
+   (starting-hand state :corp ["Paper Trail", "Hedge Fund", "PAD Campaign"])
+   (play-from-hand state :corp "Paper Trail", "New remote")
+   (play-from-hand state :corp "PAD Campaign", "New remote")
+   (take-credits state :corp)
+   (core/gain state :runner :click 1)
+   (play-from-hand state :runner "By Any Means")
+   (run-empty-server state "HQ")
+   (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
+   (is (= 3 (count (:hand (get-runner)))) "Took 1 meat damage")
+   (run-empty-server state "R&D")
+   (is (= 2 (count (:discard (get-corp)))) "ICE was trashed")
+   (is (= 2 (count (:hand (get-runner)))) "Took 1 meat damage")
+   (run-empty-server state "Server 1")
+   (is (= 3 (count (:discard (get-corp)))) "Agenda was trashed")
+   (is (= 1 (count (:hand (get-runner)))) "Took 1 meat damage")
+   (run-empty-server state "Server 2")
+   (is (= 4 (count (:discard (get-corp)))) "Trashable was trashed")
+   (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+
 (deftest cbi-raid
   ;; CBI Raid - Full test
   (do-game
