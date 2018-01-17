@@ -833,6 +833,33 @@
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (get-counters (refresh kati) :credit)) "No counters left on Kati"))))
 
+(deftest lewi-guilherme
+  ;; Lewi Guilherme - lower corp hand size by 1, pay 1 credit when turn begins or trash
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Lewi Guilherme" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lewi Guilherme")
+    (is (= -1 (:hand-size-modification (get-corp))) "Corp hand size reduced by 1")
+    (take-credits state :runner)
+    (core/lose state :runner :credit 6)
+    (is (= 2 (:credit (get-runner))) "Credits are 2")
+    (take-credits state :corp)
+    (prompt-choice :runner "Yes")
+    (is (= 1 (:credit (get-runner))) "Lost a credit from Lewi")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "No")
+    (is (= 1 (count (:discard (get-runner)))) "First Lewi trashed")
+    (is (= 0 (:hand-size-modification (get-corp))) "Corp hand size normal again")
+    (play-from-hand state :runner "Lewi Guilherme")
+    (take-credits state :runner)
+    (core/lose state :runner :credit 8)
+    (is (= 0 (:credit (get-runner))) "Credits are 0")
+    (take-credits state :corp)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
+
 (deftest london-library
   ;; Install non-virus programs on London library. Includes #325/409
   (do-game
