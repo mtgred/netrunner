@@ -426,6 +426,29 @@
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))
 
 ;;; Psi games
+
+(defn show-prompt-with-dice
+  "Calls show-prompt normally, but appends a 'roll d6' button to choices.
+  If user chooses to roll d6, reveal the result to user and re-display
+  the prompt without the 'roll d6 button'."
+  ([state side card msg other-choices f]
+   (show-prompt state side card msg other-choices f nil))
+  ([state side card msg other-choices f args]
+   (let [dice-msg "Roll a d6",
+         choices (conj other-choices dice-msg)]
+     (show-prompt state side card msg choices
+                  #(if (not= % dice-msg)
+                     (f %)
+                     (show-prompt state side card
+                                  (str msg
+                                       " (Dice result: "
+                                       (+ (rand-int 6) 1)
+                                       ")"
+                                       )
+                                  other-choices f args)
+                     )
+                  args))))
+
 (defn psi-game
   "Starts a psi game by showing the psi prompt to both players. psi is a map containing
   :equal and :not-equal abilities which will be triggered in resolve-psi accordingly."
@@ -439,9 +462,10 @@
            valid-amounts (remove #(or (any-flag-fn? state :corp :psi-prevent-spend %)
                                       (any-flag-fn? state :runner :psi-prevent-spend %))
                                  all-amounts)]
-       (show-prompt state s card (str "Choose an amount to spend for " (:title card))
-                    (map #(str % " [Credits]") valid-amounts)
-                    #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
+
+       (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
+                              (map #(str % " [Credits]") valid-amounts)
+                              #(resolve-psi state s eid card psi (Integer/parseInt (first (split % #" "))))
                     {:priority 2})))))
 
 (defn resolve-psi
