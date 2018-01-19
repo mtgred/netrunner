@@ -522,6 +522,32 @@
     :msg "look at the top 4 cards of their Stack and add 1 of them to their Grip"
     :effect (effect (move target :hand) (shuffle! :deck))}
 
+   "Falsified Credentials"
+   {:prompt "Choose a type"
+    :choices ["Agenda" "Asset" "Upgrade"]
+    :effect (effect
+             (resolve-ability
+              (let [chosen-type target]
+                {:choices {:req #(let [topmost (get-nested-host %)]
+                                   (and (is-remote? (second (:zone topmost)))
+                                        (= (last (:zone topmost)) :content)
+                                        (not (:rezzed %))))}
+                 :delayed-completion true
+                 :effect (req             ;taken from Drive By - maybe refactor
+                          (when-completed (expose state side target) 
+                            (if async-result ;; expose was successful
+                              (if (= chosen-type (:type target))
+                                (do (resolve-ability
+                                     state :runner
+                                     {:effect (effect (gain :credit 5))
+                                      :msg "gain 5 [Credits] "}
+                                     card nil)
+                                    (effect-completed state side eid))
+                                (effect-completed state side eid))
+                              (effect-completed state side eid))))})
+              card nil))}
+
+   
    "Fear the Masses"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))
