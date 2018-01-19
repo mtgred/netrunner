@@ -651,7 +651,7 @@
     (new-game (default-corp [(qty "Eve Campaign" 2)
                              (qty "Product Placement" 2)
                              (qty "Project Atlas" 1)])
-              (default-runner [(qty "Falsified Credentials" 5)]))
+              (default-runner [(qty "Falsified Credentials" 3)]))
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "Eve Campaign" "New remote")
     (play-from-hand state :corp "Eve Campaign" "New remote")
@@ -663,8 +663,7 @@
           eve2 (get-content state :remote2 0)
           atl (get-content state :remote3 0)
           pp1 (get-content state :hq 0)
-          pp2 (get-content state :remote3 1)
-          ]
+          pp2 (get-content state :remote3 1)]
       (core/rez state :corp eve1)
       (play-from-hand state :runner "Falsified Credentials")
       (prompt-choice :runner "Asset")
