@@ -364,26 +364,28 @@
                             card nil)))}}
 
    "Enhanced Login Protocol"
-   (letfn [(add-effect [state side card]
-             (update! state side (assoc card :elp-activated true))
+   (letfn [(elp-activated [state]
+             (get-in @state [:corp :register :elp-activated] false))
+           (add-effect [state side]
+             (swap! state assoc-in [:corp :register :elp-activated] true)
              (click-run-cost-bonus state side [:click 1]))
-           (remove-effect [state side card]
+           (remove-effect [state side]
              (click-run-cost-bonus state side [:click -1])
-             (update! state side (dissoc card :elp-activated)))]
+             (swap! state update-in [:corp :register] dissoc :elp-activated))]
      {:effect (req (when (and (= :runner (:active-player @state))
                               (not (:made-click-run runner-reg)))
-                     (add-effect state side card)
+                     (add-effect state side)
                      (system-msg state side (str "uses Enhanced Login Protocol to add an additional cost of [Click]"
                                                  " to make the first run not through a card ability this turn"))))
       :events {:runner-turn-begins {:msg "add an additional cost of [Click] to make the first run not through a card ability this turn"
-                                    :effect (effect (add-effect card))}
-               :runner-turn-ends {:req (req (:elp-activated card))
-                                  :effect (effect (remove-effect card))}
-               :run-ends {:req (req (and (:elp-activated card)
+                                    :effect (effect (add-effect))}
+               :runner-turn-ends {:req (req (elp-activated state))
+                                  :effect (effect (remove-effect))}
+               :run-ends {:req (req (and (elp-activated state)
                                          (:made-click-run runner-reg)))
-                          :effect (effect (remove-effect card))}}
-      :leave-play (req (when (:elp-activated card)
-                         (remove-effect state side card)))})
+                          :effect (effect (remove-effect))}}
+      :leave-play (req (when (elp-activated state)
+                         (remove-effect state side)))})
 
    "Exchange of Information"
    {:req (req (and tagged
