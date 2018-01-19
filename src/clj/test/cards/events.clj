@@ -688,6 +688,31 @@
       (is (= 17 (:credit (get-runner)))
           "Gained 5 credits for guessing agenda correctly, even with rezzed card in server"))))
 
+(deftest falsified-credentials-zaibatsu-loyalty
+  ;; If Falsified Credentials fails to expose, it grants no credits.
+  (do-game
+   (new-game (default-corp [(qty "Zaibatsu Loyalty" 1)
+                            (qty "Project Atlas" 1)])
+             (default-runner [(qty "Falsified Credentials" 2)]))
+   
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (play-from-hand state :corp "Zaibatsu Loyalty" "New remote")
+    (take-credits state :corp)
+    (let [atl (get-content state :remote1 0)
+          zaibatsu (get-content state :remote2 0)]
+      (core/rez state :corp zaibatsu)
+      (play-from-hand state :runner "Falsified Credentials")
+      (prompt-choice :runner "Agenda")
+      (prompt-select :runner atl)
+      (prompt-choice :corp "Done")
+      (is (= 9 (:credit (get-runner))) "An unprevented expose gets credits")
+
+      (play-from-hand state :runner "Falsified Credentials")
+      (prompt-choice :runner "Agenda")
+      (prompt-select :runner atl)
+      (card-ability state :corp (refresh zaibatsu) 0) ; prevent the expose!
+      (prompt-choice :corp "Done")      
+      (is (= 8 (:credit (get-runner))) "A prevented expose does not"))))
 
 (deftest frantic-coding-install
   ;; Frantic Coding - Install 1 program, other 9 cards are trashed
