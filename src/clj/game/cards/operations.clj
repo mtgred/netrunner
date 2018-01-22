@@ -1163,24 +1163,26 @@
                    (move state :runner c :hand)))}
 
    "Service Outage"
-   (let [add-effect (fn [state side card]
-                      (update! state side (assoc card :so-activated true))
-                      (run-cost-bonus state side [:credit 1]))
-         remove-effect (fn [state side card]
-                         (run-cost-bonus state side [:credit -1])
-                         (update! state side (dissoc card :so-activated)))
-         remove-ability {:req (req (:so-activated card))
-                         :effect (effect (remove-effect card))}]
+   (letfn [(so-activated [state]
+             (get-in @state [:corp :register :so-activated] false))
+           (add-effect [state side]
+             (swap! state assoc-in [:corp :register :so-activated] true)
+             (run-cost-bonus state side [:credit 1]))
+           (remove-effect [state side]
+             (run-cost-bonus state side [:credit -1])
+             (swap! state update-in [:corp :register] dissoc :so-activated))]
      {:msg "add a cost of 1 [Credit] for the Runner to make the first run each turn"
       :effect (req (when (and (= :runner (:active-player @state))
                               (empty? (:made-run runner-reg)))
-                     (add-effect state side card)))
+                     (add-effect state side)))
       :events {:runner-turn-begins {:msg "add an additional cost of 1 [Credit] to make the first run this turn"
-                                    :effect (effect (add-effect card))}
-               :runner-turn-ends remove-ability
-               :run-ends remove-ability}
-      :leave-play (req (when (:so-activated card)
-                         (remove-effect state side card)))})
+                                    :effect (effect (add-effect))}
+               :runner-turn-ends {:req (req (so-activated state))
+                                  :effect (effect (remove-effect))}
+               :run-ends {:req (req (so-activated state))
+                          :effect (effect (remove-effect))}}
+      :leave-play (req (when (so-activated state)
+                         (remove-effect state side)))})
 
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
