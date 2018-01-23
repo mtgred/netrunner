@@ -1092,8 +1092,8 @@
    "Rolling Brownout"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
     :events {:play-event {:once :per-turn
-                          :msg "to gain 1 [Credits]"
-                          :effect (effect (gain :credit 1))}
+                          :msg "gain 1 [Credits]"
+                          :effect (effect (gain :corp :credit 1))}
              :pre-play-instant {:effect (effect (play-cost-bonus [:credit 1]))}}}
 
    "Rover Algorithm"
