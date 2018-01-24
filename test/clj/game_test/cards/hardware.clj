@@ -682,6 +682,18 @@
       (prompt-choice :runner "Yes")  ; 6 installed
       (is (count-spy 6) "6 Spy Cameras installed"))))
 
+(deftest respirocytes-multiple
+  ;; Should draw multiple cards when multiple respirocytes are in play
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Respirocytes" 3) (qty "Sure Gamble" 3)]))
+   (take-credits state :corp)
+   (starting-hand state :runner ["Respirocytes" "Respirocytes" "Respirocytes" "Sure Gamble"])
+   (dotimes [_ 2]
+     (play-from-hand state :runner "Respirocytes"))
+   (is (= 2 (count (:discard (get-runner)))) "2 damage done")
+   (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
+
 (deftest sifr
   ;; Once per turn drop encountered ICE to zero strenght
   ;; Also handle archangel then re-install sifr should not break the game #2576
@@ -938,3 +950,22 @@
     (take-credits state :corp)
     (is (not= (count (:hand (get-corp))) (core/hand-size state :corp)) "Corp hand below max")
     (is (= 1 (count (:hand (get-runner)))) "No card drawn")))
+
+(deftest zamba
+  ;; Zamba - Whenever corp card is exposed you may gain 1 credit
+  (do-game
+   (new-game (default-corp [(qty "Ice Wall" 1)])
+             (default-runner [(qty "Zamba" 1) (qty "Infiltration" 2)]))
+   (play-from-hand state :corp "Ice Wall" "Archives")
+   (take-credits state :corp)
+   (play-from-hand state :runner "Zamba")
+   (is (= 6 (:memory (get-runner))) "Gain 2 memory")
+   (is (= 1 (:credit (get-runner))) "At 1 credit")
+   (play-from-hand state :runner "Infiltration")
+   (prompt-choice :runner "Expose a card")
+   (prompt-select :runner (get-ice state :archives 0))
+   (is (= 2 (:credit (get-runner))) "Gained 1 credit from exposing")
+   (play-from-hand state :runner "Infiltration")
+   (prompt-choice :runner "Expose a card")
+   (prompt-select :runner (get-ice state :archives 0))
+   (is (= 3 (:credit (get-runner))) "Gained 1 more credit from exposing")))

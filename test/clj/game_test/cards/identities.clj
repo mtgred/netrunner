@@ -382,6 +382,18 @@
     (prompt-select :corp (get-ice state :hq 0))
     (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")))
 
+(deftest haas-bioroid-asa-group
+  ;; Asa Group - don't allow installation of operations
+  (do-game
+    (new-game
+      (make-deck "Asa Group: Security Through Vigilance" [(qty "Pup" 1) (qty "BOOM!" 1) (qty "Urban Renewal" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Pup" "New remote")
+    (prompt-select :corp (find-card "BOOM!" (:hand (get-corp))))
+    (is (empty? (get-content state :remote1)) "Asa Group installed an event in a server")
+    (prompt-select :corp (find-card "Urban Renewal" (:hand (get-corp))))
+    (is (= "Urban Renewal" (:title (get-content state :remote1 0))) "Asa Group can install an asset in a remote")))
+
 (deftest haas-bioroid-engineering-the-future-employee-strike
   ;; EtF - interaction with Employee Strike
   (do-game

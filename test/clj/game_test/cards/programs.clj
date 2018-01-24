@@ -818,3 +818,30 @@
      (is (= 1 (:credit (get-runner))) "Paid 2 credits to use Surfer")
      (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
      (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
+
+(deftest upya
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Upya" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Upya")
+    (dotimes [_ 3]
+      (run-empty-server state "R&D"))
+    (is (= 3 (get-counters (get-program state 0) :power)) "3 counters on Upya")
+    (take-credits state :corp)
+    (dotimes [_ 3]
+      (run-empty-server state "R&D"))
+    (is (= 6 (get-counters (get-program state 0) :power)) "6 counters on Upya")
+    (let [upya (get-program state 0)]
+      (card-ability state :runner upya 0)
+      (is (= 3 (get-counters (refresh upya) :power)) "3 counters spent")
+      (is (= 2 (:click (get-runner))) "Gained 2 clicks")
+      (card-ability state :runner upya 0)
+      (is (= 3 (get-counters (refresh upya) :power)) "Upya not used more than once a turn")
+      (is (= 2 (:click (get-runner))) "Still at 2 clicks"))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [upya (get-program state 0)]
+      (card-ability state :runner upya 0)
+      (is (= 0 (get-counters (refresh upya) :power)) "3 counters spent")
+      (is (= 5 (:click (get-runner))) "Gained 2 clicks"))))

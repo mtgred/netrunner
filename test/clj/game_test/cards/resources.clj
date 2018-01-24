@@ -834,6 +834,33 @@
       (is (= 14 (:credit (get-runner))) "Take 6cr from Kati")
       (is (zero? (get-counters (refresh kati) :credit)) "No counters left on Kati"))))
 
+(deftest lewi-guilherme
+  ;; Lewi Guilherme - lower corp hand size by 1, pay 1 credit when turn begins or trash
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Lewi Guilherme" 2)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lewi Guilherme")
+    (is (= -1 (:hand-size-modification (get-corp))) "Corp hand size reduced by 1")
+    (take-credits state :runner)
+    (core/lose state :runner :credit 6)
+    (is (= 2 (:credit (get-runner))) "Credits are 2")
+    (take-credits state :corp)
+    (prompt-choice :runner "Yes")
+    (is (= 1 (:credit (get-runner))) "Lost a credit from Lewi")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "No")
+    (is (= 1 (count (:discard (get-runner)))) "First Lewi trashed")
+    (is (= 0 (:hand-size-modification (get-corp))) "Corp hand size normal again")
+    (play-from-hand state :runner "Lewi Guilherme")
+    (take-credits state :runner)
+    (core/lose state :runner :credit 8)
+    (is (= 0 (:credit (get-runner))) "Credits are 0")
+    (take-credits state :corp)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
+
 (deftest london-library
   ;; Install non-virus programs on London library. Includes #325/409
   (do-game
@@ -1095,6 +1122,34 @@
           (prompt-card :runner (-> (get-runner) :prompt first :choices first)) ; choose Spy Camera
           ;; the fact that we got this far means the bug is fixed
           (is (= 1 (count (get-hardware state))) "Spy Camera installed"))))))
+
+(deftest officer-frank
+  ;; Officer Frank - meat damage to trash 2 from HQ
+  (do-game
+      (new-game (default-corp [(qty "Swordsman" 1) (qty "Hedge Fund" 2)])
+                (default-runner [(qty "Officer Frank" 1) (qty "Skulljack" 1) (qty "Respirocytes" 4)]))
+   (play-from-hand state :corp "Swordsman" "Archives")
+   (take-credits state :corp)
+   (starting-hand state :runner ["Officer Frank" "Skulljack" "Respirocytes" "Respirocytes" "Respirocytes" "Respirocytes"])
+   (play-from-hand state :runner "Officer Frank")
+   (card-ability state :runner (get-resource state 0) 0)
+   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (play-from-hand state :runner "Skulljack")
+   (is (= 3 (count (:hand (get-runner)))) "Took 1 brain damage")
+   (card-ability state :runner (get-resource state 0) 0)
+   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (let [sm (get-ice state :archives 0)]
+     (run-on state :archives)
+     (core/rez state :corp sm)
+     (card-subroutine state :corp sm 0)
+     (run-jack-out state))
+   (is (= 2 (count (:hand (get-runner)))) "Took 1 net damage")
+   (card-ability state :runner (get-resource state 0) 0)
+   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (play-from-hand state :runner "Respirocytes")
+   (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")
+   (card-ability state :runner (get-resource state 0) 0)
+   (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
 
 (deftest paige-piper-frantic-coding
   ;; Paige Piper - interaction with Frantic Coding. Issue #2190.
