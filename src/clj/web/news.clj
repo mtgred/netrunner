@@ -13,7 +13,8 @@
 (defn fetch-news []
   (try
     (let [client (make-client (:key trello-auth) (:token trello-auth))
-          cards (client trello/get "/lists/5668b498ced988b1204cae9a/cards" :params {:filter "open" :fields "dateLastActivity,name,labels"})]
+          cards (client trello/get (str "/lists/" (:list-id trello-auth) "/cards")
+                        :params {:filter "open" :fields "dateLastActivity,name,labels"})]
       {:time (t/now)
        :news (for [c (filter #(empty? (:labels %)) cards)]
                {:title (:name c)
@@ -31,6 +32,6 @@
     (:news @news-items)))
 
 (defn news-handler [request]
-    (if trello-auth
-      (response 200 (get-news))
-      (response 200 [{:date "01/01/2015 00:00" :title "Get a Trello API Key and Token, and set the :trello-auth variables in config.edn to see the news."}])))
+  (if (:key trello-auth)
+    (response 200 (get-news))
+    (response 200 [{:date "01/01/2015 00:00" :title "DEVELOPER: Get a Trello API Key and Token, and set the :trello-auth variables in config.edn to see the news."}])))
