@@ -440,13 +440,8 @@
                   #(if (not= % dice-msg)
                      (f %)
                      (show-prompt state side card
-                                  (str msg
-                                       " (Dice result: "
-                                       (+ (rand-int 6) 1)
-                                       ")"
-                                       )
-                                  other-choices f args)
-                     )
+                                  (str msg " (Dice result: " (inc (rand-int 6)) ")")
+                                  other-choices f args))
                   args))))
 
 (defn psi-game
