@@ -1,4 +1,3 @@
-; Copy this file as "config.edn" and edit it to change local settings. Do not commit that file.
 {:trello-auth
        {:key   nil
         :token nil}
