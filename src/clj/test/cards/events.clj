@@ -644,6 +644,75 @@
     (is (= 0 (:credit (get-runner))))
     (is (= 3 (count (:discard (get-runner)))))))
 
+(deftest falsified-credentials
+  ;; Falsified Credentials - Expose card in remote
+  ;; server and correctly guess its type to gain 5 creds
+  (do-game
+    (new-game (default-corp [(qty "Eve Campaign" 2)
+                             (qty "Product Placement" 2)
+                             (qty "Project Atlas" 1)])
+              (default-runner [(qty "Falsified Credentials" 3)]))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (play-from-hand state :corp "Product Placement" "HQ")
+    (play-from-hand state :corp "Product Placement" "Server 3")
+    (take-credits state :corp)
+    (let [eve1 (get-content state :remote1 0)
+          eve2 (get-content state :remote2 0)
+          atl (get-content state :remote3 0)
+          pp1 (get-content state :hq 0)
+          pp2 (get-content state :remote3 1)]
+      (core/rez state :corp eve1)
+      (play-from-hand state :runner "Falsified Credentials")
+      (prompt-choice :runner "Asset")
+      (prompt-select :runner (refresh eve1))
+      (is (= 4 (:credit (get-runner)))
+          "Rezzed cards can't be targeted")
+      (prompt-select :runner eve2)
+      (is (= 3 (:click (get-runner))) "Spent 1 click")
+      (is (= 9 (:credit (get-runner))) "Gained 5 creds for guessing asset correctly")
+      (play-from-hand state :runner "Falsified Credentials")
+      (prompt-choice :runner "Upgrade")
+      (prompt-select :runner pp1)
+      (is (= 8 (:credit (get-runner))) "Can't target cards in centrals")
+      (prompt-select :runner pp2)
+      (is (= 13 (:credit (get-runner)))
+          "Gained 5 creds for guessing upgrade correctly, even if server contains non-upgrade as well")
+      (core/rez state :corp pp2)
+      (play-from-hand state :runner "Falsified Credentials")
+      (prompt-choice :runner "Agenda")
+      (prompt-select :runner atl)
+      (is (= 17 (:credit (get-runner)))
+          "Gained 5 credits for guessing agenda correctly, even with rezzed card in server"))))
+
+(deftest falsified-credentials-zaibatsu-loyalty
+  ;; If Falsified Credentials fails to expose, it grants no credits.
+  (do-game
+   (new-game (default-corp [(qty "Zaibatsu Loyalty" 1)
+                            (qty "Project Atlas" 1)])
+             (default-runner [(qty "Falsified Credentials" 2)]))
+   
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (play-from-hand state :corp "Zaibatsu Loyalty" "New remote")
+    (take-credits state :corp)
+    (let [atl (get-content state :remote1 0)
+          zaibatsu (get-content state :remote2 0)]
+      (core/rez state :corp zaibatsu)
+      (play-from-hand state :runner "Falsified Credentials")
+      (prompt-choice :runner "Agenda")
+      (prompt-select :runner atl)
+      (prompt-choice :corp "Done")
+      (is (= 9 (:credit (get-runner))) "An unprevented expose gets credits")
+
+      (play-from-hand state :runner "Falsified Credentials")
+      (prompt-choice :runner "Agenda")
+      (prompt-select :runner atl)
+      (card-ability state :corp (refresh zaibatsu) 0) ; prevent the expose!
+      (prompt-choice :corp "Done")      
+      (is (= 8 (:credit (get-runner))) "A prevented expose does not"))))
+
 (deftest frantic-coding-install
   ;; Frantic Coding - Install 1 program, other 9 cards are trashed
   (do-game

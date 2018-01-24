@@ -927,7 +927,7 @@
                                                                  (resolve-ability
                                                                    state side
                                                                    {:counter-cost [:virus cost]
-                                                                    :effect (effect (pump yusuf cost)
+                                                                    :effect (effect (pump (get-card state yusuf) cost)
                                                                                     (system-msg (str "spends " cost (pluralize " counter" cost) " from " (:title selected-virus)
                                                                                                      " to add " cost " strength to Yusuf")))}
                                                                    selected-virus nil)))}

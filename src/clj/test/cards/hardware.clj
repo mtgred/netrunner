@@ -680,6 +680,18 @@
       (prompt-choice :runner "Yes")  ; 6 installed
       (is (count-spy 6) "6 Spy Cameras installed"))))
 
+(deftest respirocytes-multiple
+  ;; Should draw multiple cards when multiple respirocytes are in play
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Respirocytes" 3) (qty "Sure Gamble" 3)]))
+   (take-credits state :corp)
+   (starting-hand state :runner ["Respirocytes" "Respirocytes" "Respirocytes" "Sure Gamble"])
+   (dotimes [_ 2]
+     (play-from-hand state :runner "Respirocytes"))
+   (is (= 2 (count (:discard (get-runner)))) "2 damage done")
+   (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
+
 (deftest sifr
   ;; Once per turn drop encountered ICE to zero strenght
   ;; Also handle archangel then re-install sifr should not break the game #2576

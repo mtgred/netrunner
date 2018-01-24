@@ -478,3 +478,33 @@
      (is (= 0 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to 0")
      (card-ability state :runner wyrm 1)
      (is (= -1 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to -1"))))
+
+(deftest yusuf
+  ;; Yusuf gains virus counters on successful runs and can spend virus counters from any installed card
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Yusuf" 1) (qty "Cache" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Yusuf")
+    (play-from-hand state :runner "Cache")
+    (let [yusuf (get-program state 0)
+          cache (get-program state 1)]
+      (run-empty-server state "Archives")
+      (is (= 1 (get-in (refresh yusuf) [:counter :virus])) "Yusuf has 1 virus counter")
+      (is (= 3 (:current-strength (refresh yusuf))) "Initial Yusuf strength")
+      (is (= 3 (get-in (refresh cache) [:counter :virus])) "Initial Cache virus counters")
+      (card-ability state :runner yusuf 0)
+      (prompt-select :runner cache)
+      (prompt-choice :runner 1)
+      (is (= 2 (get-in (refresh cache) [:counter :virus])) "Cache lost a virus counter to pump")
+      (is (= 4 (:current-strength (refresh yusuf))) "Yusuf strength 4")
+      (is (= 1 (get-in (refresh yusuf) [:counter :virus])) "Initial Yusuf virus counters")
+      (card-ability state :runner yusuf 0)
+      (prompt-select :runner yusuf)
+      (prompt-choice :runner 1)
+      (is (= 5 (:current-strength (refresh yusuf))) "Yusuf strength 5")
+      (is (= 0 (get-in (refresh yusuf) [:counter :virus])) "Yusuf lost a virus counter")
+      (card-ability state :runner yusuf 1)
+      (prompt-select :runner cache)
+      (prompt-choice :runner 1)
+      (is (= 1 (get-in (refresh cache) [:counter :virus])) "Cache lost a virus counter to break"))))
