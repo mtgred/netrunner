@@ -89,8 +89,8 @@
                      {:username username}
                      {"$set" {:last-connection (java.util.Date.)}})
           (-> (response 200 {:message "ok"})
-              (assoc :cookies {"session" {:value (create-token user)
-                                          :http-only true}})))
+              (assoc :cookies {"session" (merge {:value (create-token user)}
+                                                (get-in server-config [:auth :cookie]))})))
       (response 401 {:error "Invalid login or password"}))))
 
 (defn logout-handler [request]

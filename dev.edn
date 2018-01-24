@@ -1,3 +1,4 @@
+; Copy this file as "config.edn" and edit it to change local settings. Do not commit that file.
 {:trello-auth
        {:key   nil
         :token nil}
@@ -5,7 +6,9 @@
         :port    27017
         :name    "netrunner"}
  :auth {:expiration 60
-        :secret     "Dev salt"}
+        :secret     "Dev salt"
+        :cookie {:http-only true
+                 :secure true}}
  :web {:port 1042}
  :email {:host nil
          :user nil
