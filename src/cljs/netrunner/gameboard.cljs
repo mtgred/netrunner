@@ -1260,7 +1260,7 @@
                                                    (or (pos? (:tagged opponent))
                                                        (pos? (:tag opponent))))
                              #(send-command "trash-resource")))
-              (cond-button "Draw" (pos? (:click me)) #(send-command "draw"))
+              (cond-button "Draw" (and (pos? (:click me)) (not-empty (:deck me))) #(send-command "draw"))
               (cond-button "Gain Credit" (pos? (:click me)) #(send-command "credit"))]))]))))
 
 (defn update-audio [{:keys [gameid sfx sfx-current-id] :as cursor} owner]
