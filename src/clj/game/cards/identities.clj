@@ -133,6 +133,7 @@
                                 :delayed-completion true
                                 :choices {:req #(and (in-hand? %)
                                                      (= (:side %) "Corp")
+                                                     (corp-installable-type? %)
                                                      (not (is-type? % "Agenda"))
                                                      (or (is-remote? z)
                                                          (ice? %)))}
