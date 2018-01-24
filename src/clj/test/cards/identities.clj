@@ -516,7 +516,31 @@
       (make-deck "Jinteki Biotech: Life Imagined" [(qty "Braintrust" 1)])
       (default-runner)
       {:dont-start-turn true})
-    (prompt-choice :corp "[The Brewery~brewery]")
+    (prompt-choice :corp "The Brewery")
+    (core/start-turn state :corp nil)
+    (card-ability state :corp (:identity (get-corp)) 1)
+    (is (= 1 (count (:hand (get-runner)))) "Runner took 2 net damage from Brewery flip")))
+
+(deftest jinteki-biotech-greenhouse
+  ;; Jinteki Biotech - Greenhouse four advancement tokens
+  (do-game
+    (new-game
+      (make-deck "Jinteki Biotech: Life Imagined" [(qty "Braintrust" 1)])
+      (default-runner)
+      {:dont-start-turn true})
+    (prompt-choice :corp "The Greenhouse")
+    (core/start-turn state :corp nil)
+    (card-ability state :corp (:identity (get-corp)) 1)
+    (is (= 1 (count (:hand (get-runner)))) "Runner took 2 net damage from Brewery flip")))
+
+(deftest jinteki-biotech-tank
+  ;; Jinteki Biotech - Tank shuffle Archives into R&D
+  (do-game
+    (new-game
+      (make-deck "Jinteki Biotech: Life Imagined" [(qty "Braintrust" 1)])
+      (default-runner)
+      {:dont-start-turn true})
+    (prompt-choice :corp "The Tank")
     (core/start-turn state :corp nil)
     (card-ability state :corp (:identity (get-corp)) 1)
     (is (= 1 (count (:hand (get-runner)))) "Runner took 2 net damage from Brewery flip")))
