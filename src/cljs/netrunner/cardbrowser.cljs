@@ -233,7 +233,7 @@
       "Corp" (cons "Identity" corp-types))))
 
 (defn factions [side]
-  (let [runner-factions ["Anarch" "Criminal" "Shaper"]
+  (let [runner-factions ["Anarch" "Criminal" "Shaper" "Adam" "Apex" "Sunny Lebeau"]
         corp-factions ["Jinteki" "Haas-Bioroid" "NBN" "Weyland Consortium" "Neutral"]]
     (case side
       "All" (concat runner-factions corp-factions)
