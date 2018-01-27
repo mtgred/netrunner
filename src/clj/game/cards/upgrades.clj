@@ -360,6 +360,18 @@
                               :delayed-completion true
                               :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Jinja City Grid"
+    {:events {:corp-draw {:req (req (is-type? (last (:hand corp)) "ICE"))
+                          :optional
+                          {:prompt (msg (str "Reveal " (:title (last (:hand corp)))
+                                             " and install in " (zone->name (second (:zone card)))
+                                             ", lowering the cost by 4 [Credits]?"))
+                           :player :corp
+                           :yes-ability {:msg (msg "reveal and install the ICE just drawn: " (:title (last (:hand corp))))
+                                         :effect (effect (corp-install (last (:hand corp))
+                                                                       (zone->name (second (:zone card)))
+                                                                       {:extra-cost [:credit -4]}))}}}}}
+
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
                  :req (req (and this-server
