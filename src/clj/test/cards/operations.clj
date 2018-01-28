@@ -1180,6 +1180,28 @@
     (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
     (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
 
+(deftest self-growth-program
+  ;; Self-Growth Program - Add 2 installed cards to grip if runner is tagged
+  (do-game
+    (new-game (default-corp [(qty "Self-Growth Program" 1)])
+              (default-runner [(qty "Clone Chip" 1) (qty "Inti" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clone Chip")
+    (play-from-hand state :runner "Inti")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Self-Growth Program")
+    (is (= 3 (:click (get-corp))) "Self-Growth Program precondition not met; card not played")
+    (core/gain state :runner :tag 1)
+    (is (= 0 (count (:hand (get-runner)))) "Runner hand is empty")
+    (let [inti (get-in @state [:runner :rig :program 0])
+          cc (get-in @state [:runner :rig :hardware 0])]
+      (play-from-hand state :corp "Self-Growth Program")
+      (prompt-select :corp inti)
+      (prompt-select :corp cc))
+    (is (= 2 (count (:hand (get-runner)))) "2 cards returned to hand")
+    (is (= 0 (count (get-in @state [:runner :rig :program]))) "No programs installed")
+    (is (= 0 (count (get-in @state [:runner :rig :hardware]))) "No hardware installed")))
+
 (deftest service-outage
   ;; Service Outage - First click run each turn costs a credit
   (do-game

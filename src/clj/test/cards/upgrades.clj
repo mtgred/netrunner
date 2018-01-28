@@ -217,6 +217,32 @@
        (core/rez state :corp sbox)
        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
 
+(deftest calibration-testing
+  ;; Calibration Testing - advanceable / non-advanceable
+  (do-game
+    (new-game (default-corp [(qty "Calibration Testing" 2) (qty "Project Junebug" 1) (qty "PAD Campaign" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 10)
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Calibration Testing" "New remote")
+    (play-from-hand state :corp "Project Junebug" "Server 1")
+    (let [ct (get-content state :remote1 0)
+          pj (get-content state :remote1 1)]
+      (core/rez state :corp ct)
+      (card-ability state :corp ct 0)
+      (prompt-select :corp pj)
+      (is (= 1 (:advance-counter (refresh pj))) "Project Junebug advanced")
+      (is (= 1 (count (:discard (get-corp)))) "Calibration Testing trashed"))
+    (play-from-hand state :corp "Calibration Testing" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "Server 2")
+    (let [ct (get-content state :remote2 0)
+          pad (get-content state :remote2 1)]
+      (core/rez state :corp ct)
+      (card-ability state :corp ct 0)
+      (prompt-select :corp pad)
+      (is (= 1 (:advance-counter (refresh pad))) "PAD Campaign advanced")
+      (is (= 2 (count (:discard (get-corp)))) "Calibration Testing trashed"))))
+
 (deftest caprice-nisei
   ;; Caprice Nisei - Psi game for ETR after runner passes last ice
   (do-game
