@@ -336,6 +336,12 @@
                                      (damage state side eid :meat 1 {:card card})
                                      (tag-runner state :runner eid 1)))}}}}
 
+   "Economic Warfare"
+   {:req (req (and (:successful-run runner-reg-last)
+                   (can-pay? state :runner nil :credit 4)))
+    :msg "make the runner lose 4 [Credits]"
+    :effect (effect (lose :runner :credit 4))}
+
    "Election Day"
    {:req (req (->> (get-in @state [:corp :hand])
                    (filter #(not (= (:cid %) (:cid card))))
