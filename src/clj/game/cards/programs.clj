@@ -646,6 +646,16 @@
                                    :effect (effect (runner-install target {:no-cost true}))} card nil)
                                 (trash state side card)))}]}
 
+   "Plague"
+   {:prompt "Choose a server for Plague" :choices (req servers)
+    :msg (msg "target " target)
+    :req (req (not (:server-target card)))
+    :effect (effect (update! (assoc card :server-target target)))
+    :events {:successful-run
+             {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+              :msg "gain 2 virus counters"
+              :effect (effect (add-counter :runner card :virus 2))}}}
+
    "Pheromones"
    {:recurring (req (when (< (get card :rec-counter 0) (get-in card [:counter :virus] 0))
                       (set-prop state side card :rec-counter
