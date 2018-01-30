@@ -93,7 +93,7 @@
              c (if (and (= side :corp) (= (first dest) :discard) (rezzed? card))
                  (assoc card :seen true) card)
              c (if (and (or installed host (#{:servers :scored :current} (first zone)))
-                        (#{:hand :deck :discard} (first dest))
+                        (#{:hand :deck :discard :rfg} (first dest))
                         (not (:facedown c)))
                  (deactivate state side c) c)
              c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
