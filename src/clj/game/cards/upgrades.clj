@@ -293,6 +293,14 @@
     :events {:corp-turn-begins ability}
     :abilities [ability]})
 
+   "Forced Connection"
+   {:access {:req (req (not= (first (:zone card)) :discard))
+             :interactive (req true)
+             :trace {:base 3
+                     :msg "give the Runner 2 tags"
+                     :delayed-completion true
+                     :effect (effect (tag-runner :runner eid 2))}}}
+
    "Fractal Threat Matrix"
    {:implementation "Manual trigger each time all subs are broken"
     :abilities [{:label "Trash the top 2 cards from the Stack"
