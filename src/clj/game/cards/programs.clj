@@ -828,7 +828,7 @@
 
    "Takobi"
    {:implementation "Adding power counter is manual"
-    :abilities [{:label "Add power counter after breaking all subroutines on a piece of ice"
+    :abilities [{:label "Add 1 power counter"
                  :effect (effect (add-counter card :power 1)
                                  (system-msg "adds a power counter to Takobi"))}
                 {:req (req (and (:run @state)
