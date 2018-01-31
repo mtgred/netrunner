@@ -868,7 +868,9 @@
    {:abilities [{:label "[Trash]: Break the first subroutine on the encountered piece of ice"
                  :req (req (and (:run @state) (rezzed? current-ice)))
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (system-msg :corp "trashes Kongamato to break the first subroutine on the encountered piece of ice"))}]}
+                                 (system-msg :corp
+                                             (str "trashes Kongamato to break the first subroutine on "
+                                                  (:title current-ice))))}]}
 
    "Laguna Velasco District"
    {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
