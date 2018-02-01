@@ -427,6 +427,28 @@
       (is (zero? (get-counters (refresh cache) :virus))
           "Cache has no counters"))))
 
+(deftest forced-connection
+  ;; Forced Connection - ambush, trace(3) give the runner 2 tags
+  (do-game
+    (new-game (default-corp [(qty "Forced Connection" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Forced Connection" "Forced Connection"])
+    (play-from-hand state :corp "Forced Connection" "New remote")
+    (take-credits state :corp)
+    (is (= 0 (:tag (get-runner))) "Runner starts with 0 tags")
+    (run-empty-server state :remote1)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-choice :runner "Yes") ; trash
+    (is (= 2 (:tag (get-runner))) "Runner took two tags")
+    (run-empty-server state "Archives")
+    (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when accessed from Archives")
+    (run-empty-server state "HQ")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 3)
+    (prompt-choice :runner "Yes") ; trash
+    (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
+
 (deftest ghost-branch-dedicated-response-team
   ;; Ghost Branch - with Dedicated Response Team
   (do-game

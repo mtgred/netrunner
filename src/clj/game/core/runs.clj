@@ -52,6 +52,8 @@
                                        (play-sfx state side "agenda-steal")
                                        (when (:run @state)
                                          (swap! state assoc-in [:run :did-steal] true))
+                                       (when (card-flag? c :has-events-when-stolen true)
+                                         (register-events state side (:events (card-def c)) c))
                                        (when-let [current (first (get-in @state [:corp :current]))]
                                          (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
                                          (trash state side current)))}
