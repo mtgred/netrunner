@@ -336,6 +336,12 @@
                                      (damage state side eid :meat 1 {:card card})
                                      (tag-runner state :runner eid 1)))}}}}
 
+   "Economic Warfare"
+   {:req (req (and (:successful-run runner-reg-last)
+                   (can-pay? state :runner nil :credit 4)))
+    :msg "make the runner lose 4 [Credits]"
+    :effect (effect (lose :runner :credit 4))}
+
    "Election Day"
    {:req (req (->> (get-in @state [:corp :hand])
                    (filter #(not (= (:cid %) (:cid card))))
@@ -1389,6 +1395,28 @@
                                  :no-ability trash-all-resources}}
                     trash-all-resources)
                   card targets))})
+
+   "Threat Assessment"
+   {:req (req (:trashed-card runner-reg-last))
+    :prompt "Select an installed Runner card"
+    :choices {:req #(and (= (:side %) "Runner") (installed? %))}
+    :delayed-completion true
+    :effect (req (let [chosen target]
+                   (show-wait-prompt state side "Runner to resolve Threat Assessment")
+                   (continue-ability state :runner
+                                     {:prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
+                                      :choices [(str "Move " (:title chosen))
+                                                "2 tags"]
+                                      :delayed-completion true
+                                      :effect (req (clear-wait-prompt state :corp)
+                                                   (move state :corp (last (:discard corp)) :rfg)
+                                                   (if (.startsWith target "Move")
+                                                     (do (system-msg state side (str "chooses to move " (:title chosen) " to the Stack"))
+                                                       (move state :runner chosen :deck {:front true})
+                                                       (effect-completed state side eid))
+                                                     (do (system-msg state side "chooses to take 2 tags")
+                                                       (tag-runner state :runner eid 2))))}
+                                     card nil)))}
 
    "Threat Level Alpha"
    {:trace {:base 1

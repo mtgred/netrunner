@@ -361,6 +361,18 @@
       (is (= 1 (:advance-counter (refresh gb))) "1 advancement on Ghost Branch")
       (is (= 4 (:credit (get-corp)))))))
 
+(deftest echochamber
+  ;; Echo Chamber - 3 clicks to become 1 point agenda
+  (do-game
+    (new-game (default-corp [(qty "Echo Chamber" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Echo Chamber" "New remote")
+    (let [ec (get-content state :remote1 0)]
+      (core/rez state :corp ec)
+      (card-ability state :corp ec 0))
+    (is (= 1 (:agendapoints (get-in @state [:corp :scored 0]))) "Echo Chamber added to Corp score area")))
+
 (deftest edge-of-world
   ;; Edge of World - ability
   (do-game

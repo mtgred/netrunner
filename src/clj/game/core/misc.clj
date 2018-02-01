@@ -145,6 +145,7 @@
             new-scored (merge new-scored {:abilities abilities})]
         (update! state :corp new-scored)
         (when-let [events (:events (card-def new-scored))]
+          (unregister-events state side new-scored)
           (register-events state side events new-scored))
         (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil)))
     (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]

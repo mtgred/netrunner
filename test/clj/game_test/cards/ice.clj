@@ -23,6 +23,24 @@
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
+(deftest aimor
+  ;; Aimor - trash the top 3 cards of the stack, trash Aimor
+  (do-game
+    (new-game (default-corp [(qty "Aimor" 1)])
+              (default-runner [(qty "Sure Gamble" 2) (qty "Desperado" 1)
+                               (qty "Corroder" 1) (qty "Patron" 1)]))
+    (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
+    (play-from-hand state :corp "Aimor" "HQ")
+    (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor installed")
+    (take-credits state :corp)
+    (let [aim (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp aim)
+      (card-subroutine state :corp aim 0)
+      (is (= 3 (count (:discard (get-runner)))) "Runner trashed 3 cards")
+      (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck"))
+    (is (= 0 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
+
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (do-game
@@ -591,6 +609,25 @@
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice")
       (is (= 3 (:current-strength (refresh nb2)))
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice"))))
+
+(deftest nightdancer
+  ;; Nightdancer - Runner loses a click if able, corp gains a click on next turn
+  (do-game
+    (new-game (default-corp [(qty "Nightdancer" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Nightdancer" "HQ")
+    (take-credits state :corp)
+    (let [nd (get-ice state :hq 0)]
+      (core/rez state :corp nd)
+      (run-on state "HQ")
+      (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
+      (card-subroutine state :corp nd 0)
+      (is (= 2 (:click (get-runner))) "Runner lost 1 click")
+      (card-subroutine state :corp nd 0)
+      (is (= 1 (:click (get-runner))) "Runner lost 1 click")
+      (run-jack-out state)
+      (take-credits state :runner)
+      (is (= 5 (:click (get-corp))) "Corp has 5 clicks"))))
 
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag

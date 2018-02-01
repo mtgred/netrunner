@@ -218,6 +218,32 @@
        (core/rez state :corp sbox)
        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
 
+(deftest calibration-testing
+  ;; Calibration Testing - advanceable / non-advanceable
+  (do-game
+    (new-game (default-corp [(qty "Calibration Testing" 2) (qty "Project Junebug" 1) (qty "PAD Campaign" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 10)
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Calibration Testing" "New remote")
+    (play-from-hand state :corp "Project Junebug" "Server 1")
+    (let [ct (get-content state :remote1 0)
+          pj (get-content state :remote1 1)]
+      (core/rez state :corp ct)
+      (card-ability state :corp ct 0)
+      (prompt-select :corp pj)
+      (is (= 1 (:advance-counter (refresh pj))) "Project Junebug advanced")
+      (is (= 1 (count (:discard (get-corp)))) "Calibration Testing trashed"))
+    (play-from-hand state :corp "Calibration Testing" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "Server 2")
+    (let [ct (get-content state :remote2 0)
+          pad (get-content state :remote2 1)]
+      (core/rez state :corp ct)
+      (card-ability state :corp ct 0)
+      (prompt-select :corp pad)
+      (is (= 1 (:advance-counter (refresh pad))) "PAD Campaign advanced")
+      (is (= 2 (count (:discard (get-corp)))) "Calibration Testing trashed"))))
+
 (deftest caprice-nisei
   ;; Caprice Nisei - Psi game for ETR after runner passes last ice
   (do-game
@@ -401,6 +427,28 @@
       ;; purged counters
       (is (zero? (get-counters (refresh cache) :virus))
           "Cache has no counters"))))
+
+(deftest forced-connection
+  ;; Forced Connection - ambush, trace(3) give the runner 2 tags
+  (do-game
+    (new-game (default-corp [(qty "Forced Connection" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Forced Connection" "Forced Connection"])
+    (play-from-hand state :corp "Forced Connection" "New remote")
+    (take-credits state :corp)
+    (is (= 0 (:tag (get-runner))) "Runner starts with 0 tags")
+    (run-empty-server state :remote1)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-choice :runner "Yes") ; trash
+    (is (= 2 (:tag (get-runner))) "Runner took two tags")
+    (run-empty-server state "Archives")
+    (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when accessed from Archives")
+    (run-empty-server state "HQ")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 3)
+    (prompt-choice :runner "Yes") ; trash
+    (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
 
 (deftest ghost-branch-dedicated-response-team
   ;; Ghost Branch - with Dedicated Response Team

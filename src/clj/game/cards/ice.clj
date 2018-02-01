@@ -207,6 +207,20 @@
                            :effect (effect (draw :runner 2))})
                   (do-net-damage 1)]}
 
+   "Aimor"
+   {:subroutines [{:label "Trash the top 3 cards of the Stack. Trash Aimor."
+                   :effect (req (when (not-empty (:deck runner))
+                                  (system-msg state :corp
+                                              (str "uses Aimor to trash "
+                                                   (join ", " (map :title (take 3 (:deck runner))))
+                                                   " from the Runner's Stack"))
+                                  (mill state :runner 3))
+                                (when current-ice
+                                  (no-action state :corp nil)
+                                  (continue state :runner nil))
+                                (trash state side card)
+                                (system-msg state side (str "trashes Aimor")))}]}
+
    "Archangel"
    {:access
     {:delayed-completion true
@@ -1392,6 +1406,13 @@
                                                         (rezzed? %))
                                                   (all-installed state :corp))) " subroutines")}]
     :subroutines [end-the-run]}
+
+   "Nightdancer"
+   {:subroutines [{:label "The Runner loses [Click], if able. You have an additional [Click] to spend during your next turn."
+                   :msg "force the runner to lose a [Click], if able. Corp gains an additional [Click] to spend during their next turn"
+                   :effect (req
+                             (lose state :runner :click 1)
+                             (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]}
 
    "Orion"
    ;; TODO: wormhole subroutine

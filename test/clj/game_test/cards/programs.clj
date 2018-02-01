@@ -819,6 +819,42 @@
      (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
      (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
 
+(deftest takobi
+  ;; Takobi - 2 power counter to add +3 strength to a non-AI icebreaker for encounter
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 1)])
+              (default-runner [(qty "Takobi" 1) (qty "Corroder" 1) (qty "Faust" 1)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Takobi")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Faust")
+    (let [tako (get-in @state [:runner :rig :program 0])
+          corr (get-in @state [:runner :rig :program 1])
+          faus (get-in @state [:runner :rig :program 2])]
+      (dotimes [_ 3]
+        (card-ability state :runner tako 0))
+      (is (= 3 (get-counters (refresh tako) :power)) "3 counters on Takobi")
+
+      (run-on state "HQ")
+      (card-ability state :runner tako 1)
+      (is (empty? (:prompt (get-runner))) "No prompt for un-rezzed ice")
+      (core/rez state :corp (get-ice state :hq 0))
+      (card-ability state :runner tako 1)
+      (prompt-select :runner (refresh faus))
+      (is (not-empty (:prompt (get-runner))) "Can't select AI breakers")
+      (prompt-select :runner (refresh corr))
+      (is (empty? (:prompt (get-runner))) "Can select non-AI breakers")
+      (is (= 5 (:current-strength (refresh corr))) "Corroder at +3 strength")
+      (is (= 1 (get-counters (refresh tako) :power)) "1 counter on Takobi")
+      (card-ability state :runner tako 1)
+      (is (empty? (:prompt (get-runner))) "No prompt when too few power counters")
+      (core/no-action state :corp nil)
+      (run-continue state)
+      (is (= 2 (:current-strength (refresh corr))) "Corroder returned to normal strength"))))
+
 (deftest upya
   (do-game
     (new-game (default-corp)
