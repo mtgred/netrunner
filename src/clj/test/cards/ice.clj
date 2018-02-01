@@ -22,6 +22,24 @@
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
+(deftest aimor
+  ;; Aimor - trash the top 3 cards of the stack, trash Aimor
+  (do-game
+    (new-game (default-corp [(qty "Aimor" 1)])
+              (default-runner [(qty "Sure Gamble" 2) (qty "Desperado" 1)
+                               (qty "Corroder" 1) (qty "Patron" 1)]))
+    (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
+    (play-from-hand state :corp "Aimor" "HQ")
+    (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor installed")
+    (take-credits state :corp)
+    (let [aim (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp aim)
+      (card-subroutine state :corp aim 0)
+      (is (= 3 (count (:discard (get-runner)))) "Runner trashed 3 cards")
+      (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck"))
+    (is (= 0 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
+
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (do-game
