@@ -696,6 +696,34 @@
                             :effect (effect (draw :runner 1))
                             :msg "draw 1 card"}}}
 
+   "RNG Key"
+   {:events {:pre-access-card {:req (req (get-in card [:special :rng-guess]))
+                               :msg (msg "to reveal " (:title target))
+                               :effect (req (when-let [guess (get-in card [:special :rng-guess])]
+                                              (when (or (= guess (:cost target))
+                                                        (= guess (:advancementcost target)))
+                                                (continue-ability state side
+                                                                  {:prompt "Choose RNG Key award"
+                                                                   :delayed-completion true
+                                                                   :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                                                   :effect (req (if (= target "Draw 2 cards")
+                                                                                  (do (draw state :runner 2)
+                                                                                    (system-msg state :runner "uses RNG Key to draw 2 cards")
+                                                                                    (effect-completed state side eid card))
+                                                                                  (do (gain state :runner :credit 3)
+                                                                                    (system-msg state :runner "uses RNG Key to gain 3 [Credits]"
+                                                                                    (effect-completed state side eid card)))))}
+                                                                  card nil))))}
+             :post-access-card {:effect (effect (update! (assoc-in card [:special :rng-guess] nil)))}
+             :successful-run {:req (req (let [first-hq (first-successful-run-on-server? state :hq)
+                                              first-rd (first-successful-run-on-server? state :rd)]
+                                          (and first-hq first-rd (or (= target :hq) (= target :rd)))))
+                              :optional {:prompt "Fire RNG Key?"
+                                         :yes-ability {:prompt "Guess a number"
+                                                       :choices {:number (req 20)}
+                                                       :msg (msg "guess " target)
+                                                       :effect (effect (update! (assoc-in card [:special :rng-guess] target)))}}}}}
+
    "Rook"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [r (get-card state card)
