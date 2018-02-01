@@ -864,6 +864,14 @@
       :msg "gain 2 [Credits]"
       :effect (effect (gain :credit 2))}}}
 
+   "Kongamato"
+   {:abilities [{:label "[Trash]: Break the first subroutine on the encountered piece of ice"
+                 :req (req (and (:run @state) (rezzed? current-ice)))
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (system-msg :corp
+                                             (str "trashes Kongamato to break the first subroutine on "
+                                                  (:title current-ice))))}]}
+
    "Laguna Velasco District"
    {:events {:runner-click-draw {:msg "draw 1 card" :effect (effect (draw))}}}
 
