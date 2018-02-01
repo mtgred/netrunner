@@ -980,6 +980,18 @@
    "Hunter"
    {:subroutines [(tag-trace 3)]}
 
+   "Jua"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:msg "prevent the Runner from installing cards for the rest of the turn"
+                 :effect (effect (lock-install (:cid card) :runner)
+                                 (register-events {:runner-turn-ends
+                                                   {:effect (effect (unlock-install (:cid card) :runner)
+                                                                    (unregister-events card))}}
+                                                  card))
+                                 }]
+    :events {:runner-turn-ends nil}
+    :subroutines [end-the-run]}
+
    "Ice Wall"
    {:advanceable :always
     :subroutines [end-the-run]
