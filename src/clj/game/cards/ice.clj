@@ -1016,7 +1016,7 @@
                                        :runner
                                         {:player :runner
                                          :priority 1
-                                         :delayed_completion true
+                                         :delayed-completion true
                                          :prompt "Select a card to move to the Stack"
                                          :choices [(card-str state (first targets)) (card-str state (second targets))]
                                          :effect (req (let [c (installed-byname state :runner target)]
