@@ -568,7 +568,7 @@
         (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
         (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
-(deftest plaque
+(deftest plague
   ;; Plague
   (do-game
     (new-game (default-corp [(qty "Mark Yale" 1)])
