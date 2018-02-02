@@ -559,6 +559,25 @@
     (prompt-choice :runner "Archives")
     (is (= 4 (:click (get-runner))) "Early Bird gains click")))
 
+(deftest emergent-creativity
+  ;; Emergent Creativty - Double, discard programs/hardware from grip, install from heap
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Emergent Creativity" 1) (qty "Paperclip" 1)
+                               (qty "Heartbeat" 1) (qty "Gordian Blade" 1) (qty "Test Run" 1)]))
+    (starting-hand state :runner ["Emergent Creativity" "Heartbeat" "Gordian Blade" "Test Run"])
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Emergent Creativity")
+    (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
+    (prompt-select :runner (find-card "Gordian Blade" (:hand (get-runner))))
+    (prompt-choice :runner "Done")
+    (prompt-choice :runner (find-card "Paperclip" (:deck (get-runner))))
+    (is (= 3 (:credit (get-runner))) "Offset cost of installing Paperclip")
+    (is (= 0 (count (:deck (get-runner)))) "Installed from heap")
+    (is (= 3 (count (:discard (get-runner)))) "Discard is 3 cards - EC, Heartbeat, GB")
+    (is (= 2 (:click (get-runner))) "Emergent Creativity is a Double event")))
+
 (deftest employee-strike-blue-sun
   ;; Employee Strike - vs Blue Sun, suppress Step 1.2
   (do-game
