@@ -877,4 +877,48 @@
                    :counter-cost [:power 3]
                    :once :per-turn
                    :msg "gain [Click][Click]"
-                   :effect (effect (gain :click 2))}]}})
+                   :effect (effect (gain :click 2))}]}
+
+   "Wari"
+   {:events {:successful-run
+             {:interactive (req )
+              :delayed-completion true
+              :req (req (and (= target :hq)
+                             (first-successful-run-on-server? state :hq)
+                             (some #(and (ice? %)
+                                         (not (rezzed? %)))
+                                   (all-installed state :corp))))
+              :effect (effect
+                       (continue-ability
+                        {:prompt "Use Wari?"
+                         :choices ["Yes" "No"]
+                         :delayed-completion true
+                         :effect (effect 
+                                  (continue-ability
+                                   (if (= target "Yes")
+                                     {:prompt "Choose a subtype"
+                                      :choices ["Barrier" "Code Gate" "Sentry"]
+                                      :delayed-completion true
+                                      :effect (effect
+                                               (trash card)
+                                               (continue-ability
+                                                (let [chosen-subtype target]
+                                                  {:choices {:req #(and (ice? %)
+                                                                        (not (rezzed? %)))}
+                                                   :delayed-completion true
+                                                   :msg (str "name " chosen-subtype)
+                                                   :effect (req
+                                                            (when-completed (expose state side target)
+                                                              (if (and async-result
+                                                                       (has-subtype? target chosen-subtype))
+                                                                (continue-ability
+                                                                   state :corp
+                                                                   (let [ice target]
+                                                                     {:effect (effect (move ice :hand))
+                                                                      :msg (str "add " (:title target) " to HQ")})
+                                                                   card nil)
+                                                                (effect-completed state side eid))))})
+                                                card nil))}
+                                     (effect-completed state side eid))
+                                   card nil))}
+                        card nil))}}}})
