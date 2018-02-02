@@ -698,9 +698,10 @@
 
    "RNG Key"
    {:events {:pre-access-card {:req (req (get-in card [:special :rng-guess]))
+                               :delayed-completion true
                                :msg (msg "to reveal " (:title target))
-                               :effect (req (when-let [guess (get-in card [:special :rng-guess])]
-                                              (when (or (= guess (:cost target))
+                               :effect (req (if-let [guess (get-in card [:special :rng-guess])]
+                                              (if (or (= guess (:cost target))
                                                         (= guess (:advancementcost target)))
                                                 (continue-ability state side
                                                                   {:prompt "Choose RNG Key award"
@@ -713,7 +714,9 @@
                                                                                   (do (gain state :runner :credit 3)
                                                                                     (system-msg state :runner "uses RNG Key to gain 3 [Credits]"
                                                                                     (effect-completed state side eid card)))))}
-                                                                  card nil))))}
+                                                                  card nil)
+                                                (effect-completed state side eid card))
+                                              (effect-completed state side eid card)))}
              :post-access-card {:effect (effect (update! (assoc-in card [:special :rng-guess] nil)))}
              :successful-run {:req (req (let [first-hq (first-successful-run-on-server? state :hq)
                                               first-rd (first-successful-run-on-server? state :rd)]
