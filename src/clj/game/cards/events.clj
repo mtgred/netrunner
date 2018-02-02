@@ -426,6 +426,31 @@
                          (rezzed? %))}
     :effect (effect (derez target))}
 
+   "Emergent Creativity"
+   {:prompt "Choose Hardware and Programs to trash from your Grip"
+    :choices {:req #(and (or (is-type? % "Hardware")
+                             (is-type? % "Program"))
+                         (in-hand? %))
+              :max (req (count (:hand runner)))}
+    :effect (req (let [trash-cost (apply + (map :cost targets))
+                       to-trash targets]
+                   (continue-ability state side
+                                     {:delayed-completion true
+                                      :prompt "Choose a hardware or program to install"
+                                      :msg (msg "trash " (join ", " (map :title to-trash))
+                                                " and install " (:title target) " lowering the cost by " trash-cost)
+                                      :choices (req (filter #(or (is-type? % "Program")
+                                                                 (is-type? % "Hardware"))
+                                                            (:deck runner)))
+                                      :effect (req (trigger-event state side :searched-stack nil)
+                                                   (shuffle! state side :deck)
+                                                   (doseq [c to-trash]
+                                                     (trash state side c {:unpreventable true}))
+                                                   (install-cost-bonus state side [:credit (- trash-cost)])
+                                                   (runner-install state side target)
+                                                   (effect-completed state side eid card))}
+                                     card nil)))}
+
    "Employee Strike"
    {:msg "disable the Corp's identity"
     :disable-id true
