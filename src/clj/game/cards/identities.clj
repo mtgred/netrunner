@@ -536,11 +536,11 @@
                                 (filter #(and (is-type? % "Program")
                                               (not (has-subtype? % "Virus")))
                                         (:deck runner))))
-                 :msg (str"install a non-virus program from their stack, lowering the cost by 1 [Credit]")
+                 :msg (str "install a non-virus program from their stack, lowering the cost by 1 [Credit]")
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (install-cost-bonus [:credit -1])
-                                 (runner-install (assoc-in target [:special :kabonesa] true) {:no-cost false}))
+                                 (runner-install (assoc-in target [:special :kabonesa] true)))
                  :end-turn
                  {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :kabonesa]))
                   :msg (msg "remove " (:title target) " from the game")
