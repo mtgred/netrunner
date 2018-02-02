@@ -251,7 +251,7 @@
                          (in-hand? %))}
     :effect (effect (install-cost-bonus [:credit -8])
                     (runner-install target)
-                    (gain :tag 1))}
+                    (tag-runner 1))}
 
    "Cyber Threat"
    {:prompt "Choose a server"
