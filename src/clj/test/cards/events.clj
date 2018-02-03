@@ -267,6 +267,19 @@
    (is (= 4 (count (:discard (get-corp)))) "Trashable was trashed")
    (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
 
+(deftest by-any-means-ctm-crash
+  (do-game
+    (new-game (make-deck "NBN: Controlling the Message" [(qty "Paper Trail" 1)])
+              (default-runner [(qty "By Any Means" 2)]))
+    (play-from-hand state :corp "Paper Trail" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "By Any Means")
+    (run-empty-server state "Server 1")
+    (prompt-choice :corp "No") ;; Don't trigger CTM trace
+    (is (empty? (:prompt (get-runner))) "No prompt to steal since agenda was trashed")
+    (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
+    (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+
 (deftest credit-kiting
   ;; After successful central run lower install cost by 8 and gain a tag
   (do-game
