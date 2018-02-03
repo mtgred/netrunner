@@ -261,6 +261,7 @@
     (is (= 1 (count (:hand (get-corp)))))
     (take-credits state :runner)
     (is (= 5 (count (:hand (get-corp)))) "Drew an additional 3 cards with 3 DBS")
+    (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
     (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp)))) ;invalid target
     (prompt-select :corp (find-card "Resistor" (:hand (get-corp))))
     (prompt-select :corp (find-card "Product Placement" (:hand (get-corp))))
@@ -313,6 +314,19 @@
       (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, DBS didn't activate")
       (prompt-select :corp (find-card "Breaking News" (:hand (get-corp)))) ; Sensie target
       (is (= "Breaking News" (:title (last (:deck (get-corp))))) "Breaking News last card in deck"))))
+
+(deftest daily-business-show-manual-draw
+  ;; Daily Business Show - Should not trigger if rezzed after mandatory draw
+  (do-game
+    (new-game (default-corp [(qty "Daily Business Show" 3) (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
+                             (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Daily Business Show"])
+    (play-from-hand state :corp "Daily Business Show" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/draw state :corp)
+    (is (= 1 (count (:hand (get-corp)))) "DBS did not fire on manual draw")
+    (is (empty? (:prompt (get-corp))) "Corp is not being asked to bury a card with DBS")    ))
 
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
