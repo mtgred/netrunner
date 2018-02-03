@@ -267,6 +267,22 @@
    (is (= 4 (count (:discard (get-corp)))) "Trashable was trashed")
    (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
 
+(deftest credit-kiting
+  ;; After successful central run lower install cost by 8 and gain a tag
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 1)])
+              (default-runner [(qty "Credit Kiting" 1) (qty "Femme Fatale" 1)]))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (play-from-hand state :runner "Credit Kiting")
+    (is (= 3 (:click (get-runner))) "Card not played, successful run on central not made")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Credit Kiting")
+    (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
+    (is (= 4 (:credit (get-runner))) "Femme Fatale only cost 1 credit")
+    (is (= 1 (:tag (get-runner))) "Runner gained a tag")))
+
 (deftest cbi-raid
   ;; CBI Raid - Full test
   (do-game
