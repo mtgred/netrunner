@@ -568,6 +568,23 @@
         (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
         (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
+(deftest plague
+  ;; Plague
+  (do-game
+    (new-game (default-corp [(qty "Mark Yale" 1)])
+              (default-runner [(qty "Plague" 1)]))
+    (play-from-hand state :corp "Mark Yale" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Plague")
+    (prompt-choice :runner "Server 1")
+    (let [plague (get-in @state [:runner :rig :program 0])]
+      (run-empty-server state "Server 1")
+      (is (= 2 (get-counters (refresh plague) :virus)) "Plague gained 2 counters")
+      (run-empty-server state "Server 1")
+      (is (= 4 (get-counters (refresh plague) :virus)) "Plague gained 2 counters")
+      (run-empty-server state "Archives")
+      (is (= 4 (get-counters (refresh plague) :virus)) "Plague did not gain counters"))))
+
 (deftest progenitor-host-hivemind
   ;; Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738
   (do-game
