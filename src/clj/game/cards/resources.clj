@@ -1010,6 +1010,7 @@
                    state :corp
                    {:prompt "Select a card to derez"
                     :choices {:req #(and (= (:side %) "Corp")
+                                         (not (is-type? % "Agenda"))
                                          (:rezzed %))}
                     :effect (req (derez state side target))}
                   card nil))
