@@ -140,6 +140,56 @@
                                                                   (clear-wait-prompt :runner))} card nil)))}
                               card nil))}}
 
+   "Bacterial Programming"
+   (letfn [(hq-step [remaining to-trash to-hq]
+             {:delayed-completion true
+              :prompt "Select a card to move to HQ"
+              :choices (conj (vec remaining) "Done")
+              :effect (req (if (= "Done" target)
+                             (do
+                               (doseq [t to-trash]
+                                 (println "Moving" (:title t) "to trash")
+                                 (trash state :corp t {:unpreventable true}))
+                               (doseq [h to-hq]
+                                 (println "Moving" (:title h) "to hand")
+                                 (move state :corp h :hand))
+                               (println "Remaining cards:" (map :title remaining))
+                               (continue-ability state :corp (reorder-choice :corp :runner remaining '()
+                                                                            (count remaining) remaining) card nil)
+                               (system-msg state :corp (str "uses Bacterial Programming to add " (count to-hq) " cards to HQ,  discard "
+                                                            (count to-trash) ", and arrange the top cards of R&D")))
+                             (do
+                               (system-msg state :corp (str "selected " (:title target) " to move to HQ"))
+                               (continue-ability state :corp (hq-step
+                                                               (clojure.set/difference (set remaining) (set [target]))
+                                                               to-trash
+                                                               (conj to-hq target)) card nil))))})
+           (trash-step [remaining to-trash]
+             {:delayed-completion true
+              :prompt "Select a card to discard"
+              :choices (conj (vec remaining) "Done")
+              :effect (req (if (= "Done" target)
+                             (continue-ability state :corp (hq-step remaining to-trash `()) card nil)
+                             (do
+                               (system-msg state :corp (str "selected " (:title target) " to trash"))
+                               (continue-ability state :corp (trash-step
+                                                               (clojure.set/difference (set remaining) (set [target]))
+                                                               (conj to-trash target)) card nil))))})]
+     (let [arrange-rd (effect (continue-ability
+                                {:delayed-completion true
+                                 :optional
+                                 {:prompt "Arrange top 7 cards of R&D?"
+                                  :no-ability {:effect (req (effect-completed state side eid card))}
+                                  :yes-ability {:effect (req (let [c (take 7 (:deck corp))]
+                                                               (show-wait-prompt state :runner "Corp to use Bacterial Programming")
+                                                               (continue-ability state :corp (trash-step c `()) card nil)))}}}
+                                card nil))]
+       {:effect arrange-rd
+        :delayed-completion true
+        :stolen {:delayed-completion true
+                 :effect arrange-rd}
+        :interactive (req true)}))
+
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
     :optional {:prompt "Trigger the ability of a scored agenda?"
