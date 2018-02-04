@@ -398,7 +398,12 @@
                                           (continue-ability
                                             state side
                                             (access-helper-hq-or-rd state zone label (dec amount) select-fn title-fn
-                                                                    (conj already-accessed accessed))
+                                                                    (if (-> @state :run :shuffled-during-access zone)
+                                                                      ;; if the zone was shuffled because of the access,
+                                                                      ;; the runner "starts over" excepting any upgrades that were accessed
+                                                                      (set (filter #(= :servers (first (:zone %)))
+                                                                                   already-accessed))
+                                                                      (conj already-accessed accessed)))
                                             card nil)
                                           (effect-completed state side eid)))))
                     ;; accessing a rezzed upgrade
