@@ -420,7 +420,7 @@
    {:flags {:runner-phase-12 (req true)}
     :abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
                  :req (req (:runner-phase-12 @state))
-                 :effect (effect (move card :rfg) (gain :memory 3 :click 3))
+                 :effect (effect (move card :rfg) (gain :click 3))
                  :msg "gain [Click] [Click] [Click]"}]}
 
    "Imp"
@@ -645,6 +645,17 @@
                                    :msg (msg "install " (:title target))
                                    :effect (effect (runner-install target {:no-cost true}))} card nil)
                                 (trash state side card)))}]}
+
+   "Plague"
+   {:prompt "Choose a server for Plague" :choices (req servers)
+    :msg (msg "target " target)
+    :req (req (not (get-in card [:special :server-target])))
+    :effect (effect (update! (assoc-in card [:special :server-target] target)))
+    :events {:successful-run
+             {:req (req (= (zone->name (get-in @state [:run :server]))
+                           (get-in (get-card state card) [:special :server-target])))
+              :msg "gain 2 virus counters"
+              :effect (effect (add-counter :runner card :virus 2))}}}
 
    "Pheromones"
    {:recurring (req (when (< (get card :rec-counter 0) (get-in card [:counter :virus] 0))

@@ -270,6 +270,29 @@
       (is (= 7 (:click (get-runner))) "Gained 3 clicks")
       (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
 
+(deftest hyperdriver-dhegdheer
+  ;; triggering a Dhegdeered Hyperdriver should not grant +3 MU
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Hyperdriver" 1)
+                               (qty "Dhegdheer" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dhegdheer")
+    (let [dheg (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner dheg 0)
+      (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
+      (is (= 4 (:memory (get-runner))) "0 MU used")
+      (is (= 2 (:click (get-runner))) "2 clicks used")
+      (is (= 3 (:credit (get-runner))) "2 credits used")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (:runner-phase-12 @state) "Runner in Step 1.2")
+      (let [hyp (first (:hosted (refresh dheg)))]        
+        (card-ability state :runner hyp 0)
+        (core/end-phase-12 state :runner nil)
+        (is (= 7 (:click (get-runner))) "Used Hyperdriver")
+        (is (= 4 (:memory (get-runner))) "Still 0 MU used")))))
+
 (deftest imp-the-future-perfect
   ;; Trashing TFP with Imp should not trigger psi-game -- Issue #1844
   (do-game
@@ -567,6 +590,23 @@
         (take-credits state :corp)
         (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
         (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
+
+(deftest plague
+  ;; Plague
+  (do-game
+    (new-game (default-corp [(qty "Mark Yale" 1)])
+              (default-runner [(qty "Plague" 1)]))
+    (play-from-hand state :corp "Mark Yale" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Plague")
+    (prompt-choice :runner "Server 1")
+    (let [plague (get-in @state [:runner :rig :program 0])]
+      (run-empty-server state "Server 1")
+      (is (= 2 (get-counters (refresh plague) :virus)) "Plague gained 2 counters")
+      (run-empty-server state "Server 1")
+      (is (= 4 (get-counters (refresh plague) :virus)) "Plague gained 2 counters")
+      (run-empty-server state "Archives")
+      (is (= 4 (get-counters (refresh plague) :virus)) "Plague did not gain counters"))))
 
 (deftest progenitor-host-hivemind
   ;; Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738
