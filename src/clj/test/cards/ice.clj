@@ -523,6 +523,23 @@
     (is (= 4 (:current-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
 	(is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
 
+(deftest mind-game
+  ;; Mind game - PSI redirect to different server
+  (do-game
+    (new-game (default-corp [(qty "Mind Game" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mind Game" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [mindgame (get-ice state :hq 0)]
+      (core/rez state :corp mindgame)
+      (card-subroutine state :corp mindgame 0))
+    (prompt-choice :corp "1 [Credits]")
+    (prompt-choice :runner "0 [Credits]")
+    (is (= (set ["R&D" "Archives"]) (set (:choices (prompt-map :corp)))) "Corp cannot choose server Runner is on")
+    (prompt-choice :corp "Archives")
+    (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")))
+
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost
   (do-game
