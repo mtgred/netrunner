@@ -1016,14 +1016,12 @@
                                        :runner
                                         {:player :runner
                                          :priority 1
-                                         :delayed-completion true
                                          :prompt "Select a card to move to the Stack"
                                          :choices [(card-str state (first targets)) (card-str state (second targets))]
                                          :effect (req (let [c (installed-byname state :runner target)]
                                                         (clear-wait-prompt state :corp)
                                                         (move state :runner c :deck {:front true})
-                                                        (system-msg state :runner (str "selected " (:title c) " to move to the Stack"))
-                                                        (effect-completed state side eid card)))}
+                                                        (system-msg state :runner (str "selected " (:title c) " to move to the Stack"))))}
                                          card nil)))}]}
 
    "Ice Wall"
