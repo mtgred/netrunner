@@ -716,15 +716,12 @@
                                                         (= guess (:advancementcost target)))
                                                 (continue-ability state side
                                                                   {:prompt "Choose RNG Key award"
-                                                                   :delayed-completion true
                                                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]
                                                                    :effect (req (if (= target "Draw 2 cards")
                                                                                   (do (draw state :runner 2)
-                                                                                    (system-msg state :runner "uses RNG Key to draw 2 cards")
-                                                                                    (effect-completed state side eid card))
+                                                                                    (system-msg state :runner "uses RNG Key to draw 2 cards"))
                                                                                   (do (gain state :runner :credit 3)
-                                                                                    (system-msg state :runner "uses RNG Key to gain 3 [Credits]"
-                                                                                    (effect-completed state side eid card)))))}
+                                                                                    (system-msg state :runner "uses RNG Key to gain 3 [Credits]"))))}
                                                                   card nil)
                                                 (effect-completed state side eid card))
                                               (effect-completed state side eid card)))}
