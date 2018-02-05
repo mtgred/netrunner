@@ -425,6 +425,54 @@
                  (= 3 (:current-strength (refresh iq2)))
                  (= 2 (:credit (get-corp)))) "3 cards in HQ: paid 3 to rez, both have 3 strength")))))
 
+(deftest jua-encounter
+  ;; Jua (encounter effect) - Prevent Runner from installing cards for the rest of the turn
+  (do-game
+    (new-game (default-corp [(qty "Jua" 1)])
+              (default-runner [(qty "Desperado" 1) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Jua" "HQ")
+    (take-credits state :corp)
+    (let [jua (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp jua)
+      (card-ability state :corp (refresh jua) 0)
+      (run-successful state)
+      (is (= 2 (count (:hand (get-runner)))) "Runner starts with 2 cards in hand")
+      (play-from-hand state :runner "Desperado")
+      (is (= 2 (count (:hand (get-runner)))) "No cards installed")
+      (play-from-hand state :runner "Sure Gamble")
+      (is (= 1 (count (:hand (get-runner)))) "Can play events")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 cards in hand")
+      (play-from-hand state :runner "Desperado")
+      (is (= 0 (count (:hand (get-runner)))) "Card installed"))))
+
+(deftest jua-sub
+  ;; Jua (subroutine effect) - Select 2 runner cards, runner moves one to the stack
+  (do-game
+    (new-game (default-corp [(qty "Jua" 1)])
+              (default-runner [(qty "Desperado" 1) (qty "Gordian Blade" 1)]))
+    (play-from-hand state :corp "Jua" "HQ")
+    (take-credits state :corp)
+    (let [jua (get-ice state :hq 0)]
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Desperado")
+      (run-on state "HQ")
+      (core/rez state :corp jua)
+      (card-subroutine state :corp (refresh jua) 0)
+      (is (empty? (:prompt (get-corp))) "Can't fire for 1 installed card")
+      (run-successful state)
+
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state "HQ")
+      (card-subroutine state :corp (refresh jua) 0)
+      (prompt-select :corp (get-program state 0))
+      (prompt-select :corp (get-hardware state 0))
+      (prompt-choice :runner "Gordian Blade")
+      (is (nil? (get-program state 0)) "Card is uninstalled")
+      (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck"))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
