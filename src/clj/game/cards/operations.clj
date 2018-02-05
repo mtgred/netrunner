@@ -332,11 +332,9 @@
                                              (in-hand? %))}
                         :msg (msg "trash " (quantify (count targets) "card") " from HQ")
                         :effect (req (when-completed
-                                       (trash-cards state side eid targets nil)
+                                       (trash-cards state side targets nil)
                                        (continue-ability state side shuffle-two card nil)))
-                        :cancel-effect (req (continue-ability state side shuffle-two card nil))
-      }]
-
+                        :cancel-effect (req (continue-ability state side shuffle-two card nil))}]
      {:delayed-completion true
       :msg "give The Runner 2 [Credits]"
       :effect (effect (gain :runner :credit 2)
