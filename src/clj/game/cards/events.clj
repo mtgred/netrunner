@@ -112,9 +112,9 @@
              :pre-access-card {:req (req (not= [:discard] (:zone target)))
                                :delayed-completion true
                                :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
-                               :effect (req (trash state side (assoc target :seen true))
-                                            (swap! state assoc-in [:runner :register :trashed-card] true)
-                                            (damage state :runner eid :meat 1 {:unboostable true}))}}}
+                               :effect (req (when-completed (trash state side (assoc target :seen true) nil)
+                                                            (do (swap! state assoc-in [:runner :register :trashed-card] true)
+                                                                (damage state :runner eid :meat 1 {:unboostable true}))))}}}
 
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
@@ -573,9 +573,9 @@
                                         (not (rezzed? %))))}
                  :delayed-completion true
                  :effect (req             ;taken from Drive By - maybe refactor
-                          (when-completed (expose state side target) 
+                          (when-completed (expose state side target)
                             (if (and async-result ;; expose was successful
-                                     (= chosen-type (:type target))) 
+                                     (= chosen-type (:type target)))
                               (continue-ability
                                   state :runner
                                   {:effect (effect (gain :credit 5))
@@ -584,7 +584,7 @@
                               (effect-completed state side eid))))})
               card nil))}
 
-   
+
    "Fear the Masses"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))
