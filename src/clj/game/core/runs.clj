@@ -401,8 +401,9 @@
                                                                     (if (-> @state :run :shuffled-during-access zone)
                                                                       ;; if the zone was shuffled because of the access,
                                                                       ;; the runner "starts over" excepting any upgrades that were accessed
-                                                                      (set (filter #(= :servers (first (:zone %)))
-                                                                                   already-accessed))
+                                                                      (do (swap! state update-in [:run :shuffled-during-access] dissoc zone)
+                                                                          (set (filter #(= :servers (first (:zone %)))
+                                                                                       already-accessed)))
                                                                       (conj already-accessed accessed)))
                                             card nil)
                                           (effect-completed state side eid)))))
