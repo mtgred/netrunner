@@ -543,6 +543,25 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
 
+(deftest jinja-city-grid
+  ;; Jinja City Grid - install drawn ice, lowering install cost by 4
+  (do-game
+    (new-game (default-corp [(qty "Jinja City Grid" 1) (qty "Vanilla" 3) (qty "Ice Wall" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Jinja City Grid"])
+    (core/gain state :corp :click 6)
+    (play-from-hand state :corp "Jinja City Grid" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (dotimes [n 5]
+      (core/click-draw state :corp 1)
+      (prompt-choice :corp "Yes")
+      (is (= 4 (:credit (get-corp))) "Not charged to install ice")
+      (is (= (inc n) (count (get-in @state [:corp :servers :remote1 :ices]))) (str n " ICE protecting Remote1")))
+    (core/click-draw state :corp 1)
+    (prompt-choice :corp "Yes")
+    (is (= 3 (:credit (get-corp))) "Charged to install ice")
+    (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
+
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program
   (do-game
