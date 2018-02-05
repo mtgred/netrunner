@@ -1303,7 +1303,7 @@
    {:subroutines [(do-psi {:label "Redirect the run to another server"
                            :player :corp
                            :prompt "Choose a server"
-                           :choices (req servers)
+                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
                            :msg (msg "redirect the run to " target)
                            :effect (req (let [dest (server->zone state target)]
                                           (swap! state update-in [:run]
