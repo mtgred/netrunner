@@ -365,6 +365,30 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
+(deftest distract-the-masses
+  (do-game
+    (new-game (default-corp [(qty "Distract the Masses" 2) (qty "Hedge Fund" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Hedge Fund" "Hedge Fund" "Hedge Fund" "Distract the Masses" "Distract the Masses"])
+    (play-from-hand state :corp "Distract the Masses")
+    (prompt-select :corp (first (:hand (get-corp))))
+    (prompt-select :corp (first (next (:hand (get-corp)))))
+    (prompt-select :corp (first (:discard (get-corp))))
+    (prompt-choice :corp "Done")
+    (is (= 1 (count (:discard (get-corp)))) "1 card still discarded")
+    (is (= 1 (count (:deck (get-corp)))) "1 card shuffled into R&D")
+    (is (= 1 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
+    (is (= 7 (:credit (get-runner))) "Runner gained 2 credits")
+    (play-from-hand state :corp "Distract the Masses")
+    (prompt-select :corp (first (:hand (get-corp))))
+    (prompt-choice :corp "Done")
+    (prompt-select :corp (first (:discard (get-corp))))
+    (prompt-select :corp (first (next (:discard (get-corp)))))
+    (is (= 0 (count (:discard (get-corp)))) "No cards left in archives")
+    (is (= 3 (count (:deck (get-corp)))) "2 more cards shuffled into R&D")
+    (is (= 2 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
+    (is (= 9 (:credit (get-runner))) "Runner gained 2 credits")))
+
 (deftest diversified-portfolio
   (do-game
     (new-game (default-corp [(qty "Diversified Portfolio" 1)
