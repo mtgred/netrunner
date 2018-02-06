@@ -471,63 +471,93 @@
                 (should-trigger? state :corp % nil (:access cdef))))
           (get-in @state [:corp :discard])))
 
-(defn access-helper-archives [state already-accessed]
-  (letfn [(get-root-content [state]
-            (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers :archives :content])))
-          (get-accessible [state already-accessed]
-            (filter #(not (contains? already-accessed %)) (get-archives-accessible state)))]
+(defn- get-archives-inactive [state]
+  ;; only include non-agendas that don't have an :access ability whose :req is true.
+  (let [accessible (set (get-archives-accessible state))]
+    (clojure.set/difference (set (-> @state :corp :discard)) accessible)))
+
+(defn access-helper-archives [state amount already-accessed]
+  (let [root-content (fn [already-accessed] (filter (complement already-accessed) (-> @state :corp :servers :archives :content)))
+        faceup-accessible (fn [already-accessed] (filter (complement already-accessed) (get-archives-accessible state)))
+        facedown-cards (fn [already-accessed] (filter #(and (not (:seen %))
+                                                            (not (already-accessed %)))
+                                                      (-> @state :corp :discard)))
+
+        next-access (fn [state side eid already-accessed card]
+                      (continue-ability state side (access-helper-archives state (dec amount) already-accessed)
+                                        card nil))
+
+        must-continue? (fn [already-accessed]
+                         (and (< 1 amount)
+                              (pos? (+ (count (root-content already-accessed))
+                                       (count (faceup-accessible already-accessed))
+                                       (count (facedown-cards already-accessed))))))]
     {:delayed-completion true
      :prompt "Select a card to access. You must access all cards."
-     :choices (concat (map :title (get-accessible state already-accessed))
-                      (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in Archives") (get-root-content state)))
+     :choices (concat (when (<= amount (count (get-archives-inactive state)))
+                        ["Access remaining inactive cards"])
+                      (map :title (faceup-accessible already-accessed))
+                      (map #(if (rezzed? %) (:title %) "Unrezzed upgrade in Archives") (root-content already-accessed))
+                      (map (fn [_] (str "Facedown card in Archives")) (facedown-cards already-accessed)))
      :effect (req (case target
+                    "Access remaining inactive cards"
+                    ;; Interaction with Bacterial Programming. If we have X accesses remaining and <= X inactive cards
+                    ;; in Archives, we don't have to access the remaining active cards.  This only happens if you choose
+                    ;; to access at least one of the facedown cards added to Archives by Bacterial Programming.
+                    (do (system-msg state side "accesses the remaining inactive cards in Archives")
+                        (effect-completed state side eid))
+
+                    "Facedown card in Archives"
+                    ;; accessing a card that was added to archives because of the effect of another card
+                    (let [accessed (first (shuffle (facedown-cards already-accessed)))
+                          already-accessed (conj already-accessed accessed)]
+                      (update! state :corp (assoc accessed :seen true))
+                      (when-completed (handle-access state side [accessed])
+                                      (if (must-continue? already-accessed)
+                                        (next-access state side eid already-accessed card)
+                                        (effect-completed state side eid))))
+
                     "Unrezzed upgrade in Archives"
                     ;; accessing an unrezzed upgrade
-                    (let [from-root (get-root-content state)
-                          unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
-                                           from-root)]
+                    (let [unrezzed (filter #(and (= (last (:zone %)) :content) (not (:rezzed %)))
+                                           (root-content already-accessed))]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue
-                        (when-completed (handle-access state side unrezzed)
-                                        (if (< 1 (count cards))
-                                          (continue-ability
-                                            state side
-                                            (access-helper-archives state (conj already-accessed (first unrezzed)))
-                                            card nil)
-                                          (effect-completed state side eid)))
+                        (let [already-accessed (conj already-accessed (first unrezzed))]
+                          (when-completed (handle-access state side unrezzed)
+                                          (if (must-continue? already-accessed)
+                                            (next-access state side eid already-accessed card)
+                                            (effect-completed state side eid))))
                         ;; more than one unrezzed upgrade. allow user to select with mouse.
                         (continue-ability
                           state side
                           {:delayed-completion true
                            :prompt "Choose an upgrade in Archives to access."
                            :choices {:req #(and (= (second (:zone %)) :archives)
-                                                (not (contains? already-accessed %)))}
-                           :effect (req (when-completed (handle-access state side [target])
-                                                        (continue-ability
-                                                          state side
-                                                          (access-helper-archives state (conj already-accessed target))
-                                                          card nil)))}
+                                                (not (already-accessed %)))}
+                           :effect (req (let [already-accessed (conj already-accessed target)]
+                                          (when-completed (handle-access state side [target])
+                                                          (if (must-continue? already-accessed)
+                                                            (next-access state side eid already-accessed card)
+                                                            (effect-completed state side eid)))))}
                           card nil)))
                     ;; accessing a rezzed upgrade, or a card in archives
                     (let [accessed (some #(when (= (:title %) target) %)
-                                         (concat (get-accessible state already-accessed) (get-root-content state)))]
+                                         (concat (faceup-accessible already-accessed) (root-content already-accessed)))
+                          already-accessed (conj already-accessed accessed)]
                       (when-completed (handle-access state side [accessed])
-                                      (let [accessible (get-accessible state (conj already-accessed accessed))
-                                            from-root (get-root-content state)]
-                                        (if (pos? (+ (count accessible) (count from-root)))
-                                          (continue-ability
-                                            state side
-                                            (access-helper-archives state (conj already-accessed accessed))
-                                            card nil)
-                                          (effect-completed state side eid)))))))}))
+                                      (if (must-continue? already-accessed)
+                                        (next-access state side eid already-accessed card)
+                                        (effect-completed state side eid))))))}))
 
 (defmethod choose-access :archives [cards server]
   {:delayed-completion true
-   :effect (req (let [cards (concat (get-archives-accessible state) (get-in @state [:corp :servers :archives :content]))]
-                  (if (pos? (count cards))
-                    (if (= 1 (count cards))
+   :effect (req (let [cards (concat (get-archives-accessible state) (get-in @state [:corp :servers :archives :content]))
+                      archives-count (count cards)]
+                  (if (pos? archives-count)
+                    (if (= 1 archives-count)
                       (handle-access state side eid cards)
-                      (continue-ability state side (access-helper-archives state #{}) card nil))
+                      (continue-ability state side (access-helper-archives state archives-count #{}) card nil))
                     (effect-completed state side eid))))})
 
 (defn get-all-hosted [hosts]
