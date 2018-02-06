@@ -440,7 +440,8 @@
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
                     (handle-access state side eid cards)
-                    (let [from-hq (access-count state side :hq-access)
+                    (let [from-hq (min (access-count state side :hq-access)
+                                       (-> @state :corp :hand count))
                           ; Handle root only access - no cards to access in hand
                           from-hq (if (some #(= '[:hand] (:zone %)) cards) from-hq 0)]
                       (continue-ability state side (access-helper-hq-or-rd
