@@ -178,7 +178,7 @@
                                   :prompt "Arrange top 7 cards of R&D?"
                                   :yes-ability {:delayed-completion true
                                                 :effect (req (let [c (take 7 (:deck corp))]
-                                                               (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+                                                               (swap! state assoc-in [:run :shuffled-during-access :rd] true)
                                                                (show-wait-prompt state :runner "Corp to use Bacterial Programming")
                                                                (continue-ability state :corp (trash-step c `()) card nil)))}}}
                                 card nil))]
