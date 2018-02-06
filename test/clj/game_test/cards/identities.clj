@@ -382,6 +382,18 @@
     (prompt-select :corp (get-ice state :hq 0))
     (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")))
 
+(deftest haas-bioroid-asa-group
+  ;; Asa Group - don't allow installation of operations
+  (do-game
+    (new-game
+      (make-deck "Asa Group: Security Through Vigilance" [(qty "Pup" 1) (qty "BOOM!" 1) (qty "Urban Renewal" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Pup" "New remote")
+    (prompt-select :corp (find-card "BOOM!" (:hand (get-corp))))
+    (is (empty? (get-content state :remote1)) "Asa Group installed an event in a server")
+    (prompt-select :corp (find-card "Urban Renewal" (:hand (get-corp))))
+    (is (= "Urban Renewal" (:title (get-content state :remote1 0))) "Asa Group can install an asset in a remote")))
+
 (deftest haas-bioroid-engineering-the-future-employee-strike
   ;; EtF - interaction with Employee Strike
   (do-game
@@ -518,10 +530,47 @@
       (make-deck "Jinteki Biotech: Life Imagined" [(qty "Braintrust" 1)])
       (default-runner)
       {:dont-start-turn true})
-    (prompt-choice :corp "[The Brewery~brewery]")
+    (prompt-choice :corp "The Brewery")
     (core/start-turn state :corp nil)
     (card-ability state :corp (:identity (get-corp)) 1)
     (is (= 1 (count (:hand (get-runner)))) "Runner took 2 net damage from Brewery flip")))
+
+(deftest jinteki-biotech-greenhouse
+  ;; Jinteki Biotech - Greenhouse four advancement tokens
+  (do-game
+    (new-game
+      (make-deck "Jinteki Biotech: Life Imagined" [(qty "Braintrust" 1)])
+      (default-runner)
+      {:dont-start-turn true})
+    (prompt-choice :corp "The Greenhouse")
+    (core/start-turn state :corp nil)
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (let [bt (get-content state :remote1 0)]
+      (is (nil? (:advance-counter (refresh bt))) "No advancement counters on agenda")
+      (card-ability state :corp (:identity (get-corp)) 1)
+      (prompt-select :corp (refresh bt))
+      (is (= 4 (:advance-counter (refresh bt))) "Four advancement counters on agenda"))))
+
+(deftest jinteki-biotech-tank
+  ;; Jinteki Biotech - Tank shuffle Archives into R&D
+  (do-game
+    (new-game
+      (make-deck "Jinteki Biotech: Life Imagined" [(qty "Hedge Fund" 3)])
+      (default-runner)
+      {:dont-start-turn true})
+    (prompt-choice :corp "The Tank")
+    (core/start-turn state :corp nil)
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (take-credits state :runner)
+    (is (= 3 (count (:discard (get-corp)))) "Archives started with 3 cards")
+    (is (= 0 (count (:deck (get-corp)))) "R&D started empty")
+    (card-ability state :corp (:identity (get-corp)) 1)
+    (is (= 0 (count (:discard (get-corp)))) "Archives ended empty")
+    (is (= 3 (count (:deck (get-corp)))) "R&D ended with 3 cards")))
 
 (deftest jinteki-personal-evolution
   ;; Personal Evolution - Prevent runner from running on remotes unless they first run on a central

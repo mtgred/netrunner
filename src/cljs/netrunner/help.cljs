@@ -192,9 +192,11 @@
              :title "What is MWL and \"Tournament legal\"? Why is my deck marked as \"Casual play only\"?"
              :content (list
                         [:p "New Angeles Police Department Most Wanted List, also known as NAPD MWL or just MWL, is a list "
-                         "of restricted cards introduced by FFG to tournament play. Each of the cards on the list reduces "
-                         "the influence printed on the ID by 1, with a minimum of 1 (so Professor is unaffected). For "
-                         "more information about the MWL read Tournament Rules from "
+                         "of cards with additional deck building restrictions for tournament play. "
+                         "There are two categories of MWL cards: \"restricted\" and \"removed\". "
+                         "You may only include up to one card (up to its maximum number of copies) from the restricted category. "
+                         "You may not include cards from the removed category. "
+                         "For more information about the MWL read Tournament Rules from "
                          [:a {:href "https://www.fantasyflightgames.com/en/products/android-netrunner-the-card-game/"} "the official FFG page"] "."]
                         [:p "Decks that are valid and fit within tournament restrictions are marked " [:span.legal "Tournament legal" ] ". "
                          "Decks that fit within the printed influence limit, but not within the tournament restrictions, "

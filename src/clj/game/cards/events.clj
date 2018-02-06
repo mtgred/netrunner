@@ -112,8 +112,9 @@
              :pre-access-card {:req (req (not= [:discard] (:zone target)))
                                :delayed-completion true
                                :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
-                               :effect (effect (trash (assoc target :seen true))
-                                               (damage :runner eid :meat 1 {:unboostable true}))}}}
+                               :effect (req (when-completed (trash state side (assoc target :seen true) nil)
+                                                            (do (swap! state assoc-in [:runner :register :trashed-card] true)
+                                                                (damage state :runner eid :meat 1 {:unboostable true}))))}}}
 
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
@@ -241,6 +242,17 @@
                                    (system-msg state side (str "uses Credit Crash to trash " title " at no cost"))
                                    (effect-completed state side eid)))))}
              :run-ends {:effect (effect (unregister-events card))}}}
+
+   "Credit Kiting"
+   {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+    :prompt "Select a card to install from your Grip"
+    :choices {:req #(and (or (is-type? % "Hardware")
+                             (is-type? % "Program")
+                             (is-type? % "Resource"))
+                         (in-hand? %))}
+    :effect (effect (install-cost-bonus [:credit -8])
+                    (runner-install target)
+                    (tag-runner 1))}
 
    "Cyber Threat"
    {:prompt "Choose a server"
@@ -426,6 +438,32 @@
                          (rezzed? %))}
     :effect (effect (derez target))}
 
+   "Emergent Creativity"
+   (letfn [(ec [trash-cost to-trash]
+             {:delayed-completion true
+             :prompt "Choose a hardware or program to install"
+             :msg (msg "trash " (if (empty? to-trash) "no cards" (join ", " (map :title to-trash)))
+                       " and install " (:title target) " lowering the cost by " trash-cost)
+             :choices (req (cancellable (filter #(or (is-type? % "Program")
+                                                     (is-type? % "Hardware"))
+                                                (:deck runner)) :sorted))
+             :effect (req (trigger-event state side :searched-stack nil)
+                          (shuffle! state side :deck)
+                          (doseq [c to-trash]
+                            (trash state side c {:unpreventable true}))
+                          (install-cost-bonus state side [:credit (- trash-cost)])
+                          (runner-install state side target)
+                          (effect-completed state side eid card))})]
+   {:prompt "Choose Hardware and Programs to trash from your Grip"
+    :choices {:req #(and (or (is-type? % "Hardware")
+                             (is-type? % "Program"))
+                         (in-hand? %))
+              :max (req (count (:hand runner)))}
+    :cancel-effect (effect (resolve-ability (ec 0 []) card nil))
+    :effect (req (let [trash-cost (apply + (map :cost targets))
+                       to-trash targets]
+                   (resolve-ability state side (ec trash-cost to-trash) card nil)))})
+
    "Employee Strike"
    {:msg "disable the Corp's identity"
     :disable-id true
@@ -521,6 +559,31 @@
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
     :msg "look at the top 4 cards of their Stack and add 1 of them to their Grip"
     :effect (effect (move target :hand) (shuffle! :deck))}
+
+   "Falsified Credentials"
+   {:prompt "Choose a type"
+    :choices ["Agenda" "Asset" "Upgrade"]
+    :delayed-completion true
+    :effect (effect
+             (continue-ability
+              (let [chosen-type target]
+                {:choices {:req #(let [topmost (get-nested-host %)]
+                                   (and (is-remote? (second (:zone topmost)))
+                                        (= (last (:zone topmost)) :content)
+                                        (not (rezzed? %))))}
+                 :delayed-completion true
+                 :effect (req             ;taken from Drive By - maybe refactor
+                          (when-completed (expose state side target)
+                            (if (and async-result ;; expose was successful
+                                     (= chosen-type (:type target)))
+                              (continue-ability
+                                  state :runner
+                                  {:effect (effect (gain :credit 5))
+                                   :msg "gain 5 [Credits] "}
+                                  card nil)
+                              (effect-completed state side eid))))})
+              card nil))}
+
 
    "Fear the Masses"
    {:req (req hq-runnable)

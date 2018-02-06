@@ -367,6 +367,30 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
+(deftest distract-the-masses
+  (do-game
+    (new-game (default-corp [(qty "Distract the Masses" 2) (qty "Hedge Fund" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Hedge Fund" "Hedge Fund" "Hedge Fund" "Distract the Masses" "Distract the Masses"])
+    (play-from-hand state :corp "Distract the Masses")
+    (prompt-select :corp (first (:hand (get-corp))))
+    (prompt-select :corp (first (next (:hand (get-corp)))))
+    (prompt-select :corp (first (:discard (get-corp))))
+    (prompt-choice :corp "Done")
+    (is (= 1 (count (:discard (get-corp)))) "1 card still discarded")
+    (is (= 1 (count (:deck (get-corp)))) "1 card shuffled into R&D")
+    (is (= 1 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
+    (is (= 7 (:credit (get-runner))) "Runner gained 2 credits")
+    (play-from-hand state :corp "Distract the Masses")
+    (prompt-select :corp (first (:hand (get-corp))))
+    (prompt-choice :corp "Done")
+    (prompt-select :corp (first (:discard (get-corp))))
+    (prompt-select :corp (first (next (:discard (get-corp)))))
+    (is (= 0 (count (:discard (get-corp)))) "No cards left in archives")
+    (is (= 3 (count (:deck (get-corp)))) "2 more cards shuffled into R&D")
+    (is (= 2 (count (:rfg (get-corp)))) "Distract the Masses removed from game")
+    (is (= 9 (:credit (get-runner))) "Runner gained 2 credits")))
+
 (deftest diversified-portfolio
   (do-game
     (new-game (default-corp [(qty "Diversified Portfolio" 1)
@@ -380,6 +404,32 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
+
+(deftest economic-warfare
+  ;; Economic Warfare - If successful run last turn, make the runner lose 4 credits if able
+  (do-game
+    (new-game (default-corp [(qty "Economic Warfare" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Economic Warfare")
+    (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
+    (is (= 3 (count (:hand (get-corp)))) "Corp still has 3 cards")
+    (take-credits state :corp)
+
+    (run-on state :archives)
+    (run-successful state)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Economic Warfare")
+    (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
+    (play-from-hand state :corp "Economic Warfare")
+    (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
+    (take-credits state :corp)
+
+    (run-on state :archives)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Economic Warfare")
+    (is (= 3 (:credit (get-runner))) "Runner has 3 credits")))
 
 (deftest enhanced-login-protocol
   ;; Enhanced Login Protocol - First click run each turn costs an additional click
@@ -449,6 +499,27 @@
       (run-on state :archives)
       (is (= 2 (:click (get-runner)))
           "Runner spends 1 additional click to make a run"))))
+
+(deftest enhanced-login-protocol-new-angeles-sol
+  ;; Enhanced Login Protocol trashed and reinstalled on steal doesn't double remove penalty
+  (do-game
+    (new-game
+      (make-deck "New Angeles Sol: Your News" [(qty "Enhanced Login Protocol" 1) (qty "Breaking News" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (play-from-hand state :corp "Enhanced Login Protocol")
+    (take-credits state :corp)
+
+    (run-on state :remote1)
+    (run-successful state)
+    (prompt-choice :runner "Steal")
+
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Enhanced Login Protocol"
+                                    (:discard (get-corp))))
+
+    (run-on state :archives)
+    (is (= 1 (:click (get-runner))) "Runner has 1 click")))
 
 (deftest enhanced-login-protocol-run-events
   ;; Enhanced Login Protocol - Run event don't cost additional clicks
@@ -1161,6 +1232,28 @@
     (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
     (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
 
+(deftest self-growth-program
+  ;; Self-Growth Program - Add 2 installed cards to grip if runner is tagged
+  (do-game
+    (new-game (default-corp [(qty "Self-Growth Program" 1)])
+              (default-runner [(qty "Clone Chip" 1) (qty "Inti" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clone Chip")
+    (play-from-hand state :runner "Inti")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Self-Growth Program")
+    (is (= 3 (:click (get-corp))) "Self-Growth Program precondition not met; card not played")
+    (core/gain state :runner :tag 1)
+    (is (= 0 (count (:hand (get-runner)))) "Runner hand is empty")
+    (let [inti (get-in @state [:runner :rig :program 0])
+          cc (get-in @state [:runner :rig :hardware 0])]
+      (play-from-hand state :corp "Self-Growth Program")
+      (prompt-select :corp inti)
+      (prompt-select :corp cc))
+    (is (= 2 (count (:hand (get-runner)))) "2 cards returned to hand")
+    (is (= 0 (count (get-in @state [:runner :rig :program]))) "No programs installed")
+    (is (= 0 (count (get-in @state [:runner :rig :hardware]))) "No hardware installed")))
+
 (deftest service-outage
   ;; Service Outage - First click run each turn costs a credit
   (do-game
@@ -1317,6 +1410,34 @@
     (run-on state :archives)
     (is (= 1 (:credit (get-runner)))
         "Runner doesn't spend 1 additional credit to make a run")))
+
+(deftest service-outage-new-angeles-sol
+  ;; Service Outage trashed and reinstalled on steal doesn't double remove penalty
+  (do-game
+    (new-game
+      (make-deck "New Angeles Sol: Your News" [(qty "Service Outage" 1)
+                                               (qty "Breaking News" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (play-from-hand state :corp "Service Outage")
+    (take-credits state :corp)
+
+    (run-on state :remote1)
+    (run-successful state)
+    (prompt-choice :runner "Steal")
+
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Service Outage"
+                                    (:discard (get-corp))))
+
+    (take-credits state :runner)
+
+    (take-credits state :corp)
+
+    (is (= 7 (:credit (get-runner))) "Runner has 7 credits")
+    (run-on state :archives)
+    (is (= 6 (:credit (get-runner)))
+        "Runner spends 1 credit to make a run")))
 
 (deftest shipment-from-sansan
   ;; Shipment from SanSan - placing advancements
@@ -1567,6 +1688,44 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Successful Demonstration")
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
+
+(deftest threat-assessment
+  ;; Threat Assessment - play only if runner trashed a card last turn, move a card to the stack or take 2 tags
+  (do-game
+    (new-game (default-corp [(qty "Threat Assessment" 3) (qty "Adonis Campaign" 1)])
+              (default-runner [(qty "Desperado" 1) (qty "Corroder" 1)]))
+    (play-from-hand state :corp "Adonis Campaign" "New remote")
+    (take-credits state :corp)
+
+    (run-on state :remote1)
+    (run-successful state)
+    (prompt-choice :runner "Yes") ;trash
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Desperado")
+    (play-from-hand state :runner "Corroder")
+    (take-credits state :runner)
+
+    (is (= 0 (:tag (get-runner))) "Runner starts with 0 tags")
+    (play-from-hand state :corp "Threat Assessment")
+    (prompt-select :corp (find-card "Desperado" (-> (get-runner) :rig :hardware)))
+    (prompt-choice :runner "2 tags")
+    (is (= 2 (:tag (get-runner))) "Runner took 2 tags")
+    (is (= 1 (count (-> (get-runner) :rig :hardware))) "Didn't trash Desperado")
+    (is (= "Threat Assessment" (:title (first (:rfg (get-corp))))) "Threat Assessment removed from game")
+
+    (play-from-hand state :corp "Threat Assessment")
+    (prompt-select :corp (find-card "Corroder" (-> (get-runner) :rig :program)))
+    (prompt-choice :runner "Move Corroder")
+    (is (= 2 (:tag (get-runner))) "Runner didn't take tags")
+    (is (= "Corroder" (:title (first (:deck (get-runner))))) "Moved Corroder to the deck")
+    (is (= 2 (count (:rfg (get-corp)))))
+    (take-credits state :runner)
+
+    (take-credits state :corp)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Threat Assessment")
+    (is (empty? (:prompt (get-corp))) "Threat Assessment triggered with no trash")))
 
 (deftest transparency-initiative
   ;; Transparency Initiative - Full test

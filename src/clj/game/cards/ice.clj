@@ -207,6 +207,20 @@
                            :effect (effect (draw :runner 2))})
                   (do-net-damage 1)]}
 
+   "Aimor"
+   {:subroutines [{:label "Trash the top 3 cards of the Stack. Trash Aimor."
+                   :effect (req (when (not-empty (:deck runner))
+                                  (system-msg state :corp
+                                              (str "uses Aimor to trash "
+                                                   (join ", " (map :title (take 3 (:deck runner))))
+                                                   " from the Runner's Stack"))
+                                  (mill state :runner 3))
+                                (when current-ice
+                                  (no-action state :corp nil)
+                                  (continue state :runner nil))
+                                (trash state side card)
+                                (system-msg state side (str "trashes Aimor")))}]}
+
    "Archangel"
    {:access
     {:delayed-completion true
@@ -980,6 +994,36 @@
    "Hunter"
    {:subroutines [(tag-trace 3)]}
 
+   "Jua"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:msg "prevent the Runner from installing cards for the rest of the turn"
+                 :effect (effect (lock-install (:cid card) :runner)
+                                 (register-events {:runner-turn-ends
+                                                   {:effect (effect (unlock-install (:cid card) :runner)
+                                                                    (unregister-events card))}}
+                                                  card))}]
+    :events {:runner-turn-ends nil}
+    :subroutines [{:label "Choose 2 installed Runner cards, if able. The Runner must add 1 of those to the top of the Stack."
+                   :req (req (>= (count (all-installed state :runner)) 2))
+                   :delayed-completion true
+                   :prompt "Select 2 installed Runner cards"
+                   :choices {:req #(and (= (:side %) "Runner") (installed? %)) :max 2 :all true}
+                   :msg (msg "add either " (card-str state (first targets)) " or " (card-str state (second targets)) " to the Stack")
+                   :effect (req (when (= (count targets) 2)
+                                     (show-wait-prompt state :corp "Runner to decide which card to move")
+                                     (continue-ability
+                                       state
+                                       :runner
+                                        {:player :runner
+                                         :priority 1
+                                         :prompt "Select a card to move to the Stack"
+                                         :choices [(card-str state (first targets)) (card-str state (second targets))]
+                                         :effect (req (let [c (installed-byname state :runner target)]
+                                                        (clear-wait-prompt state :corp)
+                                                        (move state :runner c :deck {:front true})
+                                                        (system-msg state :runner (str "selected " (:title c) " to move to the Stack"))))}
+                                         card nil)))}]}
+
    "Ice Wall"
    {:advanceable :always
     :subroutines [end-the-run]
@@ -1259,7 +1303,7 @@
    {:subroutines [(do-psi {:label "Redirect the run to another server"
                            :player :corp
                            :prompt "Choose a server"
-                           :choices (req servers)
+                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
                            :msg (msg "redirect the run to " target)
                            :effect (req (let [dest (server->zone state target)]
                                           (swap! state update-in [:run]
@@ -1392,6 +1436,13 @@
                                                         (rezzed? %))
                                                   (all-installed state :corp))) " subroutines")}]
     :subroutines [end-the-run]}
+
+   "Nightdancer"
+   {:subroutines [{:label "The Runner loses [Click], if able. You have an additional [Click] to spend during your next turn."
+                   :msg "force the runner to lose a [Click], if able. Corp gains an additional [Click] to spend during their next turn"
+                   :effect (req
+                             (lose state :runner :click 1)
+                             (swap! state update-in [:corp :extra-click-temp] (fnil inc 0)))}]}
 
    "Orion"
    ;; TODO: wormhole subroutine

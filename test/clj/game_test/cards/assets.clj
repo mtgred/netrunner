@@ -263,6 +263,7 @@
     (is (= 1 (count (:hand (get-corp)))))
     (take-credits state :runner)
     (is (= 5 (count (:hand (get-corp)))) "Drew an additional 3 cards with 3 DBS")
+    (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
     (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp)))) ;invalid target
     (prompt-select :corp (find-card "Resistor" (:hand (get-corp))))
     (prompt-select :corp (find-card "Product Placement" (:hand (get-corp))))
@@ -316,6 +317,19 @@
       (prompt-select :corp (find-card "Breaking News" (:hand (get-corp)))) ; Sensie target
       (is (= "Breaking News" (:title (last (:deck (get-corp))))) "Breaking News last card in deck"))))
 
+(deftest daily-business-show-manual-draw
+  ;; Daily Business Show - Should not trigger if rezzed after mandatory draw
+  (do-game
+    (new-game (default-corp [(qty "Daily Business Show" 3) (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
+                             (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Daily Business Show"])
+    (play-from-hand state :corp "Daily Business Show" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/draw state :corp)
+    (is (= 1 (count (:hand (get-corp)))) "DBS did not fire on manual draw")
+    (is (empty? (:prompt (get-corp))) "Corp is not being asked to bury a card with DBS")    ))
+
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
   (do-game
@@ -360,6 +374,18 @@
       (prompt-select :corp gb)
       (is (= 1 (:advance-counter (refresh gb))) "1 advancement on Ghost Branch")
       (is (= 4 (:credit (get-corp)))))))
+
+(deftest echochamber
+  ;; Echo Chamber - 3 clicks to become 1 point agenda
+  (do-game
+    (new-game (default-corp [(qty "Echo Chamber" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Echo Chamber" "New remote")
+    (let [ec (get-content state :remote1 0)]
+      (core/rez state :corp ec)
+      (card-ability state :corp ec 0))
+    (is (= 1 (:agendapoints (get-in @state [:corp :scored 0]))) "Echo Chamber added to Corp score area")))
 
 (deftest edge-of-world
   ;; Edge of World - ability
@@ -1137,6 +1163,40 @@
       (take-credits state :runner)
       (is (= 4 (:rec-counter (refresh netpol))) "4 recurring for Runner's 4 link"))))
 
+(deftest ngo-front
+  ;; NGO Front - full test
+  (do-game
+    (new-game (default-corp [(qty "NGO Front" 3)])
+              (default-runner))
+    (core/gain state :corp :click 3)
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [ngo1 (get-content state :remote1 0)
+          ngo2 (get-content state :remote2 0)
+          ngo3 (get-content state :remote3 0)]
+      (core/advance state :corp {:card ngo2})
+      (core/advance state :corp {:card (refresh ngo3)})
+      (core/advance state :corp {:card (refresh ngo3)})
+      (core/rez state :corp (refresh ngo1))
+      (core/rez state :corp (refresh ngo2))
+      (core/rez state :corp (refresh ngo3))
+      (is (= 2 (:credit (get-corp))) "Corp at 2 credits")
+      (card-ability state :corp ngo1 1)
+      (card-ability state :corp ngo1 0)
+      (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
+      (is (= 0 (count (:discard (get-corp)))) "Nothing trashed")
+      (card-ability state :corp ngo2 1)
+      (is (= 2 (:credit (get-corp))) "Corp still 2 credits")
+      (is (= 0 (count (:discard (get-corp)))) "Nothing trashed")
+      (card-ability state :corp ngo2 0)
+      (is (= 7 (:credit (get-corp))) "Corp gained 5 credits")
+      (is (= 1 (count (:discard (get-corp)))) "1 NGO Front Trashed")
+      (card-ability state :corp ngo3 1)
+      (is (= 15 (:credit (get-corp))) "Corp gained 8 credits")
+      (is (= 2 (count (:discard (get-corp)))) "2 NGO Front Trashed")
+      )))
+
 (deftest plan-b
   ;; Plan B - score agenda with adv cost <= # of adv counters
   (do-game
@@ -1371,6 +1431,27 @@
       (core/gain state :runner :tag 1)
       (take-credits state :runner)
       (is (= 13 (:credit (get-corp))) "Gained 2 credits because Runner is tagged"))))
+
+(deftest reconstruction-contract
+  ;; Reconstruction Contract - place advancement token when runner takes meat damage
+  (do-game
+    (new-game (default-corp [(qty "Reconstruction Contract" 1) (qty "Scorched Earth" 1) (qty "Pup" 1)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Imp" 3)]))
+    (core/gain state :runner :tag 1)
+    (core/gain state :corp :credit 5)
+    (starting-hand state :runner ["Sure Gamble" "Sure Gamble" "Sure Gamble" "Imp" "Imp"])
+    (play-from-hand state :corp "Reconstruction Contract" "New remote")
+    (let [rc (get-content state :remote1 0)]
+      (core/rez state :corp (refresh rc))
+      (play-from-hand state :corp "Scorched Earth")
+      (is (= 4 (count (:discard (get-runner)))))
+      (is (= 1 (:advance-counter (refresh rc))) "Reconstruction Contract has 1 advancement token")
+      (starting-hand state :runner ["Imp" "Imp"])
+      (play-from-hand state :corp "Pup" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (card-subroutine state :corp (get-ice state :hq 0) 0)
+      (is (= 5 (count (:discard (get-runner)))))
+      (is (= 1 (:advance-counter (refresh rc))) "Reconstruction Contract doesn't get advancement token for net damage"))))
 
 (deftest reversed-accounts
   ;; Reversed Accounts - Trash to make Runner lose 4 credits per advancement
