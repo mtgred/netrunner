@@ -516,7 +516,6 @@
                     ;; accessing a card that was added to archives because of the effect of another card
                     (let [accessed (first (shuffle (facedown-cards already-accessed)))
                           already-accessed (conj already-accessed accessed)]
-                      (update! state :corp (assoc accessed :seen true))
                       (when-completed (handle-access state side [accessed])
                                       (if (must-continue? already-accessed)
                                         (next-access state side eid already-accessed card)
