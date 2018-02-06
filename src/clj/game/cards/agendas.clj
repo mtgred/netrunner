@@ -148,14 +148,10 @@
               :effect (req (if (= "Done" target)
                              (do
                                (doseq [t to-trash]
-                                 (println "Moving" (:title t) "to trash")
                                  (trash state :corp t {:unpreventable true}))
                                (doseq [h to-hq]
-                                 (println "Moving" (:title h) "to hand")
                                  (move state :corp h :hand))
-                               (println "Remaining cards:" (map :title remaining))
-                               (println "Deck:" (map :title (:deck (:corp @state))))
-                               (continue-ability state :corp (reorder-choice :corp remaining) card nil)
+                               (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
                                (system-msg state :corp (str "uses Bacterial Programming to add " (count to-hq)
                                                             " cards to HQ, discard " (count to-trash)
                                                             ", and arrange the top cards of R&D")))
@@ -182,6 +178,7 @@
                                   :prompt "Arrange top 7 cards of R&D?"
                                   :yes-ability {:delayed-completion true
                                                 :effect (req (let [c (take 7 (:deck corp))]
+                                                               (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                                                                (show-wait-prompt state :runner "Corp to use Bacterial Programming")
                                                                (continue-ability state :corp (trash-step c `()) card nil)))}}}
                                 card nil))]
