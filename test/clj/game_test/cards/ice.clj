@@ -426,6 +426,54 @@
                  (= 3 (:current-strength (refresh iq2)))
                  (= 2 (:credit (get-corp)))) "3 cards in HQ: paid 3 to rez, both have 3 strength")))))
 
+(deftest jua-encounter
+  ;; Jua (encounter effect) - Prevent Runner from installing cards for the rest of the turn
+  (do-game
+    (new-game (default-corp [(qty "Jua" 1)])
+              (default-runner [(qty "Desperado" 1) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Jua" "HQ")
+    (take-credits state :corp)
+    (let [jua (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp jua)
+      (card-ability state :corp (refresh jua) 0)
+      (run-successful state)
+      (is (= 2 (count (:hand (get-runner)))) "Runner starts with 2 cards in hand")
+      (play-from-hand state :runner "Desperado")
+      (is (= 2 (count (:hand (get-runner)))) "No cards installed")
+      (play-from-hand state :runner "Sure Gamble")
+      (is (= 1 (count (:hand (get-runner)))) "Can play events")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 cards in hand")
+      (play-from-hand state :runner "Desperado")
+      (is (= 0 (count (:hand (get-runner)))) "Card installed"))))
+
+(deftest jua-sub
+  ;; Jua (subroutine effect) - Select 2 runner cards, runner moves one to the stack
+  (do-game
+    (new-game (default-corp [(qty "Jua" 1)])
+              (default-runner [(qty "Desperado" 1) (qty "Gordian Blade" 1)]))
+    (play-from-hand state :corp "Jua" "HQ")
+    (take-credits state :corp)
+    (let [jua (get-ice state :hq 0)]
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Desperado")
+      (run-on state "HQ")
+      (core/rez state :corp jua)
+      (card-subroutine state :corp (refresh jua) 0)
+      (is (empty? (:prompt (get-corp))) "Can't fire for 1 installed card")
+      (run-successful state)
+
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state "HQ")
+      (card-subroutine state :corp (refresh jua) 0)
+      (prompt-select :corp (get-program state 0))
+      (prompt-select :corp (get-hardware state 0))
+      (prompt-choice :runner "Gordian Blade")
+      (is (nil? (get-program state 0)) "Card is uninstalled")
+      (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck"))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
@@ -523,6 +571,23 @@
     (core/rez state :corp (get-ice state :rd 0))
     (is (= 4 (:current-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
 	(is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
+
+(deftest mind-game
+  ;; Mind game - PSI redirect to different server
+  (do-game
+    (new-game (default-corp [(qty "Mind Game" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mind Game" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [mindgame (get-ice state :hq 0)]
+      (core/rez state :corp mindgame)
+      (card-subroutine state :corp mindgame 0))
+    (prompt-choice :corp "1 [Credits]")
+    (prompt-choice :runner "0 [Credits]")
+    (is (= (set ["R&D" "Archives"]) (set (:choices (prompt-map :corp)))) "Corp cannot choose server Runner is on")
+    (prompt-choice :corp "Archives")
+    (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")))
 
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost

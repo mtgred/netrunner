@@ -994,6 +994,36 @@
    "Hunter"
    {:subroutines [(tag-trace 3)]}
 
+   "Jua"
+   {:implementation "Encounter effect is manual"
+    :abilities [{:msg "prevent the Runner from installing cards for the rest of the turn"
+                 :effect (effect (lock-install (:cid card) :runner)
+                                 (register-events {:runner-turn-ends
+                                                   {:effect (effect (unlock-install (:cid card) :runner)
+                                                                    (unregister-events card))}}
+                                                  card))}]
+    :events {:runner-turn-ends nil}
+    :subroutines [{:label "Choose 2 installed Runner cards, if able. The Runner must add 1 of those to the top of the Stack."
+                   :req (req (>= (count (all-installed state :runner)) 2))
+                   :delayed-completion true
+                   :prompt "Select 2 installed Runner cards"
+                   :choices {:req #(and (= (:side %) "Runner") (installed? %)) :max 2 :all true}
+                   :msg (msg "add either " (card-str state (first targets)) " or " (card-str state (second targets)) " to the Stack")
+                   :effect (req (when (= (count targets) 2)
+                                     (show-wait-prompt state :corp "Runner to decide which card to move")
+                                     (continue-ability
+                                       state
+                                       :runner
+                                        {:player :runner
+                                         :priority 1
+                                         :prompt "Select a card to move to the Stack"
+                                         :choices [(card-str state (first targets)) (card-str state (second targets))]
+                                         :effect (req (let [c (installed-byname state :runner target)]
+                                                        (clear-wait-prompt state :corp)
+                                                        (move state :runner c :deck {:front true})
+                                                        (system-msg state :runner (str "selected " (:title c) " to move to the Stack"))))}
+                                         card nil)))}]}
+
    "Ice Wall"
    {:advanceable :always
     :subroutines [end-the-run]
@@ -1273,7 +1303,7 @@
    {:subroutines [(do-psi {:label "Redirect the run to another server"
                            :player :corp
                            :prompt "Choose a server"
-                           :choices (req servers)
+                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
                            :msg (msg "redirect the run to " target)
                            :effect (req (let [dest (server->zone state target)]
                                           (swap! state update-in [:run]

@@ -458,13 +458,11 @@
      (trash state side
             (update-in h [:zone] #(map to-keyword %))
             {:unpreventable true :suppress-event true}))
-   (let [card (get-card state card)
-         c (if (in-corp-scored? state side card)
-             (deactivate state side card) card)]
-     (system-msg state side (str "forfeits " (:title c)))
-     (gain-agenda-point state side (- (get-agenda-points state side c)))
-     (move state side c :rfg)
-     (when-completed (trigger-event-sync state side (keyword (str (name side) "-forfeit-agenda")) c)
+   (let [card (get-card state card)]
+     (system-msg state side (str "forfeits " (:title card)))
+     (gain-agenda-point state side (- (get-agenda-points state side card)))
+     (move state side card :rfg)
+     (when-completed (trigger-event-sync state side (keyword (str (name side) "-forfeit-agenda")) card)
                      (effect-completed state side eid)))))
 
 (defn gain-agenda-point

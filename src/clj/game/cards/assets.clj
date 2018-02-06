@@ -373,24 +373,31 @@
    "Daily Business Show"
    {:events {:pre-corp-draw
              {:msg "draw additional cards"
+              ;; The req catches draw events that happened before DBS was rezzed.
+              :req (req (first-event? state :corp :pre-corp-draw))
+              ;; The once and once-key force a single DBS to act on behalf of all rezzed DBS's.
               :once :per-turn
               :once-key :daily-business-show-draw-bonus
-              :req (req (first-event? state side :pre-corp-draw))
               :effect (req (let [dbs (count (filter #(and (= "06086" (:code %)) (rezzed? %)) (all-installed state :corp)))]
                              (draw-bonus state side dbs)))}
              :post-corp-draw
-             {:once :per-turn
+             {:req (req (first-event? state :corp :post-corp-draw))
+              :once :per-turn
               :once-key :daily-business-show-put-bottom
               :delayed-completion true
               :effect (req (let [dbs (count (filter #(and (= "06086" (:code %)) (rezzed? %)) (all-installed state :corp)))
                                  drawn (get-in @state [:corp :register :most-recent-drawn])]
+                             (show-wait-prompt state :runner "Corp to use Daily Business Show")
                              (continue-ability
                                state side
                                {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
                                 :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
                                 :choices {:max dbs
                                           :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
-                                :effect (req (doseq [c targets] (move state side c :deck)))} card targets)))}}}
+                                :effect (req (doseq [c targets] (move state side c :deck))
+                                             (clear-wait-prompt state :runner))
+                                :cancel-effect (effect (clear-wait-prompt :runner))}
+                               card targets)))}}}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged)
@@ -979,6 +986,16 @@
                                                    (trigger-event state side :no-trash card))))}
                                card targets))}}
 
+   "NGO Front"
+   (letfn [(builder [cost cred]
+             {:advance-counter-cost cost
+              :effect (effect (trash card {:cause :ability-cost}) (gain :credit cred))
+              :label (str "[Trash]: Gain " cred " [Credits]")
+              :msg (str "gain " cred " [Credits]")})]
+     {:advanceable :always
+      :abilities [(builder 1 5) 
+                  (builder 2 8)]})
+   
    "Open Forum"
    {:events {:corp-mandatory-draw {:msg (msg (let [deck (:deck corp)]
                                                (if (pos? (count deck))
