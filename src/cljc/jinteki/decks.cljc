@@ -106,7 +106,7 @@
   (let [card-faction (:faction card)]
     (if (= identity-faction card-faction)
       0
-      (* qty (:factioncost card)))))
+      (* qty (:factioncost card 0)))))
 
 (defn line-influence-cost
   "Returns the influence cost of the specified card"
