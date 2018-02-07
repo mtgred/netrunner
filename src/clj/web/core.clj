@@ -27,7 +27,8 @@
           sets (mc/find-maps db "sets" nil)
           cycles (mc/find-maps db "cycles" nil)
           mwl (mc/find-maps db "mwl" nil)]
-      (reset! cards/all-cards (into {} (map (juxt :title identity) cards)))
+      (reset! cards/all-cards (into {} (map (juxt :title identity)
+                                            (sort-by (complement :rotated) cards))))
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
       (reset! cards/mwl mwl))
