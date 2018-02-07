@@ -862,6 +862,116 @@
     (is (= 2 (count (get-in @state [:corp :hand]))))
     (is (= 1 (count (get-in @state [:runner :hand]))))))
 
+(deftest ssl-endorsement-scored
+  ;; SSL Endorsement - gain credits when in corp score area before turn begins
+  (do-game
+    (new-game (default-corp [(qty "SSL Endorsement" 1)])
+              (default-runner))
+    (score-agenda state :corp (find-card "SSL Endorsement" (:hand (get-corp))))
+    (take-credits state :runner)
+
+    (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+    (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")
+    (take-credits state :runner)
+
+    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+    (prompt-choice :corp "No")
+    (is (= 8 (:credit (get-corp))) "Corp doesn't gain 3 credits")
+    (take-credits state :runner)
+
+    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 11 (:credit (get-corp))) "Corp gains 3 credits")
+    (take-credits state :runner)
+
+    (is (= 11 (:credit (get-corp))) "Corp starts with 11 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 14 (:credit (get-corp))) "Corp gains 3 credits")
+    (take-credits state :runner)
+
+    (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+
+(deftest ssl-endorsement-stolen
+  ;; SSL Endorsement - gain credits when in runner score area before turn begins
+  (do-game
+    (new-game (default-corp [(qty "SSL Endorsement" 1)])
+              (default-runner))
+    (play-from-hand state :corp "SSL Endorsement" "New remote")
+    (take-credits state :corp)
+
+    (run-on state "Server 1")
+    (run-successful state)
+    (prompt-choice :runner "Steal")
+    (take-credits state :runner)
+
+    (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+    (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")
+    (take-credits state :runner)
+
+    (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+    (prompt-choice :corp "No")
+    (is (= 10 (:credit (get-corp))) "Corp doesn't gain 3 credits")
+    (take-credits state :runner)
+
+    (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 13 (:credit (get-corp))) "Corp gains 3 credits")
+    (take-credits state :runner)
+
+    (is (= 13 (:credit (get-corp))) "Corp starts with 13 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 16 (:credit (get-corp))) "Corp gains 3 credits")
+    (take-credits state :runner)
+
+    (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+
+(deftest ssl-endorsement-stolen-swapped
+  ;; SSL Endorsement - don't double register event when agenda is swapped
+  (do-game
+    (new-game (default-corp [(qty "SSL Endorsement" 1) (qty "Breaking News" 1)
+                             (qty "Exchange of Information" 1)])
+              (default-runner))
+    (play-from-hand state :corp "SSL Endorsement" "New remote")
+    (score-agenda state :corp (find-card "Breaking News" (:hand (get-corp))))
+    (take-credits state :corp)
+
+    (run-on state "Server 1")
+    (run-successful state)
+    (prompt-choice :runner "Steal")
+    (take-credits state :runner)
+
+    (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+    (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (prompt-select :corp (find-card "SSL Endorsement" (:scored (get-runner))))
+    (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
+    (take-credits state :runner)
+
+    (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+    (prompt-choice :corp "No")
+    (is (empty? (:prompt (get-corp))) "Not double prompted for credits")
+    (is (= 10 (:credit (get-corp))) "Corp doesn't gain 3 credits")
+    (take-credits state :runner)
+
+    (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 13 (:credit (get-corp))) "Corp gains 3 credits")
+    (take-credits state :runner)
+
+    (is (= 13 (:credit (get-corp))) "Corp starts with 13 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 16 (:credit (get-corp))) "Corp gains 3 credits")
+    (take-credits state :runner)
+
+    (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+
 (deftest sentinel-defense-program
   ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented
   (do-game

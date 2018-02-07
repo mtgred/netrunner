@@ -322,6 +322,24 @@
    {:events {:pre-damage {:req (req (= target :brain)) :msg "do 1 additional brain damage"
                           :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
 
+   "Distract the Masses"
+   (let [shuffle-two {:delayed-completion true
+                      :effect (effect (rfg-and-shuffle-rd-effect (find-cid (:cid card) (:discard corp)) 2))}
+         trash-from-hq {:delayed-completion true
+                        :prompt "Select up to 2 cards in HQ to trash"
+                        :choices {:max 2
+                                  :req #(and (= (:side %) "Corp")
+                                             (in-hand? %))}
+                        :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+                        :effect (req (when-completed
+                                       (trash-cards state side targets nil)
+                                       (continue-ability state side shuffle-two card nil)))
+                        :cancel-effect (req (continue-ability state side shuffle-two card nil))}]
+     {:delayed-completion true
+      :msg "give The Runner 2 [Credits]"
+      :effect (effect (gain :runner :credit 2)
+                      (continue-ability trash-from-hq card nil))})
+
    "Diversified Portfolio"
    {:msg (msg "gain " (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))
               " [Credits]")
@@ -1395,6 +1413,28 @@
                                  :no-ability trash-all-resources}}
                     trash-all-resources)
                   card targets))})
+
+   "Threat Assessment"
+   {:req (req (:trashed-card runner-reg-last))
+    :prompt "Select an installed Runner card"
+    :choices {:req #(and (= (:side %) "Runner") (installed? %))}
+    :delayed-completion true
+    :effect (req (let [chosen target]
+                   (show-wait-prompt state side "Runner to resolve Threat Assessment")
+                   (continue-ability state :runner
+                                     {:prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
+                                      :choices [(str "Move " (:title chosen))
+                                                "2 tags"]
+                                      :delayed-completion true
+                                      :effect (req (clear-wait-prompt state :corp)
+                                                   (move state :corp (last (:discard corp)) :rfg)
+                                                   (if (.startsWith target "Move")
+                                                     (do (system-msg state side (str "chooses to move " (:title chosen) " to the Stack"))
+                                                       (move state :runner chosen :deck {:front true})
+                                                       (effect-completed state side eid))
+                                                     (do (system-msg state side "chooses to take 2 tags")
+                                                       (tag-runner state :runner eid 2))))}
+                                     card nil)))}
 
    "Threat Level Alpha"
    {:trace {:base 1

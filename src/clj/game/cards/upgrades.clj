@@ -293,6 +293,14 @@
     :events {:corp-turn-begins ability}
     :abilities [ability]})
 
+   "Forced Connection"
+   {:access {:req (req (not= (first (:zone card)) :discard))
+             :interactive (req true)
+             :trace {:base 3
+                     :msg "give the Runner 2 tags"
+                     :delayed-completion true
+                     :effect (effect (tag-runner :runner eid 2))}}}
+
    "Fractal Threat Matrix"
    {:implementation "Manual trigger each time all subs are broken"
     :abilities [{:label "Trash the top 2 cards from the Stack"
@@ -359,6 +367,41 @@
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
                               :delayed-completion true
                               :effect (effect (damage eid :net 1 {:card card}))}}}
+
+   "Jinja City Grid"
+   (letfn [(reveal-next [ices]
+             {:optional
+              {:delayed-completion true
+               :prompt (msg (str "Reveal " (:title (first ices))
+                                 " and install in " (zone->name (second (:zone card)))
+                                 ", lowering the cost by 4 [Credits]?"))
+               :player :corp
+               :yes-ability {:delayed-completion true
+                             :msg (msg "reveal and install the ICE just drawn: " (:title (first ices)))
+                             :effect (req (when-completed (corp-install state side
+                                                                        (first ices)
+                                                                        (zone->name (second (:zone card)))
+                                                                        {:extra-cost [:credit -4]})
+                                                          (if (< 1 (count ices))
+                                                            (continue-ability state side
+                                                                              (reveal-next (next ices))
+                                                                              card nil)
+                                                            (effect-completed state side eid))))}
+               :no-ability {:delayed-completion true
+                            :effect (req (if (< 1 (count ices))
+                                           (continue-ability state side
+                                                             (reveal-next (next ices))
+                                                             card nil)
+                                           (effect-completed state side eid)))}}})]
+     {:events {:corp-draw {:req (req (some #(is-type? % "ICE")
+                                           (:most-recent-drawn corp-reg)))
+                           :delayed-completion true
+                           :effect (req (let [ices (filter #(and (is-type? % "ICE")
+                                                                 (get-card state %))
+                                                           (:most-recent-drawn corp-reg))]
+                                          (if (not-empty ices)
+                                            (continue-ability state side (reveal-next ices) card nil)
+                                            (effect-completed state side eid))))}}})
 
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"

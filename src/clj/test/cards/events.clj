@@ -267,6 +267,35 @@
    (is (= 4 (count (:discard (get-corp)))) "Trashable was trashed")
    (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
 
+(deftest by-any-means-ctm-crash
+  (do-game
+    (new-game (make-deck "NBN: Controlling the Message" [(qty "Paper Trail" 1)])
+              (default-runner [(qty "By Any Means" 2)]))
+    (play-from-hand state :corp "Paper Trail" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "By Any Means")
+    (run-empty-server state "Server 1")
+    (prompt-choice :corp "No") ;; Don't trigger CTM trace
+    (is (empty? (:prompt (get-runner))) "No prompt to steal since agenda was trashed")
+    (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
+    (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+
+(deftest credit-kiting
+  ;; After successful central run lower install cost by 8 and gain a tag
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 1)])
+              (default-runner [(qty "Credit Kiting" 1) (qty "Femme Fatale" 1)]))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (play-from-hand state :runner "Credit Kiting")
+    (is (= 3 (:click (get-runner))) "Card not played, successful run on central not made")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Credit Kiting")
+    (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
+    (is (= 4 (:credit (get-runner))) "Femme Fatale only cost 1 credit")
+    (is (= 1 (:tag (get-runner))) "Runner gained a tag")))
+
 (deftest cbi-raid
   ;; CBI Raid - Full test
   (do-game
@@ -558,6 +587,25 @@
     (play-from-hand state :runner "Early Bird")
     (prompt-choice :runner "Archives")
     (is (= 4 (:click (get-runner))) "Early Bird gains click")))
+
+(deftest emergent-creativity
+  ;; Emergent Creativty - Double, discard programs/hardware from grip, install from heap
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Emergent Creativity" 1) (qty "Paperclip" 1)
+                               (qty "Heartbeat" 1) (qty "Gordian Blade" 1) (qty "Test Run" 1)]))
+    (starting-hand state :runner ["Emergent Creativity" "Heartbeat" "Gordian Blade" "Test Run"])
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Emergent Creativity")
+    (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
+    (prompt-select :runner (find-card "Gordian Blade" (:hand (get-runner))))
+    (prompt-choice :runner "Done")
+    (prompt-choice :runner (find-card "Paperclip" (:deck (get-runner))))
+    (is (= 3 (:credit (get-runner))) "Offset cost of installing Paperclip")
+    (is (= 0 (count (:deck (get-runner)))) "Installed from heap")
+    (is (= 3 (count (:discard (get-runner)))) "Discard is 3 cards - EC, Heartbeat, GB")
+    (is (= 2 (:click (get-runner))) "Emergent Creativity is a Double event")))
 
 (deftest employee-strike-blue-sun
   ;; Employee Strike - vs Blue Sun, suppress Step 1.2

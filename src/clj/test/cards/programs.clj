@@ -270,6 +270,29 @@
       (is (= 7 (:click (get-runner))) "Gained 3 clicks")
       (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
 
+(deftest hyperdriver-dhegdheer
+  ;; triggering a Dhegdeered Hyperdriver should not grant +3 MU
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Hyperdriver" 1)
+                               (qty "Dhegdheer" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dhegdheer")
+    (let [dheg (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner dheg 0)
+      (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
+      (is (= 4 (:memory (get-runner))) "0 MU used")
+      (is (= 2 (:click (get-runner))) "2 clicks used")
+      (is (= 3 (:credit (get-runner))) "2 credits used")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (:runner-phase-12 @state) "Runner in Step 1.2")
+      (let [hyp (first (:hosted (refresh dheg)))]        
+        (card-ability state :runner hyp 0)
+        (core/end-phase-12 state :runner nil)
+        (is (= 7 (:click (get-runner))) "Used Hyperdriver")
+        (is (= 4 (:memory (get-runner))) "Still 0 MU used")))))
+
 (deftest imp-the-future-perfect
   ;; Trashing TFP with Imp should not trigger psi-game -- Issue #1844
   (do-game
@@ -568,6 +591,23 @@
         (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
         (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
+(deftest plague
+  ;; Plague
+  (do-game
+    (new-game (default-corp [(qty "Mark Yale" 1)])
+              (default-runner [(qty "Plague" 1)]))
+    (play-from-hand state :corp "Mark Yale" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Plague")
+    (prompt-choice :runner "Server 1")
+    (let [plague (get-in @state [:runner :rig :program 0])]
+      (run-empty-server state "Server 1")
+      (is (= 2 (get-counters (refresh plague) :virus)) "Plague gained 2 counters")
+      (run-empty-server state "Server 1")
+      (is (= 4 (get-counters (refresh plague) :virus)) "Plague gained 2 counters")
+      (run-empty-server state "Archives")
+      (is (= 4 (get-counters (refresh plague) :virus)) "Plague did not gain counters"))))
+
 (deftest progenitor-host-hivemind
   ;; Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738
   (do-game
@@ -652,6 +692,61 @@
     (prompt-choice :runner "Done")
     (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
     (is (= 0 (count (:hand (get-runner)))) "No cards in hand")))
+
+(deftest rng-key
+  ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 5) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "RNG Key" 1) (qty "Paperclip" 2)]))
+    (starting-hand state :corp ["Hedge Fund"])
+    (starting-hand state :runner ["RNG Key"])
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "RNG Key")
+    (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner 5)
+    (prompt-choice :runner "Gain 3 [Credits]")
+    (is (= 8 (:credit (get-runner))) "Gained 3 credits")
+    (prompt-choice :runner "OK")
+
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (take-credits state :runner)
+    (take-credits state :corp)
+
+    (run-on state "Archives")
+    (run-successful state)
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :runner "No")
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :runner "OK")
+    (take-credits state :runner)
+    (take-credits state :corp)
+
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner 2)
+    (prompt-choice :runner "OK")
+
+    (take-credits state :runner)
+    (take-credits state :corp)
+
+    (is (= 0 (count (:hand (get-runner)))) "Started with 0 cards")
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner 3)
+    (prompt-choice :runner "Draw 2 cards")
+    (prompt-choice :runner "OK")
+    (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
+    (is (= 0 (count (:deck (get-runner)))) "Cards came from deck")))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
@@ -818,6 +913,42 @@
      (is (= 1 (get-in @state [:run :position])) "Now at next position (1)")
      (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall now at position 1"))))
 
+(deftest takobi
+  ;; Takobi - 2 power counter to add +3 strength to a non-AI icebreaker for encounter
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 1)])
+              (default-runner [(qty "Takobi" 1) (qty "Corroder" 1) (qty "Faust" 1)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Takobi")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Faust")
+    (let [tako (get-in @state [:runner :rig :program 0])
+          corr (get-in @state [:runner :rig :program 1])
+          faus (get-in @state [:runner :rig :program 2])]
+      (dotimes [_ 3]
+        (card-ability state :runner tako 0))
+      (is (= 3 (get-counters (refresh tako) :power)) "3 counters on Takobi")
+
+      (run-on state "HQ")
+      (card-ability state :runner tako 1)
+      (is (empty? (:prompt (get-runner))) "No prompt for un-rezzed ice")
+      (core/rez state :corp (get-ice state :hq 0))
+      (card-ability state :runner tako 1)
+      (prompt-select :runner (refresh faus))
+      (is (not-empty (:prompt (get-runner))) "Can't select AI breakers")
+      (prompt-select :runner (refresh corr))
+      (is (empty? (:prompt (get-runner))) "Can select non-AI breakers")
+      (is (= 5 (:current-strength (refresh corr))) "Corroder at +3 strength")
+      (is (= 1 (get-counters (refresh tako) :power)) "1 counter on Takobi")
+      (card-ability state :runner tako 1)
+      (is (empty? (:prompt (get-runner))) "No prompt when too few power counters")
+      (core/no-action state :corp nil)
+      (run-continue state)
+      (is (= 2 (:current-strength (refresh corr))) "Corroder returned to normal strength"))))
+
 (deftest upya
   (do-game
     (new-game (default-corp)
@@ -858,3 +989,4 @@
     (prompt-select :runner (get-ice state :rd 0))
     (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
     (is (not (empty? (get-in @state [:runner :prompt]))) "Runner is currently accessing Ice Wall")))
+
