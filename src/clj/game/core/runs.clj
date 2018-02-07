@@ -123,8 +123,11 @@
           (continue-ability state :runner
                             {:cost [:credit trash-cost]
                              :delayed-completion true
-                             :effect (req (trash state side eid card nil)
+                             :effect (req (when (:run @state)
+                                            (swap! state assoc-in [:run :did-trash] true)
+                                            (swap! state assoc-in [:run :did-access] true))
                                           (swap! state assoc-in [:runner :register :trashed-card] true)
+                                          (trash state side eid card nil)
                                           (system-msg state side (str "is forced to pay " trash-msg)))}
                             card nil)
           ;; Otherwise, show the option to pay to trash the card.
@@ -135,18 +138,20 @@
             (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
               (continue-ability state :runner
                                 {:optional
-                                 {:prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
+                                 {:delayed-completion true
+                                  :prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
                                   :no-ability {:effect (req
                                                          ;; toggle access flag to prevent Hiro issue #2638
                                                          (swap! state dissoc :access)
                                                          (trigger-event state side :no-trash c)
-                                                         (swap! state assoc :access true))}
+                                                         (swap! state assoc :access true)
+                                                         (effect-completed state side eid))}
                                   :yes-ability {:cost [:credit trash-cost]
                                                 :delayed-completion true
-                                                :effect (req (trash state side eid card nil)
-                                                             (when (:run @state)
+                                                :effect (req (when (:run @state)
                                                                (swap! state assoc-in [:run :did-trash] true))
                                                              (swap! state assoc-in [:runner :register :trashed-card] true)
+                                                             (trash state side eid card nil)
                                                              (system-msg state side (str "pays " trash-msg)))}}}
                                 card nil)))))
       ;; The card does not have a trash cost
