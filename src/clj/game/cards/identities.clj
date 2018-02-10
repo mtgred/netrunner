@@ -784,16 +784,16 @@
     {:encounter-ice {:once :per-turn
                      :effect (req (let [stypes (:subtype target)]
                                     (update! state :runner (-> card
-                                                               (assoc :kit-target target)
-                                                               (assoc :kit-target-stypes stypes)))
+                                                               (assoc-in [:special :kit-target] target)
+                                                               (assoc-in [:special :kit-target-stypes] stypes)))
                                     (update! state side (assoc target :subtype (combine-subtypes true stypes "Code Gate")))
                                     (trigger-event state side :ice-subtype-changed target)
                                     (system-msg state :runner (str "uses Rielle \"Kit\" Peddler: Transhuman to make "
                                                                    (:title target)
                                                                    " gain Code Gate until the end of the run"))))}
-     :run-ends {:effect (req (let [kit-target (:kit-target card)]
+     :run-ends {:effect (req (let [kit-target (get-in card [:special :kit-target])]
                                (when kit-target
-                                 (update! state side (assoc (get-card state kit-target) :subtype (:kit-target-stypes card)))
+                                 (update! state side (assoc (get-card state kit-target) :subtype (get-in card [:special :kit-target-stypes])))
                                  (trigger-event state side :ice-subtype-changed (get-card state kit-target))
                                  (update! state :runner (-> card
                                                             (dissoc :kit-target)
