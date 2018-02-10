@@ -780,19 +780,24 @@
                    :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
    "Rielle \"Kit\" Peddler: Transhuman"
-   {:abilities [{:req (req (and (:run @state)
-                                (:rezzed (get-card state current-ice))))
-                 :once :per-turn :msg (msg "make " (:title current-ice) " gain Code Gate until the end of the run")
-                 :effect (req (let [ice current-ice
-                                    stypes (:subtype ice)]
-                                (update! state side (assoc ice :subtype (combine-subtypes true stypes "Code Gate")))
-                                (register-events state side
-                                                 {:run-ends {:effect (effect (update! (assoc ice :subtype stypes))
-                                                                             (trigger-event :ice-subtype-changed ice)
-                                                                             (unregister-events card))}} card)
-                                (update-ice-strength state side ice)
-                                (trigger-event state side :ice-subtype-changed ice)))}]
-    :events {:run-ends nil}}
+   {:events
+    {:encounter-ice {:once :per-turn
+                     :effect (req (let [stypes (:subtype target)]
+                                    (update! state :runner (-> card
+                                                               (assoc :kit-target target)
+                                                               (assoc :kit-target-stypes stypes)))
+                                    (update! state side (assoc target :subtype (combine-subtypes true stypes "Code Gate")))
+                                    (trigger-event state side :ice-subtype-changed target)
+                                    (system-msg state :runner (str "uses Rielle \"Kit\" Peddler: Transhuman to make "
+                                                                   (:title target)
+                                                                   " gain Code Gate until the end of the run"))))}
+     :run-ends {:effect (req (let [kit-target (:kit-target card)]
+                               (when kit-target
+                                 (update! state side (assoc (get-card state kit-target) :subtype (:kit-target-stypes card)))
+                                 (trigger-event state side :ice-subtype-changed (get-card state kit-target))
+                                 (update! state :runner (-> card
+                                                            (dissoc :kit-target)
+                                                            (dissoc :kit-target-stypes))))))}}}
 
    "Seidr Laboratories: Destiny Defined"
    {:implementation "Manually triggered"
