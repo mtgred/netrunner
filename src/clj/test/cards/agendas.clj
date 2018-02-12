@@ -97,6 +97,23 @@
         (should-not-place token-astro hand-ice-wall " in hand")
         (should-place token-astro installed-ice-wall " that is installed")))))
 
+(deftest bacterial-programming-run
+  ;; Bacterial Programming - scoring should not cause a run to exist for runner.
+  (do-game
+    (new-game (default-corp [(qty "Bacterial Programming" 1) (qty "Hedge Fund" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Bacterial Programming"])
+    (play-from-hand state :corp "Bacterial Programming" "New remote")
+    (let [bp (get-content state :remote1 0)]
+      (score-agenda state :corp bp)
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp "Done")
+      (prompt-choice :corp "Done")
+      (prompt-card :corp (first (:deck (get-corp))))
+      (prompt-choice :corp "Done")
+      (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
+      (is (not (:run @state)) "No run is active"))))
+
 (deftest braintrust
   ;; Braintrust - Discount ICE rez by 1 for every 2 over-advancements when scored
   (do-game
