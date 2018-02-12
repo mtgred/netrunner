@@ -1458,7 +1458,10 @@
                  :choices {:req #(and (installed? %) (ice? %)) :max 2}
                  :effect (req (when (= (count targets) 2)
                                 (swap-ice state side (first targets) (second targets))))
-                 :msg "swap the positions of two ICE"}]}
+                 :msg (msg "swap the positions of "
+                           (card-str state (first targets))
+                           " and "
+                           (card-str state (second targets)))}]}
 
    "Test Ground"
    {:implementation "Derez is manual"
