@@ -47,8 +47,9 @@
   "Updates the old-states atom with the new game state, then sends a :netrunner/diff
   message to game clients."
   (let [old-state (get @old-states gameid)]
-    (swap! old-states assoc gameid @state)
-    (send-state-diffs! game (main/public-diffs old-state state))))
+    (when (and state @state)
+      (swap! old-states assoc gameid @state)
+      (send-state-diffs! game (main/public-diffs old-state state)))))
 
 (defn handle-game-start
   [{{{:keys [username] :as user} :user} :ring-req
@@ -142,7 +143,7 @@
     reply-fn                            :?reply-fn}]
   (if-let [{game-password :password state :state started :started :as game}
            (lobby/game-for-id gameid)]
-    (when (and user game (lobby/allowed-in-game game user))
+    (when (and user game (lobby/allowed-in-game game user) state @state)
       (if-not started
         false ; don't handle this message, let lobby/handle-game-watch.
         (if (or (empty? game-password)
