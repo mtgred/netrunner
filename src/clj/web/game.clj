@@ -6,7 +6,8 @@
             [game.core :as core]
             [jinteki.utils :refer [side-from-str]]
             [cheshire.core :as json]
-            [crypto.password.bcrypt :as bcrypt]))
+            [crypto.password.bcrypt :as bcrypt]
+            [clj-time.core :as t]))
 
 
 (defn send-state-diffs!
@@ -62,7 +63,8 @@
             game (as-> game g
                        (assoc g :started true
                                 :original-players stripped-players
-                                :ending-players stripped-players)
+                                :ending-players stripped-players
+                                :last-update (t/now))
                        (assoc g :state (core/init-game g))
                        (update-in g [:players] #(mapv strip-deck %)))]
         (swap! all-games assoc gameid game)
@@ -133,6 +135,7 @@
         old-state (get @old-states gameid)
         side (some #(when (= client-id (:ws-id %)) (:side %)) players)]
     (main/handle-action user command state (side-from-str side) args)
+    (swap! all-games assoc-in [gameid :last-update] (t/now))
     (swap-and-send-diffs! game)))
 
 (defn handle-game-watch
@@ -177,6 +180,7 @@
       (let [{:keys [user] :as spect} (lobby/spectator? client-id gameid)]
         (when (and spect (not mute-spectators))
           (main/handle-say state :spectator user msg)
+          (swap! all-games assoc :last-update (t/now))
           (swap-and-send-diffs! game))))))
 
 (defn handle-game-typing
