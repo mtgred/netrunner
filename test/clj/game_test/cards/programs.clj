@@ -976,3 +976,18 @@
       (card-ability state :runner upya 0)
       (is (= 0 (get-counters (refresh upya) :power)) "3 counters spent")
       (is (= 5 (:click (get-runner))) "Gained 2 clicks"))))
+
+(deftest wari
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Wari" 1)]))
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Wari")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "Barrier")
+    (prompt-select :runner (get-ice state :rd 0))
+    (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
+    (is (not (empty? (get-in @state [:runner :prompt]))) "Runner is currently accessing Ice Wall")))
+
