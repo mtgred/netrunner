@@ -380,36 +380,37 @@
 
 (defn score
   "Score an agenda. It trusts the card data passed to it."
-  [state side args]
-  (let [card (or (:card args) args)]
-    (when (and (can-score? state side card)
-               (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
-               (>= (:advance-counter card 0) (or (:current-cost card) (:advancementcost card))))
+  ([state side args] (score state side (make-eid state) args))
+  ([state side eid args]
+   (let [card (or (:card args) args)]
+     (when (and (can-score? state side card)
+                (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
+                (>= (:advance-counter card 0) (or (:current-cost card) (:advancementcost card))))
 
-      ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
-      (let [moved-card (move state :corp card :scored)
-            c (card-init state :corp moved-card {:resolve-effect false
-                                                 :init-data true})
-            points (get-agenda-points state :corp c)]
-        (trigger-event-simult
-          state :corp (make-eid state) :agenda-scored
-          {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
-                                          (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-                                          ; This is to handle Employee Strike with damage IDs #2688
-                                          (when (:disable-id (card-def current))
-                                            (swap! state assoc-in [:corp :disable-id] true))
-                                          (trash state side current)))}
-           :card-ability (card-as-handler c)
-           :after-active-player {:effect (req (let [c (get-card state c)
-                                                    points (or (get-agenda-points state :corp c) points)]
-                                                (set-prop state :corp (get-card state moved-card) :advance-counter 0)
-                                                (system-msg state :corp (str "scores " (:title c) " and gains "
-                                                                             (quantify points "agenda point")))
-                                                (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-                                                (swap! state dissoc-in [:corp :disable-id])
-                                                (gain-agenda-point state :corp points)
-                                                (play-sfx state side "agenda-score")))}}
-          c)))))
+       ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
+       (let [moved-card (move state :corp card :scored)
+             c (card-init state :corp moved-card {:resolve-effect false
+                                                  :init-data true})
+             points (get-agenda-points state :corp c)]
+         (trigger-event-simult
+           state :corp eid :agenda-scored
+           {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
+                                           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+                                           ; This is to handle Employee Strike with damage IDs #2688
+                                           (when (:disable-id (card-def current))
+                                             (swap! state assoc-in [:corp :disable-id] true))
+                                           (trash state side current)))}
+            :card-ability (card-as-handler c)
+            :after-active-player {:effect (req (let [c (get-card state c)
+                                                     points (or (get-agenda-points state :corp c) points)]
+                                                 (set-prop state :corp (get-card state moved-card) :advance-counter 0)
+                                                 (system-msg state :corp (str "scores " (:title c) " and gains "
+                                                                              (quantify points "agenda point")))
+                                                 (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+                                                 (swap! state dissoc-in [:corp :disable-id])
+                                                 (gain-agenda-point state :corp points)
+                                                 (play-sfx state side "agenda-score")))}}
+           c))))))
 
 (defn no-action
   "The corp indicates they have no more actions for the encounter."
