@@ -174,6 +174,19 @@
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
 
+(deftest city-works-project
+  ;; City Works Project - do 2 + advancement counters meat damage on access
+  (do-game
+    (new-game (make-deck "Weyland Consortium: Building a Better World" [(qty "City Works Project" 1)])
+              (default-runner [(qty "Sure Gamble" 4)]))
+    (play-from-hand state :corp "City Works Project" "New remote"
+      (let [cwp (get-content state :remote1 0)]
+        (core/advance state :corp {:card (refresh cwp)})
+        (core/advance state :corp {:card (refresh cwp)})
+        (run-empty-server state "Server 1")
+        (prompt-choice :runner "Yes")
+        (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 meat damage")))))
+
 (deftest corporate-sales-team
   ;; Corporate Sales Team - Places 10c on card, corp takes 1c on each turn start
   (do-game
