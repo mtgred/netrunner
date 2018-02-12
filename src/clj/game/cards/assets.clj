@@ -641,9 +641,10 @@
    (let [ability {:msg "gain 1 [Credits] and draw 1 card"
                   :label "Gain 1 [Credits] and draw 1 card (start of turn)"
                   :once :per-turn
+                  :delayed-completion true
                   :req (req (:corp-phase-12 @state))
                   :effect (effect (gain :credit 1)
-                                  (draw))}]
+                                  (draw eid 1 nil))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]
@@ -756,7 +757,8 @@
                                  (move target :hand))}]}
 
    "Lily Lockwell"
-   {:effect (effect (draw 3))
+   {:delayed-completion true
+    :effect (effect (draw eid 3 nil))
     :msg (msg "draw 3 cards")
     :abilities [{:label "Remove a tag to search R&D for an operation"
                  :prompt "Choose an operation to put on top of R&D"
