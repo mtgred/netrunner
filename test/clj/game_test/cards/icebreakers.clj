@@ -32,6 +32,35 @@
       (is (= 2 (get-counters atman :power)) "2 power counters")
       (is (= 2 (:current-strength atman)) "2 current strength"))))
 
+(deftest aumakua
+  ;; Aumakua - Gain credit on no-trash
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 3)])
+              (default-runner [(qty "Aumakua" 1)]))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Aumakua")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "No")
+    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
+    (core/gain state :runner :credit 5)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
+
+(deftest aumakua-neutralize-all-threats
+  ;; Aumakua - Neutralize All Threats interaction
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 3)])
+              (default-runner [(qty "Aumakua" 1) (qty "Neutralize All Threats" 1)]))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Aumakua")
+    (play-from-hand state :runner "Neutralize All Threats")
+    (core/gain state :runner :credit 5)
+    (run-empty-server state "Server 1")
+    (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash")))
+
 (deftest baba-yaga
   (do-game
     (new-game
