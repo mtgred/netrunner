@@ -218,7 +218,7 @@
           "/draw"       #(draw %1 %2 (max 0 value))
           "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
           "/error"      #(show-error-toast %1 %2)
-          "/handsize"   #(swap! %1 assoc-in [%2 :hand-size-modification] (- (max 0 value) (:hand-size-base %2)))
+          "/handsize"   #(swap! %1 assoc-in [%2 :hand-size-modification] (- (max 0 value) (get-in @%1 [%2 :hand-size-base])))
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
           "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
           "/memory"     #(swap! %1 assoc-in [%2 :memory] value)
