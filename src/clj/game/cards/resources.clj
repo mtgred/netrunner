@@ -154,7 +154,11 @@
                                 ;; Other cards are moved to rig and have events wired.
                                 (let [temp (move state side target :play-area)
                                       moved (move state side temp (type->rig-zone (:type temp)))]
-                                  (card-init state side (make-eid state) moved {:resolve-effect false :init-data false}))))
+                                  (card-init state side (make-eid state) moved {:resolve-effect false :init-data false})
+                                  (when (:memoryunits moved)
+                                    (lose state :runner :memory (:memoryunits moved)))
+                                  (when (and (is-type? moved "Program") (neg? (get-in @state [:runner :memory])))
+                                    (toast state :runner "You have run out of memory units!")))))
                  :msg (msg "turn " (:title target) " faceup")}]}
 
    "Bhagat"
