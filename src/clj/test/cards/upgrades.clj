@@ -554,11 +554,11 @@
     (core/rez state :corp (get-content state :remote1 0))
     (dotimes [n 5]
       (core/click-draw state :corp 1)
-      (prompt-choice :corp "Yes")
+      (prompt-choice :corp (-> (get-corp) :prompt first :choices first))
       (is (= 4 (:credit (get-corp))) "Not charged to install ice")
       (is (= (inc n) (count (get-in @state [:corp :servers :remote1 :ices]))) (str n " ICE protecting Remote1")))
     (core/click-draw state :corp 1)
-    (prompt-choice :corp "Yes")
+    (prompt-choice :corp (-> (get-corp) :prompt first :choices first))
     (is (= 3 (:credit (get-corp))) "Charged to install ice")
     (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
 
