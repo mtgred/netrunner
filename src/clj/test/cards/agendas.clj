@@ -420,6 +420,20 @@
       (is (= 12 (:credit (get-corp))) "Gain 7 credits")
       (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity"))))
 
+(deftest ikawah-project-not-stealing
+  ;; Ikawah Project - do not reveal when the Runner does not steal from R&D
+  (do-game
+    (new-game (default-corp [(qty "Ikawah Project" 2)])
+              (default-runner))
+    (take-credits state :corp)
+    (starting-hand state :corp ["Ikawah Project"])
+    (run-empty-server state "R&D")
+    (prompt-choice :runner "Don't steal")
+    (is (not (last-log-contains? state "not to pay to steal Ikawah Project")) "Ikawah Project should not be mentioned")
+    (run-empty-server state "HQ")
+    (prompt-choice :runner "Don't steal")
+    (is (last-log-contains? state "not to pay to steal Ikawah Project") "Ikawah Project should be mentioned")))
+
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers - Prevent the Runner from jacking out as long as there is still a power counter
   (do-game

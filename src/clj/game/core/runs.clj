@@ -172,9 +172,10 @@
              (if (= target "Don't steal")
                (continue-ability state :runner
                                  {:delayed-completion true
-                                  :effect (effect (system-msg (str "decides not to pay to steal " (:title card)))
-                                                  (trigger-event :no-steal card)
-                                                  (resolve-steal-events eid card))} card nil)
+                                  :effect (req (when-not (find-cid (:cid card) (:deck corp))
+                                                    (system-msg state side (str "decides not to pay to steal " (:title card))))
+                                                  (trigger-event state side :no-steal card)
+                                                  (resolve-steal-events state side eid card))} card nil)
                (let [name (:title card)
                      chosen (cons target chosen)
                      clicks (count (re-seq #"\[Click\]+" target))
