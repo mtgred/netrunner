@@ -174,6 +174,12 @@
             [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]]
 
            [:section
+            [:h3 "NetrunnerDB Integration"]
+            [:div
+             [:div [:a {:href "/nrdb/authorize?redirect=/account"} "Authorize"]]
+             [:div [:a {:href "/nrdb/authorize?redirect=/account"} "Deauthorize"]]]]
+
+           [:section
             [:h3 "Sounds"]
             [:div
              [:label [:input {:type "checkbox"

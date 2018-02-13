@@ -26,8 +26,13 @@ LocalStrategy = require('passport-local').Strategy
 io = require('socket.io')(server)
 stylus = require('stylus')
 zmq = require('zmq')
+got = require('got')
 
 config = require('./config')
+
+process.on('unhandledRejection', (reason, p) =>
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason)
+)
 
 # MongoDB connection
 appName = 'netrunner'
@@ -859,7 +864,7 @@ app.get '/data/news', (req, res) ->
     res.status(200).json([{date: '01/01/2015 00:00', title: 'Get a Trello API Key and set your environment variable TRELLO_API_KEY to see announcements'}])
 
 app.get '/data/:collection', (req, res) ->
-  if req.params.collection != 'users' && req.params.collection != 'games'
+  if req.params.collection != 'users' && req.params.collection != 'games' && req.params.collection != 'nrdb_tokens'
     db.collection(req.params.collection).find().sort(_id: 1).toArray (err, data) ->
       throw err if err
       delete d._id for d in data
@@ -868,7 +873,7 @@ app.get '/data/:collection', (req, res) ->
     res.status(401).send({message: 'Unauthorized'})
 
 app.get '/data/:collection/:field/:value', (req, res) ->
-  if req.params.collection != 'users' && req.params.collection != 'games'
+  if req.params.collection != 'users' && req.params.collection != 'games' && req.params.collection != 'nrdb_tokens'
     filter = {}
     filter[req.params.field] = req.params.value
     db.collection(req.params.collection).find(filter).toArray (err, data) ->
@@ -913,10 +918,292 @@ app.post '/admin/version', (req, res) ->
   else
     res.status(401).send({message: 'Unauthorized'})
 
+## NetrunnerDB integration
+##
+app.get '/nrdb/authorize', (req, res) ->
+  if req.user
+    nonce = uuid.v4()
+    state = nonce
+    if req.query? and req.query.redirect?
+      state = nonce + ':' + req.query.redirect
+      db.collection('nrdb_tokens').deleteMany {userID: req.user._id}, (err, result) ->
+        throw(err) if err
+        db.collection('nrdb_tokens').updateOne {userID: req.user._id},\
+        {$set: {userID: req.user._id, nonce: nonce}, $currentDate: {created: {$type: 'date'}}}, {upsert: true}, (err) ->
+          throw(err) if err
+          auth_url = "#{config.nrdb_auth_url}?response_type=code&client_id=#{config.nrdb_client_id}&redirect_uri=#{config.nrdb_callback_url}&state=#{state}"
+          res.redirect(auth_url)
+  else
+    res.status(401).send({message: 'Unauthorized'})
+
+app.get '/callback', (req, res) ->
+  handle_nrdb_callback_check(req, res)
+
+handle_nrdb_callback_check = (req, res) ->
+  if req.query.code? and req.query.state?
+    handle_nrdb_callback(req.query.code, req.query.state, req, res)
+  else
+    console.log("Failed to authorize NRDB:")
+    console.log(req.query)
+    if req.query? and req.query.state?
+      # remove the nonce from the db so it can't be reused later
+      split_state = req.query.state.split(":")
+      nonce = split_state[0]
+      db.collection('nrdb_tokens').remove {nonce: nonce}, (err) ->
+    res.redirect('/')
+
+handle_nrdb_callback = (auth_code, state, req, res) ->
+  unless req.user?
+    res.status(401).send({message: 'Unauthorized'})
+    return
+
+  split_state = state.split(":")
+  nonce = split_state[0]
+  redirect = split_state[1] or "/"
+  # verify the authorization request came from us and is for the logged in user
+  db.collection('nrdb_tokens').findOne {nonce: nonce, userID: req.user._id}, (err, entry) ->
+    throw(err) if err
+    unless entry is null
+      got.get(config.nrdb_token_url,
+        {json: true,
+        query: "client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&grant_type=authorization_code&code=#{auth_code}&redirect_uri=#{config.nrdb_callback_url}"}).then( (response) ->
+        enc_access = encrypt_token(response.body.access_token)
+        enc_refresh = encrypt_token(response.body.refresh_token)
+        new_entry = {userID: req.user._id, access_token: enc_access.encrypted, access_iv: enc_access.iv, \
+          refresh_token: enc_refresh.encrypted, refresh_iv: enc_refresh.iv}
+        db.collection('nrdb_tokens').updateOne {userID: entry.userID}, new_entry, (err) ->
+          throw(err) if err
+          res.redirect(redirect)
+        ).catch( (error) ->
+          console.log("Get new access/refresh token error")
+          console.log(error)
+          res.status(400).send({message: 'Bad Request'})
+        )
+    else
+      console.log("Unknown nonce or user in auth_code callback")
+      res.status(400).send({message: 'Bad Request'})
+
+# For encrypting the OAuth2 access and refresh tokens in the database
+# The encryption key is stored in an environment variable
+token_encryption_algo = 'aes-256-ctr'
+iv_length = 16
+
+encryption_key = config.nrdb_encryption_key
+if encryption_key.length < 32
+  console.log("******** nrdb_encryption_key must be 32 bytes long, padding it\n")
+  while(encryption_key.length < 32)
+    encryption_key = encryption_key + "0"
+else if encryption_key.length > 32
+  console.log("******** nrdb_encryption_key must be 32 bytes long, truncating it\n")
+  encryption_key = encryption_key.slice(0, 32)
+
+encrypt_token = (token) ->
+  iv = crypto.randomBytes(iv_length)
+  iv_string = iv.toString('hex').slice(0, 16)
+  cipher = crypto.createCipheriv(token_encryption_algo, encryption_key, iv_string)
+  encrypted = cipher.update(token, 'utf8', 'hex')
+  encrypted += cipher.final('hex')
+  {encrypted: encrypted, iv: iv_string}
+
+decrypt_token = (encrypted_token, iv) ->
+  decipher = crypto.createDecipheriv(token_encryption_algo, encryption_key, iv)
+  dec = decipher.update(encrypted_token, 'hex', 'utf8')
+  dec += decipher.final('utf8')
+  return dec
+
+insert_nrdb_card = (nrdb_id, username, card_id, qty, callback) ->
+  if card_id and qty
+    db.collection('cards').findOne {code: card_id}, (err, card) ->
+      throw(err) if err
+      if card
+        if card.type is "Identity"
+          identity = { "title" : card.title, "side" : card.side, "code" : card.code }
+          db.collection('decks').updateOne {nrdb_id: nrdb_id, username: username}, {$set: {identity: identity}}, (err) ->
+            throw(err) if err
+            callback()
+        else
+          entry = { "qty" : qty, "card" : card.title }
+          db.collection('decks').updateOne {nrdb_id: nrdb_id, username: username}, {$push: {cards: entry}}, (err) ->
+            throw(err) if err
+            callback()
+      else
+        callback()
+  else
+    callback()
+
+upsert_nrdb_deck = (deck, user, callback) ->
+  new_deck = {name: deck.name, username: user.username, nrdb_id: deck.id, date: deck.date_update,\
+    description: deck.description, mwl_code: deck.mwl_code, tags: deck.tags, cards: [], identity: {} }
+  db.collection('decks').updateOne {nrdb_id: deck.id, username: user.username}, new_deck, {upsert: true}, (err) ->
+    throw(err) if err
+    keys = (k for own k,v of deck.cards)
+    async.eachSeries keys, (card_id, key_callback) ->
+      insert_nrdb_card(deck.id, user.username, card_id, deck.cards[card_id], key_callback)
+    , (key_err) ->
+      throw(key_err) if key_err
+      if callback?
+        callback(deck.id)
+
+insert_deck_if_not_exists = (deck, user) ->
+  db.collection('decks').findOne {nrdb_id: deck.id, username: user.username}, {_id: 1}, (err, curr_deck) ->
+    throw(err) if err
+    upsert_nrdb_deck(deck, user, null) unless curr_deck
+
+make_nrdb_card = (entry, callback) ->
+  db.collection('cards').findOne {title: entry.card, replaced_by: {$exists: false}}, (err, card) ->
+    throw(err) if err
+    if card
+      callback(null, {code: "#{card.code}", qty: entry.qty})
+    else
+      callback(null, {})
+
+make_nrdb_deck = (deck, token_entry, user, socket) ->
+  async.map(deck.cards, make_nrdb_card, (err, results) ->
+    throw(err) if err
+    nrdb_deck = {name: deck.name, content: {}}
+    if deck.description?
+      nrdb_deck.description = deck.description
+    if deck.mwl_code?
+      nrdb_deck.mwl_code = deck.mwl_code
+    if deck.tags?
+      nrdb_deck.tags = deck.tags
+    if deck.nrdb_id?
+      nrdb_deck.deck_id = deck.nrdb_id
+    else
+      nrdb_deck.deck_id = 0
+    for entry in results
+      nrdb_deck.content[entry.code] = entry.qty
+    nrdb_deck.content["#{deck.identity.code}"] = 1
+    access_token = decrypt_token(token_entry.access_token, token_entry.access_iv)
+    got.post(config.nrdb_deck_save_url,
+      {json: true,
+      body: nrdb_deck,
+      headers: {'Authorization': "Bearer #{access_token}"}}).then( (response) ->
+        if response.body? and response.body.success
+          db.collection('decks').updateOne {_id: mongoskin.helper.toObjectID(deck._id)}, {$set: {nrdb_id: response.body.data[0].id}}, (err, result) ->
+            throw(err) if err
+            socket.emit("netrunner", {msg: "exported_deck", nrdb_id: response.body.data[0].id})
+        else
+          console.log("Failed to write deck to NRDB")
+          console.log(response)
+          socket.emit("netrunner", {msg: "unknown_error"})
+    ).catch( (error) ->
+      # deck missing from NRDB, create it
+      if error.statusCode is 404
+        deck.nrdb_id = null
+        make_nrdb_deck(deck, token_entry, user, socket)
+      else
+        handle_nrdb_error(error, user, token_entry, socket, (refreshed_token) ->
+          make_nrdb_deck(deck, refreshed_token, user, socket)
+        )
+    ))
+
+export_nrdb_deck = (token_entry, deck_id, user, socket) ->
+  db.collection('decks').findOne {_id: mongoskin.helper.toObjectID(deck_id), username: user.username}, (err, deck) ->
+    throw(err) if err
+    if deck
+      make_nrdb_deck(deck, token_entry, user, socket)
+    else
+      socket.emit("netrunner", {msg: "unknown_error"})
+
+import_nrdb_deck = (token_entry, nrdb_id, user, socket) ->
+  access_token = decrypt_token(token_entry.access_token, token_entry.access_iv)
+  got.get("#{config.nrdb_deck_url}/#{nrdb_id}",
+    {json: true,
+    headers: {'Authorization': "Bearer #{access_token}"}}).then( (response) ->
+      if response.body? and response.body.success
+        upsert_nrdb_deck(response.body.data[0], user, (nrdb_id) ->
+          socket.emit("netrunner", {msg: "imported_deck", nrdb_id: nrdb_id}))
+      else
+        console.log("Failed to import NRDB deck")
+        console.log(response)
+        socket.emit("netrunner", {msg: "unknown_error"})
+  ).catch( (error) ->
+    handle_nrdb_error(error, user, token_entry, socket, (refreshed_token) ->
+      import_nrdb_deck(refreshed_token, nrdb_id, user, socket)
+    )
+  )
+
+import_nrdb_decks = (token_entry, user, socket) ->
+  access_token = decrypt_token(token_entry.access_token, token_entry.access_iv)
+  got.get(config.nrdb_decks_url,
+    {json: true,
+    headers: {'Authorization': "Bearer #{access_token}"}}).then( (response) ->
+      if response.body? and response.body.success
+        insert_deck_if_not_exists(deck, user) for deck in response.body.data
+        socket.emit("netrunner", {msg: "imported_decks", count: response.body.data.length})
+      else
+        console.log("Failed to import all NRDB decks")
+        console.log(response)
+        socket.emit("netrunner", {msg: "unknown_error"})
+  ).catch( (error) ->
+    handle_nrdb_error(error, user, token_entry, socket, (refreshed_token) ->
+      import_nrdb_decks(refreshed_token, user, socket)
+    )
+  )
+
+handle_nrdb_error = (error, user, token_entry, socket, callback) ->
+  if error.statusCode is 401
+    refresh_nrdb_token(user, token_entry, socket, callback)
+  else if error.statusCode is 400
+    socket.emit('netrunner', {msg: "not_authorized_nrdb"})
+  else if error.statusCode is 404
+    socket.emit('netrunner', {msg: "unknown_deck"})
+  else
+    console.log("Got NRDB error")
+    console.log(error)
+    console.log(error.statusCode)
+    socket.emit("netrunner", {msg: "unknown_error"})
+
+refresh_nrdb_token = (user, token_entry, socket, callback) ->
+  refresh_token = decrypt_token(token_entry.refresh_token, token_entry.refresh_iv)
+  got.get(config.nrdb_token_url,
+    {json: true,
+    query: "grant_type=refresh_token&client_id=#{config.nrdb_client_id}&client_secret=#{config.nrdb_secret}&refresh_token=#{refresh_token}"}).then( (response) ->
+    enc_access = encrypt_token(response.body.access_token)
+    enc_refresh = encrypt_token(response.body.refresh_token)
+    new_entry = {userID: mongoskin.helper.toObjectID(user._id), access_token: enc_access.encrypted, access_iv: enc_access.iv, \
+      refresh_token: enc_refresh.encrypted, refresh_iv: enc_refresh.iv}
+    db.collection('nrdb_tokens').updateOne {userID: mongoskin.helper.toObjectID(user._id)}, new_entry, (err) ->
+      throw(err) if err
+      callback(new_entry)
+  ).catch( (error) ->
+    if error.statusCode is 400
+      socket.emit('netrunner', {msg: "not_authorized_nrdb"})
+    else
+      console.log("Get refresh token error")
+      console.log(error)
+      socket.emit("netrunner", {msg: "unknown_error"})
+  )
+
+deckbuilder = io.of('/deckbuilder').on 'connection', (socket) ->
+  socket.on 'netrunner', (msg) ->
+    if socket.request.user
+      userID = mongoskin.helper.toObjectID(socket.request.user._id)
+      db.collection('nrdb_tokens').findOne {userID: userID, nonce: {$exists: false}}, (err, entry) ->
+        throw(err) if err
+        if entry is null
+          socket.emit('netrunner', {msg: "not_authorized_nrdb"})
+        else
+          switch msg.action
+            when "import_all_decks"
+              import_nrdb_decks(entry, socket.request.user, socket)
+
+            when "import_deck"
+              nrdb_id = msg.nrdb_id
+              if nrdb_id
+                import_nrdb_deck(entry, nrdb_id, socket.request.user, socket)
+
+            when "export_deck"
+              deck_id = msg.deck_id
+              if deck_id
+                export_nrdb_deck(entry, deck_id, socket.request.user, socket)
+
 env = process.env['NODE_ENV'] || 'development'
 
 if env == 'development'
   console.log "Dev environment"
+
   app.get '/*', (req, res) ->
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
@@ -925,6 +1212,7 @@ if env == 'development'
 
 if env == 'production'
   console.log "Prod environment"
+
   app.get '/*', (req, res) ->
     if req.user
       db.collection('users').update {username: req.user.username}, {$set: {lastConnection: new Date()}}, (err) ->
