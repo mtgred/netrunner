@@ -114,6 +114,22 @@
     (is (= 4 (:click (get-runner))) "Spent 1 click; gained 2 clicks")
     (is (= 1 (count (:discard (get-runner)))) "All-nighter is trashed")))
 
+(deftest assimilator-mu
+  ;; Assimilator - double click to flip a program updates mu
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Apex: Invasive Predator" [(qty "Assimilator" 1) (qty "Endless Hunger" 1)]))
+    (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
+    (prompt-select :runner (find-card "Endless Hunger" (:hand (get-runner))))
+    (play-from-hand state :runner "Assimilator")
+    (is (= 4 (:memory (get-runner))) "Starts with 4 MU")
+    (let [assim (get-resource state 0)]
+      (card-ability state :runner assim 0)
+      (prompt-select :runner (find-card "Endless Hunger" (get-in @state [:runner :rig :facedown]))))
+    (is (= 0 (:memory (get-runner))) "Charged for 4 MU")))
+
 (deftest bank-job-manhunt
   ;; Bank Job - Manhunt trace happens first
   (do-game
