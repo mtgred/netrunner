@@ -8,6 +8,7 @@
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
             [netrunner.deckbuilder :refer [influence-dot]]
+            [netrunner.account :refer [legacy-images]]
             [differ.core :as differ]
             [om.dom :as dom]))
 
@@ -31,6 +32,14 @@
                        (get art-options (keyword art) (:code card))
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
+
+(defn get-background-image
+  []
+  (if-let [custom-img (get-in @app-state [:options :custom-background])]
+    custom-img
+    (if-let [img (get-in @app-state [:options :background-img])]
+      img
+      (get legacy-images (get-in @app-state [:options :background]) "unknown.jpg"))))
 
 (defn toastr-options
   "Function that generates the correct toastr options for specified settings"
@@ -1344,7 +1353,9 @@
                  ") wins by scoring agenda points")
 
                [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "x"]])
-            [:div {:class (:background (:options @app-state))}]
+            [:div.background-image.gameboard-bg {:style {:background-image
+                                                         (str "url(" (.encodeURI js/window (get-background-image)) ")")
+                                                         :background-color "#282828"}}]
             [:div.rightpane
              [:div.card-zoom
               (when-let [card (om/get-state owner :zoom)]

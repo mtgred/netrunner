@@ -1289,6 +1289,9 @@ nav ul
   flex-direction(row-reverse)
   justify-content(space-between)
 
+  .background-image
+    cover-img: url('missing-file-fallthrough')
+
   .panel
     position: relative
     padding: 3px 6px
@@ -1964,6 +1967,31 @@ nav ul
     position: relative
     top: 9px
     left: 16px
+
+  .custom-background-input
+    width: 400px
+    margin-bottom: 10px
+
+  .custom-background
+    margin-bottom: 20px
+
+  .unlink-custom-background-btn
+    width: 200px
+    margin-top: 5px
+
+  .background-images
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 5px 5px;
+    justify-items: center;
+    align-items: center;
+
+  .background-thumbnail
+    width: 200px
+    height: auto
+
+    &.selected-bg
+      box-shadow(0 0 1px 2px orange)
 
   #alt-art
     div#my-alt-art
