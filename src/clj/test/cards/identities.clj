@@ -1182,19 +1182,35 @@
       (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
 
 (deftest rielle-kit-peddler-ability
-  ;; Rielle "Kit" Peddler - Give ICE Code Gate
+  ;; Rielle "Kit" Peddler - Give first encountered ICE Code Gate
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 2)])
               (make-deck "Rielle \"Kit\" Peddler: Transhuman" [(qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
     (take-credits state :corp)
-    (run-on state "HQ")
-    (let [k (get-in @state [:runner :identity])
-          iwall (get-ice state :hq 0)]
+    (let [iwall (get-ice state :hq 0)]
       (core/rez state :corp iwall)
-      (card-ability state :runner k 0)
+      (run-on state "HQ")
+      (run-continue state)
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
-      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
+      (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate on second run"))
+    (let [iwall (get-ice state :rd 0)]
+      (core/rez state :corp iwall)
+      (run-on state "R&D")
+      (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall on other server does not have Code Gate"))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [iwall (get-ice state :hq 0)]
+      (core/rez state :corp iwall)
+      (run-on state "HQ")
+      (run-continue state)
+      (is (core/has-subtype? (refresh iwall) "Code Gate") "New Turn: Ice Wall has Code Gate again"))))
 
 (deftest skorpios
   ; Remove a card from game when it moves to discard once per round
