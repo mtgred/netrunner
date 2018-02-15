@@ -18,7 +18,4 @@ jobs:
             - ~/project/.m2
             - ~/project/.lein
           key: lein-deps-{{ checksum "project.clj" }}
-      - run: lein do fetch --no-card-images, test, uberjar
-      - store_artifacts:
-          path: target/uberjar/netrunner-standalone.jar
-          destination: uberjar
+      - run: lein do fetch --no-card-images, test
