@@ -155,30 +155,27 @@
                                (system-msg state :corp (str "uses Bacterial Programming to add " (count to-hq)
                                                             " cards to HQ, discard " (count to-trash)
                                                             ", and arrange the top cards of R&D")))
-                             (do
-                               (system-msg state :corp (str "selected " (:title target) " to move to HQ"))
-                               (continue-ability state :corp (hq-step
-                                                               (clojure.set/difference (set remaining) (set [target]))
-                                                               to-trash
-                                                               (conj to-hq target)) card nil))))})
+                             (continue-ability state :corp (hq-step
+                                                             (clojure.set/difference (set remaining) (set [target]))
+                                                             to-trash
+                                                             (conj to-hq target)) card nil)))})
            (trash-step [remaining to-trash]
              {:delayed-completion true
               :prompt "Select a card to discard"
               :choices (conj (vec remaining) "Done")
               :effect (req (if (= "Done" target)
                              (continue-ability state :corp (hq-step remaining to-trash `()) card nil)
-                             (do
-                               (system-msg state :corp (str "selected " (:title target) " to trash"))
-                               (continue-ability state :corp (trash-step
-                                                               (clojure.set/difference (set remaining) (set [target]))
-                                                               (conj to-trash target)) card nil))))})]
+                             (continue-ability state :corp (trash-step
+                                                             (clojure.set/difference (set remaining) (set [target]))
+                                                             (conj to-trash target)) card nil)))})]
      (let [arrange-rd (effect (continue-ability
                                 {:optional
                                  {:delayed-completion true
                                   :prompt "Arrange top 7 cards of R&D?"
                                   :yes-ability {:delayed-completion true
                                                 :effect (req (let [c (take 7 (:deck corp))]
-                                                               (swap! state assoc-in [:run :shuffled-during-access :rd] true)
+                                                               (when (:run @state)
+                                                                (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                                                                (show-wait-prompt state :runner "Corp to use Bacterial Programming")
                                                                (continue-ability state :corp (trash-step c `()) card nil)))}}}
                                 card nil))]
@@ -586,12 +583,20 @@
    "Mandatory Seed Replacement"
    (letfn [(msr [] {:prompt "Select two pieces of ICE to swap positions"
                     :choices {:req #(and (installed? %) (ice? %)) :max 2}
+                    :delayed-completion true
                     :effect (req (if (= (count targets) 2)
                                    (do (swap-ice state side (first targets) (second targets))
-                                       (resolve-ability state side (msr) card nil))
-                                   (system-msg state :corp (str "has finished rearranging ICE"))))})]
-     {:msg "rearrange any number of ICE"
-      :effect (effect (resolve-ability (msr) card nil))})
+                                       (system-msg state side
+                                                   (str "swaps the position of "
+                                                        (card-str state (first targets))
+                                                        " and "
+                                                        (card-str state (second targets))))
+                                       (continue-ability state side (msr) card nil))
+                                   (do (system-msg state :corp (str "has finished rearranging ICE"))
+                                       (effect-completed state side eid))))})]
+     {:delayed-completion true
+      :msg "rearrange any number of ICE"
+      :effect (effect (continue-ability (msr) card nil))})
 
    "Mandatory Upgrades"
    {:msg "gain an additional [Click] per turn"
@@ -922,13 +927,15 @@
 
    "Research Grant"
    {:interactive (req true)
+    :silent (req (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
     :req (req (not (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp)))))
     :delayed-completion true
     :effect (effect (continue-ability
                       {:prompt "Select another installed copy of Research Grant to score"
                        :choices {:req #(= (:title %) "Research Grant")}
+                       :delayed-completion true
                        :effect (effect (set-prop target :advance-counter (:advancementcost target))
-                                       (score target))
+                                       (score eid (get-card state target)))
                        :msg "score another installed copy of Research Grant"}
                      card nil))}
 

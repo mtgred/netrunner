@@ -99,6 +99,23 @@
         (should-not-place token-astro hand-ice-wall " in hand")
         (should-place token-astro installed-ice-wall " that is installed")))))
 
+(deftest bacterial-programming-run
+  ;; Bacterial Programming - scoring should not cause a run to exist for runner.
+  (do-game
+    (new-game (default-corp [(qty "Bacterial Programming" 1) (qty "Hedge Fund" 1)])
+              (default-runner))
+    (starting-hand state :corp ["Bacterial Programming"])
+    (play-from-hand state :corp "Bacterial Programming" "New remote")
+    (let [bp (get-content state :remote1 0)]
+      (score-agenda state :corp bp)
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp "Done")
+      (prompt-choice :corp "Done")
+      (prompt-card :corp (first (:deck (get-corp))))
+      (prompt-choice :corp "Done")
+      (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
+      (is (not (:run @state)) "No run is active"))))
+
 (deftest braintrust
   ;; Braintrust - Discount ICE rez by 1 for every 2 over-advancements when scored
   (do-game
@@ -877,6 +894,23 @@
     (is (= "Self-modifying Code" (:title (first (:hand (get-runner))))))
     (is (= 2 (count (get-in @state [:corp :hand]))))
     (is (= 1 (count (get-in @state [:runner :hand]))))))
+
+(deftest research-grant-leela
+  ;; Research Grant - vs. Leela. Issue #3069.
+  (do-game
+    (new-game (default-corp [(qty "Research Grant" 2) (qty "Ice Wall" 2)])
+              (make-deck "Leela Patel: Trained Pragmatist" [(qty "Sure Gamble" 1)]))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Research Grant" "New remote")
+    (play-from-hand state :corp "Research Grant" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-select :corp (get-content state :remote2 0))
+    (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")
+    (prompt-select :runner (get-ice state :hq 0))
+    (prompt-select :runner (get-ice state :rd 0))
+    (is (empty? (:effect-completed @state)) "All score and Leela effects resolved")))
 
 (deftest ssl-endorsement-scored
   ;; SSL Endorsement - gain credits when in corp score area before turn begins
