@@ -4,6 +4,8 @@
 
 (defonce frontend-version (atom "0.1.0"))
 
+(defonce server-mode (atom "prod"))
+
 (let [dev-config (read-config "dev.edn")
       master-filename "config.edn"
       master-config (when (.exists (io/file master-filename))

@@ -33,7 +33,7 @@
                  [throttler "1.0.0"]
                  [clj-http "3.7.0"]]
 
-  :plugins [[lein-cljsbuild "1.1.4"]
+  :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.11"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
@@ -46,10 +46,6 @@
 
   :aliases {"fetch" ["run" "-m" "tasks.nrdb/fetch"]
             "add_art" ["run" "-m" "tasks.altart/add_art"]}
-
-  ;; These can be run as "lein ____", ex. "lein fetch"
-  ;; :aliases {"fetch" ["exec" "-ep" "(use 'tasks.fetch) (fetch-data)"]}
-
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs" "src/cljc"]
@@ -73,7 +69,7 @@
       {:id "dev"
        :source-paths ["src/cljs" "src/dev" "src/cljc"]
        :figwheel true
-       :compiler {:output-to "resources/public/js/app.js"
+       :compiler {:output-to "resources/public/cljs/app.js"
                   :output-dir "resources/public/cljs"
                   :optimizations :none
                   :source-map-timestamp true
@@ -99,4 +95,4 @@
   ;; Set timeout to 2 min to allow for full compilation after a clean.
   :repl-options {:timeout 120000
                  :init-ns web.core
-                 :init (-main)})
+                 :init (-main "dev")})

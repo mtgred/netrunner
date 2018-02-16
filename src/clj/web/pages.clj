@@ -10,7 +10,7 @@
             [cheshire.core :as json]))
 
 
-(defn layout [{:keys [version] :as req} & content]
+(defn layout [{:keys [version user] :as req} & content]
   (hiccup/html5
     [:head
      [:meta {:charset "utf-8"}]
@@ -31,30 +31,35 @@
      (hiccup/include-js "/lib/toastr/toastr.min.js")
      (hiccup/include-js "/lib/howler/howler.min.js")
      [:script {:type "text/javascript"}
-      (str "var user=" (json/generate-string (:user req)))]
+      (str "var user=" (json/generate-string user))]
 
-     [:script (str "var iourl = window.location.origin;")]
-
-     (hiccup/include-js "/cljs/goog/base.js")
-     (hiccup/include-js (str "js/app.js?v=" version))
-     [:script
-      (for [req ["netrunner.appstate"
-                 "netrunner.main"
-                 "netrunner.ajax"
-                 "netrunner.auth"
-                 "netrunner.chat"
-                 "netrunner.gameboard"
-                 "netrunner.gamelobby"
-                 "netrunner.cardbrowser"
-                 "netrunner.deckbuilder"
-                 "netrunner.help"
-                 "netrunner.about"
-                 "netrunner.account"
-                 "netrunner.stats"
-                 "netrunner.news"]]
-            (str "goog.require(\"" req "\");"))
-      (str "goog.require(\"dev.figwheel\");")]
-     ]))
+     (if (= "dev" @web.config/server-mode)
+       (list (hiccup/include-js "/cljs/goog/base.js")
+             (hiccup/include-js (str "cljs/app.js?v=" version))
+             [:script
+              (for [req ["netrunner.appstate"
+                         "netrunner.main"
+                         "netrunner.ajax"
+                         "netrunner.auth"
+                         "netrunner.chat"
+                         "netrunner.gameboard"
+                         "netrunner.gamelobby"
+                         "netrunner.cardbrowser"
+                         "netrunner.deckbuilder"
+                         "netrunner.help"
+                         "netrunner.about"
+                         "netrunner.account"
+                         "netrunner.stats"
+                         "netrunner.news"
+                         "dev.figwheel"]]
+                (str "goog.require(\"" req "\");"))])
+       (list (hiccup/include-js (str "js/app.js?v=" version))
+             [:script
+              "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+              ga('create', 'UA-20250150-2', 'www.jinteki.net');"]))
+     (when user
+       (str "ga('set', '&uid', '" (:username user) "');"))
+     "ga('send', 'pageview');"]))
 
 
 (defn index-page [req]
