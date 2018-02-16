@@ -33,7 +33,7 @@
   (authenticated
     (fn [user]
       (let [id (get-in @app-state [:user :_id])]
-        ;(try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
+        (try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
         (go (let [result (<! (DELETE "/profile/stats/user"))]
               (swap! app-state assoc :stats result)))))))
 

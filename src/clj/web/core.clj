@@ -2,7 +2,7 @@
   (:require [web.api :refer [app]]
             [monger.collection :as mc]
             [jinteki.cards :as cards]
-            [web.config :refer [frontend-version server-config]]
+            [web.config :refer [frontend-version server-config server-mode]]
             [web.ws :as ws]
             [web.db :refer [db]]
             [web.chat :as chat]
@@ -33,6 +33,9 @@
       (reset! cards/cycles cycles)
       (reset! cards/mwl mwl))
 
+    (when (#{"dev" "prod"} (first args))
+      (reset! server-mode (first args)))
+
     (if-let [config (mc/find-one-as-map db "config" nil)]
       (reset! frontend-version (:version config))
       (do (mc/create db "config" nil)
@@ -43,7 +46,7 @@
     (web.utils/tick lobby/send-lobby 1000)
 
     (reset! server (org.httpkit.server/run-server app {:port port}))
-    (println "Jinteki server running on port" port)
+    (println "Jinteki server running in" @server-mode "mode on port" port)
     (println "Frontend version " @frontend-version))
 
   (ws/start-ws-router!))
