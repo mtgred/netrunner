@@ -238,7 +238,8 @@
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
   [state side {:keys [card ability targets] :as args}]
-  (let [cdef (card-def card)
+  (let [card (get-card state card)
+        cdef (card-def card)
         ab (get-in cdef [:runner-abilities ability])]
     (do-play-ability state side card ab targets)))
 
@@ -246,7 +247,8 @@
   "Triggers a card's subroutine using its zero-based index into the card's card-def :subroutines vector."
   ([state side args] (play-subroutine state side (make-eid state) args))
   ([state side eid {:keys [card subroutine targets] :as args}]
-   (let [cdef (card-def card)
+   (let [card (get-card state card)
+         cdef (card-def card)
          sub (get-in cdef [:subroutines subroutine])
          cost (:cost sub)]
      (when (or (nil? cost)
