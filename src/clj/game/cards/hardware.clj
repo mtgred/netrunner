@@ -857,7 +857,8 @@
                                    :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
                                              " and access " (quot (count targets) 2) " additional cards")
                                    :effect (req (let [bonus (quot (count targets) 2)]
-                                                   (trash-cards state side targets)
+                                                   (trash-cards state side (make-eid state) targets
+                                                                {:unpreventable true :suppress-event true})
                                                    (game.core/run state side srv nil card)
                                                    (register-events state side
                                                      {:pre-access
