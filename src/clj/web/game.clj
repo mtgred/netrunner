@@ -58,7 +58,9 @@
   (when-let [{:keys [players gameid started] :as game} (lobby/game-for-client client-id)]
     (when (and (lobby/first-player? client-id gameid)
                (not started))
-      (let [strip-deck (fn [player] (update-in player [:deck] #(select-keys % [:_id])))
+      (let [strip-deck (fn [player] (-> player
+                                        (update-in [:deck] #(select-keys % [:_id :identity]))
+                                        (update-in [:deck :identity] #(select-keys % [:title :faction]))))
             stripped-players (mapv strip-deck players)
             game (as-> game g
                        (assoc g :started true
@@ -180,7 +182,7 @@
       (let [{:keys [user] :as spect} (lobby/spectator? client-id gameid)]
         (when (and spect (not mute-spectators))
           (main/handle-say state :spectator user msg)
-          (swap! all-games assoc :last-update (t/now))
+          (swap! all-games assoc-in [gameid :last-update] (t/now))
           (swap-and-send-diffs! game))))))
 
 (defn handle-game-typing

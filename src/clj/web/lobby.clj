@@ -34,23 +34,25 @@
 
 (defn user-public-view
   "Strips private server information from a player map."
-  [player]
+  [started? player]
   (as-> player p
         (dissoc p :ws-id)
         (if-let [{:keys [_id] :as deck} (:deck p)]
           (assoc p :deck (select-keys (assoc deck :_id (str _id))
-                                      [:_id :status :name]))
+                                      (if started?
+                                        [:_id :status :name :identity]
+                                        [:_id :status :name])))
           p)))
 
 (defn game-public-view
   "Strips private server information from a game map, preparing to send the game to clients."
-  [game]
+  [{:keys [started] :as game}]
   (-> game
       (dissoc :state :last-update)
-      (update-in [:players] #(map user-public-view %))
-      (update-in [:original-players] #(map user-public-view %))
-      (update-in [:ending-players] #(map user-public-view %))
-      (update-in [:spectators] #(map user-public-view %))))
+      (update-in [:players] #(map (partial user-public-view started) %))
+      (update-in [:original-players] #(map (partial user-public-view started) %))
+      (update-in [:ending-players] #(map (partial user-public-view started) %))
+      (update-in [:spectators] #(map (partial user-public-view started) %))))
 
 (let [lobby-update (atom true)
       lobby-updates (atom {})]
