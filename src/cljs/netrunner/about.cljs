@@ -6,7 +6,7 @@
 
 (def app-state (atom {}))
 
-(go (swap! app-state assoc :donators (:json (<! (GET "/data/donators")))))
+(go (swap! app-state assoc :donators (:json (<! (GET "/data/donors")))))
 
 (defn about [cursor owner]
   (om/component

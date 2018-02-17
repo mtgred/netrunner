@@ -89,13 +89,13 @@
                           :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
-    (swap! game-states assoc gameid state)
+    ;(swap! game-states assoc gameid state)
     (let [side :corp]
       (when-completed (trigger-event-sync state side :pre-start-game)
                       (let [side :runner]
                         (when-completed (trigger-event-sync state side :pre-start-game)
                                         (init-hands state)))))
-    @game-states))
+    state))
 
 (defn server-card
   ([title] (@all-cards title))

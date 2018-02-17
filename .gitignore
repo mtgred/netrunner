@@ -23,3 +23,5 @@ pom.xml
 /data/andb-*.json
 /data/img
 /.lein-failures
+
+config.edn

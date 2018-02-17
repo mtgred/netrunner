@@ -129,7 +129,7 @@
                                {:delayed-completion true
                                 :choices ["0", "1", "2"]
                                 :prompt "How many advancement tokens?"
-                                :effect (req (let [c (Integer/parseInt target)]
+                                :effect (req (let [c (str->int target)]
                                                (continue-ability
                                                  state side
                                                  {:choices {:req can-be-advanced?}
@@ -482,7 +482,7 @@
    {:interactive (req true)
     :choices ["0", "1", "2"]
     :prompt "How many power counters?"
-    :effect (req (let [c (Integer/parseInt target)]
+    :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
                      {:choices {:req #(< 0 (get-in % [:counter :power] 0))}
@@ -761,9 +761,9 @@
    "Profiteering"
    {:interactive (req true)
     :choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
-    :msg (msg "take " target " bad publicity and gain " (* 5 (Integer/parseInt target)) " [Credits]")
-    :effect (final-effect (gain :credit (* 5 (Integer/parseInt target))
-                                :bad-publicity (Integer/parseInt target)))}
+    :msg (msg "take " target " bad publicity and gain " (* 5 (str->int target)) " [Credits]")
+    :effect (final-effect (gain :credit (* 5 (str->int target))
+                                :bad-publicity (str->int target)))}
 
    "Project Ares"
    (letfn [(trash-count-str [card]
