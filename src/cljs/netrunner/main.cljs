@@ -9,6 +9,8 @@
             [jinteki.nav :as nav])
   (:import goog.history.Html5History))
 
+(enable-console-print!)
+
 (def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about"])
 
 (def history (Html5History.))

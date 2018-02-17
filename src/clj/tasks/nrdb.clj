@@ -139,7 +139,7 @@
   [l]
   (reduce #(assoc %1 (:code %2) %2) {} l))
 
-(defn- add-set-fields
+(defn add-set-fields
   "Add additional fields to the set documents"
   [cycle-map s]
   (let [c (cycle-map (:cycle_code s))]
@@ -265,25 +265,6 @@
              {$inc {:cards-version 1}
               $currentDate {:last-updated true}}
              {:upsert true}))
-
-(defn fetch
-  "Import data from NetrunnerDB"
-  [& args]
-  (webdb/connect)
-  (try
-    (let [cycles (fetch-data (:cycle tables))
-          mwls (fetch-data (:mwl tables))
-          sets (fetch-data (:set tables) (partial add-set-fields cycles))
-          cards (fetch-cards (:card tables) sets (not (some #{"--no-card-images"} args)))]
-      (println (count cycles) "cycles imported")
-      (println (count sets) "sets imported")
-      (println (count mwls) "MWL versions imported")
-      (println (count cards) "cards imported")
-      (update-config (:config tables)))
-    (catch Exception e (do
-                         (println "Import data failed:" (.getMessage e))
-                         (.printStackTrace e)))
-    (finally (webdb/disconnect))))
 
 (comment
   (defn compare-collections

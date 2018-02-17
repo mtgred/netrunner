@@ -44,8 +44,8 @@
                    :plugins [[lein-figwheel "0.5.11"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
-  :aliases {"fetch" ["run" "-m" "tasks.nrdb/fetch"]
-            "add_art" ["run" "-m" "tasks.altart/add_art"]}
+  :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
+            "add-art" ["run" "-m" "tasks.altart/add-art"]}
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs" "src/cljc"]

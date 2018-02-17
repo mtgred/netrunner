@@ -3,7 +3,7 @@
   (:require [web.db :refer [db] :as webdb]
             [monger.collection :as mc]
             [monger.operators :refer :all]
-            [tasks.nrdb :refer [replace-collection tables]]
+            [tasks.nrdb :refer [replace-collection tables update-config tables]]
             [clojure.string :as string]
             [clojure.java.io :as io]
             [cheshire.core :as json]))
@@ -61,20 +61,23 @@
                     0 cards)]
     (println "Added" cnt "alt art cards to set" name)))
 
-(defn add_art
+(defn add-art
   "Add alt art card images to the database"
-  []
-  (webdb/connect)
-  (try
-    (let [alt-sets (read-alt-sets)
-          alt-files (find-alt-files (map :version alt-sets))
-          alt-sets-cards (add-cards alt-sets alt-files)]
-      (replace-collection alt-collection alt-sets-cards)
-      (println (count alt-sets-cards) "alt art sets imported")
-      (remove-old-alt-art)
-      (doall (map add-alt-art alt-sets-cards))
-      )
-    (catch Exception e (do
-                         (println "Alt art import failed:" (.getMessage e))
-                         (.printStackTrace e)))
-    (finally (webdb/disconnect))))
+  ([] (add-art true))
+  ([standalone?]
+   (when standalone?
+     (webdb/connect))
+   (try
+     (let [alt-sets (read-alt-sets)
+           alt-files (find-alt-files (map :version alt-sets))
+           alt-sets-cards (add-cards alt-sets alt-files)]
+       (replace-collection alt-collection alt-sets-cards)
+       (println (count alt-sets-cards) "alt art sets imported")
+       (remove-old-alt-art)
+       (doall (map add-alt-art alt-sets-cards))
+       (when standalone?
+         (update-config (:config tables))))
+     (catch Exception e (do
+                          (println "Alt art import failed:" (.getMessage e))
+                          (.printStackTrace e)))
+     (finally (when standalone? (webdb/disconnect))))))
