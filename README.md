@@ -52,14 +52,15 @@ $ lein uberjar
 
 Launch web server:
 
-* As a standalone process:
-    ```
-    $ java -jar target/netrunner-standalone.jar
-    ```
-* OR (recommended for development) as  REPL process:
+* As a REPL process (recommended for development):
     ```
     $ lein repl
     ```
+* As a standalone process in production mode (must first run `lein cljsbuild once prod`):
+    ```
+    $ java -jar target/netrunner-standalone.jar
+    ```
+
 
 
 ## Tests
