@@ -95,4 +95,4 @@
   ;; Set timeout to 2 min to allow for full compilation after a clean.
   :repl-options {:timeout 120000
                  :init-ns web.core
-                 :init (-main "dev")})
+                 :init (do (use 'web.lobby) (-main "dev"))})
