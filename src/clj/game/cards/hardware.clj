@@ -12,8 +12,8 @@
                                                       :prompt "Use Acacia?"
                                                       :yes-ability {:effect (req (let [counters (get-in (get-card state card) [:special :numpurged])]
                                                                                    (gain state side :credit counters)
-                                                                                   (system-msg state side (str "trashes Acacia and gains " counters "[Credit]"))
-                                                                                   (trash state side card {:unpreventable true})
+                                                                                   (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
+                                                                                   (trash state side card)
                                                                                    (clear-wait-prompt state :corp)
                                                                                    (effect-completed state side eid)))}
                                                       :no-ability {:effect (effect (clear-wait-prompt :corp)
