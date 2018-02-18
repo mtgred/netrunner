@@ -60,7 +60,7 @@
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aeneas Informant"
-   {:events {:no-trash {:req (req (and (:trash target) (req (not= (first (:zone target)) :discard))))
+   {:events {:no-trash {:req (req (and (:trash target) (not= (first (:zone target)) :discard)))
                         :optional {:prompt (msg "Use Aeneas Informant?")
                                    :yes-ability {:msg (msg (str "gain 1 [Credits] and reveal " (:title target)))
                                                  :effect (effect (gain :credit 1))}}}}}
