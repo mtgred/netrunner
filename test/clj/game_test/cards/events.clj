@@ -354,6 +354,21 @@
       (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
       (run-successful state))))
 
+(deftest corporate-grant
+  ;; Corporate "Grant" - First time runner installs a card, the corp loses 1 credit
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Corporate \"Grant\"" 1) (qty "Daily Casts" 2)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Corporate \"Grant\"")
+    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+    (play-from-hand state :runner "Daily Casts")
+    (is (= 7 (:credit (get-corp))) "Corp loses 1 credit")
+    (play-from-hand state :runner "Daily Casts")
+    (is (empty? (:hand (get-runner))) "Played all cards in hand")
+    (is (= 7 (:credit (get-corp))) "Corp doesn't lose 1 credit")))
+
 (deftest corporate-scandal
   ;; Corporate Scandal - Corp has 1 additional bad pub even with 0
   (do-game
