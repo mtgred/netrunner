@@ -1659,7 +1659,9 @@
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
 
    "The Turning Wheel"
-   (letfn [(find-latest [state c] (find-cid (:cid c) (concat (all-installed state :runner) (-> @state :runner :discard))))]
+   (letfn [(find-latest [state c] (find-cid (:cid c) (concat (all-installed state :runner)
+                                                             (-> @state :runner :discard)
+                                                             (-> @state :runner :rfg))))]
      {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
                                :silent (req true)}
                :run-ends {:effect (req (when (and (not (:agenda-stolen card))
