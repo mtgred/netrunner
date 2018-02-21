@@ -285,6 +285,36 @@
         (is (= 2 (count (:hand (get-runner)))))
         (is (empty? (get-in @state [:runner :rig :hardware])) "Feedback Filter trashed")))))
 
+(deftest friday-chip
+  ;; Friday Chip - gain counters for trashing cards, move a counter on turn start
+  (do-game
+    (new-game (default-corp [(qty "Adonis Campaign" 1) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Friday Chip" 1) (qty "Aumakua" 1)]))
+    (play-from-hand state :corp "Adonis Campaign" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 20)
+    (play-from-hand state :runner "Friday Chip")
+    (play-from-hand state :runner "Aumakua")
+    (let [fc (get-in @state [:runner :rig :hardware 0])
+          aum (get-in @state [:runner :rig :program 0])]
+      (is (zero? (get-counters fc :virus)) "Friday Chip starts with 0 counters")
+      (is (zero? (get-counters aum :virus)) "Auakua starts with 0 counters")
+      (run-on state "Server 1")
+      (run-successful state)
+      (prompt-choice :runner "Yes") ; trash Adonis Campaing
+      (is (= 1 (get-counters (refresh fc) :virus)) "Friday Chip gains a counter on trash")
+      (is (zero? (get-counters (refresh aum) :virus)) "Auakua doesn't gain a counter")
+      (run-on state "HQ")
+      (run-successful state)
+      (prompt-choice :runner "OK")
+      (is (= 1 (get-counters (refresh fc) :virus)) "Friday Chip doesn't gain a counter on non-trash")
+      (is (= 1 (get-counters (refresh aum) :virus)) "Aumakua gains a counter on non-trash")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (prompt-select :runner aum)
+      (is (= 2 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
+      (is (= 0 (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))
+
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
   (do-game

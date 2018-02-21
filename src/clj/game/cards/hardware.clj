@@ -394,6 +394,18 @@
                 {:msg "remove 1 tag" :label "[Trash]: Remove 1 tag"
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
 
+   "Friday Chip"
+    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
+                   :req (req (pos? (get-in card [:counter :virus] 0)))
+                   :choices {:req #(and (has-subtype? % "Virus")
+                                        (pos? (get-in % [:counter :virus] 0)))}
+                   :effect (req (when (pos? (get-virus-counters state side target))
+                                  (add-counter state side card :virus -1)
+                                  (add-counter state side target :virus 1)))}]
+     {:events {:runner-turn-begins ability
+               :runner-trash {:msg "to gain a virus counter"
+                              :effect (effect (add-counter card :virus 1))}}})
+
    "GPI Net Tap"
    {:implementation "Trash and jack out effect is manual"
     :abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
