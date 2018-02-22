@@ -56,6 +56,21 @@
       (run-jack-out state)
       (is (= 2 (count(get-in @state [:runner :hand]))) "Runner took 1 net damage"))))
 
+(deftest armed-intimidation
+  ;; Armed intimidation choices
+  (do-game
+    (new-game (default-corp [(qty "Armed Intimidation" 2)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 2)]))
+    (play-from-hand state :corp "Armed Intimidation" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :runner "Take 2 tags")
+    (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Armed Intimidation tag choice")
+    (play-from-hand state :corp "Armed Intimidation" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 5 (count (:hand (get-runner)))) "Runner has 5 cards before Armed Intimidation meat damage")
+    (prompt-choice :runner "Suffer 5 meat damage")
+    (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards after Armed Intimidation meat damage")))
+
 (deftest astro-script-token
   ;; AstroScript token placement
   (do-game
@@ -158,7 +173,7 @@
       (prompt-select :corp kati)
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
-	  
+
 (deftest corporate-sales-team
   ;; Corporate Sales Team - Places 10c on card, corp takes 1c on each turn start
   (do-game
@@ -169,11 +184,11 @@
     (score-agenda state :corp (get-content state :remote1 0))
 	(let [scored-cst (get-in @state [:corp :scored 0])]
 	  (core/end-turn state :corp nil)
-	  (core/start-turn state :runner nil)	
+	  (core/start-turn state :runner nil)
 	  (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
 	  (is (= 9 (get-counters (refresh scored-cst) :credit)))
 	  (core/end-turn state :runner nil)
-	  (core/start-turn state :corp nil)	
+	  (core/start-turn state :corp nil)
 	  (is (= 7 (:credit (get-corp))) "Increments at corp's start of turn")
 	  (is (= 8 (get-counters (refresh scored-cst) :credit)))
 	)))
@@ -724,7 +739,7 @@
     (score-agenda state :corp (get-content state :remote4 0))
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
-	  
+
 (deftest posted-bounty-yes
   ;; Posted Bounty - Forfeiting takes 1 bad publicity
   (do-game
@@ -737,7 +752,7 @@
 	  (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
       (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity"))
 	  (is (= 1 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))
-	  
+
 (deftest posted-bounty-no
   ;; Posted Bounty - Choosing not to forfeit scores normally
   (do-game

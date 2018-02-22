@@ -105,6 +105,22 @@
                             :msg "give the Runner a tag for trashing a Corp card"
                             :effect (effect (tag-runner :runner eid 1))}}}
 
+   "Armed Intimidation"
+   {:delayed-completion true
+    :effect (effect (show-wait-prompt :corp "Runner to suffer 5 meat damage or take 2 tags")
+                    (continue-ability :runner
+                      {:delayed-completion true
+                       :choices ["Suffer 5 meat damage" "Take 2 tags"]
+                       :prompt "Choose Armed Intimidation score effect"
+                       :effect (req (case target
+                                      "Suffer 5 meat damage"
+                                      (do (damage state :runner eid :meat 5 {:card card})
+                                          (system-msg state :runner "chooses to suffer 5 meat damage from Armed Intimidation"))
+                                      "Take 2 tags"
+                                      (do (tag-runner state :runner eid 2 {:card card})
+                                          (system-msg state :runner "chooses to take 2 tags from Armed Intimidation"))))}
+                      card nil))}
+
    "Armored Servers"
    {:implementation "Runner must trash cards manually when required"
     :effect (effect (add-counter card :agenda 1))
