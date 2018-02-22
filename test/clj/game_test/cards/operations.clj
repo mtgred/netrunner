@@ -367,6 +367,24 @@
       (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
       (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
+(deftest death-and-taxes
+  ;; Death and Taxes gain credit on runner install, runner trash installed card
+  (do-game
+    (new-game (default-corp [(qty "Death and Taxes" 1) (qty "PAD Campaign" 1)])
+              (default-runner [(qty "Fall Guy" 1)]))
+    (play-from-hand state :corp "Death and Taxes")
+    (is (= (- 5 2) (:credit (get-corp))) "Corp paid 2 to play Death and Taxes")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (let [corp-creds (:credit (get-corp))]
+      (play-from-hand state :runner "Fall Guy")
+      (is (= (+ 1 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner installed Fall Guy")
+      (card-ability state :runner (get-resource state 0) 1)
+      (is (= (+ 2 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed Fall Guy")
+      (run-empty-server state :remote1)
+      (prompt-choice :runner "Yes")                         ;; Runner trashes PAD Campaign
+      (is (= (+ 3 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed PAD Campaign"))))
+
 (deftest distract-the-masses
   (do-game
     (new-game (default-corp [(qty "Distract the Masses" 2) (qty "Hedge Fund" 3)])
