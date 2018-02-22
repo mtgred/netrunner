@@ -313,8 +313,8 @@
      :mwl           mwl
      :rotation      rotation
      :status        status
-     :onesies       (:legal onesies)
-     :cache-refresh (:legal cache-refresh)}))
+     :onesies       onesies
+     :cache-refresh cache-refresh}))
 
 (defn trusted-deck-status [{:keys [status name cards] :as deck}]
   (or status (check-deck-status deck)))
