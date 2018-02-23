@@ -704,10 +704,10 @@
       :trash-effect {:effect cleanup}
       :events {:corp-spent-click
                {:effect (req (when-not target
-                               (clojure.stacktrace/print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
+                               (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
                              (update! state side (update-in card [:seen-this-turn (or target :this-is-a-hack)]
                                                             (fnil + 0) (second targets)))
-                             (when (>= (get-in (get-card state card) [:seen-this-turn target]) 3)
+                             (when (>= (get-in (get-card state card) [:seen-this-turn (or target :this-is-a-hack)]) 3)
                                (resolve-ability state side ability card nil)))}
                :corp-turn-ends {:effect cleanup}}})
 
