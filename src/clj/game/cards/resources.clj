@@ -60,7 +60,7 @@
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aeneas Informant"
-   {:events {:no-trash {:req (req (and (:trash target) (req (not= (first (:zone target)) :discard))))
+   {:events {:no-trash {:req (req (and (:trash target) (not= (first (:zone target)) :discard)))
                         :optional {:prompt (msg "Use Aeneas Informant?")
                                    :yes-ability {:msg (msg (str "gain 1 [Credits] and reveal " (:title target)))
                                                  :effect (effect (gain :credit 1))}}}}}
@@ -868,7 +868,7 @@
    {:abilities [{:label "[Trash]: Break the first subroutine on the encountered piece of ice"
                  :req (req (and (:run @state) (rezzed? current-ice)))
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (system-msg :corp
+                                 (system-msg :runner
                                              (str "trashes Kongamato to break the first subroutine on "
                                                   (:title current-ice))))}]}
 
@@ -1475,6 +1475,7 @@
     :abilities [{:req (req (not (install-locked? state side)))
                  :prompt "Choose a card on Street Peddler to install"
                  :choices (req (cancellable (filter #(and (not (is-type? % "Event"))
+                                                          (runner-can-install? state side % nil)
                                                           (can-pay? state side nil (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")
@@ -1658,21 +1659,26 @@
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
 
    "The Turning Wheel"
-   {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
-                             :silent (req true)}
-             :pre-access {:req (req (and (:counters-spent card) (#{:hq :rd} target)))
-                          :effect (effect (access-bonus (:counters-spent card 0)))
-                          :silent (req true)}
-             :run-ends {:effect (req (when (and (not (:agenda-stolen card))
-                                                (#{:hq :rd} target))
-                                       (add-counter state side card :power 1)
-                                       (system-msg state :runner (str "places a power counter on " (:title card))))
-                                     (update! state side (dissoc (get-card state card) :agenda-stolen :counters-spent)))
-                        :silent (req true)}}
-    :abilities [{:counter-cost [:power 2]
-                 :req (req (:run @state))
-                 :msg "access 1 additional card from HQ or R&D for the remainder of the run"
-                 :effect (effect (update! (update-in card [:counters-spent] #(inc (or % 0)))))}]}
+   (letfn [(find-latest [state c] (find-cid (:cid c) (concat (all-installed state :runner)
+                                                             (-> @state :runner :discard)
+                                                             (-> @state :runner :rfg))))]
+     {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
+                               :silent (req true)}
+               :run-ends {:effect (req (when (and (not (:agenda-stolen card))
+                                                  (#{:hq :rd} target))
+                                         (add-counter state side card :power 1)
+                                         (system-msg state :runner (str "places a power counter on " (:title card))))
+                                       (update! state side (dissoc (get-card state card) :agenda-stolen)))
+                          :silent (req true)}}
+      :abilities [{:counter-cost [:power 2]
+                   :req (req (:run @state))
+                   :msg "access 1 additional card from HQ or R&D for the remainder of the run"
+                   :effect  (req (swap! state update-in [:run :ttw-spent] #(inc (or % 0)))
+                                 (register-events state side
+                                                  {:pre-access {:req (req (and (get-in @state [:run :ttw-spent]) (#{:hq :rd} target)))
+                                                                :effect (effect (access-bonus (get-in @state [:run :ttw-spent] 0))
+                                                                                (unregister-events #(find-latest state card) {:events {:pre-access nil}}))
+                                                                :silent (req true)}} #(find-latest state card)))}]})
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all :run-credit :all)

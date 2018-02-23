@@ -1565,6 +1565,37 @@
       (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
       (is (= 2 (:memory (get-runner))) "Morning Star uses 2 memory"))))
 
+(deftest rip-deal
+  ;; Rip Deal - replaces number of HQ accesses with heap retrieval
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 2)(qty "Vanilla" 2)])
+              (default-runner [(qty "The Gauntlet" 1) (qty "Rip Deal" 1) (qty "Easy Mark" 2)]))
+    (trash-from-hand state :runner "Easy Mark")
+    (trash-from-hand state :runner "Easy Mark")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rip Deal")
+    (run-successful state)
+    (prompt-choice :runner "Run ability")
+    (is (= "Choose 1 card(s) to move from the Heap to your Grip" (-> (get-runner) :prompt first :msg)))))
+
+(deftest rip-deal-gauntlet
+  ;; Rip Deal with Gauntlet #2942
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 2)(qty "Vanilla" 2)])
+              (default-runner [(qty "The Gauntlet" 1) (qty "Rip Deal" 1) (qty "Easy Mark" 2)]))
+    (trash-from-hand state :runner "Easy Mark")
+    (trash-from-hand state :runner "Easy Mark")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 4)
+    (play-from-hand state :runner "The Gauntlet")
+    (play-from-hand state :runner "Rip Deal")
+    (run-successful state)
+    (prompt-choice :runner 1)
+    (prompt-choice :runner "Run ability")
+    (is (= "Choose 2 card(s) to move from the Heap to your Grip" (-> (get-runner) :prompt first :msg)))))
+
 (deftest rumor-mill
   ;; Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects
   (do-game
