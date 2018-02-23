@@ -233,7 +233,7 @@
              end-cost (if no-install-cost 0 (install-cost state side card all-cost))
              install-state (or install-state (:install-state cdef))]
          (when (and (corp-can-install? state side card dest-zone) (not (install-locked? state :corp)))
-           (if-let [cost-str (pay state side card end-cost action)]
+           (if-let [cost-str (pay state side card end-cost {:action action})]
              (do (let [c (-> card
                              (assoc :advanceable (:advanceable cdef) :new true)
                              (dissoc :seen :disabled))]
