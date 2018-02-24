@@ -158,7 +158,7 @@
       (prompt-select :corp kati)
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
-	  
+
 (deftest corporate-sales-team
   ;; Corporate Sales Team - Places 10c on card, corp takes 1c on each turn start
   (do-game
@@ -169,11 +169,11 @@
     (score-agenda state :corp (get-content state :remote1 0))
 	(let [scored-cst (get-in @state [:corp :scored 0])]
 	  (core/end-turn state :corp nil)
-	  (core/start-turn state :runner nil)	
+	  (core/start-turn state :runner nil)
 	  (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
 	  (is (= 9 (get-counters (refresh scored-cst) :credit)))
 	  (core/end-turn state :runner nil)
-	  (core/start-turn state :corp nil)	
+	  (core/start-turn state :corp nil)
 	  (is (= 7 (:credit (get-corp))) "Increments at corp's start of turn")
 	  (is (= 8 (get-counters (refresh scored-cst) :credit)))
 	)))
@@ -724,7 +724,7 @@
     (score-agenda state :corp (get-content state :remote4 0))
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
-	  
+
 (deftest posted-bounty-yes
   ;; Posted Bounty - Forfeiting takes 1 bad publicity
   (do-game
@@ -737,7 +737,7 @@
 	  (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
       (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity"))
 	  (is (= 1 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))
-	  
+
 (deftest posted-bounty-no
   ;; Posted Bounty - Choosing not to forfeit scores normally
   (do-game
@@ -978,6 +978,29 @@
     (take-credits state :runner)
 
     (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+
+(deftest ssl-endorsement-scored-swapped
+  ;; SSL Endorsement - register event when agenda swapped with Turntable
+  ;; Regression test for #3114
+  (do-game
+    (new-game (default-corp [(qty "SSL Endorsement" 1) (qty "Breaking News" 1)])
+              (default-runner [(qty "Turntable" 1)]))
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (score-agenda state :corp (find-card "SSL Endorsement" (:hand (get-corp))))
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Turntable")
+    (run-on state "Server 1")
+    (run-successful state)
+    (prompt-choice :runner "Steal")
+    (prompt-choice :runner "Yes")                           ;; Swap BN with SSL
+    (prompt-select :runner (find-card "SSL Endorsement" (:scored (get-corp))))
+    (take-credits state :runner)
+
+    (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+    (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+    (prompt-choice :corp "Yes")
+    (is (= 10 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
 
 (deftest ssl-endorsement-stolen-swapped
   ;; SSL Endorsement - don't double register event when agenda is swapped
