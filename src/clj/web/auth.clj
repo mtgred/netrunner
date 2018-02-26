@@ -73,10 +73,10 @@
                                                        :options          {}})
             demo-decks (mc/find-maps db "decks" {:username "__demo__"})]
         (when (not-empty demo-decks)
-          (mc/insert db "decks" (map #(-> %
-                                          (dissoc :_id)
-                                          (assoc :username username))
-                                     demo-decks)))
+          (mc/insert-batch db "decks" (map #(-> %
+                                                (dissoc :_id)
+                                                (assoc :username username))
+                                           demo-decks)))
         (response 200 {:message "ok"})))))
 
 (defn login-handler [{{:keys [username password]} :params

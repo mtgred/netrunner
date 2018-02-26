@@ -355,6 +355,22 @@
     (is (= 2 (:credit (get-runner))) "No Desperado or Temujin credits")
     (is (not (:successful-run (:register (get-runner)))) "No successful run in register")))
 
+(deftest crisium-grid-gauntlet
+  ;; Crisium Grid with Gauntlet #3082
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 2)(qty "Vanilla" 2)])
+              (default-runner [(qty "The Gauntlet" 1) (qty "Temüjin Contract" 1)]))
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (core/rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 4)
+    (play-from-hand state :runner "The Gauntlet")
+    (run-on state "HQ")
+    (run-successful state)
+    (is (seq (:prompt (get-runner))) "The Gauntlet has a prompt")))
+
 (deftest cyberdex-virus-suite-purge
   ;; Cyberdex Virus Suite - Purge ability
   (do-game

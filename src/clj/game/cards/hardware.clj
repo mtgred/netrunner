@@ -12,8 +12,8 @@
                                                       :prompt "Use Acacia?"
                                                       :yes-ability {:effect (req (let [counters (get-in (get-card state card) [:special :numpurged])]
                                                                                    (gain state side :credit counters)
-                                                                                   (system-msg state side (str "trashes Acacia and gains " counters "[Credit]"))
-                                                                                   (trash state side card {:unpreventable true})
+                                                                                   (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
+                                                                                   (trash state side card)
                                                                                    (clear-wait-prompt state :corp)
                                                                                    (effect-completed state side eid)))}
                                                       :no-ability {:effect (effect (clear-wait-prompt :corp)
@@ -857,7 +857,8 @@
                                    :msg (msg "trash " (count targets) " card" (if (not= 1 (count targets)) "s")
                                              " and access " (quot (count targets) 2) " additional cards")
                                    :effect (req (let [bonus (quot (count targets) 2)]
-                                                   (trash-cards state side targets)
+                                                   (trash-cards state side (make-eid state) targets
+                                                                {:unpreventable true :suppress-event true})
                                                    (game.core/run state side srv nil card)
                                                    (register-events state side
                                                      {:pre-access
@@ -925,17 +926,17 @@
    "The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
     :in-play [:memory 2]
-    :events {:successful-run {:req (req (and (= :hq target)
-                                         run))
-                              :silent (req true)
-                              :delayed-completion true
-                              :effect (effect (continue-ability
-                                                {:prompt "How many ICE protecting HQ did you break all subroutines on?"
-                                                 ;; Makes number of ice on server (HQ) the upper limit.
-                                                 ;; This should work since trashed ice do not count according to UFAQ
-                                                 :choices {:number (req (count (get-in @state [:corp :servers :hq :ices])))}
-                                                 :effect (effect (access-bonus target))}
-                                                card nil))}}}
+    :events {:post-successful-run {:req (req (and (= :hq target)
+                                                  run))
+                                   :silent (req true)
+                                   :delayed-completion true
+                                   :effect (effect (continue-ability
+                                                     {:prompt "How many ICE protecting HQ did you break all subroutines on?"
+                                                      ;; Makes number of ice on server (HQ) the upper limit.
+                                                      ;; This should work since trashed ice do not count according to UFAQ
+                                                      :choices {:number (req (count (get-in @state [:corp :servers :hq :ices])))}
+                                                      :effect (effect (access-bonus target))}
+                                                     card nil))}}}
 
    "The Personal Touch"
    {:hosting {:req #(and (has-subtype? % "Icebreaker")

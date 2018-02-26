@@ -635,7 +635,8 @@
    (swap! state assoc-in [:run :successful] true)
    (when-completed (trigger-event-simult state side :pre-successful-run nil (first server))
                    (when-completed (trigger-event-simult state side :successful-run nil (first (get-in @state [:run :server])))
-                                   (effect-completed state side eid nil)))))
+                                   (when-completed (trigger-event-simult state side :post-successful-run nil (first (get-in @state [:run :server])))
+                                                   (effect-completed state side eid nil))))))
 
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
