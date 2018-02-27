@@ -219,6 +219,10 @@
   [state side ev]
   (mapcat rest (filter #(= ev (first %)) (:turn-events @state))))
 
+(defn last-turn? [state side event]
+  (let [register (get-in @state [side :register-last-turn])]
+    (and register (event register))))
+
 (defn first-event?
   "Returns true if the given event has not occurred yet this turn."
   [state side ev]

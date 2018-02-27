@@ -2,10 +2,6 @@
 
 (declare set-prop get-nested-host get-nested-zone)
 
-(defn last-turn? [state side event]
-  (let [register (get-in @state [side :register-last-turn])]
-    (and register (event register))))
-
 (defn get-zones [state]
   (keys (get-in state [:corp :servers])))
 

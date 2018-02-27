@@ -1676,7 +1676,7 @@
                    :effect  (req (swap! state update-in [:run :ttw-spent] #(inc (or % 0)))
                                  (register-events state side
                                                   {:pre-access {:req (req (and (get-in @state [:run :ttw-spent]) (#{:hq :rd} target)))
-                                                                :effect (effect (access-bonus (get-in @state [:run :ttw-spent] 0))
+                                                                :effect (effect (access-bonus 1)
                                                                                 (unregister-events #(find-latest state card) {:events {:pre-access nil}}))
                                                                 :silent (req true)}} #(find-latest state card)))}]})
 
