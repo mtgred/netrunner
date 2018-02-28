@@ -13,27 +13,24 @@
 (def pub-chan (chan))
 (def notif-chan (pub pub-chan :topic))
 
-;; Load in sets and mwl lists
-(go (let [sets (:json (<! (GET "/data/sets")))
-          cycles (:json (<! (GET "/data/cycles")))
-          mwl (:json (<! (GET "/data/mwl")))
-          latest_mwl (->> mwl
-                       (map (fn [e] (update e :date_start #(js/Date %))))
-                       (sort-by :date_start)
-                       (last))]
-
-      (reset! cards/mwl latest_mwl)
-      (reset! cards/sets sets)
-      (reset! cards/cycles cycles)
-      (swap! app-state assoc :sets sets :cycles cycles)))
-
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
           local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
           need-update? (or (not local-cards) (not= server-version (:version local-cards)))
           cards (sort-by :code
                          (if need-update?
                            (:json (<! (GET "/data/cards")))
-                           (:cards local-cards)))]
+                           (:cards local-cards)))
+          sets (:json (<! (GET "/data/sets")))
+          cycles (:json (<! (GET "/data/cycles")))
+          mwl (:json (<! (GET "/data/mwl")))
+          latest_mwl (->> mwl
+                       (map (fn [e] (update e :date_start #(js/Date.parse %))))
+                       (sort-by :date_start)
+                       (last))]
+      (reset! cards/mwl latest_mwl)
+      (reset! cards/sets sets)
+      (reset! cards/cycles cycles)
+      (swap! app-state assoc :sets sets :cycles cycles)
       (when need-update?
         (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
       (reset! all-cards cards)
