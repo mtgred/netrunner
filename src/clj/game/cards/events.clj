@@ -205,6 +205,11 @@
                                                                (continue-ability end-effect card nil))}}
                                     c)))})
 
+  "Corporate \"Grant\""
+  {:events {:runner-install {:req (req (first-event? state side :runner-install))
+                             :msg "force the Corp to lose 1 [Credit]"
+                             :effect (effect (lose :corp :credit 1))}}}
+
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
     :implementation "No enforcement that this Bad Pub cannot be removed"
