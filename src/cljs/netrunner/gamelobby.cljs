@@ -457,7 +457,7 @@
                              name
                              "Deck selected")]])
                        (when-let [deck (:deck player)]
-                         [:div.float-right (deck-status-span sets deck true false)])
+                         [:div.float-right (deck-status-span sets deck true false true)])
                        (when (= (:user player) user)
                          [:span.fake-link.deck-load
                           {:data-target "#deck-select" :data-toggle "modal"
