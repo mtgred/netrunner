@@ -220,8 +220,17 @@
   (mapcat rest (filter #(= ev (first %)) (:turn-events @state))))
 
 (defn last-turn? [state side event]
-  (let [register (get-in @state [side :register-last-turn])]
-    (and register (event register))))
+  (cond
+
+    ; Return true if no previous turn (i.e. Corp turn 1).
+    (-> @state side :register-last-turn nil?)
+    true
+
+    (-> @state side :register-last-turn event)
+    true
+
+    :else
+    false))
 
 (defn first-event?
   "Returns true if the given event has not occurred yet this turn."
