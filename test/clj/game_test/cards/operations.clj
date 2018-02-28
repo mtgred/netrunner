@@ -1141,6 +1141,28 @@
     (prompt-choice :runner 0)
     (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
 
+(deftest reverse-infection
+  ;; Reverse Infection - purge and trash 1 card from stack for every 3 counters purged - or gain 2 credits
+  (do-game
+    (new-game (default-corp [(qty "Reverse Infection" 2)])
+              (default-runner [(qty "Virus Breeding Ground" 1) (qty "Datasucker" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :runner ["Virus Breeding Ground" "Datasucker"])
+    (play-from-hand state :corp "Reverse Infection")
+    (prompt-choice :corp "Gain 2 [Credits]")
+    (is (= 7 (:credit (get-corp))) "Corp gained 2 credits")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virus Breeding Ground")
+    (play-from-hand state :runner "Datasucker")
+    (take-credits state :runner)
+    (core/add-counter state :runner (get-resource state 0) :virus 4)
+    (core/add-counter state :runner (get-program state 0) :virus 3)
+    (play-from-hand state :corp "Reverse Infection")
+    (prompt-choice :corp "Purge virus counters.")
+    (is (= 9 (:credit (get-corp))) "Corp did not gain credits")
+    (is (zero? (get-counters (get-resource state 0) :virus)) "Viruses purged from VBG")
+    (is (zero? (get-counters (get-program state 0) :virus)) "Viruses purged from Datasucker")
+    (is (= 2 (count (:discard (get-runner)))) "Two cards trashed from stack")))
+
 (deftest reuse
   ;; Reuse - Gain 2 credits for each card trashed from HQ
   (do-game
