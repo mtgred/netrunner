@@ -240,10 +240,10 @@
   ([state side cards]
    (msg-handle-access state side cards (:title (first cards))))
   ([state side cards title]
-   (system-msg state side
-               (str "accesses " title
-                    (when (pos? (count cards))
-                      (str " from " (->> cards first :zone (name-zone side))))))))
+   (let [msg (str "accesses " title
+                  (when (pos? (count cards))
+                    (str " from " (->> cards first :zone (name-zone side)))))]
+     (system-msg state side msg))))
 
 (defn handle-access
   "Apply game rules for accessing the given list of cards (which generally only contains 1 card.)"
@@ -429,14 +429,14 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
-                    (handle-access state side eid cards "an unseen card from R&D")
+                    (handle-access state side eid cards "an unseen card")
                     (let [from-rd (access-count state side :rd-access)]
                       (continue-ability state side (access-helper-hq-or-rd
                                                      state :rd "deck" from-rd
                                                      ;; access the first card in deck that has not been accessed.
                                                      (fn [already-accessed] (first (drop-while already-accessed
                                                                                                (-> @state :corp :deck))))
-                                                     (fn [_] "an unseen card from R&D")
+                                                     (fn [_] "an unseen card")
                                                      #{})
                                         card nil)))
                   (effect-completed state side eid)))})
