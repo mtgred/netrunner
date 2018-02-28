@@ -139,17 +139,19 @@
     ;; Update agenda points
     (gain-agenda-point state :runner runner-ap-change)
     (gain-agenda-point state :corp corp-ap-change)
-    ;; Set up abilities and events
-    (let [new-scored (find-cid (:cid stolen) (get-in @state [:corp :scored]))]
-      (let [abilities (:abilities (card-def new-scored))
-            new-scored (merge new-scored {:abilities abilities})]
-        (update! state :corp new-scored)
-        (when-let [events (:events (card-def new-scored))]
-          (unregister-events state side new-scored)
-          (register-events state side events new-scored))
-        (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil)))
-    (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
-      (deactivate state :corp new-stolen))))
+    ;; Set up abilities and events for new scored agenda
+    (let [new-scored (find-cid (:cid stolen) (get-in @state [:corp :scored]))
+          abilities (:abilities (card-def new-scored))
+          new-scored (merge new-scored {:abilities abilities})]
+      (update! state :corp new-scored)
+      (when-let [events (:events (card-def new-scored))]
+        (unregister-events state side new-scored)
+        (register-events state side events new-scored))
+      (resolve-ability state side (:swapped (card-def new-scored)) new-scored nil))
+    ;; Set up abilities and events for new stolen agenda
+    (when-not (card-flag? scored :has-events-when-stolen true)
+      (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
+        (deactivate state :corp new-stolen)))))
 
 ;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon
