@@ -302,8 +302,9 @@
       (run-on state "Server 1")
       (run-successful state)
       (prompt-choice :runner "Yes") ; trash Adonis Campaing
+      (prompt-choice :runner "Yes") ; gain virus counter
       (is (= 1 (get-counters (refresh fc) :virus)) "Friday Chip gains a counter on trash")
-      (is (zero? (get-counters (refresh aum) :virus)) "Auakua doesn't gain a counter")
+      (is (zero? (get-counters (refresh aum) :virus)) "Aumakua doesn't gain a counter")
       (run-on state "HQ")
       (run-successful state)
       (prompt-choice :runner "OK")
