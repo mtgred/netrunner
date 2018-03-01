@@ -88,6 +88,11 @@
   [state]
   (concat (all-installed state :corp) (all-installed state :runner)))
 
+(defn number-of-virus-counters
+  "Returns number of actual virus counters (excluding virtual counters from Hivemind)"
+  [state]
+  (reduce + (map #(get-in % [:counter :virus] 0) (all-installed state :runner))))
+
 (defn all-active
   "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,
   currents, or the corp's scored area."
