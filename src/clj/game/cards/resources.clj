@@ -60,7 +60,7 @@
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aeneas Informant"
-   {:events {:no-trash {:req (req (and (:trash target) (req (not= (first (:zone target)) :discard))))
+   {:events {:no-trash {:req (req (and (:trash target) (not= (first (:zone target)) :discard)))
                         :optional {:prompt (msg "Use Aeneas Informant?")
                                    :yes-ability {:msg (msg (str "gain 1 [Credits] and reveal " (:title target)))
                                                  :effect (effect (gain :credit 1))}}}}}
@@ -868,7 +868,7 @@
    {:abilities [{:label "[Trash]: Break the first subroutine on the encountered piece of ice"
                  :req (req (and (:run @state) (rezzed? current-ice)))
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (system-msg :corp
+                                 (system-msg :runner
                                              (str "trashes Kongamato to break the first subroutine on "
                                                   (:title current-ice))))}]}
 
@@ -1475,6 +1475,7 @@
     :abilities [{:req (req (not (install-locked? state side)))
                  :prompt "Choose a card on Street Peddler to install"
                  :choices (req (cancellable (filter #(and (not (is-type? % "Event"))
+                                                          (runner-can-install? state side % nil)
                                                           (can-pay? state side nil (modified-install-cost state side % [:credit -1])))
                                                     (:hosted card))))
                  :msg (msg "install " (:title target) " lowering its install cost by 1 [Credits]")

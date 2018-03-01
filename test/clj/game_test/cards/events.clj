@@ -354,6 +354,21 @@
       (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
       (run-successful state))))
 
+(deftest corporate-grant
+  ;; Corporate "Grant" - First time runner installs a card, the corp loses 1 credit
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Corporate \"Grant\"" 1) (qty "Daily Casts" 2)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Corporate \"Grant\"")
+    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+    (play-from-hand state :runner "Daily Casts")
+    (is (= 7 (:credit (get-corp))) "Corp loses 1 credit")
+    (play-from-hand state :runner "Daily Casts")
+    (is (empty? (:hand (get-runner))) "Played all cards in hand")
+    (is (= 7 (:credit (get-corp))) "Corp doesn't lose 1 credit")))
+
 (deftest corporate-scandal
   ;; Corporate Scandal - Corp has 1 additional bad pub even with 0
   (do-game
@@ -1564,6 +1579,37 @@
           "Morning Star installed")
       (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
       (is (= 2 (:memory (get-runner))) "Morning Star uses 2 memory"))))
+
+(deftest rip-deal
+  ;; Rip Deal - replaces number of HQ accesses with heap retrieval
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 2)(qty "Vanilla" 2)])
+              (default-runner [(qty "The Gauntlet" 1) (qty "Rip Deal" 1) (qty "Easy Mark" 2)]))
+    (trash-from-hand state :runner "Easy Mark")
+    (trash-from-hand state :runner "Easy Mark")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rip Deal")
+    (run-successful state)
+    (prompt-choice :runner "Run ability")
+    (is (= "Choose 1 card(s) to move from the Heap to your Grip" (-> (get-runner) :prompt first :msg)))))
+
+(deftest rip-deal-gauntlet
+  ;; Rip Deal with Gauntlet #2942
+  (do-game
+    (new-game (default-corp [(qty "Crisium Grid" 2)(qty "Vanilla" 2)])
+              (default-runner [(qty "The Gauntlet" 1) (qty "Rip Deal" 1) (qty "Easy Mark" 2)]))
+    (trash-from-hand state :runner "Easy Mark")
+    (trash-from-hand state :runner "Easy Mark")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 4)
+    (play-from-hand state :runner "The Gauntlet")
+    (play-from-hand state :runner "Rip Deal")
+    (run-successful state)
+    (prompt-choice :runner 1)
+    (prompt-choice :runner "Run ability")
+    (is (= "Choose 2 card(s) to move from the Heap to your Grip" (-> (get-runner) :prompt first :msg)))))
 
 (deftest rumor-mill
   ;; Rumor Mill - interactions with rez effects, additional costs, general event handlers, and trash-effects

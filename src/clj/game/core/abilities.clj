@@ -271,6 +271,10 @@
   [state {:keys [once once-key] :as ability} {:keys [cid] :as card}]
   (when once (swap! state assoc-in [once (or once-key cid)] true)))
 
+(defn active-prompt?
+  "Checks if this card has an active prompt"
+  [state side card]
+  (some #(when (= (:cid card) (-> % :card :cid)) %) (-> @state side :prompt)))
 
 ;;; Optional Ability
 (defn optional-ability

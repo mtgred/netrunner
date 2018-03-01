@@ -205,6 +205,11 @@
                                                                (continue-ability end-effect card nil))}}
                                     c)))})
 
+  "Corporate \"Grant\""
+  {:events {:runner-install {:req (req (first-event? state side :runner-install))
+                             :msg "force the Corp to lose 1 [Credit]"
+                             :effect (effect (lose :corp :credit 1))}}}
+
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
     :implementation "No enforcement that this Bad Pub cannot be removed"
@@ -812,14 +817,15 @@
                                       card nil))}
 
    "Information Sifting"
-   (letfn [(access-pile [cards pile]
+   (letfn [(access-pile [cards pile pile-size]
              {:prompt "Choose a card to access. You must access all cards."
               :choices [(str "Card from pile " pile)]
               :delayed-completion true
               :effect (req (when-completed
                              (handle-access state side [(first cards)])
-                             (do (if (< 1 (count cards))
-                                   (continue-ability state side (access-pile (next cards) pile) card nil)
+                             (if (< 1 (count cards))
+                               (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
+                               (do (swap! state assoc-in [:run :cards-accessed] pile-size)
                                    (effect-completed state side eid card)))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
@@ -829,7 +835,7 @@
                              (clear-wait-prompt state :corp)
                              (system-msg state side (str "chooses to access " target))
                              (continue-ability state side
-                                (access-pile (if (= 1 choice) p1 p2) choice)
+                                (access-pile (if (= 1 choice) p1 p2) choice (count (if (= 1 choice) p1 p2)))
                                 card nil)))})]
      (let [access-effect
            {:delayed-completion true

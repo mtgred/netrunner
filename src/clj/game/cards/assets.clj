@@ -703,8 +703,11 @@
       :leave-play cleanup
       :trash-effect {:effect cleanup}
       :events {:corp-spent-click
-               {:effect (req (update! state side (update-in card [:seen-this-turn target] (fnil + 0) (second targets)))
-                             (when (>= (get-in (get-card state card) [:seen-this-turn target]) 3)
+               {:effect (req (when-not target
+                               (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
+                             (update! state side (update-in card [:seen-this-turn (or target :this-is-a-hack)]
+                                                            (fnil + 0) (second targets)))
+                             (when (>= (get-in (get-card state card) [:seen-this-turn (or target :this-is-a-hack)]) 3)
                                (resolve-ability state side ability card nil)))}
                :corp-turn-ends {:effect cleanup}}})
 
@@ -1048,6 +1051,15 @@
       :flags {:corp-phase-12 (req true)}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
+
+   "Personalized Portal"
+   {:events {:corp-turn-begins {:effect (req (draw state :runner 1)
+                                             (let [cnt (count (get-in @state [:runner :hand]))
+                                                   credits (quot cnt 2)]
+                                               (gain state :corp :credit credits)
+                                               (system-msg state :corp
+                                                           (str "uses Personalized Portal to force the runner to draw "
+                                                                "1 card and gains " credits " [Credits]"))))}}}
 
    "Plan B"
    (advance-ambush
@@ -1452,6 +1464,19 @@
                  :effect (effect (trash card)
                                  (shuffle! :deck)
                                  (corp-install target nil))}]}
+
+   "TechnoCo"
+   (letfn [(is-techno-target [card]
+             (or (is-type? card "Program")
+                 (is-type? card "Hardware")
+                 (and (is-type? card "Resource") (has-subtype? card "Virtual"))))]
+     {:events {:pre-install {:req (req (and (is-techno-target target)
+                                            (not (second targets)))) ; not facedown
+                             :effect (effect (install-cost-bonus [:credit 1]))}
+               :runner-install {:req (req (and (is-techno-target target)
+                                               (not (second targets)))) ; not facedown
+                                :msg "gain 1 [Credits]"
+                                :effect (req (gain state :corp :credit 1))}}})
 
    "Tenma Line"
    {:abilities [{:label "Swap 2 pieces of installed ICE"

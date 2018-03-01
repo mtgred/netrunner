@@ -227,6 +227,12 @@
                                              :effect (effect (move target :deck))
                                              :choices {:req (fn [t] (and (card-is? t :side %2) (in-hand? t)))}}
                                             {:title "/move-bottom command"} nil)
+          "/move-deck"   #(resolve-ability %1 %2
+                                           {:prompt "Select a card to move to the top of your deck"
+                                            :effect (req (let [c (deactivate %1 %2 target)]
+                                                           (move %1 %2 c :deck {:front true})))
+                                            :choices {:req (fn [t] (card-is? t :side %2))}}
+                                           {:title "/move-deck command"} nil)
           "/move-hand"  #(resolve-ability %1 %2
                                           {:prompt "Select a card to move to your hand"
                                            :effect (req (let [c (deactivate %1 %2 target)]
