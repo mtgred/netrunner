@@ -1117,25 +1117,23 @@
                                       (gain :credit (* 2 (count targets))))} card nil)))}
 
    "Reverse Infection"
-   (letfn [(num-virus-tokens [cards]
-             (reduce + (map #(get-in % [:counter :virus] 0) cards)))]
-     {:prompt "Choose One:"
-      :choices ["Purge virus counters."
-                "Gain 2 [Credits]"]
-      :effect (req (if (= target "Gain 2 [Credits]")
-                     (do (gain state side :credit 2)
-                         (system-msg state side "uses Reverse Infection to gain 2 [Credits]"))
-                     (let [pre-purge-virus (num-virus-tokens (all-installed state :runner))]
-                       (purge state side)
-                       (let [post-purge-virus (num-virus-tokens (all-installed state :runner))
-                             num-virus-purged (- pre-purge-virus post-purge-virus)
-                             num-to-trash (quot num-virus-purged 3)]
-                         (mill state :runner num-to-trash)
-                         (system-msg state side (str "uses Reverse Infection to purge "
-                                                     num-virus-purged (pluralize " virus counter" num-virus-purged)
-                                                     " and trash "
-                                                     num-to-trash (pluralize " card" num-to-trash)
-                                                     " from the top of the stack"))))))})
+   {:prompt "Choose One:"
+    :choices ["Purge virus counters."
+              "Gain 2 [Credits]"]
+    :effect (req (if (= target "Gain 2 [Credits]")
+                   (do (gain state side :credit 2)
+                       (system-msg state side "uses Reverse Infection to gain 2 [Credits]"))
+                   (let [pre-purge-virus (number-of-virus-counters state)]
+                     (purge state side)
+                     (let [post-purge-virus (number-of-virus-counters state)
+                           num-virus-purged (- pre-purge-virus post-purge-virus)
+                           num-to-trash (quot num-virus-purged 3)]
+                       (mill state :runner num-to-trash)
+                       (system-msg state side (str "uses Reverse Infection to purge "
+                                                   num-virus-purged (pluralize " virus counter" num-virus-purged)
+                                                   " and trash "
+                                                   num-to-trash (pluralize " card" num-to-trash)
+                                                   " from the top of the stack"))))))}
 
    "Rework"
    {:prompt "Select a card from HQ to shuffle into R&D"

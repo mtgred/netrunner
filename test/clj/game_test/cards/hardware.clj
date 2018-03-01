@@ -7,6 +7,24 @@
 
 (use-fixtures :once load-all-cards)
 
+(deftest acacia
+  ;; Acacia - Optionally gain credits for number of virus tokens then trash
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Acacia" 1) (qty "Virus Breeding Ground" 1) (qty "Datasucker" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Acacia")
+    (play-from-hand state :runner "Virus Breeding Ground")
+    (play-from-hand state :runner "Datasucker")
+    (core/add-counter state :runner (get-resource state 0) :virus 4)
+    (core/add-counter state :runner (get-program state 0) :virus 3)
+    (take-credits state :runner)
+    (is (= 2 (:credit (get-runner))) "Runner initial credits")
+    (core/purge state :corp)
+    (prompt-choice :runner "Yes")
+    (is (= 9 (:credit (get-runner))) "Runner gained 9 credits")
+    (is (= 1 (count (:discard (get-runner)))) "Acacia has trashed")))
+
 (deftest akamatsu-mem
   ;; Akamatsu Mem Chip - Gain 1 memory
   (do-game
