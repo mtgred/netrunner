@@ -303,6 +303,13 @@
    {:msg "purge virus counters"
     :effect (effect (purge))}
 
+   "Death and Taxes"
+   (let [gain-cred-effect {:msg "gain 1 [Credits]"
+                           :effect (effect (gain :corp :credit 1))}]
+     {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
+      :events {:runner-install gain-cred-effect
+               :runner-trash gain-cred-effect}})
+
    "Dedication Ceremony"
    {:prompt "Select a faceup card"
     :choices {:req #(or (and (card-is? % :side :corp)

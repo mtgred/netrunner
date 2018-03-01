@@ -56,6 +56,21 @@
       (run-jack-out state)
       (is (= 2 (count(get-in @state [:runner :hand]))) "Runner took 1 net damage"))))
 
+(deftest armed-intimidation
+  ;; Armed intimidation choices
+  (do-game
+    (new-game (default-corp [(qty "Armed Intimidation" 2)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 2)]))
+    (play-from-hand state :corp "Armed Intimidation" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :runner "Take 2 tags")
+    (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Armed Intimidation tag choice")
+    (play-from-hand state :corp "Armed Intimidation" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 5 (count (:hand (get-runner)))) "Runner has 5 cards before Armed Intimidation meat damage")
+    (prompt-choice :runner "Suffer 5 meat damage")
+    (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards after Armed Intimidation meat damage")))
+
 (deftest astro-script-token
   ;; AstroScript token placement
   (do-game
