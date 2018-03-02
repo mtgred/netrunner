@@ -404,8 +404,9 @@
      {:events {:runner-turn-begins ability
                :runner-trash {:optional
                               {:prompt "Gain a virus counter on Friday Chip?"
-                               :yes-ability {:msg "to gain a virus counter"
-                                             :effect (effect (add-counter card :virus 1))}}}}})
+                               :yes-ability
+                               {:effect (effect (add-counter card :virus 1)
+                                                (system-msg :runner (str "places 1 virus counter on Friday Chip")))}}}}})
 
    "GPI Net Tap"
    {:implementation "Trash and jack out effect is manual"
