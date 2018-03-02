@@ -1429,6 +1429,25 @@
                    :effect (effect (corp-install target nil))
                    :msg (msg (corp-install-msg target))}]}
 
+   "NEXT Sapphire"
+   {:subroutines [{:label "Draw up to X cards"
+                   :prompt "Draw how many cards?"
+                   :choices {:number (req (next-ice-count corp))
+                             :default (req 1)}
+                   :delayed-completion true
+                   :effect (effect (draw eid target))}
+                  {:label "Add up to X cards from Archives to HQ"
+                   :prompt "Select cards to add to HQ"
+                   :choices {:req #(and (= "Corp" (:side %)) (= [:discard] (:zone %)))
+                             :max (req (next-ice-count corp))}
+                   :effect (req (doseq [c targets] (move state side c :hq)))}
+                  {:label "Shuffle up to X cards from HQ into R&D"
+                   :prompt "Select cards to shuffle into R&D"
+                   :choices {:req #(and (= "Corp" (:side %)) (= [:hand] (:zone %)))
+                             :max (req (next-ice-count corp))}
+                   :effect (req (doseq [c targets] (move state side c :deck))
+                                (shuffle! state side :deck))}]}
+
    "NEXT Silver"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (filter #(and (is-type? % "ICE")
