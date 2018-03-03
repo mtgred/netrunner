@@ -1251,7 +1251,7 @@
 
    "Shipment from Tennin"
    {:delayed-completion true
-    :req (req (not (last-turn? state :runner :successful-run)))
+    :req (req (not-last-turn? state :runner :successful-run))
     :choices {:req #(and (installed? %) (= (:side %) "Corp"))}
     :msg (msg "place 2 advancement tokens on " (card-str state target))
     :effect (effect (add-prop target :advance-counter 2 {:placed true}))}
@@ -1332,7 +1332,7 @@
    (letfn [(subliminal []
              {:corp-phase-12
               {:effect
-               (req (if (not (last-turn? state :runner :made-run))
+               (req (if (not-last-turn? state :runner :made-run)
                       (do (resolve-ability state side
                                            {:optional
                                             {:prompt "Add Subliminal Messaging to HQ?"
