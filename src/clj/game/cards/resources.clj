@@ -682,6 +682,14 @@
                                    (set (get-in @state [:corp :servers :hq :content])))
                                  card nil))))}}}
 
+   "Gbahali"
+   {:abilities [{:label "[Trash]: Break the last subroutine on the encountered piece of ice"
+                 :req (req (and (:run @state) (rezzed? current-ice)))
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (system-msg :runner
+                                             (str "trashes Gbahali to break the last subroutine on "
+                                                  (:title current-ice))))}]}
+
    "Gene Conditioning Shoppe"
    {:msg "make Genetics trigger a second time each turn"
     :effect (effect (register-persistent-flag! card :genetics-trigger-twice (constantly true)))
