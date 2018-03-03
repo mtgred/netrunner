@@ -1203,6 +1203,7 @@
                 ;; otherwise choice of all present choices
                 :else
                 (for [c (:choices prompt)]
+
                   (when (not= c "Hide")
                     (if (string? c)
                       [:button {:on-click #(send-command "choice" {:choice c})}

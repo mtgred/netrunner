@@ -378,6 +378,7 @@
            all (get-in ability [:choices :all])]
        (swap! state update-in [side :selected]
               #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+                              :not-self (when (get-in ability [:choices :not-self]) (:cid card))
                               :max (get-in ability [:choices :max])
                               :all all}))
        (show-prompt state side card

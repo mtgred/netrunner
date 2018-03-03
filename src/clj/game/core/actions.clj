@@ -161,8 +161,9 @@
   if the max number of cards has been selected."
   [state side {:keys [card] :as args}]
   (let [card (get-card state card)
-        r (get-in @state [side :selected 0 :req])]
-    (when (or (not r) (r card))
+        r (get-in @state [side :selected 0 :req])
+        cid (get-in @state [side :selected 0 :not-self])]
+    (when (and (not= (:cid card) cid) (or (not r) (r card))
       (let [c (update-in card [:selected] not)]
         (update! state side c)
         (if (:selected c)
@@ -171,7 +172,7 @@
                  (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))
         (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
-            (resolve-select state side)))))))
+            (resolve-select state side))))))))
 
 (defn- do-play-ability [state side card ability targets]
   (let [cost (:cost ability)]
