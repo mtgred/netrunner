@@ -224,10 +224,12 @@
    "Anansi"
    (let [corp-draw {:optional {:prompt "Draw 1 card?"
                                :yes-ability {:delayed-completion true
+                                             :msg "draw 1 card"
                                              :effect (effect (draw eid 1 nil))}}}
          runner-draw {:player :runner
                       :optional {:prompt "Pay 2[Credits] to draw 1 card?"
                                  :yes-ability {:delayed-completion true
+                                               :msg "pay 2[Credits] to draw 1 card"
                                                :effect (effect (lose :credit 2)
                                                                (draw eid 1 nil))}}}]
      {:implementation "Encounter-ends effect is manually triggered."
@@ -241,10 +243,12 @@
                                                            card nil)
                                          (do (clear-wait-prompt state :runner)
                                              (effect-completed state side eid)))))}
-                    {:delayed-completion true
+                    {:label "Draw 1 card; allow runner to draw 1 card"
+                     :delayed-completion true
                      :effect (req (when-completed (resolve-ability state side corp-draw card nil)
                                                   (continue-ability state :runner runner-draw card nil)))}
-                    (do-net-damage 1)]})
+                    (do-net-damage 1)]
+      :abilities [(do-net-damage 3)]})
 
    "Archangel"
    {:access
