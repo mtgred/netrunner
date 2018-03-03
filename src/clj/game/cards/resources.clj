@@ -433,8 +433,10 @@
 
    "Dadiana Chacon"
    (let [trashme {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
-                                  (damage eid :meat 3 {:unboostable true :card card})
-                                  (trash card {:cause :ability-cost}))}
+                                  (register-events {:play {:req (req (= "Runner" (:side target)))
+                                                           :effect (effect (unregister-events card)
+                                                                           (damage eid :meat 3 {:unboostable true :card card})
+                                                                           (trash card {:cause :ability-cost}))}} card))}
          ability {:once :per-turn
                   :msg "gain 1 [Credits]"
                   :req (req (< (get-in @state [:runner :credit]) 6))
@@ -448,7 +450,8 @@
                                     (resolve-ability ref side trashme card nil))))))
       :leave-play (req (remove-watch state :dadiana))
       :flags {:drip-economy true}
-      :events {:runner-turn-begins ability}})
+      :events {:play nil
+               :runner-turn-begins ability}})
 
    "Daily Casts"
    (let [ability {:once :per-turn
