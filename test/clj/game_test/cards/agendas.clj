@@ -264,7 +264,6 @@
     (take-credits state :corp)
 
     (is (= 0 (count (:deck (get-runner)))) "Runner starts with empty deck")
-    (core/gain state :runner :click 1)
     (run-on state "Server 1")
     (run-successful state)
     (prompt-choice :runner "Yes")
@@ -275,13 +274,6 @@
 
     (let [ia (get-in @state [:runner :rig :resource 0])
           an (get-in @state [:runner :rig :resource 1])]
-      (run-on state "Server 1")
-      (run-successful state)
-      (prompt-choice :runner "Yes")
-      (prompt-select :runner ia)
-      (prompt-choice :runner "Done")
-      (is (= 0 (:agenda-point (get-runner))) "Runner stole Degree Mill by selecting one program")
-
       (run-on state "Server 1")
       (run-successful state)
       (prompt-choice :runner "Yes")

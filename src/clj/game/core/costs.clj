@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast damage mill installed? is-type? is-scored?)
+(declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg)
 
 (defn deduce
   "Deduct the value from the player's attribute."
@@ -79,10 +79,14 @@
                    {:prompt (str "Choose " amount " " (pluralize "card" amount) " to shuffle into the stack")
                     :delayed-completion true
                     :choices {:max amount
+                              :all true
                               :req #(and (installed? %) (= (:side %) "Runner"))}
                     :effect (req
                               (doseq [c targets]
                                 (move state :runner c :deck))
+                              (system-msg state :runner
+                                          (str "shuffles " (join ", " (map :title targets))
+                                               " into their stack"))
                               (shuffle! state :runner :deck))}
                    card nil)
   (when-let [cost-name (cost-names amount :shuffle-installed-to-stack)] cost-name))
