@@ -329,6 +329,9 @@
                                                                           #(assoc % :replace-access psi-effect)))
                                                                  (effect-completed state side eid))}}}}})
 
+   "Degree Mill"
+   {:steal-cost-bonus (req [:shuffle-installed-to-stack 2])}
+
    "Director Haas Pet Project"
    (letfn [(install-ability [server-name n]
              {:prompt "Select a card to install"
