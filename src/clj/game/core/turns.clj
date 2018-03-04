@@ -227,7 +227,8 @@
       (if (= side :runner)
         (do (when (neg? (hand-size state side))
               (flatline state))
-            (trigger-event state side :runner-turn-ends))
+            (trigger-event state side :runner-turn-ends)
+            (trigger-event state side :post-runner-turn-ends))
         (trigger-event state side :corp-turn-ends))
       (doseq [a (get-in @state [side :register :end-turn])]
         (resolve-ability state side (:ability a) (:card a) (:targets a)))

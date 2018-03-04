@@ -536,10 +536,10 @@
                  :effect (req (let [c target]
                                 (disable-card state side c)
                                 (register-events state side
-                                                 {:runner-turn-ends
+                                                 {:post-runner-turn-ends
                                                   {:effect (effect (enable-card (get-card state c))
                                                                    (unregister-events card))}} card)))}]
-    :events {:runner-turn-ends nil}}
+    :events {:post-runner-turn-ends nil}}
 
    "Drug Dealer"
    {:flags {:runner-phase-12 (req (some #(card-flag? % :drip-economy true) (all-installed state :runner)))}
