@@ -1969,7 +1969,7 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
       (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
-      (core/rez state :corp iwall)
+      (core/rez state :corp (refresh iwall))
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
       (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
