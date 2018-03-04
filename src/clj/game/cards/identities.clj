@@ -43,6 +43,7 @@
                              (continue-ability state side
                                                {:prompt (str "Choose 3 starting directives")
                                                 :choices {:max 3
+                                                          :all true
                                                           :req #(and (= (:side %) "Runner")
                                                                      (= (:zone %) [:play-area]))}
                                                 :effect (req (doseq [c targets]

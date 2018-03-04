@@ -920,7 +920,7 @@
             {:prompt "Select a remote server"
              :choices (req (conj (vec (get-remote-names @state)) "New remote"))
              :delayed-completion true
-             :effect (effect (corp-install (assoc (move state side chosen :play-area) :advance-counter 3) target {:no-install-cost true}))})]
+             :effect (effect (corp-install (assoc chosen :advance-counter 3) target {:no-install-cost true}))})]
      {:delayed-completion true
       :prompt "Choose a piece of ICE in HQ to install"
       :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (ice? %))}
