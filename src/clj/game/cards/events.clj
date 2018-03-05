@@ -1789,8 +1789,8 @@
                              (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :trace {:base 3
-            :msg "reveal all cards in HQ"
             :unsuccessful {:delayed-completion true
+                           :msg "reveal all cards in HQ"
                            :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
 
    "Windfall"
