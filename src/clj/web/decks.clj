@@ -32,7 +32,7 @@
           deck (-> deck
                    (update-in [:cards] (fn [cards] (mapv #(select-keys % [:qty :card :id :art]) cards)))
                    (assoc :username username))
-          status (decks/check-deck-status check-deck)
+          status (decks/calculate-deck-status check-deck)
           deck (assoc deck :status status)]
       (if-let [deck-id (:_id deck)]
         (do (mc/update db "decks"

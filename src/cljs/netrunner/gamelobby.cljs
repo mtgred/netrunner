@@ -12,11 +12,9 @@
             [netrunner.gameboard :refer [init-game game-state toast launch-game parse-state]]
             [netrunner.cardbrowser :refer [image-url] :as cb]
             [netrunner.stats :refer [notnum->zero]]
-            [netrunner.deckbuilder :refer [deck-status-span deck-status-label process-decks load-decks num->percent]]))
+            [netrunner.deckbuilder :refer [format-deck-status-span deck-status-span process-decks load-decks num->percent]]))
 
 (def socket-channel (chan))
-
-
 
 (defn sort-games-list [games]
   (sort-by #(vec (map (assoc % :started (not (:started %))
@@ -450,14 +448,14 @@
                     (for [player (:players game)]
                       [:div
                        (om/build player-view {:player player})
-                       (when-let [{:keys [_id name] :as deck} (:deck player)]
-                         [:span {:class (deck-status-label sets deck)}
+                       (when-let [{:keys [_id name status] :as deck} (:deck player)]
+                         [:span {:class (:status status)}
                           [:span.label
                            (if (= (:user player) user)
                              name
                              "Deck selected")]])
                        (when-let [deck (:deck player)]
-                         [:div.float-right (deck-status-span sets deck true false true)])
+                         [:div.float-right (format-deck-status-span (:status deck) true false)])
                        (when (= (:user player) user)
                          [:span.fake-link.deck-load
                           {:data-target "#deck-select" :data-toggle "modal"
