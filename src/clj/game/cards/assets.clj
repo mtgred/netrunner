@@ -725,7 +725,7 @@
    "Kuwinda K4H1U3"
    (let [ability {:trace {:base (req (get-in card [:counter :power] 0))
                           :delayed-completion true
-                          :effect (effect (damage :runner eid :brain 1)
+                          :effect (effect (damage :runner eid :brain 1 {:card card})
                                           (trash card))
                           :msg "do 1 brain damage"
                           :unsuccessful {:effect (effect (add-counter card :power 1)
