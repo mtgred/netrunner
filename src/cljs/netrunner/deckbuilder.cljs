@@ -433,8 +433,11 @@
      [:div {:class (if (:legal onesies) "legal" "invalid") :title (if onesies-details? (:reason onesies))}
       [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]]))
 
-(defn deck-status-span-impl [sets deck tooltip? onesies-details?]
-   (let [{:keys [valid mwl rotation cache-refresh onesies status]} (decks/trusted-deck-status deck)
+(defn deck-status-span-impl [sets deck tooltip? onesies-details? use-trusted-info]
+   (let [{:keys [valid mwl rotation cache-refresh onesies status]}
+         (if use-trusted-info
+           (decks/trusted-deck-status deck)
+           (decks/check-deck-status deck))
          message (case status
                    "legal" "Tournament legal"
                    "casual" "Casual play only"
@@ -447,10 +450,9 @@
 
 (defn deck-status-span
   "Returns a [:span] with standardized message and colors depending on the deck validity."
-  ([sets deck] (deck-status-span sets deck false))
-  ([sets deck tooltip?] (deck-status-span sets deck tooltip? false))
-  ([sets deck tooltip? onesies-details?]
-   (deck-status-span-memoize sets deck tooltip? onesies-details?)))
+  ([sets deck] (deck-status-span sets deck false false true))
+  ([sets deck tooltip? onesies-details? use-trusted-info]
+   (deck-status-span-memoize sets deck tooltip? onesies-details? use-trusted-info)))
 
 (defn match [identity query]
   (->> @all-cards
@@ -701,7 +703,7 @@
                         [:span.invalid " (minimum " min-point ")"])
                       (when (> points (inc min-point))
                         [:span.invalid " (maximum " (inc min-point) ")"])]))
-                 [:div (deck-status-span sets deck true true)]]
+                 [:div (deck-status-span sets deck true true false)]]
                 [:div.cards
                  (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
                    [:div.group

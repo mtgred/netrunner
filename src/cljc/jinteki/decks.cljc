@@ -313,8 +313,15 @@
      :mwl           mwl
      :rotation      rotation
      :status        status
-     :onesies       (:legal onesies)
-     :cache-refresh (:legal cache-refresh)}))
+     :onesies       onesies
+     :cache-refresh cache-refresh}))
 
-(defn trusted-deck-status [{:keys [status name cards] :as deck}]
-  (or status (check-deck-status deck)))
+(defn trusted-deck-status [{:keys [status name cards date] :as deck}]
+  (let [parse-date #?(:clj  #(f/parse (f/formatters :date) %)
+                      :cljs #(js/Date.parse %))
+        deck-date (parse-date date)
+        mwl-date (:date_start @cards/mwl)]
+    (if (and status
+             (> deck-date mwl-date))
+      status
+      (check-deck-status deck))))

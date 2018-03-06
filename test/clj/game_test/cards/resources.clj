@@ -1973,7 +1973,7 @@
       (is (= 2 (get-counters (refresh vbg) :virus))
           "Virus Breeding Ground gains 1 counter per turn"))))
 
-(deftest virus-breeding-ground-gain
+(deftest virus-breeding-ground-move
   ;; Virus Breeding Ground - Move counters
   (do-game
     (new-game (default-corp)

@@ -303,6 +303,13 @@
    {:msg "purge virus counters"
     :effect (effect (purge))}
 
+   "Death and Taxes"
+   (let [gain-cred-effect {:msg "gain 1 [Credits]"
+                           :effect (effect (gain :corp :credit 1))}]
+     {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
+      :events {:runner-install gain-cred-effect
+               :runner-trash gain-cred-effect}})
+
    "Dedication Ceremony"
    {:prompt "Select a faceup card"
     :choices {:req #(or (and (card-is? % :side :corp)
@@ -1115,6 +1122,25 @@
                                        " and gain " (* 2 m) " [Credits]")))
                       :effect (effect (trash-cards targets)
                                       (gain :credit (* 2 (count targets))))} card nil)))}
+
+   "Reverse Infection"
+   {:prompt "Choose One:"
+    :choices ["Purge virus counters."
+              "Gain 2 [Credits]"]
+    :effect (req (if (= target "Gain 2 [Credits]")
+                   (do (gain state side :credit 2)
+                       (system-msg state side "uses Reverse Infection to gain 2 [Credits]"))
+                   (let [pre-purge-virus (number-of-virus-counters state)]
+                     (purge state side)
+                     (let [post-purge-virus (number-of-virus-counters state)
+                           num-virus-purged (- pre-purge-virus post-purge-virus)
+                           num-to-trash (quot num-virus-purged 3)]
+                       (mill state :runner num-to-trash)
+                       (system-msg state side (str "uses Reverse Infection to purge "
+                                                   num-virus-purged (pluralize " virus counter" num-virus-purged)
+                                                   " and trash "
+                                                   num-to-trash (pluralize " card" num-to-trash)
+                                                   " from the top of the stack"))))))}
 
    "Rework"
    {:prompt "Select a card from HQ to shuffle into R&D"

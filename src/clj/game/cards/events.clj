@@ -205,6 +205,11 @@
                                                                (continue-ability end-effect card nil))}}
                                     c)))})
 
+  "Corporate \"Grant\""
+  {:events {:runner-install {:req (req (first-event? state side :runner-install))
+                             :msg "force the Corp to lose 1 [Credit]"
+                             :effect (effect (lose :corp :credit 1))}}}
+
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
     :implementation "No enforcement that this Bad Pub cannot be removed"
@@ -1767,6 +1772,28 @@
                                :effect (req (let [n (str->int target)]
                                               (when (pay state :runner card :click n)
                                                 (trash-cards state :corp (take n (shuffle (:hand corp)))))))}} card))}
+
+   "White Hat"
+   (letfn [(finish-choice [choices]
+             (let [choices (filter #(not= "None" %) choices)]
+               (when (not-empty choices)
+                {:effect (req (doseq [c choices] (move state :corp c :deck))
+                              (shuffle! state :corp :deck))
+                 :msg (str "shuffle " (join ", " (map :title choices)) " into R&D")})))
+           (choose-cards [hand chosen]
+             {:prompt "Choose a card in HQ to shuffle into R&D"
+              :player :runner
+              :choices (conj (vec (clojure.set/difference hand chosen))
+                             "None")
+              :delayed-completion true
+              :effect (req (if (and (empty? chosen) (not= "None" target))
+                             (continue-ability state side (choose-cards hand (conj chosen target)) card nil)
+                             (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
+   {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+    :trace {:base 3
+            :unsuccessful {:delayed-completion true
+                           :msg "reveal all cards in HQ"
+                           :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
 
    "Windfall"
    {:effect (effect (shuffle! :deck)

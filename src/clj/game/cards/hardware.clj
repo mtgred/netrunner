@@ -2,15 +2,15 @@
 
 (def cards-hardware
   {"Acacia"
-   {:events {:pre-purge {:effect (req (let [virus (filter #(has-subtype? % "Virus") (all-installed state :runner))
-                                            counters (reduce + (map #(get-virus-counters state :runner %) virus))]
+   {:events {:pre-purge {:effect (req (let [counters (number-of-virus-counters state)]
                                         (update! state side (assoc-in (get-card state card) [:special :numpurged] counters))))}
              :purge {:delayed-completion true
                      :effect (effect (show-wait-prompt  :corp "Runner to decide if they will use Acacia")
                                   (continue-ability {:optional
                                                      {:player :runner
                                                       :prompt "Use Acacia?"
-                                                      :yes-ability {:effect (req (let [counters (get-in (get-card state card) [:special :numpurged])]
+                                                      :yes-ability {:effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
+                                                                                                   (number-of-virus-counters state))]
                                                                                    (gain state side :credit counters)
                                                                                    (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
                                                                                    (trash state side card)
@@ -394,6 +394,20 @@
                  :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}
                 {:msg "remove 1 tag" :label "[Trash]: Remove 1 tag"
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
+
+   "Friday Chip"
+    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
+                   :req (req (pos? (get-in card [:counter :virus] 0)))
+                   :choices {:req #(and (has-subtype? % "Virus")
+                                        (is-type? % "Program"))}
+                   :effect (req (add-counter state :runner card :virus -1)
+                                (add-counter state :runner target :virus 1))}]
+     {:events {:runner-turn-begins ability
+               :runner-trash {:optional
+                              {:prompt "Gain a virus counter on Friday Chip?"
+                               :yes-ability
+                               {:effect (effect (add-counter card :virus 1)
+                                                (system-msg :runner (str "places 1 virus counter on Friday Chip")))}}}}})
 
    "GPI Net Tap"
    {:implementation "Trash and jack out effect is manual"

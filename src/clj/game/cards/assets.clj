@@ -722,6 +722,21 @@
                  :effect (effect (mill :runner)
                                  (trash card {:cause :ability-cost}))}]}
 
+   "Kuwinda K4H1U3"
+   (let [ability {:trace {:base (req (get-in card [:counter :power] 0))
+                          :delayed-completion true
+                          :effect (effect (damage :runner eid :brain 1 {:card card})
+                                          (trash card))
+                          :msg "do 1 brain damage"
+                          :unsuccessful {:effect (effect (add-counter card :power 1)
+                                                         (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins
+               {:optional {:prompt "Initiate trace with Kuwinda K4H1U3?"
+                           :delayed-completion true
+                           :yes-ability ability}}}
+      :abilities [(assoc ability :label "Trace X - do 1 brain damage (start of turn)")]})
+
    "Lakshmi Smartfabrics"
    {:events {:rez {:effect (effect (add-counter card :power 1))}}
     :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")
@@ -998,9 +1013,9 @@
               :label (str "[Trash]: Gain " cred " [Credits]")
               :msg (str "gain " cred " [Credits]")})]
      {:advanceable :always
-      :abilities [(builder 1 5) 
+      :abilities [(builder 1 5)
                   (builder 2 8)]})
-   
+
    "Open Forum"
    {:events {:corp-mandatory-draw {:msg (msg (let [deck (:deck corp)]
                                                (if (pos? (count deck))
@@ -1051,6 +1066,15 @@
       :flags {:corp-phase-12 (req true)}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
+
+   "Personalized Portal"
+   {:events {:corp-turn-begins {:effect (req (draw state :runner 1)
+                                             (let [cnt (count (get-in @state [:runner :hand]))
+                                                   credits (quot cnt 2)]
+                                               (gain state :corp :credit credits)
+                                               (system-msg state :corp
+                                                           (str "uses Personalized Portal to force the runner to draw "
+                                                                "1 card and gains " credits " [Credits]"))))}}}
 
    "Plan B"
    (advance-ambush
@@ -1455,6 +1479,19 @@
                  :effect (effect (trash card)
                                  (shuffle! :deck)
                                  (corp-install target nil))}]}
+
+   "TechnoCo"
+   (letfn [(is-techno-target [card]
+             (or (is-type? card "Program")
+                 (is-type? card "Hardware")
+                 (and (is-type? card "Resource") (has-subtype? card "Virtual"))))]
+     {:events {:pre-install {:req (req (and (is-techno-target target)
+                                            (not (second targets)))) ; not facedown
+                             :effect (effect (install-cost-bonus [:credit 1]))}
+               :runner-install {:req (req (and (is-techno-target target)
+                                               (not (second targets)))) ; not facedown
+                                :msg "gain 1 [Credits]"
+                                :effect (req (gain state :corp :credit 1))}}})
 
    "Tenma Line"
    {:abilities [{:label "Swap 2 pieces of installed ICE"

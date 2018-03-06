@@ -1197,6 +1197,30 @@
       (is (= 2 (count (:discard (get-corp)))) "2 NGO Front Trashed")
       )))
 
+(deftest personalized-portal
+  ;; Personalized Portal - on corp turn start, force the runner to draw 1 card
+  ;; and then gain 1 credit for every 2 cards in the runners hand
+  (do-game
+    (new-game (default-corp [(qty "Personalized Portal" 1)])
+              (default-runner [(qty "Daily Casts" 3) (qty "Dyson Mem Chip" 3)]))
+    (play-from-hand state :corp "Personalized Portal" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (starting-hand state :runner [])
+    (is (empty? (:hand (get-runner))) "Runner's grip is empty to start")
+    (is (= 4 (:credit (get-corp))) "Corp starts with 4 credits")
+    (take-credits state :runner)
+    (is (= 1 (count (:hand (get-runner)))) "Runner drew 1 card")
+    (is (= 4 (:credit (get-corp))) "Corp gained 0 credits")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 2 (count (:hand (get-runner)))) "Runner drew 1 card")
+    (is (= 8 (:credit (get-corp))) "Corp gained 1 credit")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 3 (count (:hand (get-runner)))) "Runner drew 1 card")
+    (is (= 12 (:credit (get-corp))) "Corp gained 1 credit")))
+
 (deftest plan-b
   ;; Plan B - score agenda with adv cost <= # of adv counters
   (do-game
@@ -1839,6 +1863,32 @@
     (core/score state :corp {:card (get-content state :remote1 1)})
     (prompt-choice :corp "Done")
     (is (= 7 (:agenda-point (get-corp))) "Scored 5 points in one turn")))
+
+(deftest technoco
+  ;; TechnoCo - Increase program / hardware / virtual cost by 1 and gain 1 when they are installed
+  (do-game
+    (new-game (default-corp [(qty "TechnoCo" 1)])
+              (default-runner [(qty "Misdirection" 1)       ;; 0 cost program
+                               (qty "Bookmark" 1)           ;; 0 cost hardware
+                               (qty "Ice Analyzer" 1)       ;; 0 cost virtual resource
+                               (qty "Fall Guy" 1)]))        ;; 0 cost non-virtual resource
+    (play-from-hand state :corp "TechnoCo" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-corp))) "Corp at 5 credits")
+    (is (= 5 (:credit (get-runner))) "Runner at 5 credits")
+    (play-from-hand state :runner "Misdirection")
+    (is (= 6 (:credit (get-corp))) "Corp gained a credit")
+    (is (= 4 (:credit (get-runner))) "Runner spent an extra credit")
+    (play-from-hand state :runner "Bookmark")
+    (is (= 7 (:credit (get-corp))) "Corp gained a credit")
+    (is (= 3 (:credit (get-runner))) "Runner spent an extra credit")
+    (play-from-hand state :runner "Ice Analyzer")
+    (is (= 8 (:credit (get-corp))) "Corp gained a credit")
+    (is (= 2 (:credit (get-runner))) "Runner spent an extra credit")
+    (play-from-hand state :runner "Fall Guy")
+    (is (= 8 (:credit (get-corp))) "Corp did not gain a credit")
+    (is (= 2 (:credit (get-runner))) "Runner did not spend an extra credit")))
 
 (deftest the-board
   ;; The Board - Modify everything in the score area (regression test for #1938)
