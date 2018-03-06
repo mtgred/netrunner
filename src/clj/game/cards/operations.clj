@@ -1481,6 +1481,12 @@
                              (do (tag-runner state :runner eid 1)
                                  (system-msg state side "uses Threat Level Alpha to give the Runner a tag")))))}}
 
+   "Too Big to Fail"
+   {:req (req (< (:credit corp) 10))
+    :msg "gain 7 [Credits] and take 1 Bad Publicity"
+    :effect (effect (gain :credit 7)
+                    (gain :corp :bad-publicity 1) ) }
+
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))
     :msg "do 2 meat damage"
