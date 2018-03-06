@@ -1705,8 +1705,10 @@
                  {:msg (msg "make " (card-str state ice) " gain Sentry, Code Gate, and Barrier until the end of the turn")
                   :effect (effect (update! (assoc ice :subtype (combine-subtypes true (:subtype ice) "Sentry" "Code Gate" "Barrier")))
                                   (update-ice-strength (get-card state ice))
+                                  (add-icon card (get-card state ice) "T" "green")
                                   (register-events {:runner-turn-ends
-                                                    {:effect (effect (update! (assoc (get-card state ice) :subtype stypes)))}}
+                                                    {:effect (effect (remove-icon card (get-card state ice))
+                                                                     (update! (assoc (get-card state ice) :subtype stypes)))}}
                                   (assoc card :zone '(:discard))))}
                card nil)))
     :events {:runner-turn-ends nil}}

@@ -231,7 +231,9 @@
          (flatline state))
        (when-completed
          (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends))
-         (do (doseq [a (get-in @state [side :register :end-turn])]
+         (do (when (= side :runner)
+               (trigger-event state side :post-runner-turn-ends))
+             (doseq [a (get-in @state [side :register :end-turn])]
                (resolve-ability state side (:ability a) (:card a) (:targets a)))
              (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
              (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
