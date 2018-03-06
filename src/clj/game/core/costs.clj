@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare forfeit prompt! toast damage mill installed? is-type? is-scored?)
+(declare forfeit prompt! toast damage mill installed? is-type? is-scored? system-msg)
 
 (defn deduce
   "Deduct the value from the player's attribute."
@@ -30,6 +30,7 @@
                   (and (= type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
                   (and (= type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
                                                                   (all-installed state :runner))) amount) 0))
+                  (and (= type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
                   (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
       "Unable to pay")))
 
@@ -71,6 +72,25 @@
             {:effect (effect (trash target args))})
    (when-let [cost-name (cost-names amount type)] cost-name)))
 
+(defn pay-shuffle-installed-to-stack
+  "Shuffle installed runner card(s) into the stack as part of paying for a card or ability"
+  [state card amount]
+  (resolve-ability state :runner
+                   {:prompt (str "Choose " amount " " (pluralize "card" amount) " to shuffle into the stack")
+                    :delayed-completion true
+                    :choices {:max amount
+                              :all true
+                              :req #(and (installed? %) (= (:side %) "Runner"))}
+                    :effect (req
+                              (doseq [c targets]
+                                (move state :runner c :deck))
+                              (system-msg state :runner
+                                          (str "shuffles " (join ", " (map :title targets))
+                                               " into their stack"))
+                              (shuffle! state :runner :deck))}
+                   card nil)
+  (when-let [cost-name (cost-names amount :shuffle-installed-to-stack)] cost-name))
+
 (defn- cost-handler
   "Calls the relevant function for a cost depending on the keyword passed in"
   [state side card action costs cost]
@@ -95,6 +115,9 @@
     :tag (deduce state :runner cost)
     :net-damage (damage state side :net (second cost) {:unpreventable true})
     :mill (mill state side (second cost))
+
+    ;; Shuffle installed runner cards into the stack (eg Degree Mill)
+    :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state card (second cost))
 
     ;; Else
     (deduce state side cost)))
