@@ -162,7 +162,7 @@
 (deftest city-works-project
   ;; City Works Project - do 2 + advancement counters meat damage on access
   (do-game
-    (new-game (make-deck "Weyland Consortium: Building a Better World" [(qty "City Works Project" 1)])
+    (new-game (default-corp [(qty "City Works Project" 1)])
               (default-runner [(qty "Sure Gamble" 4)]))
     (play-from-hand state :corp "City Works Project" "New remote"
       (let [cwp (get-content state :remote1 0)]

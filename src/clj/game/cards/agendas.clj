@@ -252,12 +252,12 @@
     :effect (effect (move-zone :runner :discard :rfg))}
 
    "City Works Project"
-   {:install-state :face-up
-    :access {:req (req installed)
-             :msg (msg "do " (+ 2 (:advance-counter (get-card state card) 0)) " meat damage")
-             :delayed-completion true
-             :effect (effect (damage eid :meat (+ 2 (:advance-counter (get-card state card) 0))
-                                     {:card card}))}}
+   (let [meat-damage (+ 2 (:advance-counter (get-card state card) 0))]
+     {:install-state :face-up
+      :access {:req (req installed)
+               :msg (msg "do " meat-damage " meat damage")
+               :delayed-completion true
+               :effect (effect (damage eid :meat meat-damage {:card card}))}})
 
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
