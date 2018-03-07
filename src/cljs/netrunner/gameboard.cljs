@@ -1166,6 +1166,14 @@
                 ;; choice of number of credits
                 (= (:choices prompt) "credit")
                 [:div
+                 (when (:base prompt)
+                   ;; This is trace prompt
+                   (if (= side :corp)
+                     ;; This is a trace prompt for the corp, show runner link + credits
+                     [:div.info "Runner has " (:link runner) [:span {:class "anr-icon link"}]
+                      " + " (:credit runner) [:span {:class "anr-icon credit"}]]
+                     ;; This is a trace prompt for the runner, show trace strength
+                     [:div.info (str "Trace - " (:strength prompt))]))
                  [:div.credit-select
                   ;; Inform user of base trace / link and any bonuses
                   (when-let [base (:base prompt)]
