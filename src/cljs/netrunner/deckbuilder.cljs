@@ -406,15 +406,6 @@
   [deck]
   (dots-html influence-dot (decks/influence-map deck)))
 
-
-(defn deck-status-label
-  [sets {:keys [status] :as deck}]
-  (or status
-      (let [valid (decks/valid-deck? deck)
-            mwl (decks/mwl-legal? deck)
-            rotation (decks/only-in-rotation? sets deck)]
-        (decks/deck-status mwl valid rotation))))
-
 (defn- build-deck-status-label [valid mwl rotation cache-refresh onesies onesies-details?]
   (let [status (decks/deck-status mwl valid rotation)
         message (case status
@@ -433,18 +424,25 @@
      [:div {:class (if (:legal onesies) "legal" "invalid") :title (if onesies-details? (:reason onesies))}
       [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]]))
 
+(defn- deck-status-details
+  [deck use-trusted-info]
+  (if use-trusted-info
+    (decks/trusted-deck-status deck)
+    (decks/calculate-deck-status deck)))
+
+(defn format-deck-status-span
+  [deck-status tooltip? onesies-details?]
+  (let [{:keys [valid mwl rotation cache-refresh onesies status]} deck-status
+        message (case status
+                  "legal" "Tournament legal"
+                  "casual" "Casual play only"
+                  "invalid" "Invalid")]
+    [:span.deck-status.shift-tooltip {:class status} message
+     (when tooltip?
+       (build-deck-status-label valid mwl rotation cache-refresh onesies onesies-details?))]))
+
 (defn deck-status-span-impl [sets deck tooltip? onesies-details? use-trusted-info]
-   (let [{:keys [valid mwl rotation cache-refresh onesies status]}
-         (if use-trusted-info
-           (decks/trusted-deck-status deck)
-           (decks/check-deck-status deck))
-         message (case status
-                   "legal" "Tournament legal"
-                   "casual" "Casual play only"
-                   "invalid" "Invalid")]
-     [:span.deck-status.shift-tooltip {:class status} message
-      (when tooltip?
-        (build-deck-status-label valid mwl rotation cache-refresh onesies onesies-details?))]))
+  (format-deck-status-span (deck-status-details deck use-trusted-info) tooltip? onesies-details?))
 
 (def deck-status-span-memoize (memoize deck-status-span-impl))
 

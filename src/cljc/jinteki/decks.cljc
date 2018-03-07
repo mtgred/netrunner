@@ -294,7 +294,6 @@
   (and (every? #(released? sets (:card %)) (:cards deck))
        (released? sets (:identity deck))))
 
-
 (defn deck-status
   [mwl-legal valid in-rotation]
   (cond
@@ -302,7 +301,7 @@
     valid "casual"
     :else "invalid"))
 
-(defn check-deck-status [deck]
+(defn calculate-deck-status [deck]
   (let [valid (valid-deck? deck)
         mwl (mwl-legal? deck)
         rotation (only-in-rotation? @cards/sets deck)
@@ -317,11 +316,11 @@
      :cache-refresh cache-refresh}))
 
 (defn trusted-deck-status [{:keys [status name cards date] :as deck}]
-  (let [parse-date #?(:clj  #(f/parse (f/formatters :date) %)
+  (let [parse-date #?(:clj  #(f/parse (f/formatters :date-time) %)
                       :cljs #(js/Date.parse %))
         deck-date (parse-date date)
         mwl-date (:date_start @cards/mwl)]
     (if (and status
              (> deck-date mwl-date))
       status
-      (check-deck-status deck))))
+      (calculate-deck-status deck))))

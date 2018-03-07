@@ -9,7 +9,8 @@
             [web.lobby :as lobby]
             [web.game :as game]
             [web.stats :as stats]
-            [jinteki.nav :as nav])
+            [jinteki.nav :as nav]
+            [clj-time.format :as f])
   (:gen-class :main true))
 
 (defonce server (atom nil))
@@ -26,12 +27,16 @@
     (let [cards (mc/find-maps db "cards" nil)
           sets (mc/find-maps db "sets" nil)
           cycles (mc/find-maps db "cycles" nil)
-          mwl (mc/find-maps db "mwl" nil)]
+          mwl (mc/find-maps db "mwl" nil)
+          latest_mwl (->> mwl
+                       (map (fn [e] (update e :date_start #(f/parse (f/formatters :date) %))))
+                       (sort-by :date_start)
+                       (last))]
       (reset! cards/all-cards (into {} (map (juxt :title identity)
                                             (sort-by (complement :rotated) cards))))
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
-      (reset! cards/mwl mwl))
+      (reset! cards/mwl latest_mwl))
 
     (when (#{"dev" "prod"} (first args))
       (reset! server-mode (first args)))
