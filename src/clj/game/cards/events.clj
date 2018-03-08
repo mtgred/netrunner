@@ -1047,6 +1047,16 @@
                    (let [from (take 6 (:deck runner))]
                      (continue-ability state side (entrance-trash from) card nil)))})
 
+   "Marathon"
+   (run-event
+     {:choices (req (filter #(can-run-server? state %) remotes))}
+     {:end-run {:effect (req (prevent-run-on-server state card (:server run))
+                             (when (:successful run)
+                               (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
+                               (gain state :runner :click 1)
+                               (move state :runner (last (:discard runner)) :hand)))}})
+
+
    "Mars for Martians"
    {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
                                      (all-installed state :runner)))
