@@ -255,6 +255,34 @@
     (prompt-choice :corp "1")
     (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
 
+(deftest degree-mill
+  ;; Degree Mill - runner must shuffle two installed cards into stack to steal
+  (do-game
+    (new-game (default-corp [(qty "Degree Mill" 1)])
+              (default-runner [(qty "Ice Analyzer" 1) (qty "All-nighter" 1)]))
+    (play-from-hand state :corp "Degree Mill" "New remote")
+    (take-credits state :corp)
+
+    (is (= 0 (count (:deck (get-runner)))) "Runner starts with empty deck")
+    (run-on state "Server 1")
+    (run-successful state)
+    (prompt-choice :runner "Yes")
+    (is (= 0 (:agenda-point (get-runner))) "Runner stole Degree Mill with no installed cards")
+
+    (play-from-hand state :runner "Ice Analyzer")
+    (play-from-hand state :runner "All-nighter")
+
+    (let [ia (get-in @state [:runner :rig :resource 0])
+          an (get-in @state [:runner :rig :resource 1])]
+      (run-on state "Server 1")
+      (run-successful state)
+      (prompt-choice :runner "Yes")
+      (prompt-select :runner ia)
+      (prompt-select :runner an)
+      (is (= 3 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill")
+      (is (empty? (get-in @state [:runner :rig :resource])) "Degree Mill didn't remove installed cards")
+      (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck"))))
+
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
   (do-game

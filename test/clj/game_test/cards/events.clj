@@ -1109,6 +1109,38 @@
     (is (= 2 (:click (get-runner))) "Spent 2 clicks")
     (is (= 1 (:tag (get-runner))) "Lost 2 tags")))
 
+(deftest leave-no-trace
+  ;; Leave No Trace should derez ICE that was rezzed during the run
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 2)])
+              (default-runner [(qty "Leave No Trace" 1)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Leave No Trace")
+    (prompt-choice :runner "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (run-successful state)
+    (is (not (:rezzed (get-ice state :hq 0))) "Inner Ice Wall should not be rezzed")
+    (is (:rezzed (get-ice state :hq 1)) "Outer Ice Wall should be rezzed still")))
+
+(deftest leave-no-trace-does-not-derez-modified-ice
+  ;; Leave No Trace should not derez ICE that has changed during a run
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Leave No Trace" 1)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (is (:rezzed (get-ice state :hq 0)) "Ice Wall should be rezzed initially")
+    (play-from-hand state :runner "Leave No Trace")
+    (prompt-choice :runner "Server 1")
+    (core/add-counter state :corp (get-ice state :hq 0) :advance-counter 1)
+    (run-successful state)
+    (is (= 1 (get-counters (get-ice state :hq 0) :advance-counter)))
+    (is (:rezzed (get-ice state :hq 0)) "Ice Wall should still be rezzed")))
+
 (deftest mad-dash
   ;; Mad Dash - Make a run. Move to score pile as 1 point if steal agenda.  Take 1 meat if not
   (do-game
@@ -1984,7 +2016,7 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
       (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
-      (core/rez state :corp iwall)
+      (core/rez state :corp (refresh iwall))
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
       (is (core/has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")

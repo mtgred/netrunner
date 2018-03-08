@@ -953,24 +953,27 @@
                  (game.core/run state side (make-eid state) target nil card))}
 
    "Leave No Trace"
-   {:prompt "Choose a server"
-    :msg "make a run and derez any ICE that are rezzed during this run"
-    :choices (req runnable-servers)
-    :delayed-completion true
-    :effect (req
-              (let [old-ice (filter #(and (rezzed? %) (is-type? % "ICE")) (all-installed state :corp))]
-                (swap! state assoc :lnt old-ice)
-                (register-events state side (:events (card-def card)) (assoc card :zone '(:discard)))
-                (game.core/run state side (make-eid state) target nil card)))
-    :events {:run-ends {:effect (req (let [new (set (filter #(and (rezzed? %) (is-type? % "ICE")) (all-installed state :corp)))
-                                           old (set (:lnt @state))
-                                           diff (seq (clojure.set/difference new old))]
-                                       (doseq [ice diff]
-                                         (derez state side ice))
-                                       (when-not (empty? diff)
-                                         (system-msg state side (str "derezzes " (join ", " (map :title diff)) " via Leave No Trace")))
-                                       (swap! state dissoc :lnt)
-                                       (unregister-events state side card)))}}}
+   (letfn [(get-rezzed-cids [ice]
+             (map :cid (filter #(and (rezzed? %) (is-type? % "ICE")) ice)))]
+     {:prompt "Choose a server"
+      :msg "make a run and derez any ICE that are rezzed during this run"
+      :choices (req runnable-servers)
+      :delayed-completion true
+      :effect (req
+                (let [old-ice-cids (get-rezzed-cids (all-installed state :corp))]
+                  (swap! state assoc :lnt old-ice-cids)
+                  (register-events state side (:events (card-def card)) (assoc card :zone '(:discard)))
+                  (game.core/run state side (make-eid state) target nil card)))
+      :events {:run-ends {:effect (req (let [new (set (get-rezzed-cids (all-installed state :corp)))
+                                             old (set (:lnt @state))
+                                             diff-cid (seq (clojure.set/difference new old))
+                                             diff (map #(find-cid % (all-installed state :corp)) diff-cid)]
+                                         (doseq [ice diff]
+                                           (derez state side ice))
+                                         (when-not (empty? diff)
+                                           (system-msg state side (str "derezzes " (join ", " (map :title diff)) " via Leave No Trace")))
+                                         (swap! state dissoc :lnt)
+                                         (unregister-events state side card)))}}})
 
    "Legwork"
    {:req (req hq-runnable)
@@ -1705,8 +1708,10 @@
                  {:msg (msg "make " (card-str state ice) " gain Sentry, Code Gate, and Barrier until the end of the turn")
                   :effect (effect (update! (assoc ice :subtype (combine-subtypes true (:subtype ice) "Sentry" "Code Gate" "Barrier")))
                                   (update-ice-strength (get-card state ice))
+                                  (add-icon card (get-card state ice) "T" "green")
                                   (register-events {:runner-turn-ends
-                                                    {:effect (effect (update! (assoc (get-card state ice) :subtype stypes)))}}
+                                                    {:effect (effect (remove-icon card (get-card state ice))
+                                                                     (update! (assoc (get-card state ice) :subtype stypes)))}}
                                   (assoc card :zone '(:discard))))}
                card nil)))
     :events {:runner-turn-ends nil}}
@@ -1789,8 +1794,8 @@
                              (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :trace {:base 3
-            :msg "reveal all cards in HQ"
             :unsuccessful {:delayed-completion true
+                           :msg "reveal all cards in HQ"
                            :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
 
    "Windfall"

@@ -353,7 +353,7 @@
   "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
   Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
   ([state side card msg f args] (show-trace-prompt state side (make-eid state) card msg f args))
-  ([state side eid card msg f {:keys [priority base bonus] :as args}]
+  ([state side eid card msg f {:keys [priority base bonus strength] :as args}]
    (let [prompt (if (string? msg) msg (msg state side nil card nil))
          newitem {:eid eid
                   :msg prompt
@@ -362,7 +362,8 @@
                   :card card
                   :priority priority
                   :base base
-                  :bonus bonus}]
+                  :bonus bonus
+                  :strength strength}]
      (add-to-prompt-queue state side newitem))))
 
 (defn show-select
@@ -378,6 +379,7 @@
            all (get-in ability [:choices :all])]
        (swap! state update-in [side :selected]
               #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+                              :not-self (when (get-in ability [:choices :not-self]) (:cid card))
                               :max (get-in ability [:choices :max])
                               :all all}))
        (show-prompt state side card
@@ -508,7 +510,8 @@
                                  " + " boost " [Credits]) (" (make-label ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
     (show-trace-prompt state :runner card "Boost link strength?"
-                       #(resolve-trace state side eid %) {:priority (or priority 2) :base link})
+                       #(resolve-trace state side eid %) 
+                       {:priority (or priority 2) :base link :strength total})
     (swap! state assoc :trace {:strength total :ability ability :card card})
     (trigger-event state side :trace nil)))
 
