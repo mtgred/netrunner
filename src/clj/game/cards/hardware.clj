@@ -396,17 +396,18 @@
                  :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
 
    "Friday Chip"
-    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
-                   :req (req (pos? (get-in card [:counter :virus] 0)))
-                   :choices {:req #(and (has-subtype? % "Virus")
-                                        (is-type? % "Program"))}
-                   :effect (req (add-counter state :runner card :virus -1)
-                                (add-counter state :runner target :virus 1))}]
+   (let [ability {:msg (msg "move 1 virus counter to " (:title target))
+                  :req (req (pos? (get-in card [:counter :virus] 0)))
+                  :choices {:req #(and (has-subtype? % "Virus")
+                                       (is-type? % "Program"))}
+                  :effect (req (add-counter state :runner card :virus -1)
+                               (add-counter state :runner target :virus 1))}]
      {:events {:runner-turn-begins ability
-               :runner-trash {:optional
+               :runner-trash {:req (req (= (:side target) "Corp"))
+                              :optional
                               {:prompt "Gain a virus counter on Friday Chip?"
                                :yes-ability
-                               {:effect (effect (add-counter card :virus 1)
+                               {:effect (effect (add-counter :runner card :virus 1)
                                                 (system-msg :runner (str "places 1 virus counter on Friday Chip")))}}}}})
 
    "GPI Net Tap"
