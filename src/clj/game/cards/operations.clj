@@ -308,7 +308,7 @@
                            :effect (effect (gain :corp :credit 1))}]
      {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
       :events {:runner-install gain-cred-effect
-               :runner-trash gain-cred-effect}})
+               :runner-trash (assoc gain-cred-effect :req (req (installed? target)))}})
 
    "Dedication Ceremony"
    {:prompt "Select a faceup card"
