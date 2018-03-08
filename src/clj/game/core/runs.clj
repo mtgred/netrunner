@@ -613,6 +613,7 @@
                            (system-msg state side "accessed no cards during the run")
                            (do (when (:run @state)
                                  (swap! state assoc-in [:run :did-access] true))
+                               (swap! state assoc-in [:runner :register :accessed-cards] true)
                                (when-completed (resolve-ability state side (choose-access cards server) nil nil)
                                                (effect-completed state side eid nil))
                                (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
