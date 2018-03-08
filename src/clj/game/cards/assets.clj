@@ -1416,8 +1416,8 @@
                                  :yes-ability {:delayed-completion true
                                                :cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
-                                               :effect (effect (damage eid :net 3 {:card card})
-                                                               (tag-runner :runner eid 1))}}}
+                                               :effect (req (when-completed (damage state side :net 3 {:card card})
+                                                                            (tag-runner state :runner eid 1)))}}}
                                card nil))}}
 
    "Space Camp"

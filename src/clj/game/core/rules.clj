@@ -227,6 +227,7 @@
          ;; runner can prevent the damage.
          (do (system-msg state :runner "has the option to avoid damage")
              (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
+             (swap! state assoc-in [:prevent :current] type)
              (show-prompt
                state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
                (fn [_]
@@ -263,6 +264,7 @@
   (swap! state update-in [:runner :tag-remove-bonus] (fnil #(+ % n) 0)))
 
 (defn resolve-tag [state side eid n args]
+  (trigger-event state side :pre-resolve-tag n)
   (if (pos? n)
     (do (gain state :runner :tag n)
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
@@ -281,6 +283,7 @@
        (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
          (do (system-msg state :runner "has the option to avoid tags")
              (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
+             (swap! state assoc-in [:prevent :current] :tag)
              (show-prompt
                state :runner nil (str "Avoid any of the " n " tags?") ["Done"]
                (fn [_]
