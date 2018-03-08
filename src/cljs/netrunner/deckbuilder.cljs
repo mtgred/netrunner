@@ -80,8 +80,10 @@
 (defn parse-identity
   "Parse an id to the corresponding card map"
   [{:keys [side title art setname]}]
-  (let [card (lookup side {:title title})]
-    (assoc card :art art :display-name (build-identity-name title setname art))))
+  (if (nil? title)
+    {:display-name "Missing Identity"}
+    (let [card (lookup side {:title title})]
+      (assoc card :art art :display-name (build-identity-name title setname art)))))
 
 (defn add-params-to-card
   "Add art and id parameters to a card hash"
