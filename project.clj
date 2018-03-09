@@ -45,7 +45,8 @@
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
-            "add-art" ["run" "-m" "tasks.altart/add-art"]}
+            "add-art" ["run" "-m" "tasks.altart/add-art"]
+            "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]}
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs" "src/cljc"]
