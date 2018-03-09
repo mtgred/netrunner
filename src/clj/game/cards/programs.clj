@@ -369,7 +369,7 @@
 
    "Gravedigger"
    {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
-                               :effect (effect (add-counter :runner card :virus 1))}]
+                     :effect (effect (add-counter :runner card :virus 1))}]
               {:runner-trash e :corp-trash e})
     :abilities [{:counter-cost [:virus 1]
                  :cost [:click 1]
