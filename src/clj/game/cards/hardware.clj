@@ -778,18 +778,20 @@
     :events {:jack-out {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))) " from HQ")}}}
 
    "Replicator"
-   {:events {:runner-install
-             {:interactive (req (and (is-type? target "Hardware")
-                                     (some #(= (:title %) (:title target)) (:deck runner))))
-              :silent (req (not (and (is-type? target "Hardware")
-                                     (some #(= (:title %) (:title target)) (:deck runner)))))
-              :optional {:prompt "Use Replicator to add a copy?"
-                         :req (req (and (is-type? target "Hardware") (some #(= (:title %) (:title target)) (:deck runner))))
-                         :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
-                                       :effect (effect (trigger-event :searched-stack nil)
-                                                       (shuffle! :deck)
-                                                       (move (some #(when (= (:title %) (:title target)) %)
-                                                                   (:deck runner)) :hand))}}}}}
+   (letfn [(hardware-and-in-deck? [target runner]
+             (and (is-type? target "Hardware")
+                  (some #(= (:title %) (:title target)) (:deck runner))))]
+     {:events {:runner-install
+               {:interactive (req (hardware-and-in-deck? target runner))
+                :silent (req (not (hardware-and-in-deck? target runner)))
+                :optional {:prompt "Use Replicator to add a copy?"
+                           :req (req (hardware-and-in-deck? target runner))
+                           :yes-ability {:msg (msg "add a copy of " (:title target) " to their Grip")
+                                         :effect (effect (trigger-event :searched-stack nil)
+                                                   (shuffle! :deck)
+                                                   (move (some #(when (= (:title %) (:title target)) %)
+                                                               (:deck runner)) :hand))}}}}})
+
 
    "Respirocytes"
    (let [ability {:once :per-turn
