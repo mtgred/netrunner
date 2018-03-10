@@ -35,10 +35,12 @@
           status (decks/calculate-deck-status check-deck)
           deck (assoc deck :status status)]
       (if-let [deck-id (:_id deck)]
-        (do (mc/update db "decks"
-                       {:_id (object-id deck-id) :username username}
-                       {"$set" (dissoc deck :_id)})
+        (if (:identity deck)
+          (do (mc/update db "decks"
+                         {:_id (object-id deck-id) :username username}
+                         {"$set" (dissoc deck :_id)})
             (response 200 {:message "OK"}))
+          (response 409 {:message "Deck is missing identity"}))
         (response 409 {:message "Deck is missing _id"})))
     (response 401 {:message "Unauthorized"})))
 
