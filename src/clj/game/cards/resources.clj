@@ -748,7 +748,8 @@
 
    "Guru Davinder"
    {:events {:pre-damage
-             {:req (req (or (= target :meat) (= target :net)))
+             {:req    (req (and (or (= target :meat) (= target :net))
+                                (pos? (last targets))))
               :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
               :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
                            (damage-prevent state side :net Integer/MAX_VALUE)
