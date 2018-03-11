@@ -26,3 +26,12 @@ pom.xml
 /.lein-failures
 
 config.edn
+
+# MongoDB files
+*.wt
+*.lock
+*.turtle
+data/WiredTiger
+data/diagnostic.data
+data/journal
+data/storage.bson
