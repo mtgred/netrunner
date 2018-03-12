@@ -85,7 +85,7 @@
                        :mill (str value " card mill")
                        :hardware (str value " installed hardware")
                        :shuffle-installed-to-stack (str "shuffling " value " installed "
-                                                        (pluralize "program" value) " into the stack")
+                                                        (pluralize "card" value) " into the stack")
                        (str value (str key)))) (partition 2 (flatten costs)))))
 
 (defn vdissoc [v n]
