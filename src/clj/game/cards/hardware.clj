@@ -397,13 +397,13 @@
 
    "Friday Chip"
    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
-                  :req (req (pos? (get-in card [:counter :virus] 0)))
+                  :req (req (and (pos? (get-in card [:counter :virus] 0))
+                                 (pos? (count-virus-programs state))))
                   :choices {:req #(and (has-subtype? % "Virus")
                                        (is-type? % "Program"))}
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
-     {:events {:runner-turn-begins {:req (req (pos? (count-virus-programs state)))
-                                    :effect (ability)}
+     {:events {:runner-turn-begins ability
                :runner-trash {:req (req (= (:side target) "Corp"))
                               :optional
                               {:prompt "Gain a virus counter on Friday Chip?"
