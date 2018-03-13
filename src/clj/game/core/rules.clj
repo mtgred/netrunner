@@ -402,8 +402,8 @@
       (if (is-type? card "Agenda")
         (when-completed (resolve-steal-events state side card)
                         (resolve-trash-no-cost state side card))
-        (resolve-trash-no-cost state side card)))
-    (close-access-prompt state side)))
+        (resolve-trash-no-cost state side card))
+      (close-access-prompt state side))))
 
 
 ;;; Agendas
