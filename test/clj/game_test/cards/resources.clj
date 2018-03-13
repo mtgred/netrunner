@@ -719,6 +719,20 @@
     (take-credits state :runner)
     (is (= 1 (count (:discard (get-runner)))) "No successful runs; Grifter is trashed")))
 
+(deftest guru-davinder
+  ;; Guru Davinder - no prompt/trash for 'preventing' 0 damage
+  (do-game
+    (new-game (default-corp [(qty "Punitive Counterstrike" 1)])
+              (default-runner [(qty "Guru Davinder" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Guru Davinder")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Punitive Counterstrike")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (empty? (get-in @state [:runner :prompt]))
+        "There is no prompt for 0 damage")))
+
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
   (do-game
