@@ -474,6 +474,31 @@
       (is (nil? (get-program state 0)) "Card is uninstalled")
       (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck"))))
 
+(deftest kakugo-swap
+  ;; Kakugo - ability continues to work when ice is swapped
+  (do-game
+   (new-game (default-corp [(qty "Kakugo" 1)
+                            (qty "Ice Wall" 1)])
+             (default-runner))
+   (play-from-hand state :corp "Kakugo" "R&D")
+   (play-from-hand state :corp "Ice Wall" "Archives")
+   (take-credits state :corp)
+
+   (let [kakugo   (get-ice state :rd 0)
+         ice-wall (get-ice state :archives 0)]
+     (run-on state "R&D")
+     (core/rez state :corp kakugo)
+     (run-continue state)
+     (run-jack-out state)
+     (is (= 2 (count (:hand (get-runner)))) "Runner took damage before swap")
+
+     (core/swap-ice state :corp kakugo ice-wall)
+
+     (run-on state "Archives")
+     (run-continue state)
+     (run-jack-out state)
+     (is (= 1 (count (:hand (get-runner)))) "Runner took damage after swap"))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game

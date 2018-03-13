@@ -100,6 +100,8 @@
     (swap! state update-in (cons :corp (:zone a)) #(assoc % a-index b-new))
     (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
     (doseq [newcard [a-new b-new]]
+      (unregister-events state side newcard)
+      (register-events state side (:events (card-def newcard)) newcard)
       (doseq [h (:hosted newcard)]
         (let [newh (-> h
                        (assoc-in [:zone] '(:onhost))
