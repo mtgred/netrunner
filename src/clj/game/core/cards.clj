@@ -59,7 +59,7 @@
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
   ([state side {:keys [zone cid host installed] :as card} to {:keys [front keep-server-alive force] :as options}]
-   (let [to (if (is-type? card "Identity") :rfg to)          ; Identities always get moved to RFG
+   (let [to (if (is-type? card "Fake-Identity") :rfg to)          ; Fake-Identities always get moved to RFG
          zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)
