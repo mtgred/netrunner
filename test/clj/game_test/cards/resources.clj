@@ -444,6 +444,43 @@
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
     (is (= 0 (:tag (get-runner))) "Tag avoided")))
 
+(let [choose-runner (fn [name state prompt-map]
+                      (let [the-choice (some #(when (= name (:title %)) %) (:choices (prompt-map :runner)))]
+                        (core/resolve-prompt state :runner {:card the-choice})))
+
+      ;; Start id
+      sunny "Sunny Lebeau: Security Specialist"
+      ;; List of all G-Mod identities
+      geist "Armand \"Geist\" Walker: Tech Lord"
+      kate "Kate \"Mac\" McCaffrey: Digital Tinker"
+      kit "Rielle \"Kit\" Peddler: Transhuman"
+      professor "The Professor: Keeper of Knowledge"
+      jamie "Jamie \"Bzzz\" Micken: Techno Savant"
+      chaos "Chaos Theory: Wünderkind"
+      whizzard "Whizzard: Master Gamer"
+      reina "Reina Roja: Freedom Fighter"
+      maxx "MaxX: Maximum Punk Rock"]
+
+  (deftest dj-fenris-chaos
+    ;; DJ Fenris - host 1 g-mod id not in faction on DJ Fenris
+    (do-game
+      (new-game (default-corp)
+                ;; Runner id is Gabe, make sure Geist is not in list (would be first)
+                (make-deck sunny ["DJ Fenris"]) {:start-as :runner})
+      (play-from-hand state :runner "DJ Fenris")
+      (is (= (first (prompt-titles :runner)) geist) "List is sorted")
+      (is (every? #(some #{%} (prompt-titles :runner))
+                  [geist chaos reina maxx]))
+      (is (not-any? #(some #{%} (prompt-titles :runner))
+                    [professor whizzard jamie kate kit]))
+      (choose-runner chaos state prompt-map)
+
+      (is (= chaos (get-in (get-resource state 0) [:hosted 0 :title])))
+
+      (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
+      (is (= 2 (:link (get-runner))) "2 link from Sunny")
+      (is (= 5 (:memory (get-runner))) "+1 MU from Chaos Theory") )))
+
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
   (do-game
