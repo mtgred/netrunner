@@ -1261,6 +1261,29 @@
       (prompt-choice :runner "No")
       (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
 
+(deftest tori-hanzo-net
+  ;; Tori Hanzō breaking subsequent net damage: Issue #3176
+  (do-game
+    (new-game (default-corp [(qty "Tori Hanzō" 1) (qty "Pup" 2) (qty "Neural EMP" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 8)
+    (play-from-hand state :corp "Tori Hanzō" "New remote")
+    (play-from-hand state :corp "Pup" "Server 1")
+    (take-credits state :corp)
+    (run-on state "Server 1")
+    (let [tori (get-content state :remote1 0)
+          pup (get-ice state :remote1 0)]
+      (core/rez state :corp pup)
+      (core/rez state :corp tori)
+      (card-subroutine state :corp pup 0)
+      (prompt-choice :corp "Yes") ; pay 2c to replace 1 net with 1 brain
+      (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
+      (is (= 1 (:brain-damage (get-runner))))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Neural EMP")
+      (is (= 2 (count (:discard (get-runner)))) "Net damage processed correctly"))))
+
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game

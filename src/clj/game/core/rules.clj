@@ -200,7 +200,7 @@
                                 (swap! state update-in [:runner :brain-damage] #(+ % n))
                                 (swap! state update-in [:runner :hand-size-modification] #(- % n)))
                               (when-let [trashed-msg (join ", " (map :title cards-trashed))]
-                                (system-msg state :runner (str "trashes " trashed-msg " due to damage")))
+                                (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
                               (if (< (count hand) n)
                                 (do (flatline state)
                                     (trash-cards state side (make-eid state) cards-trashed
@@ -209,6 +209,7 @@
                                                  {:unpreventable true :cause type})
                                     (trigger-event state side :damage type card n)))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
+                      (swap! state update-in [:damage] dissoc :damage-replace)
                       (effect-completed state side eid card))))
 
 (defn damage
