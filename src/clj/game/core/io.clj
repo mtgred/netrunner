@@ -186,6 +186,7 @@
 (defn command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]
     (swap! state update-in [side :prompt] rest)
+    (swap! state dissoc-in [side :selected])
     (effect-completed state side (:eid fprompt))))
 
 (defn parse-command [text]
