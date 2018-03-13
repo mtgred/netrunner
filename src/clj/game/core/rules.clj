@@ -387,10 +387,9 @@
      (trashrec cards))))
 
 (defn- resolve-trash-no-cost
-  [state side card]
-  (trash state side (assoc card :seen true))
-  (swap! state assoc-in [:runner :register :trashed-card] true)
-  (close-access-prompt state side))
+  [state side card & seen]
+  (trash state side (assoc card :seen (or seen true)))
+  (swap! state assoc-in [side :register :trashed-card] true))
 
 (defn trash-no-cost
   "Trashes a card at no cost while it is being accessed. (Imp.)"
@@ -403,7 +402,8 @@
       (if (is-type? card "Agenda")
         (when-completed (resolve-steal-events state side card)
                         (resolve-trash-no-cost state side card))
-        (resolve-trash-no-cost state side card)))))
+        (resolve-trash-no-cost state side card)))
+    (close-access-prompt state side)))
 
 
 ;;; Agendas
@@ -497,8 +497,8 @@
   ([state side] (mill state side 1))
   ([state side n]
    (let [milltargets (take n (get-in @state [side :deck]))]
-     (doseq [c milltargets]
-       (move state side c :discard)))))
+     (doseq [card milltargets]
+       (resolve-trash-no-cost state side card false)))))
 
 ;; Exposing
 (defn expose-prevent
