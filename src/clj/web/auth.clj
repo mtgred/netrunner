@@ -58,7 +58,7 @@
                          :as                               request}]
   (if (< 20 (count username))
     (response 423 {:message "Usernames are limited to 20 characters"})
-    (if-let [_ (mc/find-one-as-map db "users" {:username {$regex (str "^" email "$") $options "i"}})]
+    (if-let [_ (mc/find-one-as-map db "users" {:username {$regex (str "^" username "$") $options "i"}})]
       (response 422 {:message "Username taken"})
       (let [emailhash (digest/md5 email)
             registrationDate (java.util.Date.)
