@@ -214,7 +214,7 @@
                                               (str "uses Aimor to trash "
                                                    (join ", " (map :title (take 3 (:deck runner))))
                                                    " from the Runner's Stack"))
-                                  (mill state :runner 3))
+                                  (mill state :corp :runner 3))
                                 (when current-ice
                                   (no-action state :corp nil)
                                   (continue state :runner nil))
@@ -512,7 +512,7 @@
     :abilities [{:label "Trash the top 2 cards of the Runner's Stack"
                  :req (req (some #(has-subtype? % "AI") (all-installed state :runner)))
                  :msg (msg (str "trash " (join ", " (map :title (take 2 (:deck runner)))) " from the Runner's Stack"))
-                 :effect (effect (mill :runner 2))}]
+                 :effect (effect (mill :corp :runner 2))}]
     :subroutines [(do-net-damage 2)
                   end-the-run]}
 

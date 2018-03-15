@@ -524,7 +524,7 @@
 
    "Genotyping"
    {:delayed-completion true
-    :effect (effect (mill 2)
+    :effect (effect (mill :corp 2)
                     (system-msg "trashes the top 2 cards of R&D")
                     (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4))}
 
@@ -1135,7 +1135,7 @@
                      (let [post-purge-virus (number-of-virus-counters state)
                            num-virus-purged (- pre-purge-virus post-purge-virus)
                            num-to-trash (quot num-virus-purged 3)]
-                       (mill state :runner num-to-trash)
+                       (mill state :corp :runner num-to-trash)
                        (system-msg state side (str "uses Reverse Infection to purge "
                                                    num-virus-purged (pluralize " virus counter" num-virus-purged)
                                                    " and trash "

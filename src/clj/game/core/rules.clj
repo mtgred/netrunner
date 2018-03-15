@@ -387,8 +387,9 @@
      (trashrec cards))))
 
 (defn- resolve-trash-no-cost
-  [state side card & seen]
-  (trash state side (assoc card :seen (or seen true)))
+  [state side card & {:keys [seen]
+                      :or {seen true}}]
+  (trash state side (assoc card :seen seen))
   (swap! state assoc-in [side :register :trashed-card] true))
 
 (defn trash-no-cost
@@ -493,12 +494,13 @@
   (trigger-event state side :purge))
 
 (defn mill
-  "Force the discard of n cards from :deck to :discard."
-  ([state side] (mill state side 1))
-  ([state side n]
-   (let [milltargets (take n (get-in @state [side :deck]))]
+  "Force the discard of n cards by trashing them."
+  ([state side] (mill state side side 1))
+  ([state side n] (mill state side side n))
+  ([state from-side to-side n]
+   (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
-       (resolve-trash-no-cost state side card false)))))
+       (resolve-trash-no-cost state from-side card :seen false)))))
 
 ;; Exposing
 (defn expose-prevent
