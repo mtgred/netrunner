@@ -597,12 +597,12 @@
   [sets {:keys [identity cards] :as deck} {:keys [qty card] :as line}]
   [:span (if-let [name (:title card)]
            (let [infaction (noinfcost? identity card)
-                 banned (banned? card)
-                 allied (alliance-is-free? cards line)
-                 valid (and (allowed? card identity)
-                            (legal-num-copies? identity line))
-                 released (released? sets card)
-                 modqty (if (is-prof-prog? deck card) (- qty 1) qty)]
+                 banned (decks/banned? card)
+                 allied (decks/alliance-is-free? cards line)
+                 valid (and (decks/allowed? card identity)
+                            (decks/legal-num-copies? identity line))
+                 released (decks/released? sets card)
+                 modqty (if (decks/is-prof-prog? deck card) (- qty 1) qty)]
              [:span
               [:span {:class (cond
                                (and valid released (not banned)) "fake-link"
