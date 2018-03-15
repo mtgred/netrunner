@@ -182,14 +182,15 @@
                      kw (if (pos? clicks) :click (to-keyword (join "-" (rest (split target #" ")))))
                      val (if (pos? clicks) clicks (string->num (first (split target #" "))))]
                  (if (can-pay? state side name [kw val])
-                   (do (pay state side nil [kw val])
-                       (system-msg state side (str "pays " target
+                   (when-completed
+                     (pay-sync state side nil [kw val])
+                     (do (system-msg state side (str "pays " target
                                                    " to steal " (:title card)))
-                       (if (< (count chosen) n)
-                         (continue-ability state side
-                                              (steal-pay-choice state :runner (remove-once #(not= target %)
+                         (if (< (count chosen) n)
+                           (continue-ability state side
+                                             (steal-pay-choice state :runner (remove-once #(not= target %)
                                                                                      choices) chosen n card) card nil)
-                         (resolve-steal state side eid card)))
+                           (resolve-steal state side eid card))))
                    (resolve-steal-events state side eid card)))))})
 
 (defn- access-agenda
@@ -215,10 +216,10 @@
           {:yes-ability
                        {:delayed-completion true
                         :effect (req (if (can-pay? state side name cost)
-                                       (do (pay state side nil cost)
-                                           (system-msg state side (str "pays " (costs-to-symbol cost)
-                                                                       " to steal " name))
-                                           (resolve-steal state side eid c))
+                                       (when-completed (pay-sync state side nil cost)
+                                                       (do (system-msg state side (str "pays " (costs-to-symbol cost)
+                                                                                   " to steal " name))
+                                                           (resolve-steal state side eid c)))
                                        (resolve-steal-events state side eid c)))}
            :no-ability {:delayed-completion true
                         :effect (effect (trigger-event :no-steal card)
@@ -245,6 +246,62 @@
                     (str " from " (->> cards first :zone (name-zone side)))))]
      (system-msg state side msg))))
 
+(defn- resolve-handle-access
+  [state side eid c title]
+  (let [cdef (card-def c)
+        c (assoc c :seen true)
+        access-effect (:access cdef)]
+    (msg-handle-access state side cards title)
+    (when-let [name (:title c)]
+      (if (is-type? c "Agenda")
+        ;; Accessing an agenda
+        (if (and access-effect
+                 (can-trigger? state side access-effect c nil))
+          ;; deal with access effects first. This is where Film Critic can be used to prevent these
+          (continue-ability state :runner
+                            {:delayed-completion true
+                             :prompt             (str "You must access " name)
+                             :choices            ["Access"]
+                             :effect             (req (when-completed
+                                                        (resolve-ability state (to-keyword (:side c)) access-effect c nil)
+                                                        (access-agenda state side eid c)))} c nil)
+          (access-agenda state side eid c))
+        ;; Accessing a non-agenda
+        (if (and access-effect
+                 (= (:zone c) (:zone (get-card state c))))
+          ;; if card wasn't moved by a pre-access effect
+          (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
+                          (do (if (= (:zone c) (:zone (get-card state c)))
+                                ;; if the card wasn't moved by the access effect
+                                (access-non-agenda state side eid c)
+                                (effect-completed state side eid))))
+          (access-non-agenda state side eid c))))))
+
+(defn- handle-access-pay
+  [state side eid c title]
+  (let [acost (access-cost state side c)
+        ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
+        anon-card (dissoc c :title)
+        cant-pay #(prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})]
+    (cond
+      ;; Check if a pre-access-card effect trashed the card (By Any Means)
+      (not (get-card state c))
+      (effect-completed state side eid)
+
+      ;; Either there were no access costs, or the runner could pay them.
+      (empty? acost)
+      (resolve-handle-access state side eid c title)
+
+      (not-empty acost)
+      (when-completed (pay-sync state side anon-card acost)
+                      (if async-result
+                        (resolve-handle-access state side eid c title)
+                        (cant-pay)))
+      :else
+      ;; The runner cannot afford the cost to access the card
+      (cant-pay)))
+  (trigger-event state side :post-access-card c))
+
 (defn handle-access
   "Apply game rules for accessing the given list of cards (which generally only contains 1 card.)"
   ([state side cards] (handle-access state side (make-eid state) cards nil))
@@ -257,49 +314,7 @@
      (swap! state update-in [:bonus] dissoc :steal-cost)
      (swap! state update-in [:bonus] dissoc :access-cost)
      (when-completed (trigger-event-sync state side :pre-access-card c)
-                     (do (let [acost (access-cost state side c)
-                               ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
-                               anon-card (dissoc c :title)]
-                           (cond
-                             ;; Check if a pre-access-card effect trashed the card (By Any Means)
-                             (not (get-card state c))
-                             (effect-completed state side eid)
-
-                             ;; Either there were no access costs, or the runner could pay them.
-                             (or (empty? acost) (pay state side anon-card acost))
-                             (let [cdef (card-def c)
-                                   c (assoc c :seen true)
-                                   access-effect (:access cdef)]
-                               (msg-handle-access state side cards title)
-                               (when-let [name (:title c)]
-                                 (if (is-type? c "Agenda")
-                                   ;; Accessing an agenda
-                                   (if (and access-effect
-                                            (can-trigger? state side access-effect c nil))
-                                     ;; deal with access effects first. This is where Film Critic can be used to prevent these
-                                     (continue-ability state :runner
-                                                       {:delayed-completion true
-                                                        :prompt (str "You must access " name)
-                                                        :choices ["Access"]
-                                                        :effect (req (when-completed
-                                                                       (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                                                                       (access-agenda state side eid c)))} c nil)
-                                     (access-agenda state side eid c))
-                                   ;; Accessing a non-agenda
-                                   (if (and access-effect
-                                            (= (:zone c) (:zone (get-card state c))))
-                                     ;; if card wasn't moved by a pre-access effect
-                                     (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                                                     (do (if (= (:zone c) (:zone (get-card state c)))
-                                                           ;; if the card wasn't moved by the access effect
-                                                           (access-non-agenda state side eid c)
-                                                           (effect-completed state side eid))))
-                                     (access-non-agenda state side eid c)))))
-
-                             :else
-                             ;; The runner cannot afford the cost to access the card
-                             (prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})))
-                         (trigger-event state side :post-access-card c))))))
+                     (handle-access-pay state side eid c title)))))
 
 (defn max-access
   "Put an upper limit on the number of cards that can be accessed in this run. For Eater."
