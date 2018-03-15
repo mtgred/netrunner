@@ -514,17 +514,24 @@
                       :on-change #(om/set-state! owner :quantity (.. % -target -value))}]
          [:button "Add to deck"]
          (let [query (:query state)
-               matches (match (get-in state [:deck :identity]) query)]
-           (when-not (or (empty? query)
-                         (= (:title (first matches)) query))
-             (om/set-state! owner :matches matches)
-             [:div.typeahead
-              (for [i (range (count matches))]
-                [:div {:class (if (= i (:selected state)) "selected" "")
-                       :on-click (fn [e] (-> ".deckedit .qty" js/$ .select)
-                                         (om/set-state! owner :query (.. e -target -textContent))
-                                         (om/set-state! owner :selected i))}
-                 (:title (nth matches i))])]))]]))))
+               matches (match (get-in state [:deck :identity]) query)
+               exact-match (= (:title (first matches)) query)]
+           (cond
+             exact-match
+             (do
+               (om/set-state! owner :matches matches)
+               (om/set-state! owner :selected 0))
+
+             (not (or (empty? query) exact-match))
+             (do
+               (om/set-state! owner :matches matches)
+               [:div.typeahead
+                (for [i (range (count matches))]
+                  [:div {:class (if (= i (:selected state)) "selected" "")
+                         :on-click (fn [e] (-> ".deckedit .qty" js/$ .select)
+                                     (om/set-state! owner :query (.. e -target -textContent))
+                                     (om/set-state! owner :selected i))}
+                   (:title (nth matches i))])])))]]))))
 
 (defn deck-collection
   [{:keys [sets decks decks-loaded active-deck]} owner]
