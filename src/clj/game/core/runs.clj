@@ -238,12 +238,10 @@
                            :effect (req (resolve-steal state :runner eid c))} c nil)))))
 
 (defn msg-handle-access
-  ([state side cards]
-   (msg-handle-access state side cards (:title (first cards))))
-  ([state side cards title]
+  ([state side card title]
    (let [msg (str "accesses " title
-                  (when (pos? (count cards))
-                    (str " from " (->> cards first :zone (name-zone side)))))]
+                  (when card
+                    (str " from " (->> card :zone (name-zone side)))))]
      (system-msg state side msg))))
 
 (defn- resolve-handle-access
@@ -251,7 +249,7 @@
   (let [cdef (card-def c)
         c (assoc c :seen true)
         access-effect (:access cdef)]
-    (msg-handle-access state side cards title)
+    (msg-handle-access state side c title)
     (when-let [name (:title c)]
       (if (is-type? c "Agenda")
         ;; Accessing an agenda
