@@ -2000,8 +2000,8 @@
     (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Kati Jones was installed")
     (play-from-hand state :runner "The Price of Freedom")
     (is (= 0 (count (get-in @state [:runner :hand]))) "The Price of Freedom can be played because a connection is in play")
-    (let [kj (find-card "Kati Jones" (:resource (:rig (get-runner))))]
-      (prompt-choice :runner kj)
+    (let [kj (get-resource state 0)]
+      (prompt-select :runner kj)
       (is (= 0 (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed wth The Price of Freedom")
       (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game, and only Kati Jones is in the discard"))
     (take-credits state :runner)
