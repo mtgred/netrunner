@@ -19,8 +19,9 @@
 
 (defn filter-blocked-messages
   [messages]
-  (let [blocked-users (get-in @app-state [:options :blocked-users] [])]
-    (filter #(= -1 (.indexOf blocked-users (:username %))) messages)))
+  (if-let [blocked-users (get-in @app-state [:options :blocked-users] nil)]
+    (filter #(= -1 (.indexOf blocked-users (:username %))) messages)
+    messages))
 
 (defn update-message-channel
   [channel messages]
