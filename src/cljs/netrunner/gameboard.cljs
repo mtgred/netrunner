@@ -994,8 +994,8 @@
 (defn controls [key]
   (sab/html
    [:div.controls
-    [:button.small {:on-click #(send-command "change" {:key key :delta 1}) :type "button"} "+"]
-    [:button.small {:on-click #(send-command "change" {:key key :delta -1}) :type "button"} "-"]]))
+    [:button.small {:on-click #(send-command "change" {:key key :delta -1}) :type "button"} "-"]
+    [:button.small {:on-click #(send-command "change" {:key key :delta 1}) :type "button"} "+"]]))
 
 (defmulti stats-view #(get-in % [:identity :side]))
 

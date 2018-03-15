@@ -568,7 +568,7 @@
 (defn line-span
   "Make the view of a single line in the deck - returns a span"
   [sets {:keys [identity cards] :as deck} {:keys [qty card] :as line}]
-  [:span qty " "
+  [:span qty "  "
    (if-let [name (:title card)]
      (let [infaction (noinfcost? identity card)
            banned (decks/banned? card)
@@ -586,6 +586,32 @@
                 :on-mouse-leave #(put! zoom-channel false)} name]
         (card-influence-html card modqty infaction allied)])
      card)])
+
+ (defn line-qty-span
+  "Make the view of a single line in the deck - returns a span"
+  [sets {:keys [identity cards] :as deck} {:keys [qty card] :as line}]
+  [:span qty "  "])
+ 
+(defn line-name-span
+  "Make the view of a single line in the deck - returns a span"
+  [sets {:keys [identity cards] :as deck} {:keys [qty card] :as line}]
+  [:span (if-let [name (:title card)]
+           (let [infaction (noinfcost? identity card)
+                 banned (banned? card)
+                 allied (alliance-is-free? cards line)
+                 valid (and (allowed? card identity)
+                            (legal-num-copies? identity line))
+                 released (released? sets card)
+                 modqty (if (is-prof-prog? deck card) (- qty 1) qty)]
+             [:span
+              [:span {:class (cond
+                               (and valid released (not banned)) "fake-link"
+                               valid "casual"
+                               :else "invalid")
+                      :on-mouse-enter #(put! zoom-channel line)
+                      :on-mouse-leave #(put! zoom-channel false)} name]
+              (card-influence-html card modqty infaction allied)])
+           card)])
 
 (defn- create-identity
   [state target-value]
@@ -717,14 +743,16 @@
                     [:h4 (str (or (first group) "Unknown") " (" (decks/card-count (last group)) ")") ]
                     (for [line (sort-by #(get-in % [:card :title]) (last group))]
                       [:div.line
-                       (when (:edit state)
+                       (if (:edit state)
                          (let [ch (om/get-state owner :edit-channel)]
                            [:span
+                            [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)})
+                                            :type "button"} "-"]
+                            (line-qty-span sets deck line)
                             [:button.small {:on-click #(put! ch {:qty 1 :card (:card line)})
                                             :type "button"} "+"]
-                            [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)})
-                                            :type "button"} "-"]]))
-                       (line-span sets deck line)])])]]))]
+                            (line-name-span sets deck line)])
+                        (line-span sets deck line))])])]]))]
 
           [:div.deckedit
            [:div
