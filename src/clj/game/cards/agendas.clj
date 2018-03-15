@@ -272,7 +272,7 @@
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
     :silent (req true)
     :stolen {:msg "force the Corp to take 1 bad publicity"
-             :effect (effect (gain :corp :bad-publicity 1))}}
+             :effect (effect (gain-bad-publicity :corp 1))}}
 
    "Corporate Sales Team"
    (let [e {:effect (req (when (pos? (get-in card [:counter :credit] 0))
@@ -450,7 +450,8 @@
     :abilities [{:cost [:click 1]
                  :counter-cost [:agenda 1]
                  :msg "gain 7 [Credits] and take 1 bad publicity"
-                 :effect (effect (gain :credit 7 :bad-publicity 1))}]}
+                 :effect (effect (gain :credit 7)
+                                 (gain-bad-publicity :corp 1))}]}
 
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
@@ -519,7 +520,8 @@
 
    "Hostile Takeover"
    {:msg "gain 7 [Credits] and take 1 bad publicity"
-    :effect (effect (gain :credit 7 :bad-publicity 1))
+    :effect (effect (gain :credit 7)
+                    (gain-bad-publicity :corp 1))
     :interactive (req true)}
 
    "Hollywood Renovation"
@@ -554,7 +556,7 @@
                      {:optional
                       {:prompt "Take 1 bad publicity from Illicit Sales?"
                        :yes-ability {:msg "take 1 bad publicity"
-                                     :effect (effect (gain :bad-publicity 1))}
+                                     :effect (effect (gain-bad-publicity :corp 1))}
                        :no-ability {:effect (req (effect-completed state side eid))}}}
                      card nil)
                    (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
@@ -765,7 +767,7 @@
    {:optional {:prompt "Forfeit Posted Bounty to give the Runner 1 tag and take 1 bad publicity?"
                :yes-ability {:msg "give the Runner 1 tag and take 1 bad publicity"
                              :delayed-completion true
-                             :effect (effect (gain :bad-publicity 1)
+                             :effect (effect (gain-bad-publicity :corp eid 1)
                                              (tag-runner :runner eid 1)
                                              (forfeit card))}}}
 
@@ -782,8 +784,8 @@
    {:interactive (req true)
     :choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
     :msg (msg "take " target " bad publicity and gain " (* 5 (str->int target)) " [Credits]")
-    :effect (final-effect (gain :credit (* 5 (str->int target))
-                                :bad-publicity (str->int target)))}
+    :effect (final-effect (gain :credit (* 5 (str->int target)))
+                          (gain-bad-publicity :corp (str->int target)))}
 
    "Project Ares"
    (letfn [(trash-count-str [card]
@@ -803,7 +805,7 @@
                                              (:installed %))}
                         :effect (final-effect (trash-cards targets)
                                               (system-msg (str "trashes " (join ", " (map :title targets))))
-                                              (gain :corp :bad-publicity 1))}
+                                              (gain-bad-publicity :corp 1))}
                        card nil)
                       (clear-wait-prompt :corp))})
 
@@ -1140,7 +1142,7 @@
     :msg "do 2 meat damage"
     :effect (effect (damage eid :meat 2 {:card card}))
     :stolen {:msg "force the Corp to take 1 bad publicity"
-             :effect (effect (gain :corp :bad-publicity 1))}}
+             :effect (effect (gain-bad-publicity :corp 1))}}
 
    "Water Monopoly"
    {:events {:pre-install {:req (req (and (is-type? target "Resource")

@@ -323,7 +323,7 @@
    {:events {:pre-start-game {:req (req (= :corp side))
                               :effect (req (gain state :corp :credit 5)
                                            (when (= 0 (:bad-publicity corp))
-                                             (gain state :corp :bad-publicity 1)))}}}
+                                             (gain-bad-publicity state :corp 1)))}}}
 
    "Haarpsichord Studios: Entertainment Unleashed"
    (let [haarp (fn [state side card]
@@ -965,6 +965,11 @@
    "The Masque: Cyber General"
    {:events {:pre-start-game {:effect draft-points-target}}}
 
+   "The Outfit: Family Owned and Operated"
+   {:events {:corp-gain-bad-publicity {:delayed-completion true
+                                       :msg "gain 3 [Credit]"
+                                       :effect (effect (gain :credit 3))}}}
+
    ;; No special implementation
    "The Professor: Keeper of Knowledge"
    {}
@@ -980,7 +985,7 @@
    {:events {:pre-start-game
              {:req (req (and (= side :runner)
                              (zero? (get-in @state [:corp :bad-publicity]))))
-              :effect (effect (gain :corp :bad-publicity 1))}}}
+              :effect (effect (gain-bad-publicity :corp 1))}}}
 
    "Weyland Consortium: Because We Built It"
    {:recurring 1}

@@ -98,7 +98,7 @@
 
 (def take-bad-pub
   "Bad pub on rez effect."
-  (effect (gain :bad-publicity 1)
+  (effect (gain-bad-publicity :corp 1)
           (system-msg (str "takes 1 bad publicity from " (:title card)))))
 
 

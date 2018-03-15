@@ -49,7 +49,7 @@
                         :effect (effect (tag-runner :runner eid 1))}
      :runner-turn-begins {:req (req (not has-bad-pub))
                           :msg "give the Corp 1 bad publicity"
-                          :effect (effect (gain :corp :bad-publicity 1))}}}
+                          :effect (effect (gain-bad-publicity :corp 1))}}}
 
    "Adjusted Chronotype"
    {:events {:runner-loss {:req (req (and (some #{:click} target)
@@ -821,7 +821,8 @@
    "Investigative Journalism"
    {:req (req has-bad-pub)
     :abilities [{:cost [:click 4] :msg "give the Corp 1 bad publicity"
-                 :effect (effect (gain :corp :bad-publicity 1) (trash card {:cause :ability-cost}))}]}
+                 :effect (effect (gain-bad-publicity :corp 1)
+                                 (trash card {:cause :ability-cost}))}]}
 
    "Jak Sinclair"
    (let [ability {:label "Make a run (start of turn)"
@@ -1571,7 +1572,7 @@
                                :player :runner
                                :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
                                              :delayed-completion true
-                                             :effect (effect (gain :corp :bad-publicity 1)
+                                             :effect (effect (gain-bad-publicity :corp 1)
                                                              (tag-runner :runner eid 1)
                                                              (clear-wait-prompt :corp))}
                                :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
@@ -1627,7 +1628,7 @@
                              :msg "force the Corp to initiate a trace"
                              :label "Trace 1 - If unsuccessful, take 1 bad publicity"
                              :trace {:base 1
-                                     :unsuccessful {:effect (effect (gain :corp :bad-publicity 1)
+                                     :unsuccessful {:effect (effect (gain-bad-publicity :corp 1)
                                                                     (system-msg :corp (str "takes 1 bad publicity")))}}}}}
 
    "The Black File"

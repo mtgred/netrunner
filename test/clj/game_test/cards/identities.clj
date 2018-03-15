@@ -1359,6 +1359,42 @@
     (prompt-choice :corp "Yes")
     (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D")))
 
+(deftest the-outfit
+  ;; The Outfit - Gain 3 whenever you take at least 1 bad publicity
+  (do-game
+    (new-game
+      (make-deck "The Outfit: Family Owned and Operated" [(qty "Hostile Takeover" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity")
+    (is (= 15 (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit")))
+
+(deftest the-outfit-profiteering
+  ;; The Outfit & Profiteering - Only gain 3 credits when taking more than 1 bad publicity in a single effect
+  (do-game
+    (new-game
+      (make-deck "The Outfit: Family Owned and Operated" [(qty "Profiteering" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Profiteering" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :corp "3")
+    (is (= 3 (:bad-publicity (get-corp))) "Take 3 bad publicity")
+    (is (= 23 (:credit (get-corp))) "Gain 15 from Profiteering + 3 from The Outfit")))
+
+(deftest the-outfit-valencia
+  ;; The Outfit vs Valencia - 1 bad pub at start means 8 credits to start with
+  (do-game
+    (new-game
+      (make-deck "The Outfit: Family Owned and Operated" [(qty "Hostile Takeover" 1)])
+      (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
+    (is (= 1 (:bad-publicity (get-corp))) "The Outfit starts with 1 bad publicity")
+    (is (= 8 (:credit (get-corp))) "The Outfit starts with 8 credits")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 2 (:bad-publicity (get-corp))) "Take 1 bad publicity")
+    (is (= 18 (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit")))
+
 (deftest titan-agenda-counter
   ;; Titan Transnational - Add a counter to a scored agenda
   (do-game
