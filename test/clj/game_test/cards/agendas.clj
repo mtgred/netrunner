@@ -179,13 +179,14 @@
   (do-game
     (new-game (default-corp [(qty "City Works Project" 1)])
               (default-runner [(qty "Sure Gamble" 4)]))
-    (play-from-hand state :corp "City Works Project" "New remote"
-      (let [cwp (get-content state :remote1 0)]
-        (core/advance state :corp {:card (refresh cwp)})
-        (core/advance state :corp {:card (refresh cwp)})
-        (run-empty-server state "Server 1")
-        (prompt-choice :runner "Yes")
-        (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 meat damage")))))
+    (play-from-hand state :corp "City Works Project" "New remote")
+    (let [cwp (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh cwp)})
+      (core/advance state :corp {:card (refresh cwp)}))
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 meat damage")))
 
 (deftest corporate-sales-team
   ;; Corporate Sales Team - Places 10c on card, corp takes 1c on each turn start
