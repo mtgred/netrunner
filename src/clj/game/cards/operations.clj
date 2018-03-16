@@ -1176,7 +1176,7 @@
                                                   (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
                                                                               (gain state side :credit bplost)
                                                                               (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
-                                                                          (system-msg state side "uses Sacrifice but gains no credits and loses no Bad Publicity"))
+                                                                          (system-msg state side "uses Sacrifice but gains no credits and loses no bad publicity"))
                                                   (effect-completed state side eid)
                                                   (unregister-events state side card)))}}}
    "Salems Hospitality"
@@ -1483,7 +1483,7 @@
 
    "Too Big to Fail"
    {:req (req (< (:credit corp) 10))
-    :msg "gain 7 [Credits] and take 1 Bad Publicity"
+    :msg "gain 7 [Credits] and take 1 bad publicity"
     :effect (effect (gain :credit 7)
                     (gain :corp :bad-publicity 1) ) }
 
