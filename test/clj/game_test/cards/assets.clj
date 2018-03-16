@@ -139,6 +139,29 @@
       (core/rez state :corp eli)
       (is (= 1 (:credit (get-corp))) "Paid only 1c to rez Eli; reduction of 2c"))))
 
+(deftest broadcast-square
+  ;; Broadcast Square - Trace 3: Prevent all bad publicity
+  (do-game
+    (new-game (default-corp [(qty "Profiteering" 1) (qty "Hostile Takeover" 1) (qty "Broadcast Square" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Broadcast Square" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Profiteering" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (prompt-choice :corp "3")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:agenda-point (get-corp))))
+    (is (= 0 (:bad-publicity (get-corp))) "Prevented all bad publicity")
+    (is (= 3 (:credit (get-corp))) "Gained 0 credits")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote3 0))
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 3)
+    (is (= 2 (:agenda-point (get-corp))))
+    (is (= 1 (:bad-publicity (get-corp))) "Gained a bad publicity through failed trace")
+    (is (= 10 (:credit (get-corp))) "Gained 7 credits")))
+
 (deftest capital-investors
   ;; Capital Investors - Click for 2 credits
   (do-game

@@ -200,10 +200,10 @@
               :effect (effect (rez-cost-bonus (- (:click runner))))}}}
 
    "Broadcast Square"
-   {:abilities [{:label "Trace 3 - Avoid taking a bad publicity"
-                 :trace {:base 3
-                         :msg "avoid taking a bad publicity"
-                         :effect (effect (bad-publicity-prevent 1))}}]}
+   {:events {:pre-bad-publicity {:delayed-completion true
+                                 :trace {:base 3
+                                         :msg "prevents all bad publicity"
+                                         :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}
 
    "Capital Investors"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
