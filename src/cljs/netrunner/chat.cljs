@@ -6,23 +6,29 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar authenticated] :as auth]
             [netrunner.gameboard :refer [card-preview-mouse-over card-preview-mouse-out get-message-parts create-span card-zoom] :as gameboard]
-            [netrunner.ajax :refer [GET]]))
+            [netrunner.ajax :refer [GET]]
+            [netrunner.ws :as ws]))
+
+(enable-console-print!)
 
 (def chat-channel (chan))
-(def chat-socket (.connect js/io (str js/iourl "/chat")))
 
-(.on chat-socket "netrunner" #(put! chat-channel (js->clj % :keywordize-keys true)))
+(ws/register-ws-handler!
+  :chat/message
+  (partial put! chat-channel))
 
 (defn filter-blocked-messages
   [messages]
-  (let [blocked-users (get-in @app-state [:options :blocked-users] [])]
-    (filter #(= -1 (.indexOf blocked-users (:username %))) messages)))
+  (if-let [blocked-users (get-in @app-state [:options :blocked-users] nil)]
+    (filter #(= -1 (.indexOf blocked-users (:username %))) messages)
+    messages))
 
 (defn update-message-channel
   [channel messages]
   (swap! app-state assoc-in [:channels channel] (filter-blocked-messages messages)))
 
 (go (while true
+
       (let [msg (<! chat-channel)
             ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
@@ -36,10 +42,10 @@
            text (.-value input)
            $div (js/$ ".chat-app .message-list")]
        (when-not (empty? text)
-         (.emit chat-socket "netrunner" #js {:channel (name channel)
-                                             :msg text
-                                             :username (:username user)
-                                             :emailhash (:emailhash user)})
+         (ws/ws-send! [:chat/say {:channel   (name channel)
+                                  :msg       text
+                                  :username  (:username user)
+                                  :emailhash (:emailhash user)}])
          (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
          (aset input "value" "")
          (.focus input))))))
@@ -82,7 +88,8 @@
   (let [channel (om/get-state owner :channel)
         messages (get-in @app-state [:channels channel])]
     (when (empty? messages)
-      (go (let [data (:json (<! (GET (str "/messages/" (name channel)))))]
+      (go (let [x (<! (GET (str "/messages/" (name channel))))
+                data (:json x)]
             (update-message-channel channel data))))))
 
 (defn chat [cursor owner]
@@ -132,7 +139,8 @@
          [:div.chat-app
           [:div.blue-shade.panel.channel-list
            [:h4 "Channels"]
-           (for [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska :português :sverige :stimhack-league]]
+           (for [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
+                     :português :sverige :stimhack-league :русский]]
              (om/build channel-view {:channel ch :active-channel (:channel state)}
                        {:init-state {:channel-ch (:channel-ch state)}}))]
           [:div.chat-container

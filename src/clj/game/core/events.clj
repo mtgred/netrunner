@@ -14,15 +14,17 @@
   (register-suppress state side (:suppress (card-def card)) card))
 
 (defn unregister-events
-  "Removes all event handlers defined for the given card."
-  [state side card]
-  (let [cdef (card-def card)]
+  "Removes all event handlers defined for the given card.
+   Optionally input a partial card-definition map to remove only some handlers"
+  ([state side card] (unregister-events state side card nil))
+  ([state side card part-def]
+   (let [cdef (or part-def (card-def card))]
     ;; Combine normal events and derezzed events. Any merge conflicts should not matter
     ;; as they should cause all relevant events to be removed anyway.
     (doseq [e (merge (:events cdef) (:derezzed-events cdef))]
       (swap! state update-in [:events (first e)]
              #(remove (fn [effect] (= (get-in effect [:card :cid]) (:cid card))) %))))
-  (unregister-suppress state side card))
+  (unregister-suppress state side card)))
 
 (defn trigger-event
   "Resolves all abilities registered as handlers for the given event key, passing them
@@ -216,6 +218,22 @@
   "Returns the targets vectors of each event with the given key that was triggered this turn."
   [state side ev]
   (mapcat rest (filter #(= ev (first %)) (:turn-events @state))))
+
+(defn last-turn? [state side event]
+  (if (-> @state side :register-last-turn event) true false))
+
+(defn not-last-turn? [state side event]
+  (cond
+
+    ; Return false if no previous turn (i.e. turn 1).
+    (-> @state side :register-last-turn nil?)
+    false
+
+    (-> @state side :register-last-turn event)
+    false
+
+    :else
+    true))
 
 (defn first-event?
   "Returns true if the given event has not occurred yet this turn."

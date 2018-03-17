@@ -19,10 +19,8 @@ http://www.jinteki.net
 
 ## Dependencies
 
-* Node.js, Node Package Manager
 * Leiningen (version 2+)
 * MongoDB
-* Zero MQ
 
 
 ## Installation
@@ -37,10 +35,10 @@ Launch MongoDB and fetch card data:
 
 ```
 $ mongod
-$ npm run fetch
+$ lein fetch
 ```
 
-Compile and watch client side Clojurescript files:
+Compile and watch client side ClojureScript files:
 
 ```
 $ lein figwheel
@@ -52,29 +50,30 @@ Compile server side Clojure files:
 $ lein uberjar
 ```
 
-Launch game server:
+Launch web server:
 
-```
-$ java -jar target/netrunner-standalone.jar
-```
+* As a REPL process (recommended for development):
+    ```
+    $ lein repl
+    ```
+* As a standalone process in production mode (must first run `lein cljsbuild once prod`):
+    ```
+    $ java -jar target/netrunner-standalone.jar
+    ```
 
-Launch the Node server:
 
-```
-$ npm start
-```
 
 ## Tests
 
 To run all tests:
 
 ```
-$ lein test test.all
+$ lein test
 ```
 
 To run a single test file:
 ```
-$ lein test test.cards.agendas
+$ lein test game-test.cards.agendas
 ```
 
 

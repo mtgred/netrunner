@@ -21,5 +21,8 @@ pom.xml
 /resources/public/css/
 /resources/public/img/cards
 /data/andb-*.json
+/data/cards.json
 /data/img
 /.lein-failures
+
+config.edn

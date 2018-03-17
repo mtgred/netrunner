@@ -5,24 +5,35 @@
             [cljs.core.async :refer [chan put! >! sub pub] :as async]
             [netrunner.appstate :refer [app-state]]
             [netrunner.account :refer [alt-art-name]]
-            [netrunner.ajax :refer [GET]]))
+            [netrunner.ajax :refer [GET]]
+            [jinteki.cards :refer [all-cards] :as cards]
+            [jinteki.decks :as decks]))
 
 (def cards-channel (chan))
 (def pub-chan (chan))
 (def notif-chan (pub pub-chan :topic))
 
-;; Load in sets and mwl lists
-(go (let [sets (:json (<! (GET "/data/sets")))
+(go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
+          local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
+          need-update? (or (not local-cards) (not= server-version (:version local-cards)))
+          cards (sort-by :code
+                         (if need-update?
+                           (:json (<! (GET "/data/cards")))
+                           (:cards local-cards)))
+          sets (:json (<! (GET "/data/sets")))
           cycles (:json (<! (GET "/data/cycles")))
           mwl (:json (<! (GET "/data/mwl")))
           latest_mwl (->> mwl
-                       (map (fn [e] (update e :date_start #(js/Date %))))
+                       (map (fn [e] (update e :date_start #(js/Date.parse %))))
                        (sort-by :date_start)
                        (last))]
-      (swap! app-state assoc :sets sets :mwl latest_mwl :cycles cycles)))
-
-(go (let [cards (sort-by :code (:json (<! (GET "/data/cards"))))]
-      (swap! app-state assoc :cards cards)
+      (reset! cards/mwl latest_mwl)
+      (reset! cards/sets sets)
+      (reset! cards/cycles cycles)
+      (swap! app-state assoc :sets sets :cycles cycles)
+      (when need-update?
+        (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version}))))
+      (reset! all-cards cards)
       (swap! app-state assoc :cards-loaded true)
       (put! cards-channel cards)))
 
@@ -68,7 +79,8 @@
 (defn insert-alt-arts
   "Add copies of all alt art cards to the list of cards"
   [cards]
-  (reduce expand-alts () (reverse cards)))
+  cards)
+  ;(reduce expand-alts () (reverse cards)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -142,8 +154,8 @@
      {:class (if-let [faction (:faction card)]
                (-> faction .toLowerCase (.replace " " "-"))
                "neutral")}
-     (when (netrunner.deckbuilder/banned? card) netrunner.deckbuilder/banned-span)
-     (when (netrunner.deckbuilder/restricted? card) netrunner.deckbuilder/restricted-span)
+     (when (decks/banned? card) netrunner.deckbuilder/banned-span)
+     (when (decks/restricted? card) netrunner.deckbuilder/restricted-span)
      (when (:rotated card) netrunner.deckbuilder/rotated-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
@@ -401,12 +413,12 @@
                        (let [s (selected-set-name state)
                              cycle-sets (set (for [x sets :when (= (:cycle x) s)] (:name x)))
                              cards (cond
-                                     (= s "All") (:cards cursor)
-                                     (= s "Alt Art") (filter-alt-art-cards (:cards cursor))
+                                     (= s "All") @all-cards
+                                     (= s "Alt Art") (filter-alt-art-cards @all-cards)
                                      :else
                                      (if (= (.indexOf (:set-filter state) "Cycle") -1)
-                                       (filter #(= (:setname %) s) (:cards cursor))
-                                       (filter #(cycle-sets (:setname %)) (:cards cursor))))]
+                                       (filter #(= (:setname %) s) @all-cards)
+                                       (filter #(cycle-sets (:setname %)) @all-cards)))]
                          (->> cards
                               (filter-cards (:side-filter state) :side)
                               (filter-cards (:faction-filter state) :faction)

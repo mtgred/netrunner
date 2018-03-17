@@ -703,8 +703,11 @@
       :leave-play cleanup
       :trash-effect {:effect cleanup}
       :events {:corp-spent-click
-               {:effect (req (update! state side (update-in card [:seen-this-turn target] (fnil + 0) (second targets)))
-                             (when (>= (get-in (get-card state card) [:seen-this-turn target]) 3)
+               {:effect (req (when-not target
+                               (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
+                             (update! state side (update-in card [:seen-this-turn (or target :this-is-a-hack)]
+                                                            (fnil + 0) (second targets)))
+                             (when (>= (get-in (get-card state card) [:seen-this-turn (or target :this-is-a-hack)]) 3)
                                (resolve-ability state side ability card nil)))}
                :corp-turn-ends {:effect cleanup}}})
 
@@ -718,6 +721,21 @@
                  :msg (msg "trash " (:title (first (:deck runner))) " from the Runner's Stack")
                  :effect (effect (mill :runner)
                                  (trash card {:cause :ability-cost}))}]}
+
+   "Kuwinda K4H1U3"
+   (let [ability {:trace {:base (req (get-in card [:counter :power] 0))
+                          :delayed-completion true
+                          :effect (effect (damage :runner eid :brain 1 {:card card})
+                                          (trash card))
+                          :msg "do 1 brain damage"
+                          :unsuccessful {:effect (effect (add-counter card :power 1)
+                                                         (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins
+               {:optional {:prompt "Initiate trace with Kuwinda K4H1U3?"
+                           :delayed-completion true
+                           :yes-ability ability}}}
+      :abilities [(assoc ability :label "Trace X - do 1 brain damage (start of turn)")]})
 
    "Lakshmi Smartfabrics"
    {:events {:rez {:effect (effect (add-counter card :power 1))}}
@@ -995,9 +1013,9 @@
               :label (str "[Trash]: Gain " cred " [Credits]")
               :msg (str "gain " cred " [Credits]")})]
      {:advanceable :always
-      :abilities [(builder 1 5) 
+      :abilities [(builder 1 5)
                   (builder 2 8)]})
-   
+
    "Open Forum"
    {:events {:corp-mandatory-draw {:msg (msg (let [deck (:deck corp)]
                                                (if (pos? (count deck))
@@ -1048,6 +1066,15 @@
       :flags {:corp-phase-12 (req true)}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
+
+   "Personalized Portal"
+   {:events {:corp-turn-begins {:effect (req (draw state :runner 1)
+                                             (let [cnt (count (get-in @state [:runner :hand]))
+                                                   credits (quot cnt 2)]
+                                               (gain state :corp :credit credits)
+                                               (system-msg state :corp
+                                                           (str "uses Personalized Portal to force the runner to draw "
+                                                                "1 card and gains " credits " [Credits]"))))}}}
 
    "Plan B"
    (advance-ambush
@@ -1389,8 +1416,8 @@
                                  :yes-ability {:delayed-completion true
                                                :cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
-                                               :effect (effect (damage eid :net 3 {:card card})
-                                                               (tag-runner :runner eid 1))}}}
+                                               :effect (req (when-completed (damage state side :net 3 {:card card})
+                                                                            (tag-runner state :runner eid 1)))}}}
                                card nil))}}
 
    "Space Camp"
@@ -1452,6 +1479,19 @@
                  :effect (effect (trash card)
                                  (shuffle! :deck)
                                  (corp-install target nil))}]}
+
+   "TechnoCo"
+   (letfn [(is-techno-target [card]
+             (or (is-type? card "Program")
+                 (is-type? card "Hardware")
+                 (and (is-type? card "Resource") (has-subtype? card "Virtual"))))]
+     {:events {:pre-install {:req (req (and (is-techno-target target)
+                                            (not (second targets)))) ; not facedown
+                             :effect (effect (install-cost-bonus [:credit 1]))}
+               :runner-install {:req (req (and (is-techno-target target)
+                                               (not (second targets)))) ; not facedown
+                                :msg "gain 1 [Credits]"
+                                :effect (req (gain state :corp :credit 1))}}})
 
    "Tenma Line"
    {:abilities [{:label "Swap 2 pieces of installed ICE"

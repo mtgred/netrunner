@@ -5,8 +5,11 @@
             [goog.history.EventType :as EventType]
             [netrunner.appstate :refer [app-state]]
             [netrunner.gameboard :as gameboard]
-            [netrunner.gamelobby :as gamelobby])
+            [netrunner.gamelobby :as gamelobby]
+            [jinteki.nav :as nav])
   (:import goog.history.Html5History))
+
+(enable-console-print!)
 
 (def tokens #js ["/" "/cards" "/deckbuilder" "/play" "/help" "/account" "/stats" "/about"])
 
@@ -28,21 +31,12 @@
   (om/component
    (sab/html
     [:ul.carousel-indicator {}
-     (for [page [["Chat" "/" 0]
-                 ["Cards" "/cards" 1]
-                 ["Deck Builder" "/deckbuilder" 2]
-                 ["Play" "/play" 3]
-                 ["Help" "/help" 4]
-                 (when (:user @app-state)
-                  ["Settings" "/account" 5])
-                 (when (:user @app-state)
-                   ["Stats" "/stats" 6])
-                 ["About" "/about" 7]]]
-       (when-let [route (second page)]
+     (for [[name route ndx show-fn?] nav/navbar-links]
+       (when (or (not show-fn?) (show-fn? @app-state))
          [:li {:class (if (= (first (:active-page cursor)) route) "active" "")
                :on-click #(.setToken history route)
-               :data-target "#main" :data-slide-to (last page)}
-          [:a {:href route} (first page)]]))])))
+               :data-target "#main" :data-slide-to ndx}
+          [:a {:href route} name]]))])))
 
 (defn status [cursor owner]
   (om/component
@@ -55,13 +49,13 @@
        (when (:started game)
          [:div.float-right
           (when (not= (:side @app-state) :spectator)
-            [:a.concede-button {:on-click #(gameboard/send-command "concede" {:user (:user @app-state)})} "Concede"])
-          [:a.leave-button {:on-click #(gamelobby/leave-game)} "Leave game"]
+            [:a.concede-button {:on-click gamelobby/concede} "Concede"])
+          [:a.leave-button {:on-click gamelobby/leave-game} "Leave game"]
           (when (not= (:side @app-state) :spectator)
-            [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mutespectators game)))}
-             (if (:mutespectators game) "Unmute spectators" "Mute spectators")])])
+            [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mute-spectators game)))}
+             (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])])
        (when (= (:side @app-state) :spectator)
-         [:div.float-right [:a {:on-click #(gamelobby/leave-game)} "Leave game"]]))
+         [:div.float-right [:a {:on-click gamelobby/leave-game} "Leave game"]]))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          (let [c (count (:spectators game))]

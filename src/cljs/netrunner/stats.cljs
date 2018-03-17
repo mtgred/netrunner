@@ -6,13 +6,23 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.deckbuilder :refer [process-decks num->percent]]
             [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.ajax :refer [POST GET]]
+            [netrunner.ajax :refer [GET DELETE]]
+            [netrunner.ws :as ws]
             [goog.string :as gstring]
             [goog.string.format]))
 
-(def stats-channel (chan))
-(def stats-socket (.connect js/io (str js/iourl "/stats")))
-(.on stats-socket "netrunner" #(put! stats-channel (js->clj % :keywordize-keys true)))
+(defn update-deck-stats
+  "Update the local app-state with a new version of deck stats"
+  [deck-id stats]
+  (let [deck (first (filter #(= (:_id %) deck-id) (:decks @app-state)))
+        deck (assoc deck :stats stats)
+        others (remove #(= (:_id %) deck-id) (:decks @app-state))]
+    (swap! app-state assoc :decks (conj others deck))))
+
+(ws/register-ws-handler!
+  :stats/update
+  #(do (swap! app-state assoc :stats (-> % :userstats))
+       (update-deck-stats (-> % :deck-id) (-> % :deckstats))))
 
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
@@ -22,18 +32,10 @@
 (defn clear-user-stats []
   (authenticated
     (fn [user]
-      (let [data (:user @app-state)]
+      (let [id (get-in @app-state [:user :_id])]
         (try (js/ga "send" "event" "user" "clearuserstats") (catch js/Error e))
-        (go (let [result (<! (POST "/user/clearstats" data :json))]
+        (go (let [result (<! (DELETE "/profile/stats/user"))]
               (swap! app-state assoc :stats result)))))))
-
-;; Go loop to receive messages from node server to refresh stats on game-end
-(go (while true
-      (let [msg (<! stats-channel)
-            result (-> (<! (GET "/user")) :json first :stats)
-            decks (process-decks (:json (<! (GET "/data/decks"))))]
-        (swap! app-state assoc :stats result)
-        (swap! app-state assoc :decks decks))))
 
 (defn stat-view [{:keys [start-key complete-key win-key lose-key stats]} owner]
   (om/component

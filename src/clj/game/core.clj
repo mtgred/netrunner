@@ -8,9 +8,10 @@
                                 pluralize quantify type->rig-zone]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case]]
-            [clojure.core.match :refer [match]]))
-
-(def all-cards (atom {}))
+            [clojure.core.match :refer [match]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (load "core/events")    ; triggering of events
 (load "core/cards")     ; retrieving and updating cards

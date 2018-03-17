@@ -62,6 +62,7 @@
                         [:li [:code "/link n"] " - Set your link to n"]
                         [:li [:code "/memory n"] " - Set your memory to n"]
                         [:li [:code "/move-bottom"] " - Pick a card in your hand to put on the bottom of your deck"]
+                        [:li [:code "/move-deck"] " - Pick a card from your play-area to put on top of your deck"]
                         [:li [:code "/move-hand"] " - Pick a card from your play-area to put into your hand"]
                         [:li [:code "/psi"] " - Start a Psi game (Corp only)"]
                         [:li [:code "/rez"] " - Select a card to rez, ignoring all costs (Corp only)"]

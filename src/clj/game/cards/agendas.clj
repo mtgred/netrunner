@@ -105,6 +105,23 @@
                             :msg "give the Runner a tag for trashing a Corp card"
                             :effect (effect (tag-runner :runner eid 1))}}}
 
+   "Armed Intimidation"
+   {:delayed-completion true
+    :effect (effect (show-wait-prompt :corp "Runner to suffer 5 meat damage or take 2 tags")
+                    (continue-ability :runner
+                      {:delayed-completion true
+                       :choices ["Suffer 5 meat damage" "Take 2 tags"]
+                       :prompt "Choose Armed Intimidation score effect"
+                       :effect (req (clear-wait-prompt state :corp)
+                                    (case target
+                                      "Suffer 5 meat damage"
+                                      (do (damage state :runner eid :meat 5 {:card card :unboostable true})
+                                          (system-msg state :runner "chooses to suffer 5 meat damage from Armed Intimidation"))
+                                      "Take 2 tags"
+                                      (do (tag-runner state :runner eid 2 {:card card})
+                                          (system-msg state :runner "chooses to take 2 tags from Armed Intimidation"))))}
+                      card nil))}
+
    "Armored Servers"
    {:implementation "Runner must trash cards manually when required"
     :effect (effect (add-counter card :agenda 1))
@@ -129,7 +146,7 @@
                                {:delayed-completion true
                                 :choices ["0", "1", "2"]
                                 :prompt "How many advancement tokens?"
-                                :effect (req (let [c (Integer/parseInt target)]
+                                :effect (req (let [c (str->int target)]
                                                (continue-ability
                                                  state side
                                                  {:choices {:req can-be-advanced?}
@@ -313,6 +330,9 @@
                                                                           #(assoc % :replace-access psi-effect)))
                                                                  (effect-completed state side eid))}}}}})
 
+   "Degree Mill"
+   {:steal-cost-bonus (req [:shuffle-installed-to-stack 2])}
+
    "Director Haas Pet Project"
    (letfn [(install-ability [server-name n]
              {:prompt "Select a card to install"
@@ -482,7 +502,7 @@
    {:interactive (req true)
     :choices ["0", "1", "2"]
     :prompt "How many power counters?"
-    :effect (req (let [c (Integer/parseInt target)]
+    :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
                      {:choices {:req #(< 0 (get-in % [:counter :power] 0))}
@@ -761,9 +781,9 @@
    "Profiteering"
    {:interactive (req true)
     :choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
-    :msg (msg "take " target " bad publicity and gain " (* 5 (Integer/parseInt target)) " [Credits]")
-    :effect (final-effect (gain :credit (* 5 (Integer/parseInt target))
-                                :bad-publicity (Integer/parseInt target)))}
+    :msg (msg "take " target " bad publicity and gain " (* 5 (str->int target)) " [Credits]")
+    :effect (final-effect (gain :credit (* 5 (str->int target))
+                                :bad-publicity (str->int target)))}
 
    "Project Ares"
    (letfn [(trash-count-str [card]

@@ -192,10 +192,15 @@
 
 ;;; Misc card functions
 (defn get-virus-counters
-  "Calculate the number of virus countes on the given card, taking Hivemind into account."
+  "Calculate the number of virus counters on the given card, taking Hivemind into account."
   [state side card]
   (let [hiveminds (filter #(= (:title %) "Hivemind") (all-installed state :runner))]
     (reduce + (map #(get-in % [:counter :virus] 0) (cons card hiveminds)))))
+
+(defn count-virus-programs
+  "Calculate the number of virus programs in play"
+  [state]
+  (count (filter #(has-subtype? % "Virus") (all-installed state :runner))))
 
 (defn card->server
   "Returns the server map that this card is installed in or protecting."

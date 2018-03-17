@@ -6,7 +6,7 @@
 
 (def app-state (atom {}))
 
-(go (swap! app-state assoc :donators (:json (<! (GET "/data/donators")))))
+(go (swap! app-state assoc :donators (:json (<! (GET "/data/donors")))))
 
 (defn about [cursor owner]
   (om/component
@@ -38,7 +38,7 @@
      [:p "Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation."]
      [:ul.list.compact
       [:li "PayPal: mtgred@gmail.com or " [:a {:href "https://www.paypal.me/mtgred" :title "PayPal" :target "_blank"} "paypal.me/mtgred"]]
-      [:li "Bitcoin: " [:span.bitcoin "371AEPFnNVhBDohVhRngVncb8mmgRYzmrh" [:img.qr {:src "/img/bitcoin.png" :alt "Bitcoin QR Code"}]]]
+      [:li "Bitcoin: " [:span.bitcoin "1ByjuLNZRvG17YaRKgKUjNi3c4qQ3daX3g" [:img.qr {:src "/img/bitcoin.png" :alt "Bitcoin QR Code"}]]]
       ]
 
      [:p "Many thanks to all the donors. Your contributions and kind words are greatly appreciated. You help finance fast servers and keep the developer motivated."]
