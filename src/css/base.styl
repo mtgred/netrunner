@@ -746,16 +746,35 @@ nav ul
   display-flex()
   margin-bottom: 5px
 
+  .name-menu
+    position: relative
+
+  .clickable
+    cursor: pointer
+
   .content
     flex(1)
 
-  .block-user
-    padding: 0
-    font-size: 8px
-    line-height: 15px
-    height: 15px
-    width: 15px
-    background-color: transparent
+  .block-menu
+    display: none
+    position: absolute
+    z-index: 30
+    width: 200px
+    font-size: 12px
+    line-height: 16px
+
+    > div
+      border: 1px solid white
+      padding: 3px 6px
+      border-radius: 4px
+      margin-bottom: 4px
+      cursor: pointer
+
+      &:last-child
+        margin-bottom: 0
+
+      &:hover
+        border-color: orange
 
 .message-list
   height: 400px
