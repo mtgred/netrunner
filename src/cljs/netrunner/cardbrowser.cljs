@@ -79,8 +79,8 @@
 (defn insert-alt-arts
   "Add copies of all alt art cards to the list of cards"
   [cards]
-  cards)
-  ;(reduce expand-alts () (reverse cards)))
+  ;; cards)
+  (reduce expand-alts () (reverse cards)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
