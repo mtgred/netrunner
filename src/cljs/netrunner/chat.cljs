@@ -40,10 +40,17 @@
             messages (get-in @app-state [:channels ch])]
         (update-message-channel ch (reverse (conj (reverse messages) msg))))))
 
+(defn non-game-toast
+  "Display a toast warning with the specified message."
+  [msg type options]
+  (set! (.-options js/toastr) (netrunner.gameboard/toastr-options options))
+  (let [f (aget js/toastr type)]
+    (f msg)))
+
 (defn- post-response [owner blocked-user response]
   (if (= 200 (:status response))
-    (netrunner.gameboard/toast (str "Blocked user " blocked-user ". Refresh browser to update.") "success" nil)
-    (netrunner.gameboard/toast "Failed to block user" "error" nil)))
+    (non-game-toast (str "Blocked user " blocked-user ". Refresh browser to update.") "success" nil)
+    (non-game-toast "Failed to block user" "error" nil)))
 
 (defn block-user
   [owner blocked-user]
