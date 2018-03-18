@@ -146,21 +146,22 @@
               (default-runner))
     (play-from-hand state :corp "Broadcast Square" "New remote")
     (core/rez state :corp (get-content state :remote1 0))
+    (is (= 3 (:credit (get-corp))) "Corp should have spent 2 credits: (= 3 (- 5 2))")
     (play-from-hand state :corp "Profiteering" "New remote")
     (score-agenda state :corp (get-content state :remote2 0))
-    (prompt-choice :corp "3")
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 0)
-    (is (= 1 (:agenda-point (get-corp))))
-    (is (= 0 (:bad-publicity (get-corp))) "Prevented all bad publicity")
-    (is (= 3 (:credit (get-corp))) "Gained 0 credits")
+    (prompt-choice :corp "3")  ;; Take 3 bad publicity from Profiteering, gain 15 (if bad publicity actually taken)
+    (prompt-choice :corp 0)  ;; Corp doesn't pump trace, base 3
+    (prompt-choice :runner 0)  ;; Runner doesn't pump trace; loses trace
+    (is (= 1 (:agenda-point (get-corp))) "Corp should score a 1-point agenda")
+    (is (= 0 (:bad-publicity (get-corp))) "Corp should gain 0 bad publicity")
+    (is (= 3 (:credit (get-corp))) "Corp should gain 0 credits: (= 3 (+ 3 0))")
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (score-agenda state :corp (get-content state :remote3 0))
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 3)
-    (is (= 2 (:agenda-point (get-corp))))
-    (is (= 1 (:bad-publicity (get-corp))) "Gained a bad publicity through failed trace")
-    (is (= 10 (:credit (get-corp))) "Gained 7 credits")))
+    (prompt-choice :corp 0)  ;; Corp doesn't pump trace, base 3
+    (prompt-choice :runner 3)  ;; Runner pumps trace; wins trace
+    (is (= 2 (:agenda-point (get-corp))) "Corp should score a 1-point agenda: (= 2 (+ 1 1))")
+    (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from failed trace")
+    (is (= 10 (:credit (get-corp))) "Corp should gain 7 credits: (= 10 (+ 3 7))")))
 
 (deftest capital-investors
   ;; Capital Investors - Click for 2 credits

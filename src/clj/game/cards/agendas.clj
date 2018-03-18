@@ -784,8 +784,10 @@
    {:interactive (req true)
     :choices ["0" "1" "2" "3"] :prompt "How many bad publicity?"
     :msg (msg "take " target " bad publicity and gain " (* 5 (str->int target)) " [Credits]")
-    :effect (final-effect (gain-bad-publicity :corp eid (str->int target) {:unpreventable true})
-                          (gain :credit (* 5 (str->int target))))}
+    :effect (req (let [bp (:bad-publicity (:corp @state))]
+                   (gain-bad-publicity state :corp eid (str->int target))
+                   (if (< bp (:bad-publicity (:corp @state)))
+                     (gain state :corp :credit (* 5 (str->int target))))))}
 
    "Project Ares"
    (letfn [(trash-count-str [card]
