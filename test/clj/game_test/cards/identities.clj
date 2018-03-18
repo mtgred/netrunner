@@ -1363,12 +1363,17 @@
   ;; The Outfit - Gain 3 whenever you take at least 1 bad publicity
   (do-game
     (new-game
-      (make-deck "The Outfit: Family Owned and Operated" [(qty "Hostile Takeover" 1)])
+      (make-deck "The Outfit: Family Owned and Operated" [(qty "Hostile Takeover" 1) (qty "Profiteering" 1)])
       (default-runner))
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
     (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity")
-    (is (= 15 (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit")))
+    (is (= 15 (:credit (get-corp))) "Corp should gain 10 credits: (= 15 (+ 5 7 3))")
+    (play-from-hand state :corp "Profiteering" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (prompt-choice :corp "3")  ;; Take 3 bad publicity from Profiteering, gain 15 (if bad publicity actually taken)
+    (is (= 4 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity")
+    (is (= 33 (:credit (get-corp))) "Corp should gain 18 credits: (= 33 (+ 15 15 3))")))
 
 (deftest the-outfit-profiteering
   ;; The Outfit & Profiteering - Only gain 3 credits when taking more than 1 bad publicity in a single effect
