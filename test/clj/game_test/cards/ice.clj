@@ -719,6 +719,46 @@
       (take-credits state :runner)
       (is (= 5 (:click (get-corp))) "Corp has 5 clicks"))))
 
+(deftest oduduwa
+  ;; Oduduwa - Gain 1 advancement token when encountered.
+  ;; May placed x advancement tokens on another ice where x is the number of counters on Oduduwa already.
+  (do-game
+    (new-game (default-corp [(qty "Oduduwa" 1) (qty "Enigma" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Oduduwa" "HQ")
+    (play-from-hand state :corp "Enigma" "R&D")
+    (let [odu (get-ice state :hq 0)
+          eni (get-ice state :rd 0)]
+      (core/rez state :corp odu)
+      (core/rez state :corp eni)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (refresh odu) 0)
+      (card-ability state :corp (refresh odu) 1)
+      (prompt-select :corp (refresh eni))
+      (is (= 1 (:advance-counter (refresh odu))))
+      (is (= 1 (:advance-counter (refresh eni))))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (refresh odu) 0)
+      (card-ability state :corp (refresh odu) 1)
+      (prompt-select :corp (refresh eni))
+      (is (= 2 (:advance-counter (refresh odu))))
+      (is (= 3 (:advance-counter (refresh eni))))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (refresh odu) 0)
+      (card-ability state :corp (refresh odu) 1)
+      (prompt-select :corp (refresh eni))
+      (is (= 3 (:advance-counter (refresh odu))))
+      (is (= 6 (:advance-counter (refresh eni))))
+      )))
+
+
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
   (do-game
