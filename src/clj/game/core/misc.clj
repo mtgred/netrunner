@@ -66,7 +66,7 @@
   but not including 'inactive hosting' like Personal Workshop."
   [state side]
   (if (= side :runner)
-    (let [top-level-cards (flatten (for [t [:program :hardware :resource]] (get-in @state [:runner :rig t])))
+    (let [top-level-cards (flatten (for [t [:program :hardware :resource :facedown]] (get-in @state [:runner :rig t])))
           hosted-on-ice (->> (:corp @state) :servers seq flatten (mapcat :ices) (mapcat :hosted))]
       (loop [unchecked (concat top-level-cards (filter #(= (:side %) "Runner") hosted-on-ice)) installed ()]
         (if (empty? unchecked)
