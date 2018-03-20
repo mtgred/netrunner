@@ -425,9 +425,12 @@
   (let [run-ice (get-run-ices state)
         pos (get-in @state [:run :position])
         ice (when (and pos (pos? pos) (<= pos (count run-ice)))
-              (get-card state (nth run-ice (dec pos))))]
+              (get-card state (nth run-ice (dec pos))))
+        bypass-current-ice (get-in @state [:runner :register :bypass-current-ice])]
     (when (rezzed? ice)
-      (trigger-event state side :encounter-ice ice)
+      (trigger-event state side :approach-ice ice)
+      (if-not bypass-current-ice
+        (trigger-event state side :encounter-ice ice))
       (update-ice-strength state side ice))))
 
 ;;; Runner actions

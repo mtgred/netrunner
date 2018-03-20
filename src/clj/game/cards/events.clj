@@ -885,10 +885,17 @@
              card nil)))
 
    "Inside Job"
-   {:implementation "Bypass is manual"
-    :prompt "Choose a server"
+   {:prompt "Choose a server by choosing the ice you wish to bypass"
     :choices (req runnable-servers)
-    :effect (effect (run target nil card))}
+    :delayed-completion true
+    :effect (req (swap! state assoc-in [:runner :register :bypass-current-ice] true)
+                 (register-events state side (:events (card-def card)) (assoc card :zone '(:discard)))
+                 (game.core/run state side (make-eid state) target nil card))
+    :events {:approach-ice {:once :per-run
+                            :msg "bypass the first piece of ice"
+                            :effect (req (game.core/continue state :runner nil))}
+             :pass-ice {:effect (req
+                                  (swap! state update-in [:runner :register] dissoc :bypass-current-ice))}}}
 
    "Interdiction"
    (let [ab (effect (register-turn-flag!
