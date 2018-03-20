@@ -1820,10 +1820,13 @@
     :subroutines [end-the-run]}
 
    "Tollbooth"
-   {:implementation "Encounter effect is manual"
-    :abilities [{:msg "make the Runner pay 3 [Credits], if able"
-                 :effect (effect (pay :runner card :credit 3))}]
-    :subroutines [end-the-run]}
+   {:subroutines [end-the-run]
+    :events {:encounter-ice {:effect (req (if (>= (:credit runner) 3)
+                                            (do (lose state :runner :credit 3)
+                                                (system-msg state side "Runner loses 3 [Credits]"))
+                                            (do (end-run state side)
+                                                (system-msg state side "Runner can't pay 3")
+                                                (system-msg state side "Tollbooth ends the run"))))}}}
 
    "Tour Guide"
    {:abilities [{:label "Gain subroutines"
