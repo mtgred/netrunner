@@ -1048,6 +1048,19 @@
     (prompt-select :runner (get-ice state :rd 0))
     (is (empty? (:effect-completed @state)) "All score and Leela effects resolved")))
 
+(deftest restructured-datapool
+  (do-game
+    (new-game (default-corp [(qty "Restructured Datapool" 1)])
+              (default-runner))
+    (is (= 0 (:tag (get-runner))) "Runner should start with no tags")
+    (play-from-hand state :corp "Restructured Datapool" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (let [rd-scored (get-in @state [:corp :scored 0])]
+      (card-ability state :corp rd-scored 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability"))))
+
 (deftest ssl-endorsement-scored
   ;; SSL Endorsement - gain credits when in corp score area before turn begins
   (do-game
