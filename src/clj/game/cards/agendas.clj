@@ -386,7 +386,8 @@
    "Elective Upgrade"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 2))
-    :abilities [{:cost [:click 1] :counter-cost [:agenda 1]
+    :abilities [{:cost [:click 1]
+                 :counter-cost [:agenda 1]
                  :once :per-turn
                  :effect (effect (gain :click 2))
                  :msg "gain [Click][Click]"}]}
@@ -405,7 +406,10 @@
    {:effect (effect (add-counter card :agenda 1)
                     (shuffle-into-deck :hand))
     :interactive (req true)
-    :abilities [{:cost [:click 1] :counter-cost [:agenda 1] :msg "draw 5 cards" :effect (effect (draw 5))}]}
+    :abilities [{:cost [:click 1]
+                 :counter-cost [:agenda 1]
+                 :msg "draw 5 cards"
+                 :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
    {:access {:delayed-completion true
@@ -419,7 +423,8 @@
                                card nil))}}
 
    "False Lead"
-   {:abilities [{:req (req (>= (:click runner) 2)) :msg "force the Runner to lose [Click][Click]"
+   {:abilities [{:req (req (>= (:click runner) 2))
+                 :msg "force the Runner to lose [Click][Click]"
                  :effect (effect (forfeit card) (lose :runner :click 2))}]}
 
    "Fetal AI"

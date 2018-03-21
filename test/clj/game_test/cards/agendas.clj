@@ -377,6 +377,39 @@
         (core/advance state :corp {:card (refresh ec3)})
         (is (= 1 (:advance-counter (refresh ec3))))))))
 
+(deftest executive-retreat
+  ;; Executive Retreat
+  (do-game
+    (new-game (default-corp [(qty "Executive Retreat" 1) (qty "Hedge Fund" 5)])
+              (default-runner))
+    (starting-hand state :corp ["Executive Retreat" "Hedge Fund"])
+    (is (= 2 (count (:hand (get-corp)))) "Corp should start with 1 card in HQ")
+    (play-from-hand state :corp "Executive Retreat" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 0 (count (:hand (get-corp)))) "Corp should have 0 cards in HQ after shuffling HQ back into R&D")
+    (let [er-scored (get-in @state [:corp :scored 0])]
+      (card-ability state :corp er-scored 0)
+      (is (= 5 (count (:hand (get-corp)))) "Corp should have 5 cards in hand")
+      (is (= 0 (get-counters (refresh er-scored) :agenda)) "Executive Retreat should have 0 agenda counters"))))
+
+(deftest executive-retreat-overdraw
+  ;; Executive Retreat
+  (do-game
+    (new-game (default-corp [(qty "Executive Retreat" 1) (qty "Hedge Fund" 4)])
+              (default-runner))
+    (starting-hand state :corp ["Executive Retreat" "Hedge Fund"])
+    (is (= 2 (count (:hand (get-corp)))) "Corp should start with 1 card in HQ")
+    (play-from-hand state :corp "Executive Retreat" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 0 (count (:hand (get-corp)))) "Corp should have 0 cards in HQ after shuffling HQ back into R&D")
+    (let [er-scored (get-in @state [:corp :scored 0])]
+      (card-ability state :corp er-scored 0)
+      (is (= 4 (count (:hand (get-corp)))) "Corp should have 5 cards in hand")
+      (is (= 0 (get-counters (refresh er-scored) :agenda)) "Executive Retreat should have 0 agenda counters")
+      (is (= :runner (:winner @state)) "Runner wins")
+      (is (= "Decked" (:reason @state)) "Win condition reports decked"))))
+
+
 (deftest explode-a-palooza
   ;; Explode-a-palooza - Gain 5 credits when Runner accesses it
   (do-game
