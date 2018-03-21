@@ -258,8 +258,8 @@
 (deftest degree-mill
   ;; Degree Mill - runner must shuffle two installed cards into stack to steal
   (do-game
-    (new-game (default-corp [(qty "Degree Mill" 1)])
-              (default-runner [(qty "Ice Analyzer" 1) (qty "All-nighter" 1)]))
+    (new-game (default-corp [(qty "Degree Mill" 2)])
+              (default-runner [(qty "Ice Analyzer" 1) (qty "All-nighter" 1) (qty "Hunting Grounds" 1)]))
     (play-from-hand state :corp "Degree Mill" "New remote")
     (take-credits state :corp)
 
@@ -281,7 +281,36 @@
       (prompt-select :runner an)
       (is (= 3 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill")
       (is (empty? (get-in @state [:runner :rig :resource])) "Degree Mill didn't remove installed cards")
-      (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck"))))
+      (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck"))
+    (take-credits state :runner)
+    
+    ;; Checking if facedowns work as well
+    (play-from-hand state :corp "Degree Mill" "New remote")
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Hunting Grounds")
+    (let [hg (get-in @state [:runner :rig :resource 0])]
+      (run-on state "Server 2")
+      (run-successful state)
+      (prompt-choice :runner "Yes")
+      (is (= 3 (:agenda-point (get-runner))) "Runner stole Degree Mill with single card")
+      (card-ability state :runner hg 1)
+      (is (= 2 (count (get-in (get-runner) [:rig :facedown]))) "Hunting Ground did not install cards facedown")
+      (is (empty? (:deck (get-runner))) "Hunting Grounds did not remove cards from deck")
+      (let [fd1 (get-in (get-runner) [:rig :facedown 0])
+            fd2 (get-in (get-runner) [:rig :facedown 1])]
+        (run-on state "Server 2")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-select :runner fd1)
+        (prompt-select :runner fd2)
+        (is (= 6 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill with facedown cards")
+        (is (empty? (get-in (get-runner)  [:rig :facedown])) "Degree Mill didn't remove facedown cards")
+        (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck")
+        )
+                     )
+
+    ))
 
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice

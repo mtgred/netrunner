@@ -60,13 +60,15 @@
                      (trash state side (get-card state c))))
 
                  ;; do hosted cards first so they don't get trashed twice
-                 (doseq [c (all-installed state :runner)]
-                   (when (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone)))
+                 (let [installedcards (remove :facedown (all-installed state :runner))
+                       ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                       hostedcards (filter ishosted installedcards)
+                       nonhostedcards (remove ishosted installedcards)]
+                   (doseq [oc hostedcards :let [c (get-card state oc)]]
                      (move state side c [:rig :facedown])
                      (if (:memoryunits c)
-                       (gain state :runner :memory (:memoryunits c)))))
-                 (doseq [c (all-installed state :runner)]
-                   (when (not (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                       (gain state :runner :memory (:memoryunits c))))
+                   (doseq [oc nonhostedcards :let [c (get-card state oc)]]
                      (move state side c [:rig :facedown])
                      (if (:memoryunits c)
                        (gain state :runner :memory (:memoryunits c))))))}
