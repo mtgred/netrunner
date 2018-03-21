@@ -771,7 +771,9 @@
 
    "Priority Requisition"
    {:interactive (req true)
-    :choices {:req #(and (ice? %) (not (rezzed? %)) (installed? %))}
+    :choices {:req #(and (ice? %)
+                         (not (rezzed? %))
+                         (installed? %))}
     :effect (effect (rez target {:ignore-cost :all-costs}))}
 
    "Private Security Force"

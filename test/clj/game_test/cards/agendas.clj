@@ -818,6 +818,19 @@
       (is (= 0 (:bad-publicity (get-corp)))))
       (is (= 0 (get-in @state [:runner :tag]))))))
 
+(deftest priority-requisition
+  ;; Priority Requisition - When scored, rez an installed ice for free.
+  (do-game
+    (new-game (default-corp [(qty "Priority Requisition" 1) (qty "Archer" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Archer" "HQ")
+    (play-from-hand state :corp "Priority Requisition" "New remote")
+    (let [pri (get-content state :remote1 0)
+          arc (get-ice state :hq 0)]
+      (score-agenda state :corp pri)
+      (prompt-select :corp arc)
+      (is (get-in (refresh arc) [:rezzed])))))
+
 (deftest profiteering
   ;; Profiteering - Gain 5 credits per bad publicity taken
   (do-game
