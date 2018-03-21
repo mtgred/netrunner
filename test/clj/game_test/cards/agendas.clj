@@ -523,6 +523,24 @@
         (is (= 1 (get-counters (refresh btscored) :agenda))
             "1 agenda counter placed on scored Braintrust")))))
 
+(deftest gila-hands-arcology
+  ;; Gila Hands Arcology
+  (do-game
+    (new-game (default-corp [(qty "Gila Hands Arcology" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Gila Hands Arcology" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 2 (:click (get-corp))))
+    (is (= 5 (:credit (get-corp))))
+    (core/gain state :corp :click 2)
+    (let [gha (get-scored state :corp)]
+      (card-ability state :corp gha 0)
+      (is (= 2 (:click (get-corp))) "Should spend 2 clicks on Gila Hands")
+      (is (= 8 (:credit (get-corp))) "Should gain 3 credits from 5 to 8")
+      (card-ability state :corp gha 0)
+      (is (= 0 (:click (get-corp))) "Should spend 2 clicks on Gila Hands")
+      (is (= 11 (:credit (get-corp))) "Should gain 3 credits from 8 to 11"))))
+
 (deftest government-contracts
   ;; Government Contracts - Spend 2 clicks for 4 credits
   (do-game
