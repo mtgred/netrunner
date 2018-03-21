@@ -285,18 +285,15 @@
               (default-runner [(qty "Ice Analyzer" 1) (qty "All-nighter" 1)]))
     (play-from-hand state :corp "Degree Mill" "New remote")
     (take-credits state :corp)
-
     (is (= 0 (count (:deck (get-runner)))) "Runner starts with empty deck")
     (run-on state "Server 1")
     (run-successful state)
     (prompt-choice :runner "Yes")
     (is (= 0 (:agenda-point (get-runner))) "Runner stole Degree Mill with no installed cards")
-
     (play-from-hand state :runner "Ice Analyzer")
     (play-from-hand state :runner "All-nighter")
-
-    (let [ia (get-in @state [:runner :rig :resource 0])
-          an (get-in @state [:runner :rig :resource 1])]
+    (let [ia (get-resource state 0)
+          an (get-resource state 1)]
       (run-on state "Server 1")
       (run-successful state)
       (prompt-choice :runner "Yes")
@@ -305,6 +302,23 @@
       (is (= 3 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill")
       (is (empty? (get-in @state [:runner :rig :resource])) "Degree Mill didn't remove installed cards")
       (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck"))))
+
+(deftest director-haas-pet-project
+  (do-game
+    (new-game (default-corp [(qty "Director Haas' Pet Project" 1)
+                             (qty "Adonis Campaign" 1)
+                             (qty "Strongbox" 1)
+                             (qty "Eli 1.0" 1)
+                             (qty "Hedge Fund" 5)])
+              (default-runner))
+    (starting-hand state :corp ["Director Haas' Pet Project" "Adonis Campaign" "Strongbox"])
+    (core/move state :corp (find-card "Eli 1.0" (:deck (get-corp))) :discard)
+    (play-from-hand state :corp "Director Haas' Pet Project" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Adonis Campaign" (:hand (get-corp))))
+    (prompt-select :corp (find-card "Strongbox" (:hand (get-corp))))
+    (prompt-select :corp (find-card "Eli 1.0" (:discard (get-corp))))))
 
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
