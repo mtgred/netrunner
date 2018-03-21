@@ -836,7 +836,9 @@
    {:interactive (req true)
     :agendapoints-runner (req (do 2))
     :effect (req (let [n (quot (- (:advance-counter card) 3) 2)]
-                    (set-prop state side card :counter {:agenda n} :agendapoints (+ 2 n))))}
+                    (set-prop state side card
+                              :counter {:agenda n}
+                              :agendapoints (+ 2 n))))}
 
    "Project Kusanagi"
    {:silent (req true)
@@ -850,10 +852,13 @@
     :abilities [{:counter-cost [:agenda 1]
                  :prompt "Choose a card in Archives to add to HQ"
                  :show-discard true
-                 :choices {:req #(and (in-discard? %) (= (:side %) "Corp"))}
+                 :choices {:req #(and (in-discard? %)
+                                      (= (:side %) "Corp"))}
                  :req (req (< 0 (get-in card [:counter :agenda] 0)))
-                 :msg (msg "add " (if (:seen target)
-                                    (:title target) "an unseen card ") " to HQ from Archives")
+                 :msg (msg "add "
+                           (if (:seen target)
+                             (:title target) "an unseen card ")
+                           " to HQ from Archives")
                  :effect (effect (move target :hand))}]}
 
    "Project Wotan"

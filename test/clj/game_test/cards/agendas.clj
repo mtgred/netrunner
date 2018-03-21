@@ -967,7 +967,7 @@
               (default-runner))
     ;; Set up
     (starting-hand state :corp ["Project Atlas"])
-    (is (= 1 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
+    (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand")
     (core/gain state :corp :click 10 :credit 10)
     ;; Should gain 1 counter
     (play-from-hand state :corp "Project Atlas" "New remote")
@@ -981,7 +981,7 @@
       (card-ability state :corp atlas-scored 0)
       (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
       (is (= 0 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 0 agenda counters")
-      (is (= 1 (count (:hand (get-corp)))) "Corp should have 5 cards in hand"))))
+      (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand"))))
 
 (deftest project-atlas-titan
   ;; Project Atlas - test with Titan
@@ -1020,7 +1020,6 @@
       (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counters")
       (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand"))))
 
-
 (deftest project-beale
   ;; Project Beale - Extra agenda points for over-advancing
   (do-game
@@ -1044,6 +1043,31 @@
         (core/advance state :corp {:card (refresh pb2)})
         (core/score state :corp {:card (refresh pb2)})
         (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))))
+
+(deftest project-vitruvius
+  ;; Project Vitruvius - basic test
+  (do-game
+    (new-game (default-runner [(qty "Project Vitruvius" 1)
+                               (qty "Hedge Fund" 1)])
+              (default-runner))
+    ;; Set up
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :discard)
+    (is (= 1 (count (:discard (get-corp)))) "Corp should have 1 cards in hand")
+    (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand")
+    (core/gain state :corp :click 10 :credit 10)
+    ;; Should gain 1 counter
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (let [vit (get-content state :remote1 0)]
+      (dotimes [n 4]
+        (core/advance state :corp {:card (refresh vit)}))
+      (is (= 4 (:advance-counter (refresh vit))) "Vitruvius should have 4 advancement tokens")
+      (core/score state :corp {:card (refresh vit)}))
+    (let [vit-scored (get-in @state [:corp :scored 0])]
+      (is (= 1 (get-counters (refresh vit-scored) :agenda)) "Vitruvius should have 1 agenda counter")
+      (card-ability state :corp vit-scored 0)
+      (prompt-select :corp (find-card "Hedge Fund" (:discard (get-corp))))
+      (is (= 0 (get-counters (refresh vit-scored) :agenda)) "Vitruvius should have 0 agenda counters")
+      (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand"))))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
