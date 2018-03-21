@@ -47,9 +47,8 @@
   (do-game
     (new-game (default-corp [(qty "Accelerated Beta Test" 1) (qty "Enigma" 1) (qty "Hedge Fund" 2)])
               (default-runner))
-    (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
-    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    ;; Set up
+    (starting-hand state :corp ["Accelerated Beta Test"])
     (play-from-hand state :corp "Accelerated Beta Test" "New remote")
     (let [abt (get-content state :remote1 0)]
       (score-agenda state :corp abt)
@@ -934,7 +933,7 @@
                                (qty "Beanstalk Royalties" 1)])
               (default-runner))
     ;; Set up
-    (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
+    (starting-hand state :corp ["Project Atlas"])
     (is (= 1 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
     (core/gain state :corp :click 10 :credit 10)
     ;; Should gain 1 counter
@@ -954,13 +953,11 @@
 (deftest project-atlas-titan
   ;; Project Atlas - test with Titan
   (do-game
-    (new-game (make-deck "Titan Transnational: Investing In Your Future" [(qty "Project Atlas" 2)
-                                                                          (qty "Beanstalk Royalties" 1)
-                                                                          (qty "Hedge Fund" 1)])
+    (new-game (make-deck "Titan Transnational: Investing In Your Future"
+                         [(qty "Project Atlas" 2) (qty "Beanstalk Royalties" 1) (qty "Hedge Fund" 1)])
               (default-runner))
     ;; Set up
-    (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
-    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (starting-hand state :corp ["Project Atlas" "Project Atlas"])
     (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
     (core/gain state :corp :click 10 :credit 10)
     ;; Should gain 1 counter
@@ -975,7 +972,7 @@
       (card-ability state :corp atlas-scored 0)
       (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
       (is (= 0 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 0 agenda counters")
-      (is (= 2 (count (:hand (get-corp)))) "Corp should have 5 cards in hand"))
+      (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 card in hand"))
     ;; Should gain 2 counters
     (play-from-hand state :corp "Project Atlas" "New remote")
     (let [atlas (get-content state :remote2 0)]
@@ -988,7 +985,7 @@
       (card-ability state :corp atlas-scored 0)
       (prompt-choice :corp (find-card "Hedge Fund" (:deck (get-corp))))
       (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counters")
-      (is (= 2 (count (:hand (get-corp)))) "Corp should have 4 cards in hand"))))
+      (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand"))))
 
 
 (deftest project-beale
@@ -1370,9 +1367,7 @@
     (new-game (default-corp [(qty "Underway Renovation" 1) (qty "Shipment from SanSan" 1)])
               (default-runner))
     (core/gain state :corp :click 2)
-    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-    (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
+    (starting-hand state :runner [])
     (play-from-hand state :corp "Underway Renovation" "New remote")
     (let [ur (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh ur)})
