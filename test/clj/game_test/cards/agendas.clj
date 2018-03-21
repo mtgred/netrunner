@@ -923,7 +923,6 @@
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
 
-
 (deftest profiteering
   ;; Profiteering - Gain 5 credits per bad publicity taken
   (do-game
@@ -1037,7 +1036,7 @@
 (deftest project-vitruvius
   ;; Project Vitruvius - basic test
   (do-game
-    (new-game (default-runner [(qty "Project Vitruvius" 1)
+    (new-game (default-corp [(qty "Project Vitruvius" 1)
                                (qty "Hedge Fund" 1)])
               (default-runner))
     ;; Set up
@@ -1057,6 +1056,27 @@
       (prompt-select :corp (find-card "Hedge Fund" (:discard (get-corp))))
       (is (= 0 (get-counters (refresh vit-scored) :agenda)) "Vitruvius should have 0 agenda counters")
       (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand"))))
+
+  (deftest project-wotan
+    ;; Project Wotan - basic. Only checks if agenda counter is spent
+    (do-game
+      (new-game (default-corp [(qty "Project Wotan" 1)
+                               (qty "Eli 1.0" 1)
+                               (qty "Hedge Fund" 3)])
+                (default-runner))
+      (starting-hand state :corp ["Project Wotan" "Eli 1.0"])
+      (play-from-hand state :corp "Project Wotan" "New remote")
+      (play-from-hand state :corp "Eli 1.0" "HQ")
+      (let [wotan (get-content state :remote1 0)
+            eli (get-ice state :hq 0)]
+        (core/rez state :corp eli)
+        (score-agenda state :corp wotan))
+      (take-credits state :corp)
+      (let [wot-scored (get-scored state :corp)]
+        (is (= 3 (get-counters (refresh wot-scored) :agenda)) "Wotan should start with 3 agenda counters")
+        (run-on state "HQ")
+        (card-ability state :corp wot-scored 0)
+        (is (= 2 (get-counters (refresh wot-scored) :agenda))) "Wotan should only have 2 agenda counters")))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
