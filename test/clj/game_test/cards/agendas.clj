@@ -568,6 +568,43 @@
       (run-jack-out state)
       (is (not (:run @state)) "No jack out prevent prompt"))))
 
+(deftest mandatory-upgrades
+  ;; Mandatory Upgrades - You have 1 additional :click: to spend each turn.
+  (do-game
+    (new-game (default-corp [(qty "Mandatory Upgrades" 1)
+                             (qty "Melange Mining Corp." 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mandatory Upgrades" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 2 (:agenda-point (get-corp))))
+    (play-from-hand state :corp "Melange Mining Corp." "New remote")
+    (let [mmc (get-content state :remote2 0)]
+      (core/rez state :corp mmc)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 4 (:click (get-corp))))
+      (card-ability state :corp mmc 0)
+      (is (= 1 (:click (get-corp)))))))
+
+(deftest mandatory-upgrades-sacrifice
+  ;; Mandatory Upgrades - Lose additional click if sacrificed
+  (do-game
+    (new-game (default-corp [(qty "Mandatory Upgrades" 1)
+                             (qty "Archer" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Mandatory Upgrades" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 2 (:agenda-point (get-corp))))
+    (play-from-hand state :corp "Archer" "HQ")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (let [arc (get-ice state :hq 0)]
+      (is (= 4 (:click (get-corp))) "Corp should start turn with 4 clicks")
+      (core/rez state :corp arc)
+      (prompt-select :corp (get-in (get-corp) [:scored 0]))
+      (is (= 3 (:click (get-corp))) "Corp should lose 1 click on agenda sacrifice"))))
+
+
 (deftest medical-breakthrough
   ;; Medical Breakthrough - Lower advancement requirement by 1 for each scored/stolen copy
   (do-game
