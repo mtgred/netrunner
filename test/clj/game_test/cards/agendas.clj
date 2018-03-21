@@ -927,6 +927,70 @@
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 1 (:bad-publicity (get-corp))))))
 
+(deftest project-atlas
+  ;; Project Atlas - basic test
+  (do-game
+    (new-game (default-runner [(qty "Project Atlas" 1)
+                               (qty "Beanstalk Royalties" 1)])
+              (default-runner))
+    ;; Set up
+    (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
+    (is (= 1 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
+    (core/gain state :corp :click 10 :credit 10)
+    ;; Should gain 1 counter
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (let [atlas (get-content state :remote1 0)]
+      (dotimes [n 4]
+        (core/advance state :corp {:card (refresh atlas)}))
+      (is (= 4 (:advance-counter (refresh atlas))) "Atlas should have 4 advancement tokens")
+      (core/score state :corp {:card (refresh atlas)}))
+    (let [atlas-scored (get-in @state [:corp :scored 0])]
+      (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
+      (card-ability state :corp atlas-scored 0)
+      (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (is (= 0 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 0 agenda counters")
+      (is (= 1 (count (:hand (get-corp)))) "Corp should have 5 cards in hand"))))
+
+(deftest project-atlas-titan
+  ;; Project Atlas - test with Titan
+  (do-game
+    (new-game (make-deck "Titan Transnational: Investing In Your Future" [(qty "Project Atlas" 2)
+                                                                          (qty "Beanstalk Royalties" 1)
+                                                                          (qty "Hedge Fund" 1)])
+              (default-runner))
+    ;; Set up
+    (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
+    (core/gain state :corp :click 10 :credit 10)
+    ;; Should gain 1 counter
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (let [atlas (get-content state :remote1 0)]
+      (dotimes [n 3]
+        (core/advance state :corp {:card (refresh atlas)}))
+      (is (= 3 (:advance-counter (refresh atlas))) "Atlas should have 3 advancement tokens")
+      (core/score state :corp {:card (refresh atlas)}))
+    (let [atlas-scored (get-in @state [:corp :scored 0])]
+      (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
+      (card-ability state :corp atlas-scored 0)
+      (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (is (= 0 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 0 agenda counters")
+      (is (= 2 (count (:hand (get-corp)))) "Corp should have 5 cards in hand"))
+    ;; Should gain 2 counters
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (let [atlas (get-content state :remote2 0)]
+      (dotimes [n 4]
+        (core/advance state :corp {:card (refresh atlas)}))
+      (is (= 4 (:advance-counter (refresh atlas))) "Atlas should have 4 advancement tokens")
+      (core/score state :corp {:card (refresh atlas)}))
+    (let [atlas-scored (get-in @state [:corp :scored 1])]
+      (is (= 2 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 2 agenda counter")
+      (card-ability state :corp atlas-scored 0)
+      (prompt-choice :corp (find-card "Hedge Fund" (:deck (get-corp))))
+      (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counters")
+      (is (= 2 (count (:hand (get-corp)))) "Corp should have 4 cards in hand"))))
+
+
 (deftest project-beale
   ;; Project Beale - Extra agenda points for over-advancing
   (do-game
@@ -1208,13 +1272,13 @@
       (run-on state "HQ")
       (core/rez state :corp viktor)
       (card-subroutine state :corp viktor 0)
-      (prompt-choice :runner "Done") ;don't prevent the brain damage
+      (prompt-choice :runner "Done")  ;; Don't prevent the brain damage
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 1 (:brain-damage (get-runner))))
-      (prompt-choice :runner "Done") ;so we take the net, but don't prevent it either
+      (prompt-choice :runner "Done")  ;; So we take the net, but don't prevent it either
       (is (= 2 (count (:discard (get-runner)))))
       (card-subroutine state :corp viktor 0)
-      (card-ability state :runner ff 1) ;prevent the brain damage this time
+      (card-ability state :runner ff 1)  ;; Prevent the brain damage this time
       (prompt-choice :runner "Done")
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
