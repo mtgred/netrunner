@@ -501,6 +501,45 @@
     (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
     (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))
 
+(deftest geothermal-fracking
+  ;; Geothermal Fracking
+  (do-game
+    (new-game (default-corp [(qty "Geothermal Fracking" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Geothermal Fracking" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
+    (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
+    (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
+    (let [gf-scored (get-scored state :corp)]
+      (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
+      (card-ability state :corp gf-scored 0)
+      (is (= 1 (:click (get-corp))) "Should have 1 click left")
+      (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
+      (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
+
+(deftest geothermal-fracking-broadcast-square
+  ;; TODO: Geothermal Fracking & Broadcast Square:
+  ;; Prevented bad publicity shouldn't block credit gain
+  (do-game
+    (new-game (default-corp [(qty "Geothermal Fracking" 1) (qty "Broadcast Square" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Geothermal Fracking" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
+    (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
+    (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
+    (play-from-hand state :corp "Broadcast Square" "New remote")
+    (let [gf-scored (get-scored state :corp)
+          bs (get-content state :remote2 0)]
+      (core/rez state :corp bs)
+      ;; TODO: Implement Broadcast Square prevention here once #3196 is merged.
+      (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
+      (card-ability state :corp gf-scored 0)
+      (is (= 0 (:click (get-corp))) "Should have 0 click left")
+      (is (= 10 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
+      (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
+
 (deftest genetic-resequencing
   ;; Genetic Resequencing - Place 1 agenda counter on a scored agenda
   (do-game
@@ -530,8 +569,8 @@
               (default-runner))
     (play-from-hand state :corp "Gila Hands Arcology" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
-    (is (= 2 (:click (get-corp))))
-    (is (= 5 (:credit (get-corp))))
+    (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
+    (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
     (core/gain state :corp :click 2)
     (let [gha (get-scored state :corp)]
       (card-ability state :corp gha 0)
