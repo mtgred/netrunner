@@ -42,6 +42,32 @@
       (is (= 0 (count (:scored (get-corp))))))
     (is (= "15 Minutes" (:title (first (:deck (get-corp))))))))
 
+(deftest accelerated-beta-test
+  ;; Accelerated Beta Test - When scored, look at top 3 of R&D. If any are ice, install & rez one for free. Trash others.
+  (do-game
+    (new-game (default-corp [(qty "Accelerated Beta Test" 1) (qty "Enigma" 1) (qty "Hedge Fund" 2)])
+              (default-runner))
+    (core/move state :corp (find-card "Enigma" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
+    (let [abt (get-content state :remote1 0)]
+      (score-agenda state :corp abt)
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (find-card "Enigma" (get-in @state [:corp :play-area])))
+      (prompt-choice :corp "HQ")
+      (is (not (nil? (get-ice state :hq 0))))
+      (is (= 2 (count (:discard (get-corp))))))
+    (core/move state :corp (find-card "Accelerated Beta Test" (:scored (get-corp))) :hand)
+    (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
+    (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
+    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
+    (let [abt (get-content state :remote2 0)]
+      (score-agenda state :corp abt)
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp "I have no regrets")
+      (is (= 2 (count (:discard (get-corp))))))))
+
 (deftest ancestral-imager
   ;; Ancestral Imager - damage on jack out
   (do-game
@@ -182,16 +208,15 @@
     (play-from-hand state :corp "Corporate Sales Team" "New remote")
     (is (= 5 (:credit (get-corp))))
     (score-agenda state :corp (get-content state :remote1 0))
-	(let [scored-cst (get-in @state [:corp :scored 0])]
-	  (core/end-turn state :corp nil)
-	  (core/start-turn state :runner nil)
-	  (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
-	  (is (= 9 (get-counters (refresh scored-cst) :credit)))
-	  (core/end-turn state :runner nil)
-	  (core/start-turn state :corp nil)
-	  (is (= 7 (:credit (get-corp))) "Increments at corp's start of turn")
-	  (is (= 8 (get-counters (refresh scored-cst) :credit)))
-	)))
+    (let [scored-cst (get-in @state [:corp :scored 0])]
+      (core/end-turn state :corp nil)
+      (core/start-turn state :runner nil)
+      (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
+      (is (= 9 (get-counters (refresh scored-cst) :credit)))
+      (core/end-turn state :runner nil)
+      (core/start-turn state :corp nil)
+      (is (= 7 (:credit (get-corp))) "Increments at corp's start of turn")
+      (is (= 8 (get-counters (refresh scored-cst) :credit))))))
 
 (deftest corporate-war
   ;; Corporate War - Gain 7c if you have 7c or more when scoring, otherwise lose all credits
@@ -576,25 +601,25 @@
     (new-game (default-corp [(qty "NAPD Contract" 1)])
               (default-runner))
     (play-from-hand state :corp "NAPD Contract" "New remote")
-      (let [napd (get-content state :remote1 0)]
-        (core/advance state :corp {:card (refresh napd)})
-        (core/advance state :corp {:card (refresh napd)})
-        (take-credits state :corp)
-        (core/lose state :runner :credit 2)
-        (run-empty-server state "Server 1")
-        (prompt-choice :runner "Yes")
-        (is (= 0 (count (:scored (get-runner)))) "Runner could not steal NAPD Contract")
-        (is (= 3 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
-        (take-credits state :runner)
-        (core/gain state :corp :bad-publicity 1)
-        (core/advance state :corp {:card (refresh napd)})
-        (core/advance state :corp {:card (refresh napd)})
-        (core/score state :corp {:card (refresh napd)})
-        (is (not (nil? (get-content state :remote1 0)))
-            "Corp can't score with 4 advancements because of BP")
-        (core/advance state :corp {:card (refresh napd)})
-        (core/score state :corp {:card (refresh napd)})
-        (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
+    (let [napd (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh napd)})
+      (core/advance state :corp {:card (refresh napd)})
+      (take-credits state :corp)
+      (core/lose state :runner :credit 2)
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Yes")
+      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal NAPD Contract")
+      (is (= 3 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
+      (take-credits state :runner)
+      (core/gain state :corp :bad-publicity 1)
+      (core/advance state :corp {:card (refresh napd)})
+      (core/advance state :corp {:card (refresh napd)})
+      (core/score state :corp {:card (refresh napd)})
+      (is (not (nil? (get-content state :remote1 0)))
+          "Corp can't score with 4 advancements because of BP")
+      (core/advance state :corp {:card (refresh napd)})
+      (core/score state :corp {:card (refresh napd)})
+      (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
 
 (deftest napd-contract-corporate-scandal
   ;; NAPD Contract - scoring requirement increases with bad publicity from Corporate Scandal
@@ -602,20 +627,20 @@
     (new-game (default-corp [(qty "NAPD Contract" 1)])
               (default-runner [(qty "Corporate Scandal" 1)]))
     (play-from-hand state :corp "NAPD Contract" "New remote")
-      (let [napd (get-content state :remote1 0)]
-        (core/advance state :corp {:card (refresh napd)})
-        (core/advance state :corp {:card (refresh napd)})
-        (take-credits state :corp)
-        (play-from-hand state :runner "Corporate Scandal")
-        (take-credits state :runner)
-        (core/advance state :corp {:card (refresh napd)})
-        (core/advance state :corp {:card (refresh napd)})
-        (core/score state :corp {:card (refresh napd)})
-        (is (not (nil? (get-content state :remote1 0)))
-            "Corp can't score with 4 advancements because of BP")
-        (core/advance state :corp {:card (refresh napd)})
-        (core/score state :corp {:card (refresh napd)})
-        (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
+    (let [napd (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh napd)})
+      (core/advance state :corp {:card (refresh napd)})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corporate Scandal")
+      (take-credits state :runner)
+      (core/advance state :corp {:card (refresh napd)})
+      (core/advance state :corp {:card (refresh napd)})
+      (core/score state :corp {:card (refresh napd)})
+      (is (not (nil? (get-content state :remote1 0)))
+          "Corp can't score with 4 advancements because of BP")
+      (core/advance state :corp {:card (refresh napd)})
+      (core/score state :corp {:card (refresh napd)})
+      (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements")))
 
 (deftest net-quarantine
   ;; The Runner's base link strength is reduced to 0 during the first trace each turn.
@@ -645,20 +670,19 @@
 (deftest nisei-mk-ii-step-43
   ;; Nisei MK II - Remove hosted counter to ETR, check this works in 4.3
   (do-game
-   (new-game (default-corp [(qty "Nisei MK II" 1)])
-             (default-runner))
-   (play-from-hand state :corp "Nisei MK II" "New remote")
-   (score-agenda state :corp (get-content state :remote1 0))
-   (let [scored-nisei (get-in @state [:corp :scored 0])]
-     (is (= 1 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has one counter")
-     (take-credits state :corp)
-
-     (run-on state "HQ")
-     (run-phase-43 state)
-     (card-ability state :corp (refresh scored-nisei) 0)
-     (prompt-choice :corp "Done") ; close 4.3 corp
-     (is (not (:run @state)) "Run ended by using Nisei counter")
-     (is (= 0 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has no counters"))))
+    (new-game (default-corp [(qty "Nisei MK II" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Nisei MK II" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (let [scored-nisei (get-in @state [:corp :scored 0])]
+      (is (= 1 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has one counter")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-phase-43 state)
+      (card-ability state :corp (refresh scored-nisei) 0)
+      (prompt-choice :corp "Done") ; close 4.3 corp
+      (is (not (:run @state)) "Run ended by using Nisei counter")
+      (is (= 0 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has no counters"))))
 
 (deftest oaktown-renovation
   ;; Oaktown Renovation - Installed face up, gain credits with each conventional advancement
@@ -776,10 +800,10 @@
     (play-from-hand state :corp "Posted Bounty" "New remote")
     (let [pb (get-content state :remote1 0)]
       (score-agenda state :corp pb)
-	  (prompt-choice :corp "Yes")
-	  (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
       (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity"))
-	  (is (= 1 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))
+    (is (= 1 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))
 
 (deftest posted-bounty-no
   ;; Posted Bounty - Choosing not to forfeit scores normally
@@ -789,10 +813,10 @@
     (play-from-hand state :corp "Posted Bounty" "New remote")
     (let [pb (get-content state :remote1 0)]
       (score-agenda state :corp pb)
-	  (prompt-choice :corp "No")
-	  (is (= 1 (:agenda-point (get-corp))))
+      (prompt-choice :corp "No")
+      (is (= 1 (:agenda-point (get-corp))))
       (is (= 0 (:bad-publicity (get-corp)))))
-	  (is (= 0 (get-in @state [:runner :tag])))))
+      (is (= 0 (get-in @state [:runner :tag]))))))
 
 (deftest profiteering
   ;; Profiteering - Gain 5 credits per bad publicity taken
@@ -826,8 +850,8 @@
       (core/advance state :corp {:card (refresh ares)})
       (core/advance state :corp {:card (refresh ares)})
       (core/advance state :corp {:card (refresh ares)})
-      (is (= 6 (:advance-counter (refresh ares)))
-      (core/score state :corp {:card (refresh ares)}))
+      (is (= 6 (:advance-counter (refresh ares))))
+      (core/score state :corp {:card (refresh ares)})
       (is (prompt-is-card? :runner ares) "Runner has Ares prompt to trash installed cards"))
     (prompt-select :runner (find-card "Clone Chip" (:hardware (:rig (get-runner)))))
     (is (empty? (get-in @state [:runner :prompt])) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
@@ -849,14 +873,14 @@
       (core/score state :corp {:card (refresh pb1)})
       (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points")
       (play-from-hand state :corp "Project Beale" "New remote")
-        (let [pb2 (get-content state :remote2 0)]
-          (core/advance state :corp {:card (refresh pb2)})
-          (core/advance state :corp {:card (refresh pb2)})
-          (core/advance state :corp {:card (refresh pb2)})
-          (core/advance state :corp {:card (refresh pb2)})
-          (core/advance state :corp {:card (refresh pb2)})
-          (core/score state :corp {:card (refresh pb2)})
-          (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))))
+      (let [pb2 (get-content state :remote2 0)]
+        (core/advance state :corp {:card (refresh pb2)})
+        (core/advance state :corp {:card (refresh pb2)})
+        (core/advance state :corp {:card (refresh pb2)})
+        (core/advance state :corp {:card (refresh pb2)})
+        (core/advance state :corp {:card (refresh pb2)})
+        (core/score state :corp {:card (refresh pb2)})
+        (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
