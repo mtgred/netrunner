@@ -831,6 +831,23 @@
       (prompt-select :corp arc)
       (is (get-in (refresh arc) [:rezzed])))))
 
+(deftest private-security-force
+  ;; Private Security Force - if tagged, click: do 1 meat
+  (do-game
+    (new-game (default-corp [(qty "Private Security Force" 1) (qty "Breaking News" 1) (qty "SEA Source" 1)])
+              (default-runner [(qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Private Security Force" "New remote")
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (let [psf (get-content state :remote1 0)
+          bn (get-content state :remote2 0)]
+      (score-agenda state :corp psf)
+      (score-agenda state :corp bn)
+      (let [psf-scored (get-in @state [:corp :scored 0])]
+        (card-ability state :corp psf-scored 0)
+        (is (= 1 (count (:discard (get-runner)))))))
+    ))
+
+
 (deftest profiteering
   ;; Profiteering - Gain 5 credits per bad publicity taken
   (do-game
