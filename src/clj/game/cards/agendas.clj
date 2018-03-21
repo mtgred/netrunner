@@ -777,7 +777,9 @@
     :effect (effect (rez target {:ignore-cost :all-costs}))}
 
    "Private Security Force"
-   {:abilities [{:req (req tagged) :cost [:click 1] :effect (effect (damage eid :meat 1 {:card card}))
+   {:abilities [{:req (req tagged)
+                 :cost [:click 1]
+                 :effect (effect (damage eid :meat 1 {:card card}))
                  :msg "do 1 meat damage"}]}
 
    "Profiteering"

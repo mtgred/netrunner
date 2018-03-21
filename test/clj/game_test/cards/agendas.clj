@@ -834,18 +834,20 @@
 (deftest private-security-force
   ;; Private Security Force - if tagged, click: do 1 meat
   (do-game
-    (new-game (default-corp [(qty "Private Security Force" 1) (qty "Breaking News" 1) (qty "SEA Source" 1)])
-              (default-runner [(qty "Sure Gamble" 3)]))
+    (new-game (default-corp [(qty "Private Security Force" 10)])
+              (default-runner))
+    (core/gain state :runner :tag 1)
     (play-from-hand state :corp "Private Security Force" "New remote")
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (let [psf (get-content state :remote1 0)
-          bn (get-content state :remote2 0)]
-      (score-agenda state :corp psf)
-      (score-agenda state :corp bn)
-      (let [psf-scored (get-in @state [:corp :scored 0])]
-        (card-ability state :corp psf-scored 0)
-        (is (= 1 (count (:discard (get-runner)))))))
-    ))
+    (score-agenda state :corp (get-content state :remote1 0))
+    (let [psf-scored (get-in @state [:corp :scored 0])]
+      (card-ability state :corp psf-scored 0)
+      (is (= 1 (count (:discard (get-runner)))))
+      (take-credits state :runner)
+      (dotimes [n 3]
+        (card-ability state :corp psf-scored 0))
+      (is (= 3 (count (:discard (get-runner)))))
+      (is (= :corp (:winner @state)) "Corp wins")
+      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
 
 
 (deftest profiteering
