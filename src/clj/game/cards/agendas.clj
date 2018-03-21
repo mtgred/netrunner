@@ -425,7 +425,8 @@
    "False Lead"
    {:abilities [{:req (req (>= (:click runner) 2))
                  :msg "force the Runner to lose [Click][Click]"
-                 :effect (effect (forfeit card) (lose :runner :click 2))}]}
+                 :effect (effect (forfeit card)
+                                 (lose :runner :click 2))}]}
 
    "Fetal AI"
    {:access {:delayed-completion true
@@ -437,7 +438,8 @@
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))
     :abilities [{:counter-cost [:agenda 1]
-                 :choices {:req #(and (ice? %) (can-be-advanced? %))}
+                 :choices {:req #(and (ice? %)
+                                      (can-be-advanced? %))}
                  :req (req (< 0 (get-in card [:counter :agenda] 0)))
                  :msg (msg "place 1 advancement token on " (card-str state target))
                  :once :per-turn
@@ -455,27 +457,40 @@
     :abilities [{:cost [:click 1]
                  :counter-cost [:agenda 1]
                  :msg "gain 7 [Credits] and take 1 bad publicity"
-                 :effect (effect (gain :credit 7 :bad-publicity 1))}]}
+                 :effect (effect (gain :credit 7
+                                       :bad-publicity 1))}]}
 
    "Gila Hands Arcology"
-   {:abilities [{:cost [:click 2] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
+   {:abilities [{:cost [:click 2]
+                 :msg "gain 3 [Credits]"
+                 :effect (effect (gain :credit 3))}]}
 
    "Global Food Initiative"
    {:agendapoints-runner (req (do 2))}
 
    "Glenn Station"
-   {:abilities [{:label "Host a card from HQ on Glenn Station" :cost [:click 1]
-                 :prompt "Choose a card to host on Glenn Station" :choices (req (:hand corp))
-                 :msg "host a card from HQ" :effect (effect (host card target {:facedown true}))}
-                {:label "Add a card on Glenn Station to HQ" :cost [:click 1]
-                 :prompt "Choose a card on Glenn Station" :choices (req (:hosted card))
-                 :msg "add a hosted card to HQ" :effect (effect (move target :hand))}]}
+   {:abilities [{:label "Host a card from HQ on Glenn Station"
+                 :cost [:click 1]
+                 :msg "host a card from HQ"
+                 :prompt "Choose a card to host on Glenn Station"
+                 :choices (req (:hand corp))
+                 :effect (effect (host card target {:facedown true}))}
+                {:label "Add a card on Glenn Station to HQ"
+                 :cost [:click 1]
+                 :msg "add a hosted card to HQ"
+                 :prompt "Choose a card on Glenn Station"
+                 :choices (req (:hosted card))
+                 :effect (effect (move target :hand))}]}
 
    "Government Contracts"
-   {:abilities [{:cost [:click 2] :effect (effect (gain :credit 4)) :msg "gain 4 [Credits]"}]}
+   {:abilities [{:cost [:click 2]
+                 :effect (effect (gain :credit 4))
+                 :msg "gain 4 [Credits]"}]}
 
    "Government Takeover"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 3)) :msg "gain 3 [Credits]"}]}
+   {:abilities [{:cost [:click 1]
+                 :effect (effect (gain :credit 3))
+                 :msg "gain 3 [Credits]"}]}
 
    "Graft"
    (letfn [(graft [n] {:prompt "Choose a card to add to HQ with Graft"
@@ -496,12 +511,18 @@
       :effect (effect (continue-ability (graft 1) card nil))})
 
    "Hades Fragment"
-   {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard])) (is-scored? state :corp card)))}
+   {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard]))
+                                     (is-scored? state :corp card)))}
     :abilities [{:prompt "Select a card to add to the bottom of R&D"
                  :show-discard true
-                 :choices {:req #(and (= (:side %) "Corp") (= (:zone %) [:discard]))}
+                 :choices {:req #(and (= (:side %) "Corp")
+                                      (= (:zone %) [:discard]))}
                  :effect (effect (move target :deck))
-                 :msg (msg "add " (if (:seen target) (:title target) "a card") " to the bottom of R&D")}]}
+                 :msg (msg "add "
+                           (if (:seen target)
+                             (:title target)
+                             "a card")
+                           " to the bottom of R&D")}]}
 
    "Helium-3 Deposit"
    {:interactive (req true)
@@ -524,7 +545,8 @@
 
    "Hostile Takeover"
    {:msg "gain 7 [Credits] and take 1 bad publicity"
-    :effect (effect (gain :credit 7 :bad-publicity 1))
+    :effect (effect (gain :credit 7
+                          :bad-publicity 1))
     :interactive (req true)}
 
    "Hollywood Renovation"

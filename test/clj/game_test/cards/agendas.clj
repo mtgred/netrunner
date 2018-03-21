@@ -447,6 +447,19 @@
       (is (= 2 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
       (is (= 17 (:credit (get-corp))) "Gained 5 credits"))))
 
+(deftest false-lead
+  ;; False Lead - forfeit to make runner lose 2 clicks
+  (do-game
+    (new-game (default-corp [(qty "False Lead" 1)])
+              (default-runner))
+    (play-from-hand state :corp "False Lead" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 1 (count (:scored (get-corp)))) "Corp should have 1 agenda point")
+    (take-credits state :corp)
+    (is (= 4 (:click (get-runner))) "Runner should start turn with 4 clicks")
+    (card-ability state :corp (get-scored state :corp) 0)
+    (is (= 2 (:click (get-runner))) "Runner should lose 2 clicks from False Lead")))
+
 (deftest fetal-ai-damage
   ;; Fetal AI - damage on access
   (do-game
