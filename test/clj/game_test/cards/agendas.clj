@@ -129,6 +129,34 @@
         (should-not-place token-astro hand-ice-wall " in hand")
         (should-place token-astro installed-ice-wall " that is installed")))))
 
+(deftest award-bait
+  ;; Award Bait
+  (do-game
+    (new-game (default-corp [(qty "Award Bait" 2) (qty "Ice Wall" 1)])
+              (default-runner))
+    (core/move state :corp (find-card "Award Bait" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [iw (get-ice state :hq 0)]
+      (is (= 0 (count (:advance-counter (refresh iw)))) "Ice Wall should start with 0 advancement tokens")
+      (play-from-hand state :corp "Award Bait" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (prompt-choice :runner "Access")
+      (prompt-choice :corp "2")
+      (prompt-select :corp (refresh iw))
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:advance-counter (refresh iw))) "Ice Wall should gain 2 advancement tokens")
+      (run-on state :rd)
+      (run-successful state)
+      (prompt-choice :runner "Access")
+      (prompt-choice :corp "2")
+      (prompt-select :corp (refresh iw))
+      (prompt-choice :runner "Steal")
+      (is (= 4 (:advance-counter (refresh iw))) "Ice Wall should gain 2 advancement tokens")
+      )
+    ))
+
 (deftest bacterial-programming-run
   ;; Bacterial Programming - scoring should not cause a run to exist for runner.
   (do-game
