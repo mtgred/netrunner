@@ -605,6 +605,25 @@
     (is (= 12 (:credit (get-corp))) "Gain 7 credits")
     (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity")))
 
+(deftest house-of-knives
+  ;; House of Knives
+  (do-game
+    (new-game (default-corp [(qty "House of Knives" 1)])
+              (default-runner))
+    (play-and-score state "House of Knives")
+    (let [hok-scored (get-scored state :corp)]
+      (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
+      (take-credits state :corp)
+      (run-empty-server state "R&D")
+      (run-phase-43 state)
+      (card-ability state :corp hok-scored 0)
+      (is (= 1 (count (:discard (get-runner)))) "Runner should pay 1 net damage")
+      (run-empty-server state "R&D")
+      (run-phase-43 state)
+      (card-ability state :corp hok-scored 0)
+      (card-ability state :corp hok-scored 0)
+      (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
+
 (deftest ikawah-project-not-stealing
   ;; Ikawah Project - do not reveal when the Runner does not steal from R&D
   (do-game
