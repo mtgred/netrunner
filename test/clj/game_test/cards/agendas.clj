@@ -738,6 +738,18 @@
       (prompt-select :corp (get-in (get-corp) [:scored 0]))
       (is (= 3 (:click (get-corp))) "Corp should lose 1 click on agenda sacrifice"))))
 
+(deftest market-research
+  ;; Market Research - full test
+  (do-game
+    (new-game (default-corp [(qty "Market Research" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Market Research" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points")
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :corp "Market Research" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))
 
 (deftest medical-breakthrough
   ;; Medical Breakthrough - Lower advancement requirement by 1 for each scored/stolen copy
