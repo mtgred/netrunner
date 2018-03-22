@@ -1712,6 +1712,22 @@
     (prompt-choice :corp "Barrier")
     (is (last-log-contains? state "Barrier"))))
 
+(deftest utopia-fragment
+  ;; Utopia Fragment - basic test
+  (do-game
+    (new-game (default-corp [(qty "Utopia Fragment" 1)
+                             (qty "Hostile Takeover" 1)])
+              (default-runner))
+    (play-and-score state "Utopia Fragment")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (advance state (get-content state :remote2 0))
+    (take-credits state :corp)
+    (run-on state :remote2)
+    (run-successful state)
+    (prompt-choice :runner "Yes")
+    (is (= 1 (:agenda-point (get-runner))))
+    (is (= 3 (:credit (get-runner))))))
+
 (deftest veterans-program
   ;; Veterans Program - basic test
   (do-game
