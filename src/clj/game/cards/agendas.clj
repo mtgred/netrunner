@@ -203,12 +203,16 @@
         :interactive (req true)}))
 
    "Bifrost Array"
-   {:req (req (not (empty? (filter #(not= (:title %) "Bifrost Array") (:scored corp)))))
+   {:req (req (not (empty? (filter #(not= (:title %)
+                                          "Bifrost Array")
+                                   (:scored corp)))))
     :optional {:prompt "Trigger the ability of a scored agenda?"
                :yes-ability {:prompt "Select an agenda to trigger the \"when scored\" ability of"
                              :choices {:req #(and (is-type? % "Agenda")
-                                                  (not= (:title %) "Bifrost Array")
-                                                  (= (first (:zone %)) :scored)
+                                                  (not= (:title %)
+                                                        "Bifrost Array")
+                                                  (= (first (:zone %))
+                                                     :scored)
                                                   (when-scored? %)
                                                   (:abilities %))}
                              :msg (msg "trigger the \"when scored\" ability of " (:title target))
@@ -220,15 +224,18 @@
                       {:optional
                        {:prompt "Pay credits to add random cards from Runner's Grip to the bottom of their Stack?"
                         :yes-ability {:prompt "How many credits?"
-                                      :choices {:number (req (min (:credit corp) (count (:hand runner))))}
+                                      :choices {:number (req (min (:credit corp)
+                                                                  (count (:hand runner))))}
                                       :effect (req (when (pos? target)
                                                      (pay state :corp card :credit target)
                                                      (let [from (take target (shuffle (:hand runner)))]
                                                        (doseq [c from]
                                                          (move state :runner c :deck))
-                                                       (system-msg state side (str "uses Brain Rewiring to pay " target " [Credits] and add " target
-                                                                                   " cards from the Runner's Grip to the bottom of their Stack. "
-                                                                                   "The Runner draws 1 card"))
+                                                       (system-msg state side (str "uses Brain Rewiring to pay " target
+                                                                                   " [Credits] and add " target
+                                                                                   " cards from the Runner's Grip"
+                                                                                   " to the bottom of their Stack."
+                                                                                   " The Runner draws 1 card"))
                                                        (draw state :runner)
                                                        (clear-wait-prompt state :runner))))}
                         :no-ability {:effect (effect (clear-wait-prompt :runner))}}}

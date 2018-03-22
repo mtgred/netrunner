@@ -144,6 +144,21 @@
     (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
     (is (not (:run @state)) "No run is active")))
 
+(deftest bifrost-array
+  ;; Bifrost Array
+  (do-game
+    (new-game (default-corp [(qty "Bifrost Array" 1) (qty "Hostile Takeover" 1)])
+              (default-runner))
+    (play-and-score state "Hostile Takeover")
+    (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
+    (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
+    (let [ht-scored (get-scored state :corp)]
+      (play-and-score state "Bifrost Array")
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (refresh ht-scored))
+      (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
+      (is (= 2 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
+
 (deftest braintrust
   ;; Braintrust - Discount ICE rez by 1 for every 2 over-advancements when scored
   (do-game
