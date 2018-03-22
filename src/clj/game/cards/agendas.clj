@@ -1147,7 +1147,8 @@
    "Unorthodox Predictions"
    {:implementation "Prevention of subroutine breaking is not enforced"
     :delayed-completion false
-    :prompt "Choose an ICE type for Unorthodox Predictions" :choices ["Sentry", "Code Gate", "Barrier"]
+    :prompt "Choose an ICE type for Unorthodox Predictions"
+    :choices ["Barrier" "Code Gate" "Sentry"]
     :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
 
    "Utopia Fragment"

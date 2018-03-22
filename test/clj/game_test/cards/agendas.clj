@@ -1544,6 +1544,16 @@
           "Underway Renovation trashed card name is in log")
       (is (= 3 (count (:discard (get-runner)))) "2 cards milled from Runner Stack; 4+ advancements"))))
 
+(deftest unorthodox-predictions
+  ;; Unorthodox Predictions
+  (do-game
+    (new-game (default-corp [(qty "Unorthodox Predictions" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Unorthodox Predictions" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (prompt-choice :corp "Barrier")
+    (is (last-log-contains? state "Barrier"))))
+
 (deftest vulcan-coverup
   ;; Vulcan Coverup - Do 2 meat damage when scored; take 1 bad pub when stolen
   (do-game
