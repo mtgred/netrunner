@@ -547,6 +547,26 @@
     (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
     (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))
 
+(deftest firmware-updates
+  ;; Firmware Updates
+  (do-game
+    (new-game (default-corp [(qty "Firmware Updates" 1)
+                             (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-and-score state "Firmware Updates")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [fu (get-scored state :corp)
+          iw (get-ice state :hq 0)]
+      (is (= 3 (get-counters (refresh fu) :agenda)) "Firmware Updates should start with 3 agenda counters")
+      (core/rez state :corp iw)
+      (is (= 0 (count (:advance-counter (refresh iw)))) "Ice Wall should start with 0 advancement tokens")
+      (card-ability state :corp fu 0)
+      (prompt-select :corp (refresh iw))
+      (is (= 2 (get-counters (refresh fu) :agenda)) "Firmware Updates should now have 2 agenda counters")
+      (is (= 1 (:advance-counter (refresh iw))) "Ice Wall should have 1 advancement token")
+      )
+    ))
+
 (deftest geothermal-fracking
   ;; Geothermal Fracking
   (do-game
