@@ -1443,6 +1443,16 @@
     (is (= 2 (count (get-in @state [:corp :hand]))))
     (is (= 1 (count (get-in @state [:runner :hand]))))))
 
+(deftest research-grant
+  ;; Research Grant - basic test
+  (do-game
+    (new-game (default-corp [(qty "Research Grant" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Research Grant" "New remote")
+    (play-and-score state "Research Grant")
+    (prompt-select :corp (get-content state :remote1 0))
+    (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")))
+
 (deftest research-grant-leela
   ;; Research Grant - vs. Leela. Issue #3069.
   (do-game
