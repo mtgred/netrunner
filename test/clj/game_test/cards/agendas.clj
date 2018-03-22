@@ -198,6 +198,25 @@
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
 
+(deftest clone-retirement
+  ;; Clone Retirement - full test
+  (do-game
+    (new-game (default-corp [(qty "Clone Retirement" 2) (qty "Hostile Takeover" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 12 (:credit (get-corp))))
+    (is (= 1 (:bad-publicity (get-corp))))
+    (play-from-hand state :corp "Clone Retirement" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 0 (:bad-publicity (get-corp))))
+    (play-from-hand state :corp "Clone Retirement" "New remote")
+    (take-credits state :corp)
+    (run-on state "Server 3")
+    (run-successful state)
+    (prompt-choice :runner "Yes")
+    (is (= 1 (:bad-publicity (get-corp))))))
+
 (deftest corporate-sales-team
   ;; Corporate Sales Team - Places 10c on card, corp takes 1c on each turn start
   (do-game
