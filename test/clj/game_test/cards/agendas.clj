@@ -398,6 +398,20 @@
         (advance state ec3)
         (is (= 1 (:advance-counter (refresh ec3))))))))
 
+(deftest encrypted-portals
+  ;; Encrypted Portals
+  (do-game
+    (new-game (default-corp [(qty "Encrypted Portals" 1) (qty "Lotus Field" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Lotus Field" "HQ")
+    (let [lf (get-ice state :hq 0)]
+      (core/rez state :corp lf)
+      (is (= 4 (:current-strength (refresh lf))) "Should start with base strength of 4")
+      (is (= 0 (:credit (get-corp))) "Should have 0 credits after rez")
+      (play-and-score state "Encrypted Portals")
+      (is (= 5 (:current-strength (refresh lf))) "Should gain 1 strength from 4 to 5")
+      (is (= 1 (:credit (get-corp))) "Should gain 1 credit for rezzed code gate"))))
+
 (deftest executive-retreat
   ;; Executive Retreat
   (do-game
