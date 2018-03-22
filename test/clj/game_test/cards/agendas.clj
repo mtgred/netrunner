@@ -114,7 +114,7 @@
       (play-and-score state "AstroScript Pilot Program")
       (play-from-hand state :corp "AstroScript Pilot Program" "New remote")
       (let [scored-astro (get-scored state :corp)
-            installed-astro (get-content state :remote1 0)
+            installed-astro (get-content state :remote2 0)
             hand-astro (find-card "AstroScript Pilot Program" (:hand get-corp))]
         (should-not-place scored-astro hand-astro " in hand")
         (should-place scored-astro installed-astro " that is installed")
@@ -197,7 +197,7 @@
     (is (= 0 (:bad-publicity (get-corp))))
     (play-from-hand state :corp "Clone Retirement" "New remote")
     (take-credits state :corp)
-    (run-on state "Server 1")
+    (run-on state "Server 3")
     (run-successful state)
     (prompt-choice :runner "Yes")
     (is (= 1 (:bad-publicity (get-corp))))))
@@ -520,7 +520,7 @@
     (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
     (play-from-hand state :corp "Broadcast Square" "New remote")
     (let [gf-scored (get-scored state :corp)
-          bs (get-content state :remote1 0)]
+          bs (get-content state :remote2 0)]
       (core/rez state :corp bs)
       ;; TODO: Implement Broadcast Square prevention here once #3196 is merged.
       (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
@@ -673,7 +673,7 @@
     (play-and-score state "Mandatory Upgrades")
     (is (= 2 (:agenda-point (get-corp))))
     (play-from-hand state :corp "Melange Mining Corp." "New remote")
-    (let [mmc (get-content state :remote1 0)]
+    (let [mmc (get-content state :remote2 0)]
       (core/rez state :corp mmc)
       (take-credits state :corp)
       (take-credits state :runner)
@@ -996,7 +996,7 @@
     (is (empty? (get-in @state [:runner :prompt])) "No prompt for Runner if scored with 4 advancement tokens")
     (core/gain state :corp :click 5)
     (play-from-hand state :corp "Project Ares" "New remote")
-    (let [ares (get-content state :remote1 0)]
+    (let [ares (get-content state :remote2 0)]
       (advance state ares 6)
       (is (= 6 (:advance-counter (refresh ares))))
       (core/score state :corp {:card (refresh ares)})

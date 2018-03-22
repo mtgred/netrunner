@@ -239,5 +239,5 @@
 (defn play-and-score
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
   ([state title]
-   (core/lose state :corp :click 1)
-   (score-agenda state :corp (find-card title (:hand (:corp @state))))))
+   (play-from-hand state :corp title "New remote")
+   (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0))))
