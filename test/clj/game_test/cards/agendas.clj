@@ -624,6 +624,48 @@
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
 
+(deftest ikawah-project
+  ;; Ikawah Project - costs 2 credit 1 click to steal
+  (do-game
+    (new-game (default-corp [(qty "Ikawah Project" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ikawah Project" "New remote")
+    ;; No credits
+    (take-credits state :corp)
+    (core/lose state :runner :credit (:credit (get-runner)) :click 3)
+    (run-empty-server state :remote1)
+    (run-successful state)
+    (prompt-choice :runner "2 [Credits]")
+    (prompt-choice :runner "Don't steal")
+    (is (= 0 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
+    (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project")
+    ;; No clicks
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (core/lose state :runner :credit (:credit (get-runner)) :click 3)
+    (run-empty-server state :remote1)
+    (run-successful state)
+    (prompt-choice :runner "[Click]")
+    (prompt-choice :runner "Don't steal")
+    (is (= 0 (:click (get-runner))) "Runner couldn't afford to steal, so no clicks spent")
+    (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project")
+    ;; Enough of both
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (core/lose state :runner :credit (:credit (get-runner)) :click (:click (get-runner)))
+    (core/gain state :runner :credit 5 :click 4)
+    (is (= 5 (:credit (get-runner))) "Runner should be reset to 5 credits")
+    (is (= 4 (:click (get-runner))) "Runner should be reset to 4 clicks")
+    (run-empty-server state :remote1)
+    ; (run-successful state)
+    (prompt-choice :runner "[Click]")
+    (prompt-choice :runner "2 [Credits]")
+    (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
+    (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
+    (is (= 3 (:agenda-point (get-runner))))
+    (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project")
+    ))
+
 (deftest ikawah-project-not-stealing
   ;; Ikawah Project - do not reveal when the Runner does not steal from R&D
   (do-game
