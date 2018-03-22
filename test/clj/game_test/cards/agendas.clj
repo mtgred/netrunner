@@ -619,6 +619,24 @@
     (is (= 0 (:click (get-corp))) "Spent 2 clicks")
     (is (= 9 (:credit (get-corp))) "Gained 4 credits")))
 
+(deftest hades-fragment
+  ;; Hades Fragment
+  (do-game
+    (new-game (default-corp [(qty "Hades Fragment" 1) (qty "Hedge Fund" 2)])
+              (default-runner))
+    (starting-hand state :corp ["Hades Fragment"])
+    (play-and-score state "Hades Fragment")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 1 (count (:hand (get-corp)))) "Corp should have no opportunity to use Hades Shard")
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :discard)
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (let [hf-scored (get-scored state :corp)]
+      (card-ability state :corp hf-scored 0)
+      (prompt-select :corp (find-card "Hedge Fund" (:discard (get-corp))))
+      (is (= 2 (count (:deck (get-corp)))) "R&D should have 2 cards in it after Hades Fragment use"))))
+
 (deftest high-risk-investment
   ;; High-Risk Investment - Gain 1 agenda counter when scored; spend it to gain credits equal to Runner's credits
   (do-game
