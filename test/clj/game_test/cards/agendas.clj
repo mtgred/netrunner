@@ -289,7 +289,7 @@
     (take-credits state :corp)
 
     (play-from-hand state :runner "Hunting Grounds")
-    (let [hg (get-in @state [:runner :rig :resource 0])]
+    (let [hg (get-resource state 0)]
       (run-on state "Server 2")
       (run-successful state)
       (prompt-choice :runner "Yes")
@@ -306,11 +306,7 @@
         (prompt-select :runner fd2)
         (is (= 6 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill with facedown cards")
         (is (empty? (get-in (get-runner)  [:rig :facedown])) "Degree Mill didn't remove facedown cards")
-        (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck")
-        )
-                     )
-
-    ))
+        (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck")))))
 
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
