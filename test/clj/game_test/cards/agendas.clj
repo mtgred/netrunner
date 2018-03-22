@@ -798,6 +798,43 @@
       (run-jack-out state)
       (is (not (:run @state)) "No jack out prevent prompt"))))
 
+(deftest license-acquisition
+  ;; License Acquisition - full test
+  (do-game
+    (new-game (default-corp [(qty "License Acquisition" 4)
+                             (qty "Adonis Campaign" 1)
+                             (qty "Eve Campaign" 1)
+                             (qty "Strongbox" 1)
+                             (qty "Corporate Troubleshooter" 1)])
+              (default-runner))
+    ;; Set up
+    (starting-hand state :corp ["License Acquisition" "License Acquisition" "License Acquisition" "License Acquisition"
+                                "Adonis Campaign" "Strongbox"])
+    (core/move state :corp (find-card "Eve Campaign" (:deck (get-corp))) :discard)
+    (core/move state :corp (find-card "Corporate Troubleshooter" (:deck (get-corp))) :discard)
+    (core/gain state :corp :click 4)
+    ;; Asset - HQ
+    (play-and-score state "License Acquisition")
+    (prompt-select :corp (find-card "Adonis Campaign" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (is (some? (get-content state :remote2 0)))
+    ;; Upgrade - HQ
+    (play-and-score state "License Acquisition")
+    (prompt-select :corp (find-card "Strongbox" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (is (some? (get-content state :remote4 0)))
+    ;; Asset - Archives
+    (play-and-score state "License Acquisition")
+    (prompt-select :corp (find-card "Eve Campaign" (:discard (get-corp))))
+    (prompt-choice :corp "New remote")
+    (is (some? (get-content state :remote6 0)))
+    ;; Upgrade - Archives
+    (play-and-score state "License Acquisition")
+    (prompt-select :corp (find-card "Corporate Troubleshooter" (:discard (get-corp))))
+    (prompt-choice :corp "New remote")
+    (is (some? (get-content state :remote8 0)))
+    ))
+
 (deftest mandatory-upgrades
   ;; Mandatory Upgrades - You have 1 additional :click: to spend each turn.
   (do-game
