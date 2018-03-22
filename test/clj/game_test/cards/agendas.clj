@@ -652,6 +652,30 @@
       (prompt-select :corp (find-card "Hedge Fund" (:discard (get-corp))))
       (is (= 2 (count (:deck (get-corp)))) "R&D should have 2 cards in it after Hades Fragment use"))))
 
+(deftest helium-3-deposit
+  ;; Helium-3 Deposit
+  (do-game
+    (new-game (default-corp [(qty "Helium-3 Deposit" 1)
+                             (qty "Chief Slee" 1)
+                             (qty "Ice Wall" 1)])
+              (default-runner))
+      ; (play-and-score state "Helium-3 Deposit")
+    (play-from-hand state :corp "Chief Slee" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (let [cs (get-content state :remote1 0)
+          iw (get-ice state :hq 0)]
+      (is (= 0 (get-counters (refresh cs) :power)) "Chief Slee should start with 0 power counters")
+      (core/rez state :corp iw)
+      (run-on state "HQ")
+      (card-ability state :corp cs 0)
+      (is (= 1 (get-counters (refresh cs) :power)) "Chief Slee should gain 1 power counter")
+      (take-credits state :runner)
+      (play-and-score state "Helium-3 Deposit")
+      (prompt-choice :corp "2")
+      (prompt-select :corp cs)
+      (is (= 3 (get-counters (refresh cs) :power)) "Chief Slee should gain 2 power counters from 1 to 3"))))
+
 (deftest high-risk-investment
   ;; High-Risk Investment - Gain 1 agenda counter when scored; spend it to gain credits equal to Runner's credits
   (do-game

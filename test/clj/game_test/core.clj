@@ -186,12 +186,12 @@
   ([state _ card]
    (let [title (:title card)
          advancementcost (:advancementcost card)]
-    (core/gain state :corp :click advancementcost :credit advancementcost)
-    (dotimes [n advancementcost]
-      (core/advance state :corp {:card (core/get-card state card)}))
-    (is (= advancementcost (get-in (core/get-card state card) [:advance-counter])))
-    (core/score state :corp {:card (core/get-card state card)})
-    (is (find-card title (get-in @state [:corp :scored]))))))
+     (core/gain state :corp :click advancementcost :credit advancementcost)
+     (dotimes [n advancementcost]
+       (core/advance state :corp {:card (core/get-card state card)}))
+     (is (= advancementcost (get-in (core/get-card state card) [:advance-counter])))
+     (core/score state :corp {:card (core/get-card state card)})
+     (is (find-card title (get-in @state [:corp :scored]))))))
 
 (defn advance
   "Advance the given card."

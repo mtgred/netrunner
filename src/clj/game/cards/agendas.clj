@@ -533,14 +533,15 @@
 
    "Helium-3 Deposit"
    {:interactive (req true)
-    :choices ["0", "1", "2"]
     :prompt "How many power counters?"
+    :choices ["0" "1" "2"]
     :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
                      {:choices {:req #(< 0 (get-in % [:counter :power] 0))}
                       :msg (msg "add " c " power counters on " (:title target))
-                      :effect (final-effect (add-counter target :power c))} card nil)))}
+                      :effect (final-effect (add-counter target :power c))}
+                     card nil)))}
 
    "High-Risk Investment"
    {:effect (effect (add-counter card :agenda 1))
