@@ -235,3 +235,9 @@
   "Checks to see if the runner has a prompt accessing the given card title"
   [state title]
   (= title (-> @state :runner :prompt first :card :title)))
+
+(defn play-and-score
+  "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
+  ([state title]
+   (core/lose state :corp :click 1)
+   (score-agenda state :corp (find-card title (:hand (:corp @state))))))

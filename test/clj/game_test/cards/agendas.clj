@@ -49,49 +49,41 @@
               (default-runner))
     ;; Set up
     (starting-hand state :corp ["Accelerated Beta Test"])
-    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
-    (let [abt (get-content state :remote1 0)]
-      (score-agenda state :corp abt)
-      (prompt-choice :corp "Yes")
-      (prompt-select :corp (find-card "Enigma" (get-in @state [:corp :play-area])))
-      (prompt-choice :corp "HQ")
-      (is (not (nil? (get-ice state :hq 0))))
-      (is (= 2 (count (:discard (get-corp))))))
+    (play-and-score state "Accelerated Beta Test")
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (find-card "Enigma" (get-in @state [:corp :play-area])))
+    (prompt-choice :corp "HQ")
+    (is (not (nil? (get-ice state :hq 0))))
+    (is (= 2 (count (:discard (get-corp)))))
     (core/move state :corp (find-card "Accelerated Beta Test" (:scored (get-corp))) :hand)
     (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
     (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
-    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
-    (let [abt (get-content state :remote2 0)]
-      (score-agenda state :corp abt)
-      (prompt-choice :corp "Yes")
-      (prompt-choice :corp "I have no regrets")
-      (is (= 2 (count (:discard (get-corp))))))))
+    (play-and-score state "Accelerated Beta Test")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "I have no regrets")
+    (is (= 2 (count (:discard (get-corp)))))))
 
 (deftest ancestral-imager
   ;; Ancestral Imager - damage on jack out
   (do-game
     (new-game (default-corp [(qty "Ancestral Imager" 3)])
               (default-runner))
-    (play-from-hand state :corp "Ancestral Imager" "New remote")
-    (let [ai (get-content state :remote1 0)]
-      (score-agenda state :corp ai)
-      (take-credits state :corp)
-      (is (= 3 (count(get-in @state [:runner :hand]))) "Runner has 3 cards in hand")
-      (run-on state :hq)
-      (run-jack-out state)
-      (is (= 2 (count(get-in @state [:runner :hand]))) "Runner took 1 net damage"))))
+    (play-and-score state "Ancestral Imager")
+    (take-credits state :corp)
+    (is (= 3 (count(get-in @state [:runner :hand]))) "Runner has 3 cards in hand")
+    (run-on state :hq)
+    (run-jack-out state)
+    (is (= 2 (count(get-in @state [:runner :hand]))) "Runner took 1 net damage")))
 
 (deftest armed-intimidation
   ;; Armed intimidation choices
   (do-game
     (new-game (default-corp [(qty "Armed Intimidation" 2)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 2)]))
-    (play-from-hand state :corp "Armed Intimidation" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Armed Intimidation")
     (prompt-choice :runner "Take 2 tags")
     (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Armed Intimidation tag choice")
-    (play-from-hand state :corp "Armed Intimidation" "New remote")
-    (score-agenda state :corp (get-content state :remote2 0))
+    (play-and-score state "Armed Intimidation")
     (is (= 5 (count (:hand (get-runner)))) "Runner has 5 cards before Armed Intimidation meat damage")
     (prompt-choice :runner "Suffer 5 meat damage")
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards after Armed Intimidation meat damage")))
@@ -119,11 +111,10 @@
                   (str (:title from) " token was used on " (:title to) msg))
               (is (= 1 (:advance-counter (refresh to)))
                   (str "Advancement token placed on " (:title to) msg)))]
-      (play-from-hand state :corp "AstroScript Pilot Program" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
+      (play-and-score state "AstroScript Pilot Program")
       (play-from-hand state :corp "AstroScript Pilot Program" "New remote")
       (let [scored-astro (get-scored state :corp)
-            installed-astro (get-content state :remote2 0)
+            installed-astro (get-content state :remote1 0)
             hand-astro (find-card "AstroScript Pilot Program" (:hand get-corp))]
         (should-not-place scored-astro hand-astro " in hand")
         (should-place scored-astro installed-astro " that is installed")
@@ -144,16 +135,14 @@
     (new-game (default-corp [(qty "Bacterial Programming" 1) (qty "Hedge Fund" 1)])
               (default-runner))
     (starting-hand state :corp ["Bacterial Programming"])
-    (play-from-hand state :corp "Bacterial Programming" "New remote")
-    (let [bp (get-content state :remote1 0)]
-      (score-agenda state :corp bp)
-      (prompt-choice :corp "Yes")
-      (prompt-choice :corp "Done")
-      (prompt-choice :corp "Done")
-      (prompt-card :corp (first (:deck (get-corp))))
-      (prompt-choice :corp "Done")
-      (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
-      (is (not (:run @state)) "No run is active"))))
+    (play-and-score state "Bacterial Programming")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp "Done")
+    (prompt-choice :corp "Done")
+    (prompt-card :corp (first (:deck (get-corp))))
+    (prompt-choice :corp "Done")
+    (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
+    (is (not (:run @state)) "No run is active")))
 
 (deftest braintrust
   ;; Braintrust - Discount ICE rez by 1 for every 2 over-advancements when scored
@@ -176,8 +165,7 @@
   (do-game
     (new-game (default-corp [(qty "Breaking News" 3)])
               (default-runner))
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Breaking News")
     (is (= 2 (get-in @state [:runner :tag])) "Runner receives 2 tags from Breaking News")
     (take-credits state :corp)
     (is (= 0 (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
@@ -191,8 +179,7 @@
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Fall Guy")
     (take-credits state :runner)
-    (play-from-hand state :corp "Character Assassination" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Character Assassination")
     (let [kati (get-in @state [:runner :rig :resource 0])]
       (prompt-select :corp kati)
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
@@ -203,16 +190,14 @@
   (do-game
     (new-game (default-corp [(qty "Clone Retirement" 2) (qty "Hostile Takeover" 1)])
               (default-runner))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))))
     (is (= 1 (:bad-publicity (get-corp))))
-    (play-from-hand state :corp "Clone Retirement" "New remote")
-    (score-agenda state :corp (get-content state :remote2 0))
+    (play-and-score state "Clone Retirement")
     (is (= 0 (:bad-publicity (get-corp))))
     (play-from-hand state :corp "Clone Retirement" "New remote")
     (take-credits state :corp)
-    (run-on state "Server 3")
+    (run-on state "Server 1")
     (run-successful state)
     (prompt-choice :runner "Yes")
     (is (= 1 (:bad-publicity (get-corp))))))
@@ -222,9 +207,8 @@
   (do-game
     (new-game (default-corp [(qty "Corporate Sales Team" 2)])
               (default-runner))
-    (play-from-hand state :corp "Corporate Sales Team" "New remote")
     (is (= 5 (:credit (get-corp))))
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Corporate Sales Team")
     (let [scored-cst (get-scored state :corp)]
       (core/end-turn state :corp nil)
       (core/start-turn state :runner nil)
@@ -240,13 +224,11 @@
   (do-game
     (new-game (default-corp [(qty "Corporate War" 2)])
               (default-runner))
-    (play-from-hand state :corp "Corporate War" "New remote")
     (is (= 5 (:credit (get-corp))))
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Corporate War")
     (is (= 0 (:credit (get-corp))) "Lost all credits")
     (core/gain state :corp :credit 7)
-    (play-from-hand state :corp "Corporate War" "New remote")
-    (score-agenda state :corp (get-content state :remote2 0))
+    (play-and-score state "Corporate War")
     (is (= 14 (:credit (get-corp))) "Had 7 credits when scoring, gained another 7")))
 
 (deftest crisis-management
@@ -254,8 +236,7 @@
   (do-game
     (new-game (default-corp [(qty "Crisis Management" 1)])
               (default-runner))
-    (play-from-hand state :corp "Crisis Management" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Crisis Management")
     (take-credits state :corp)
     (take-credits state :runner)
     (is (= 3 (count (:hand (get-runner)))) "No damage done, Runner not tagged")
@@ -270,9 +251,8 @@
     (new-game (default-corp [(qty "Dedicated Neural Net" 1) (qty "Scorched Earth" 2)
                              (qty "Hedge Fund" 1) "Caprice Nisei"])
               (default-runner [(qty "HQ Interface" 1)]))
-    (play-from-hand state :corp "Dedicated Neural Net" "New remote")
     (play-from-hand state :corp "Caprice Nisei" "HQ")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Dedicated Neural Net")
     (take-credits state :corp)
     (run-empty-server state :hq)
     (prompt-choice :runner "0")
@@ -332,8 +312,7 @@
               (default-runner))
     (starting-hand state :corp ["Director Haas' Pet Project" "Adonis Campaign" "Strongbox"])
     (core/move state :corp (find-card "Eli 1.0" (:deck (get-corp))) :discard)
-    (play-from-hand state :corp "Director Haas' Pet Project" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Director Haas' Pet Project")
     (prompt-choice :corp "Yes")
     (prompt-select :corp (find-card "Adonis Campaign" (:hand (get-corp))))
     (prompt-select :corp (find-card "Strongbox" (:hand (get-corp))))
@@ -345,12 +324,8 @@
     (new-game (default-corp [(qty "Eden Fragment" 3) (qty "Ice Wall" 3)])
               (default-runner))
     (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Eden Fragment" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Eden Fragment")
     (take-credits state :corp)
-    (take-credits state :runner)
-    (take-credits state :runner)
-    (take-credits state :runner)
     (take-credits state :runner)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (not (nil? (get-ice state :hq 1))) "Corp has two ice installed on HQ")
@@ -416,8 +391,7 @@
               (default-runner))
     (starting-hand state :corp ["Executive Retreat" "Hedge Fund"])
     (is (= 2 (count (:hand (get-corp)))) "Corp should start with 1 card in HQ")
-    (play-from-hand state :corp "Executive Retreat" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Executive Retreat")
     (is (= 0 (count (:hand (get-corp)))) "Corp should have 0 cards in HQ after shuffling HQ back into R&D")
     (let [er-scored (get-scored state :corp)]
       (card-ability state :corp er-scored 0)
@@ -431,8 +405,7 @@
               (default-runner))
     (starting-hand state :corp ["Executive Retreat" "Hedge Fund"])
     (is (= 2 (count (:hand (get-corp)))) "Corp should start with 1 card in HQ")
-    (play-from-hand state :corp "Executive Retreat" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Executive Retreat")
     (is (= 0 (count (:hand (get-corp)))) "Corp should have 0 cards in HQ after shuffling HQ back into R&D")
     (let [er-scored (get-scored state :corp)]
       (card-ability state :corp er-scored 0)
@@ -485,8 +458,7 @@
   (do-game
     (new-game (default-corp [(qty "False Lead" 1)])
               (default-runner))
-    (play-from-hand state :corp "False Lead" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "False Lead")
     (is (= 1 (count (:scored (get-corp)))) "Corp should have 1 agenda point")
     (take-credits state :corp)
     (is (= 4 (:click (get-runner))) "Runner should start turn with 4 clicks")
@@ -525,8 +497,7 @@
   (do-game
     (new-game (default-corp [(qty "Geothermal Fracking" 1)])
               (default-runner))
-    (play-from-hand state :corp "Geothermal Fracking" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Geothermal Fracking")
     (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
     (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
@@ -543,20 +514,19 @@
   (do-game
     (new-game (default-corp [(qty "Geothermal Fracking" 1) (qty "Broadcast Square" 1)])
               (default-runner))
-    (play-from-hand state :corp "Geothermal Fracking" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Geothermal Fracking")
     (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
     (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
     (play-from-hand state :corp "Broadcast Square" "New remote")
     (let [gf-scored (get-scored state :corp)
-          bs (get-content state :remote2 0)]
+          bs (get-content state :remote1 0)]
       (core/rez state :corp bs)
       ;; TODO: Implement Broadcast Square prevention here once #3196 is merged.
       (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
       (card-ability state :corp gf-scored 0)
       (is (= 0 (:click (get-corp))) "Should have 0 click left")
-      (is (= 10 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
+      (is (= 10 (:credit (get-corp))) "Should gain 7 credits from 3 to 10")
       (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
 
 (deftest genetic-resequencing
@@ -586,8 +556,7 @@
   (do-game
     (new-game (default-corp [(qty "Gila Hands Arcology" 1)])
               (default-runner))
-    (play-from-hand state :corp "Gila Hands Arcology" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Gila Hands Arcology")
     (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
     (core/gain state :corp :click 2)
@@ -604,8 +573,7 @@
   (do-game
     (new-game (default-corp [(qty "Government Contracts" 1)])
               (default-runner))
-    (play-from-hand state :corp "Government Contracts" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Government Contracts")
     (is (= 2 (:click (get-corp))))
     (card-ability state :corp (get-scored state :corp) 0)
     (is (= 0 (:click (get-corp))) "Spent 2 clicks")
@@ -616,30 +584,26 @@
   (do-game
     (new-game (default-corp [(qty "High-Risk Investment" 1)])
               (default-runner))
-    (play-from-hand state :corp "High-Risk Investment" "New remote")
-    (let [hri (get-content state :remote1 0)]
-      (score-agenda state :corp hri)
-      (let [hriscored (get-scored state :corp)]
-        (is (= 1 (get-counters (refresh hriscored) :agenda)) "Has 1 agenda counter")
-        (take-credits state :corp)
-        (is (= 7 (:credit (get-corp))))
-        (take-credits state :runner)
-        (is (= 9 (:credit (get-runner))))
-        (card-ability state :corp hriscored 0)
-        (is (= 16 (:credit (get-corp))) "Gained 9 credits")
-        (is (= 2 (:click (get-corp))) "Spent 1 click")
-        (is (= 0 (get-counters (refresh hriscored) :agenda)) "Spent agenda counter")))))
+    (play-and-score state "High-Risk Investment")
+    (let [hriscored (get-scored state :corp)]
+      (is (= 1 (get-counters (refresh hriscored) :agenda)) "Has 1 agenda counter")
+      (take-credits state :corp)
+      (is (= 7 (:credit (get-corp))))
+      (take-credits state :runner)
+      (is (= 9 (:credit (get-runner))))
+      (card-ability state :corp hriscored 0)
+      (is (= 16 (:credit (get-corp))) "Gained 9 credits")
+      (is (= 2 (:click (get-corp))) "Spent 1 click")
+      (is (= 0 (get-counters (refresh hriscored) :agenda)) "Spent agenda counter"))))
 
 (deftest hostile-takeover
   ;; Hostile Takeover - Gain 7 credits and take 1 bad publicity
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 1)])
               (default-runner))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (let [ht (get-content state :remote1 0)]
-      (score-agenda state :corp ht)
-      (is (= 12 (:credit (get-corp))) "Gain 7 credits")
-      (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity"))))
+    (play-and-score state "Hostile Takeover")
+    (is (= 12 (:credit (get-corp))) "Gain 7 credits")
+    (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity")))
 
 (deftest ikawah-project-not-stealing
   ;; Ikawah Project - do not reveal when the Runner does not steal from R&D
@@ -660,10 +624,8 @@
   (do-game
     (new-game (default-corp [(qty "Labyrinthine Servers" 2)])
               (default-runner))
-    (play-from-hand state :corp "Labyrinthine Servers" "New remote")
-    (play-from-hand state :corp "Labyrinthine Servers" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (score-agenda state :corp (get-content state :remote2 0))
+    (play-and-score state "Labyrinthine Servers")
+    (play-and-score state "Labyrinthine Servers")
     (take-credits state :corp)
     (let [ls1 (get-scored state :corp)
           ls2 (get-scored state :corp 1)]
@@ -708,11 +670,10 @@
     (new-game (default-corp [(qty "Mandatory Upgrades" 1)
                              (qty "Melange Mining Corp." 1)])
               (default-runner))
-    (play-from-hand state :corp "Mandatory Upgrades" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Mandatory Upgrades")
     (is (= 2 (:agenda-point (get-corp))))
     (play-from-hand state :corp "Melange Mining Corp." "New remote")
-    (let [mmc (get-content state :remote2 0)]
+    (let [mmc (get-content state :remote1 0)]
       (core/rez state :corp mmc)
       (take-credits state :corp)
       (take-credits state :runner)
@@ -726,8 +687,7 @@
     (new-game (default-corp [(qty "Mandatory Upgrades" 1)
                              (qty "Archer" 1)])
               (default-runner))
-    (play-from-hand state :corp "Mandatory Upgrades" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Mandatory Upgrades")
     (is (= 2 (:agenda-point (get-corp))))
     (play-from-hand state :corp "Archer" "HQ")
     (take-credits state :corp)
@@ -743,12 +703,10 @@
   (do-game
     (new-game (default-corp [(qty "Market Research" 2)])
               (default-runner))
-    (play-from-hand state :corp "Market Research" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Market Research")
     (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points")
     (core/gain state :runner :tag 1)
-    (play-from-hand state :corp "Market Research" "New remote")
-    (score-agenda state :corp (get-content state :remote2 0))
+    (play-and-score state "Market Research")
     (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))
 
 (deftest medical-breakthrough
@@ -816,7 +774,7 @@
           "Corp can't score with 4 advancements because of BP")
       (advance state napd)
       (core/score state :corp {:card (refresh napd)})
-      (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements")))
+      (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
 
 (deftest net-quarantine
   ;; The Runner's base link strength is reduced to 0 during the first trace each turn.
@@ -826,8 +784,7 @@
               (default-runner))
     (core/gain state :runner :link 1)
     (core/gain state :corp :click 3)
-    (play-from-hand state :corp "Net Quarantine" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Net Quarantine")
     (is (= 5 (:credit (get-corp))) "Corp has 5 credits")
     (is (= 1 (:link (get-runner))) "Runner has 1 link")
     (core/corp-trace-prompt state {:title "/trace command" :side :corp} {:base 1})
@@ -848,8 +805,7 @@
   (do-game
     (new-game (default-corp [(qty "Nisei MK II" 1)])
               (default-runner))
-    (play-from-hand state :corp "Nisei MK II" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Nisei MK II")
     (let [scored-nisei (get-scored state :corp)]
       (is (= 1 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has one counter")
       (take-credits state :corp)
@@ -905,7 +861,7 @@
               (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
                                (qty "Corroder" 1) (qty "Patron" 2)]))
     (starting-hand state :runner ["Self-modifying Code" "Clone Chip" "Patron" "Patron"])
-    (score-agenda state :corp (find-card "Personality Profiles" (:hand (get-corp))))
+    (play-and-score state "Personality Profiles")
     (take-credits state :corp)
     (play-from-hand state :runner "Self-modifying Code")
     (play-from-hand state :runner "Clone Chip")
@@ -927,7 +883,7 @@
               (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
                                (qty "Corroder" 1)]))
     (starting-hand state :runner ["Self-modifying Code" "Clone Chip"])
-    (score-agenda state :corp (find-card "Personality Profiles" (:hand (get-corp))))
+    (play-and-score state "Personality Profiles")
     (take-credits state :corp)
     (play-from-hand state :runner "Self-modifying Code")
     (play-from-hand state :runner "Clone Chip")
@@ -963,8 +919,7 @@
     (prompt-choice :runner "Steal")
     (is (= 3 (count (:scored (get-runner)))))
     (take-credits state :runner)
-    (play-from-hand state :corp "Philotic Entanglement" "New remote")
-    (score-agenda state :corp (get-content state :remote4 0))
+    (play-and-score state "Philotic Entanglement")
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
 
@@ -973,12 +928,10 @@
   (do-game
     (new-game (default-corp [(qty "Posted Bounty" 1)])
               (default-runner))
-    (play-from-hand state :corp "Posted Bounty" "New remote")
-    (let [pb (get-content state :remote1 0)]
-      (score-agenda state :corp pb)
-      (prompt-choice :corp "Yes")
-      (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
-      (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity"))
+    (play-and-score state "Posted Bounty")
+    (prompt-choice :corp "Yes")
+    (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
+    (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity")
     (is (= 1 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))
 
 (deftest posted-bounty-no
@@ -986,13 +939,11 @@
   (do-game
     (new-game (default-corp [(qty "Posted Bounty" 1)])
               (default-runner))
-    (play-from-hand state :corp "Posted Bounty" "New remote")
-    (let [pb (get-content state :remote1 0)]
-      (score-agenda state :corp pb)
-      (prompt-choice :corp "No")
-      (is (= 1 (:agenda-point (get-corp))))
-      (is (= 0 (:bad-publicity (get-corp)))))
-      (is (= 0 (get-in @state [:runner :tag]))))))
+    (play-and-score state "Posted Bounty")
+    (prompt-choice :corp "No")
+    (is (= 1 (:agenda-point (get-corp))))
+    (is (= 0 (:bad-publicity (get-corp))))
+    (is (= 0 (get-in @state [:runner :tag])))))
 
 (deftest priority-requisition
   ;; Priority Requisition - When scored, rez an installed ice for free.
@@ -1000,10 +951,8 @@
     (new-game (default-corp [(qty "Priority Requisition" 1) (qty "Archer" 1)])
               (default-runner))
     (play-from-hand state :corp "Archer" "HQ")
-    (play-from-hand state :corp "Priority Requisition" "New remote")
-    (let [pri (get-content state :remote1 0)
-          arc (get-ice state :hq 0)]
-      (score-agenda state :corp pri)
+    (let [arc (get-ice state :hq 0)]
+      (play-and-score state "Priority Requisition")
       (prompt-select :corp arc)
       (is (get-in (refresh arc) [:rezzed])))))
 
@@ -1013,8 +962,7 @@
     (new-game (default-corp [(qty "Private Security Force" 10)])
               (default-runner))
     (core/gain state :runner :tag 1)
-    (play-from-hand state :corp "Private Security Force" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Private Security Force")
     (let [psf-scored (get-scored state :corp)]
       (card-ability state :corp psf-scored 0)
       (is (= 1 (count (:discard (get-runner)))))
@@ -1030,13 +978,11 @@
   (do-game
     (new-game (default-corp [(qty "Profiteering" 1)])
               (default-runner))
-    (play-from-hand state :corp "Profiteering" "New remote")
-    (let [prof (get-content state :remote1 0)]
-      (score-agenda state :corp prof)
-      (prompt-choice :corp "3")
-      (is (= 1 (:agenda-point (get-corp))))
-      (is (= 3 (:bad-publicity (get-corp))) "Took 3 bad publicity")
-      (is (= 20 (:credit (get-corp))) "Gained 15 credits"))))
+    (play-and-score state "Profiteering")
+    (prompt-choice :corp "3")
+    (is (= 1 (:agenda-point (get-corp))))
+    (is (= 3 (:bad-publicity (get-corp))) "Took 3 bad publicity")
+    (is (= 20 (:credit (get-corp))) "Gained 15 credits")))
 
 (deftest project-ares
   ;; Project Ares - Full test
@@ -1046,9 +992,9 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Clone Chip")
     (take-credits state :runner)
-    (score-agenda state :corp (find-card "Project Ares" (:hand (get-corp))))
+    (play-and-score state "Project Ares")
     (is (empty? (get-in @state [:runner :prompt])) "No prompt for Runner if scored with 4 advancement tokens")
-    (core/gain state :corp :click 4)
+    (core/gain state :corp :click 5)
     (play-from-hand state :corp "Project Ares" "New remote")
     (let [ares (get-content state :remote1 0)]
       (advance state ares 6)
@@ -1139,7 +1085,7 @@
   ;; Project Vitruvius - basic test
   (do-game
     (new-game (default-corp [(qty "Project Vitruvius" 1)
-                               (qty "Hedge Fund" 1)])
+                             (qty "Hedge Fund" 1)])
               (default-runner))
     ;; Set up
     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :discard)
@@ -1159,34 +1105,31 @@
       (is (= 0 (get-counters (refresh vit-scored) :agenda)) "Vitruvius should have 0 agenda counters")
       (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand"))))
 
-  (deftest project-wotan
-    ;; Project Wotan - basic. Only checks if agenda counter is spent
-    (do-game
-      (new-game (default-corp [(qty "Project Wotan" 1)
-                               (qty "Eli 1.0" 1)
-                               (qty "Hedge Fund" 3)])
-                (default-runner))
-      (starting-hand state :corp ["Project Wotan" "Eli 1.0"])
-      (play-from-hand state :corp "Project Wotan" "New remote")
-      (play-from-hand state :corp "Eli 1.0" "HQ")
-      (let [wotan (get-content state :remote1 0)
-            eli (get-ice state :hq 0)]
-        (core/rez state :corp eli)
-        (score-agenda state :corp wotan))
-      (take-credits state :corp)
-      (let [wot-scored (get-scored state :corp)]
-        (is (= 3 (get-counters (refresh wot-scored) :agenda)) "Wotan should start with 3 agenda counters")
-        (run-on state "HQ")
-        (card-ability state :corp wot-scored 0)
-        (is (= 2 (get-counters (refresh wot-scored) :agenda))) "Wotan should only have 2 agenda counters")))
+(deftest project-wotan
+  ;; Project Wotan - basic. Only checks if agenda counter is spent
+  (do-game
+    (new-game (default-corp [(qty "Project Wotan" 1)
+                             (qty "Eli 1.0" 1)
+                             (qty "Hedge Fund" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Project Wotan" "Eli 1.0"])
+    (play-from-hand state :corp "Eli 1.0" "HQ")
+    (let [eli (get-ice state :hq 0)]
+      (core/rez state :corp eli))
+    (play-and-score state "Project Wotan")
+    (take-credits state :corp)
+    (let [wot-scored (get-scored state :corp)]
+      (is (= 3 (get-counters (refresh wot-scored) :agenda)) "Wotan should start with 3 agenda counters")
+      (run-on state "HQ")
+      (card-ability state :corp wot-scored 0)
+      (is (= 2 (get-counters (refresh wot-scored) :agenda))) "Wotan should only have 2 agenda counters")))
 
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
   (do-game
     (new-game (default-corp [(qty "Puppet Master" 1)])
               (default-runner))
-    (play-from-hand state :corp "Puppet Master" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Puppet Master")
     (take-credits state :corp)
     (run-empty-server state :archives)
     (prompt-choice :corp "Done")
@@ -1198,7 +1141,7 @@
     (new-game (default-corp [(qty "Rebranding Team" 1) (qty "Launch Campaign" 1) (qty "City Surveillance" 1)
                              (qty "Jackson Howard" 1) (qty "Museum of History" 1)])
               (default-runner))
-    (score-agenda state :corp (find-card "Rebranding Team" (:hand (get-corp))))
+    (play-and-score state "Rebranding Team")
     (is (core/has-subtype? (find-card "Launch Campaign" (:hand (get-corp))) "Advertisement"))
     (is (core/has-subtype? (find-card "City Surveillance" (:hand (get-corp))) "Advertisement"))
     (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Advertisement"))
@@ -1224,7 +1167,7 @@
                                (qty "Corroder" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)]))
     (starting-hand state :corp ["Reeducation" "Sweeps Week"])
     (starting-hand state :runner ["Self-modifying Code"])
-    (score-agenda state :corp (find-card "Reeducation" (:hand (get-corp))))
+    (play-and-score state "Reeducation")
     (is (prompt-is-type? :runner :waiting) "Runner has wait prompt")
     (is (= 1 (count (get-in @state [:corp :hand]))))
     (is (= 1 (count (get-in @state [:runner :hand]))))
@@ -1246,7 +1189,7 @@
                                (qty "Corroder" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)]))
     (starting-hand state :corp ["Reeducation" "Sweeps Week" "Hedge Fund"])
     (starting-hand state :runner ["Self-modifying Code"])
-    (score-agenda state :corp (find-card "Reeducation" (:hand (get-corp))))
+    (play-and-score state "Reeducation")
     (is (prompt-is-type? :runner :waiting) "Runner has wait prompt")
     (is (= 2 (count (get-in @state [:corp :hand]))))
     (is (= 1 (count (get-in @state [:runner :hand]))))
@@ -1266,12 +1209,11 @@
     (new-game (default-corp [(qty "Research Grant" 2) (qty "Ice Wall" 2)])
               (make-deck "Leela Patel: Trained Pragmatist" [(qty "Sure Gamble" 1)]))
     (core/gain state :corp :click 1)
-    (play-from-hand state :corp "Research Grant" "New remote")
-    (play-from-hand state :corp "Research Grant" "New remote")
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "R&D")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (prompt-select :corp (get-content state :remote2 0))
+    (play-from-hand state :corp "Research Grant" "New remote")
+    (play-and-score state "Research Grant")
+    (prompt-select :corp (get-content state :remote1 0))
     (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")
     (prompt-select :runner (get-ice state :hq 0))
     (prompt-select :runner (get-ice state :rd 0))
@@ -1282,8 +1224,7 @@
     (new-game (default-corp [(qty "Restructured Datapool" 1)])
               (default-runner))
     (is (= 0 (:tag (get-runner))) "Runner should start with no tags")
-    (play-from-hand state :corp "Restructured Datapool" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Restructured Datapool")
     (let [rd-scored (get-scored state :corp)]
       (card-ability state :corp rd-scored 0)
       (prompt-choice :corp 0)
@@ -1295,7 +1236,7 @@
   (do-game
     (new-game (default-corp [(qty "SSL Endorsement" 1)])
               (default-runner))
-    (score-agenda state :corp (find-card "SSL Endorsement" (:hand (get-corp))))
+    (play-and-score state "SSL Endorsement")
     (take-credits state :runner)
 
     (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
@@ -1364,7 +1305,7 @@
     (new-game (default-corp [(qty "SSL Endorsement" 1) (qty "Breaking News" 1)])
               (default-runner [(qty "Turntable" 1)]))
     (play-from-hand state :corp "Breaking News" "New remote")
-    (score-agenda state :corp (find-card "SSL Endorsement" (:hand (get-corp))))
+    (play-and-score state "SSL Endorsement")
     (take-credits state :corp)
 
     (play-from-hand state :runner "Turntable")
@@ -1376,9 +1317,9 @@
     (take-credits state :runner)
 
     (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
-    (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+    (is (= 6 (:credit (get-corp))) "Corp starts with 7 credits")
     (prompt-choice :corp "Yes")
-    (is (= 10 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
+    (is (= 9 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
 
 (deftest ssl-endorsement-stolen-swapped
   ;; SSL Endorsement - don't double register event when agenda is swapped
@@ -1387,7 +1328,7 @@
                              (qty "Exchange of Information" 1)])
               (default-runner))
     (play-from-hand state :corp "SSL Endorsement" "New remote")
-    (score-agenda state :corp (find-card "Breaking News" (:hand (get-corp))))
+    (play-and-score state "Breaking News")
     (take-credits state :corp)
 
     (run-on state "Server 1")
@@ -1396,29 +1337,29 @@
     (take-credits state :runner)
 
     (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
-    (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+    (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
     (prompt-choice :corp "Yes")
-    (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")
+    (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
     (core/gain state :runner :tag 1)
     (play-from-hand state :corp "Exchange of Information")
     (prompt-select :corp (find-card "SSL Endorsement" (:scored (get-runner))))
     (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
     (take-credits state :runner)
 
-    (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+    (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
     (prompt-choice :corp "No")
     (is (empty? (:prompt (get-corp))) "Not double prompted for credits")
-    (is (= 10 (:credit (get-corp))) "Corp doesn't gain 3 credits")
+    (is (= 9 (:credit (get-corp))) "Corp doesn't gain 3 credits")
     (take-credits state :runner)
 
-    (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+    (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
     (prompt-choice :corp "Yes")
-    (is (= 13 (:credit (get-corp))) "Corp gains 3 credits")
+    (is (= 12 (:credit (get-corp))) "Corp gains 3 credits")
     (take-credits state :runner)
 
-    (is (= 13 (:credit (get-corp))) "Corp starts with 13 credits")
+    (is (= 12 (:credit (get-corp))) "Corp starts with 12 credits")
     (prompt-choice :corp "Yes")
-    (is (= 16 (:credit (get-corp))) "Corp gains 3 credits")
+    (is (= 15 (:credit (get-corp))) "Corp gains 3 credits")
     (take-credits state :runner)
 
     (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
@@ -1428,7 +1369,7 @@
   (do-game
     (new-game (default-corp [(qty "Sentinel Defense Program" 1) (qty "Viktor 1.0" 1)])
               (default-runner [(qty "Feedback Filter" 1) (qty "Sure Gamble" 3)]))
-    (score-agenda state :corp (find-card "Sentinel Defense Program" (:hand (get-corp))))
+    (play-and-score state "Sentinel Defense Program")
     (play-from-hand state :corp "Viktor 1.0" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Feedback Filter")
@@ -1481,20 +1422,17 @@
   (do-game
     (new-game (default-corp [(qty "The Cleaners" 1) (qty "Scorched Earth" 1)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
-    (play-from-hand state :corp "The Cleaners" "New remote")
-    (let [clean (get-content state :remote1 0)]
-      (score-agenda state :corp clean)
-      (core/gain state :runner :tag 1)
-      (play-from-hand state :corp "Scorched Earth")
-      (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner"))))
+    (play-and-score state "The Cleaners")
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :corp "Scorched Earth")
+    (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner")))
 
 (deftest the-cleaners-cybernetics
   ;; The Cleaners - No bonus damage when runner "suffers" damage
   (do-game
     (new-game (default-corp [(qty "The Cleaners" 1)])
               (default-runner [(qty "Respirocytes" 3)]))
-    (play-from-hand state :corp "The Cleaners" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "The Cleaners")
     (take-credits state :corp)
     (play-from-hand state :runner "Respirocytes")
     (is (= 1 (count (:hand (get-runner)))) "Only 1 damage dealt to Runner from Cybernetics")))
@@ -1561,8 +1499,7 @@
   (do-game
     (new-game (default-corp [(qty "Unorthodox Predictions" 1)])
               (default-runner))
-    (play-from-hand state :corp "Unorthodox Predictions" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Unorthodox Predictions")
     (prompt-choice :corp "Barrier")
     (is (last-log-contains? state "Barrier"))))
 
@@ -1571,14 +1508,11 @@
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Veterans Program" 1)])
               (default-runner))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (score-agenda state :corp (get-content state :remote2 0))
+    (play-and-score state "Hostile Takeover")
+    (play-and-score state "Hostile Takeover")
     (is (= 19 (:credit (get-corp))) "Should gain 14 credits from 5 to 19")
     (is (= 2 (:bad-publicity (get-corp))) "Should gain 2 bad publicity")
-    (play-from-hand state :corp "Veterans Program" "New remote")
-    (score-agenda state :corp (get-content state :remote3 0))
+    (play-and-score state "Veterans Program")
     (is (= 0 (:bad-publicity (get-corp))) "Should lose 2 bad publicity")))
 
 (deftest veterans-program-only-1-bp
@@ -1586,12 +1520,10 @@
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Veterans Program" 1)])
               (default-runner))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
+    (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
     (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
-    (play-from-hand state :corp "Veterans Program" "New remote")
-    (score-agenda state :corp (get-content state :remote2 0))
+    (play-and-score state "Veterans Program")
     (is (= 0 (:bad-publicity (get-corp))) "Should lose 1 bad publicity")))
 
 (deftest vulcan-coverup
@@ -1605,7 +1537,5 @@
     (prompt-choice :runner "Steal")
     (is (= 1 (:bad-publicity (get-corp))) "Took 1 bad pub from stolen agenda")
     (take-credits state :runner)
-    (play-from-hand state :corp "Vulcan Coverup" "New remote")
-    (let [vc (get-content state :remote2 0)]
-      (score-agenda state :corp vc)
-      (is (= 2 (count (:discard (get-runner)))) "Did 2 meat damage upon scoring"))))
+    (play-and-score state "Vulcan Coverup")
+    (is (= 2 (count (:discard (get-runner)))) "Did 2 meat damage upon scoring")))
