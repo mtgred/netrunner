@@ -185,6 +185,18 @@
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
 
+(deftest chronos-project
+  ;; Chronos Project
+  (do-game
+    (new-game (default-corp [(qty "Chronos Project" 1)])
+              (default-runner))
+    (dotimes [_ 3]
+      (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :discard))
+    (is (= 3 (count (:discard (get-runner)))) "Runner should have 3 cards in heap")
+    (play-and-score state "Chronos Project")
+    (is (= 0 (count (:discard (get-runner)))) "Runner should have 0 cards in heap")
+    ))
+
 (deftest clone-retirement
   ;; Clone Retirement - full test
   (do-game
