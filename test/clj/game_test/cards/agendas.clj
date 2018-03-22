@@ -1554,6 +1554,34 @@
     (prompt-choice :corp "Barrier")
     (is (last-log-contains? state "Barrier"))))
 
+(deftest veterans-program
+  ;; Veterans Program - basic test
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Veterans Program" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 19 (:credit (get-corp))) "Should gain 14 credits from 5 to 19")
+    (is (= 2 (:bad-publicity (get-corp))) "Should gain 2 bad publicity")
+    (play-from-hand state :corp "Veterans Program" "New remote")
+    (score-agenda state :corp (get-content state :remote3 0))
+    (is (= 0 (:bad-publicity (get-corp))) "Should lose 2 bad publicity")))
+
+(deftest veterans-program-only-1-bp
+  ;; Veterans Program - Removes _up to 2_ bad publicity
+  (do-game
+    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Veterans Program" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
+    (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
+    (play-from-hand state :corp "Veterans Program" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 0 (:bad-publicity (get-corp))) "Should lose 1 bad publicity")))
+
 (deftest vulcan-coverup
   ;; Vulcan Coverup - Do 2 meat damage when scored; take 1 bad pub when stolen
   (do-game
