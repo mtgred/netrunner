@@ -318,6 +318,20 @@
     (prompt-select :corp (find-card "Strongbox" (:hand (get-corp))))
     (prompt-select :corp (find-card "Eli 1.0" (:discard (get-corp))))))
 
+(deftest domestic-sleepers
+  ;; Domestic Sleepers
+  (do-game
+    (new-game (default-corp [(qty "Domestic Sleepers" 1)])
+              (default-runner))
+    (play-and-score state "Domestic Sleepers")
+    (core/gain state :corp :click 3)
+    (let [ds_scored (get-scored state :corp)]
+      (is (= 0 (get-counters (refresh ds_scored) :agenda)) "Should start with 0 agenda counters")
+      (is (= 0 (:agenda-point (get-corp))) "Should provide 0 agenda points initially")
+      (card-ability state :corp ds_scored 0)
+      (is (= 1 (get-counters (refresh ds_scored) :agenda)) "Should gain 1 agenda counter")
+      (is (= 1 (:agenda-point (get-corp))) "Should provide 1 agenda point after ability use"))))
+
 (deftest eden-fragment
   ;; Test that Eden Fragment ignores the install cost of the first ice
   (do-game
