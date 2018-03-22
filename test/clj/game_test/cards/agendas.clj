@@ -635,11 +635,11 @@
     (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
     (core/gain state :corp :click 2)
-    (let [gha (get-scored state :corp)]
-      (card-ability state :corp gha 0)
+    (let [gha-scored (get-scored state :corp)]
+      (card-ability state :corp gha-scored 0)
       (is (= 2 (:click (get-corp))) "Should spend 2 clicks on Gila Hands")
       (is (= 8 (:credit (get-corp))) "Should gain 3 credits from 5 to 8")
-      (card-ability state :corp gha 0)
+      (card-ability state :corp gha-scored 0)
       (is (= 0 (:click (get-corp))) "Should spend 2 clicks on Gila Hands")
       (is (= 11 (:credit (get-corp))) "Should gain 3 credits from 8 to 11"))))
 
@@ -649,13 +649,13 @@
     (new-game (default-corp [(qty "Glenn Station" 1) (qty "Ice Wall" 1)])
               (default-runner))
     (play-and-score state "Glenn Station")
-    (let [gs (get-scored state :corp)]
-      (card-ability state :corp gs 0)
+    (let [gs-scored (get-scored state :corp)]
+      (card-ability state :corp gs-scored 0)
       (prompt-choice :corp (find-card "Ice Wall" (:hand (get-corp))))
-      (is (= 1 (count (:hosted (refresh gs)))))
-      (card-ability state :corp gs 1)
-      (prompt-choice :corp (find-card "Ice Wall" (:hosted (refresh gs))))
-      (is (= 0 (count (:hosted (refresh gs))))))))
+      (is (= 1 (count (:hosted (refresh gs-scored)))))
+      (card-ability state :corp gs-scored 1)
+      (prompt-choice :corp (find-card "Ice Wall" (:hosted (refresh gs-scored))))
+      (is (= 0 (count (:hosted (refresh gs-scored))))))))
 
 (deftest government-contracts
   ;; Government Contracts - Spend 2 clicks for 4 credits
@@ -667,6 +667,17 @@
     (card-ability state :corp (get-scored state :corp) 0)
     (is (= 0 (:click (get-corp))) "Spent 2 clicks")
     (is (= 9 (:credit (get-corp))) "Gained 4 credits")))
+
+(deftest government-takeover
+  ;; Government Takeover
+  (do-game
+    (new-game (default-corp [(qty "Government Takeover" 1)])
+              (default-runner))
+    (play-and-score state "Government Takeover")
+    (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
+    (let [gt-scored (get-scored state :corp)]
+      (card-ability state :corp gt-scored 0)
+      (is (= 8 (:credit (get-corp))) "Should gain 3 credits from 5 to 8"))))
 
 (deftest hades-fragment
   ;; Hades Fragment
@@ -716,16 +727,16 @@
     (new-game (default-corp [(qty "High-Risk Investment" 1)])
               (default-runner))
     (play-and-score state "High-Risk Investment")
-    (let [hriscored (get-scored state :corp)]
-      (is (= 1 (get-counters (refresh hriscored) :agenda)) "Has 1 agenda counter")
+    (let [hri-scored (get-scored state :corp)]
+      (is (= 1 (get-counters (refresh hri-scored) :agenda)) "Has 1 agenda counter")
       (take-credits state :corp)
       (is (= 7 (:credit (get-corp))))
       (take-credits state :runner)
       (is (= 9 (:credit (get-runner))))
-      (card-ability state :corp hriscored 0)
+      (card-ability state :corp hri-scored 0)
       (is (= 16 (:credit (get-corp))) "Gained 9 credits")
       (is (= 2 (:click (get-corp))) "Spent 1 click")
-      (is (= 0 (get-counters (refresh hriscored) :agenda)) "Spent agenda counter"))))
+      (is (= 0 (get-counters (refresh hri-scored) :agenda)) "Spent agenda counter"))))
 
 (deftest hostile-takeover
   ;; Hostile Takeover - Gain 7 credits and take 1 bad publicity
