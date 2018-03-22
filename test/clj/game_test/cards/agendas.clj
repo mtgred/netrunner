@@ -272,8 +272,8 @@
     (play-from-hand state :runner "Ice Analyzer")
     (play-from-hand state :runner "All-nighter")
 
-    (let [ia (get-in @state [:runner :rig :resource 0])
-          an (get-in @state [:runner :rig :resource 1])]
+    (let [ia (get-resource state 0)
+          an (get-resource state 1)]
       (run-on state "Server 1")
       (run-successful state)
       (prompt-choice :runner "Yes")
@@ -297,8 +297,8 @@
       (card-ability state :runner hg 1)
       (is (= 2 (count (get-in (get-runner) [:rig :facedown]))) "Hunting Ground did not install cards facedown")
       (is (empty? (:deck (get-runner))) "Hunting Grounds did not remove cards from deck")
-      (let [fd1 (get-in (get-runner) [:rig :facedown 0])
-            fd2 (get-in (get-runner) [:rig :facedown 1])]
+      (let [fd1 (get-runner-facedown state 0)
+            fd2 (get-runner-facedown state 1)]
         (run-on state "Server 2")
         (run-successful state)
         (prompt-choice :runner "Yes")
