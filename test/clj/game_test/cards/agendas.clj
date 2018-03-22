@@ -180,7 +180,7 @@
     (play-from-hand state :runner "Fall Guy")
     (take-credits state :runner)
     (play-and-score state "Character Assassination")
-    (let [kati (get-in @state [:runner :rig :resource 0])]
+    (let [kati (get-resource state 0)]
       (prompt-select :corp kati)
       (is (empty? (:prompt (get-runner))) "Fall Guy prevention didn't occur")
       (is (= 1 (count (:discard (get-runner)))) "Kati Jones trashed"))))
@@ -966,11 +966,11 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Self-modifying Code")
     (play-from-hand state :runner "Clone Chip")
-    (let [smc (get-in @state [:runner :rig :program 0])]
+    (let [smc (get-program state 0)]
       (card-ability state :runner smc 0)
       (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
       (is (= 2 (count (:discard (get-runner))))))
-    (let [chip (get-in @state [:runner :rig :hardware 0])]
+    (let [chip (get-hardware state 0)]
       (card-ability state :runner chip 0)
       (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
       (is (second-last-log-contains? state "Patron")
@@ -988,14 +988,14 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Self-modifying Code")
     (play-from-hand state :runner "Clone Chip")
-    (let [smc (get-in @state [:runner :rig :program 0])]
+    (let [smc (get-program state 0)]
       (card-ability state :runner smc 0)
       (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
-      (let [cor (get-in @state [:runner :rig :program 0])]
+      (let [cor (get-program state 0)]
         (is (not (nil? cor)))
         (is (= (:title cor) "Corroder"))
         (is (= "Self-modifying Code" (:title (first (:discard (get-runner))))))))
-    (let [chip (get-in @state [:runner :rig :hardware 0])]
+    (let [chip (get-hardware state 0)]
       (card-ability state :runner chip 0)
       (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
       (let [smc (get-in @state [:runner :rig :program 1])]
@@ -1475,7 +1475,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Feedback Filter")
     (let [viktor (get-ice state :hq 0)
-          ff (get-in @state [:runner :rig :hardware 0])]
+          ff (get-hardware state 0)]
       (run-on state "HQ")
       (core/rez state :corp viktor)
       (card-subroutine state :corp viktor 0)
