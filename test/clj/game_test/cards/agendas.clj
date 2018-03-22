@@ -1560,6 +1560,20 @@
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 
+(deftest superior-cyberwalls
+  ;; Superior Cyberwalls
+  (do-game
+    (new-game (default-corp [(qty "Superior Cyberwalls" 1) (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [iw (get-ice state :hq 0)]
+      (core/rez state :corp iw)
+      (is (= 1 (:current-strength (refresh iw))) "Should start with base strength of 1")
+      (is (= 4 (:credit (get-corp))) "Should have 4 credits after rez")
+      (play-and-score state "Superior Cyberwalls")
+      (is (= 2 (:current-strength (refresh iw))) "Should gain 1 strength from 1 to 2")
+      (is (= 5 (:credit (get-corp))) "Should gain 1 credit for rezzed barrier"))))
+
 ;; OHG still not working...
 (deftest tgtbt
   ;; TGTBT - Give the Runner 1 tag when they access
