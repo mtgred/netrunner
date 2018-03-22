@@ -476,7 +476,8 @@
    {:agendapoints-runner (req (do 2))}
 
    "Glenn Station"
-   {:abilities [{:label "Host a card from HQ on Glenn Station"
+   {:implementation "Doesn't prohibit hosting multiple cards"
+    :abilities [{:label "Host a card from HQ on Glenn Station"
                  :cost [:click 1]
                  :msg "host a card from HQ"
                  :prompt "Choose a card to host on Glenn Station"

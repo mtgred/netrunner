@@ -643,6 +643,20 @@
       (is (= 0 (:click (get-corp))) "Should spend 2 clicks on Gila Hands")
       (is (= 11 (:credit (get-corp))) "Should gain 3 credits from 8 to 11"))))
 
+(deftest glenn-station
+  ;; Glenn Station
+  (do-game
+    (new-game (default-corp [(qty "Glenn Station" 1) (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-and-score state "Glenn Station")
+    (let [gs (get-scored state :corp)]
+      (card-ability state :corp gs 0)
+      (prompt-choice :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (is (= 1 (count (:hosted (refresh gs)))))
+      (card-ability state :corp gs 1)
+      (prompt-choice :corp (find-card "Ice Wall" (:hosted (refresh gs))))
+      (is (= 0 (count (:hosted (refresh gs))))))))
+
 (deftest government-contracts
   ;; Government Contracts - Spend 2 clicks for 4 credits
   (do-game
