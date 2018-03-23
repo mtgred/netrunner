@@ -820,41 +820,39 @@
     (new-game (default-corp [(qty "Ikawah Project" 1)])
               (default-runner))
     (play-from-hand state :corp "Ikawah Project" "New remote")
-    ;; No credits
-    (take-credits state :corp)
-    (core/lose state :runner :credit (:credit (get-runner)) :click 3)
-    (run-empty-server state :remote1)
-    (run-successful state)
-    (prompt-choice :runner "2 [Credits]")
-    (prompt-choice :runner "Don't steal")
-    (is (= 0 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
-    (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project")
-    ;; No clicks
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (core/lose state :runner :credit (:credit (get-runner)) :click 3)
-    (run-empty-server state :remote1)
-    (run-successful state)
-    (prompt-choice :runner "[Click]")
-    (prompt-choice :runner "Don't steal")
-    (is (= 0 (:click (get-runner))) "Runner couldn't afford to steal, so no clicks spent")
-    (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project")
-    ;; Enough of both
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (core/lose state :runner :credit (:credit (get-runner)) :click (:click (get-runner)))
-    (core/gain state :runner :credit 5 :click 4)
-    (is (= 5 (:credit (get-runner))) "Runner should be reset to 5 credits")
-    (is (= 4 (:click (get-runner))) "Runner should be reset to 4 clicks")
-    (run-empty-server state :remote1)
-    ; (run-successful state)
-    (prompt-choice :runner "[Click]")
-    (prompt-choice :runner "2 [Credits]")
-    (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
-    (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
-    (is (= 3 (:agenda-point (get-runner))))
-    (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project")
-    ))
+    (testing "No credits"
+      (take-credits state :corp)
+      (core/lose state :runner :credit (:credit (get-runner)) :click 3)
+      (run-empty-server state :remote1)
+      (run-successful state)
+      (prompt-choice :runner "2 [Credits]")
+      (prompt-choice :runner "Don't steal")
+      (is (= 0 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
+      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project"))
+    (testing "No clicks"
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/lose state :runner :credit (:credit (get-runner)) :click 3)
+      (run-empty-server state :remote1)
+      (run-successful state)
+      (prompt-choice :runner "[Click]")
+      (prompt-choice :runner "Don't steal")
+      (is (= 0 (:click (get-runner))) "Runner couldn't afford to steal, so no clicks spent")
+      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project"))
+    (testing "Enough of both"
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/lose state :runner :credit (:credit (get-runner)) :click (:click (get-runner)))
+      (core/gain state :runner :credit 5 :click 4)
+      (is (= 5 (:credit (get-runner))) "Runner should be reset to 5 credits")
+      (is (= 4 (:click (get-runner))) "Runner should be reset to 4 clicks")
+      (run-empty-server state :remote1)
+      (prompt-choice :runner "[Click]")
+      (prompt-choice :runner "2 [Credits]")
+      (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
+      (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
+      (is (= 3 (:agenda-point (get-runner))))
+      (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project"))))
 
 (deftest ikawah-project-not-stealing
   ;; Ikawah Project - do not reveal when the Runner does not steal from R&D
@@ -870,6 +868,28 @@
     (prompt-choice :runner "Don't steal")
     (is (last-log-contains? state "not to pay to steal Ikawah Project") "Ikawah Project should be mentioned")))
 
+(deftest improved-tracers
+  ;; Improved Tracers
+  (do-game
+    (new-game (default-corp [(qty "Improved Tracers" 1) (qty "News Hound" 1)])
+              (default-runner))
+    (play-from-hand state :corp "News Hound" "HQ")
+    (let [nh (get-ice state :hq 0)]
+      (core/rez state :corp nh)
+      (is (= 4 (:current-strength (refresh nh))) "Should start with base strength of 4")
+      (is (= 3 (:credit (get-corp))) "Should have 2 credits after rez")
+      (play-and-score state "Improved Tracers")
+      (is (= 5 (:current-strength (refresh nh))) "Should gain 1 strength from 4 to 5")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-phase-43 state)
+      (card-subroutine state :corp nh 0)
+      (is (= 1 (get-in @state [:bonus :trace])) "Should gain 1 bonus trace strength")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (:tag (get-runner))))
+      )))
+
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers - Prevent the Runner from jacking out as long as there is still a power counter
   (do-game
@@ -882,75 +902,72 @@
           ls2 (get-scored state :corp 1)]
       (is (= 2 (get-counters (refresh ls1) :power)))
       (is (= 2 (get-counters (refresh ls2) :power)))
-      ;; don't use token
-      (run-on state "HQ")
-      (run-jack-out state)
-      (is (:run @state) "Jack out prevent prompt")
-      (prompt-choice :corp "Done")
-      (is (not (:run @state)) "Corp does not prevent the jack out, run ends")
-      ;; use token
-      (run-on state "HQ")
-      (run-jack-out state)
-      (card-ability state :corp ls1 0)
-      (card-ability state :corp ls2 0)
-      (card-ability state :corp ls1 0)
-      (prompt-choice :corp "Done")
-      (is (:run @state) "Jack out prevented, run is still ongoing")
-      (is (true? (get-in @state [:run :cannot-jack-out])) "Cannot jack out flag is in effect")
-      (run-successful state)
-      (is (not (:run @state)))
-      ;; one Labyrinthine is empty but the other still has one token, ensure prompt still occurs
-      (is (= 0 (get-counters (refresh ls1) :power)))
-      (is (= 1 (get-counters (refresh ls2) :power)))
-      (run-on state "HQ")
-      (run-jack-out state)
-      (is (:run @state))
-      (card-ability state :corp ls2 0)
-      (prompt-choice :corp "Done")
-      (is (true? (get-in @state [:run :cannot-jack-out])))
-      (run-successful state)
-      (is (not (:run @state)))
-      ;; no more tokens
-      (run-on state "HQ")
-      (run-jack-out state)
-      (is (not (:run @state)) "No jack out prevent prompt"))))
+      (testing "Don't use token"
+        (run-on state "HQ")
+        (run-jack-out state)
+        (is (:run @state) "Jack out prevent prompt")
+        (prompt-choice :corp "Done")
+        (is (not (:run @state)) "Corp does not prevent the jack out, run ends"))
+      (testing "Use token"
+        (run-on state "HQ")
+        (run-jack-out state)
+        (card-ability state :corp ls1 0)
+        (card-ability state :corp ls2 0)
+        (card-ability state :corp ls1 0)
+        (prompt-choice :corp "Done")
+        (is (:run @state) "Jack out prevented, run is still ongoing")
+        (is (true? (get-in @state [:run :cannot-jack-out])) "Cannot jack out flag is in effect")
+        (run-successful state)
+        (is (not (:run @state))))
+      (testing "one Labyrinthine is empty but the other still has one token, ensure prompt still occurs"
+        (is (= 0 (get-counters (refresh ls1) :power)))
+        (is (= 1 (get-counters (refresh ls2) :power)))
+        (run-on state "HQ")
+        (run-jack-out state)
+        (is (:run @state))
+        (card-ability state :corp ls2 0)
+        (prompt-choice :corp "Done")
+        (is (true? (get-in @state [:run :cannot-jack-out])))
+        (run-successful state)
+        (is (not (:run @state))))
+      (testing "No more tokens"
+        (run-on state "HQ")
+        (run-jack-out state)
+        (is (not (:run @state)) "No jack out prevent prompt")))))
 
 (deftest license-acquisition
   ;; License Acquisition - full test
   (do-game
     (new-game (default-corp [(qty "License Acquisition" 4)
-                             (qty "Adonis Campaign" 1)
-                             (qty "Eve Campaign" 1)
-                             (qty "Strongbox" 1)
-                             (qty "Corporate Troubleshooter" 1)])
+                             (qty "Adonis Campaign" 1) (qty "Eve Campaign" 1)
+                             (qty "Strongbox" 1) (qty "Corporate Troubleshooter" 1)])
               (default-runner))
-    ;; Set up
-    (starting-hand state :corp ["License Acquisition" "License Acquisition" "License Acquisition" "License Acquisition"
-                                "Adonis Campaign" "Strongbox"])
-    (core/move state :corp (find-card "Eve Campaign" (:deck (get-corp))) :discard)
-    (core/move state :corp (find-card "Corporate Troubleshooter" (:deck (get-corp))) :discard)
-    (core/gain state :corp :click 4)
-    ;; Asset - HQ
-    (play-and-score state "License Acquisition")
-    (prompt-select :corp (find-card "Adonis Campaign" (:hand (get-corp))))
-    (prompt-choice :corp "New remote")
-    (is (some? (get-content state :remote2 0)))
-    ;; Upgrade - HQ
-    (play-and-score state "License Acquisition")
-    (prompt-select :corp (find-card "Strongbox" (:hand (get-corp))))
-    (prompt-choice :corp "New remote")
-    (is (some? (get-content state :remote4 0)))
-    ;; Asset - Archives
-    (play-and-score state "License Acquisition")
-    (prompt-select :corp (find-card "Eve Campaign" (:discard (get-corp))))
-    (prompt-choice :corp "New remote")
-    (is (some? (get-content state :remote6 0)))
-    ;; Upgrade - Archives
-    (play-and-score state "License Acquisition")
-    (prompt-select :corp (find-card "Corporate Troubleshooter" (:discard (get-corp))))
-    (prompt-choice :corp "New remote")
-    (is (some? (get-content state :remote8 0)))
-    ))
+    (testing "Set up"
+      (starting-hand state :corp ["License Acquisition" "License Acquisition" "License Acquisition" "License Acquisition"
+                                  "Adonis Campaign" "Strongbox"])
+      (core/move state :corp (find-card "Eve Campaign" (:deck (get-corp))) :discard)
+      (core/move state :corp (find-card "Corporate Troubleshooter" (:deck (get-corp))) :discard)
+      (core/gain state :corp :click 4))
+    (testing "Asset & HQ"
+      (play-and-score state "License Acquisition")
+      (prompt-select :corp (find-card "Adonis Campaign" (:hand (get-corp))))
+      (prompt-choice :corp "New remote")
+      (is (some? (get-content state :remote2 0))))
+    (testing "Upgrade & HQ"
+      (play-and-score state "License Acquisition")
+      (prompt-select :corp (find-card "Strongbox" (:hand (get-corp))))
+      (prompt-choice :corp "New remote")
+      (is (some? (get-content state :remote4 0))))
+    (testing "Asset & Archives"
+      (play-and-score state "License Acquisition")
+      (prompt-select :corp (find-card "Eve Campaign" (:discard (get-corp))))
+      (prompt-choice :corp "New remote")
+      (is (some? (get-content state :remote6 0))))
+    (testing "Upgrade & Archives"
+      (play-and-score state "License Acquisition")
+      (prompt-select :corp (find-card "Corporate Troubleshooter" (:discard (get-corp))))
+      (prompt-choice :corp "New remote")
+      (is (some? (get-content state :remote8 0))))))
 
 (deftest mandatory-upgrades
   ;; Mandatory Upgrades - You have 1 additional :click: to spend each turn.
@@ -1015,14 +1032,14 @@
     (let [mb2 (get-content state :remote2 0)]
       (advance state mb2 3)
       (core/score state :corp {:card (refresh mb2)})
-      (is (= 2 (:agenda-point (get-corp))) "Only needed 3 advancements to score")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Medical Breakthrough" "New remote")
-      (let [mb3 (get-content state :remote3 0)]
-        (advance state mb3 2)
-        (core/score state :corp {:card (refresh mb3)})
-        (is (= 4 (:agenda-point (get-corp))) "Only needed 2 advancements to score")))))
+      (is (= 2 (:agenda-point (get-corp))) "Only needed 3 advancements to score"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Medical Breakthrough" "New remote")
+    (let [mb3 (get-content state :remote3 0)]
+      (advance state mb3 2)
+      (core/score state :corp {:card (refresh mb3)})
+      (is (= 4 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
 
 (deftest napd-contract
   ;; NAPD Contract - Requires 4 credits to steal; scoring requirement increases with bad publicity
