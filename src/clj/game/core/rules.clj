@@ -416,10 +416,10 @@
         corp-fn (:agendapoints-corp (card-def card))]
     (cond
       (and (= side :runner)
-           (not (nil? runner-fn)))
+           (some? runner-fn))
         (runner-fn state side (make-eid state) card nil)
       (and (= side :corp)
-           (not  (nil? corp-fn)))
+           (some? corp-fn))
         (corp-fn state side (make-eid state) card nil)
       :else
         base-points)))
@@ -431,8 +431,7 @@
   (swap! state update-in [:bonus :advancement-cost] (fnil #(+ % n) 0)))
 
 (defn advancement-cost [state side {:keys [advancementcost] :as card}]
-  (if (nil? advancementcost)
-    nil
+  (if (some? advancementcost)
     (-> (if-let [costfun (:advancement-cost-bonus (card-def card))]
           (+ advancementcost (costfun state side (make-eid state) card nil))
           advancementcost)

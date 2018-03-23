@@ -53,7 +53,7 @@
     (prompt-choice :corp "Yes")
     (prompt-select :corp (find-card "Enigma" (get-in @state [:corp :play-area])))
     (prompt-choice :corp "HQ")
-    (is (not (nil? (get-ice state :hq 0))))
+    (is (some? (get-ice state :hq 0)))
     (is (= 2 (count (:discard (get-corp)))))
     (core/move state :corp (find-card "Accelerated Beta Test" (:scored (get-corp))) :hand)
     (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :deck)
@@ -394,10 +394,10 @@
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "Ice Wall" "HQ")
-    (is (not (nil? (get-ice state :hq 1))) "Corp has two ice installed on HQ")
+    (is (some? (get-ice state :hq 1)) "Corp has two ice installed on HQ")
     (is (= 6 (get-in @state [:corp :credit])) "Corp does not pay for installing the first ICE of the turn")
     (play-from-hand state :corp "Ice Wall" "HQ")
-    (is (not (nil? (get-ice state :hq 2))) "Corp has three ice installed on HQ")
+    (is (some? (get-ice state :hq 2)) "Corp has three ice installed on HQ")
     (is (= 4 (get-in @state [:corp :credit])) "Corp pays for installing the second ICE of the turn")))
 
 (deftest efficiency-committee
@@ -1073,7 +1073,7 @@
       (core/gain state :corp :bad-publicity 1)
       (advance state napd 2)
       (core/score state :corp {:card (refresh napd)})
-      (is (not (nil? (get-content state :remote1 0)))
+      (is (some? (get-content state :remote1 0))
           "Corp can't score with 4 advancements because of BP")
       (advance state napd)
       (core/score state :corp {:card (refresh napd)})
@@ -1092,7 +1092,7 @@
       (take-credits state :runner)
       (advance state napd 2)
       (core/score state :corp {:card (refresh napd)})
-      (is (not (nil? (get-content state :remote1 0)))
+      (is (some? (get-content state :remote1 0))
           "Corp can't score with 4 advancements because of BP")
       (advance state napd)
       (core/score state :corp {:card (refresh napd)})
@@ -1213,14 +1213,14 @@
       (card-ability state :runner smc 0)
       (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
       (let [cor (get-program state 0)]
-        (is (not (nil? cor)))
+        (is (some? cor))
         (is (= (:title cor) "Corroder"))
         (is (= "Self-modifying Code" (:title (first (:discard (get-runner))))))))
     (let [chip (get-hardware state 0)]
       (card-ability state :runner chip 0)
       (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
       (let [smc (get-in @state [:runner :rig :program 1])]
-        (is (not (nil? smc)))
+        (is (some? smc))
         (is (= (:title smc) "Self-modifying Code"))
         (is (= "Clone Chip" (:title (first (:discard (get-runner))))))))))
 
