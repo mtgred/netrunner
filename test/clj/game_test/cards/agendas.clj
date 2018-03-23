@@ -1749,6 +1749,19 @@
     (play-from-hand state :runner "Respirocytes")
     (is (= 1 (count (:hand (get-runner)))) "Only 1 damage dealt to Runner from Cybernetics")))
 
+(deftest the-future-is-now
+  ;; The Future is Now
+  (do-game
+    (new-game (default-corp [(qty "The Future is Now" 1) (qty "Ice Wall" 1)])
+              (default-runner))
+    (starting-hand state :corp ["The Future is Now"])
+    (is (= 1 (count (:hand (get-corp)))))
+    (is (= 1 (count (:deck (get-corp)))))
+    (play-and-score state "The Future is Now")
+    (prompt-choice :corp (find-card "Ice Wall" (:deck (get-corp))))
+    (is (= 1 (count (:hand (get-corp)))))
+    (is (= 0 (count (:deck (get-corp)))))))
+
 (deftest the-future-perfect
   ;; The Future Perfect - cannot steal on failed psi game (if not installed)
   (do-game
