@@ -235,8 +235,7 @@
       (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :discard))
     (is (= 3 (count (:discard (get-runner)))) "Runner should have 3 cards in heap")
     (play-and-score state "Chronos Project")
-    (is (= 0 (count (:discard (get-runner)))) "Runner should have 0 cards in heap")
-    ))
+    (is (= 0 (count (:discard (get-runner)))) "Runner should have 0 cards in heap")))
 
 (deftest clone-retirement
   ;; Clone Retirement - full test
@@ -589,9 +588,7 @@
       (card-ability state :corp fu 0)
       (prompt-select :corp (refresh iw))
       (is (= 2 (get-counters (refresh fu) :agenda)) "Firmware Updates should now have 2 agenda counters")
-      (is (= 1 (:advance-counter (refresh iw))) "Ice Wall should have 1 advancement token")
-      )
-    ))
+      (is (= 1 (:advance-counter (refresh iw))) "Ice Wall should have 1 advancement token"))))
 
 (deftest geothermal-fracking
   ;; Geothermal Fracking
@@ -682,6 +679,24 @@
       (card-ability state :corp gs-scored 1)
       (prompt-choice :corp (find-card "Ice Wall" (:hosted (refresh gs-scored))))
       (is (= 0 (count (:hosted (refresh gs-scored))))))))
+
+(deftest global-food-initiative
+  ;; Global Food Initiative
+  (do-game
+    (new-game (default-corp [(qty "Global Food Initiative" 2)])
+              (default-runner))
+    (testing "Corp scores"
+      (is (= 0 (:agenda-point (get-runner))) "Runner should start with 0 agenda points")
+      (is (= 0 (:agenda-point (get-corp))) "Corp should start with 0 agenda points")
+      (play-and-score state "Global Food Initiative")
+      (is (= 3 (:agenda-point (get-corp))) "Corp should gain 3 agenda points"))
+    (testing "Runner steals"
+      (play-from-hand state :corp "Global Food Initiative" "New remote")
+      (take-credits state :corp)
+      (run-on state :remote2)
+      (run-successful state)
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:agenda-point (get-runner))) "Runner should gain 2 agenda points, not 3"))))
 
 (deftest government-contracts
   ;; Government Contracts - Spend 2 clicks for 4 credits
@@ -887,8 +902,7 @@
       (is (= 1 (get-in @state [:bonus :trace])) "Should gain 1 bonus trace strength")
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (= 1 (:tag (get-runner))))
-      )))
+      (is (= 1 (:tag (get-runner)))))))
 
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers - Prevent the Runner from jacking out as long as there is still a power counter
@@ -1904,8 +1918,7 @@
     (new-game (default-corp [(qty "Vanity Project" 1)])
               (default-runner))
     (play-and-score state "Vanity Project")
-    (is (= 4 (:agenda-point (get-corp))))
-    ))
+    (is (= 4 (:agenda-point (get-corp))))))
 
 (deftest veterans-program
   ;; Veterans Program - basic test
