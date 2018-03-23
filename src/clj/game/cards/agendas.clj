@@ -1168,6 +1168,9 @@
                               :effect (req (let [counter (:advance-counter target)]
                                              (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 
+   "Vanity Project"
+   {}
+
    "Veterans Program"
    {:interactive (req true)
     :msg "lose 2 bad publicity"

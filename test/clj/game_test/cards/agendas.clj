@@ -1831,6 +1831,15 @@
     (is (= 1 (:agenda-point (get-runner))))
     (is (= 3 (:credit (get-runner))))))
 
+(deftest vanity-project
+  ;; Vanity Project
+  (do-game
+    (new-game (default-corp [(qty "Vanity Project" 1)])
+              (default-runner))
+    (play-and-score state "Vanity Project")
+    (is (= 4 (:agenda-point (get-corp))))
+    ))
+
 (deftest veterans-program
   ;; Veterans Program - basic test
   (do-game
