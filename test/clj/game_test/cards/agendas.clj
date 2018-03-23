@@ -153,9 +153,7 @@
       (prompt-choice :corp "2")
       (prompt-select :corp (refresh iw))
       (prompt-choice :runner "Steal")
-      (is (= 4 (:advance-counter (refresh iw))) "Ice Wall should gain 2 advancement tokens")
-      )
-    ))
+      (is (= 4 (:advance-counter (refresh iw))) "Ice Wall should gain 2 advancement tokens"))))
 
 (deftest bacterial-programming-run
   ;; Bacterial Programming - scoring should not cause a run to exist for runner.
@@ -765,6 +763,28 @@
       (is (= 16 (:credit (get-corp))) "Gained 9 credits")
       (is (= 2 (:click (get-corp))) "Spent 1 click")
       (is (= 0 (get-counters (refresh hri-scored) :agenda)) "Spent agenda counter"))))
+
+(deftest hollywood-renovation
+  ;; Hollywood Renovation
+  (do-game
+    (new-game (default-corp [(qty "Hollywood Renovation" 1) (qty "Ice Wall" 1)])
+              (default-runner))
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Hollywood Renovation" "New remote")
+    (let [hr (get-content state :remote1 0)
+          iw (get-ice state :hq 0)]
+      (is (= 0 (count (:advance-counter (refresh hr)))) "Hollywood Renovation should start with 0 advancement tokens")
+      (is (= 0 (count (:advance-counter (refresh iw)))) "Ice Wall should start with 0 advancement tokens")
+      (dotimes [n 5]
+        (advance state (refresh hr))
+        (prompt-select :corp (refresh iw)))
+      (is (= 5 (:advance-counter (refresh hr))) "Hollywood Renovation should gain 5 advancement tokens")
+      (is (= 5 (:advance-counter (refresh iw))) "Ice Wall should gain 5 advancement tokens")
+      (advance state (refresh hr))
+      (prompt-select :corp (refresh iw))
+      (is (= 6 (:advance-counter (refresh hr))) "Hollywood Renovation should gain 1 from 5 to 6 advancement tokens")
+      (is (= 7 (:advance-counter (refresh iw))) "Ice Wall should gain 2 from 5 to 7 advancement tokens"))))
 
 (deftest hostile-takeover
   ;; Hostile Takeover - Gain 7 credits and take 1 bad publicity

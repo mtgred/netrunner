@@ -561,15 +561,18 @@
    "Hollywood Renovation"
    {:install-state :face-up
     :events {:advance
-             {:req (req (= (:cid card) (:cid target)))
+             {:req (req (= (:cid card)
+                           (:cid target)))
               :effect (req (let [n (if (>= (:advance-counter (get-card state card)) 6) 2 1)]
-                             (continue-ability
-                              state side
-                              {:choices {:req #(and (not= (:cid %) (:cid card))
+                             (continue-ability state side
+                              {:choices {:req #(and (not= (:cid %)
+                                                          (:cid card))
                                                     (can-be-advanced? %))}
-                               :msg (msg "place " n " advancement tokens on "
+                               :msg (msg "place " n
+                                         " advancement tokens on "
                                          (card-str state target))
-                               :effect (final-effect (add-prop :corp target :advance-counter n {:placed true}))} card nil)))}}}
+                               :effect (final-effect (add-prop :corp target :advance-counter n {:placed true}))}
+                              card nil)))}}}
 
    "House of Knives"
    {:effect (effect (add-counter card :agenda 3))
