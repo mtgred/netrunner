@@ -980,10 +980,11 @@
     (play-from-hand state :corp "Archer" "HQ")
     (take-credits state :corp)
     (take-credits state :runner)
-    (let [arc (get-ice state :hq 0)]
+    (let [arc (get-ice state :hq 0)
+          mu (get-scored state :corp)]
       (is (= 4 (:click (get-corp))) "Corp should start turn with 4 clicks")
       (core/rez state :corp arc)
-      (prompt-select :corp (get-in (get-corp) [:scored 0]))
+      (prompt-select :corp (refresh mu))
       (is (= 3 (:click (get-corp))) "Corp should lose 1 click on agenda sacrifice"))))
 
 (deftest market-research
@@ -991,11 +992,13 @@
   (do-game
     (new-game (default-corp [(qty "Market Research" 2)])
               (default-runner))
-    (play-and-score state "Market Research")
-    (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points")
-    (core/gain state :runner :tag 1)
-    (play-and-score state "Market Research")
-    (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))
+    (testing "Runner is not tagged"
+      (play-and-score state "Market Research")
+      (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points"))
+    (testing "Runner is tagged"
+      (core/gain state :runner :tag 1)
+      (play-and-score state "Market Research")
+      (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points"))))
 
 (deftest medical-breakthrough
   ;; Medical Breakthrough - Lower advancement requirement by 1 for each scored/stolen copy
@@ -1769,7 +1772,6 @@
               (default-runner))
     (play-from-hand state :corp "The Future Perfect" "New remote")
     (take-credits state :corp)
-
     (testing "No steal on not-equal Psi game"
       (run-empty-server state "HQ")
       (prompt-choice :runner "Access")
@@ -1778,7 +1780,6 @@
       ;; Cannot steal prompt
       (prompt-choice :runner "OK")
       (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))
-
     (testing "Successful steal on equal Psi game"
       (run-empty-server state "HQ")
       (prompt-choice :runner "Access")
@@ -1786,7 +1787,6 @@
       (prompt-choice :runner "1 [Credits]")
       (prompt-choice :runner "Steal")
       (is (= 3 (:agenda-point (get-runner))) "Runner stole TFP"))
-
     (testing "No Psi game and successful steal when installed"
       (run-empty-server state "Server 1")
       (prompt-choice :runner "Steal")
