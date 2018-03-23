@@ -98,7 +98,7 @@
   currents, or the corp's scored area."
   [state side]
   (if (= side :runner)
-    (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current]) (all-installed state side)))
+    (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current]) (remove :facedown (all-installed state side))))
     (cons (get-in @state [:corp :identity]) (filter #(not (:disabled %))
                                                     (concat (all-installed state side)
                                                             (get-in @state [:corp :current])
