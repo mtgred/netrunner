@@ -108,7 +108,7 @@
                                            :effect (effect (update-breaker-strength card))}]
                                 {:runner-install cloud :trash cloud :card-moved cloud})
                       :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
-                                                          (all-installed state :runner))))}))
+                                                          (all-active-installed state :runner))))}))
 
 (defn- global-sec-breaker
   "GlobalSec breakers for Sunny"
@@ -149,7 +149,7 @@
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
                                        (not (install-locked? state side))
-                                       (not (some #(= title (:title %)) (all-installed state :runner)))
+                                       (not (some #(= title (:title %)) (all-active-installed state :runner)))
                                        (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
                         :optional {:player :runner
                                    :prompt (str "Install " title "?")
@@ -654,7 +654,7 @@
                          :req (req (is-type? target "Program"))
                          :effect (effect (update-breaker-strength card))}]
               {:runner-install maven :trash maven :card-moved maven})
-    :strength-bonus (req (count (filter #(is-type? % "Program") (all-installed state :runner))))}
+    :strength-bonus (req (count (filter #(is-type? % "Program") (all-active-installed state :runner))))}
 
    "Morning Star"
    {:abilities [(break-sub 1 0 "Barrier")]}

@@ -60,7 +60,7 @@
                      (trash state side (get-card state c))))
 
                  ;; do hosted cards first so they don't get trashed twice
-                 (let [installedcards (remove :facedown (all-installed state :runner))
+                 (let [installedcards (all-active-installed state :runner)
                        ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
                        hostedcards (filter ishosted installedcards)
                        nonhostedcards (remove ishosted installedcards)]
@@ -120,9 +120,9 @@
 
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
-                                     (all-installed state :runner))) " [Credits]")
+                                     (all-active-installed state :runner))) " [Credits]")
     :effect (effect (gain :credit (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
-                                                 (all-installed state :runner)))))}
+                                                 (all-active-installed state :runner)))))}
 
    "Career Fair"
    {:prompt "Select a resource to install from your Grip"
@@ -948,10 +948,10 @@
    {:prompt "Choose a server"
     :choices (req runnable-servers)
     :delayed-completion true
-    :msg (msg "make a run on " target (when (< (count (filter #(is-type? % "Program") (all-installed state :runner))) 4)
+    :msg (msg "make a run on " target (when (< (count (filter #(is-type? % "Program") (all-active-installed state :runner))) 4)
                                         ", adding +2 strength to all icebreakers"))
-    :effect (req (when (< (count (filter #(is-type? % "Program") (all-installed state :runner))) 4)
-                   (doseq [c (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+    :effect (req (when (< (count (filter #(is-type? % "Program") (all-active-installed state :runner))) 4)
+                   (doseq [c (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                      (pump state side c 2 :all-run)))
                  (game.core/run state side (make-eid state) target nil card))}
 
@@ -1062,10 +1062,10 @@
 
    "Mars for Martians"
    {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
-                                     (all-installed state :runner)))
+                                     (all-active-installed state :runner)))
               " cards and gain " (:tag runner) " [Credits]")
     :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
-                                         (all-installed state :runner))))
+                                         (all-active-installed state :runner))))
                     (gain :credit (:tag runner)))}
 
    "Mass Install"
@@ -1161,7 +1161,7 @@
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "On the Lam"
-   {:req (req (some #(is-type? % "Resource") (all-installed state :runner)))
+   {:req (req (some #(is-type? % "Resource") (all-active-installed state :runner)))
     :prompt "Choose a resource to host On the Lam"
     :choices {:req #(and (is-type? % "Resource")
                          (installed? %))}
@@ -1252,7 +1252,7 @@
                                        (update-agenda-points state :corp target -1))}} card))})
 
    "Populist Rally"
-   {:req (req (seq (filter #(has-subtype? % "Seedy") (all-installed state :runner))))
+   {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
     :msg "give the Corp 1 fewer [Click] to spend on their next turn"
     :effect (effect (lose :corp :click-per-turn 1)
                     (register-events (:events (card-def card))
@@ -1308,7 +1308,7 @@
     :choices (req runnable-servers)
     :delayed-completion true
     :effect (req (when (<= (hsize @state) 2)
-                   (let [breakers (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+                   (let [breakers (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                      (doseq [t breakers] (pump state side t 2 :all-run))))
                  (game.core/run state side (make-eid state) target))})
 

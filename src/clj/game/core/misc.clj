@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare set-prop get-nested-host get-nested-zone)
+(declare set-prop get-nested-host get-nested-zone all-active-installed)
 
 (defn get-zones [state]
   (keys (get-in state [:corp :servers])))
@@ -98,11 +98,19 @@
   currents, or the corp's scored area."
   [state side]
   (if (= side :runner)
-    (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current]) (remove :facedown (all-installed state side))))
+    (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current]) (all-active-installed state side)))
     (cons (get-in @state [:corp :identity]) (filter #(not (:disabled %))
-                                                    (concat (all-installed state side)
+                                                    (concat (all-active-installed state side)
                                                             (get-in @state [:corp :current])
                                                             (get-in @state [:corp :scored]))))))
+
+(defn all-active-installed
+  "Returns a vector of active AND installed cards for the given side. This is all face-up installed cards."
+  [state side]
+  (let [installed (all-installed state side)]
+   (if (= side :runner)
+     (remove :facedown installed)
+     (filter :rezzed installed))))
 
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"

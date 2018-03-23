@@ -364,7 +364,7 @@
 
    "Bloodletter"
    {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
-                   :effect (req (if (empty? (filter #(is-type? % "Program") (all-installed state :runner)))
+                   :effect (req (if (empty? (filter #(is-type? % "Program") (all-active-installed state :runner)))
                                    (do (mill state :runner 2)
                                        (system-msg state :runner (str "trashes the top 2 cards of their Stack")))
                                    (do (show-wait-prompt state :corp "Runner to choose an option for Bloodletter")
@@ -443,7 +443,7 @@
    "Bulwark"
    {:effect take-bad-pub
     :abilities [{:msg "gain 2 [Credits] if there is an installed AI"
-                 :req (req (some #(has-subtype? % "AI") (all-installed state :runner)))
+                 :req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
                  :effect (effect (gain :credit 2))}]
     :subroutines [(assoc trash-program :player :runner
                                        :msg "force the Runner to trash 1 program"
@@ -510,7 +510,7 @@
    "Chiyashi"
    {:implementation "Trash effect when using an AI to break is activated manually"
     :abilities [{:label "Trash the top 2 cards of the Runner's Stack"
-                 :req (req (some #(has-subtype? % "AI") (all-installed state :runner)))
+                 :req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
                  :msg (msg (str "trash " (join ", " (map :title (take 2 (:deck runner)))) " from the Runner's Stack"))
                  :effect (effect (mill :runner 2))}]
     :subroutines [(do-net-damage 2)
@@ -590,7 +590,7 @@
                   {:msg "force the Runner to lose 1 [Click] if able"
                    :effect (effect (lose :runner :click 1))}
                   end-the-run]
-    :strength-bonus (req (if (some #(has-subtype? % "AI") (all-installed state :runner)) 3 0))}
+    :strength-bonus (req (if (some #(has-subtype? % "AI") (all-active-installed state :runner)) 3 0))}
 
    "Cortex Lock"
    {:subroutines [{:label "Do 1 net damage for each unused memory unit the Runner has"
@@ -733,7 +733,7 @@
                    :msg (msg "trash " (:title target))
                    :effect (effect (trash target))}
                   {:msg "trash all virtual resources"
-                   :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-installed state :runner))]
+                   :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-active-installed state :runner))]
                                   (trash state side c)))}]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
@@ -1062,7 +1062,7 @@
     :subroutines [trash-installed]}
 
    "IP Block"
-   {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-installed state :runner))))
+   {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-active-installed state :runner))))
                                 :label "Give the Runner 1 tag if there is an installed AI")]
     :subroutines [(tag-trace 3)
                   end-the-run-if-tagged]}
@@ -1233,7 +1233,7 @@
                    (continue-ability
                      state side
                      {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                      (remove-once #(not= (:cid %) (:cid magnet)) (all-installed state corp))))
+                                      (remove-once #(not= (:cid %) (:cid magnet)) (all-active-installed state corp))))
                       :prompt "Select a Program to host on Magnet"
                       :choices {:req #(and (card-is? % :type "Program")
                                            (ice? (:host %))
@@ -1491,9 +1491,8 @@
    "NEXT Silver"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (filter #(and (is-type? % "ICE")
-                                                        (has-subtype? % "NEXT")
-                                                        (rezzed? %))
-                                                  (all-installed state :corp))) " subroutines")}]
+                                                        (has-subtype? % "NEXT"))
+                                                  (all-active-installed state :corp))) " subroutines")}]
     :subroutines [end-the-run]}
 
    "Nightdancer"
@@ -1603,7 +1602,7 @@
    {:subroutines [trash-program]
     :access {:delayed-completion true
              :req (req (and (not= (first (:zone card)) :discard)
-                            (some #(is-type? % "Program") (all-installed state :runner))))
+                            (some #(is-type? % "Program") (all-active-installed state :runner))))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Sapper subroutine")
                              (continue-ability
                                :runner {:optional
@@ -1822,8 +1821,8 @@
 
    "Tour Guide"
    {:abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (count (filter #(and (is-type? % "Asset") (rezzed? %))
-                                                  (all-installed state :corp))) " subroutines")}]
+                 :msg (msg "gain " (count (filter #(is-type? % "Asset")
+                                                  (all-active-installed state :corp))) " subroutines")}]
     :subroutines [end-the-run]}
 
    "Tribunal"
@@ -2009,7 +2008,7 @@
 
    "Wraparound"
    {:subroutines [end-the-run]
-    :strength-bonus (req (if (some #(has-subtype? % "Fracter") (all-installed state :runner))
+    :strength-bonus (req (if (some #(has-subtype? % "Fracter") (all-active-installed state :runner))
                            0 7))
     :events (let [wr {:silent (req true)
                       :req (req (and (not= (:cid target) (:cid card))

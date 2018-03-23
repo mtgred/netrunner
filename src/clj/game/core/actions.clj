@@ -266,8 +266,8 @@
       (resolve-ability state side
                        {:prompt  "Choose a resource to trash"
                         :choices {:req (fn [card]
-                                         (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-installed state :runner)))
-                                                  (> (count (filter #(is-type? % "Resource") (all-installed state :runner))) 1))
+                                         (if (and (seq (filter (fn [c] (untrashable-while-resources? c)) (all-active-installed state :runner)))
+                                                  (> (count (filter #(is-type? % "Resource") (all-active-installed state :runner))) 1))
                                            (and (is-type? card "Resource") (not (untrashable-while-resources? card)))
                                            (is-type? card "Resource")))}
                         :cancel-effect (effect (gain :credit trash-cost :click 1))
@@ -475,7 +475,7 @@
                             (update-ice-strength state side cur-ice))
                           (when next-ice
                             (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
-                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                             (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
                             (update-breaker-strength state side p)))))))
 

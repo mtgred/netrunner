@@ -47,7 +47,7 @@
    (handle-prevent-effect state card)
    (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
      (gain state :runner :memory (:memoryunits card)))
-   (when (and (find-cid (:cid card) (all-installed state side))
+   (when (and (find-cid (:cid card) (all-active-installed state side))
               (not (:disabled card))
               (or (:rezzed card) (:installed card)))
      (when-let [in-play (:in-play (card-def card))]
@@ -299,7 +299,7 @@
       facedown true
       ;; Console check
       (and (has-subtype? card "Console")
-           (some #(has-subtype? % "Console") (all-installed state :runner)))
+           (some #(has-subtype? % "Console") (all-active-installed state :runner)))
       :console
       ;; Installing not locked
       (install-locked? state side) :lock-install
