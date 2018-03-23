@@ -360,7 +360,7 @@
                  :yes-ability (install-ability "New remote" 0)}})
 
    "Domestic Sleepers"
-   {:agendapoints-runner (req (do 0))
+   {:agendapoints-runner (req 0)
     :abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"
                  :req (req (not (:counter card)))
                  :effect (effect (gain-agenda-point 1)
@@ -473,7 +473,7 @@
                  :effect (effect (gain :credit 3))}]}
 
    "Global Food Initiative"
-   {:agendapoints-runner (req (do 2))}
+   {:agendapoints-runner (req 2)}
 
    "Glenn Station"
    {:implementation "Doesn't prohibit hosting multiple cards"
@@ -685,7 +685,7 @@
                                                    (concat (:scored corp) (:scored runner))))))}
 
    "Merger"
-   {:agendapoints-runner (req (do 3))}
+   {:agendapoints-runner (req 3)}
 
    "Meteor Mining"
    (let [choices ["Take Nothing" "Take 7 [Credits]"]]
@@ -870,7 +870,7 @@
 
    "Project Beale"
    {:interactive (req true)
-    :agendapoints-runner (req (do 2))
+    :agendapoints-runner (req 2)
     :effect (req (let [n (quot (- (:advance-counter card) 3) 2)]
                     (set-prop state side card
                               :counter {:agenda n}
