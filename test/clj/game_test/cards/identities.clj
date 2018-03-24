@@ -7,6 +7,61 @@
 
 (use-fixtures :once load-all-cards)
 
+(deftest FourHundredAndNineTeen-amoral-scammer
+  ;; 419: Amoral Scammer - expose first installed card unless corp pays 1 credit
+  (do-game
+    (new-game
+      (make-deck "Weyland Consortium: Builder of Nations"
+                 [(qty "PAD Campaign" 1) (qty "The Cleaners" 1) (qty "Pup" 3)])
+      (make-deck "419: Amoral Scammer" []))
+    (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
+    (play-from-hand state :corp "Pup" "HQ")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :corp "Yes")
+    (is (= 4 (:credit (get-corp))) "Pays 1 credit to not expose card")
+    (play-from-hand state :corp "Pup" "HQ")
+    (is (empty? (:prompt (get-runner))) "No option on second install")
+    (take-credits state :corp)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Pup" "Archives")
+    (prompt-choice :runner "No")
+    (is (empty? (:prompt (get-corp))) "No prompt if Runner chooses No")
+    (take-credits state :corp)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "The Cleaners" "New remote")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :corp "No")
+    (is (last-log-contains? state "exposes The Cleaners") "Installed card was exposed")
+    (take-credits state :corp)
+    (take-credits state :runner)
+
+    (core/lose state :corp :credit (:credit (get-corp)))
+    (is (= 0 (:credit (get-corp))) "Corp has no credits")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (prompt-choice :runner "Yes")
+    (is (empty? (:prompt (get-corp))) "No prompt if Corp has no credits")
+    (is (last-log-contains? state "exposes PAD Campaign") "Installed card was exposed")))
+
+(deftest FourHundredAndNineTeen-amoral-scammer-block-expose
+  ;; 419: Amoral Scammer - verify expose can be blocked
+  (do-game
+    (new-game
+      (make-deck "Weyland Consortium: Builder of Nations" [(qty "Underway Grid" 1) (qty "Pup" 1)])
+      (make-deck "419: Amoral Scammer" []))
+    (play-from-hand state :corp "Underway Grid" "New remote")
+    (prompt-choice :runner "No")
+    (take-credits state :corp)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Pup" "Server 1")
+    (prompt-choice :runner "Yes")
+    (let [ug (get-in @state [:corp :servers :remote1 :content 0])]
+      (core/rez state :corp ug)
+      (prompt-choice :corp "No")
+      (is (last-log-contains? state "uses Underway Grid to prevent 1 card from being exposed") "Exposure was prevented"))))
+
 (deftest adam-directives
   ;; Adam - Allow runner to choose directives
   (do-game
