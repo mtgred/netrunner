@@ -1317,6 +1317,48 @@
       (is (= 3 (:credit (get-runner)))
           "Runner lost 1 credit from rez of advertisement (Runner turn)"))))
 
+(deftest sso-industries-fueling-innovation
+  ;; SSO Industries: Fueling Innovation - add advancement tokens on ice for faceup agendas
+  (do-game
+    (new-game
+      (make-deck "SSO Industries: Fueling Innovation"
+                 [(qty "Hortum" 2) (qty "Oaktown Renovation" 2) (qty "Braintrust" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Braintrust" "New remote")
+    (take-credits state :corp)
+    (is (empty? (:prompt (get-corp))) "Not prompted when no faceup agenda available")
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
+    (take-credits state :corp)
+    (is (empty? (:prompt (get-corp))) "Not prompted when no ice available")
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Hortum" "HQ")
+    (play-from-hand state :corp "Hortum" "R&D")
+    (let [h0 (get-ice state :hq 0)
+          h1 (get-ice state :rd 0)]
+      (is (= nil (:advance-counter (refresh h0))) "Starts with 0 tokens")
+      (is (= nil (:advance-counter (refresh h1))) "Starts with 0 tokens")
+      (take-credits state :corp)
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (refresh h0))
+      (is (= 2 (:advance-counter (refresh h0))) "Gains 2 tokens")
+      (is (= nil (:advance-counter (refresh h1))) "Stays at 0 tokens")
+      (take-credits state :runner)
+
+      (play-from-hand state :corp "Oaktown Renovation" "New remote")
+      (take-credits state :corp)
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (refresh h1))
+      (is (= 2 (:advance-counter (refresh h0))) "Stays at 2 tokens")
+      (is (= 4 (:advance-counter (refresh h1))) "Gains 4 tokens")
+      (take-credits state :runner)
+
+      (take-credits state :corp)
+      (is (empty? (:prompt (get-corp))) "Not prompted when all ice advanced")
+      )))
+
 (deftest strategic-innovations-future-forward
   ;; Strategic Innovations: Future Forward - Ability
   (do-game
