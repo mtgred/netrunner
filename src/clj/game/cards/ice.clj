@@ -1122,11 +1122,11 @@
                                         {:player :runner
                                          :priority 1
                                          :prompt "Select a card to move to the Stack"
-                                         :choices [(card-str state (first targets)) (card-str state (second targets))]
-                                         :effect (req (let [c (installed-byname state :runner target)]
+                                         :choices targets ;{:req (fn [x] (some #(= % x) targets))} - Alternative version
+                                         :effect (req (let [c target]
                                                         (clear-wait-prompt state :corp)
                                                         (move state :runner c :deck {:front true})
-                                                        (system-msg state :runner (str "selected " (:title c) " to move to the Stack"))))}
+                                                        (system-msg state :runner (str "selected " (card-str state c) " to move to the Stack"))))}
                                          card nil)))}]}
 
    "Kakugo"
