@@ -9,7 +9,7 @@
 (defn- has-most-faction?
   "Checks if the faction has a plurality of rezzed / installed cards"
   [state side fc]
-  (let [card-list ((all-active-installed state side))
+  (let [card-list (all-active-installed state side)
         faction-freq (frequencies (map :faction card-list))
         reducer (fn [{:keys [max-count] :as acc} faction count]
                   (cond
