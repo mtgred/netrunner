@@ -81,7 +81,7 @@ $ lein test game-test.cards.agendas
 
 Or a single test:
 ```
-$ lein test game-test.cards.agendas/fifteen-minutes
+$ lein test :only game-test.cards.agendas/fifteen-minutes
 ```
 
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
