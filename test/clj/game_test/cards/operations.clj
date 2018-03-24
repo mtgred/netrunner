@@ -791,6 +791,44 @@
     (play-from-hand state :corp "Hedge Fund")
     (is (= 9 (:credit (get-corp))))))
 
+(deftest high-profile-target-no-tag
+  ;; High-Profile Target - not tagged
+  (do-game
+   (new-game (default-corp [(qty "High-Profile Target" 1)])
+             (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+   (play-from-hand state :corp "High-Profile Target")
+   (is (= 3 (:click (get-corp))) "Corp not charged a click")
+   (is (= 5 (count (:hand (get-runner)))) "Runner did not take damage")))
+
+(deftest high-profile-target-1-tag
+  ;; High-Profile Target - one tag, 2 damage
+  (do-game
+   (new-game (default-corp [(qty "High-Profile Target" 1)])
+             (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+   (core/gain state :runner :tag 1)
+   (play-from-hand state :corp "High-Profile Target")
+   (is (= 3 (count (:hand (get-runner)))) "Runner has 3 cards in hand")))
+
+(deftest high-profile-target-2-tags
+  ;; High-Profile Target - two tags, 4 damage
+  (do-game
+   (new-game (default-corp [(qty "High-Profile Target" 1)])
+             (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+   (core/gain state :runner :tag 2)
+   (play-from-hand state :corp "High-Profile Target")
+   (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")))
+
+(deftest high-profile-target-flatline
+  ;; High-Profile Target - three tags, gg
+  (do-game
+   (new-game (default-corp [(qty "High-Profile Target" 10)])
+             (default-runner))
+   (core/gain state :runner :tag 3)
+   (play-from-hand state :corp "High-Profile Target")
+   (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+   (is (= :corp (:winner @state)) "Corp wins")
+   (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+
 (deftest housekeeping
   ;; Housekeeping - Runner must trash a card from Grip on first install of a turn
   (do-game
