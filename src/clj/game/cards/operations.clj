@@ -619,7 +619,8 @@
                                    card nil)))}
 
    "High-Profile Target"
-   (let [dmg-count (fn [runner] (* 2 (:tag runner)))]
+   (letfn [(dmg-count [runner]
+             (* 2 (:tag runner)))]
      {:req (req tagged)
       :delayed-completion true
       :msg (msg "do " (dmg-count runner) " meat damage")
