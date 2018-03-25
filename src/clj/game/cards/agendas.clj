@@ -268,6 +268,14 @@
     :interactive (req true)
     :effect (effect (move-zone :runner :discard :rfg))}
 
+   "City Works Project"
+   (letfn [(meat-damage [s c] (+ 2 (:advance-counter (get-card s c) 0)))]
+     {:install-state :face-up
+      :access {:req (req installed)
+               :msg (msg "do " (meat-damage state card) " meat damage")
+               :delayed-completion true
+               :effect (effect (damage eid :meat (meat-damage state card) {:card card}))}})
+
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
     :silent (req true)
