@@ -735,6 +735,16 @@
                                       :delayed-completion true
                                       :effect (effect (tag-runner :runner eid 1))}}}}
 
+   "Market Forces"
+   (letfn [(credit-diff [runner]
+             (min (* 3 (:tag runner))
+                  (:credit runner)))]
+     {:req (req tagged)
+      :msg (msg (let [c (credit-diff runner)]
+                  (str "make the runner lose " c " [Credits], and gain " c " [Credits]")))
+      :effect (effect (gain :corp :credit (credit-diff runner))
+                      (lose :runner :credit (credit-diff runner)))})
+
    "Mass Commercialization"
    {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
                                           (concat (all-installed state :runner) (all-installed state :corp))))) " [Credits]")
