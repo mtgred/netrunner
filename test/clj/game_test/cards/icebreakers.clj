@@ -709,6 +709,36 @@
      (card-ability state :runner wyrm 1)
      (is (= -1 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to -1"))))
 
+(deftest musaazi
+  ;; Musaazi gains virus counters on successful runs and can spend virus counters from any installed card
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Musaazi" 1) (qty "Cache" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Musaazi")
+    (play-from-hand state :runner "Cache")
+    (let [musaazi (get-program state 0)
+          cache (get-program state 1)]
+      (run-empty-server state "Archives")
+      (is (= 1 (get-in (refresh musaazi) [:counter :virus])) "Musaazi has 1 virus counter")
+      (is (= 1 (:current-strength (refresh musaazi))) "Initial Musaazi strength")
+      (is (= 3 (get-in (refresh cache) [:counter :virus])) "Initial Cache virus counters")
+      (card-ability state :runner musaazi 0)
+      (prompt-select :runner cache)
+      (prompt-choice :runner 1)
+      (is (= 2 (get-in (refresh cache) [:counter :virus])) "Cache lost a virus counter to pump")
+      (is (= 2 (:current-strength (refresh musaazi))) "Musaazi strength 2")
+      (is (= 1 (get-in (refresh musaazi) [:counter :virus])) "Initial Musaazi virus counters")
+      (card-ability state :runner musaazi 0)
+      (prompt-select :runner musaazi)
+      (prompt-choice :runner 1)
+      (is (= 3 (:current-strength (refresh musaazi))) "Musaazi strength 3")
+      (is (= 0 (get-in (refresh musaazi) [:counter :virus])) "Musaazi lost a virus counter")
+      (card-ability state :runner musaazi 1)
+      (prompt-select :runner cache)
+      (prompt-choice :runner 1)
+      (is (= 1 (get-in (refresh cache) [:counter :virus])) "Cache lost a virus counter to break"))))
+
 (deftest yusuf
   ;; Yusuf gains virus counters on successful runs and can spend virus counters from any installed card
   (do-game
