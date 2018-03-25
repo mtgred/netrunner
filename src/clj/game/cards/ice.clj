@@ -674,17 +674,23 @@
                   end-the-run]}
 
    "Data Raven"
-   {:implementation "Encounter effect is manual"
-    :abilities [give-tag
-                (power-counter-ability give-tag)]
-    :runner-abilities [{:label "End the run"
-                        :effect (req (end-run state :runner)
-                                     (system-msg state :runner "chooses to end the run on encountering Data Raven"))}
-                       {:label "Take 1 tag"
-                        :delayed-completion true
-                        :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Raven")
-                                     (tag-runner state :runner eid 1))}]
-    :subroutines [(trace-ability 3 add-power-counter)]}
+   {:abilities [(power-counter-ability give-tag)]
+    :subroutines [(trace-ability 3 add-power-counter)]
+    :events {:encounter-ice {:delayed-completion true
+                             :req (req (not= (get-in @state [:runner :register :bypass-current-ice])))
+                             :effect (req (show-wait-prompt state :corp "Runner to decide to take 1 tag or end the run")
+                                          (continue-ability state :runner
+                                            {:player :runner
+                                             :prompt "Take 1 tag or end the run?"
+                                             :choices ["Take 1 tag" "End the run"]
+                                             :effect (req (if (= target "Take 1 tag")
+                                                             (do (system-msg state :runner "chooses to take 1 tag on encountering Data Raven")
+                                                                 (tag-runner state :runner eid 1)
+                                                                 (clear-wait-prompt state :corp))
+                                                             (do (system-msg state :runner "chooses to end the run on encountering Data Raven")
+                                                                 (end-run state :runner)
+                                                                 (clear-wait-prompt state :corp))))}
+                                          card nil))}}}
 
    "Data Ward"
    {:runner-abilities [{:label "Pay 3 [Credits]"
@@ -1826,10 +1832,13 @@
     :subroutines [end-the-run]}
 
    "Tollbooth"
-   {:implementation "Encounter effect is manual"
-    :abilities [{:msg "make the Runner pay 3 [Credits], if able"
-                 :effect (effect (pay :runner card :credit 3))}]
-    :subroutines [end-the-run]}
+   {:subroutines [end-the-run]
+    :events {:encounter-ice {:effect (req (if (>= (:credit runner) 3)
+                                            (do (lose state :runner :credit 3)
+                                                (system-msg state side "Runner loses 3 [Credits]"))
+                                            (do (end-run state side)
+                                                (system-msg state side "Runner can't pay 3")
+                                                (system-msg state side "Tollbooth ends the run"))))}}}
 
    "Tour Guide"
    {:abilities [{:label "Gain subroutines"
