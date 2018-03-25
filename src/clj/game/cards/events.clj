@@ -1094,7 +1094,7 @@
 
                                       (= target "Take 1 Bad Publicity")
                                       (do (gain state :corp :bad-publicity 1)
-                                          (system-msg state side "takes 1 Bad Publicity from Mining Accident")
+                                          (system-msg state side "takes 1 bad publicity from Mining Accident")
                                           (clear-wait-prompt state :runner)
                                           (effect-completed state side eid))))})]
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
@@ -1102,7 +1102,7 @@
     :effect (req (move state side (first (:play-area runner)) :rfg)
                  (show-wait-prompt state :runner "Corp to choose to pay or take bad publicity")
                  (continue-ability state side (mining) card nil))
-    :msg "make the Corp pay 5 [Credits] or take 1 Bad Publicity"})
+    :msg "make the Corp pay 5 [Credits] or take 1 bad publicity"})
 
    "Möbius"
    {:req (req rd-runnable)

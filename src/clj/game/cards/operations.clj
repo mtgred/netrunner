@@ -1176,7 +1176,7 @@
                                                   (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
                                                                               (gain state side :credit bplost)
                                                                               (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
-                                                                          (system-msg state side "uses Sacrifice but gains no credits and loses no Bad Publicity"))
+                                                                          (system-msg state side "uses Sacrifice but gains no credits and loses no bad publicity"))
                                                   (effect-completed state side eid)
                                                   (unregister-events state side card)))}}}
    "Salems Hospitality"
@@ -1480,6 +1480,12 @@
                                  (system-msg state side (str "uses Threat Level Alpha to give the Runner " tags " tags")))
                              (do (tag-runner state :runner eid 1)
                                  (system-msg state side "uses Threat Level Alpha to give the Runner a tag")))))}}
+
+   "Too Big to Fail"
+   {:req (req (< (:credit corp) 10))
+    :msg "gain 7 [Credits] and take 1 bad publicity"
+    :effect (effect (gain :credit 7)
+                    (gain :corp :bad-publicity 1) ) }
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))
