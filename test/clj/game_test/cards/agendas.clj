@@ -1548,74 +1548,82 @@
 
 (deftest reeducation
   ;; Reeducation - Simple test
-  (do-game
-    (new-game (default-corp [(qty "Reeducation" 1) (qty "Sweeps Week" 1) (qty "Hedge Fund" 1)
-                             (qty "Jackson Howard" 1) (qty "Gutenberg" 1)])
-              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
-                               (qty "Corroder" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)]))
-    (starting-hand state :corp ["Reeducation" "Sweeps Week"])
-    (starting-hand state :runner ["Self-modifying Code"])
-    (play-and-score state "Reeducation")
-    (is (prompt-is-type? :runner :waiting) "Runner has wait prompt")
-    (is (= 1 (count (get-in @state [:corp :hand]))))
-    (is (= 1 (count (get-in @state [:runner :hand]))))
-    (prompt-choice :corp (find-card "Sweeps Week" (:hand (get-corp)))) ; put Sweeps Week at bottom of R&D
-    (prompt-choice :corp "Done") ; finished selecting cards
-    (prompt-choice :corp "Done") ; corp prompt for Done/Start Over
-    (is (= "Sweeps Week" (:title (last (:deck (get-corp))))))
-    (is (= "Self-modifying Code" (:title (last (:deck (get-runner))))))
-    (is (= 1 (count (get-in @state [:corp :hand]))))
-    (is (= 0 (count (get-in @state [:runner :hand]))))))
+  (testing "Simple test"
+    (do-game
+      (new-game (default-corp [(qty "Reeducation" 1) (qty "Sweeps Week" 1) (qty "Hedge Fund" 1)
+                               (qty "Jackson Howard" 1) (qty "Gutenberg" 1)])
+                (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                                 (qty "Corroder" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)]))
+      (starting-hand state :corp ["Reeducation" "Sweeps Week"])
+      (starting-hand state :runner ["Self-modifying Code"])
+      (play-and-score state "Reeducation")
+      (is (prompt-is-type? :runner :waiting) "Runner has wait prompt")
+      (is (= 1 (count (get-in @state [:corp :hand]))))
+      (is (= 1 (count (get-in @state [:runner :hand]))))
+      (prompt-choice :corp (find-card "Sweeps Week" (:hand (get-corp)))) ; put Sweeps Week at bottom of R&D
+      (prompt-choice :corp "Done") ; finished selecting cards
+      (prompt-choice :corp "Done") ; corp prompt for Done/Start Over
+      (is (= "Sweeps Week" (:title (last (:deck (get-corp))))))
+      (is (= "Self-modifying Code" (:title (last (:deck (get-runner))))))
+      (is (= 1 (count (get-in @state [:corp :hand]))))
+      (is (= 0 (count (get-in @state [:runner :hand]))))))
+  (testing "Extra cards"
+    ;; If Corp is adding more cards in HQ than Runner has in their Grip, Runner
+    ;; is not 'able' to resolve the effect and doesn't have to add to bottom of Stack
+    (do-game
+      (new-game (default-corp [(qty "Reeducation" 1) (qty "Sweeps Week" 1) (qty "Hedge Fund" 1)
+                               (qty "Jackson Howard" 1) (qty "Gutenberg" 1)])
+                (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                                 (qty "Corroder" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)]))
+      (starting-hand state :corp ["Reeducation" "Sweeps Week" "Hedge Fund"])
+      (starting-hand state :runner ["Self-modifying Code"])
+      (play-and-score state "Reeducation")
+      (is (prompt-is-type? :runner :waiting) "Runner has wait prompt")
+      (is (= 2 (count (:hand (get-corp)))))
+      (is (= 1 (count (:hand (get-runner)))))
+      (prompt-choice :corp (find-card "Sweeps Week" (:hand (get-corp))))
+      (prompt-choice :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; this is the bottom card of R&D
+      (prompt-choice :corp "Done") ; finished selecting cards
+      (prompt-choice :corp "Done") ; corp prompt for Done/Start Over
+      (is (= "Hedge Fund" (:title (last (:deck (get-corp))))))
+      (is (= "Sweeps Week" (:title (last (butlast (:deck (get-corp)))))))
+      (is (= "Self-modifying Code" (:title (first (:hand (get-runner))))))
+      (is (= 2 (count (:hand (get-corp)))))
+      (is (= 1 (count (:hand (get-runner))))))))
 
-(deftest reeducation-extra-cards
-  ;; Reeducation - If Corp is adding more cards in HQ than Runner has in their Grip, Runner
-  ;; is not 'able' to resolve the effect and doesn't have to add to bottom of Stack
+(deftest remote-data-farm
+  ;; Remote Data Farm
   (do-game
-    (new-game (default-corp [(qty "Reeducation" 1) (qty "Sweeps Week" 1) (qty "Hedge Fund" 1)
-                             (qty "Jackson Howard" 1) (qty "Gutenberg" 1)])
-              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
-                               (qty "Corroder" 1) (qty "Sure Gamble" 1) (qty "Desperado" 1)]))
-    (starting-hand state :corp ["Reeducation" "Sweeps Week" "Hedge Fund"])
-    (starting-hand state :runner ["Self-modifying Code"])
-    (play-and-score state "Reeducation")
-    (is (prompt-is-type? :runner :waiting) "Runner has wait prompt")
-    (is (= 2 (count (get-in @state [:corp :hand]))))
-    (is (= 1 (count (get-in @state [:runner :hand]))))
-    (prompt-choice :corp (find-card "Sweeps Week" (:hand (get-corp))))
-    (prompt-choice :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; this is the bottom card of R&D
-    (prompt-choice :corp "Done") ; finished selecting cards
-    (prompt-choice :corp "Done") ; corp prompt for Done/Start Over
-    (is (= "Hedge Fund" (:title (last (:deck (get-corp))))))
-    (is (= "Sweeps Week" (:title (last (butlast (:deck (get-corp)))))))
-    (is (= "Self-modifying Code" (:title (first (:hand (get-runner))))))
-    (is (= 2 (count (get-in @state [:corp :hand]))))
-    (is (= 1 (count (get-in @state [:runner :hand]))))))
+    (new-game (default-corp [(qty "Remote Data Farm" 1)])
+              (default-runner))
+    (is (= 5 (get-hand-size :corp)))
+    (play-and-score state "Remote Data Farm")
+    (is (= 7 (get-hand-size :corp)))))
 
 (deftest research-grant
-  ;; Research Grant - basic test
-  (do-game
-    (new-game (default-corp [(qty "Research Grant" 2)])
-              (default-runner))
-    (play-from-hand state :corp "Research Grant" "New remote")
-    (play-and-score state "Research Grant")
-    (prompt-select :corp (get-content state :remote1 0))
-    (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")))
-
-(deftest research-grant-leela
-  ;; Research Grant - vs. Leela. Issue #3069.
-  (do-game
-    (new-game (default-corp [(qty "Research Grant" 2) (qty "Ice Wall" 2)])
-              (make-deck "Leela Patel: Trained Pragmatist" [(qty "Sure Gamble" 1)]))
-    (core/gain state :corp :click 1)
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "R&D")
-    (play-from-hand state :corp "Research Grant" "New remote")
-    (play-and-score state "Research Grant")
-    (prompt-select :corp (get-content state :remote1 0))
-    (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")
-    (prompt-select :runner (get-ice state :hq 0))
-    (prompt-select :runner (get-ice state :rd 0))
-    (is (empty? (:effect-completed @state)) "All score and Leela effects resolved")))
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Research Grant" 2)])
+                (default-runner))
+      (play-from-hand state :corp "Research Grant" "New remote")
+      (play-and-score state "Research Grant")
+      (prompt-select :corp (get-content state :remote1 0))
+      (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")))
+  (testing "vs Leela"
+    ;; Issue #3069
+    (do-game
+      (new-game (default-corp [(qty "Research Grant" 2) (qty "Ice Wall" 2)])
+                (make-deck "Leela Patel: Trained Pragmatist" [(qty "Sure Gamble" 1)]))
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Research Grant" "New remote")
+      (play-and-score state "Research Grant")
+      (prompt-select :corp (get-content state :remote1 0))
+      (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")
+      (prompt-select :runner (get-ice state :hq 0))
+      (prompt-select :runner (get-ice state :rd 0))
+      (is (empty? (:effect-completed @state)) "All score and Leela effects resolved"))))
 
 (deftest restructured-datapool
   (do-game
