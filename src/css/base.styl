@@ -157,7 +157,7 @@ button.small
 .username
   font-weight: bold
   font-size: 14px
-  margin-right: 10px
+  margin-right: 5px
 
 .active
   color: orange
@@ -746,8 +746,35 @@ nav ul
   display-flex()
   margin-bottom: 5px
 
+  .name-menu
+    position: relative
+
+  .clickable
+    cursor: pointer
+
   .content
     flex(1)
+
+  .block-menu
+    display: none
+    position: absolute
+    z-index: 30
+    width: 200px
+    font-size: 12px
+    line-height: 16px
+
+    > div
+      border: 1px solid white
+      padding: 3px 6px
+      border-radius: 4px
+      margin-bottom: 4px
+      cursor: pointer
+
+      &:last-child
+        margin-bottom: 0
+
+      &:hover
+        border-color: orange
 
 .message-list
   height: 400px
