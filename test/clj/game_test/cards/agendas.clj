@@ -99,10 +99,11 @@
               (default-runner))
     (play-and-score state "Ancestral Imager")
     (take-credits state :corp)
-    (is (= 3 (count(get-in @state [:runner :hand]))) "Runner has 3 cards in hand")
-    (run-on state :hq)
-    (run-jack-out state)
-    (is (= 2 (count(get-in @state [:runner :hand]))) "Runner took 1 net damage")))
+    (let [grip (count (:hand (get-runner)))]
+      (is (= grip (count (:hand (get-runner)))) (str "Runner has " grip " cards in hand"))
+      (run-on state :hq)
+      (run-jack-out state)
+      (is (= (dec grip) (count (:hand (get-runner)))) "Runner took 1 net damage"))))
 
 (deftest armed-intimidation
   ;; Armed intimidation choices
@@ -494,7 +495,6 @@
       (is (= 1 (:credit (get-corp))) "Should gain 1 credit for rezzed code gate"))))
 
 (deftest executive-retreat
-  ;; Executive Retreat
   (do-game
     (new-game (default-corp [(qty "Executive Retreat" 1) (qty "Hedge Fund" 5)])
               (default-runner))
@@ -505,24 +505,21 @@
     (let [er-scored (get-scored state :corp)]
       (card-ability state :corp er-scored 0)
       (is (= 5 (count (:hand (get-corp)))) "Corp should have 5 cards in hand")
-      (is (= 0 (get-counters (refresh er-scored) :agenda)) "Executive Retreat should have 0 agenda counters"))))
-
-(deftest executive-retreat-overdraw
-  ;; Executive Retreat
-  (do-game
-    (new-game (default-corp [(qty "Executive Retreat" 1) (qty "Hedge Fund" 4)])
-              (default-runner))
-    (starting-hand state :corp ["Executive Retreat" "Hedge Fund"])
-    (is (= 2 (count (:hand (get-corp)))) "Corp should start with 1 card in HQ")
-    (play-and-score state "Executive Retreat")
-    (is (= 0 (count (:hand (get-corp)))) "Corp should have 0 cards in HQ after shuffling HQ back into R&D")
-    (let [er-scored (get-scored state :corp)]
-      (card-ability state :corp er-scored 0)
-      (is (= 4 (count (:hand (get-corp)))) "Corp should have 5 cards in hand")
-      (is (= 0 (get-counters (refresh er-scored) :agenda)) "Executive Retreat should have 0 agenda counters")
-      (is (= :runner (:winner @state)) "Runner wins")
-      (is (= "Decked" (:reason @state)) "Win condition reports decked"))))
-
+      (is (= 0 (get-counters (refresh er-scored) :agenda)) "Executive Retreat should have 0 agenda counters")))
+  (testing "Overdraw"
+    (do-game
+      (new-game (default-corp [(qty "Executive Retreat" 1) (qty "Hedge Fund" 4)])
+                (default-runner))
+      (starting-hand state :corp ["Executive Retreat" "Hedge Fund"])
+      (is (= 2 (count (:hand (get-corp)))) "Corp should start with 1 card in HQ")
+      (play-and-score state "Executive Retreat")
+      (is (= 0 (count (:hand (get-corp)))) "Corp should have 0 cards in HQ after shuffling HQ back into R&D")
+      (let [er-scored (get-scored state :corp)]
+        (card-ability state :corp er-scored 0)
+        (is (= 4 (count (:hand (get-corp)))) "Corp should have 5 cards in hand")
+        (is (= 0 (get-counters (refresh er-scored) :agenda)) "Executive Retreat should have 0 agenda counters")
+        (is (= :runner (:winner @state)) "Runner wins")
+        (is (= "Decked" (:reason @state)) "Win condition reports decked")))))
 
 (deftest explode-a-palooza
   ;; Explode-a-palooza - Gain 5 credits when Runner accesses it
@@ -860,57 +857,57 @@
 
 (deftest ikawah-project
   ;; Ikawah Project - costs 2 credit 1 click to steal
-  (do-game
-    (new-game (default-corp [(qty "Ikawah Project" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Ikawah Project" "New remote")
-    (testing "No credits"
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Ikawah Project" 1)])
+                (default-runner))
+      (play-from-hand state :corp "Ikawah Project" "New remote")
+      (testing "No credits"
+        (take-credits state :corp)
+        (core/lose state :runner :credit (:credit (get-runner)) :click 3)
+        (run-empty-server state :remote1)
+        (run-successful state)
+        (prompt-choice :runner "2 [Credits]")
+        (prompt-choice :runner "Don't steal")
+        (is (= 0 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
+        (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project"))
+      (testing "No clicks"
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (core/lose state :runner :credit (:credit (get-runner)) :click 3)
+        (run-empty-server state :remote1)
+        (run-successful state)
+        (prompt-choice :runner "[Click]")
+        (prompt-choice :runner "Don't steal")
+        (is (= 0 (:click (get-runner))) "Runner couldn't afford to steal, so no clicks spent")
+        (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project"))
+      (testing "Enough of both"
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (core/lose state :runner :credit (:credit (get-runner)) :click (:click (get-runner)))
+        (core/gain state :runner :credit 5 :click 4)
+        (is (= 5 (:credit (get-runner))) "Runner should be reset to 5 credits")
+        (is (= 4 (:click (get-runner))) "Runner should be reset to 4 clicks")
+        (run-empty-server state :remote1)
+        (prompt-choice :runner "[Click]")
+        (prompt-choice :runner "2 [Credits]")
+        (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
+        (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
+        (is (= 3 (:agenda-point (get-runner))))
+        (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project"))))
+  (testing "Not stealing"
+    ;; do not reveal when the Runner does not steal from R&D
+    (do-game
+      (new-game (default-corp [(qty "Ikawah Project" 2)])
+                (default-runner))
       (take-credits state :corp)
-      (core/lose state :runner :credit (:credit (get-runner)) :click 3)
-      (run-empty-server state :remote1)
-      (run-successful state)
-      (prompt-choice :runner "2 [Credits]")
+      (starting-hand state :corp ["Ikawah Project"])
+      (run-empty-server state "R&D")
       (prompt-choice :runner "Don't steal")
-      (is (= 0 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
-      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project"))
-    (testing "No clicks"
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (core/lose state :runner :credit (:credit (get-runner)) :click 3)
-      (run-empty-server state :remote1)
-      (run-successful state)
-      (prompt-choice :runner "[Click]")
+      (is (not (last-log-contains? state "not to pay to steal Ikawah Project")) "Ikawah Project should not be mentioned")
+      (run-empty-server state "HQ")
       (prompt-choice :runner "Don't steal")
-      (is (= 0 (:click (get-runner))) "Runner couldn't afford to steal, so no clicks spent")
-      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project"))
-    (testing "Enough of both"
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (core/lose state :runner :credit (:credit (get-runner)) :click (:click (get-runner)))
-      (core/gain state :runner :credit 5 :click 4)
-      (is (= 5 (:credit (get-runner))) "Runner should be reset to 5 credits")
-      (is (= 4 (:click (get-runner))) "Runner should be reset to 4 clicks")
-      (run-empty-server state :remote1)
-      (prompt-choice :runner "[Click]")
-      (prompt-choice :runner "2 [Credits]")
-      (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
-      (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
-      (is (= 3 (:agenda-point (get-runner))))
-      (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project"))))
-
-(deftest ikawah-project-not-stealing
-  ;; Ikawah Project - do not reveal when the Runner does not steal from R&D
-  (do-game
-    (new-game (default-corp [(qty "Ikawah Project" 2)])
-              (default-runner))
-    (take-credits state :corp)
-    (starting-hand state :corp ["Ikawah Project"])
-    (run-empty-server state "R&D")
-    (prompt-choice :runner "Don't steal")
-    (is (not (last-log-contains? state "not to pay to steal Ikawah Project")) "Ikawah Project should not be mentioned")
-    (run-empty-server state "HQ")
-    (prompt-choice :runner "Don't steal")
-    (is (last-log-contains? state "not to pay to steal Ikawah Project") "Ikawah Project should be mentioned")))
+      (is (last-log-contains? state "not to pay to steal Ikawah Project") "Ikawah Project should be mentioned"))))
 
 (deftest improved-tracers
   ;; Improved Tracers
@@ -1150,6 +1147,31 @@
     (is (= 1 (:link (get-runner))) "Runner has 1 link")
     (prompt-choice :runner 2)
     (is (= 7 (:credit (get-corp))) "Corp gained a credit from NQ")))
+
+(deftest new-construction
+  ;; New Construction
+  (do-game
+    (new-game (default-corp [(qty "New Construction" 1) (qty "Commercial Bankers Group" 10)])
+              (default-runner))
+    (starting-hand state :corp (vec (cons "New Construction" (repeat 10 "Commercial Bankers Group"))))
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "New Construction" "New remote")
+    (let [nc (get-content state :remote1 0)]
+      (is (= 0 (count (:advance-counter (refresh nc)))))
+      (dotimes [n 4]
+        (advance state (refresh nc))
+        (prompt-choice :corp "Yes")
+        (prompt-select :corp (find-card "Commercial Bankers Group" (:hand (get-corp)))))
+      (is (= 4 (:advance-counter (refresh nc))))
+      (is (not= :this-turn (get-in (get-content state :remote5 0) [:rezzed])))
+      (let [credits (:credit (get-corp))]
+        (advance state (refresh nc))
+        (prompt-choice :corp "Yes")
+        (prompt-select :corp (find-card "Commercial Bankers Group" (:hand (get-corp))))
+        (is (= 5 (:advance-counter (refresh nc))))
+        (is (= :this-turn (get-in (get-content state :remote6 0) [:rezzed])))
+        (is (= (dec credits) (:credit (get-corp))))
+        ))))
 
 (deftest nisei-mk-ii-step-43
   ;; Nisei MK II - Remove hosted counter to ETR, check this works in 4.3
