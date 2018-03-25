@@ -575,7 +575,7 @@
 
 (deftest false-flag
   (testing "when the corp attempts to score False Flag"
-    (testing "when False Flag has 7 advancements"
+    (testing "and False Flag has 7 advancements"
       (do-game
        (new-game (default-corp [(qty "False Flag" 1)])
                  (default-runner))
@@ -593,7 +593,7 @@
          (is (= 1 (:click (get-corp)))
              "scoring False Flag costs one click"))))
 
-    (testing "when False Flag has less than 7 advancements"
+    (testing "and False Flag has less than 7 advancements"
       (do-game
        (new-game (default-corp [(qty "False Flag" 1)])
                  (default-runner))
@@ -614,7 +614,7 @@
   (testing "when the runner accesses False Flag"
     (letfn [(false-flag-tags-test
               [[advancements expected-tags]]
-              (testing (str "when False Flag has " advancements " advancements")
+              (testing (str "and False Flag has " advancements " advancements")
                 (do-game
                  (new-game (default-corp [(qty "False Flag" 1)])
                            (default-runner))
