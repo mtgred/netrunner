@@ -148,7 +148,7 @@
                                       (= "Runner" (:side %)))}
                  :effect (req (if (or (is-type? target "Event")
                                       (and (has-subtype? target "Console")
-                                           (some #(has-subtype? % "Console") (all-installed state :runner))))
+                                           (some #(has-subtype? % "Console") (all-active-installed state :runner))))
                                 ;; Consoles and events are immediately unpreventably trashed.
                                 (trash state side target {:unpreventable true})
                                 ;; Other cards are moved to rig and have events wired.
@@ -171,7 +171,7 @@
               :effect (req (let [bj card]
                              (when-not (:replace-access (get-in @state [:run :run-effect]))
                                (swap! state assoc-in [:run :run-effect :replace-access]
-                                      {:effect (req (if (> (count (filter #(= (:title %) "Bank Job") (all-installed state :runner))) 1)
+                                      {:effect (req (if (> (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))) 1)
                                                       (resolve-ability state side
                                                         {:prompt "Select a copy of Bank Job to use"
                                                          :choices {:req #(and installed? (= (:title %) "Bank Job"))}
@@ -563,7 +563,7 @@
     :events {:post-runner-turn-ends nil}}
 
    "Drug Dealer"
-   {:flags {:runner-phase-12 (req (some #(card-flag? % :drip-economy true) (all-installed state :runner)))}
+   {:flags {:runner-phase-12 (req (some #(card-flag? % :drip-economy true) (all-active-installed state :runner)))}
     :abilities [{:label "Lose 1 [Credits] (start of turn)"
                  :msg (msg (if (= (get-in @state [:runner :credit]) 0) "lose 0 [Credits] (runner has no credits to lose)" "lose 1 [Credits]"))
                  :req (req (:runner-phase-12 @state))
@@ -607,7 +607,7 @@
    {:flags {:runner-turn-draw true
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                       (cons (get-in @state [:runner :identity])
-                                                            (all-installed state :runner))))))}
+                                                            (all-active-installed state :runner))))))}
     :data {:counter {:power  3}}
     :events {:runner-turn-begins ability}
     :abilities [ability]})
@@ -922,7 +922,7 @@
                                                           (system-msg "chooses to trash Lewi Guilherme"))}}}]
    {:flags {:drip-economy true ;; for Drug Dealer
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
-                                                      (all-installed state :runner)))))}
+                                                      (all-active-installed state :runner)))))}
 
     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
     :effect (effect (lose :corp :hand-size-modification 1))
@@ -1021,7 +1021,7 @@
                   :effect (effect (prompt! card (str "The top card of your Stack is "
                                                      (:title (first (:deck runner)))) ["OK"] {}))}]
    {:flags {:runner-turn-draw true
-            :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner)))}
+            :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner)))}
     :events {:runner-turn-begins ability}
     :abilities [ability]})
 
@@ -1355,7 +1355,7 @@
 
    "Rosetta 2.0"
    {:abilities [{:req (req (and (not (install-locked? state side))
-                                (some #(is-type? % "Program") (all-installed state :runner))))
+                                (some #(is-type? % "Program") (all-active-installed state :runner))))
                  :cost [:click 1]
                  :prompt "Choose an installed program to remove from the game"
                  :choices {:req #(and installed? (is-type? % "Program"))}
@@ -1819,7 +1819,7 @@
    {:flags {:runner-turn-draw true
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                       (cons (get-in @state [:runner :identity])
-                                                            (all-installed state :runner))))))}
+                                                            (all-active-installed state :runner))))))}
 
     :events {:runner-turn-begins {:effect (req (lose state side :click 1)
                                                (when-not (get-in @state [:per-turn (:cid card)])

@@ -422,8 +422,8 @@
                            :effect (req (let [ices (filter #(and (is-type? % "ICE")
                                                                  (get-card state %))
                                                            (:most-recent-drawn corp-reg))
-                                              grids (filterv #(and (:rezzed %) (= "Jinja City Grid" (:title %)))
-                                                             (all-installed state :corp))]
+                                              grids (filterv #(= "Jinja City Grid" (:title %))
+                                                             (all-active-installed state :corp))]
                                           (if (not-empty ices)
                                             (continue-ability state side (choose-ice ices grids) card nil)
                                             (effect-completed state side eid))))}
@@ -434,7 +434,7 @@
                  :req (req (and this-server
                                 (pos? (get-in @state [:runner :tag]))
                                 (not (empty? (filter #(is-type? % "Program")
-                                                     (all-installed state :runner))))))
+                                                     (all-active-installed state :runner))))))
                  :msg (msg "remove 1 tag")
                  :effect (req (resolve-ability state side trash-program card nil)
                               (trash state side card {:cause :ability-cost})
@@ -923,7 +923,7 @@
      {:interactive (req true)
       :delayed-completion true
       :req (req (and this-server
-                     (some #(has-subtype? % "Icebreaker") (all-installed state :runner))))
+                     (some #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
       :effect (req (show-wait-prompt state :runner "Corp to use Will-o'-the-Wisp")
                    (continue-ability state side
                      {:optional

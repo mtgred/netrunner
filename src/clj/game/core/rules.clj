@@ -347,7 +347,7 @@
 
        (and (= side :corp)
             (untrashable-while-resources? card)
-            (> (count (filter #(is-type? % "Resource") (all-installed state :runner))) 1))
+            (> (count (filter #(is-type? % "Resource") (all-active-installed state :runner))) 1))
        (do (enforce-msg state card "cannot be trashed while there are other resources installed")
            (effect-completed state side eid))
 

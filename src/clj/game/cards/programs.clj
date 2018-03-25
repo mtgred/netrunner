@@ -565,10 +565,10 @@
    "Origami"
    {:effect (effect (gain :hand-size-modification
                           (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                   (all-installed state :runner)))))))
+                                                   (all-active-installed state :runner)))))))
     :leave-play (effect (lose :hand-size-modification
                               (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                       (all-installed state :runner)))))))}
+                                                       (all-active-installed state :runner)))))))}
 
    "Paintbrush"
    {:abilities [{:cost [:click 1]

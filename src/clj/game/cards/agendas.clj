@@ -249,7 +249,7 @@
                :msg "make the Runner lose 2 tags"}}
 
    "CFC Excavation Contract"
-   {:effect (req (let [bios (count (filter #(and (rezzed? %) (has-subtype? % "Bioroid")) (all-installed state :corp)))
+   {:effect (req (let [bios (count (filter #(has-subtype? % "Bioroid") (all-active-installed state :corp)))
                        bucks (* bios 2)]
                    (gain state side :credit bucks)
                    (system-msg state side (str "gains " bucks " [Credits] from CFC Excavation Contract"))))}
@@ -752,7 +752,7 @@
             :msg "trash all connection and job resources"
             :effect (req (doseq [resource (filter #(or (has-subtype? % "Job")
                                                        (has-subtype? % "Connection"))
-                                                  (all-installed state :runner))]
+                                                  (all-active-installed state :runner))]
                                    (trash state side resource)))}}
 
    "Personality Profiles"

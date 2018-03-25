@@ -353,7 +353,7 @@
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     ; not-empty doesn't work for the next line, because it does not return literal true; it returns the collection.
     ; flags need exact equality of value to work.
-    :flags {:corp-phase-12 (req (and (pos? (count (filter #(card-is? % :type "Resource") (all-installed state :runner))))
+    :flags {:corp-phase-12 (req (and (pos? (count (filter #(card-is? % :type "Resource") (all-active-installed state :runner))))
                                      (:rezzed card)))}
     :abilities [{:label "Trash a resource"
                  :prompt "Select a resource to trash with Corporate Town"
@@ -918,7 +918,7 @@
     :events {:corp-turn-begins {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}}
     :abilities [{:cost [:credit 2]
                  :req (req (and (> (get card :advance-counter 0) 0)
-                                (some #(rezzed? %) (all-installed state :corp))))
+                                (not-empty (all-active-installed state :corp))))
                  :label "Move an advancement token to a faceup card"
                  :prompt "Select a faceup card"
                  :choices {:req #(rezzed? %)}

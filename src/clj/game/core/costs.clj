@@ -29,7 +29,7 @@
                   (and (= type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                   (and (= type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
                   (and (= type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                                  (all-installed state :runner))) amount) 0))
+                                                                  (all-active-installed state :runner))) amount) 0))
                   (and (= type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
                   (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
       "Unable to pay")))

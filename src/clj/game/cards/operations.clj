@@ -168,11 +168,11 @@
 
    "Biased Reporting"
    {:delayed-completion true
-    :req (req (not-empty (all-installed state :runner)))
+    :req (req (not-empty (all-active-installed state :runner)))
     :prompt "Choose a card type"
     :choices ["Resource" "Hardware" "Program"]
     :effect (req (let [t target
-                       num (count (filter #(is-type? % t) (all-installed state :runner)))]
+                       num (count (filter #(is-type? % t) (all-active-installed state :runner)))]
                    (show-wait-prompt state :corp "Runner to choose cards to trash")
                    (when-completed
                      (resolve-ability state :runner
@@ -186,7 +186,7 @@
                                                                     " and gains " (count targets) " [Credits]"))
                                      (clear-wait-prompt state :corp))}
                       card nil)
-                     (do (let [n (* 2 (count (filter #(is-type? % t) (all-installed state :runner))))]
+                     (do (let [n (* 2 (count (filter #(is-type? % t) (all-active-installed state :runner))))]
                            (when (pos? n)
                              (gain state :corp :credit n)
                              (system-msg state :corp (str "uses Biased Reporting to gain " n " [Credits]")))
@@ -458,8 +458,8 @@
 
    "Financial Collapse"
    {:delayed-completion true
-    :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-installed state :runner)))))
-    :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-installed state :runner)))]
+    :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-active-installed state :runner)))))
+    :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-active-installed state :runner)))]
                    (if (pos? rcount)
                      (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
                          (continue-ability
@@ -596,7 +596,7 @@
    {:req (req (last-turn? state :runner :trashed-card))
     :trace {:base 2
             :label "Trash 2 installed non-program cards"
-            :choices {:max (req (min 2 (count (filter #(not (is-type? % "Program")) (concat (all-installed state :corp)
+            :choices {:max (req (min 2 (count (filter #(or (:facedown %) (not (is-type? % "Program"))) (concat (all-installed state :corp)
                                                                                             (all-installed state :runner))))))
                       :all true
                       :req #(and (installed? %)
@@ -691,8 +691,7 @@
 
    "Liquidation"
    {:delayed-completion true
-    :effect (req (let [n (count (filter #(and (rezzed? %)
-                                              (not (is-type? % "Agenda"))) (all-installed state :corp)))]
+    :effect (req (let [n (count (filter #(not (is-type? % "Agenda")) (all-active-installed state :corp)))]
                    (continue-ability state side
                      {:prompt "Select any number of rezzed cards to trash"
                       :choices {:max n
@@ -737,13 +736,13 @@
 
    "Mass Commercialization"
    {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
-                                          (concat (all-installed state :runner) (all-installed state :corp))))) " [Credits]")
+                                          (get-all-installed state)))) " [Credits]")
     :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
-                                                      (concat (all-installed state :runner) (all-installed state :corp)))))))}
+                                                      (get-all-installed state))))))}
 
    "MCA Informant"
    {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"
-    :req (req (not-empty (filter #(has-subtype? % "Connection") (all-installed state :runner))))
+    :req (req (not-empty (filter #(has-subtype? % "Connection") (all-active-installed state :runner))))
     :prompt "Choose a connection to host MCA Informant on it"
     :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Connection") (installed? %))}
     :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
@@ -892,7 +891,7 @@
    "Power Shutdown"
    {:req (req (last-turn? state :runner :made-run))
     :prompt "Trash how many cards from the top R&D?"
-    :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-installed state :runner)))))}
+    :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-active-installed state :runner)))))}
     :msg (msg "trash " target " cards from the top of R&D")
     :delayed-completion true
     :effect (req (mill state :corp target)
