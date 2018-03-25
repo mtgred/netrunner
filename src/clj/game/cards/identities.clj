@@ -873,11 +873,10 @@
                                   ice (ice-with-no-advancement-tokens state)]
                               (continue-ability
                                 state side
-                                {:prompt (str "Select ICE with no advancement tokens to place " agenda-points
-                                              (pluralize " advancement token" agenda-points) " on")
+                                {:prompt (str "Select ICE with no advancement tokens to place "
+                                             (quantify agenda-points "advancement token") " on")
                                  :choices {:req #(selectable-ice? %)}
-                                 :msg (msg "places " agenda-points
-                                           (pluralize " advancement token" agenda-points)
+                                 :msg (msg "places " (quantify agenda-points "advancement token")
                                            " on ICE with no advancement tokens")
                                  :effect (req (add-prop state :corp target :advance-counter agenda-points {:placed true})
                                               (clear-wait-prompt state :runner))}
