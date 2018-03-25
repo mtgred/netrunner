@@ -63,6 +63,35 @@
     (prompt-choice :corp "I have no regrets")
     (is (= 2 (count (:discard (get-corp)))))))
 
+(deftest advanced-concept-hopper
+  ;; Advanced Concept Hopper
+  (do-game
+    (new-game (default-corp [(qty "Advanced Concept Hopper" 1) (qty "Hedge Fund" 4)])
+              (default-runner))
+    (starting-hand state :corp ["Advanced Concept Hopper"])
+    (play-and-score state "Advanced Concept Hopper")
+    (take-credits state :corp)
+    (testing "Corp draws 1 card, only once per turn"
+      (let [cards (count (:hand (get-corp)))]
+        (is (= cards (count (:hand (get-corp)))) (str "Corp should have " cards " cards in hand"))
+        (run-on state :archives)
+        (prompt-choice :corp "Draw 1 card")
+        (is (= (inc cards) (count (:hand (get-corp)))) (str "Corp should have " (inc cards) " card in hand"))
+        (run-successful state)
+        (run-on state :archives)
+        (is (empty (:prompt (get-corp))) "No prompt as it's once per turn")))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (testing "Corp gains 1 credit, only once per turn"
+      (let [credits (:credit (get-corp))]
+        (is (= credits (:credit (get-corp))) (str "Corp should have " credits " credits"))
+        (run-on state :archives)
+        (prompt-choice :corp "Gain 1 [Credits]")
+        (is (= (inc credits) (:credit (get-corp))) (str "Corp should have " (inc credits) " credits"))
+        (run-successful state)
+        (run-on state :archives)
+        (is (empty (:prompt (get-corp))) "No prompt as it's once per turn")))))
+
 (deftest ancestral-imager
   ;; Ancestral Imager - damage on jack out
   (do-game
