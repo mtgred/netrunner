@@ -553,6 +553,31 @@
     (run-jack-out state)
     (is (= 6 (:credit (get-runner))) "Run unsuccessful; gained no credits")))
 
+(deftest diversion-of-funds-ability
+  ;; Diversion of Funds - Use ability
+  (do-game
+   (new-game (default-corp) (default-runner [(qty "Diversion of Funds" 3)]))
+   (take-credits state :corp)
+   (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
+   ;; play Diversion of Funds, use ability
+   (play-run-event state (first (:hand (get-runner))) :hq)
+   (prompt-choice :runner "Run ability")
+   (is (= 9 (:credit (get-runner))) "Runner netted 4 credits")
+   (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
+
+(deftest diversion-of-funds-access
+  ;; Diversion of Funds - Access
+  (do-game
+   (new-game (default-corp) (default-runner [(qty "Diversion of Funds" 3)]))
+   (take-credits state :corp) ; pass to runner's turn by taking credits
+   (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
+   ;; play Diversion, do not use ability
+   (play-run-event state (first (get-in @state [:runner :hand])) :hq)
+   (prompt-choice :runner "Access")
+   (is (= 0 (:tag (get-runner))) "Runner did not take any tags")
+   (is (= 4 (:credit (get-runner))) "Runner is down a credit")
+   (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")))
+
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
   (do-game
