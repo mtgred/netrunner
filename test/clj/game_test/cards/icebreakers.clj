@@ -419,6 +419,37 @@
     (prompt-choice :runner "No")
     (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")))
 
+(deftest persephone
+  ;; Persephone's ability trashes cards from R&D, triggering AR-Enhanced Security
+  ;; See #3187
+  (do-game
+    (new-game
+      (default-corp [(qty "Zed 1.0" 1) (qty "Zed 2.0" 3) (qty "AR-Enhanced Security" 1)])
+      (default-runner [(qty "Persephone" 10)]))
+    (core/move state :corp (find-card "Zed 2.0" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Zed 2.0" (:hand (get-corp))) :deck)
+    (play-from-hand state :corp "AR-Enhanced Security" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Zed 1.0" "Archives")
+    (core/rez state :corp (get-ice state :archives 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Persephone")
+    (run-on state "Archives")
+    (run-continue state)
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner 2)
+    (is (= 1 (:tag (get-runner))) "Runner took 1 tag from using Persephone's ability while AR-Enhanced Security is scored")
+    (take-credits state :runner)
+    ;; Gotta move the discarded cards back to the deck
+    (core/move state :corp (find-card "Zed 2.0" (:discard (get-corp))) :deck)
+    (core/move state :corp (find-card "Zed 2.0" (:discard (get-corp))) :deck)
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (run-continue state)
+    (prompt-choice :runner "Yes")
+    (prompt-choice :runner 2)
+    (is (= 2 (:tag (get-runner))) "Runner took 1 tag from using Persephone's ability while AR-Enhanced Security is scored")))
+
 (deftest shiv
   ;; Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link
   (do-game

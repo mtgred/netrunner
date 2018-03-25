@@ -476,7 +476,7 @@
               :effect (req (let [c (first (get-in @state [:runner :deck]))]
                              (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
                                                           " from the top of the Runner's Stack"))
-                             (mill state :runner)))}}}
+                             (mill state :corp :runner 1)))}}}
 
    "Jinteki: Replicating Perfection"
    {:events
@@ -620,7 +620,7 @@
                                 (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                 "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
-                  :effect (effect (mill 2) (draw))}]
+                  :effect (effect (mill :runner 2) (draw))}]
      {:flags {:runner-turn-draw true
               :runner-phase-12 (req (and (not (:disabled card))
                                          (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner))))}
