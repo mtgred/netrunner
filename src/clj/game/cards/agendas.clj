@@ -643,7 +643,9 @@
 
    "Mandatory Seed Replacement"
    (letfn [(msr [] {:prompt "Select two pieces of ICE to swap positions"
-                    :choices {:req #(and (installed? %) (ice? %)) :max 2}
+                    :choices {:req #(and (installed? %)
+                                         (ice? %))
+                              :max 2}
                     :delayed-completion true
                     :effect (req (if (= (count targets) 2)
                                    (do (swap-ice state side (first targets) (second targets))

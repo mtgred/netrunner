@@ -1045,6 +1045,43 @@
       (prompt-choice :corp "New remote")
       (is (some? (get-content state :remote8 0))))))
 
+(deftest mandatory-seed-replacement
+  ;; Mandatory Seed Replacement
+  (do-game
+    (new-game (default-corp [(qty "Mandatory Seed Replacement" 1)
+                             (qty "Ice Wall" 1) (qty "Fire Wall" 1)
+                             (qty "Kakugo" 1) (qty "Chum" 1)
+                             (qty "RSVP" 1) (qty "Sensei" 1)])
+              (default-runner))
+    (core/click-draw state :corp 2)
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (play-from-hand state :corp "Fire Wall" "R&D")
+    (play-from-hand state :corp "Kakugo" "HQ")
+    (play-from-hand state :corp "Chum" "Archives")
+    (play-from-hand state :corp "RSVP" "R&D")
+    (play-from-hand state :corp "Sensei" "HQ")
+    (let [iw (get-ice state :archives 0)
+          fw (get-ice state :rd 0)
+          kk (get-ice state :hq 0)
+          ch (get-ice state :archives 1)
+          rs (get-ice state :rd 1)
+          sn (get-ice state :hq 1)]
+      (core/rez state :corp iw)
+      (core/rez state :corp fw)
+      (core/rez state :corp kk)
+      (core/rez state :corp ch)
+      (core/rez state :corp rs)
+      (core/rez state :corp sn)
+      (play-and-score state "Mandatory Seed Replacement")
+      (prompt-select :corp (refresh iw))
+      (prompt-select :corp (refresh fw))
+      (prompt-select :corp (refresh kk))
+      (prompt-select :corp (refresh ch))
+      (prompt-select :corp (refresh rs))
+      (prompt-select :corp (refresh sn))
+    )))
+
 (deftest mandatory-upgrades
   ;; Mandatory Upgrades
   (testing "Gain an additional click"
