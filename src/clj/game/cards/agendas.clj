@@ -733,26 +733,28 @@
                                             (corp-install state side target "New remote")))}}}}}
 
    "Net Quarantine"
-   (let [nq  {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
-                             (when (pos? extra) (gain state side :credit extra)
-                                                (system-msg state :corp (str "uses Net Quarantine to gain " extra " [Credits]")))
-                             (when (some? (get-in @state [:runner :temp-link]))
-                               (swap! state assoc-in [:runner :link] (:temp-link runner))
-                               (swap! state dissoc-in [:runner :temp-link]))))}]
-   {:events
-    {:trace     {:once :per-turn
-                 :silent (req true)
-                 :effect (req
-                           (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
-                           (swap! state assoc-in [:runner :temp-link] (:link runner))
-                           (swap! state assoc-in [:runner :link] 0))}
-    :successful-trace nq
-    :unsuccessful-trace nq}})
+   (let [nq {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
+                            (when (pos? extra)
+                              (gain state side :credit extra)
+                              (system-msg state :corp (str "uses Net Quarantine to gain " extra " [Credits]")))
+                            (when (some? (get-in @state [:runner :temp-link]))
+                              (swap! state assoc-in [:runner :link] (:temp-link runner))
+                              (swap! state dissoc-in [:runner :temp-link]))))}]
+   {:successful-trace nq
+    :unsuccessful-trace nq
+    :events {:trace {:once :per-turn
+                     :silent (req true)
+                     :effect (req (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
+                                  (swap! state assoc-in [:runner :temp-link] (:link runner))
+                                  (swap! state assoc-in [:runner :link] 0))}}})
 
    "NEXT Wave 2"
    {:delayed-completion true
     :not-when-scored true
-    :effect (req (if (some #(and (rezzed? %) (ice? %) (has-subtype? % "NEXT")) (all-installed state :corp))
+    :effect (req (if (some #(and (rezzed? %)
+                                 (ice? %)
+                                 (has-subtype? % "NEXT"))
+                           (all-installed state :corp))
                    (continue-ability state side
                      {:optional
                       {:prompt "Do 1 brain damage with NEXT Wave 2?"

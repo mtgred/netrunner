@@ -1237,8 +1237,23 @@
         (prompt-select :corp (find-card "Commercial Bankers Group" (:hand (get-corp))))
         (is (= 5 (:advance-counter (refresh nc))))
         (is (= :this-turn (get-in (get-content state :remote6 0) [:rezzed])))
-        (is (= (dec credits) (:credit (get-corp))))
-        ))))
+        (is (= (dec credits) (:credit (get-corp))))))))
+
+(deftest next-wave-2
+  ;; NEXT Wave 2
+  (do-game
+    (new-game (default-corp [(qty "NEXT Wave 2" 2) (qty "NEXT Bronze" 1)])
+              (default-runner))
+    (is (= 0 (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
+    (play-from-hand state :corp "NEXT Bronze" "HQ")
+    (let [nxbr (get-ice state :hq 0)]
+      (core/rez state :corp nxbr))
+    (play-and-score state "NEXT Wave 2")
+    (prompt-choice :corp "No")
+    (is (= 0 (:brain-damage (get-runner))) "Runner should stay at 0 brain damage")
+    (play-and-score state "NEXT Wave 2")
+    (prompt-choice :corp "Yes")
+    (is (= 1 (:brain-damage (get-runner))) "Runner should gain 1 brain damage")))
 
 (deftest nisei-mk-ii-step-43
   ;; Nisei MK II - Remove hosted counter to ETR, check this works in 4.3
