@@ -60,13 +60,15 @@
                      (trash state side (get-card state c))))
 
                  ;; do hosted cards first so they don't get trashed twice
-                 (doseq [c (all-installed state :runner)]
-                   (when (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone)))
+                 (let [installedcards (all-active-installed state :runner)
+                       ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                       hostedcards (filter ishosted installedcards)
+                       nonhostedcards (remove ishosted installedcards)]
+                   (doseq [oc hostedcards :let [c (get-card state oc)]]
                      (move state side c [:rig :facedown])
                      (if (:memoryunits c)
-                       (gain state :runner :memory (:memoryunits c)))))
-                 (doseq [c (all-installed state :runner)]
-                   (when (not (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                       (gain state :runner :memory (:memoryunits c))))
+                   (doseq [oc nonhostedcards :let [c (get-card state oc)]]
                      (move state side c [:rig :facedown])
                      (if (:memoryunits c)
                        (gain state :runner :memory (:memoryunits c))))))}
@@ -118,9 +120,9 @@
 
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
-                                     (all-installed state :runner))) " [Credits]")
+                                     (all-active-installed state :runner))) " [Credits]")
     :effect (effect (gain :credit (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
-                                                 (all-installed state :runner)))))}
+                                                 (all-active-installed state :runner)))))}
 
    "Career Fair"
    {:prompt "Select a resource to install from your Grip"
@@ -412,6 +414,19 @@
     {:end-run {:req (req (:successful run))
                :msg "gain 5 [Credits]"
                :effect (effect (gain :runner :credit 5))}})
+
+   "Diversion of Funds"
+   {:req (req hq-runnable)
+    :effect (effect (run :hq
+                         {:req (req (= target :hq))
+                          :replace-access
+                          (let [five-or-all (fn [corp] (min 5 (:credit corp)))]
+                            {:delayed-completion true
+                             :msg (msg "force the Corp to lose " (five-or-all corp)
+                                       " [Credits], and gain " (five-or-all corp))
+                             :effect (effect (lose :corp :credit (five-or-all corp))
+                                             (gain :runner :credit (five-or-all corp)))})}
+                      card))}
 
    "Drive By"
    {:choices {:req #(let [topmost (get-nested-host %)]
@@ -946,10 +961,10 @@
    {:prompt "Choose a server"
     :choices (req runnable-servers)
     :delayed-completion true
-    :msg (msg "make a run on " target (when (< (count (filter #(is-type? % "Program") (all-installed state :runner))) 4)
+    :msg (msg "make a run on " target (when (< (count (filter #(is-type? % "Program") (all-active-installed state :runner))) 4)
                                         ", adding +2 strength to all icebreakers"))
-    :effect (req (when (< (count (filter #(is-type? % "Program") (all-installed state :runner))) 4)
-                   (doseq [c (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+    :effect (req (when (< (count (filter #(is-type? % "Program") (all-active-installed state :runner))) 4)
+                   (doseq [c (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                      (pump state side c 2 :all-run)))
                  (game.core/run state side (make-eid state) target nil card))}
 
@@ -1060,10 +1075,10 @@
 
    "Mars for Martians"
    {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
-                                     (all-installed state :runner)))
+                                     (all-active-installed state :runner)))
               " cards and gain " (:tag runner) " [Credits]")
     :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
-                                         (all-installed state :runner))))
+                                         (all-active-installed state :runner))))
                     (gain :credit (:tag runner)))}
 
    "Mass Install"
@@ -1094,7 +1109,7 @@
 
                                       (= target "Take 1 Bad Publicity")
                                       (do (gain state :corp :bad-publicity 1)
-                                          (system-msg state side "takes 1 Bad Publicity from Mining Accident")
+                                          (system-msg state side "takes 1 bad publicity from Mining Accident")
                                           (clear-wait-prompt state :runner)
                                           (effect-completed state side eid))))})]
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
@@ -1102,7 +1117,7 @@
     :effect (req (move state side (first (:play-area runner)) :rfg)
                  (show-wait-prompt state :runner "Corp to choose to pay or take bad publicity")
                  (continue-ability state side (mining) card nil))
-    :msg "make the Corp pay 5 [Credits] or take 1 Bad Publicity"})
+    :msg "make the Corp pay 5 [Credits] or take 1 bad publicity"})
 
    "Möbius"
    {:req (req rd-runnable)
@@ -1159,7 +1174,7 @@
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "On the Lam"
-   {:req (req (some #(is-type? % "Resource") (all-installed state :runner)))
+   {:req (req (some #(is-type? % "Resource") (all-active-installed state :runner)))
     :prompt "Choose a resource to host On the Lam"
     :choices {:req #(and (is-type? % "Resource")
                          (installed? %))}
@@ -1250,7 +1265,7 @@
                                        (update-agenda-points state :corp target -1))}} card))})
 
    "Populist Rally"
-   {:req (req (seq (filter #(has-subtype? % "Seedy") (all-installed state :runner))))
+   {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
     :msg "give the Corp 1 fewer [Click] to spend on their next turn"
     :effect (effect (lose :corp :click-per-turn 1)
                     (register-events (:events (card-def card))
@@ -1306,7 +1321,7 @@
     :choices (req runnable-servers)
     :delayed-completion true
     :effect (req (when (<= (hsize @state) 2)
-                   (let [breakers (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))]
+                   (let [breakers (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                      (doseq [t breakers] (pump state side t 2 :all-run))))
                  (game.core/run state side (make-eid state) target))})
 

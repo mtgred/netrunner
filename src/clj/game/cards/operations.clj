@@ -168,11 +168,11 @@
 
    "Biased Reporting"
    {:delayed-completion true
-    :req (req (not-empty (all-installed state :runner)))
+    :req (req (not-empty (all-active-installed state :runner)))
     :prompt "Choose a card type"
     :choices ["Resource" "Hardware" "Program"]
     :effect (req (let [t target
-                       num (count (filter #(is-type? % t) (all-installed state :runner)))]
+                       num (count (filter #(is-type? % t) (all-active-installed state :runner)))]
                    (show-wait-prompt state :corp "Runner to choose cards to trash")
                    (when-completed
                      (resolve-ability state :runner
@@ -186,7 +186,7 @@
                                                                     " and gains " (count targets) " [Credits]"))
                                      (clear-wait-prompt state :corp))}
                       card nil)
-                     (do (let [n (* 2 (count (filter #(is-type? % t) (all-installed state :runner))))]
+                     (do (let [n (* 2 (count (filter #(is-type? % t) (all-active-installed state :runner))))]
                            (when (pos? n)
                              (gain state :corp :credit n)
                              (system-msg state :corp (str "uses Biased Reporting to gain " n " [Credits]")))
@@ -458,8 +458,8 @@
 
    "Financial Collapse"
    {:delayed-completion true
-    :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-installed state :runner)))))
-    :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-installed state :runner)))]
+    :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-active-installed state :runner)))))
+    :effect (req (let [rcount (count (filter #(is-type? % "Resource") (all-active-installed state :runner)))]
                    (if (pos? rcount)
                      (do (show-wait-prompt state :corp "Runner to trash a resource to prevent Financial Collapse")
                          (continue-ability
@@ -524,7 +524,7 @@
 
    "Genotyping"
    {:delayed-completion true
-    :effect (effect (mill 2)
+    :effect (effect (mill :corp 2)
                     (system-msg "trashes the top 2 cards of R&D")
                     (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4))}
 
@@ -596,7 +596,7 @@
    {:req (req (last-turn? state :runner :trashed-card))
     :trace {:base 2
             :label "Trash 2 installed non-program cards"
-            :choices {:max (req (min 2 (count (filter #(not (is-type? % "Program")) (concat (all-installed state :corp)
+            :choices {:max (req (min 2 (count (filter #(or (:facedown %) (not (is-type? % "Program"))) (concat (all-installed state :corp)
                                                                                             (all-installed state :runner))))))
                       :all true
                       :req #(and (installed? %)
@@ -617,6 +617,14 @@
                                     :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
                                     :effect (effect (move target :deck {:front true}))}
                                    card nil)))}
+
+   "High-Profile Target"
+   (letfn [(dmg-count [runner]
+             (* 2 (:tag runner)))]
+     {:req (req tagged)
+      :delayed-completion true
+      :msg (msg "do " (dmg-count runner) " meat damage")
+      :effect (effect (damage eid :meat (dmg-count runner) {:card card}))})
 
    "Housekeeping"
    {:events {:runner-install {:player :runner
@@ -691,8 +699,7 @@
 
    "Liquidation"
    {:delayed-completion true
-    :effect (req (let [n (count (filter #(and (rezzed? %)
-                                              (not (is-type? % "Agenda"))) (all-installed state :corp)))]
+    :effect (req (let [n (count (filter #(not (is-type? % "Agenda")) (all-active-installed state :corp)))]
                    (continue-ability state side
                      {:prompt "Select any number of rezzed cards to trash"
                       :choices {:max n
@@ -737,13 +744,13 @@
 
    "Mass Commercialization"
    {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
-                                          (concat (all-installed state :runner) (all-installed state :corp))))) " [Credits]")
+                                          (get-all-installed state)))) " [Credits]")
     :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
-                                                      (concat (all-installed state :runner) (all-installed state :corp)))))))}
+                                                      (get-all-installed state))))))}
 
    "MCA Informant"
    {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"
-    :req (req (not-empty (filter #(has-subtype? % "Connection") (all-installed state :runner))))
+    :req (req (not-empty (filter #(has-subtype? % "Connection") (all-active-installed state :runner))))
     :prompt "Choose a connection to host MCA Informant on it"
     :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Connection") (installed? %))}
     :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
@@ -892,7 +899,7 @@
    "Power Shutdown"
    {:req (req (last-turn? state :runner :made-run))
     :prompt "Trash how many cards from the top R&D?"
-    :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-installed state :runner)))))}
+    :choices {:number (req (apply max (map :cost (filter #(or (= "Program" (:type %)) (= "Hardware" (:type %))) (all-active-installed state :runner)))))}
     :msg (msg "trash " target " cards from the top of R&D")
     :delayed-completion true
     :effect (req (mill state :corp target)
@@ -1135,7 +1142,7 @@
                      (let [post-purge-virus (number-of-virus-counters state)
                            num-virus-purged (- pre-purge-virus post-purge-virus)
                            num-to-trash (quot num-virus-purged 3)]
-                       (mill state :runner num-to-trash)
+                       (mill state :corp :runner num-to-trash)
                        (system-msg state side (str "uses Reverse Infection to purge "
                                                    num-virus-purged (pluralize " virus counter" num-virus-purged)
                                                    " and trash "
@@ -1176,7 +1183,7 @@
                                                   (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
                                                                               (gain state side :credit bplost)
                                                                               (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
-                                                                          (system-msg state side "uses Sacrifice but gains no credits and loses no Bad Publicity"))
+                                                                          (system-msg state side "uses Sacrifice but gains no credits and loses no bad publicity"))
                                                   (effect-completed state side eid)
                                                   (unregister-events state side card)))}}}
    "Salems Hospitality"
@@ -1298,19 +1305,21 @@
             :choices {:req #(has-subtype? % "Connection")}
             :delayed-completion true
             :effect (req (let [c target]
+                           (show-wait-prompt state :corp "Runner to decide if they will take 1 tag")
                            (continue-ability
                              state side
                              {:prompt (msg "Take 1 tag to prevent " (:title c) " from being trashed?")
                               :choices ["Yes" "No"] :player :runner
                               :delayed-completion true
-                              :effect (effect (continue-ability
+                              :effect (effect (clear-wait-prompt :corp)
+                                              (continue-ability
                                                 (if (= target "Yes")
                                                   {:msg (msg "take 1 tag to prevent " (:title c)
                                                              " from being trashed")
                                                    :delayed-completion true
                                                    :effect (effect (tag-runner eid 1 {:unpreventable true}))}
                                                   {:delayed-completion true
-                                                   :effect (effect (trash eid c nil))
+                                                   :effect (effect (trash :corp eid c nil))
                                                    :msg (msg "trash " (:title c))})
                                                 card nil))}
                              card nil)))}}
@@ -1480,6 +1489,12 @@
                                  (system-msg state side (str "uses Threat Level Alpha to give the Runner " tags " tags")))
                              (do (tag-runner state :runner eid 1)
                                  (system-msg state side "uses Threat Level Alpha to give the Runner a tag")))))}}
+
+   "Too Big to Fail"
+   {:req (req (< (:credit corp) 10))
+    :msg "gain 7 [Credits] and take 1 bad publicity"
+    :effect (effect (gain :credit 7)
+                    (gain :corp :bad-publicity 1) ) }
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))
