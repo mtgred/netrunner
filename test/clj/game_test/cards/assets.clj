@@ -597,6 +597,72 @@
       (core/advance state :corp {:card (last (:hosted (refresh fir)))})
       (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
 
+(deftest false-flag
+  (testing "when the corp attempts to score False Flag"
+    (testing "and False Flag has 7 advancements"
+      (do-game
+       (new-game (default-corp [(qty "False Flag" 1)])
+                 (default-runner))
+
+       (play-from-hand state :corp "False Flag" "New remote")
+       (let [ff (get-content state :remote1 0)]
+         (core/add-counter state :corp ff :advancement 7)
+         (core/rez state :corp (refresh ff))
+         (card-ability state :corp (refresh ff) 0)
+
+         (is (nil? (get-content state :remote1 0))
+             "False Flag is no longer in remote")
+         (is (= 3 (:agendapoints (get-in @state [:corp :scored 0])))
+             "the corp can score False Flag")
+         (is (= 1 (:click (get-corp)))
+             "scoring False Flag costs one click"))))
+
+    (testing "and False Flag has less than 7 advancements"
+      (do-game
+       (new-game (default-corp [(qty "False Flag" 1)])
+                 (default-runner))
+
+       (play-from-hand state :corp "False Flag" "New remote")
+       (let [ff (get-content state :remote1 0)]
+         (core/add-counter state :corp ff :advancement 6)
+         (core/rez state :corp (refresh ff))
+         (card-ability state :corp (refresh ff) 0)
+
+         (is (not (nil? (get-content state :remote1 0)))
+             "False Flag remains in the remote")
+         (is (nil? (:agendapoints (get-in @state [:corp :scored 0])))
+             "the corp cannot score false flag")
+         (is (= 2 (:click (get-corp)))
+             "the corp does not lose a click")))))
+
+  (testing "when the runner accesses False Flag"
+    (letfn [(false-flag-tags-test
+              [[advancements expected-tags]]
+              (testing (str "and False Flag has " advancements " advancements")
+                (do-game
+                 (new-game (default-corp [(qty "False Flag" 1)])
+                           (default-runner))
+
+                 (play-from-hand state :corp "False Flag" "New remote")
+                 (core/add-prop state
+                                :corp
+                                (get-content state :remote1 0)
+                                :advance-counter
+                                advancements)
+                 (take-credits state :corp)
+                 (run-empty-server state "Server 1")
+                 (prompt-choice :runner "No")
+
+                 (let [tags (:tag (get-runner))]
+                   (is (= expected-tags tags)
+                       (str "the runner recieves " tags " tags"))))))]
+
+      (doall (map false-flag-tags-test
+                  [[0 0]
+                   [2 1]
+                   [5 2]
+                   [10 5]])))))
+
 (deftest gene-splicer-access-unadvanced-no-trash
   ;; Runner accesses an unadvanced Gene Splicer and doesn't trash
   ;; No net damage is dealt and Gene Splicer remains installed

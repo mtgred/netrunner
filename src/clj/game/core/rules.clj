@@ -395,7 +395,7 @@
 
        (and (= side :corp)
             (untrashable-while-resources? card)
-            (> (count (filter #(is-type? % "Resource") (all-installed state :runner))) 1))
+            (> (count (filter #(is-type? % "Resource") (all-active-installed state :runner))) 1))
        (do (enforce-msg state card "cannot be trashed while there are other resources installed")
            (effect-completed state side eid))
 
@@ -435,10 +435,10 @@
      (trashrec cards))))
 
 (defn- resolve-trash-no-cost
-  [state side card]
-  (trash state side (assoc card :seen true))
-  (swap! state assoc-in [:runner :register :trashed-card] true)
-  (close-access-prompt state side))
+  [state side card & {:keys [seen]
+                      :or {seen true}}]
+  (trash state side (assoc card :seen seen))
+  (swap! state assoc-in [side :register :trashed-card] true))
 
 (defn trash-no-cost
   "Trashes a card at no cost while it is being accessed. (Imp.)"
@@ -451,7 +451,8 @@
       (if (is-type? card "Agenda")
         (when-completed (resolve-steal-events state side card)
                         (resolve-trash-no-cost state side card))
-        (resolve-trash-no-cost state side card)))))
+        (resolve-trash-no-cost state side card))
+      (close-access-prompt state side))))
 
 
 ;;; Agendas
@@ -541,12 +542,13 @@
   (trigger-event state side :purge))
 
 (defn mill
-  "Force the discard of n cards from :deck to :discard."
-  ([state side] (mill state side 1))
-  ([state side n]
-   (let [milltargets (take n (get-in @state [side :deck]))]
-     (doseq [c milltargets]
-       (move state side c :discard)))))
+  "Force the discard of n cards by trashing them."
+  ([state side] (mill state side side 1))
+  ([state side n] (mill state side side n))
+  ([state from-side to-side n]
+   (let [milltargets (take n (get-in @state [to-side :deck]))]
+     (doseq [card milltargets]
+       (resolve-trash-no-cost state from-side card :seen false)))))
 
 ;; Exposing
 (defn expose-prevent

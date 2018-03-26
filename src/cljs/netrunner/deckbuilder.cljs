@@ -413,7 +413,8 @@
         message (case status
                   "legal" "Tournament legal"
                   "casual" "Casual play only"
-                  "invalid" "Invalid")]
+                  "invalid" "Invalid"
+                  "")]
     [:div.status-tooltip.blue-shade
      [:div {:class (if valid "legal" "invalid")}
       [:span.tick (if valid "✔" "✘")] "Basic deckbuilding rules"]
@@ -438,7 +439,8 @@
         message (case status
                   "legal" "Tournament legal"
                   "casual" "Casual play only"
-                  "invalid" "Invalid")]
+                  "invalid" "Invalid"
+                  "")]
     [:span.deck-status.shift-tooltip {:class status} message
      (when tooltip?
        (build-deck-status-label valid mwl rotation cache-refresh onesies onesies-details?))]))

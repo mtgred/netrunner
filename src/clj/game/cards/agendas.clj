@@ -249,7 +249,7 @@
                :msg "make the Runner lose 2 tags"}}
 
    "CFC Excavation Contract"
-   {:effect (req (let [bios (count (filter #(and (rezzed? %) (has-subtype? % "Bioroid")) (all-installed state :corp)))
+   {:effect (req (let [bios (count (filter #(has-subtype? % "Bioroid") (all-active-installed state :corp)))
                        bucks (* bios 2)]
                    (gain state side :credit bucks)
                    (system-msg state side (str "gains " bucks " [Credits] from CFC Excavation Contract"))))}
@@ -267,6 +267,14 @@
    {:msg "remove all cards in the Runner's Heap from the game"
     :interactive (req true)
     :effect (effect (move-zone :runner :discard :rfg))}
+
+   "City Works Project"
+   (letfn [(meat-damage [s c] (+ 2 (:advance-counter (get-card s c) 0)))]
+     {:install-state :face-up
+      :access {:req (req installed)
+               :msg (msg "do " (meat-damage state card) " meat damage")
+               :delayed-completion true
+               :effect (effect (damage eid :meat (meat-damage state card) {:card card}))}})
 
    "Clone Retirement"
    {:msg "remove 1 bad publicity" :effect (effect (lose :bad-publicity 1))
@@ -746,7 +754,7 @@
             :msg "trash all connection and job resources"
             :effect (req (doseq [resource (filter #(or (has-subtype? % "Job")
                                                        (has-subtype? % "Connection"))
-                                                  (all-installed state :runner))]
+                                                  (all-active-installed state :runner))]
                                    (trash state side resource)))}}
 
    "Personality Profiles"
@@ -1091,23 +1099,15 @@
                                                                  (fn [_ _ c] (not= (:cid c) (:cid card)))))}}}}
 
    "Underway Renovation"
-   {:install-state :face-up
-    :events {:advance {:req (req (= (:cid card) (:cid target))) 
-                       :msg (msg (let [deck (:deck runner)
-                                       anydeck? (pos? (count deck)) 
-                                       adv4? (>= (:advance-counter (get-card state card)) 4)] 
-                         (cond
-                           (and anydeck? adv4?)
-                           (str "trash " (join ", " (map :title (take 2 deck))) " from the Runner's stack")
-
-                           (and anydeck? (not adv4?) )
-                           (str "trash " (:title (first deck)) " from the Runner's stack")
-
-                           (false? anydeck?)  
-                           "trash from the Runner's stack but it is empty")))
-
-                       :effect (effect (mill :runner
-                                             (if (>= (:advance-counter (get-card state card)) 4)  2 1)))}}}
+   (letfn [(adv4? [s c] (if (>= (:advance-counter (get-card s c)) 4) 2 1))]
+     {:install-state :face-up
+      :events {:advance {:req (req (= (:cid card) (:cid target)))
+                         :msg (msg (if (pos? (count (:deck runner)))
+                                     (str "trash "
+                                          (join ", " (map :title (take (adv4? state card) (:deck runner))))
+                                          " from the Runner's stack")
+                                     "trash from the Runner's stack but it is empty"))
+                         :effect (effect (mill :corp :runner (adv4? state card)))}}})
 
    "Unorthodox Predictions"
    {:implementation "Prevention of subroutine breaking is not enforced"

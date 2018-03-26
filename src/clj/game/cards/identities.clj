@@ -9,9 +9,7 @@
 (defn- has-most-faction?
   "Checks if the faction has a plurality of rezzed / installed cards"
   [state side fc]
-  (let [card-list (if (= side :corp)
-                    (filter :rezzed (all-installed state :corp))
-                    (all-installed state :runner))
+  (let [card-list (all-active-installed state side)
         faction-freq (frequencies (map :faction card-list))
         reducer (fn [{:keys [max-count] :as acc} faction count]
                   (cond
@@ -476,7 +474,7 @@
               :effect (req (let [c (first (get-in @state [:runner :deck]))]
                              (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
                                                           " from the top of the Runner's Stack"))
-                             (mill state :runner)))}}}
+                             (mill state :corp :runner 1)))}}}
 
    "Jinteki: Replicating Perfection"
    {:events
@@ -543,9 +541,9 @@
                                  (install-cost-bonus [:credit -1])
                                  (runner-install (assoc-in target [:special :kabonesa] true)))
                  :end-turn
-                 {:req (req (get-in (find-cid (:cid target) (all-installed state :runner)) [:special :kabonesa]))
+                 {:req (req (get-in (find-cid (:cid target) (all-active-installed state :runner)) [:special :kabonesa]))
                   :msg (msg "remove " (:title target) " from the game")
-                  :effect (req (move state side (find-cid (:cid target) (all-installed state :runner))
+                  :effect (req (move state side (find-cid (:cid target) (all-active-installed state :runner))
                                      :rfg))}}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
@@ -620,10 +618,10 @@
                                 (str "trash " (join ", " (map :title (take 2 deck))) " from their Stack and draw 1 card")
                                 "trash the top 2 cards from their Stack and draw 1 card - but their Stack is empty")))
                   :once :per-turn
-                  :effect (effect (mill 2) (draw))}]
+                  :effect (effect (mill :runner 2) (draw))}]
      {:flags {:runner-turn-draw true
               :runner-phase-12 (req (and (not (:disabled card))
-                                         (some #(card-flag? % :runner-turn-draw true) (all-installed state :runner))))}
+                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
       :events {:runner-turn-begins ability}
       :abilities [ability]})
 
