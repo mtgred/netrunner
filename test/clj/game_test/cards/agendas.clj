@@ -1295,48 +1295,47 @@
     (is (last-log-contains? state "wins the game") "PE did not fire")))
 
 (deftest personality-profiles
-  ;; Personality Profiles - Full test
-  (do-game
-    (new-game (default-corp [(qty "Personality Profiles" 1)])
-              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
-                               (qty "Corroder" 1) (qty "Patron" 2)]))
-    (starting-hand state :runner ["Self-modifying Code" "Clone Chip" "Patron" "Patron"])
-    (play-and-score state "Personality Profiles")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Self-modifying Code")
-    (play-from-hand state :runner "Clone Chip")
-    (let [smc (get-program state 0)]
-      (card-ability state :runner smc 0)
-      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
-      (is (= 2 (count (:discard (get-runner))))))
-    (let [chip (get-hardware state 0)]
-      (card-ability state :runner chip 0)
-      (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
-      (is (second-last-log-contains? state "Patron")
-          "Personality Profiles trashed card name is in log")
-      (is (= 3 (count (:discard (get-runner))))))))
-
-(deftest personality-profiles-empty-hand
-  ;; Personality Profiles - Ensure effects still fire with an empty hand, #1840
-  (do-game
-    (new-game (default-corp [(qty "Personality Profiles" 1)])
-              (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
-                               (qty "Corroder" 1)]))
-    (starting-hand state :runner ["Self-modifying Code" "Clone Chip"])
-    (play-and-score state "Personality Profiles")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Self-modifying Code")
-    (play-from-hand state :runner "Clone Chip")
-    (let [smc (get-program state 0)]
-      (card-ability state :runner smc 0)
-      (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+  ;; Personality Profiles
+  (testing "basic test"
+    (do-game
+      (new-game (default-corp [(qty "Personality Profiles" 1)])
+                (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                                 (qty "Corroder" 1) (qty "Patron" 2)]))
+      (starting-hand state :runner ["Self-modifying Code" "Clone Chip" "Patron" "Patron"])
+      (play-and-score state "Personality Profiles")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Self-modifying Code")
+      (play-from-hand state :runner "Clone Chip")
+      (let [smc (get-program state 0)]
+        (card-ability state :runner smc 0)
+        (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
+        (is (= 2 (count (:discard (get-runner))))))
+      (let [chip (get-hardware state 0)]
+        (card-ability state :runner chip 0)
+        (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
+        (is (second-last-log-contains? state "Patron")
+            "Personality Profiles trashed card name is in log")
+        (is (= 3 (count (:discard (get-runner))))))))
+  (testing "Ensure effects still fire with an empty hand, #1840"
+    (do-game
+      (new-game (default-corp [(qty "Personality Profiles" 1)])
+                (default-runner [(qty "Self-modifying Code" 1) (qty "Clone Chip" 1)
+                                 (qty "Corroder" 1)]))
+      (starting-hand state :runner ["Self-modifying Code" "Clone Chip"])
+      (play-and-score state "Personality Profiles")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Self-modifying Code")
+      (play-from-hand state :runner "Clone Chip")
+      (let [smc (get-program state 0)]
+        (card-ability state :runner smc 0)
+        (prompt-choice :runner (find-card "Corroder" (:deck (get-runner)))))
       (let [cor (get-program state 0)]
         (is (some? cor))
         (is (= (:title cor) "Corroder"))
-        (is (= "Self-modifying Code" (:title (first (:discard (get-runner))))))))
-    (let [chip (get-hardware state 0)]
-      (card-ability state :runner chip 0)
-      (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))
+        (is (= "Self-modifying Code" (:title (first (:discard (get-runner)))))))
+      (let [chip (get-hardware state 0)]
+        (card-ability state :runner chip 0)
+        (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner)))))
       (let [smc (get-in @state [:runner :rig :program 1])]
         (is (some? smc))
         (is (= (:title smc) "Self-modifying Code"))
@@ -1363,7 +1362,7 @@
     (is (= 2 (:agenda-point (get-corp))))
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
 
-(deftest posted-bounty-yes
+(deftest posted-bounty
   ;; Posted Bounty
   (testing "Forfeiting takes 1 bad publicity"
     (do-game
@@ -1446,62 +1445,61 @@
     (is (= 1 (:bad-publicity (get-corp))))))
 
 (deftest project-atlas
-  ;; Project Atlas - basic test
-  (do-game
-    (new-game (default-runner [(qty "Project Atlas" 1)
-                               (qty "Beanstalk Royalties" 1)])
-              (default-runner))
-    ;; Set up
-    (starting-hand state :corp ["Project Atlas"])
-    (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand")
-    (core/gain state :corp :click 10 :credit 10)
-    ;; Should gain 1 counter
-    (play-from-hand state :corp "Project Atlas" "New remote")
-    (let [atlas (get-content state :remote1 0)]
-      (advance state atlas 4)
-      (is (= 4 (:advance-counter (refresh atlas))) "Atlas should have 4 advancement tokens")
-      (core/score state :corp {:card (refresh atlas)}))
-    (let [atlas-scored (get-scored state :corp)]
-      (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
-      (card-ability state :corp atlas-scored 0)
-      (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
-      (is (= 0 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 0 agenda counters")
-      (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand"))))
-
-(deftest project-atlas-titan
-  ;; Project Atlas - test with Titan
-  (do-game
-    (new-game (make-deck "Titan Transnational: Investing In Your Future"
-                         [(qty "Project Atlas" 2) (qty "Beanstalk Royalties" 1) (qty "Hedge Fund" 1)])
-              (default-runner))
-    ;; Set up
-    (starting-hand state :corp ["Project Atlas" "Project Atlas"])
-    (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
-    (core/gain state :corp :click 10 :credit 10)
-    ;; Should gain 1 counter
-    (play-from-hand state :corp "Project Atlas" "New remote")
-    (let [atlas (get-content state :remote1 0)]
-      (advance state atlas 3)
-      (is (= 3 (:advance-counter (refresh atlas))) "Atlas should have 3 advancement tokens")
-      (core/score state :corp {:card (refresh atlas)}))
-    (let [atlas-scored (get-scored state :corp)]
-      (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
-      (card-ability state :corp atlas-scored 0)
-      (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
-      (is (= 0 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 0 agenda counters")
-      (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 card in hand"))
-    ;; Should gain 2 counters
-    (play-from-hand state :corp "Project Atlas" "New remote")
-    (let [atlas (get-content state :remote2 0)]
-      (advance state atlas 4)
-      (is (= 4 (:advance-counter (refresh atlas))) "Atlas should have 4 advancement tokens")
-      (core/score state :corp {:card (refresh atlas)}))
-    (let [atlas-scored (get-scored state :corp 1)]
-      (is (= 2 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 2 agenda counter")
-      (card-ability state :corp atlas-scored 0)
-      (prompt-choice :corp (find-card "Hedge Fund" (:deck (get-corp))))
-      (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counters")
-      (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand"))))
+  ;; Project Atlas
+  (testing "basic test"
+    (do-game
+      (new-game (default-runner [(qty "Project Atlas" 1)
+                                 (qty "Beanstalk Royalties" 1)])
+                (default-runner))
+      ;; Set up
+      (starting-hand state :corp ["Project Atlas"])
+      (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand")
+      (core/gain state :corp :click 10 :credit 10)
+      ;; Should gain 1 counter
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (let [atlas (get-content state :remote1 0)]
+        (advance state atlas 4)
+        (is (= 4 (:advance-counter (refresh atlas))) "Atlas should have 4 advancement tokens")
+        (core/score state :corp {:card (refresh atlas)}))
+      (let [atlas-scored (get-scored state :corp)]
+        (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
+        (card-ability state :corp atlas-scored 0)
+        (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
+        (is (= 0 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 0 agenda counters")
+        (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand"))))
+  (testing "test with Titan"
+    (do-game
+      (new-game (make-deck "Titan Transnational: Investing In Your Future"
+                           [(qty "Project Atlas" 2) (qty "Beanstalk Royalties" 1) (qty "Hedge Fund" 1)])
+                (default-runner))
+      ;; Set up
+      (starting-hand state :corp ["Project Atlas" "Project Atlas"])
+      (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
+      (core/gain state :corp :click 10 :credit 10)
+      ;; Should gain 1 counter
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (let [atlas (get-content state :remote1 0)]
+        (advance state atlas 3)
+        (is (= 3 (:advance-counter (refresh atlas))) "Atlas should have 3 advancement tokens")
+        (core/score state :corp {:card (refresh atlas)}))
+      (let [atlas-scored (get-scored state :corp)]
+        (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
+        (card-ability state :corp atlas-scored 0)
+        (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
+        (is (= 0 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 0 agenda counters")
+        (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 card in hand"))
+      ;; Should gain 2 counters
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (let [atlas (get-content state :remote2 0)]
+        (advance state atlas 4)
+        (is (= 4 (:advance-counter (refresh atlas))) "Atlas should have 4 advancement tokens")
+        (core/score state :corp {:card (refresh atlas)}))
+      (let [atlas-scored (get-scored state :corp 1)]
+        (is (= 2 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 2 agenda counter")
+        (card-ability state :corp atlas-scored 0)
+        (prompt-choice :corp (find-card "Hedge Fund" (:deck (get-corp))))
+        (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counters")
+        (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")))))
 
 (deftest project-beale
   ;; Project Beale - Extra agenda points for over-advancing
@@ -1514,11 +1512,35 @@
       (advance state pb1 4)
       (core/score state :corp {:card (refresh pb1)})
       (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points")
-      (play-from-hand state :corp "Project Beale" "New remote")
-      (let [pb2 (get-content state :remote2 0)]
-        (advance state pb2 5)
-        (core/score state :corp {:card (refresh pb2)})
-        (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points")))))
+      (play-from-hand state :corp "Project Beale" "New remote"))
+    (let [pb2 (get-content state :remote2 0)]
+      (advance state pb2 5)
+      (core/score state :corp {:card (refresh pb2)})
+      (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points"))))
+
+(deftest project-kusanagi
+  ;; Project Kusanagi
+  (do-game
+    (new-game (default-corp [(qty "Project Kusanagi" 2) (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/gain state :corp :click 10 :credit 10)
+    (testing "Should gain 0 counters"
+      (play-and-score state "Project Kusanagi")
+      (let [pk-scored (get-scored state :corp 0)]
+        (is (= 0 (get-counters (refresh pk-scored) :agenda)) "Kusanagi should start with 0 agenda counters")))
+    (testing "Should gain 1 counter"
+      (play-from-hand state :corp "Project Kusanagi" "New remote")
+      (let [pk (get-content state :remote2 0)]
+        (advance state pk 3)
+        (is (= 3 (:advance-counter (refresh pk))) "Kusanagi should have 3 advancement tokens")
+        (core/score state :corp {:card (refresh pk)}))
+      (let [pk-scored (get-scored state :corp 1)]
+        (is (= 1 (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 1 agenda counter")
+        (run-empty-server state :hq)
+        (card-ability state :corp pk-scored 0)
+        (is (last-log-contains? state "Do 1 net damage"))
+        (is (= 0 (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 0 agenda counters")))))
 
 (deftest project-vitruvius
   ;; Project Vitruvius - basic test
