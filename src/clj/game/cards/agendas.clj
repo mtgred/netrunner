@@ -690,27 +690,23 @@
    {:agendapoints-runner (req 3)}
 
    "Meteor Mining"
-   (let [choices ["Take Nothing" "Take 7 [Credits]"]]
-    {:interactive (req true)
-     :delayed-completion true
-     :prompt "Pick what to take"
-     :choices (req (if (> (:tag runner) 1)
-                     (conj choices "Give 7 Meat Damage")
-                     choices))
-     :effect (req (cond
-
-                    (= target "Take 7 [Credits]")
-                    (do (gain state side :credit 7)
-                        (system-msg state side "takes 7 [Credits] from Meteor Mining")
-                        (effect-completed state side eid))
-
-                    (= target "Give 7 Meat Damage")
-                    (do (damage state side eid :meat 7 {:card card})
-                        (system-msg state side "gives 7 meat damage from Meteor Mining"))
-
-                    (= target "Take Nothing")
-                    (do (system-msg state side "did not take anything from Meteor Mining")
-                        (effect-completed state side eid))))})
+   {:interactive (req true)
+    :delayed-completion true
+    :prompt "Use Meteor Mining?"
+    :choices (req (if (< (:tag runner) 2)
+                    ["Gain 7 [Credits]" "No action"]
+                    ["Gain 7 [Credits]" "Do 7 meat damage" "No action"]))
+    :effect (req (case target
+                   "Gain 7 [Credits]"
+                   (do (gain state side :credit 7)
+                       (system-msg state side "uses Meteor Mining to gain 7 [Credits]")
+                       (effect-completed state side eid))
+                   "Do 7 meat damage"
+                   (do (damage state side eid :meat 7 {:card card})
+                       (system-msg state side "uses Meteor Mining do 7 meat damage"))
+                   "No action"
+                   (do (system-msg state side "does not use Meteor Mining")
+                       (effect-completed state side eid))))}
 
    "NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])

@@ -385,6 +385,7 @@
       (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck"))))
 
 (deftest director-haas-pet-project
+  ;; Director Haas' Pet Project
   (do-game
     (new-game (default-corp [(qty "Director Haas' Pet Project" 1)
                              (qty "Adonis Campaign" 1)
@@ -425,10 +426,10 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (some? (get-ice state :hq 1)) "Corp has two ice installed on HQ")
-    (is (= 6 (get-in @state [:corp :credit])) "Corp does not pay for installing the first ICE of the turn")
+    (is (= 6 (:credit (get-corp))) "Corp does not pay for installing the first ICE of the turn")
     (play-from-hand state :corp "Ice Wall" "HQ")
     (is (some? (get-ice state :hq 2)) "Corp has three ice installed on HQ")
-    (is (= 4 (get-in @state [:corp :credit])) "Corp pays for installing the second ICE of the turn")))
+    (is (= 4 (:credit (get-corp))) "Corp pays for installing the second ICE of the turn")))
 
 (deftest efficiency-committee
   ;; Efficiency Committee - Cannot advance cards if agenda counter is used
@@ -495,6 +496,7 @@
       (is (= 1 (:credit (get-corp))) "Should gain 1 credit for rezzed code gate"))))
 
 (deftest executive-retreat
+  ;; Executive Retreat
   (do-game
     (new-game (default-corp [(qty "Executive Retreat" 1) (qty "Hedge Fund" 5)])
               (default-runner))
@@ -1024,39 +1026,38 @@
       (is (some? (get-content state :remote8 0))))))
 
 (deftest mandatory-upgrades
-  ;; Mandatory Upgrades - You have 1 additional :click: to spend each turn.
-  (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 1)
-                             (qty "Melange Mining Corp." 1)])
-              (default-runner))
-    (play-and-score state "Mandatory Upgrades")
-    (is (= 2 (:agenda-point (get-corp))))
-    (play-from-hand state :corp "Melange Mining Corp." "New remote")
-    (let [mmc (get-content state :remote2 0)]
-      (core/rez state :corp mmc)
+  ;; Mandatory Upgrades
+  (testing "Gain an additional click"
+    (do-game
+      (new-game (default-corp [(qty "Mandatory Upgrades" 1)
+                               (qty "Melange Mining Corp." 1)])
+                (default-runner))
+      (play-and-score state "Mandatory Upgrades")
+      (is (= 2 (:agenda-point (get-corp))))
+      (play-from-hand state :corp "Melange Mining Corp." "New remote")
+      (let [mmc (get-content state :remote2 0)]
+        (core/rez state :corp mmc)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 4 (:click (get-corp))))
+        (card-ability state :corp mmc 0)
+        (is (= 1 (:click (get-corp)))))))
+  (testing "Lose additional click if sacrificed"
+    (do-game
+      (new-game (default-corp [(qty "Mandatory Upgrades" 1)
+                               (qty "Archer" 1)])
+                (default-runner))
+      (play-and-score state "Mandatory Upgrades")
+      (is (= 2 (:agenda-point (get-corp))))
+      (play-from-hand state :corp "Archer" "HQ")
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (= 4 (:click (get-corp))))
-      (card-ability state :corp mmc 0)
-      (is (= 1 (:click (get-corp)))))))
-
-(deftest mandatory-upgrades-sacrifice
-  ;; Mandatory Upgrades - Lose additional click if sacrificed
-  (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 1)
-                             (qty "Archer" 1)])
-              (default-runner))
-    (play-and-score state "Mandatory Upgrades")
-    (is (= 2 (:agenda-point (get-corp))))
-    (play-from-hand state :corp "Archer" "HQ")
-    (take-credits state :corp)
-    (take-credits state :runner)
-    (let [arc (get-ice state :hq 0)
-          mu (get-scored state :corp)]
-      (is (= 4 (:click (get-corp))) "Corp should start turn with 4 clicks")
-      (core/rez state :corp arc)
-      (prompt-select :corp (refresh mu))
-      (is (= 3 (:click (get-corp))) "Corp should lose 1 click on agenda sacrifice"))))
+      (let [arc (get-ice state :hq 0)
+            mu (get-scored state :corp)]
+        (is (= 4 (:click (get-corp))) "Corp should start turn with 4 clicks")
+        (core/rez state :corp arc)
+        (prompt-select :corp (refresh mu))
+        (is (= 3 (:click (get-corp))) "Corp should lose 1 click on agenda sacrifice")))))
 
 (deftest market-research
   ;; Market Research - full test
@@ -1107,6 +1108,45 @@
     (run-empty-server state :remote2)
     (prompt-choice :runner "Steal")
     (is (= 3 (:agenda-point (get-runner))) "Runner should score 3 points")))
+
+(deftest meteor-mining
+  ;; Meteor Mining
+  (testing "when Meteor Mining is stolen"
+    (do-game
+      (new-game (default-corp [(qty "Meteor Mining" 1)])
+                (default-runner))
+      (play-from-hand state :corp "Meteor Mining" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:agenda-point (get-runner))) "Runner should score 2 points")))
+  (testing "when Meteor Mining is scored"
+    (letfn [(meteor-mining-test [[tags num-choices pick creds dmg]]
+              (do-game
+                (new-game (default-corp [(qty "Meteor Mining" 1)])
+                          (default-runner [(qty "Sure Gamble" 7)]))
+                (starting-hand state :runner (repeat 7 "Sure Gamble"))
+                (let [credits (:credit (get-corp))
+                      grip (count (:hand (get-runner)))]
+                  (core/gain state :runner :tag tags)
+                  (play-and-score state "Meteor Mining")
+                  (is (= num-choices (count (:choices (first (get-in @state [:corp :prompt]))))))
+                  (prompt-choice :corp pick)
+                  (is (= (+ credits creds) (:credit (get-corp)))
+                      (str "Corp should have " (+ credits creds) " credits"))
+                  (is (= (- grip dmg) (count (:hand (get-runner))))
+                      (str "Runner should have " (- grip dmg) " cards in hand")))))]
+      (doall (map meteor-mining-test
+                  [[0 2 "No action" 0 0]
+                   [0 2 "Gain 7 [Credits]" 7 0]
+                   [1 2 "No action" 0 0]
+                   [1 2 "Gain 7 [Credits]" 7 0]
+                   [2 3 "No action" 0 0]
+                   [2 3 "Gain 7 [Credits]" 7 0]
+                   [2 3 "Do 7 meat damage" 0 7]
+                   [3 3 "No action" 0 0]
+                   [3 3 "Gain 7 [Credits]" 7 0]
+                   [3 3 "Do 7 meat damage" 0 7]])))))
 
 (deftest napd-contract
   ;; NAPD Contract - Requires 4 credits to steal; scoring requirement increases with bad publicity
@@ -1324,26 +1364,25 @@
     (is (= 3 (count (:discard (get-runner)))) "Dealt 3 net damage upon scoring")))
 
 (deftest posted-bounty-yes
-  ;; Posted Bounty - Forfeiting takes 1 bad publicity
-  (do-game
-    (new-game (default-corp [(qty "Posted Bounty" 1)])
-              (default-runner))
-    (play-and-score state "Posted Bounty")
-    (prompt-choice :corp "Yes")
-    (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
-    (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity")
-    (is (= 1 (get-in @state [:runner :tag])) "Runner receives 1 tag forfeiting Posted Bounty")))
-
-(deftest posted-bounty-no
-  ;; Posted Bounty - Choosing not to forfeit scores normally
-  (do-game
-    (new-game (default-corp [(qty "Posted Bounty" 1)])
-              (default-runner))
-    (play-and-score state "Posted Bounty")
-    (prompt-choice :corp "No")
-    (is (= 1 (:agenda-point (get-corp))))
-    (is (= 0 (:bad-publicity (get-corp))))
-    (is (= 0 (get-in @state [:runner :tag])))))
+  ;; Posted Bounty
+  (testing "Forfeiting takes 1 bad publicity"
+    (do-game
+      (new-game (default-corp [(qty "Posted Bounty" 1)])
+                (default-runner))
+      (play-and-score state "Posted Bounty")
+      (prompt-choice :corp "Yes")
+      (is (= 0 (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
+      (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity")
+      (is (= 1 (:tag (get-runner))) "Runner receives 1 tag forfeiting Posted Bounty")))
+  (testing "Choosing not to forfeit scores normally"
+    (do-game
+      (new-game (default-corp [(qty "Posted Bounty" 1)])
+                (default-runner))
+      (play-and-score state "Posted Bounty")
+      (prompt-choice :corp "No")
+      (is (= 1 (:agenda-point (get-corp))))
+      (is (= 0 (:bad-publicity (get-corp))))
+      (is (= 0 (:tag (get-runner)))))))
 
 (deftest priority-requisition
   ;; Priority Requisition - When scored, rez an installed ice for free.
@@ -1650,6 +1689,7 @@
     (is (= 7 (get-hand-size :corp)))))
 
 (deftest research-grant
+  ;; Research Grant
   (testing "Basic test"
     (do-game
       (new-game (default-corp [(qty "Research Grant" 2)])
@@ -1675,6 +1715,7 @@
       (is (empty? (:effect-completed @state)) "All score and Leela effects resolved"))))
 
 (deftest restructured-datapool
+  ;; Restructured Datapool
   (do-game
     (new-game (default-corp [(qty "Restructured Datapool" 1)])
               (default-runner))
@@ -1686,138 +1727,114 @@
       (prompt-choice :runner 0)
       (is (= 1 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability"))))
 
-(deftest ssl-endorsement-scored
-  ;; SSL Endorsement - gain credits when in corp score area before turn begins
-  (do-game
-    (new-game (default-corp [(qty "SSL Endorsement" 1)])
-              (default-runner))
-    (play-and-score state "SSL Endorsement")
-    (take-credits state :runner)
-
-    (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
-    (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")
-    (take-credits state :runner)
-
-    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
-    (prompt-choice :corp "No")
-    (is (= 8 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-    (take-credits state :runner)
-
-    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 11 (:credit (get-corp))) "Corp gains 3 credits")
-    (take-credits state :runner)
-
-    (is (= 11 (:credit (get-corp))) "Corp starts with 11 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 14 (:credit (get-corp))) "Corp gains 3 credits")
-    (take-credits state :runner)
-
-    (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
-
-(deftest ssl-endorsement-stolen
-  ;; SSL Endorsement - gain credits when in runner score area before turn begins
-  (do-game
-    (new-game (default-corp [(qty "SSL Endorsement" 1)])
-              (default-runner))
-    (play-from-hand state :corp "SSL Endorsement" "New remote")
-    (take-credits state :corp)
-
-    (run-on state "Server 1")
-    (run-successful state)
-    (prompt-choice :runner "Steal")
-    (take-credits state :runner)
-
-    (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
-    (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")
-    (take-credits state :runner)
-
-    (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
-    (prompt-choice :corp "No")
-    (is (= 10 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-    (take-credits state :runner)
-
-    (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 13 (:credit (get-corp))) "Corp gains 3 credits")
-    (take-credits state :runner)
-
-    (is (= 13 (:credit (get-corp))) "Corp starts with 13 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 16 (:credit (get-corp))) "Corp gains 3 credits")
-    (take-credits state :runner)
-
-    (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
-
-(deftest ssl-endorsement-scored-swapped
-  ;; SSL Endorsement - register event when agenda swapped with Turntable
-  ;; Regression test for #3114
-  (do-game
-    (new-game (default-corp [(qty "SSL Endorsement" 1) (qty "Breaking News" 1)])
-              (default-runner [(qty "Turntable" 1)]))
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (play-and-score state "SSL Endorsement")
-    (take-credits state :corp)
-
-    (play-from-hand state :runner "Turntable")
-    (run-on state "Server 1")
-    (run-successful state)
-    (prompt-choice :runner "Steal")
-    (prompt-choice :runner "Yes")                           ;; Swap BN with SSL
-    (prompt-select :runner (find-card "SSL Endorsement" (:scored (get-corp))))
-    (take-credits state :runner)
-
-    (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
-    (is (= 6 (:credit (get-corp))) "Corp starts with 7 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 9 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
-
-(deftest ssl-endorsement-stolen-swapped
-  ;; SSL Endorsement - don't double register event when agenda is swapped
-  (do-game
-    (new-game (default-corp [(qty "SSL Endorsement" 1) (qty "Breaking News" 1)
-                             (qty "Exchange of Information" 1)])
-              (default-runner))
-    (play-from-hand state :corp "SSL Endorsement" "New remote")
-    (play-and-score state "Breaking News")
-    (take-credits state :corp)
-
-    (run-on state "Server 1")
-    (run-successful state)
-    (prompt-choice :runner "Steal")
-    (take-credits state :runner)
-
-    (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
-    (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
-    (core/gain state :runner :tag 1)
-    (play-from-hand state :corp "Exchange of Information")
-    (prompt-select :corp (find-card "SSL Endorsement" (:scored (get-runner))))
-    (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
-    (take-credits state :runner)
-
-    (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
-    (prompt-choice :corp "No")
-    (is (empty? (:prompt (get-corp))) "Not double prompted for credits")
-    (is (= 9 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-    (take-credits state :runner)
-
-    (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 12 (:credit (get-corp))) "Corp gains 3 credits")
-    (take-credits state :runner)
-
-    (is (= 12 (:credit (get-corp))) "Corp starts with 12 credits")
-    (prompt-choice :corp "Yes")
-    (is (= 15 (:credit (get-corp))) "Corp gains 3 credits")
-    (take-credits state :runner)
-
-    (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+(deftest ssl-endorsement
+  ;; SSL Endorsement
+  (testing "gain credits when in corp score area before turn begins"
+    (do-game
+      (new-game (default-corp [(qty "SSL Endorsement" 1)])
+                (default-runner))
+      (play-and-score state "SSL Endorsement")
+      (take-credits state :runner)
+      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")
+      (take-credits state :runner)
+      (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+      (prompt-choice :corp "No")
+      (is (= 8 (:credit (get-corp))) "Corp doesn't gain 3 credits")
+      (take-credits state :runner)
+      (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 11 (:credit (get-corp))) "Corp gains 3 credits")
+      (take-credits state :runner)
+      (is (= 11 (:credit (get-corp))) "Corp starts with 11 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 14 (:credit (get-corp))) "Corp gains 3 credits")
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+  (testing "gain credits when in runner score area before turn begins"
+    (do-game
+      (new-game (default-corp [(qty "SSL Endorsement" 1)])
+                (default-runner))
+      (play-from-hand state :corp "SSL Endorsement" "New remote")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-successful state)
+      (prompt-choice :runner "Steal")
+      (take-credits state :runner)
+      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")
+      (take-credits state :runner)
+      (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+      (prompt-choice :corp "No")
+      (is (= 10 (:credit (get-corp))) "Corp doesn't gain 3 credits")
+      (take-credits state :runner)
+      (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 13 (:credit (get-corp))) "Corp gains 3 credits")
+      (take-credits state :runner)
+      (is (= 13 (:credit (get-corp))) "Corp starts with 13 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 16 (:credit (get-corp))) "Corp gains 3 credits")
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-corp))) "Not prompted when out of money")))
+  (testing "register event when agenda swapped with Turntable"
+    ;; Regression test for #3114
+    (do-game
+      (new-game (default-corp [(qty "SSL Endorsement" 1) (qty "Breaking News" 1)])
+                (default-runner [(qty "Turntable" 1)]))
+      (play-from-hand state :corp "Breaking News" "New remote")
+      (play-and-score state "SSL Endorsement")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Turntable")
+      (run-on state "Server 1")
+      (run-successful state)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "Yes")
+      (prompt-select :runner (find-card "SSL Endorsement" (:scored (get-corp))))  ;; Swap BN with SSL
+      (take-credits state :runner)
+      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      (is (= 6 (:credit (get-corp))) "Corp starts with 7 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 9 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
+  (testing "don't double register event when agenda is swapped"
+    (do-game
+      (new-game (default-corp [(qty "SSL Endorsement" 1) (qty "Breaking News" 1)
+                               (qty "Exchange of Information" 1)])
+                (default-runner))
+      (play-from-hand state :corp "SSL Endorsement" "New remote")
+      (play-and-score state "Breaking News")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-successful state)
+      (prompt-choice :runner "Steal")
+      (take-credits state :runner)
+      (is (not-empty (:prompt (get-corp))) "Corp prompted to take credits")
+      (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
+      (core/gain state :runner :tag 1)
+      (play-from-hand state :corp "Exchange of Information")
+      (prompt-select :corp (find-card "SSL Endorsement" (:scored (get-runner))))
+      (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
+      (take-credits state :runner)
+      (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
+      (prompt-choice :corp "No")
+      (is (empty? (:prompt (get-corp))) "Not double prompted for credits")
+      (is (= 9 (:credit (get-corp))) "Corp doesn't gain 3 credits")
+      (take-credits state :runner)
+      (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 12 (:credit (get-corp))) "Corp gains 3 credits")
+      (take-credits state :runner)
+      (is (= 12 (:credit (get-corp))) "Corp starts with 12 credits")
+      (prompt-choice :corp "Yes")
+      (is (= 15 (:credit (get-corp))) "Corp gains 3 credits")
+      (take-credits state :runner)
+      (is (empty? (:prompt (get-corp))) "Not prompted when out of money"))))
 
 (deftest sentinel-defense-program
   ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented
@@ -1858,9 +1875,9 @@
       (is (= 2 (:current-strength (refresh iw))) "Should gain 1 strength from 1 to 2")
       (is (= 5 (:credit (get-corp))) "Should gain 1 credit for rezzed barrier"))))
 
-;; OHG still not working...
 (deftest tgtbt
   ;; TGTBT - Give the Runner 1 tag when they access
+  ;; OHG still not working...
   (do-game
     (new-game (default-corp [(qty "TGTBT" 2) (qty "Old Hollywood Grid" 1)])
               (default-runner))
@@ -1878,7 +1895,7 @@
       (prompt-choice :runner "Access")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag from accessing without stealing")
       (prompt-select :runner ohg))
-    (prompt-choice :runner "Yes") ; Trashes OHG
+    (prompt-choice :runner "Yes") ;; Trashes OHG
     (run-empty-server state "Server 2")
     ;; Accesses TGTBT and can steal
     (prompt-choice :runner "Access")
@@ -1888,23 +1905,22 @@
 
 (deftest the-cleaners
   ;; The Cleaners - Bonus damage
-  (do-game
-    (new-game (default-corp [(qty "The Cleaners" 1) (qty "Scorched Earth" 1)])
-              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
-    (play-and-score state "The Cleaners")
-    (core/gain state :runner :tag 1)
-    (play-from-hand state :corp "Scorched Earth")
-    (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner")))
-
-(deftest the-cleaners-cybernetics
-  ;; The Cleaners - No bonus damage when runner "suffers" damage
-  (do-game
-    (new-game (default-corp [(qty "The Cleaners" 1)])
-              (default-runner [(qty "Respirocytes" 3)]))
-    (play-and-score state "The Cleaners")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Respirocytes")
-    (is (= 1 (count (:hand (get-runner)))) "Only 1 damage dealt to Runner from Cybernetics")))
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "The Cleaners" 1) (qty "Scorched Earth" 1)])
+                (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
+      (play-and-score state "The Cleaners")
+      (core/gain state :runner :tag 1)
+      (play-from-hand state :corp "Scorched Earth")
+      (is (= 0 (count (:hand (get-runner)))) "5 damage dealt to Runner")))
+  (testing "No bonus damage when runner 'suffers' damage, ie Cybernetics"
+    (do-game
+      (new-game (default-corp [(qty "The Cleaners" 1)])
+                (default-runner [(qty "Respirocytes" 3)]))
+      (play-and-score state "The Cleaners")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Respirocytes")
+      (is (= 1 (count (:hand (get-runner)))) "Only 1 damage dealt to Runner from Cybernetics"))))
 
 (deftest the-future-is-now
   ;; The Future is Now
@@ -2007,6 +2023,7 @@
     (is (= 4 (:agenda-point (get-corp))))))
 
 (deftest veterans-program
+  ;; Veterans Program
   (testing "Veterans Program basic test"
     (do-game
       (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Veterans Program" 1)])
@@ -2028,6 +2045,7 @@
       (is (= 0 (:bad-publicity (get-corp))) "Should lose 1 bad publicity"))))
 
 (deftest voting-machine-initiative
+  ;; Voting Machine Initiative
   (testing "Voting Machine Initiative"
     (do-game
       (new-game (default-corp [(qty "Voting Machine Initiative" 1)])
