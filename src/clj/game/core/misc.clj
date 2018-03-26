@@ -115,7 +115,7 @@
 (defn installed-byname
   "Returns a truthy card map if a card matching title is installed"
   [state side title]
-  (some #(when (= (:title %) title) %) (all-installed state side)))
+  (some #(when (= (:title %) title) %) (all-active-installed state side)))
 
 (defn in-play?
   "Returns a truthy card map if the given card is in play (installed)."
