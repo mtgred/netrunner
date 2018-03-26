@@ -1883,6 +1883,16 @@
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 
+(deftest show-of-force
+  ;; Show of Force
+  (do-game
+    (new-game (default-corp [(qty "Show of Force" 1)])
+              (default-runner))
+    (is (= 3 (count (:hand (get-runner)))) "Runner should start with 3 cards in hand")
+    (play-and-score state "Show of Force")
+    (is (= 1 (count (:hand (get-runner)))) "Runner should have 1 card in hand")
+    (is (= 2 (count (:discard (get-runner)))) "Runner should have discarded 2 cards")))
+
 (deftest superior-cyberwalls
   ;; Superior Cyberwalls
   (do-game
