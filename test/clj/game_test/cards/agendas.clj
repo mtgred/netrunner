@@ -1095,6 +1095,19 @@
       (core/score state :corp {:card (refresh mb3)})
       (is (= 4 (:agenda-point (get-corp))) "Only needed 2 advancements to score"))))
 
+(deftest merger
+  ;; Merger
+  (do-game
+    (new-game (default-corp [(qty "Merger" 2)])
+              (default-runner))
+    (play-and-score state "Merger")
+    (is (= 2 (:agenda-point (get-corp))) "Corp should score 2 points")
+    (play-from-hand state :corp "Merger" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote2)
+    (prompt-choice :runner "Steal")
+    (is (= 3 (:agenda-point (get-runner))) "Runner should score 3 points")))
+
 (deftest napd-contract
   ;; NAPD Contract - Requires 4 credits to steal; scoring requirement increases with bad publicity
   (do-game
