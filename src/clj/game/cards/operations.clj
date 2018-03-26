@@ -1505,7 +1505,7 @@
    {:req (req (< (:credit corp) 10))
     :msg "gain 7 [Credits] and take 1 bad publicity"
     :effect (effect (gain :credit 7)
-                    (gain :corp :bad-publicity 1) ) }
+                    (gain-bad-publicity :corp 1) ) }
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))
