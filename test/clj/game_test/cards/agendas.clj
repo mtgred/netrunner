@@ -703,7 +703,7 @@
       (run-empty-server state "Server 1")
       (prompt-choice :runner "Yes")
       (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
-      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))
+      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
 
 (deftest firmware-updates
   ;; Firmware Updates
