@@ -791,6 +791,52 @@
     (play-from-hand state :corp "Hedge Fund")
     (is (= 9 (:credit (get-corp))))))
 
+(deftest high-profile-target
+  (testing "when the runner has no tags"
+    (do-game
+     (new-game (default-corp [(qty "High-Profile Target" 6)])
+               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+     (play-from-hand state :corp "High-Profile Target")
+     (is (= 3 (:click (get-corp))) "Corp not charged a click")
+     (is (= 5 (count (:hand (get-runner)))) "Runner did not take damage")))
+
+  (testing "when the runner has one tag"
+    (do-game
+     (new-game (default-corp [(qty "High-Profile Target" 6)])
+               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+     (core/gain state :runner :tag 1)
+     (play-from-hand state :corp "High-Profile Target")
+     (is (= 3 (count (:hand (get-runner)))) "Runner has 3 cards in hand")))
+
+  (testing "when the runner has two tags"
+    (do-game
+     (new-game (default-corp [(qty "High-Profile Target" 6)])
+               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+     (core/gain state :runner :tag 2)
+     (play-from-hand state :corp "High-Profile Target")
+     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")))
+
+  (testing "when the runner has enough tags to die"
+    (do-game
+     (new-game (default-corp [(qty "High-Profile Target" 6)])
+               (default-runner))
+     (core/gain state :runner :tag 3)
+     (play-from-hand state :corp "High-Profile Target")
+     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+     (is (= :corp (:winner @state)) "Corp wins")
+     (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+
+(deftest high-profile-target-flatline
+  ;; High-Profile Target - three tags, gg
+  (do-game
+   (new-game (default-corp [(qty "High-Profile Target" 10)])
+             (default-runner))
+   (core/gain state :runner :tag 3)
+   (play-from-hand state :corp "High-Profile Target")
+   (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+   (is (= :corp (:winner @state)) "Corp wins")
+   (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
+
 (deftest housekeeping
   ;; Housekeeping - Runner must trash a card from Grip on first install of a turn
   (do-game

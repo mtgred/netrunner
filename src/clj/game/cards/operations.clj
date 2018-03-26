@@ -618,6 +618,14 @@
                                     :effect (effect (move target :deck {:front true}))}
                                    card nil)))}
 
+   "High-Profile Target"
+   (letfn [(dmg-count [runner]
+             (* 2 (:tag runner)))]
+     {:req (req tagged)
+      :delayed-completion true
+      :msg (msg "do " (dmg-count runner) " meat damage")
+      :effect (effect (damage eid :meat (dmg-count runner) {:card card}))})
+
    "Housekeeping"
    {:events {:runner-install {:player :runner
                               :prompt "Select a card from your Grip to trash for Housekeeping" :once :per-turn
