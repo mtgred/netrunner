@@ -484,7 +484,7 @@
 
       ;; Try moving CT to hand
       (game.core/move state :runner (get-in (get-resource state 0) [:hosted 0]) :hand)
-      (is (= chaos (-> (get-runner) :rfg 0 :title)) "Chaos Theory moved to RFG")
+      (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
       (is (= 0 (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
       (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")))
 
