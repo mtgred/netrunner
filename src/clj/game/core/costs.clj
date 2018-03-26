@@ -29,7 +29,7 @@
                   (and (= type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                   (and (= type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
                   (and (= type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                                  (all-installed state :runner))) amount) 0))
+                                                                  (all-active-installed state :runner))) amount) 0))
                   (and (= type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
                   (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
       "Unable to pay")))
@@ -71,7 +71,7 @@
   ([state side eid card type amount select-fn args]
    (let [cost-name (cost-names amount type)]
      (continue-ability state side
-                       {:prompt (str "Choose a " type "to trash")
+                       {:prompt (str "Choose a " type " to trash")
                         :choices {:max amount
                                   :req select-fn}
                         :delayed-completion true
@@ -121,7 +121,7 @@
      :connection (pay-trash state side eid card "connection" (second cost) (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
 
      ;; Rezzed ICE
-     :ice (pay-trash state :corp card :ice (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
+     :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
 
      :tag (let [r (deduce state :runner cost)]
             (effect-completed state side (make-result eid r))

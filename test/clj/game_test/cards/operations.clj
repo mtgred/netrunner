@@ -454,6 +454,55 @@
     (play-from-hand state :corp "Economic Warfare")
     (is (= 3 (:credit (get-runner))) "Runner has 3 credits")))
 
+(deftest market-forces
+  (testing "when the runner is not tagged"
+    (do-game
+     (new-game (default-corp [(qty "Market Forces" 6)])
+               (default-runner))
+
+     (play-from-hand state :corp "Market Forces")
+
+     (is (= 6 (count (:hand (get-corp))))
+         "Market Forces is not played")
+     (is (= 3 (:click (get-corp)))
+         "the corp does not spend a click")
+     (is (= 5 (:credit (get-corp)) (:credit (get-runner)))
+         "credits are unaffected")))
+
+    (letfn [(market-forces-credit-test
+              [{:keys [tag-count runner-creds expected-credit-diff]}]
+              (testing (str "when the runner has " tag-count " tags and " runner-creds " credits")
+                (do-game
+                 (new-game (default-corp [(qty "Market Forces" 6)])
+                           (default-runner))
+
+                 (swap! state assoc-in [:corp :credit] 0)
+                 (swap! state assoc-in [:runner :credit] runner-creds)
+                 (core/gain state :runner :tag tag-count)
+
+                 (play-from-hand state :corp "Market Forces")
+
+                 (is (= expected-credit-diff (:credit (get-corp)))
+                     (str "the corp gains " expected-credit-diff " credits"))
+                 (is (= expected-credit-diff (- runner-creds (:credit (get-runner))))
+                     (str "the runner loses " expected-credit-diff " credits")))))]
+      (doall (map market-forces-credit-test
+                  [{:tag-count            1
+                    :runner-creds         10
+                    :expected-credit-diff 3}
+                   {:tag-count            2
+                    :runner-creds         10
+                    :expected-credit-diff 6}
+                   {:tag-count            3
+                    :runner-creds         10
+                    :expected-credit-diff 9}
+                   {:tag-count            3
+                    :runner-creds         0
+                    :expected-credit-diff 0}
+                   {:tag-count            3
+                    :runner-creds         5
+                    :expected-credit-diff 5}]))))
+
 (deftest enhanced-login-protocol
   ;; Enhanced Login Protocol - First click run each turn costs an additional click
   (do-game
@@ -790,6 +839,52 @@
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Hedge Fund")
     (is (= 9 (:credit (get-corp))))))
+
+(deftest high-profile-target
+  (testing "when the runner has no tags"
+    (do-game
+     (new-game (default-corp [(qty "High-Profile Target" 6)])
+               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+     (play-from-hand state :corp "High-Profile Target")
+     (is (= 3 (:click (get-corp))) "Corp not charged a click")
+     (is (= 5 (count (:hand (get-runner)))) "Runner did not take damage")))
+
+  (testing "when the runner has one tag"
+    (do-game
+     (new-game (default-corp [(qty "High-Profile Target" 6)])
+               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+     (core/gain state :runner :tag 1)
+     (play-from-hand state :corp "High-Profile Target")
+     (is (= 3 (count (:hand (get-runner)))) "Runner has 3 cards in hand")))
+
+  (testing "when the runner has two tags"
+    (do-game
+     (new-game (default-corp [(qty "High-Profile Target" 6)])
+               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
+     (core/gain state :runner :tag 2)
+     (play-from-hand state :corp "High-Profile Target")
+     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")))
+
+  (testing "when the runner has enough tags to die"
+    (do-game
+     (new-game (default-corp [(qty "High-Profile Target" 6)])
+               (default-runner))
+     (core/gain state :runner :tag 3)
+     (play-from-hand state :corp "High-Profile Target")
+     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+     (is (= :corp (:winner @state)) "Corp wins")
+     (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+
+(deftest high-profile-target-flatline
+  ;; High-Profile Target - three tags, gg
+  (do-game
+   (new-game (default-corp [(qty "High-Profile Target" 10)])
+             (default-runner))
+   (core/gain state :runner :tag 3)
+   (play-from-hand state :corp "High-Profile Target")
+   (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
+   (is (= :corp (:winner @state)) "Corp wins")
+   (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
 (deftest housekeeping
   ;; Housekeeping - Runner must trash a card from Grip on first install of a turn

@@ -3,11 +3,14 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as sab :include-macros true]
             [cljs.core.async :refer [chan put! <!] :as async]
+            [clojure.string :as s]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar authenticated] :as auth]
             [netrunner.gameboard :refer [card-preview-mouse-over card-preview-mouse-out get-message-parts create-span card-zoom] :as gameboard]
-            [netrunner.ajax :refer [GET]]
+            [netrunner.ajax :refer [GET PUT]]
             [netrunner.ws :as ws]))
+
+(declare fetch-messages)
 
 (enable-console-print!)
 
@@ -17,22 +20,50 @@
   :chat/message
   (partial put! chat-channel))
 
+(defn current-block-list
+  []
+  (if-let [curr (get-in @app-state [:options :blocked-users] nil)]
+    curr
+    []))
+
 (defn filter-blocked-messages
   [messages]
-  (if-let [blocked-users (get-in @app-state [:options :blocked-users] nil)]
-    (filter #(= -1 (.indexOf blocked-users (:username %))) messages)
-    messages))
+  (filter #(= -1 (.indexOf (current-block-list) (:username %))) messages))
 
 (defn update-message-channel
   [channel messages]
   (swap! app-state assoc-in [:channels channel] (filter-blocked-messages messages)))
 
 (go (while true
-
       (let [msg (<! chat-channel)
             ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
         (update-message-channel ch (reverse (conj (reverse messages) msg))))))
+
+(defn non-game-toast
+  "Display a toast warning with the specified message."
+  [msg type options]
+  (set! (.-options js/toastr) (netrunner.gameboard/toastr-options options))
+  (let [f (aget js/toastr type)]
+    (f msg)))
+
+(defn- post-response [owner blocked-user response]
+  (if (= 200 (:status response))
+    (non-game-toast (str "Blocked user " blocked-user ". Refresh browser to update.") "success" nil)
+    (non-game-toast "Failed to block user" "error" nil)))
+
+(defn block-user
+  [owner blocked-user]
+  (authenticated
+    (fn [user]
+      (let [my-user-name (:username user)
+            current-blocked-list (current-block-list)]
+        (when (and (not (s/blank? blocked-user))
+                   (not= my-user-name blocked-user)
+                   (= -1 (.indexOf current-blocked-list blocked-user)))
+          (let [new-block-list (conj current-blocked-list blocked-user)]
+            (swap! app-state assoc-in [:options :blocked-users] new-block-list)
+            (netrunner.account/post-options "/profile" (partial post-response owner blocked-user))))))))
 
 (defn send-msg [event channel owner]
   (.preventDefault event)
@@ -66,23 +97,37 @@
                          :on-click #(put! (:channel-ch state) channel)}
         (str "#" (name channel))]))))
 
+(defn- hide-block-menu [owner] (-> (om/get-node owner "user-msg-buttons") js/$ .hide))
+
 (defn message-view [message owner]
   (reify
     om/IRenderState
     (render-state [_ state]
       (sab/html
-        [:div.message
-         (om/build avatar message {:opts {:size 38}})
-         [:div.content
-          [:div
-           [:span.username (:username message)]
-           [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
-          [:div
-           {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch state))
-            :on-mouse-out  #(card-preview-mouse-out % (:zoom-ch state))}
-           (for [item (get-message-parts (:msg message))]
-               (create-span item))
-           ]]]))))
+        (let [user (:user @app-state)
+              my-msg (= (:username message) (:username user))]
+          [:div.message
+           (om/build avatar message {:opts {:size 38}})
+           [:div.content
+            [:div.name-menu
+             [:span.username
+              {:on-click #(-> (om/get-node owner "user-msg-buttons") js/$ .toggle)
+               :class (if my-msg "" "clickable")}
+              (:username message)]
+             (when user
+               (when (not my-msg)
+                 [:div.panel.blue-shade.block-menu
+                  {:ref "user-msg-buttons"}
+                  [:div {:on-click #(do
+                                      (block-user owner (:username message))
+                                      (hide-block-menu owner))} "Block User"]
+                  [:div {:on-click #(hide-block-menu owner)} "Cancel"]]))
+             [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
+            [:div
+             {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch state))
+              :on-mouse-out  #(card-preview-mouse-out % (:zoom-ch state))}
+             (for [item (get-message-parts (:msg message))]
+               (create-span item))]]])))))
 
 (defn fetch-messages [owner]
   (let [channel (om/get-state owner :channel)

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare active? all-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run hardware? has-subtype? ice?
+(declare active? all-installed all-active-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run hardware? has-subtype? ice?
          make-eid program? register-events remove-from-host remove-icon reset-card resource? rezzed? trash trigger-event update-hosted!
          update-ice-strength unregister-events)
 
@@ -194,13 +194,13 @@
 (defn get-virus-counters
   "Calculate the number of virus counters on the given card, taking Hivemind into account."
   [state side card]
-  (let [hiveminds (filter #(= (:title %) "Hivemind") (all-installed state :runner))]
+  (let [hiveminds (filter #(= (:title %) "Hivemind") (all-active-installed state :runner))]
     (reduce + (map #(get-in % [:counter :virus] 0) (cons card hiveminds)))))
 
 (defn count-virus-programs
   "Calculate the number of virus programs in play"
   [state]
-  (count (filter #(has-subtype? % "Virus") (all-installed state :runner))))
+  (count (filter #(has-subtype? % "Virus") (all-active-installed state :runner))))
 
 (defn card->server
   "Returns the server map that this card is installed in or protecting."

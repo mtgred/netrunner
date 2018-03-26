@@ -366,6 +366,23 @@
       (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
       (is (not (:run @state)) "Run ended"))))
 
+(deftest free-lunch
+  ;; Free Lunch - Spend 1 power counter to make Runner lose 1c
+  (do-game
+    (new-game (default-corp [(qty "Free Lunch" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Free Lunch" "HQ")
+    (let [fl (get-ice state :hq 0)]
+      (core/rez state :corp fl)
+      (card-subroutine state :corp fl 0)
+      (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
+      (card-subroutine state :corp fl 0)
+      (is (= 2 (get-counters (refresh fl) :power)) "Free Lunch has 2 power counters")
+      (is (= 5 (:credit (get-runner))))
+      (card-ability state :corp (refresh fl) 0)
+      (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
+      (is (= 4 (:credit (get-runner))) "Runner lost 1 credit"))))
+
 (deftest gemini-kicker
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success
   (do-game
@@ -406,6 +423,31 @@
       (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
       (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage"))))
 
+(deftest holmegaard
+  ;; Holmegaard - Stop Runner from accessing cards if win trace
+  (do-game
+    (new-game (default-corp [(qty "Holmegaard" 1) (qty "Hostile Takeover" 1)])
+              (default-runner [(qty "Cache" 1) (qty "Inti" 1)]))
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Holmegaard" "HQ")
+    (let [holm (get-ice state :hq 0)]
+      (core/rez state :corp holm)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Inti")
+      (play-from-hand state :runner "Cache")
+      (run-on state "HQ")
+      (card-subroutine state :corp holm 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (card-subroutine state :corp holm 1)
+      (prompt-select :corp (get-program state 1))
+      (is (empty? (:discard (get-runner))) "Can't target non-icebreaker program")
+      (prompt-select :corp (get-program state 0))
+      (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
+      (run-continue state)
+      (run-successful state)
+      (is (= 0 (:agenda-point (get-runner))) "Didn't access and steal agenda"))))
+
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
   (do-game
@@ -425,6 +467,26 @@
                  (= 3 (:current-strength (refresh iq1)))
                  (= 3 (:current-strength (refresh iq2)))
                  (= 2 (:credit (get-corp)))) "3 cards in HQ: paid 3 to rez, both have 3 strength")))))
+
+(deftest its-a-trap
+  ;; It's a Trap! - 2 net dmg on expose, self-trash and make Runner trash installed card
+  (do-game
+    (new-game (default-corp [(qty "It's a Trap!" 1)])
+              (default-runner [(qty "Cache" 3) (qty "Infiltration" 2)]))
+    (play-from-hand state :corp "It's a Trap!" "Archives")
+    (let [iat (get-ice state :archives 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Infiltration")
+      (prompt-choice :runner "Expose a card")
+      (prompt-select :runner iat)
+      (is (= 3 (count (:discard (get-runner)))) "Did 2 net damage on expose")
+      (play-from-hand state :runner "Cache")
+      (run-on state "archives")
+      (core/rez state :corp iat)
+      (card-subroutine state :corp (refresh iat) 0)
+      (prompt-select :runner (get-program state 0))
+      (is (= 4 (count (:discard (get-runner)))) "Cache trashed")
+      (is (= 1 (count (:discard (get-corp)))) "It's a Trap trashed"))))
 
 (deftest jua-encounter
   ;; Jua (encounter effect) - Prevent Runner from installing cards for the rest of the turn
@@ -470,7 +532,8 @@
       (card-subroutine state :corp (refresh jua) 0)
       (prompt-select :corp (get-program state 0))
       (prompt-select :corp (get-hardware state 0))
-      (prompt-choice :runner "Gordian Blade")
+      (prn (:prompt (get-runner)))
+      (prompt-card :runner (get-program state 0))
       (is (nil? (get-program state 0)) "Card is uninstalled")
       (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck"))))
 
@@ -719,6 +782,46 @@
       (take-credits state :runner)
       (is (= 5 (:click (get-corp))) "Corp has 5 clicks"))))
 
+(deftest oduduwa
+  ;; Oduduwa - Gain 1 advancement token when encountered.
+  ;; May placed x advancement tokens on another ice where x is the number of counters on Oduduwa already.
+  (do-game
+    (new-game (default-corp [(qty "Oduduwa" 1) (qty "Enigma" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Oduduwa" "HQ")
+    (play-from-hand state :corp "Enigma" "R&D")
+    (let [odu (get-ice state :hq 0)
+          eni (get-ice state :rd 0)]
+      (core/rez state :corp odu)
+      (core/rez state :corp eni)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (refresh odu) 0)
+      (card-ability state :corp (refresh odu) 1)
+      (prompt-select :corp (refresh eni))
+      (is (= 1 (:advance-counter (refresh odu))))
+      (is (= 1 (:advance-counter (refresh eni))))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (refresh odu) 0)
+      (card-ability state :corp (refresh odu) 1)
+      (prompt-select :corp (refresh eni))
+      (is (= 2 (:advance-counter (refresh odu))))
+      (is (= 3 (:advance-counter (refresh eni))))
+      (run-jack-out state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-ability state :corp (refresh odu) 0)
+      (card-ability state :corp (refresh odu) 1)
+      (prompt-select :corp (refresh eni))
+      (is (= 3 (:advance-counter (refresh odu))))
+      (is (= 6 (:advance-counter (refresh eni))))
+      )))
+
+
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
   (do-game
@@ -734,6 +837,39 @@
       (take-credits state :corp)
       (core/remove-tag state :runner 1)
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
+
+(deftest searchlight
+  ;; Searchlight - Trace bace equal to advancement counters
+  (do-game
+    (new-game (default-corp [(qty "Searchlight" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Searchlight" "HQ")
+    (let [searchlight (get-ice state :hq 0)]
+      (core/rez state :corp searchlight)
+      (card-subroutine state :corp (refresh searchlight) 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
+      (core/advance state :corp {:card (refresh searchlight)})
+      (card-subroutine state :corp (refresh searchlight) 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (:tag (get-runner))) "Trace succeeds with 0 advancements"))))
+
+(deftest seidr-adaptive-barrier
+  ;; Seidr Adaptive Barrier - +1 strength for every ice protecting its server
+  (do-game
+    (new-game (default-corp [(qty "Seidr Adaptive Barrier" 1) (qty "Ice Wall" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Seidr Adaptive Barrier" "HQ")
+    (let [sab (get-ice state :hq 0)]
+      (core/rez state :corp sab)
+      (is (= 3 (:current-strength (refresh sab))) "Seidr gained 1 strength for itself")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (is (= 4 (:current-strength (refresh sab))) "+2 strength for 2 pieces of ICE")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (is (= 5 (:current-strength (refresh sab))) "+3 strength for 3 pieces of ICE"))))
 
 (deftest self-adapting-code-wall-unlowerable
   ;; self-adapting code wall strength cannot be lowered
@@ -761,24 +897,6 @@
       (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased")
       (take-credits state :corp 2)
       (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased"))))
-
-(deftest searchlight
-  ;; Searchlight - Trace bace equal to advancement counters
-  (do-game
-    (new-game (default-corp [(qty "Searchlight" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Searchlight" "HQ")
-    (let [searchlight (get-ice state :hq 0)]
-      (core/rez state :corp searchlight)
-      (card-subroutine state :corp (refresh searchlight) 0)
-      (prompt-choice :corp 0)
-      (prompt-choice :runner 0)
-      (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
-      (core/advance state :corp {:card (refresh searchlight)})
-      (card-subroutine state :corp (refresh searchlight) 0)
-      (prompt-choice :corp 0)
-      (prompt-choice :runner 0)
-      (is (= 1 (:tag (get-runner))) "Trace succeeds with 0 advancements"))))
 
 (deftest sherlock
   ;; Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack
@@ -968,6 +1086,21 @@
       (core/rez state :corp t2)
       (is (= 5 (:current-strength (refresh t2)))
           "Turing increased to 5 strength over a remote server"))))
+
+(deftest waiver
+  ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
+  (do-game
+    (new-game (default-corp [(qty "Waiver" 1)])
+              (default-runner [(qty "Corroder" 1) (qty "Dean Lister" 1) (qty "Ubax" 1) (qty "Caldera" 1)]))
+    (play-from-hand state :corp "Waiver" "HQ")
+    (let [waiv (get-ice state :hq 0)]
+      (core/rez state :corp waiv)
+      (card-subroutine state :corp waiv 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 3)
+      (is (empty? (filter #(= "Ubax" (:title %)) (:discard (get-runner)))) "Ubax not trashed")
+      (is (empty? (filter #(= "Caldera" (:title %)) (:discard (get-runner)))) "Caldera not trashed")
+      (is (= 2 (count (:discard (get-runner)))) "2 cards trashed"))))
 
 (deftest wraparound
   ;; Wraparound - Strength boosted when no fracter is installed

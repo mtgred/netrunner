@@ -106,6 +106,11 @@
   [state pos]
   (get-in @state [:runner :rig :resource pos]))
 
+(defn get-runner-facedown
+  "Get non-hosted runner facedown by position."
+  [state pos]
+  (get-in @state [:runner :rig :facedown pos]))
+
 (defn get-scored
   "Get a card from the score area. Can find by name or index.
   If no index or name provided, get the first scored agenda."

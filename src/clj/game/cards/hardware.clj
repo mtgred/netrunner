@@ -21,7 +21,7 @@
 
    "Adjusted Matrix"
    {:implementation "Click Adjusted Matrix to use ability."
-    :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
+    :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
     :prompt "Choose Icebreaker on which to install Adjusted Matrix"
     :choices {:req #(and (= (:side %) "Runner") (has-subtype? % "Icebreaker") (installed? %))}
     :msg (msg "host it on " (card-str state target))
@@ -154,7 +154,7 @@
                                                       remaining (- handsize trashed)]
                                                   (doseq [c targets]
                                                     (when (not (empty? (filter #(= (:title c) (:title %))
-                                                                               (all-installed state :runner))))
+                                                                               (all-active-installed state :runner))))
                                                       (draw state side)))
                                                   (trash-cards state side targets)
                                                   (system-msg state side
@@ -243,7 +243,7 @@
 
    "Dedicated Processor"
    {:implementation "Click Dedicated Processor to use ability"
-    :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-installed state :runner))))
+    :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))
     :hosting {:req #(and (has-subtype? % "Icebreaker")
                          (not (has-subtype? % "AI"))
                          (installed? %))}
@@ -451,7 +451,7 @@
                                 (update! state side (dissoc card :llds-target))
                                 (doseq [c cards]
                                 (update-breaker-strength state side
-                                                         (find-cid (:cid c) (all-installed state :runner))))))}]
+                                                         (find-cid (:cid c) (all-active-installed state :runner))))))}]
        {:runner-turn-ends llds :corp-turn-ends llds
         :runner-install {:silent (req true)
                          :req (req (has-subtype? target "Icebreaker"))
@@ -576,7 +576,7 @@
    "NetChip"
    {:abilities [{:label "Install a program on NetChip"
                  :req (req (empty? (:hosted card)))
-                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                                 (resolve-ability state side
                                   {:cost [:click 1]
                                    :prompt "Select a program in your Grip to install on NetChip"
@@ -593,7 +593,7 @@
                                  card nil)))}
                 {:label "Host an installed program on NetChip"
                  :req (req (empty? (:hosted card)))
-                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                                 (resolve-ability state side
                                   {:prompt "Select an installed program to host on NetChip"
                                    :choices {:req #(and (is-type? % "Program")
@@ -733,7 +733,7 @@
    "Ramujan-reliant 550 BMI"
    {:prevent {:damage [:net :brain]}
     :abilities [{:req (req (not-empty (:deck runner)))
-                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-installed state :runner)))]
+                 :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                                 (resolve-ability state side
                                   {:prompt "Choose how much damage to prevent"
                                    :priority 50
@@ -930,7 +930,7 @@
                  :msg "look at the top X cards of their Stack and rearrange them"
                  :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their stack")
                               (let [n (count (filter #(= (:title %) (:title card))
-                                                     (all-installed state :runner)))
+                                                     (all-active-installed state :runner)))
                                     from (take n (:deck runner))]
                                 (if (pos? (count from))
                                   (continue-ability state side (reorder-choice :runner :corp from '()
@@ -1058,7 +1058,7 @@
       :flags {:runner-turn-draw true
               :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                         (cons (get-in @state [:runner :identity])
-                                                              (all-installed state :runner))))))}
+                                                              (all-active-installed state :runner))))))}
       :events {:runner-turn-begins ability}
       :abilities [ability]})
 

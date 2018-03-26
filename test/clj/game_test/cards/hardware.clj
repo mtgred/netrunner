@@ -74,16 +74,6 @@
     (is (= 5 (count (:hand (get-runner)))) "Did not draw")
     (is (= 1 (count (:deck (get-runner)))) "1 card left in deck")))
 
-(deftest box-e
-  ;; Box-E - +2 MU, +2 max hand size
-  (do-game
-   (new-game (default-corp)
-             (default-runner [(qty "Box-E" 1)]))
-   (take-credits state :corp)
-   (play-from-hand state :runner "Box-E")
-   (is (= 6 (:memory (get-runner))))
-   (is (= 7 (core/hand-size state :runner)))))
-
 (deftest blackguard
   ;; Blackguard - +2 MU, forced rez of exposed ice
   (do-game
@@ -101,6 +91,16 @@
      (run-on state :archives)
      (card-ability state :runner snitch 0)
      (is (:rezzed (refresh iwall)) "Ice Wall was rezzed"))))
+
+(deftest box-e
+  ;; Box-E - +2 MU, +2 max hand size
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Box-E" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Box-E")
+   (is (= 6 (:memory (get-runner))))
+   (is (= 7 (core/hand-size state :runner)))))
 
 (deftest brain-chip
   ;; Brain Chip handsize and memory limit
@@ -199,6 +199,26 @@
     (take-credits state :corp)
     (play-from-hand state :runner "CyberSolutions Mem Chip")
     (is (= 6 (:memory (get-runner))) "Gain 2 memory")))
+
+(deftest daredevil
+  ;; Daredevil
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 2)])
+              (default-runner [(qty "Daredevil" 1) (qty "Sure Gamble" 3) (qty "Easy Mark" 2)]))
+    (starting-hand state :runner ["Daredevil"])
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Daredevil")
+    (is (= 6 (:memory (get-runner))) "Gained 2 MU")
+    (run-on state "HQ")
+    (is (empty? (:hand (get-runner))) "No cards drawn")
+    (run-jack-out state)
+    (run-on state "Archives")
+    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")
+    (run-jack-out state)
+    (run-on state "Archives")
+    (is (= 2 (count (:hand (get-runner)))) "No cards drawn")))
 
 (deftest desperado
   ;; Desperado - Gain 1 MU and gain 1 credit on successful run
@@ -346,6 +366,38 @@
     (let [imp (get-in @state [:runner :rig :program 0])]
       (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter on install"))))
 
+(deftest heartbeat
+  ;; Heartbeat - +1 MU, trash installed card to prevent 1 damage
+  (do-game
+    (new-game (default-corp [(qty "Pup" 1) (qty "Neural Katana" 1)])
+              (make-deck "Apex: Invasive Predator" [(qty "Heartbeat" 2) (qty "Sure Gamble" 2) (qty "Cache" 1)]))
+    (play-from-hand state :corp "Pup" "HQ")
+    (play-from-hand state :corp "Neural Katana" "R&D")
+    (take-credits state :corp)
+    (core/end-phase-12 state :runner nil)
+    (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
+    (play-from-hand state :runner "Heartbeat")
+    (is (= 5 (:memory (get-runner))) "Gained 1 MU")
+    (play-from-hand state :runner "Cache")
+    (let [hb (get-hardware state 0)
+          cache (get-program state 0)
+          hbdown (get-in @state [:runner :rig :facedown 0])
+          pup (get-ice state :hq 0)
+          nk (get-ice state :rd 0)]
+      (core/rez state :corp pup)
+      (core/rez state :corp nk)
+      (card-subroutine state :corp (refresh pup) 0)
+      (card-ability state :runner hb 0)
+      (prompt-select :runner cache)
+      (prompt-choice :runner "Done")
+      (is (= 1 (count (:discard (get-runner)))) "Prevented 1 net damage")
+      (is (= 2 (count (:hand (get-runner)))))
+      (card-subroutine state :corp (refresh nk) 0)
+      (card-ability state :runner hb 0)
+      (prompt-select :runner hbdown)
+      (prompt-choice :runner "Done")
+      (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card"))))
+
 (deftest llds-processor
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
   (do-game
@@ -467,6 +519,25 @@
       (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
       (is (:prompt (get-runner)) "Runner has next access prompt"))))
 
+(deftest net-ready-eyes
+  ;; Net-Ready Eyes
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Sure Gamble" 3) (qty "Net-Ready Eyes" 1) (qty "Peacock" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sure Gamble")
+    (play-from-hand state :runner "Peacock")
+    (play-from-hand state :runner "Net-Ready Eyes")
+    (is (= 3 (count (:discard (get-runner)))) "Took 2 damage on NRE install")
+    (run-on state "HQ")
+    (let [pea (get-program state 0)]
+      (prompt-select :runner pea)
+      (is (= 3 (:current-strength (refresh pea))) "Peacock strength boosted")
+      (run-continue state)
+      (run-successful state)
+      (prompt-choice :runner "OK")
+      (is (= 2 (:current-strength (refresh pea))) "Peacock strength back to default"))))
+
 (deftest obelus
   ;; Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run
   (do-game
@@ -564,6 +635,62 @@
     (is (= 2 (:click (get-runner))) "Clickless installs of extra 2 copies")
     (is (= 3 (:credit (get-runner))) "Paid 2c for each of 3 copies")))
 
+(deftest ramujan-reliant
+  ;; Prevent up to X net or brain damage.
+  (do-game
+    (new-game (default-corp [(qty "Data Mine" 1)
+                             (qty "Snare!" 1)])
+              (default-runner [(qty "Ramujan-reliant 550 BMI" 4) (qty "Sure Gamble" 6)]))
+    (starting-hand state :runner
+                   ["Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Sure Gamble"])
+    (play-from-hand state :corp "Data Mine" "Server 1")
+    (play-from-hand state :corp "Snare!" "Server 1")
+    (let [sn (get-content state :remote1 0)
+          dm (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (let [rr1 (get-in @state [:runner :rig :hardware 0])
+            rr2 (get-in @state [:runner :rig :hardware 1])
+            rr3 (get-in @state [:runner :rig :hardware 2])]
+        (run-on state "Server 1")
+        (core/rez state :corp dm)
+        (card-subroutine state :corp dm 0)
+        (card-ability state :runner rr1 0)
+        (prompt-choice :runner 1)
+        (is (last-log-contains? state "Sure Gamble")
+            "Ramujan did log trashed card names")
+        (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
+        (run-successful state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+        (run-empty-server state "Server 1")
+        (prompt-choice :corp "Yes")
+        (card-ability state :runner rr2 0)
+        (prompt-choice :runner 3)
+        (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble")
+            "Ramujan did log trashed card names")
+        (is (= 1 (count (:hand (get-runner)))) "3 net damage prevented")))))
+
+(deftest ramujan-reliant-empty
+  ;; Prevent up to X net or brain damage. Empty stack
+  (do-game
+    (new-game (default-corp [(qty "Data Mine" 1)])
+              (default-runner [(qty "Ramujan-reliant 550 BMI" 1) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Data Mine" "Server 1")
+    (let [dm (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (let [rr1 (get-in @state [:runner :rig :hardware 0])]
+        (run-on state "Server 1")
+        (core/rez state :corp dm)
+        (card-subroutine state :corp dm 0)
+        (card-ability state :runner rr1 0)
+        (prompt-choice :runner 1)
+        (is (= 0 (count (:hand (get-runner)))) "Not enough cards in Stack for Ramujan to work")))))
+
 (deftest recon-drone
   ;; trash and pay X to prevent that much damage from a card you are accessing
   (do-game
@@ -644,62 +771,6 @@
       (prompt-choice :runner "Done")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no brain damage"))))
 
-(deftest ramujan-reliant
-  ;; Prevent up to X net or brain damage.
-  (do-game
-    (new-game (default-corp [(qty "Data Mine" 1)
-                             (qty "Snare!" 1)])
-              (default-runner [(qty "Ramujan-reliant 550 BMI" 4) (qty "Sure Gamble" 6)]))
-    (starting-hand state :runner
-                   ["Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Sure Gamble"])
-    (play-from-hand state :corp "Data Mine" "Server 1")
-    (play-from-hand state :corp "Snare!" "Server 1")
-    (let [sn (get-content state :remote1 0)
-          dm (get-ice state :remote1 0)]
-      (take-credits state :corp)
-      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-      (let [rr1 (get-in @state [:runner :rig :hardware 0])
-            rr2 (get-in @state [:runner :rig :hardware 1])
-            rr3 (get-in @state [:runner :rig :hardware 2])]
-        (run-on state "Server 1")
-        (core/rez state :corp dm)
-        (card-subroutine state :corp dm 0)
-        (card-ability state :runner rr1 0)
-        (prompt-choice :runner 1)
-        (is (last-log-contains? state "Sure Gamble")
-            "Ramujan did log trashed card names")
-        (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
-        (run-successful state)
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-        (run-empty-server state "Server 1")
-        (prompt-choice :corp "Yes")
-        (card-ability state :runner rr2 0)
-        (prompt-choice :runner 3)
-        (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble")
-            "Ramujan did log trashed card names")
-        (is (= 1 (count (:hand (get-runner)))) "3 net damage prevented")))))
-
-(deftest ramujan-reliant-empty
-  ;; Prevent up to X net or brain damage. Empty stack
-  (do-game
-    (new-game (default-corp [(qty "Data Mine" 1)])
-              (default-runner [(qty "Ramujan-reliant 550 BMI" 1) (qty "Sure Gamble" 1)]))
-    (play-from-hand state :corp "Data Mine" "Server 1")
-    (let [dm (get-ice state :remote1 0)]
-      (take-credits state :corp)
-      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-      (let [rr1 (get-in @state [:runner :rig :hardware 0])]
-        (run-on state "Server 1")
-        (core/rez state :corp dm)
-        (card-subroutine state :corp dm 0)
-        (card-ability state :runner rr1 0)
-        (prompt-choice :runner 1)
-        (is (= 0 (count (:hand (get-runner)))) "Not enough cards in Stack for Ramujan to work")))))
-
 (deftest replicator-bazaar
   ;; Replicator - interaction with Bazaar. Issue #1511.
   (do-game
@@ -742,6 +813,29 @@
      (play-from-hand state :runner "Respirocytes"))
    (is (= 2 (count (:discard (get-runner)))) "2 damage done")
    (is (= 2 (count (:hand (get-runner)))) "Drew 2 cards")))
+
+(deftest rubicon-switch
+  ;; Rubicon Switch
+  (do-game
+   (new-game (default-corp [(qty "Ice Wall" 1) (qty "Pachinko" 1)])
+             (default-runner [(qty "Rubicon Switch" 1)]))
+   (play-from-hand state :corp "Ice Wall" "HQ")
+   (play-from-hand state :corp "Pachinko" "R&D")
+   (let [iw (get-ice state :hq 0)
+         pach (get-ice state :rd 0)]
+     (core/rez state :corp iw)
+     (take-credits state :corp)
+     (play-from-hand state :runner "Rubicon Switch")
+     (core/rez state :corp pach)
+     (let [rs (get-hardware state 0)]
+       (card-ability state :runner rs 0)
+       (prompt-choice :runner 1)
+       (prompt-select :runner (refresh iw))
+       (is (:rezzed (refresh iw)) "Ice Wall rezzed last turn can't be targeted")
+       (prompt-select :runner (refresh pach))
+       (is (not (:rezzed (refresh pach))) "Pachinko derezzed")
+       (is (= 2 (:click (get-runner))) "Spent 1 click")
+       (is (= 1 (:credit (get-runner))) "Spent 1c")))))
 
 (deftest sifr
   ;; Once per turn drop encountered ICE to zero strenght
@@ -816,6 +910,20 @@
       (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 4 (core/hand-size state :runner)) "Reduced hand size"))))
+
+(deftest sports-hopper
+  ;; Sports Hopper
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Sports Hopper" 3) (qty "Sure Gamble" 3)]))
+    (starting-hand state :runner ["Sports Hopper"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sports Hopper")
+    (is (= 1 (:link (get-runner))) "Gained 1 link")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards")
+    (is (= 0 (:link (get-runner))) "Lost link")))
 
 (deftest spy-camera
   ;; Spy Camera - Full test
