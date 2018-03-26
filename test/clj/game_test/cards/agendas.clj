@@ -1079,8 +1079,7 @@
       (prompt-select :corp (refresh kk))
       (prompt-select :corp (refresh ch))
       (prompt-select :corp (refresh rs))
-      (prompt-select :corp (refresh sn))
-    )))
+      (prompt-select :corp (refresh sn)))))
 
 (deftest mandatory-upgrades
   ;; Mandatory Upgrades
@@ -2215,3 +2214,16 @@
     (take-credits state :runner)
     (play-and-score state "Vulcan Coverup")
     (is (= 2 (count (:discard (get-runner)))) "Did 2 meat damage upon scoring")))
+
+(deftest water-monopoly
+  ;; Water Monopoly
+  (do-game
+    (new-game (default-corp [(qty "Water Monopoly" 1)])
+              (default-runner [(qty "Fan Site" 1) (qty "Levy Advanced Research Lab" 1)]))
+    (play-and-score state "Water Monopoly")
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))) "Runner should start with 5 credits")
+    (play-from-hand state :runner "Fan Site")
+    (is (= 5 (:credit (get-runner))) "Shouldn't lose any credits")
+    (play-from-hand state :runner "Levy Advanced Research Lab")
+    (is (= 0 (:credit (get-runner))) "Should cost an extra credit to play")))
