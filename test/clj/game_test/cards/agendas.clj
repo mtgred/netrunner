@@ -1883,6 +1883,37 @@
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 
+(deftest sensor-net-activation
+  ;; Sensor Net Activation
+  (do-game
+    (new-game (default-corp [(qty "Sensor Net Activation" 2) (qty "Enforcer 1.0" 1) (qty "Ash 2X3ZB9CY" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Enforcer 1.0" "HQ")
+    (play-and-score state "Sensor Net Activation")
+    (let [sna-scored (get-scored state :corp)
+          enf (get-ice state :hq 0)]
+      (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
+      (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should start derezzed")
+      (card-ability state :corp (refresh sna-scored) 0)
+      (prompt-select :corp enf)
+      (is (get-in (refresh enf) [:rezzed]) "Enforcer 1.0 should be rezzed")
+      (is (= 1 (count (:scored (get-corp)))) "Enforcer 1.0 should be rezzed without forfeiting agenda")
+      (take-credits state :corp)
+      (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should be derezzed"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
+    (play-and-score state "Sensor Net Activation")
+    (let [sna-scored (get-scored state :corp 1)
+          ash (get-content state :remote2 0)]
+      (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
+      (is (not (get-in (refresh ash) [:rezzed])) "Ash should start derezzed")
+      (card-ability state :corp (refresh sna-scored) 0)
+      (prompt-select :corp ash)
+      (is (get-in (refresh ash) [:rezzed]) "Ash should be rezzed")
+      (take-credits state :corp)
+      (is (not (get-in (refresh ash) [:rezzed])) "Ash should be derezzed"))))
+
 (deftest show-of-force
   ;; Show of Force
   (do-game
