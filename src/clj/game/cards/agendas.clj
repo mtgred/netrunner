@@ -1184,16 +1184,25 @@
    "Voting Machine Initiative"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))
-    :abilities [{:optional {:req (req (> (get-in card [:counter :agenda] 0)
-                                         (:vmi-count card 0)))
-                            :prompt "Cause the Runner to lose [Click] at the start of their next turn?"
-                            :yes-ability {:effect (effect (toast (str "The Runner will lose " (inc (:vmi-count card 0))
-                                                                      " [Click] at the start of their next turn") "info")
-                                                    (update! (update-in card [:vmi-count] #(inc (or % 0)))))}}}]
-    :events {:runner-turn-begins {:req (req (pos? (:vmi-count card 0)))
-                                  :msg (msg "force the Runner to lose " (:vmi-count card) " [Click]")
-                                  :effect (effect (lose :runner :click (:vmi-count card))
-                                                  (add-counter (dissoc card :vmi-count) :agenda (- (:vmi-count card))))}}}
+    :events {:runner-turn-begins
+             {:req (req (pos? (get-in card [:counter :agenda] 0)))
+              :effect (effect (show-wait-prompt :runner "Corp to use Voting Machine Initiative")
+                              (continue-ability
+                                {:player :corp
+                                 :prompt "Use Voting Machine Initiative to make the Runner lose 1 [Click]?"
+                                 :once :per-turn
+                                 :choices ["Yes" "No"]
+                                 :effect (req (case target
+                                                "Yes"
+                                                (do (lose state :runner :click 1)
+                                                    (add-counter state side card :agenda -1)
+                                                    (system-msg state :corp
+                                                                (str "uses Voting Machine Initiative to make the Runner lose 1 [Click]")))
+                                                "No"
+                                                (system-msg state :corp (str "doesn't use Voting Machine Initiative")))
+                                              (clear-wait-prompt state :runner)
+                                              (effect-completed state side eid card))}
+                                card nil))}}}
 
    "Vulcan Coverup"
    {:interactive (req true)

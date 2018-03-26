@@ -1980,27 +1980,48 @@
     (is (= 4 (:agenda-point (get-corp))))))
 
 (deftest veterans-program
-  ;; Veterans Program - basic test
-  (do-game
-    (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Veterans Program" 1)])
-              (default-runner))
-    (play-and-score state "Hostile Takeover")
-    (play-and-score state "Hostile Takeover")
-    (is (= 19 (:credit (get-corp))) "Should gain 14 credits from 5 to 19")
-    (is (= 2 (:bad-publicity (get-corp))) "Should gain 2 bad publicity")
-    (play-and-score state "Veterans Program")
-    (is (= 0 (:bad-publicity (get-corp))) "Should lose 2 bad publicity")))
+  (testing "Veterans Program basic test"
+    (do-game
+      (new-game (default-corp [(qty "Hostile Takeover" 2) (qty "Veterans Program" 1)])
+                (default-runner))
+      (play-and-score state "Hostile Takeover")
+      (play-and-score state "Hostile Takeover")
+      (is (= 19 (:credit (get-corp))) "Should gain 14 credits from 5 to 19")
+      (is (= 2 (:bad-publicity (get-corp))) "Should gain 2 bad publicity")
+      (play-and-score state "Veterans Program")
+      (is (= 0 (:bad-publicity (get-corp))) "Should lose 2 bad publicity")))
+  (testing "Removes _up to 2_ bad publicity"
+    (do-game
+      (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Veterans Program" 1)])
+                (default-runner))
+      (play-and-score state "Hostile Takeover")
+      (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
+      (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
+      (play-and-score state "Veterans Program")
+      (is (= 0 (:bad-publicity (get-corp))) "Should lose 1 bad publicity"))))
 
-(deftest veterans-program-only-1-bp
-  ;; Veterans Program - Removes _up to 2_ bad publicity
-  (do-game
-    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Veterans Program" 1)])
-              (default-runner))
-    (play-and-score state "Hostile Takeover")
-    (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
-    (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
-    (play-and-score state "Veterans Program")
-    (is (= 0 (:bad-publicity (get-corp))) "Should lose 1 bad publicity")))
+(deftest voting-machine-initiative
+  (testing "Voting Machine Initiative"
+    (do-game
+      (new-game (default-corp [(qty "Voting Machine Initiative" 1)])
+                (default-runner))
+      (letfn [(vmi-test [vmi choice counter]
+                (let [diff (if (= "Yes" choice) 1 0)]
+                  (is (= counter (get-counters (refresh vmi) :agenda)))
+                  (is (= 4 (:click (get-runner))))
+                  (prompt-choice :corp choice)
+                  (is (= (- 4 diff) (:click (get-runner))))
+                  (is (= (- counter diff) (get-counters (refresh vmi) :agenda)))
+                  (take-credits state :runner)
+                  (take-credits state :corp)))]
+        (play-and-score state "Voting Machine Initiative")
+        (let [vmi-scored (get-scored state :corp)]
+          (take-credits state :corp)
+          (vmi-test vmi-scored "Yes" 3)
+          (vmi-test vmi-scored "No" 2)
+          (vmi-test vmi-scored "Yes" 2)
+          (vmi-test vmi-scored "Yes" 1)
+          (is (empty (:prompt (get-corp))) "No prompt as there are no agenda counters left"))))))
 
 (deftest vulcan-coverup
   ;; Vulcan Coverup - Do 2 meat damage when scored; take 1 bad pub when stolen
