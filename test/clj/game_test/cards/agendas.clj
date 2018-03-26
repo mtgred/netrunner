@@ -241,6 +241,22 @@
     (take-credits state :corp)
     (is (= 0 (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
 
+(deftest cfc-excavation-contract
+  ;; CFC Excavation Contract
+  (dotimes [n 5]
+    (do-game
+      (new-game (default-corp [(qty "CFC Excavation Contract" 1) (qty "Eli 1.0" n)])
+                (default-runner))
+      (core/gain state :corp :click 10 :credit 10)
+      (is (= 15 (:credit (get-corp))) "Should start with 5 credits")
+      (dotimes [_ n]
+        (play-from-hand state :corp "Eli 1.0" "New remote")
+        (core/rez state :corp (get-ice state (keyword (str "remote" (:rid @state))) 0)))
+      (let [credit (:credit (get-corp))]
+        (play-and-score state "CFC Excavation Contract")
+        (is (= (+ credit (* 2 n)) (:credit (get-corp)))
+            (str "Should now have with " (+ credit (* 2 n)) " credits"))))))
+
 (deftest character-assassination
   ;; Character Assassination - Unpreventable trash of 1 resource when scored
   (do-game
