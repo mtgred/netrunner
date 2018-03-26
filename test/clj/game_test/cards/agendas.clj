@@ -43,7 +43,7 @@
     (is (= "15 Minutes" (:title (first (:deck (get-corp))))))))
 
 (deftest accelerated-beta-test
-  ;; Accelerated Beta Test - When scored, look at top 3 of R&D. If any are ice, install & rez one for free. Trash others.
+  ;; Accelerated Beta Test
   (do-game
     (new-game (default-corp [(qty "Accelerated Beta Test" 1) (qty "Enigma" 1) (qty "Hedge Fund" 2)])
               (default-runner))
@@ -93,7 +93,7 @@
         (is (empty (:prompt (get-corp))) "No prompt as it's once per turn")))))
 
 (deftest ancestral-imager
-  ;; Ancestral Imager - damage on jack out
+  ;; Ancestral Imager
   (do-game
     (new-game (default-corp [(qty "Ancestral Imager" 3)])
               (default-runner))
@@ -139,7 +139,7 @@
       (is (= 1 (:tag (get-runner))) "Runner took 0 tags"))))
 
 (deftest armed-intimidation
-  ;; Armed intimidation choices
+  ;; Armed Intimidation
   (do-game
     (new-game (default-corp [(qty "Armed Intimidation" 2)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 2)]))
@@ -249,7 +249,7 @@
       (is (= 2 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
 
 (deftest braintrust
-  ;; Braintrust - Discount ICE rez by 1 for every 2 over-advancements when scored
+  ;; Braintrust
   (do-game
     (new-game (default-corp [(qty "Braintrust" 1) (qty "Ichi 1.0" 1)])
               (default-runner))
@@ -265,7 +265,7 @@
         (is (= 2 (:credit (get-corp))) "2c discount to rez Ichi")))))
 
 (deftest breaking-news
-  ;; Test scoring breaking news
+  ;; Breaking News
   (do-game
     (new-game (default-corp [(qty "Breaking News" 3)])
               (default-runner))
@@ -291,7 +291,7 @@
             (str "Should now have with " (+ credit (* 2 n)) " credits"))))))
 
 (deftest character-assassination
-  ;; Character Assassination - Unpreventable trash of 1 resource when scored
+  ;; Character Assassination
   (do-game
     (new-game (default-corp [(qty "Character Assassination" 1)])
               (default-runner [(qty "Fall Guy" 1) (qty "Kati Jones" 1)]))
@@ -316,8 +316,22 @@
     (play-and-score state "Chronos Project")
     (is (= 0 (count (:discard (get-runner)))) "Runner should have 0 cards in heap")))
 
+(deftest city-works-project
+  ;; City Works Project
+  (do-game
+    (new-game (default-corp [(qty "City Works Project" 1)])
+              (default-runner [(qty "Sure Gamble" 4)]))
+    (play-from-hand state :corp "City Works Project" "New remote")
+    (let [cwp (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh cwp)})
+      (core/advance state :corp {:card (refresh cwp)}))
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 meat damage")))
+
 (deftest clone-retirement
-  ;; Clone Retirement - full test
+  ;; Clone Retirement
   (do-game
     (new-game (default-corp [(qty "Clone Retirement" 2) (qty "Hostile Takeover" 1)])
               (default-runner))
@@ -333,22 +347,8 @@
     (prompt-choice :runner "Yes")
     (is (= 1 (:bad-publicity (get-corp))))))
 
-(deftest city-works-project
-  ;; City Works Project - do 2 + advancement counters meat damage on access
-  (do-game
-    (new-game (default-corp [(qty "City Works Project" 1)])
-              (default-runner [(qty "Sure Gamble" 4)]))
-    (play-from-hand state :corp "City Works Project" "New remote")
-    (let [cwp (get-content state :remote1 0)]
-      (core/advance state :corp {:card (refresh cwp)})
-      (core/advance state :corp {:card (refresh cwp)}))
-    (take-credits state :corp)
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
-    (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 meat damage")))
-
 (deftest corporate-sales-team
-  ;; Corporate Sales Team - Places 10c on card, corp takes 1c on each turn start
+  ;; Corporate Sales Team
   (do-game
     (new-game (default-corp [(qty "Corporate Sales Team" 2)])
               (default-runner))
@@ -365,7 +365,7 @@
       (is (= 8 (get-counters (refresh scored-cst) :credit))))))
 
 (deftest corporate-war
-  ;; Corporate War - Gain 7c if you have 7c or more when scoring, otherwise lose all credits
+  ;; Corporate War
   (do-game
     (new-game (default-corp [(qty "Corporate War" 2)])
               (default-runner))
@@ -377,7 +377,7 @@
     (is (= 14 (:credit (get-corp))) "Had 7 credits when scoring, gained another 7")))
 
 (deftest crisis-management
-  ;; Crisis Management - Do 1 meat damage at turn start if Runner is tagged
+  ;; Crisis Management
   (do-game
     (new-game (default-corp [(qty "Crisis Management" 1)])
               (default-runner))
@@ -423,7 +423,7 @@
     (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
 
 (deftest degree-mill
-  ;; Degree Mill - runner must shuffle two installed cards into stack to steal
+  ;; Degree Mill
   (do-game
     (new-game (default-corp [(qty "Degree Mill" 2)])
               (default-runner [(qty "Ice Analyzer" 1) (qty "All-nighter" 1) (qty "Hunting Grounds" 1)]))
@@ -450,7 +450,6 @@
     ;; Checking if facedowns work as well
     (play-from-hand state :corp "Degree Mill" "New remote")
     (take-credits state :corp)
-
     (play-from-hand state :runner "Hunting Grounds")
     (let [hg (get-resource state 0)]
       (run-on state "Server 2")
@@ -519,7 +518,7 @@
     (is (= 4 (:credit (get-corp))) "Corp pays for installing the second ICE of the turn")))
 
 (deftest efficiency-committee
-  ;; Efficiency Committee - Cannot advance cards if agenda counter is used
+  ;; Efficiency Committee
   (do-game
     (new-game (default-corp [(qty "Efficiency Committee" 3) (qty "Shipment from SanSan" 2)
                              (qty "Ice Wall" 1)])
@@ -631,7 +630,7 @@
         (is (= "Decked" (:reason @state)) "Win condition reports decked")))))
 
 (deftest explode-a-palooza
-  ;; Explode-a-palooza - Gain 5 credits when Runner accesses it
+  ;; Explode-a-palooza
   (do-game
     (new-game (default-corp [(qty "Explode-a-palooza" 1)])
               (default-runner))
@@ -669,7 +668,7 @@
       (is (= 17 (:credit (get-corp))) "Gained 5 credits"))))
 
 (deftest false-lead
-  ;; False Lead - forfeit to make runner lose 2 clicks
+  ;; False Lead
   (do-game
     (new-game (default-corp [(qty "False Lead" 1)])
               (default-runner))
@@ -681,31 +680,30 @@
     (is (= 2 (:click (get-runner))) "Runner should lose 2 clicks from False Lead")))
 
 (deftest fetal-ai-damage
-  ;; Fetal AI - damage on access
-  (do-game
-    (new-game (default-corp [(qty "Fetal AI" 3)])
-              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]))
-    (play-from-hand state :corp "Fetal AI" "New remote")
-    (take-credits state :corp 2)
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "Access")
-    (prompt-choice :runner "Yes")
-    (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
-    (is (= 3 (:credit (get-runner))) "Runner paid 2cr to steal Fetal AI")
-    (is (= 1 (count (:scored (get-runner)))) "Runner stole Fetal AI")))
-
-(deftest fetal-ai-cant-afford
-  ;; Fetal AI - can't afford to steal
-  (do-game
-    (new-game (default-corp [(qty "Fetal AI" 3)])
-              (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]))
-    (play-from-hand state :corp "Fetal AI" "New remote")
-    (take-credits state :corp 2)
-    (core/lose state :runner :credit 5)
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
-    (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
-    (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))
+  ;; Fetal AI
+  (testing "basic test"
+    (do-game
+      (new-game (default-corp [(qty "Fetal AI" 3)])
+                (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]))
+      (play-from-hand state :corp "Fetal AI" "New remote")
+      (take-credits state :corp 2)
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Access")
+      (prompt-choice :runner "Yes")
+      (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
+      (is (= 3 (:credit (get-runner))) "Runner paid 2cr to steal Fetal AI")
+      (is (= 1 (count (:scored (get-runner)))) "Runner stole Fetal AI"))
+  (testing "can't afford to steal"
+    (do-game
+      (new-game (default-corp [(qty "Fetal AI" 3)])
+                (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]))
+      (play-from-hand state :corp "Fetal AI" "New remote")
+      (take-credits state :corp 2)
+      (core/lose state :runner :credit 5)
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Yes")
+      (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
+      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))
 
 (deftest firmware-updates
   ;; Firmware Updates
@@ -763,7 +761,7 @@
       (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
 
 (deftest genetic-resequencing
-  ;; Genetic Resequencing - Place 1 agenda counter on a scored agenda
+  ;; Genetic Resequencing
   (do-game
     (new-game (default-corp [(qty "Genetic Resequencing" 1) (qty "Braintrust" 2)])
               (default-runner))
@@ -834,7 +832,7 @@
       (is (= 2 (:agenda-point (get-runner))) "Runner should gain 2 agenda points, not 3"))))
 
 (deftest government-contracts
-  ;; Government Contracts - Spend 2 clicks for 4 credits
+  ;; Government Contracts
   (do-game
     (new-game (default-corp [(qty "Government Contracts" 1)])
               (default-runner))
@@ -880,7 +878,6 @@
                              (qty "Chief Slee" 1)
                              (qty "Ice Wall" 1)])
               (default-runner))
-      ; (play-and-score state "Helium-3 Deposit")
     (play-from-hand state :corp "Chief Slee" "New remote")
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
@@ -898,7 +895,7 @@
       (is (= 3 (get-counters (refresh cs) :power)) "Chief Slee should gain 2 power counters from 1 to 3"))))
 
 (deftest high-risk-investment
-  ;; High-Risk Investment - Gain 1 agenda counter when scored; spend it to gain credits equal to Runner's credits
+  ;; High-Risk Investment
   (do-game
     (new-game (default-corp [(qty "High-Risk Investment" 1)])
               (default-runner))
@@ -937,7 +934,7 @@
       (is (= 7 (:advance-counter (refresh iw))) "Ice Wall should gain 2 from 5 to 7 advancement tokens"))))
 
 (deftest hostile-takeover
-  ;; Hostile Takeover - Gain 7 credits and take 1 bad publicity
+  ;; Hostile Takeover
   (do-game
     (new-game (default-corp [(qty "Hostile Takeover" 1)])
               (default-runner))
@@ -965,7 +962,7 @@
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
 
 (deftest ikawah-project
-  ;; Ikawah Project - costs 2 credit 1 click to steal
+  ;; Ikawah Project
   (testing "Basic test"
     (do-game
       (new-game (default-corp [(qty "Ikawah Project" 1)])
@@ -1054,7 +1051,7 @@
       (is (= 1 (:tag (get-runner)))))))
 
 (deftest labyrinthine-servers
-  ;; Labyrinthine Servers - Prevent the Runner from jacking out as long as there is still a power counter
+  ;; Labyrinthine Servers
   (do-game
     (new-game (default-corp [(qty "Labyrinthine Servers" 2)])
               (default-runner))
@@ -1099,7 +1096,7 @@
         (is (not (:run @state)) "No jack out prevent prompt")))))
 
 (deftest license-acquisition
-  ;; License Acquisition - full test
+  ;; License Acquisition
   (do-game
     (new-game (default-corp [(qty "License Acquisition" 4)
                              (qty "Adonis Campaign" 1) (qty "Eve Campaign" 1)
@@ -1203,7 +1200,7 @@
         (is (= 3 (:click (get-corp))) "Corp should lose 1 click on agenda sacrifice")))))
 
 (deftest market-research
-  ;; Market Research - full test
+  ;; Market Research
   (do-game
     (new-game (default-corp [(qty "Market Research" 2)])
               (default-runner))
@@ -1216,7 +1213,7 @@
       (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points"))))
 
 (deftest medical-breakthrough
-  ;; Medical Breakthrough - Lower advancement requirement by 1 for each scored/stolen copy
+  ;; Medical Breakthrough
   (do-game
     (new-game (default-corp [(qty "Medical Breakthrough" 3) (qty "Hedge Fund" 3)])
               (default-runner))
@@ -1292,7 +1289,7 @@
                    [3 3 "Do 7 meat damage" 0 7]])))))
 
 (deftest napd-contract
-  ;; NAPD Contract - Requires 4 credits to steal; scoring requirement increases with bad publicity
+  ;; NAPD Contract
   (testing "basic test"
     (do-game
       (new-game (default-corp [(qty "NAPD Contract" 1)])
@@ -1334,8 +1331,7 @@
         (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements")))))
 
 (deftest net-quarantine
-  ;; The Runner's base link strength is reduced to 0 during the first trace each turn.
-  ;; Whenever the Runner increases his or her link strength by spending credits, gain 1 for every 2 spent.
+  ;; Net Quarantine
   (do-game
     (new-game (default-corp [(qty "Net Quarantine" 1)])
               (default-runner))
@@ -1414,7 +1410,7 @@
       (is (= 0 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has no counters"))))
 
 (deftest oaktown-renovation
-  ;; Oaktown Renovation - Installed face up, gain credits with each conventional advancement
+  ;; Oaktown Renovation
   (do-game
     (new-game (default-corp [(qty "Oaktown Renovation" 1) (qty "Shipment from SanSan" 1)])
               (default-runner))
@@ -1437,7 +1433,7 @@
           "Spent 1 credit to advance, gained 3 credits from Oaktown"))))
 
 (deftest obokata-protocol
-  ;; Pay 4 net damage to steal.  Runner win retained on flatline
+  ;; Obotaka Protocol
   (do-game
     (new-game (make-deck "Jinteki: Personal Evolution" [(qty "Obokata Protocol" 10)])
               (default-runner [(qty "Sure Gamble" 4)]))
@@ -1499,7 +1495,7 @@
         (is (= "Clone Chip" (:title (first (:discard (get-runner))))))))))
 
 (deftest philotic-entanglement
-  ;; Philotic Entanglement - When scored, do 1 net damage for each agenda in the Runner's score area
+  ;; Philotic Entanglement
   (do-game
     (new-game (default-corp [(qty "Philotic Entanglement" 1) (qty "House of Knives" 3)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Cache" 2)]))
@@ -1541,7 +1537,7 @@
       (is (= 0 (:tag (get-runner)))))))
 
 (deftest priority-requisition
-  ;; Priority Requisition - When scored, rez an installed ice for free.
+  ;; Priority Requisition
   (do-game
     (new-game (default-corp [(qty "Priority Requisition" 1) (qty "Archer" 1)])
               (default-runner))
@@ -1552,7 +1548,7 @@
       (is (get-in (refresh arc) [:rezzed])))))
 
 (deftest private-security-force
-  ;; Private Security Force - if tagged, click: do 1 meat
+  ;; Private Security Force
   (do-game
     (new-game (default-corp [(qty "Private Security Force" 10)])
               (default-runner))
@@ -1569,7 +1565,7 @@
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
 
 (deftest profiteering
-  ;; Profiteering - Gain 5 credits per bad publicity taken
+  ;; Profiteering
   (do-game
     (new-game (default-corp [(qty "Profiteering" 1)])
               (default-runner))
@@ -1580,7 +1576,7 @@
     (is (= 20 (:credit (get-corp))) "Gained 15 credits")))
 
 (deftest project-ares
-  ;; Project Ares - Full test
+  ;; Project Ares
   (do-game
     (new-game (default-corp [(qty "Project Ares" 2)])
               (default-runner [(qty "Clone Chip" 1)]))
@@ -1659,7 +1655,7 @@
         (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")))))
 
 (deftest project-beale
-  ;; Project Beale - Extra agenda points for over-advancing
+  ;; Project Beale
   (do-game
     (new-game (default-corp [(qty "Project Beale" 2)])
               (default-runner))
@@ -1700,7 +1696,7 @@
         (is (= 0 (get-counters (refresh pk-scored) :agenda)) "Kusanagi should have 0 agenda counters")))))
 
 (deftest project-vitruvius
-  ;; Project Vitruvius - basic test
+  ;; Project Vitruvius
   (do-game
     (new-game (default-corp [(qty "Project Vitruvius" 1)
                              (qty "Hedge Fund" 1)])
@@ -1724,7 +1720,7 @@
       (is (= 1 (count (:hand (get-corp)))) "Corp should have 1 cards in hand"))))
 
 (deftest project-wotan
-  ;; Project Wotan - basic. Only checks if agenda counter is spent
+  ;; Project Wotan - Only checks if agenda counter is spent
   (do-game
     (new-game (default-corp [(qty "Project Wotan" 1)
                              (qty "Eli 1.0" 1)
@@ -1791,7 +1787,7 @@
     (is (= 0 (count (:deck (get-corp)))))))
 
 (deftest rebranding-team
-  ;; Rebranding Team - Full test
+  ;; Rebranding Team
   (do-game
     (new-game (default-corp [(qty "Rebranding Team" 1) (qty "Launch Campaign" 1) (qty "City Surveillance" 1)
                              (qty "Jackson Howard" 1) (qty "Museum of History" 1)])
@@ -1814,7 +1810,7 @@
     (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))))
 
 (deftest reeducation
-  ;; Reeducation - Simple test
+  ;; Reeducation
   (testing "Simple test"
     (do-game
       (new-game (default-corp [(qty "Reeducation" 1) (qty "Sweeps Week" 1) (qty "Hedge Fund" 1)
@@ -2124,7 +2120,7 @@
     (is (= 2 (:tag (get-runner))) "Runner took 1 tag from accessing and stealing")))
 
 (deftest the-cleaners
-  ;; The Cleaners - Bonus damage
+  ;; The Cleaners
   (testing "Basic test"
     (do-game
       (new-game (default-corp [(qty "The Cleaners" 1) (qty "Scorched Earth" 1)])
@@ -2156,7 +2152,7 @@
     (is (= 0 (count (:deck (get-corp)))))))
 
 (deftest the-future-perfect
-  ;; The Future Perfect - cannot steal on failed psi game (if not installed)
+  ;; The Future Perfect
   (do-game
     (new-game (default-corp [(qty "The Future Perfect" 2)])
               (default-runner))
@@ -2183,7 +2179,7 @@
       (is (= 6 (:agenda-point (get-runner))) "Runner stole TFP - no Psi game on installed TFP"))))
 
 (deftest underway-renovation
-  ;; Underway Renovation - Mill the Runner when advanced
+  ;; Underway Renovation
   (do-game
     (new-game (default-corp [(qty "Underway Renovation" 1) (qty "Shipment from SanSan" 1)])
               (default-runner))
@@ -2219,7 +2215,7 @@
     (is (last-log-contains? state "Barrier"))))
 
 (deftest utopia-fragment
-  ;; Utopia Fragment - basic test
+  ;; Utopia Fragment
   (do-game
     (new-game (default-corp [(qty "Utopia Fragment" 1)
                              (qty "Hostile Takeover" 1)])
@@ -2289,7 +2285,7 @@
           (is (empty (:prompt (get-corp))) "No prompt as there are no agenda counters left"))))))
 
 (deftest vulcan-coverup
-  ;; Vulcan Coverup - Do 2 meat damage when scored; take 1 bad pub when stolen
+  ;; Vulcan Coverup
   (do-game
     (new-game (default-corp [(qty "Vulcan Coverup" 2)])
               (default-runner))
