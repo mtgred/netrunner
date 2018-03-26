@@ -909,6 +909,20 @@
       (prompt-choice :runner "Don't steal")
       (is (last-log-contains? state "not to pay to steal Ikawah Project") "Ikawah Project should be mentioned"))))
 
+(deftest improved-protein-source
+  ;; Improved Protein Source
+  (do-game
+    (new-game (default-corp [(qty "Improved Protein Source" 2)])
+              (default-runner))
+    (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+    (play-and-score state "Improved Protein Source")
+    (is (= 9 (:credit (get-runner))) "Runner should gain 4 credits from Corp scoring")
+    (play-from-hand state :corp "Improved Protein Source" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote2)
+    (prompt-choice :runner "Steal")
+    (is (= 13 (:credit (get-runner))) "Runner should gain 4 credits from Corp scoring")))
+
 (deftest improved-tracers
   ;; Improved Tracers
   (do-game
