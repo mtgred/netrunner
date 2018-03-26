@@ -304,7 +304,8 @@
       ;; Installing not locked
       (install-locked? state side) :lock-install
       ;; Uniqueness check
-      (and uniqueness (in-play? state card)) :unique
+      (and uniqueness (some #(= (:title %) (:title card)) (all-active-installed state side)))
+      :unique
       ;; Req check
       (and req (not (req state side (make-eid state) card nil))) :req
       ;; Nothing preventing install
