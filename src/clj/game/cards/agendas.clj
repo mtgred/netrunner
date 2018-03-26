@@ -740,13 +740,13 @@
                             (when (some? (get-in @state [:runner :temp-link]))
                               (swap! state assoc-in [:runner :link] (:temp-link runner))
                               (swap! state dissoc-in [:runner :temp-link]))))}]
-   {:successful-trace nq
-    :unsuccessful-trace nq
-    :events {:trace {:once :per-turn
+   {:events {:trace {:once :per-turn
                      :silent (req true)
                      :effect (req (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
                                   (swap! state assoc-in [:runner :temp-link] (:link runner))
-                                  (swap! state assoc-in [:runner :link] 0))}}})
+                                  (swap! state assoc-in [:runner :link] 0))}
+             :successful-trace nq
+             :unsuccessful-trace nq}})
 
    "NEXT Wave 2"
    {:delayed-completion true

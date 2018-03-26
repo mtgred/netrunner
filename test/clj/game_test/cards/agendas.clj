@@ -495,6 +495,26 @@
       (is (= 5 (:current-strength (refresh lf))) "Should gain 1 strength from 4 to 5")
       (is (= 1 (:credit (get-corp))) "Should gain 1 credit for rezzed code gate"))))
 
+(deftest escalate-vitriol
+  ;; Escalate Vitriol
+  (do-game
+    (new-game (default-corp [(qty "Escalate Vitriol" 1)])
+              (default-runner))
+    (core/lose state :corp :credit 5)
+    (play-and-score state "Escalate Vitriol")
+    (let [ev-scored (get-scored state :corp)]
+      (dotimes [tag 10]
+        (is (= 0 (:tag (get-runner))) "Should start with 0 tags")
+        (is (= 0 (:credit (get-corp))) "Should start with 0 credits")
+        (core/gain state :runner :tag tag)
+        (card-ability state :corp ev-scored 0)
+        (is (= tag (:credit (get-corp))) (str "Should gain " tag " credits"))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/lose state :corp :credit (:credit (get-corp)))
+        (core/lose state :runner :tag tag)
+    ))))
+
 (deftest executive-retreat
   ;; Executive Retreat
   (do-game
@@ -1150,46 +1170,45 @@
 
 (deftest napd-contract
   ;; NAPD Contract - Requires 4 credits to steal; scoring requirement increases with bad publicity
-  (do-game
-    (new-game (default-corp [(qty "NAPD Contract" 1)])
-              (default-runner))
-    (play-from-hand state :corp "NAPD Contract" "New remote")
-    (let [napd (get-content state :remote1 0)]
-      (advance state napd 2)
-      (take-credits state :corp)
-      (core/lose state :runner :credit 2)
-      (run-empty-server state "Server 1")
-      (prompt-choice :runner "Yes")
-      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal NAPD Contract")
-      (is (= 3 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
-      (take-credits state :runner)
-      (core/gain state :corp :bad-publicity 1)
-      (advance state napd 2)
-      (core/score state :corp {:card (refresh napd)})
-      (is (some? (get-content state :remote1 0))
-          "Corp can't score with 4 advancements because of BP")
-      (advance state napd)
-      (core/score state :corp {:card (refresh napd)})
-      (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
-
-(deftest napd-contract-corporate-scandal
-  ;; NAPD Contract - scoring requirement increases with bad publicity from Corporate Scandal
-  (do-game
-    (new-game (default-corp [(qty "NAPD Contract" 1)])
-              (default-runner [(qty "Corporate Scandal" 1)]))
-    (play-from-hand state :corp "NAPD Contract" "New remote")
-    (let [napd (get-content state :remote1 0)]
-      (advance state napd 2)
-      (take-credits state :corp)
-      (play-from-hand state :runner "Corporate Scandal")
-      (take-credits state :runner)
-      (advance state napd 2)
-      (core/score state :corp {:card (refresh napd)})
-      (is (some? (get-content state :remote1 0))
-          "Corp can't score with 4 advancements because of BP")
-      (advance state napd)
-      (core/score state :corp {:card (refresh napd)})
-      (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
+  (testing "basic test"
+    (do-game
+      (new-game (default-corp [(qty "NAPD Contract" 1)])
+                (default-runner))
+      (play-from-hand state :corp "NAPD Contract" "New remote")
+      (let [napd (get-content state :remote1 0)]
+        (advance state napd 2)
+        (take-credits state :corp)
+        (core/lose state :runner :credit 2)
+        (run-empty-server state "Server 1")
+        (prompt-choice :runner "Yes")
+        (is (= 0 (count (:scored (get-runner)))) "Runner could not steal NAPD Contract")
+        (is (= 3 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
+        (take-credits state :runner)
+        (core/gain state :corp :bad-publicity 1)
+        (advance state napd 2)
+        (core/score state :corp {:card (refresh napd)})
+        (is (some? (get-content state :remote1 0))
+            "Corp can't score with 4 advancements because of BP")
+        (advance state napd)
+        (core/score state :corp {:card (refresh napd)})
+        (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
+  (testing "scoring requirement increases with bad publicity from Corporate Scandal"
+    (do-game
+      (new-game (default-corp [(qty "NAPD Contract" 1)])
+                (default-runner [(qty "Corporate Scandal" 1)]))
+      (play-from-hand state :corp "NAPD Contract" "New remote")
+      (let [napd (get-content state :remote1 0)]
+        (advance state napd 2)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Corporate Scandal")
+        (take-credits state :runner)
+        (advance state napd 2)
+        (core/score state :corp {:card (refresh napd)})
+        (is (some? (get-content state :remote1 0))
+            "Corp can't score with 4 advancements because of BP")
+        (advance state napd)
+        (core/score state :corp {:card (refresh napd)})
+        (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements")))))
 
 (deftest net-quarantine
   ;; The Runner's base link strength is reduced to 0 during the first trace each turn.
