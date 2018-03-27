@@ -848,7 +848,7 @@
    (letfn [(installed-faceup-agendas [state]
              (->> (all-installed state :corp)
                (filter #(is-type? % "Agenda"))
-               (filter #(faceup? %))))
+               (filter faceup?)))
            (selectable-ice? [card]
              (and
                (is-type? card "ICE")
@@ -857,13 +857,14 @@
                          (:extra-advance-counter card 0)))))
            (ice-with-no-advancement-tokens [state]
              (->> (all-installed state :corp)
-               (filter #(selectable-ice? %))))]
+               (filter selectable-ice?)))]
      {:events {:corp-turn-ends
                {:optional
                 {:prompt "Place advancement tokens?"
                  :req (req (and
                              (not-empty (installed-faceup-agendas state))
                              (not-empty (ice-with-no-advancement-tokens state))))
+                 :delayed-completion true
                  :yes-ability
                  {:effect (req (show-wait-prompt state :runner "Corp to use SSO Industries' ability")
                             (let [agendas (installed-faceup-agendas state)
@@ -879,7 +880,10 @@
                                  :msg (msg "places " (quantify agenda-points "advancement token")
                                            " on ICE with no advancement tokens")
                                  :effect (req (add-prop state :corp target :advance-counter agenda-points {:placed true})
-                                              (clear-wait-prompt state :runner))}
+                                              (clear-wait-prompt state :runner)
+                                              (effect-completed state side eid))
+                                 :cancel-effect (req (clear-wait-prompt state :runner)
+                                                  (effect-completed state side eid))}
                                 card nil)))}}}}})
 
    "Steve Cambridge: Master Grifter"
