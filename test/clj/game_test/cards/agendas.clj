@@ -578,6 +578,22 @@
         (advance state ec3)
         (is (= 1 (:advance-counter (refresh ec3))))))))
 
+(deftest elective-upgrade
+  ;; Elective Upgrade
+  (do-game
+    (new-game (default-corp [(qty "Elective Upgrade" 1)])
+              (default-runner))
+    (play-and-score state "Elective Upgrade")
+    (let [eu-scored (get-scored state :corp)]
+      (is (= 2 (get-counters (refresh eu-scored) :agenda)) "Should start with 2 agenda counters")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 3 (:click (get-corp))) "Should start with 4 clicks")
+      (card-ability state :corp eu-scored 0)
+      (card-ability state :corp eu-scored 0)
+      (is (= 4 (:click (get-corp))) "Should gain 2 clicks, not 3")
+      (is (= 1 (get-counters (refresh eu-scored) :agenda)) "Should still have 1 agenda counter"))))
+
 (deftest encrypted-portals
   ;; Encrypted Portals
   (do-game
