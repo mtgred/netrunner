@@ -34,7 +34,6 @@
    {:events {:corp-install
              {:delayed-completion true
               :req (req (first-event? state :corp :corp-install))
-              :once :per-turn
               :effect
               (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
                      (let [itarget target]
@@ -43,13 +42,15 @@
                          {:optional
                           {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
                            :player :runner
-                           :no-ability {:effect (req (clear-wait-prompt state :corp))}
+                           :delayed-completion true
+                           :no-ability {:effect (req (clear-wait-prompt state :corp)
+                                                     (effect-completed state side eid))}
                            :yes-ability
                            {:effect (req (clear-wait-prompt state :corp)
                                          (if (not (can-pay? state :corp nil :credit 1))
                                            (do
                                              (toast state :corp "Cannot afford to pay 1 [Credits] to block card exposure" "info")
-                                             (expose state side itarget))
+                                             (expose state side eid itarget))
                                            (do
                                              (show-wait-prompt state :runner "Corp decision")
                                              (continue-ability
@@ -57,14 +58,16 @@
                                                {:optional
                                                 {:prompt "Pay 1 [Credits] to prevent exposure of installed card?"
                                                  :player :corp
+                                                 :delayed-completion true
                                                  :no-ability
-                                                 {:effect (req (expose state side itarget)
+                                                 {:effect (req (expose state side eid itarget)
                                                                (clear-wait-prompt state :runner))}
                                                  :yes-ability
                                                  {:effect (req (lose state :corp :credit 1)
                                                                (system-msg state :corp (str "spends 1 [Credits] to prevent "
                                                                                             " card from being exposed"))
-                                                               (clear-wait-prompt state :runner))}}}
+                                                               (clear-wait-prompt state :runner)
+                                                               (effect-completed state side eid))}}}
                                                card nil))))}}}
                          card nil)))}}}
 
