@@ -1054,6 +1054,28 @@
       (prompt-choice :runner "Don't steal")
       (is (last-log-contains? state "not to pay to steal Ikawah Project") "Ikawah Project should be mentioned"))))
 
+(deftest illicit-sales
+  ;; Illicit Sales
+  (letfn [(illicit-sales-test [[starting-bp answer credits-gained]]
+            (testing (str "starting with " starting-bp " and answering " answer " and gaining " credits-gained)
+              (do-game
+                (new-game (default-corp [(qty "Illicit Sales" 1)])
+                          (default-runner))
+                (let [credits (:credit (get-corp))]
+                  (core/gain state :corp :bad-publicity starting-bp)
+                  (play-and-score state "Illicit Sales")
+                  (prompt-choice :corp answer)
+                  (is (= (:credit (get-corp)) (+ credits credits-gained)))))))]
+    (doall (map illicit-sales-test
+                [[0 "No" 0]
+                 [0 "Yes" 3]
+                 [1 "No" 3]
+                 [1 "Yes" 6]
+                 [2 "No" 6]
+                 [2 "Yes" 9]
+                 [3 "No" 9]
+                 [3 "Yes" 12]]))))
+
 (deftest improved-protein-source
   ;; Improved Protein Source
   (do-game
