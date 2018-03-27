@@ -248,6 +248,17 @@
       (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
       (is (= 2 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
 
+(deftest brainrewiring
+  ;; Brain Rewiring
+  (do-game
+    (new-game (default-corp [(qty "Brain Rewiring" 1)])
+              (default-runner))
+    (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
+    (play-and-score state "Brain Rewiring")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp 2)
+    (is (= 1 (count (:hand (get-runner)))))))
+
 (deftest braintrust
   ;; Braintrust
   (do-game
@@ -725,40 +736,39 @@
 
 (deftest geothermal-fracking
   ;; Geothermal Fracking
-  (do-game
-    (new-game (default-corp [(qty "Geothermal Fracking" 1)])
-              (default-runner))
-    (play-and-score state "Geothermal Fracking")
-    (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
-    (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
-    (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
-    (let [gf-scored (get-scored state :corp)]
-      (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
-      (card-ability state :corp gf-scored 0)
-      (is (= 1 (:click (get-corp))) "Should have 1 click left")
-      (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
-      (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
-
-(deftest geothermal-fracking-broadcast-square
-  ;; TODO: Geothermal Fracking & Broadcast Square:
-  ;; Prevented bad publicity shouldn't block credit gain
-  (do-game
-    (new-game (default-corp [(qty "Geothermal Fracking" 1) (qty "Broadcast Square" 1)])
-              (default-runner))
-    (play-and-score state "Geothermal Fracking")
-    (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
-    (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
-    (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
-    (play-from-hand state :corp "Broadcast Square" "New remote")
-    (let [gf-scored (get-scored state :corp)
-          bs (get-content state :remote2 0)]
-      (core/rez state :corp bs)
-      ;; TODO: Implement Broadcast Square prevention here once #3196 is merged.
-      (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
-      (card-ability state :corp gf-scored 0)
-      (is (= 0 (:click (get-corp))) "Should have 0 click left")
-      (is (= 10 (:credit (get-corp))) "Should gain 7 credits from 3 to 10")
-      (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
+  (testing "basic test"
+    (do-game
+      (new-game (default-corp [(qty "Geothermal Fracking" 1)])
+                (default-runner))
+      (play-and-score state "Geothermal Fracking")
+      (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
+      (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
+      (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
+      (let [gf-scored (get-scored state :corp)]
+        (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
+        (card-ability state :corp gf-scored 0)
+        (is (= 1 (:click (get-corp))) "Should have 1 click left")
+        (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
+        (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
+  (testing "prevented bad publicity shouldn't block credit gain"
+    (do-game
+      (new-game (default-corp [(qty "Geothermal Fracking" 1) (qty "Broadcast Square" 1)])
+                (default-runner))
+      (play-and-score state "Geothermal Fracking")
+      (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
+      (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
+      (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
+      (play-from-hand state :corp "Broadcast Square" "New remote")
+      (let [gf-scored (get-scored state :corp)
+            bs (get-content state :remote2 0)]
+        (core/rez state :corp bs)
+        (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
+        (card-ability state :corp gf-scored 0)
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (= 0 (:click (get-corp))) "Should have 0 click left")
+        (is (= 10 (:credit (get-corp))) "Should gain 7 credits from 3 to 10")
+        (is (= 0 (:bad-publicity (get-corp))) "Should gain 0 bad publicity from prevention")))))
 
 (deftest genetic-resequencing
   ;; Genetic Resequencing
