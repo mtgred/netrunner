@@ -892,6 +892,26 @@
       (card-ability state :corp gt-scored 0)
       (is (= 8 (:credit (get-corp))) "Should gain 3 credits from 5 to 8"))))
 
+(deftest graft
+  ;; Graft
+  (letfn [(graft-test [[number-of-picks deck-size]]
+    (let [cards ["Ice Wall" "Fire Wall" "Orion"]]
+      (do-game
+        (new-game (default-corp [(qty "Graft" 1) (qty "Ice Wall" 1)
+                                 (qty "Fire Wall" 1) (qty "Orion" 1)])
+                  (default-runner))
+        (starting-hand state :corp ["Graft"])
+        (play-and-score state "Graft")
+          (dotimes [current-pick number-of-picks]
+            (prompt-choice :corp (find-card (nth cards current-pick) (:deck (get-corp)))))
+        (is (= number-of-picks (count (:hand (get-corp)))))
+        (is (= deck-size (count (:deck (get-corp))))))))]
+    (doall (map graft-test
+                [[0 3]
+                [1 2]
+                [2 1]
+                [3 0]]))))
+
 (deftest hades-fragment
   ;; Hades Fragment
   (do-game
