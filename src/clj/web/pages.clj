@@ -18,7 +18,7 @@
      [:meta {:name "apple-mobile-web-app-capable" :content "yes"}]
      [:title "Jinteki"]
      (hiccup/include-css "/css/carousel.css")
-     (hiccup/include-css "/css/netrunner.css")
+     (hiccup/include-css (str "/css/netrunner.css?v=" version))
      (hiccup/include-css "/lib/toastr/toastr.min.css")
      (hiccup/include-css "/lib/jqueryui/themes/base/jquery-ui.min.css")]
     [:body
