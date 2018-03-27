@@ -200,10 +200,10 @@
               :effect (effect (rez-cost-bonus (- (:click runner))))}}}
 
    "Broadcast Square"
-   {:implementation "Removes 1 bad publicity rather than prevent it"
-    :abilities [{:label "Trace 3 - Avoid taking a bad publicity"
-                 :trace {:base 3 :msg "avoid taking a bad publicity"
-                         :effect (effect (lose :bad-publicity 1))}}]}
+   {:events {:pre-bad-publicity {:delayed-completion true
+                                 :trace {:base 3
+                                         :msg "prevents all bad publicity"
+                                         :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}
 
    "Capital Investors"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
@@ -457,7 +457,9 @@
     :abilities [{:cost [:click 1] :label "Trash a location"
                  :msg (msg "trash " (:title target) " and take 1 bad publicity")
                  :choices {:req #(has-subtype? % "Location")}
-                 :effect (effect (trash card) (trash target) (gain :bad-publicity 1))}]}
+                 :effect (effect (trash card)
+                                 (trash target)
+                                 (gain-bad-publicity :corp 1))}]}
 
    "Elizas Toybox"
    {:abilities [{:cost [:click 3] :choices {:req #(not (:rezzed %))}
@@ -665,7 +667,7 @@
       :abilities [ability]
       :trash-effect {:req (req (= :servers (first (:previous-zone card)))
                                (= side :runner))
-                     :effect (effect (gain :corp :bad-publicity 1)
+                     :effect (effect (gain-bad-publicity :corp 1)
                                      (system-msg :corp (str "takes 1 bad publicity from Illegal Arms Factory")))}})
 
    "Indian Union Stock Exchange"
@@ -1224,7 +1226,8 @@
                   :label "Gain credits (start of turn)"
                   :once :per-turn
                   :msg (msg (if tagged "gain 2 [Credits]" "gain 1 [Credits]"))}]
-   {:effect (effect (gain :bad-publicity 1) (system-msg "takes 1 bad publicity"))
+   {:effect (effect (gain-bad-publicity :corp 1)
+                    (system-msg "takes 1 bad publicity"))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins ability}
     :abilities [ability]})

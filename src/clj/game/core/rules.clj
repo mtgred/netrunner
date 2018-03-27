@@ -300,6 +300,54 @@
          (resolve-tag state side eid n args))))))
 
 
+;;;; Bad Publicity
+(defn bad-publicity-count
+  "Calculates the number of bad publicity to give, taking into account prevention and boosting effects."
+  [state side n {:keys [unpreventable unboostable] :as args}]
+  (-> n
+      (+ (or (when-not unboostable (get-in @state [:bad-publicity :bad-publicity-bonus])) 0))
+      (- (or (when-not unpreventable (get-in @state [:bad-publicity :bad-publicity-prevent])) 0))
+      (max 0)))
+
+(defn bad-publicity-prevent [state side n]
+  (swap! state update-in [:bad-publicity :bad-publicity-prevent] (fnil #(+ % n) 0))
+  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:bad-publicity ~n)))
+
+(defn resolve-bad-publicity [state side eid n args]
+  (trigger-event state side :pre-resolve-bad-publicity n)
+  (if (pos? n)
+    (do (gain state :corp :bad-publicity n)
+        (toast state :corp (str "Took " n " bad publicity!") "info")
+        (trigger-event-sync state side eid :corp-gain-bad-publicity n))
+    (effect-completed state side eid)))
+
+(defn gain-bad-publicity
+  "Attempts to give the runner n bad-publicity, allowing for boosting/prevention effects."
+  ([state side n] (gain-bad-publicity state side (make-eid state) n nil))
+  ([state side eid n] (gain-bad-publicity state side eid n nil))
+  ([state side eid n {:keys [unpreventable card] :as args}]
+   (swap! state update-in [:bad-publicity] dissoc :bad-publicity-bonus :bad-publicity-prevent)
+   (when-completed (trigger-event-sync state side :pre-bad-publicity card)
+     (let [n (bad-publicity-count state side n args)]
+       (let [prevent (get-in @state [:prevent :bad-publicity :all])]
+         (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
+           (do (system-msg state :corp "has the option to avoid bad publicity")
+               (show-wait-prompt state :runner "Corp to prevent bad publicity" {:priority 10})
+               (swap! state assoc-in [:prevent :current] :bad-publicity)
+               (show-prompt
+                 state :corp nil (str "Avoid any of the " n " bad publicity?") ["Done"]
+                 (fn [_]
+                   (let [prevent (get-in @state [:bad-publicity :bad-publicity-prevent])]
+                     (system-msg state :corp
+                                 (if prevent
+                                   (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent) " bad publicity")
+                                   "will not avoid bad publicity"))
+                     (clear-wait-prompt state :runner)
+                     (resolve-bad-publicity state side eid (max 0 (- n (or prevent 0))) args)))
+                 {:priority 10}))
+           (resolve-bad-publicity state side eid n args)))))))
+
+
 ;;; Trashing
 (defn trash-resource-bonus
   "Applies a cost increase of n to trashing a resource with the click action. (SYNC.)"

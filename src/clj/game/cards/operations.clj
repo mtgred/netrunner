@@ -590,7 +590,7 @@
             :effect (effect (move :runner target :deck {:front true})
                             (system-msg (str "adds " (:title target) " to the top of the Stack")))
             :unsuccessful {:msg "take 1 bad publicity"
-                           :effect (effect (gain :corp :bad-publicity 1))}}}
+                           :effect (effect (gain-bad-publicity :corp 1))}}}
 
    "Hellion Beta Test"
    {:req (req (last-turn? state :runner :trashed-card))
@@ -605,7 +605,7 @@
             :effect (req (doseq [c targets]
                            (trash state side c)))
             :unsuccessful {:msg "take 1 bad publicity"
-                           :effect (effect (gain :corp :bad-publicity 1))}}}
+                           :effect (effect (gain-bad-publicity :corp 1))}}}
 
    "Heritage Committee"
    {:delayed-completion true
@@ -673,7 +673,7 @@
                                               (join ", " (map :title (sort-by :title (:hand runner))))
                                               " ) and can trash up to " x " resources or events"))
                              (continue-ability state side (iop (dec x)) card nil)))
-              :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain :corp :bad-publicity 1))}}})
+              :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain-bad-publicity :corp 1))}}})
 
    "IPO"
    {:msg "gain 13 [Credits]" :effect (effect (gain :credit 13))}
@@ -1505,7 +1505,7 @@
    {:req (req (< (:credit corp) 10))
     :msg "gain 7 [Credits] and take 1 bad publicity"
     :effect (effect (gain :credit 7)
-                    (gain :corp :bad-publicity 1) ) }
+                    (gain-bad-publicity :corp 1) ) }
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))
