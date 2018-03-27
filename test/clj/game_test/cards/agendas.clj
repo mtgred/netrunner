@@ -1528,6 +1528,30 @@
     (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")
     (is (last-log-contains? state "wins the game") "PE did not fire")))
 
+(deftest paper-trail
+  ;; Paper Trail
+  (do-game
+    (new-game (default-corp [(qty "Paper Trail" 1)])
+              (default-runner [(qty "Aeneas Informant" 1) (qty "Bank Job" 1)
+                               (qty "Rosetta 2.0" 1) (qty "Magnum Opus" 1)
+                               (qty "Astrolabe" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :click 10 :credit 10)
+    (play-from-hand state :runner "Aeneas Informant")
+    (play-from-hand state :runner "Bank Job")
+    (play-from-hand state :runner "Rosetta 2.0")
+    (play-from-hand state :runner "Magnum Opus")
+    (play-from-hand state :runner "Astrolabe")
+    (take-credits state :runner)
+    (play-and-score state "Paper Trail")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 2 (count (:discard (get-runner)))))
+    (is (some? (get-resource state 0)))
+    (is (= 1 (count (get-in @state [:runner :rig :resource]))))
+    (is (some? (get-program state 0)))
+    (is (some? (get-hardware state 0)))))
+
 (deftest personality-profiles
   ;; Personality Profiles
   (testing "basic test"
