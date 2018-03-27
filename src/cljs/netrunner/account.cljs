@@ -18,11 +18,6 @@
             cards (->> @all-cards
                     (filter #(not (:replaced_by %)))
                     (map #(select-keys % [:title :setname :code :alt_art :replaces :replaced_by]))
-                    ;(map #(let [replaces (:replaces %)
-                    ;            setname (:setname %)]
-                    ;        (if (and replaces (= "Revised Core Set" setname))
-                    ;          (update-in % [:alt_art] assoc :core replaces)
-                    ;          %)))
                     (filter :alt_art)
                     (into {} (map (juxt :code identity))))]
         (swap! app-state assoc :alt-arts cards)

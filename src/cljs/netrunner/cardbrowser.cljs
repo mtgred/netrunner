@@ -79,8 +79,8 @@
 (defn insert-alt-arts
   "Add copies of all alt art cards to the list of cards"
   [cards]
-  cards)
-  ;(reduce expand-alts () (reverse cards)))
+  ;; cards)
+  (reduce expand-alts () (reverse cards)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -113,12 +113,19 @@
       (make-span "\\[weyland\\]" "weyland-consortium")
       (make-span "\\[weyland-consortium\\]" "weyland-consortium")))
 
+(defn non-game-toast
+  "Display a toast warning with the specified message."
+  [msg type options]
+  (set! (.-options js/toastr) (netrunner.gameboard/toastr-options options))
+  (let [f (aget js/toastr type)]
+    (f msg)))
+
 (defn- post-response [cursor response]
   (if (= 200 (:status response))
     (let [new-alts (get-in response [:json :altarts] {})]
       (swap! app-state assoc-in [:user :options :alt-arts] new-alts)
-      (netrunner.gameboard/toast "Updated Art" "success" nil))
-    (netrunner.gameboard/toast "Failed to Update Art" "error" nil)))
+      (non-game-toast "Updated Art" "success" nil))
+    (non-game-toast "Failed to Update Art" "error" nil)))
 
 (defn selected-alt-art [card cursor]
   (let [code (keyword (:code card))
@@ -143,7 +150,7 @@
                      (assoc alts code (name art))
                      (dissoc alts code))]
       (om/update! cursor [:options :alt-arts] new-alts)
-      (netrunner.account/post-options "/update-profile" (partial post-response cursor)))))
+      (netrunner.account/post-options "/profile" (partial post-response cursor)))))
 
 (defn- card-text
   "Generate text html representation a card"
