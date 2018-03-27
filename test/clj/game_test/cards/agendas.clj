@@ -2103,6 +2103,20 @@
     (is (= 1 (count (:hand (get-runner)))) "Runner should have 1 card in hand")
     (is (= 2 (count (:discard (get-runner)))) "Runner should have discarded 2 cards")))
 
+(deftest successful-field-test
+  ;; Successful Field Test
+  (do-game
+    (new-game (default-corp [(qty "Successful Field Test" 1) (qty "Ice Wall" 10)])
+              (default-runner))
+    (starting-hand state :corp (vec (cons "Successful Field Test" (repeat 10 "Ice Wall"))))
+    (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
+    (play-and-score state "Successful Field Test")
+    (dotimes [n 10]
+      (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (prompt-choice :corp "HQ"))
+    (is (= 5 (:credit (get-corp))) "Should still have 5 credits")
+    (is (some? (get-ice state :hq 9)))))
+
 (deftest superior-cyberwalls
   ;; Superior Cyberwalls
   (do-game
