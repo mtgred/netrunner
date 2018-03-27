@@ -669,7 +669,8 @@
    "Frame Job"
    {:prompt "Choose an agenda to forfeit"
     :choices (req (:scored runner))
-    :effect (effect (forfeit target) (gain :corp :bad-publicity 1))
+    :effect (effect (forfeit target)
+                    (gain-bad-publicity :corp 1))
     :msg (msg "forfeit " (:title target) " and give the Corp 1 bad publicity")}
 
    "Frantic Coding"
@@ -1005,7 +1006,8 @@
     :prompt "Take 2 bad publicity?"
     :choices ["Yes" "No"]
     :effect (req (if (= target "Yes")
-                   (do (gain state :corp :bad-publicity 2) (system-msg state :corp "takes 2 bad publicity"))
+                   (do (gain-bad-publicity state :corp 2)
+                       (system-msg state :corp "takes 2 bad publicity"))
                    (do (register-events state side
                                         {:pre-damage {:effect (effect (damage-prevent :net Integer/MAX_VALUE)
                                                                       (damage-prevent :meat Integer/MAX_VALUE)
@@ -1108,7 +1110,7 @@
                                           (continue-ability state side (mining) card nil))
 
                                       (= target "Take 1 Bad Publicity")
-                                      (do (gain state :corp :bad-publicity 1)
+                                      (do (gain-bad-publicity state :corp 1)
                                           (system-msg state side "takes 1 bad publicity from Mining Accident")
                                           (clear-wait-prompt state :runner)
                                           (effect-completed state side eid))))})]
