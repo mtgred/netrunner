@@ -151,6 +151,19 @@
     (prompt-choice :runner "Suffer 5 meat damage")
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards after Armed Intimidation meat damage")))
 
+(deftest armored-servers
+  ;; Armored Servers
+  (do-game
+    (new-game (default-corp [(qty "Armored Servers" 1)])
+              (default-runner))
+    (play-and-score state "Armored Servers")
+    (let [as-scored (get-scored state :corp)]
+      (is (= 1 (get-counters (refresh as-scored) :agenda)) "Should start with 1 agenda counters")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (card-ability state :corp as-scored 0)
+      (is (last-log-contains? state "make the Runner trash") "Should only write to log"))))
+
 (deftest astro-script-token
   ;; AstroScript token placement
   (do-game
