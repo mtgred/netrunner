@@ -340,7 +340,7 @@
         (go (let [result (<! (DELETE (str "/profile/stats/deck/" (:_id deck))))]
               (om/update! cursor :decks (conj decks deck))
               (om/set-state! owner :deck deck)
-              (.focus deck)))))))
+              (put! select-channel deck)))))))
 
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
