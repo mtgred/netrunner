@@ -304,7 +304,9 @@
 (defn install-locked?
   "Checks if installing is locked"
   [state side]
-  (seq (get-in @state [side :lock-install])))
+  (or (seq (get-in @state [side :lock-install]))
+      (seq (get-in @state [:stack :current-turn :lock-install]))
+      (seq (get-in @state [:stack :persistent :lock-install]))))
 
 (defn- can-rez-reason
   "Checks if the corp can rez the card.
