@@ -466,12 +466,12 @@
     (cond
       (and (= side :runner)
            (some? runner-fn))
-        (runner-fn state side (make-eid state) card nil)
+      (runner-fn state side (make-eid state) card nil)
       (and (= side :corp)
            (some? corp-fn))
-        (corp-fn state side (make-eid state) card nil)
+      (corp-fn state side (make-eid state) card nil)
       :else
-        base-points)))
+      base-points)))
 
 (defn advancement-cost-bonus
   "Applies an advancement requirement increase of n the next agenda whose advancement requirement

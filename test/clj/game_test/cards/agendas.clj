@@ -2395,8 +2395,8 @@
                   (take-credits state :runner)
                   (take-credits state :corp)))]
         (play-and-score state "Voting Machine Initiative")
+        (take-credits state :corp)
         (let [vmi-scored (get-scored state :corp)]
-          (take-credits state :corp)
           (vmi-test vmi-scored "Yes" 3)
           (vmi-test vmi-scored "No" 2)
           (vmi-test vmi-scored "Yes" 2)
