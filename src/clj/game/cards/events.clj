@@ -1072,7 +1072,7 @@
                              (when (:successful run)
                                (system-msg state :runner "gains 1 [Click] and adds Marathon to their grip")
                                (gain state :runner :click 1)
-                               (move state :runner (last (:discard runner)) :hand)))}})
+                               (move state :runner (assoc card :zone [:discard]) :hand)))}})
 
 
    "Mars for Martians"
