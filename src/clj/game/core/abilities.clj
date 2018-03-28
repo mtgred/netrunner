@@ -498,7 +498,6 @@
   [state side card {:keys [base eid priority] :as ability} boost]
   (clear-wait-prompt state :runner)
   (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
-  (trigger-event state side :pre-init-trace card)
   (let [bonus (get-in @state [:bonus :trace] 0)
         base (if (fn? base) (base state side (make-eid state) card nil) base)
         total (+ base boost bonus)
@@ -536,6 +535,7 @@
 (defn corp-trace-prompt
   "Starts the trace process by showing the boost prompt to the corp."
   [state card {:keys [base priority] :as trace}]
+  (trigger-event state :corp :pre-init-trace card)
   (let [base-trace (if (fn? base) (base state :corp (make-eid state) card nil) base)
         bonus (or (get-in @state [:bonus :trace]) 0)]
     (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority (or priority 2)})

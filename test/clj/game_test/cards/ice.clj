@@ -526,13 +526,11 @@
       (card-subroutine state :corp (refresh jua) 0)
       (is (empty? (:prompt (get-corp))) "Can't fire for 1 installed card")
       (run-successful state)
-
       (play-from-hand state :runner "Gordian Blade")
       (run-on state "HQ")
       (card-subroutine state :corp (refresh jua) 0)
       (prompt-select :corp (get-program state 0))
       (prompt-select :corp (get-hardware state 0))
-      (prn (:prompt (get-runner)))
       (prompt-card :runner (get-program state 0))
       (is (nil? (get-program state 0)) "Card is uninstalled")
       (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck"))))

@@ -191,12 +191,12 @@
   ([state _ card]
    (let [title (:title card)
          advancementcost (:advancementcost card)]
-    (core/gain state :corp :click advancementcost :credit advancementcost)
-    (dotimes [n advancementcost]
-      (core/advance state :corp {:card (core/get-card state card)}))
-    (is (= advancementcost (get-in (core/get-card state card) [:advance-counter])))
-    (core/score state :corp {:card (core/get-card state card)})
-    (is (find-card title (get-in @state [:corp :scored]))))))
+     (core/gain state :corp :click advancementcost :credit advancementcost)
+     (dotimes [n advancementcost]
+       (core/advance state :corp {:card (core/get-card state card)}))
+     (is (= advancementcost (get-in (core/get-card state card) [:advance-counter])))
+     (core/score state :corp {:card (core/get-card state card)})
+     (is (find-card title (get-in @state [:corp :scored]))))))
 
 (defn advance
   "Advance the given card."
@@ -240,3 +240,9 @@
   "Checks to see if the runner has a prompt accessing the given card title"
   [state title]
   (= title (-> @state :runner :prompt first :card :title)))
+
+(defn play-and-score
+  "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
+  ([state title]
+   (play-from-hand state :corp title "New remote")
+   (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0))))
