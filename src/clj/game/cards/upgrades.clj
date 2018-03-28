@@ -307,6 +307,7 @@
    "Forced Connection"
    {:access {:req (req (not= (first (:zone card)) :discard))
              :interactive (req true)
+             :effect (effect (system-msg :runner (str "accesses Forced Connection")))
              :trace {:base 3
                      :msg "give the Runner 2 tags"
                      :delayed-completion true
