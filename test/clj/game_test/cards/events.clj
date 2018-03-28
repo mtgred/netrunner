@@ -281,21 +281,35 @@
     (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
     (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
 
-(deftest credit-kiting
-  ;; After successful central run lower install cost by 8 and gain a tag
+(deftest careful-planning
+  ;; Careful Planning - Prevent card in/protecting remote server from being rezzed this turn
   (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 1)])
-              (default-runner [(qty "Credit Kiting" 1) (qty "Femme Fatale" 1)]))
+    (new-game (default-corp [(qty "PAD Campaign" 1) (qty "Vanilla" 2)])
+              (default-runner [(qty "Careful Planning" 2)]))
     (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Vanilla" "Server 1")
     (take-credits state :corp)
-    (run-empty-server state "Server 1")
-    (play-from-hand state :runner "Credit Kiting")
-    (is (= 3 (:click (get-runner))) "Card not played, successful run on central not made")
-    (run-empty-server state "HQ")
-    (play-from-hand state :runner "Credit Kiting")
-    (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
-    (is (= 4 (:credit (get-runner))) "Femme Fatale only cost 1 credit")
-    (is (= 1 (:tag (get-runner))) "Runner gained a tag")))
+    (let [pad (get-content state :remote1 0)
+          v1 (get-ice state :hq 0)
+          v2 (get-ice state :remote1 0)]
+      (play-from-hand state :runner "Careful Planning")
+      (prompt-select :runner v1)
+      (is (:prompt (get-runner)) "Can't target card in central server")
+      (prompt-select :runner v2)
+      (core/rez state :corp v2)
+      (is (not (:rezzed (refresh v2))) "Prevented remote ICE from rezzing")
+      (take-credits state :runner)
+      (core/rez state :corp (refresh v2))
+      (is (:rezzed (refresh v2)) "Rez prevention of ICE ended")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Careful Planning")
+      (prompt-select :runner pad)
+      (core/rez state :corp pad)
+      (is (not (:rezzed (refresh pad))) "Prevented remote server contents from rezzing")
+      (take-credits state :runner)
+      (core/rez state :corp (refresh pad))
+      (is (:rezzed (refresh pad)) "Rez prevention of asset ended"))))
 
 (deftest cbi-raid
   ;; CBI Raid - Full test
@@ -407,6 +421,22 @@
       (is (= 1 (:has-bad-pub (get-corp))) "Corp still has BP")
       (take-credits state :corp)
       (is (= 0 (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
+
+(deftest credit-kiting
+  ;; After successful central run lower install cost by 8 and gain a tag
+  (do-game
+    (new-game (default-corp [(qty "PAD Campaign" 1)])
+              (default-runner [(qty "Credit Kiting" 1) (qty "Femme Fatale" 1)]))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (play-from-hand state :runner "Credit Kiting")
+    (is (= 3 (:click (get-runner))) "Card not played, successful run on central not made")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Credit Kiting")
+    (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
+    (is (= 4 (:credit (get-runner))) "Femme Fatale only cost 1 credit")
+    (is (= 1 (:tag (get-runner))) "Runner gained a tag")))
 
 (deftest data-breach
   ;; Data Breach
@@ -746,6 +776,24 @@
     (play-from-hand state :runner "Eureka!")
     (is (= 0 (:credit (get-runner))))
     (is (= 3 (count (:discard (get-runner)))))))
+
+(deftest exploratory-romp
+  ;; Exploratory Romp - Remove advancements from card instead of accessing
+  (do-game
+    (new-game (default-corp [(qty "TGTBT" 1)])
+              (default-runner [(qty "Exploratory Romp" 1)]))
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (let [tg (get-content state :remote1 0)]
+      (advance state tg 2)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Exploratory Romp")
+      (prompt-choice :runner "Server 1")
+      (run-successful state)
+      (prompt-choice :runner "Run ability")
+      (prompt-choice :runner "2")
+      (prompt-select :runner (refresh tg))
+      (is (= 0 (:tag (get-runner))) "No tags, didn't access TGTBT")
+      (is (= 0 (:advance-counter (refresh tg))) "Advancements removed"))))
 
 (deftest falsified-credentials
   ;; Falsified Credentials - Expose card in remote
@@ -1438,6 +1486,26 @@
     (is (= 0 (:agenda-point (get-corp))) "Forfeiting agenda did not refund extra agenda points ")
     (is (= 1 (count (:discard (get-runner)))) "Political Graffiti is in the Heap")))
 
+(deftest power-to-the-people
+  ;; Power to the People - Gain 7c the first time you access an agenda
+  (do-game
+    (new-game (default-corp [(qty "NAPD Contract" 1) (qty "Hostile Takeover" 1)])
+              (default-runner [(qty "Power to the People" 1)]))
+    (play-from-hand state :corp "NAPD Contract" "New remote")
+    (take-credits state :corp)
+    (core/lose state :runner :credit 2)
+    (let [napd (get-content state :remote1 0)]
+      (play-from-hand state :runner "Power to the People")
+      (is (= 3 (:credit (get-runner))) "Can't afford to steal NAPD")
+      (run-empty-server state "Server 1")
+      (is (= 10 (:credit (get-runner))) "Gained 7c on access, can steal NAPD")
+      (prompt-choice :runner "Yes")
+      (is (= 2 (:agenda-point (get-runner))) "Stole agenda")
+      (is (= 6 (:credit (get-runner))))
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (= 6 (:credit (get-runner))) "No credits gained from 2nd agenda access"))))
+
 (deftest push-your-luck-correct-guess
   ;; Push Your Luck - Corp guesses correctly
   (do-game
@@ -1614,24 +1682,24 @@
       (choose-runner kate state prompt-map)
       (is (= 2 (:link (get-runner))) "2 link after rebirth"))))
 
-(deftest rigged-results
-  ;; Rigged Results - success and failure
+(deftest reshape
+  ;; Reshape - Swap 2 pieces of unrezzed ICE
   (do-game
-    (new-game (default-corp [(qty "Ice Wall" 1)])
-              (default-runner [(qty "Rigged Results" 3)]))
-    (play-from-hand state :corp "Ice Wall" "HQ")
+    (new-game (default-corp [(qty "Vanilla" 2) (qty "Paper Wall" 1)])
+              (default-runner [(qty "Reshape" 1)]))
+    (play-from-hand state :corp "Paper Wall" "R&D")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
     (take-credits state :corp)
-    (play-from-hand state :runner "Rigged Results")
-    (prompt-choice :runner "0")
-    (prompt-choice :corp "0")
-    (is (empty? (:prompt (get-runner))) "Rigged Results failed for runner")
-    (is (empty? (:prompt (get-corp))) "Rigged Results failed for runner")
-    (play-from-hand state :runner "Rigged Results")
-    (prompt-choice :runner "2")
-    (prompt-choice :corp "1")
+    (play-from-hand state :runner "Reshape")
+    (prompt-select :runner (get-ice state :rd 0))
     (prompt-select :runner (get-ice state :hq 0))
-    (is (= [:hq] (:server (:run @state))) "Runner is running on HQ")
-    (is (= 3 (:credit (get-runner))) "Rigged results spends credits")))
+    (is (:prompt (get-runner)) "Can't target rezzed Vanilla, prompt still open")
+    (prompt-select :runner (get-ice state :hq 1))
+    (is (empty? (:prompt (get-runner))))
+    (is (= "Vanilla" (:title (get-ice state :rd 0))) "Vanilla swapped to R&D")
+    (is (= "Paper Wall" (:title (get-ice state :hq 1))) "Paper Wall swapped to HQ outer position")))
 
 (deftest retrieval-run
   ;; Retrieval Run - Run Archives successfully and install a program from Heap for free
@@ -1650,6 +1718,25 @@
           "Morning Star installed")
       (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
       (is (= 2 (:memory (get-runner))) "Morning Star uses 2 memory"))))
+
+(deftest rigged-results
+  ;; Rigged Results - success and failure
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Rigged Results" 3)]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rigged Results")
+    (prompt-choice :runner "0")
+    (prompt-choice :corp "0")
+    (is (empty? (:prompt (get-runner))) "Rigged Results failed for runner")
+    (is (empty? (:prompt (get-corp))) "Rigged Results failed for runner")
+    (play-from-hand state :runner "Rigged Results")
+    (prompt-choice :runner "2")
+    (prompt-choice :corp "1")
+    (prompt-select :runner (get-ice state :hq 0))
+    (is (= [:hq] (:server (:run @state))) "Runner is running on HQ")
+    (is (= 3 (:credit (get-runner))) "Rigged results spends credits")))
 
 (deftest rip-deal
   ;; Rip Deal - replaces number of HQ accesses with heap retrieval
@@ -1990,7 +2077,7 @@
         (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
         (is (= "Morning Star" (:title (get-in @state [:runner :rig :program 0]))) "Morning Star still installed")))))
 
-(deftest makers-eye
+(deftest the-makers-eye
   (do-game
     (new-game (default-corp [(qty "Quandary" 5)])
               (default-runner [(qty "The Maker's Eye" 1)]))
@@ -2063,6 +2150,35 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
       (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))
+
+(deftest traffic-jam
+  ;; Traffic Jam - Increase adv requirement based on previously scored copies
+  (do-game
+    (new-game
+      (default-corp [(qty "TGTBT" 3)])
+      (default-runner [(qty "Traffic Jam" 1)]))
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (take-credits state :corp)
+    (let [tg (get-content state :remote3 0)]
+      (play-from-hand state :runner "Traffic Jam")
+      (take-credits state :runner)
+      (core/gain state :corp :click 2)
+      (advance state tg 3)
+      (core/score state :corp {:card (refresh tg)})
+      (is (= 2 (:agenda-point (get-corp))) "Last TGTBT not scored")
+      (is (= 1 (count (get-content state :remote3))))
+      (advance state (refresh tg) 1)
+      (is (= 4 (:advance-counter (refresh tg))))
+      (core/score state :corp {:card (refresh tg)})
+      (is (= 2 (:agenda-point (get-corp))) "Not scored with 4 advancements")
+      (advance state (refresh tg) 1)
+      (is (= 5 (:advance-counter (refresh tg))))
+      (core/score state :corp {:card (refresh tg)})
+      (is (= 3 (:agenda-point (get-corp))) "Took 5 advancements to score"))))
 
 (deftest unscheduled-maintenance
   ;; Unscheduled Maintenance - prevent Corp from installing more than 1 ICE per turn
