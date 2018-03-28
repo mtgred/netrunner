@@ -864,9 +864,9 @@
                  :req (req (and
                              (not-empty (installed-faceup-agendas state))
                              (not-empty (ice-with-no-advancement-tokens state))))
-                 :delayed-completion true
                  :yes-ability
-                 {:effect (req (show-wait-prompt state :runner "Corp to use SSO Industries' ability")
+                 {:delayed-completion true
+                  :effect (req (show-wait-prompt state :runner "Corp to use SSO Industries' ability")
                             (let [agendas (installed-faceup-agendas state)
                                   agenda-points (->> agendas
                                                   (map :agendapoints)
@@ -880,10 +880,8 @@
                                  :msg (msg "places " (quantify agenda-points "advancement token")
                                            " on ICE with no advancement tokens")
                                  :effect (req (add-prop state :corp target :advance-counter agenda-points {:placed true})
-                                              (clear-wait-prompt state :runner)
-                                              (effect-completed state side eid))
-                                 :cancel-effect (req (clear-wait-prompt state :runner)
-                                                  (effect-completed state side eid))}
+                                              (clear-wait-prompt state :runner))
+                                 :cancel-effect (req (clear-wait-prompt state :runner))}
                                 card nil)))}}}}})
 
    "Steve Cambridge: Master Grifter"
