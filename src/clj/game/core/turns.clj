@@ -113,7 +113,7 @@
 (defn reset-card
   "Resets a card back to its original state overlaid with any play-state data"
   ([state side card]
-   (update! state side (merge card (make-card (get @all-cards (:title card)) (:cid card))))))
+   (update! state side (merge card (make-card (get @all-cards (:title card)) (:cid card)) {:special nil}))))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
