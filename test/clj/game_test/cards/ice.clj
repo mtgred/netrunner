@@ -532,7 +532,6 @@
       (card-subroutine state :corp (refresh jua) 0)
       (prompt-select :corp (get-program state 0))
       (prompt-select :corp (get-hardware state 0))
-      (prn (:prompt (get-runner)))
       (prompt-card :runner (get-program state 0))
       (is (nil? (get-program state 0)) "Card is uninstalled")
       (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck"))))

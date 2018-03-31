@@ -16,6 +16,13 @@
   [cid from]
   (some #(when (= (:cid %) cid) %) from))
 
+(defn find-latest
+  "Returns the newest version of a card where-ever it may be"
+  [state card]
+  (let [side (-> card :side to-keyword)]
+    (find-cid (:cid card) (concat (all-installed state side)
+                                  (-> (map #(-> @state side %) [:hand :discard :deck :rfg]) concat flatten)))))
+
 (defn get-scoring-owner
   "Returns the owner of the scoring area the card is in"
   [state {:keys [cid] :as card}]
@@ -124,7 +131,7 @@
            (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card moved-card)
          (when (#{:discard :hand} to) (reset-card state side moved-card))
-         (when-let [icon-card (get-card state (get-in moved-card [:icon :card]))]
+         (when-let [icon-card (get-in moved-card [:icon :card])]
            ;; remove icon if card moved to :discard or :hand
            (when (#{:discard :hand} to) (remove-icon state side icon-card moved-card)))
          moved-card)))))
