@@ -176,6 +176,23 @@
         (is (empty? (:prompt (get-corp))) "No choice after declining on first damage")
         (is (= 3 (count (:discard (get-runner)))))))))
 
+(deftest chronos-protocol-obokata-protocol
+  ;; Pay 4 net damage to steal.  Only 3 damage left after Chronos.  No trigger of damage prevent.
+  (do-game
+    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Obokata Protocol" 5)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Inti" 1) (qty "Feedback Filter" 1)]))
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :corp "Obokata Protocol" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp (find-card "Inti" (:hand (get-runner))))
+    (is (empty? (:prompt (get-runner)))
+        "Feedback Filter net damage prevention opportunity not given")
+    (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")))
+
 (deftest chronos-protocol-employee-strike
   ;; Chronos Protocol - Issue #1958 also affects Chronos Protocol
   (do-game

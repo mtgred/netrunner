@@ -249,7 +249,7 @@
                                                         (swap! state update-in [:damage] dissoc :damage-choose-corp)
                                                         (trash state side target {:cause :net :unpreventable true})
                                                         (let [more (dec (or (get-defer-damage state side :net nil) 0))]
-                                                          (damage-defer state side :net more)))}
+                                                          (damage-defer state side :net more {:part-resolved true})))}
                              :no-ability {:effect (req (clear-wait-prompt state :runner)
                                                        (swap! state update-in [:damage] dissoc :damage-choose-corp))}}}
                            card nil))))}}
