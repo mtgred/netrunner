@@ -135,7 +135,7 @@
            (reset-card state side moved-card)
            (when-let [icon-card (get-in moved-card [:icon :card])]
              ; Remove icon and icon-card keys
-             (when (#{:discard :hand :deck :rfg} to) (remove-icon state side icon-card moved-card))))
+             (remove-icon state side icon-card moved-card)))
          moved-card)))))
 
 (defn move-zone
