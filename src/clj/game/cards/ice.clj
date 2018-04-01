@@ -101,6 +101,14 @@
   (effect (gain-bad-publicity :corp 1)
           (system-msg (str "takes 1 bad publicity from " (:title card)))))
 
+(def runner-loses-click
+  "Runner loses a click effect"
+  (req (if (:runner-phase-12 @state)
+    ; this handles Jak Sinclair losing clicks before they are given
+    (do (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
+        (toast state :runner "Runner loses a click at start of turn" "warning")
+        (toast state :corp "Runner loses a click at start of turn" "warning"))
+    (lose state :runner :click 1))))
 
 ;;; For Advanceable ICE
 (def advance-counters
@@ -588,7 +596,7 @@
                                        :msg "force the Runner to trash 1 program"
                                        :label "The Runner trashes 1 program")
                   {:msg "force the Runner to lose 1 [Click] if able"
-                   :effect (effect (lose :runner :click 1))}
+                   :effect runner-loses-click}
                   end-the-run]
     :strength-bonus (req (if (some #(has-subtype? % "AI") (all-active-installed state :runner)) 3 0))}
 
@@ -739,7 +747,7 @@
 
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
-                   :effect (effect (lose :runner :click 1))}
+                   :effect runner-loses-click}
                   end-the-run]}
 
    "Errand Boy"
@@ -985,7 +993,7 @@
 
    "Hourglass"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
-                   :effect (effect (lose :runner :click 1))}]}
+                   :effect runner-loses-click}]}
 
    "Howler"
    (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
@@ -1769,8 +1777,7 @@
    "Tapestry"
    {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
                    :msg "force the Runner to lose 1 [Click]"
-                   :req (req (pos? (:click runner)))
-                   :effect (effect (lose :runner :click 1))}
+                   :effect runner-loses-click}
                   {:msg "draw 1 card"
                    :effect (effect (draw))}
                   {:req (req (pos? (count (:hand corp))))
@@ -1928,7 +1935,7 @@
    "Viper"
    {:subroutines [(trace-ability 3 {:label "The Runner loses 1 [Click] if able"
                                     :msg "force the Runner to lose 1 [Click] if able"
-                                    :effect (effect (lose :runner :click 1))})
+                                    :effect runner-loses-click})
                   (trace-ability 3 end-the-run)]}
 
    "Virgo"
@@ -1966,9 +1973,8 @@
 
    "Weir"
    {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
-                   :req (req (pos? (:click runner)))
                    :msg "force the Runner to lose 1 [Click]"
-                   :effect (effect (lose :runner :click 1))}
+                   :effect runner-loses-click}
                   {:label "Runner trashes 1 card from their Grip"
                    :req (req (pos? (count (:hand runner))))
                    :prompt "Choose a card to trash from your Grip"

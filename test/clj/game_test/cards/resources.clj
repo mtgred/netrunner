@@ -791,6 +791,27 @@
     (is (= 1 (count (:discard (get-runner)))) "IJ is trashed")
     (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
 
+(deftest jak-sinclair-enigma
+  ;; Lost clicks carry through to when turn starts fully #1764
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 3)])
+              (default-runner [(qty "Jak Sinclair" 3)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jak Sinclair")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [eni (get-ice state :hq 0)
+          jak (get-resource state 0)]
+      (core/rez state :corp eni)
+      (is (:runner-phase-12 @state) "Runner in Step 1.2")
+      (card-ability state :runner jak 0)
+      (prompt-choice :runner "HQ")
+      (card-subroutine state :corp (refresh eni) 0)
+      (run-successful state)
+      (core/end-phase-12 state :runner nil)
+      (is (= 3 (:click (get-runner))) "Enigma took a click"))))
+
 (deftest john-masanori
   ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run
   (do-game
