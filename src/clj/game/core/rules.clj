@@ -438,9 +438,9 @@
      (trashrec cards))))
 
 (defn- resolve-trash-no-cost
-  [state side card & {:keys [seen]
+  [state side card & {:keys [seen unpreventable]
                       :or {seen true}}]
-  (trash state side (assoc card :seen seen))
+  (trash state side (assoc card :seen seen) {:unpreventable unpreventable})
   (swap! state assoc-in [side :register :trashed-card] true))
 
 (defn trash-no-cost
@@ -554,7 +554,7 @@
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
-       (resolve-trash-no-cost state from-side card :seen false)))))
+       (resolve-trash-no-cost state from-side card :seen false :unpreventable true)))))
 
 ;; Exposing
 (defn expose-prevent

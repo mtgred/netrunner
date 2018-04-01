@@ -876,6 +876,18 @@
     (is (last-log-contains? state "Wyldside, Wyldside")
         "Maxx did log trashed card names")))
 
+(deftest maxx-dummy-box
+  ; Check that mills don't trigger trash prevention #3246
+  (do-game
+    (new-game (default-corp)
+              (make-deck "MaxX: Maximum Punk Rock" [(qty "Dummy Box" 30)]))
+    (take-credits state :corp)
+    (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
+    (play-from-hand state :runner "Dummy Box")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (empty? (:prompt (get-runner))) "Dummy Box not fired from mill")))
+
 (deftest maxx-wyldside-start-of-turn
   ;; MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click
   (do-game
