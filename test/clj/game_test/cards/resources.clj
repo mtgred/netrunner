@@ -733,6 +733,20 @@
     (is (empty? (get-in @state [:runner :prompt]))
         "There is no prompt for 0 damage")))
 
+(deftest guru-davinder-obokata-protocol
+  ;; Guru Davinder - cannot steal Obokata while installed
+  (do-game
+    (new-game (make-deck "Jinteki: Personal Evolution" [(qty "Obokata Protocol" 10)])
+              (default-runner [(qty "Guru Davinder" 1) (qty "Sure Gamble" 4)]))
+    (play-from-hand state :corp "Obokata Protocol" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :agenda-point 6)
+    (play-from-hand state :runner "Guru Davinder")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 0 (count (:discard (get-runner)))) "Runner did not pay damage")
+    (is (not= :runner (:winner @state)) "Runner has not won")))
+
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
   (do-game
