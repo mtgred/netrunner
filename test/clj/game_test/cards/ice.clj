@@ -526,7 +526,6 @@
       (card-subroutine state :corp (refresh jua) 0)
       (is (empty? (:prompt (get-corp))) "Can't fire for 1 installed card")
       (run-successful state)
-
       (play-from-hand state :runner "Gordian Blade")
       (run-on state "HQ")
       (card-subroutine state :corp (refresh jua) 0)

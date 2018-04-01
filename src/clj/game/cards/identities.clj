@@ -27,7 +27,47 @@
 
 ;;; Card definitions
 (def cards-identities
-  {"Adam: Compulsive Hacker"
+  {
+   "419: Amoral Scammer"
+   {:events {:corp-install
+             {:delayed-completion true
+              :req (req (first-event? state :corp :corp-install))
+              :effect
+              (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
+                     (let [itarget target]
+                       (continue-ability
+                         state side
+                         {:optional
+                          {:prompt "Expose installed card unless Corp pays 1 [Credits]?"
+                           :player :runner
+                           :no-ability {:effect (req (clear-wait-prompt state :corp))}
+                           :yes-ability
+                           {:delayed-completion true
+                            :effect (req (clear-wait-prompt state :corp)
+                                         (if (not (can-pay? state :corp nil :credit 1))
+                                           (do
+                                             (toast state :corp "Cannot afford to pay 1 [Credits] to block card exposure" "info")
+                                             (expose state side eid itarget))
+                                           (do
+                                             (show-wait-prompt state :runner "Corp decision")
+                                             (continue-ability
+                                               state side
+                                               {:optional
+                                                {:prompt "Pay 1 [Credits] to prevent exposure of installed card?"
+                                                 :player :corp
+                                                 :no-ability
+                                                 {:delayed-completion true
+                                                  :effect (req (expose state side eid itarget)
+                                                               (clear-wait-prompt state :runner))}
+                                                 :yes-ability
+                                                 {:effect (req (lose state :corp :credit 1)
+                                                               (system-msg state :corp (str "spends 1 [Credits] to prevent "
+                                                                                            " card from being exposed"))
+                                                               (clear-wait-prompt state :runner))}}}
+                                               card nil))))}}}
+                         card nil)))}}}
+
+   "Adam: Compulsive Hacker"
    {:events {:pre-start-game
              {:req (req (= side :runner))
               :delayed-completion true
@@ -841,6 +881,46 @@
                                           (flatten (turn-events state :corp :rez))))))
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
+
+   "SSO Industries: Fueling Innovation"
+   (letfn [(installed-faceup-agendas [state]
+             (->> (all-installed state :corp)
+               (filter #(is-type? % "Agenda"))
+               (filter faceup?)))
+           (selectable-ice? [card]
+             (and
+               (is-type? card "ICE")
+               (installed? card)
+               (zero? (+ (:advance-counter card 0)
+                         (:extra-advance-counter card 0)))))
+           (ice-with-no-advancement-tokens [state]
+             (->> (all-installed state :corp)
+               (filter selectable-ice?)))]
+     {:events {:corp-turn-ends
+               {:optional
+                {:prompt "Place advancement tokens?"
+                 :req (req (and
+                             (not-empty (installed-faceup-agendas state))
+                             (not-empty (ice-with-no-advancement-tokens state))))
+                 :yes-ability
+                 {:delayed-completion true
+                  :effect (req (show-wait-prompt state :runner "Corp to use SSO Industries' ability")
+                            (let [agendas (installed-faceup-agendas state)
+                                  agenda-points (->> agendas
+                                                  (map :agendapoints)
+                                                  (reduce +))
+                                  ice (ice-with-no-advancement-tokens state)]
+                              (continue-ability
+                                state side
+                                {:prompt (str "Select ICE with no advancement tokens to place "
+                                             (quantify agenda-points "advancement token") " on")
+                                 :choices {:req #(selectable-ice? %)}
+                                 :msg (msg "places " (quantify agenda-points "advancement token")
+                                           " on ICE with no advancement tokens")
+                                 :effect (req (add-prop state :corp target :advance-counter agenda-points {:placed true})
+                                              (clear-wait-prompt state :runner))
+                                 :cancel-effect (req (clear-wait-prompt state :runner))}
+                                card nil)))}}}}})
 
    "Steve Cambridge: Master Grifter"
    {:events {:successful-run

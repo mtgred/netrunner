@@ -466,11 +466,15 @@
   (let [base-points (:agendapoints card)
         runner-fn (:agendapoints-runner (card-def card))
         corp-fn (:agendapoints-corp (card-def card))]
-    (if (and (= side :runner) (not (nil? runner-fn)))
+    (cond
+      (and (= side :runner)
+           (some? runner-fn))
       (runner-fn state side (make-eid state) card nil)
-      (if (and (= side :corp) (not  (nil? corp-fn)))
-        (corp-fn state side (make-eid state) card nil)
-        base-points))))
+      (and (= side :corp)
+           (some? corp-fn))
+      (corp-fn state side (make-eid state) card nil)
+      :else
+      base-points)))
 
 (defn advancement-cost-bonus
   "Applies an advancement requirement increase of n the next agenda whose advancement requirement
@@ -479,8 +483,7 @@
   (swap! state update-in [:bonus :advancement-cost] (fnil #(+ % n) 0)))
 
 (defn advancement-cost [state side {:keys [advancementcost] :as card}]
-  (if (nil? advancementcost)
-    nil
+  (if (some? advancementcost)
     (-> (if-let [costfun (:advancement-cost-bonus (card-def card))]
           (+ advancementcost (costfun state side (make-eid state) card nil))
           advancementcost)

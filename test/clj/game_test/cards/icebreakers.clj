@@ -7,6 +7,20 @@
 
 (use-fixtures :once load-all-cards)
 
+(deftest adept-strength
+  ;; Adept - +1 str for each unused MU
+  (do-game
+    (new-game (default-corp) (default-runner [(qty "Adept" 1) (qty "Box-E" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Adept")
+    (let [ad (get-program state 0)]
+      (is (= 2 (:memory (get-runner))))
+      (is (= 4 (:current-strength (refresh ad))) "+2 strength for 2 unused MU")
+      (play-from-hand state :runner "Box-E")
+      (is (= 4 (:memory (get-runner))))
+      (is (= 6 (:current-strength (refresh ad))) "+4 strength for 4 unused MU"))))
+
 (deftest atman-install-0
   ;; Atman - Installing with 0 power counters
   (do-game
@@ -86,6 +100,25 @@
       (is (= 1 (:memory (get-runner))) "1 MU left with 2 breakers on Baba Yaga")
       (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog"))))
 
+(deftest cerberus-rex
+  ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Cerberus \"Rex\" H2" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Cerberus \"Rex\" H2")
+   (is (= 2 (:credit (get-runner))) "2 credits left after install")
+   (let [rex (get-in @state [:runner :rig :program 0])]
+     (is (= 4 (get-counters rex :power)) "Start with 4 counters")
+     ;; boost strength
+     (card-ability state :runner rex 1)
+     (is (= 1 (:credit (get-runner))) "Spend 1 credit to boost")
+     (is (= 2 (:current-strength (refresh rex))) "At strength 2 after boost")
+     ;; break
+     (card-ability state :runner rex 0)
+     (is (= 1 (:credit (get-runner))) "No credits spent to break")
+     (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
+
 (deftest chameleon-clonechip
   ;; Chameleon - Install on corp turn, only returns to hand at end of runner's turn
   (do-game
@@ -129,25 +162,6 @@
     (is (= 0 (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
     (take-credits state :runner)
     (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2")))
-
-(deftest cerberus
-  ;; Cerberus - boost 1 for 1 cred. Break for 1 counter
-  (do-game
-   (new-game (default-corp)
-             (default-runner [(qty "Cerberus \"Rex\" H2" 1)]))
-   (take-credits state :corp)
-   (play-from-hand state :runner "Cerberus \"Rex\" H2")
-   (is (= 2 (:credit (get-runner))) "2 credits left after install")
-   (let [rex (get-in @state [:runner :rig :program 0])]
-     (is (= 4 (get-counters rex :power)) "Start with 4 counters")
-     ;; boost strength
-     (card-ability state :runner rex 1)
-     (is (= 1 (:credit (get-runner))) "Spend 1 credit to boost")
-     (is (= 2 (:current-strength (refresh rex))) "At strength 2 after boost")
-     ;; break
-     (card-ability state :runner rex 0)
-     (is (= 1 (:credit (get-runner))) "No credits spent to break")
-     (is (= 3 (get-counters (refresh rex) :power)) "One counter used to break"))))
 
 (deftest crypsis
   ;; Crypsis - Loses a virus counter after encountering ice it broke
@@ -318,6 +332,37 @@
     (core/trash state :corp iw)
     (is (not (:icon (refresh iw))) "Ice Wall does not have an icon after itself trashed"))))
 
+(deftest god-of-war
+  ;; God of War - Take 1 tag to place 2 virus counters
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "God of War" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "God of War")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (let [gow (get-program state 0)]
+     (card-ability state :runner gow 2)
+     (is (= 1 (:tag (get-runner))))
+     (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
+
+(deftest mammon
+  ;; Mammon - Pay to add X power counters at start of turn, all removed at end of turn
+  (do-game
+   (new-game (default-corp)
+             (default-runner [(qty "Mammon" 1)]))
+   (take-credits state :corp)
+   (play-from-hand state :runner "Mammon")
+   (take-credits state :runner)
+   (take-credits state :corp)
+   (let [mam (get-program state 0)]
+     (card-ability state :runner mam 0)
+     (prompt-choice :runner 3)
+     (is (= 2 (:credit (get-runner))) "Spent 3 credits")
+     (is (= 3 (get-counters (refresh mam) :power)) "Mammon has 3 power counters")
+     (take-credits state :runner)
+     (is (= 0 (get-counters (refresh mam) :power)) "All power counters removed"))))
+
 (deftest nanotk-install-ice-during-run
   ;; Na'Not'K - Strength adjusts accordingly when ice installed during run
   (do-game
@@ -418,6 +463,34 @@
     (run-on state "Archives")
     (prompt-choice :runner "No")
     (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")))
+
+(deftest peregrine
+  ;; Peregrine - 2c to return to grip and derez an encountered code gate
+  (do-game
+    (new-game (default-corp [(qty "Paper Wall" 1) (qty "Bandwidth" 2)])
+              (default-runner [(qty "Peregrine" 1)]))
+    (play-from-hand state :corp "Bandwidth" "Archives")
+    (play-from-hand state :corp "Bandwidth" "Archives")
+    (play-from-hand state :corp "Paper Wall" "Archives")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Peregrine")
+    (let [bw1 (get-ice state :archives 0)
+          pw (get-ice state :archives 2)
+          per (get-program state 0)]
+      (run-on state "Archives")
+      (core/rez state :corp pw)
+      (core/rez state :corp bw1)
+      (card-ability state :runner per 2)
+      (is (and (= 2 (:credit (get-runner))) (empty? (:hand (get-runner)))) "Can't use Peregrine on a barrier")
+      (run-continue state)
+      (card-ability state :runner per 2)
+      (is (and (= 2 (:credit (get-runner))) (empty? (:hand (get-runner)))) "Can't use Peregrine on unrezzed code gate")
+      (run-continue state)
+      (card-ability state :runner per 2)
+      (is (= 0 (:credit (get-runner))) "Spent 2 credits")
+      (is (= 1 (count (:hand (get-runner)))) "Peregrine returned to grip")
+      (is (not (get-in (refresh bw1) [:rezzed])) "Bandwidth derezzed"))))
 
 (deftest persephone
   ;; Persephone's ability trashes cards from R&D, triggering AR-Enhanced Security

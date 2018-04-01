@@ -128,5 +128,5 @@
               userstats (:stats (stats-for-user user-id))
               deckstats (:stats (stats-for-deck deck-id))]
         (ws/send! (:ws-id p) [:stats/update {:userstats userstats
-                                             :deck-id   deck-id
+                                             :deck-id   (str deck-id)
                                              :deckstats deckstats}])))))
