@@ -386,8 +386,9 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "install " (:title target))
-                                    :effect (req (runner-install state side (assoc target :special {:diana-installed true}) {:no-cost true})
-                                                 (swap! state update :diana #(conj % (assoc target :special {:diana-installed true}))))}
+                                    :effect (req (let [diana-card (assoc-in target [:special :diana-installed] true)]
+                                                   (runner-install state side diana-card {:no-cost true})
+                                                   (swap! state update :diana #(conj % diana-card))))}
                                    card nil))}]
     :effect (effect (run target nil card)
                     (prompt! card (str "Click Diana's Hunt in the Temporary Zone to install a Program") ["OK"] {})

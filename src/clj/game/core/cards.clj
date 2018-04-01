@@ -130,10 +130,12 @@
          (when-let [card-moved (:move-zone (card-def c))]
            (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card moved-card)
-         (when (#{:discard :hand} to) (reset-card state side moved-card))
-         (when-let [icon-card (get-in moved-card [:icon :card])]
-           ;; remove icon if card moved to :discard or :hand
-           (when (#{:discard :hand} to) (remove-icon state side icon-card moved-card)))
+         ; Default a card when moved to inactive zones (except :persistent key)
+         (when (#{:discard :hand :deck :rfg} to)
+           (reset-card state side moved-card)
+           (when-let [icon-card (get-in moved-card [:icon :card])]
+             ; Remove icon and icon-card keys
+             (when (#{:discard :hand :deck :rfg} to) (remove-icon state side icon-card moved-card))))
          moved-card)))))
 
 (defn move-zone
