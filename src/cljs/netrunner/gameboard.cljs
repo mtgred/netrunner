@@ -283,10 +283,11 @@
     (> (.indexOf p value) -1)))
 
 (defn has-subtype?
-  "Checks if the specified subtype is present in the card.
-  Mostly sugar for the has? function."
+  "Checks if the specified subtype is present in the card."
   [card subtype]
-  (has? card :subtype subtype))
+  (or (has? card :subtype subtype)
+      (when-let [persistent-subs (-> card :persistent :subtype)]
+        (includes? persistent-subs subtype))))
 
 (defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)

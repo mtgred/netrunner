@@ -913,9 +913,14 @@
   ;; Rebranding Team - Full test
   (do-game
     (new-game (default-corp [(qty "Rebranding Team" 1) (qty "Launch Campaign" 1) (qty "City Surveillance" 1)
-                             (qty "Jackson Howard" 1) (qty "Museum of History" 1)])
+                             (qty "Jackson Howard" 1) (qty "Museum of History" 1) (qty "Advanced Assembly Lines" 1)])
               (default-runner))
     (score-agenda state :corp (find-card "Rebranding Team" (:hand (get-corp))))
+    (core/click-draw state :runner 1)
+    (is (core/has-subtype? (find-card "Advanced Assembly Lines" (:hand (get-corp))) "Advertisement"))
+    ; #2608 part 2 - retain Advertisement always
+    (trash-from-hand state :corp "Advanced Assembly Lines")
+    (is (core/has-subtype? (find-card "Advanced Assembly Lines" (:discard (get-corp))) "Advertisement"))
     (is (core/has-subtype? (find-card "Launch Campaign" (:hand (get-corp))) "Advertisement"))
     (is (core/has-subtype? (find-card "City Surveillance" (:hand (get-corp))) "Advertisement"))
     (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Advertisement"))
@@ -925,6 +930,7 @@
     (is (core/has-subtype? (find-card "Museum of History" (:hand (get-corp))) "Ritzy"))
     (core/move state :corp (find-card "Rebranding Team" (:scored (get-corp))) :deck)
     (is (core/has-subtype? (find-card "Launch Campaign" (:hand (get-corp))) "Advertisement"))
+    (is (not (core/has-subtype? (find-card "Advanced Assembly Lines" (:discard (get-corp))) "Advertisement")))
     (is (not (core/has-subtype? (find-card "City Surveillance" (:hand (get-corp))) "Advertisement")))
     (is (not (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Advertisement")))
     (is (core/has-subtype? (find-card "Jackson Howard" (:hand (get-corp))) "Executive"))
