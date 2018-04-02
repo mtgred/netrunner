@@ -195,6 +195,39 @@
       (is (= 3 (count (:hand (get-runner))))
           "No meat damage dealt by Tri-maf's leave play effect"))))
 
+(deftest because-i-can
+  ;; make a successful run on a remote to shuffle its contents into R&D
+  (do-game
+    (new-game (default-corp [(qty "Bullfrog" 1) (qty "PAD Campaign" 1) (qty "Project Atlas" 1) (qty "Shell Corporation" 2)])
+              (default-runner [(qty "Because I Can" 1)]))
+    (play-from-hand state :corp "Shell Corporation" "New Remote")
+    (play-from-hand state :corp "Shell Corporation" "Server 1")
+    (play-from-hand state :corp "Project Atlas" "Server 1")
+    (let [n (count (get-in @state [:corp :deck]))]
+      (play-from-hand state :corp "Because I Can")
+      (prompt-choice :runner "Server 1")
+      (is (= 3 (count (get-in @state [:corp :servers :remote1 :content]))) "3 cards in server 1 before successful run")
+      (run-successful state)
+      (is (= (+ n 3) (count (get-in @state [:corp :deck]))) "3 cards were shuffled into R&D")
+      (is (= 0 (count (get-in @state [:corp :servers :remote1 :content]))) "No cards left in server 1"))
+    (take-credits state :runner)
+    (play-from-hand state :corp "Sand Storm" "New Remote")
+    (play-from-hand state :corp "PAD Campaign" "New Remote")
+    (take-credits state :corp)
+    (let [n (count (get-in @state [:corp :deck]))
+          sand-storm (get-ice state :remote2 0)]
+      (play-from-hand state :corp "Because I Can")
+      (prompt-choice :runner "Server 2")
+      (core/rez state :corp sand-storm)
+      (is (= :remote2 (first (get-in @state [:run :server]))))
+      (card-subroutine state :corp sand-storm 0)
+      (prompt-choice :corp "Server 3")
+      (is (= :remote3 (first (get-in @state [:run :server]))))
+      (is (= 1 (count (get-in @state [:corp :servers :remote3 :content]))) "1 cards in server 3 before successful run")
+      (run-successful state)
+      (is (= (+ n 1) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
+      (is (= 0 (count (get-in @state [:corp :servers :remote3 :content]))) "No cards left in server 3"))))
+
 (deftest blackmail
   ;; Prevent rezzing of ice for one run
   (do-game
