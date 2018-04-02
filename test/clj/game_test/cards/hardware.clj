@@ -398,6 +398,37 @@
       (prompt-choice :runner "Done")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card"))))
 
+(deftest knobkierie
+  ;; Knobkierie - first successful run, place a virus counter on a virus program
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Knobkierie" 1) (qty "Hivemind" 1) (qty "Eater" 1)]))
+    (core/gain state :runner :credit 20)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Knobkierie")
+    (play-from-hand state :runner "Eater")
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :runner "Ok")
+    (is (empty? (:prompt (get-runner))) "No prompt if not virus program installed")
+    (take-credits state :runner)
+
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hivemind")
+    (let [hv (find-card "Hivemind" (get-in @state [:runner :rig :program]))]
+      (is (= 1 (get-counters (refresh hv) :virus)) "Hivemind starts with 1 virus counters")
+      (run-on state "HQ")
+      (run-successful state)
+      (prompt-choice :runner "Yes") ; gain virus counter
+      (prompt-select :runner (find-card "Hivemind" (get-in @state [:runner :rig :program])))
+      (prompt-choice :runner "Ok")
+      (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind gains a counter on successful run")
+      (run-on state "HQ")
+      (run-successful state)
+      (prompt-choice :runner "Ok")
+      (is (empty? (:prompt (get-runner))) "No prompt after first run")
+      (is (= 2 (get-counters (refresh hv) :virus)) "Hivemind doesn't gain a counter after first run"))))
+
 (deftest llds-processor
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
   (do-game

@@ -437,6 +437,26 @@
    "HQ Interface"
    {:in-play [:hq-access 1]}
 
+   "Knobkierie"
+   {:implementation "MU usage restriction not enforced"
+    :in-play [:memory 3]
+    :events {:successful-run
+             {:delayed-completion true
+              :req (req (and (first-event? state :runner :successful-run)
+                             (pos? (count-virus-programs state))))
+              :optional
+              {:prompt "Place a virus counter?"
+               :yes-ability
+               {:delayed-completion true
+                :effect (effect (continue-ability
+                                  {:prompt "Select an installed virus program"
+                                   :choices {:req #(and (installed? %)
+                                                        (has-subtype? % "Virus")
+                                                        (is-type? % "Program"))}
+                                   :msg (msg "places 1 virus counter on " (:title target))
+                                   :effect (effect (add-counter target :virus 1))}
+                                  card nil))}}}}}
+
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
                  :choices {:req installed?} :effect (effect (expose eid target))
