@@ -724,7 +724,7 @@
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Endless EULA"
-   {:implementation "Encounter effect is manual. Runner choice is not implemented"
+   {:implementation "Subroutine effect is manual. Runner choice is not implemented"
     :subroutines [end-the-run]
     :runner-abilities [(runner-break [:credit 1] 1)
                        (runner-break [:credit 6] 6)]}
