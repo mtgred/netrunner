@@ -453,7 +453,7 @@
                                    :choices {:req #(and (installed? %)
                                                         (has-subtype? % "Virus")
                                                         (is-type? % "Program"))}
-                                   :msg (msg "places 1 virus counter on " (:title target))
+                                   :msg (msg "place 1 virus counter on " (:title target))
                                    :effect (effect (add-counter target :virus 1))}
                                   card nil))}}}}}
 
