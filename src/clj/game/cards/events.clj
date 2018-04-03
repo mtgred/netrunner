@@ -738,35 +738,38 @@
   "Glut Cipher"
   {:req (req archives-runnable)
    :makes-run true
-   :delayed-completion true
-   :effect (effect (run eid :archives 
-                        (let [n (min (count (:discard corp)) 5)] 
-                                     {:req (req (= target :archives))
-                                      :delayed-completion true
-                                      :replace-access {:mandatory true 
-                                                       :effect (if (>= n 5) (req (show-wait-prompt state :runner "Corp to choose which cards to pick up from Archives")
-                                                                                 (resolve-ability state side 
-                                                                                                  {:show-discard true
-                                                                                                   :player :corp
-                                                                                                   :choices {:max n
-                                                                                                             :all true
-                                                                                                             :req #(and (= (:side %) "Corp")
-                                                                                                                        (= (:zone %) [:discard]))}
-                                                                                                   :msg (msg "move "
-                                                                                                             (let [seen (filter :seen targets)
-                                                                                                                   m (count  (remove :seen targets))]
-                                                                                                               (str (join ", " (map :title seen))
-                                                                                                                    (when (pos? m)
-                                                                                                                      (str (when-not (empty? seen) " and ")
-                                                                                                                           (quantify m "unseen card")))
-                                                                                                                    " into HQ, then trash " 
-                                                                                                                    (quantify m "card"))))
-                                                                                                   :effect (req (doseq [c targets] (move state side c :hand))
-                                                                                                                (doseq [c (take n (shuffle (:hand corp)))]
-                                                                                                                  (trash state :corp c))
-                                                                                                                (clear-wait-prompt state :runner)
-                                                                                                                )}
-                                                                                                  card nil)))}})
+   :effect (effect (run :archives 
+                        {:req (req (= target :archives))
+                         :replace-access 
+                         {:mandatory true 
+                          :req (req (>= (count (:discard corp)) 5))
+                          :effect (req (show-wait-prompt state :runner "Corp to choose which cards to pick up from Archives") ;; For some reason it just shows successful-run-trigger-message, but this works!?
+                                       (continue-ability state side 
+                                                         {:show-discard true
+                                                          :player :corp
+                                                          :choices {:max 5
+                                                                    :all true
+                                                                    :req #(and (= (:side %) "Corp")
+                                                                               (= (:zone %) [:discard]))}
+                                                          :msg (msg "move "
+                                                                    (let [seen (filter :seen targets)
+                                                                          m (count  (remove :seen targets))]
+                                                                      (str (join ", " (map :title seen))
+                                                                           (when (pos? m)
+                                                                             (str (when-not (empty? seen) " and ")
+                                                                                  (quantify m "unseen card")))
+                                                                           " into HQ, then trash 5 cards")))
+                                                          :effect (req (when-completed
+                                                                         (resolve-ability state side 
+                                                                                          {:effect (req (doseq [c targets]
+                                                                                                          (move state side c :hand)))}
+                                                                                          card targets)
+                                                                         (continue-ability state side 
+                                                                                           {:effect (req (doseq [c (take 5 (shuffle (:hand corp)))]
+                                                                                                           (trash state :corp c))
+                                                                                                         (clear-wait-prompt state :runner))}
+                                                                                           card nil)))}
+                                                         card nil))}}
                         card))}
 
    "High-Stakes Job"
