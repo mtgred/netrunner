@@ -724,8 +724,10 @@
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Endless EULA"
-   {:subroutines [end-the-run]
-    :runner-abilities [(runner-break [:credit 1] 1)]}
+   {:implementation "Encounter effect is manual. Runner choice is not implemented"
+    :subroutines [end-the-run]
+    :runner-abilities [(runner-break [:credit 1] 1)
+                       (runner-break [:credit 6] 6)]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
