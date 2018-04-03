@@ -983,6 +983,22 @@
       (is (= 1 (:position (get-in @state [:run])))
           "Run position updated; now approaching Ice Wall"))))
 
+
+(deftest sand-storm-alone
+  ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
+  (do-game
+    (new-game (default-corp [(qty "Sand Storm" 1) (qty "PAD Campaign" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Sand Storm" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-on state "Server 1")
+    (let [sand-storm (get-ice state :remote1 0)]
+      (core/rez state :corp sand-storm)
+      (card-subroutine state :corp sand-storm 0)
+      (prompt-choice :corp "Server 2")
+      (is (=  (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
+
 (deftest tithonium
   ;; Forfeit option as rez cost, can have hosted condition counters
   (do-game

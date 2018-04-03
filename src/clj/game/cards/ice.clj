@@ -1599,10 +1599,10 @@
                    :choices (req (cancellable servers))
                    :msg (msg "move Sand Storm and the run.  The Runner is now running on " target ". Sand Storm is trashed")
                    :effect (req (let [dest (server->zone state target)]
-                                (trash state side card {:unpreventable true})
-                                (swap! state update-in [:run]
-                                       #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                 :server (rest dest)))))}]}
+                                  (swap! state update-in [:run]
+                                         #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                 :server (rest dest)))
+                                  (trash state side card {:unpreventable true})))}]}
 
    "Sapper"
    {:subroutines [trash-program]
