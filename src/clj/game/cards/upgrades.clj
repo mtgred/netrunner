@@ -103,6 +103,21 @@
                                       :unsuccessful {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
                                                                      (trash card))}}}}}
 
+  "Bio Vault"
+  {:implementation "Installation restriction not enforced"
+   :advanceable :always
+   :abilities [{:label "[Trash], 2 hosted advancement tokens: End the run."
+                :req (req (and (>= (get-in card [:advance-counter] 0) 2)
+                               (:run @state)))
+                :msg "end the run. Bio Vault is trashed"
+                :delayed-completion true
+                :effect (effect (continue-ability
+                                  {:delayed-completion true
+                                   :effect (effect
+                                             (end-run)
+                                             (trash eid card {:cause :ability-cost}))}
+                                  card nil))}]}
+
    "Black Level Clearance"
    {:events {:successful-run
              {:interactive (req true)
