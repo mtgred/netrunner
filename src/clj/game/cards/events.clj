@@ -169,6 +169,7 @@
             :effect (effect (run :hq {:replace-access
                                 {:msg "force the Corp to add all cards in HQ to the top of R&D"
                                  :delayed-completion true
+                                 :mandatory true
                                  :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
                                               (let [from (:hand corp)]
                                                 (if (pos? (count from))
@@ -733,6 +734,40 @@
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
+
+  "Glut Cipher"
+  {:req (req archives-runnable)
+   :makes-run true
+   :delayed-completion true
+   :effect (effect (run eid :archives 
+                        (let [n (min (count (:discard corp)) 5)] 
+                                     {:req (req (= target :archives))
+                                      :delayed-completion true
+                                      :replace-access {:mandatory true 
+                                                       :effect (if (>= n 5) (req (show-wait-prompt state :runner "Corp to choose which cards to pick up from Archives")
+                                                                                 (resolve-ability state side 
+                                                                                                  {:show-discard true
+                                                                                                   :player :corp
+                                                                                                   :choices {:max n
+                                                                                                             :all true
+                                                                                                             :req #(and (= (:side %) "Corp")
+                                                                                                                        (= (:zone %) [:discard]))}
+                                                                                                   :msg (msg "move "
+                                                                                                             (let [seen (filter :seen targets)
+                                                                                                                   m (count  (remove :seen targets))]
+                                                                                                               (str (join ", " (map :title seen))
+                                                                                                                    (when (pos? m)
+                                                                                                                      (str (when-not (empty? seen) " and ")
+                                                                                                                           (quantify m "unseen card")))
+                                                                                                                    " into HQ, then trash " 
+                                                                                                                    (quantify m "card"))))
+                                                                                                   :effect (req (doseq [c targets] (move state side c :hand))
+                                                                                                                (doseq [c (take n (shuffle (:hand corp)))]
+                                                                                                                  (trash state :corp c))
+                                                                                                                (clear-wait-prompt state :runner)
+                                                                                                                )}
+                                                                                                  card nil)))}})
+                        card))}
 
    "High-Stakes Job"
    (run-event
