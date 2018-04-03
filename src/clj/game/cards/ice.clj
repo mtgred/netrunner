@@ -1604,6 +1604,20 @@
                                        #(assoc % :position (count (get-in corp (conj dest :ices)))
                                                  :server (rest dest)))))}]}
 
+   "Sandman"
+   {:subroutines [{:label "Add an installed Runner card to the grip"
+                   :req (req (pos? (count (all-installed state :runner))))
+                   :delayed-completion true
+                   :effect (effect (show-wait-prompt :runner "Corp to select Sandman target")
+                                   (continue-ability {:choices {:req #(and (installed? %)
+                                                                           (= (:side %) "Runner"))}
+                                                      :msg (msg "to add " (:title target) " to the grip")
+                                                      :effect (effect (clear-wait-prompt :runner)
+                                                                      (move :runner target :hand true))
+                                                      :cancel-effect (effect (clear-wait-prompt :runner)
+                                                                             (effect-completed eid))}
+                                                     card nil))}]}
+
    "Sapper"
    {:subroutines [trash-program]
     :access {:delayed-completion true
