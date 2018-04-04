@@ -107,8 +107,8 @@
   {:implementation "Installation restriction not enforced"
    :advanceable :always
    :abilities [{:label "[Trash], 2 hosted advancement tokens: End the run."
-                :req (req (and (>= (get-in card [:advance-counter] 0) 2)
-                               (:run @state)))
+                :advance-counter-cost 2
+                :req (req (:run @state))
                 :msg "end the run. Bio Vault is trashed"
                 :delayed-completion true
                 :effect (effect (continue-ability
