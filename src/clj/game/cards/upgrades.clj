@@ -111,12 +111,9 @@
                 :req (req (:run @state))
                 :msg "end the run. Bio Vault is trashed"
                 :delayed-completion true
-                :effect (effect (continue-ability
-                                  {:delayed-completion true
-                                   :effect (effect
-                                             (end-run)
-                                             (trash eid card {:cause :ability-cost}))}
-                                  card nil))}]}
+                :effect (effect
+                          (end-run)
+                          (trash eid card {:cause :ability-cost}))}]}
 
    "Black Level Clearance"
    {:events {:successful-run
