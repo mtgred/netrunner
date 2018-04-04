@@ -807,8 +807,8 @@
    "Tempus"
    {:access {:req (req (not= (first (:zone card)) :discard))
              :interactive (req true)
-             :effect (req (when (= (first (:zone card)) :rd)
-                            (system-msg :runner (str "accesses Tempus"))))
+             :effect (req (when (= (first (:zone card)) :deck)
+                            (system-msg state :runner (str "accesses Tempus"))))
              :trace {:base 3
                      :msg "make the Runner choose between losing [Click][Click] or suffering 1 brain damage"
                      :delayed-completion true
