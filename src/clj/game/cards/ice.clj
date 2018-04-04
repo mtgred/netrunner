@@ -1583,6 +1583,50 @@
    "Rototurret"
    {:subroutines [trash-program end-the-run]}
 
+   "Sadaka"
+   {:subroutines [{:label "Look at the top 3 cards of R&D and either arrange them in any order or shuffle R&D. You may draw 1 card."
+                   :req (req (not-empty (:deck corp)))
+                   :delayed-completion true
+                   :effect (req (let [c (take 3 (:deck corp))
+                                      c-names (map :title c)
+                                      maybe-draw (fn [state side card]
+                                                   (show-wait-prompt state :runner "Corp to decide on Sadaka card draw action")
+                                                   (resolve-ability
+                                                     state side
+                                                     {:optional
+                                                      {:player :corp
+                                                       :prompt "Draw 1 card?"
+                                                       :yes-ability
+                                                       {:effect (effect (draw)
+                                                                        (clear-wait-prompt :runner))
+                                                        :msg "draw 1 card"}
+                                                       :no-ability
+                                                       {:effect (effect (clear-wait-prompt :runner))}}}
+                                                     card nil))]
+                                  (show-wait-prompt state :runner "Corp to decide on Sadaka R&D card actions")
+                                  (continue-ability
+                                    state side
+                                    {:prompt (str "Top 3 cards of R&D: " (clojure.string/join ", " c-names))
+                                     :choices ["Arrange cards" "Shuffle R&D"]
+                                     :effect
+                                     (req
+                                       (if (= target "Arrange cards")
+                                         (do
+                                           (when-completed
+                                             (resolve-ability state side (reorder-choice :corp c) card nil)
+                                             (do
+                                               (system-msg state :corp (str "rearranges the top " (count c) " cards of R&D"))
+                                               (clear-wait-prompt state :runner)
+                                               (maybe-draw state side card))))
+                                         (do
+                                           (shuffle! state :corp :deck)
+                                           (system-msg state :corp (str "shuffles R&D"))
+                                           (clear-wait-prompt state :runner)
+                                           (maybe-draw state side card))))}
+                                    card nil)))}
+                  {:label "You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka."
+                   }]}
+
    "Sagittarius"
    (constellation-ice trash-program)
 
