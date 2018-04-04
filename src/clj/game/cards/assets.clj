@@ -824,16 +824,14 @@
 
    "Malia Z0L0K4"
    {:effect (effect (update! (assoc card :malia-target target))
-                    (disable-card target))
-    :msg (msg (str "blank " (card-str state target))) ;todo: make something nicer
+                    (disable-card :runner target))
+    :msg (msg (str "blank the text box of " (card-str state target)))
 
     :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
                          (not (has-subtype? % "Virtual")))}
-    :leave-play (effect (enable-card (get-card state (:malia-target target)))
+    :leave-play (effect (enable-card :runner (get-card state (:malia-target card)))
                         (system-msg (str "uses "  (:title card) " to unblank "
-                                         (card-str state (:malia-target card))))
-                        )
-    }
+                                         (card-str state (:malia-target card)))))}
    "Marilyn Campaign"
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
