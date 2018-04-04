@@ -106,7 +106,7 @@
   "Bio Vault"
   {:implementation "Installation restriction not enforced"
    :advanceable :always
-   :abilities [{:label "[Trash], 2 hosted advancement tokens: End the run."
+   :abilities [{:label "[Trash]: End the run"
                 :advance-counter-cost 2
                 :req (req (:run @state))
                 :msg "end the run. Bio Vault is trashed"
