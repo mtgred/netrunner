@@ -152,16 +152,15 @@
                                {:effect (effect (add-counter :runner card :virus 1)
                                                 (system-msg :runner (str "places 1 virus counter on Consume")))}}}}
     :abilities [{:cost [:click 1]
+                 :effect (effect (gain :credit (* 2 (get-virus-counters state side card)))
+                                 (update! (assoc-in card [:counter :virus] 0)))
                  :msg (msg (let [local-virus (get-in card [:counter :virus])
                             global-virus (get-virus-counters state side card)
                             hivemind-virus (- global-virus local-virus)]
-                            (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counters from Consume"
+                            (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
                             (when (pos? hivemind-virus)
-                                  (str " (and " hivemind-virus " from Hivemind)"))))
-                                 )
-                 :effect (effect (gain :credit (* 2 (get-virus-counters state side card)))
-                                 (update! (assoc-in card [:counter :virus] 0)))
-                 }]}
+                                  (str " (and " hivemind-virus " from Hivemind)")))
+                                 )}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
