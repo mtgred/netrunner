@@ -1608,7 +1608,7 @@
    {:subroutines [{:label "Add an installed Runner card to the grip"
                    :req (req (pos? (count (all-installed state :runner))))
                    :effect (effect (show-wait-prompt :runner "Corp to select Sandman target")
-                                   (continue-ability {:choices {:req #(and (installed? %)
+                                   (resolve-ability {:choices {:req #(and (installed? %)
                                                                            (= (:side %) "Runner"))}
                                                       :msg (msg "to add " (:title target) " to the grip")
                                                       :effect (effect (clear-wait-prompt :runner)
