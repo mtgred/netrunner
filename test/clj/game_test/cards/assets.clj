@@ -80,7 +80,7 @@
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
 
 (deftest amani-senai
-  ;; Team Sponsorship - Install from HQ
+  ;; Amani Senai - trace on score/steal to bounce, with base strength = advancement req of the agenda
   (do-game
     (new-game (default-corp [(qty "Amani Senai" 1)
                              (qty "Global Food Initiative" 1)
@@ -102,7 +102,7 @@
       (prompt-choice :corp "Yes")
       ;; (is (= 2 (get-in @state [:corp :prompt])) "Corp is prompted for trace")
       (prompt-choice :corp 0)  ;; Corp doesn't pump trace
-      (is (= 3  (get-in @state [:trace :strength])) "Trace base strength is 3 after stealing a GFI")
+      (is (= 5  (get-in @state [:trace :strength])) "Trace base strength is 5 after stealing a GFI")
       (prompt-choice :runner 0)
       (let [n (count (get-in @state [:runner :hand]))]
         (is (= 1 (count (get-in @state [:runner :rig :program]))) "There is an Analog Dreamers installed")
@@ -113,7 +113,7 @@
       (score-agenda state :corp sleepers)
       (prompt-choice :corp "Yes")       ;corp should get to trigger trace even when no runner cards are installed
       (prompt-choice :corp 0)
-      (is (= 0 (get-in @state [:trace :strength])) "Trace base strength is 0 after scoring a Sleepers"))))
+      (is (= 2 (get-in @state [:trace :strength])) "Trace base strength is 2 after scoring a Sleepers"))))
 
 (deftest blacklist-steal
   ;; Blacklist - #2426.  Need to allow steal.
