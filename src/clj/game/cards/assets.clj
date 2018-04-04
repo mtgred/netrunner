@@ -132,7 +132,8 @@
    (let [get-last-stolen-pts (fn [state] (:advancementcost (last (get-in @state [:runner :scored]))))
          get-last-scored-pts (fn [state] (:advancementcost (last (get-in @state [:corp :scored]))))
          senai-ability (fn [trace-base-func]
-                         {:optional {:prompt "Trace with Amani Senai?" :player :corp
+                         {:interactive (req true)
+                          :optional {:prompt "Trace with Amani Senai?" :player :corp
                                      :yes-ability {:trace {:base (req (trace-base-func state))
                                                            :choices {:req #(and (installed? %)
                                                                                 (card-is? % :side :runner))}
