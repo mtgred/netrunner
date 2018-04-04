@@ -128,18 +128,18 @@
                  :effect (effect (trash card))
                  :msg (msg "swap " (:advance-counter card 0) " cards in HQ and Archives")}]}
 
-   "Amani Sendai"
+   "Amani Senai"
    (let [get-last-stolen-pts (fn [state] (:agendapoints (last (get-in @state [:runner :scored]))))
          get-last-scored-pts (fn [state] (:agendapoints (last (get-in @state [:corp :scored]))))
-         sendai-ability (fn [trace-base-func]
-                          {:optional {:prompt "Trace with Amani Sendai?" :player :corp
+         senai-ability (fn [trace-base-func]
+                          {:optional {:prompt "Trace with Amani Senai?" :player :corp
                                       :yes-ability {:trace {:base (req (trace-base-func state))
                                                             :choices {:req #(and (installed? %)
                                                                                  (card-is? % :side :runner))}
                                                             :msg "add an installed Runner card to the grip"
                                                             :effect (effect (move :runner target :hand true))}}}})]
-     {:events {:agenda-scored (sendai-ability get-last-scored-pts)
-               :agenda-stolen (sendai-ability get-last-stolen-pts)}})
+     {:events {:agenda-scored (senai-ability get-last-scored-pts)
+               :agenda-stolen (senai-ability get-last-stolen-pts)}})
 
    "Anson Rose"
    (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
