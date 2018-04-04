@@ -822,14 +822,16 @@
     :events {:corp-turn-begins {:effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}}}
 
-   "Malia Z0l0k4"
+   "Malia Z0L0K4"
    {:effect (effect (update! (assoc card :malia-target target))
-                    (system-msg (str " blank ") target) ;todo: make something nicer
                     (disable-card target))
+    :msg (msg (str "blank " (card-str state target))) ;todo: make something nicer
+
     :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
                          (not (has-subtype? % "Virtual")))}
-    :leave-play (effect (enable-card (get-card (:malia-target target)))
-                        (system-msg (str "unblank")) ;todo: make this nicer too
+    :leave-play (effect (enable-card (get-card state (:malia-target target)))
+                        (system-msg (str "uses "  (:title card) " to unblank "
+                                         (card-str state (:malia-target card))))
                         )
     }
    "Marilyn Campaign"
