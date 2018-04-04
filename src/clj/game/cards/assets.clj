@@ -129,8 +129,8 @@
                  :msg (msg "swap " (:advance-counter card 0) " cards in HQ and Archives")}]}
 
    "Amani Senai"
-   (let [get-last-stolen-pts (fn [state] (:advancementcost (last (get-in @state [:runner :scored]))))
-         get-last-scored-pts (fn [state] (:advancementcost (last (get-in @state [:corp :scored]))))
+   (let [get-last-stolen-pts (fn [state] (advancement-cost state :corp (last (get-in @state [:runner :scored]))))
+         get-last-scored-pts (fn [state] (advancement-cost state :corp (last (get-in @state [:corp :scored]))))
          senai-ability (fn [trace-base-func]
                          {:interactive (req true)
                           :optional {:prompt "Trace with Amani Senai?" :player :corp
