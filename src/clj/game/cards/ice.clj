@@ -723,10 +723,6 @@
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
-   "Endless EULA"
-   {:subroutines [end-the-run]
-    :runner-abilities [(runner-break [:credit 1] 1)]}
-
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
     :subroutines [trash-program
