@@ -1625,7 +1625,27 @@
                                            (maybe-draw state side card))))}
                                     card nil)))}
                   {:label "You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka."
-                   }]}
+                   :delayed-completion true
+                   :effect
+                   (req (show-wait-prompt state :runner "Corp to select cards to trash with Sadaka")
+                        (when-completed
+                          (resolve-ability
+                            state side
+                            {:prompt "Choose a card in HQ to trash"
+                             :choices (req (cancellable (:hand corp) :sorted))
+                             :cancel-effect (effect (system-msg "chooses not to trash a card from HQ"))
+                             :delayed-completion true
+                             :effect (req (trash state :corp target)
+                                          (system-msg state :corp "trashes a card from HQ")
+                                          (when-completed
+                                            (resolve-ability state side trash-resource-sub card nil)
+                                            (system-msg state :corp "done trashing cards")))}
+                            card nil)
+                          (do
+                            (trash state :corp card)
+                            (system-msg state :corp "trashes Sadaka")
+                            (clear-wait-prompt state :runner)
+                            (effect-completed state side eid))))}]}
 
    "Sagittarius"
    (constellation-ice trash-program)
