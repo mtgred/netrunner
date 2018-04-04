@@ -836,6 +836,29 @@
       (core/remove-tag state :runner 1)
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
 
+(deftest sandman
+  ;; Sandman - add an installed runner card to the grip
+  (do-game
+    (new-game (default-corp [(qty "Sandman" 1)])
+              (default-runner [(qty "Inti" 1) (qty "Scrubber" 1)]))
+    (play-from-hand state :corp "Sandman" "HQ")
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Inti")
+    (play-from-hand state :runner "Scrubber")
+    (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
+    (run-on state "HQ")
+    (let [sand (get-ice state :hq 0)]
+      (core/rez state :corp (refresh sand))
+      (card-subroutine state :corp (refresh sand) 0)
+      (prompt-select :corp (find-card "Inti" (get-in (get-runner) [:rig :program])))
+      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+      (card-subroutine state :corp (refresh sand) 0)
+      (prompt-select :corp (find-card "Scrubber" (get-in (get-runner) [:rig :resource])))
+      (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+      (card-subroutine state :corp (refresh sand) 0)
+      (is (empty? (:prompt (get-corp))) "Sandman doesn't fire if no installed cards"))))
+
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters
   (do-game
