@@ -678,6 +678,13 @@
    "IPO"
    {:msg "gain 13 [Credits]" :effect (effect (gain :credit 13))}
 
+   "Kill Switch"
+   (let [trace-for-brain-damage {:trace {:base 3 :msg "give the Runner 1 brain damage"
+                                        :delayed-completion true
+                                        :effect (effect (damage :runner eid :brain 1 {:card card}))}}]
+   {:events {:pre-access-card (assoc trace-for-brain-damage :req (req (is-type? target "Agenda")))
+             :agenda-scored trace-for-brain-damage}})
+
    "Lag Time"
    {:effect (effect (update-all-ice))
     :events {:pre-ice-strength {:effect (effect (ice-strength-bonus 1 target))}}
