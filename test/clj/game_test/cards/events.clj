@@ -980,7 +980,7 @@
     (is (= 3 (count (:discard (get-corp)))) "There are 3 cards in Archives")
 
 
-    (play-run-event state "Glut Cipher" :archives)
+    (play-from-hand state :runner "Glut Cipher")
     (is (= 3 (count (:discard (get-corp)))) "Glut Cipher did not fire when < 5 cards")
     (is (= 0 (count (filter :seen (:discard (get-corp))))) "There are no faceup cards in Archives")
 
