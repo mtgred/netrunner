@@ -893,6 +893,29 @@
       (prompt-select :corp (get-resource state 0))
       (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
       (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed"))))
+(deftest sandman
+
+  ;; Sandman - add an installed runner card to the grip
+  (do-game
+    (new-game (default-corp [(qty "Sandman" 1)])
+              (default-runner [(qty "Inti" 1) (qty "Scrubber" 1)]))
+    (play-from-hand state :corp "Sandman" "HQ")
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Inti")
+    (play-from-hand state :runner "Scrubber")
+    (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
+    (run-on state "HQ")
+    (let [sand (get-ice state :hq 0)]
+      (core/rez state :corp (refresh sand))
+      (card-subroutine state :corp (refresh sand) 0)
+      (prompt-select :corp (find-card "Inti" (get-in (get-runner) [:rig :program])))
+      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+      (card-subroutine state :corp (refresh sand) 0)
+      (prompt-select :corp (find-card "Scrubber" (get-in (get-runner) [:rig :resource])))
+      (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+      (card-subroutine state :corp (refresh sand) 0)
+      (is (empty? (:prompt (get-corp))) "Sandman doesn't fire if no installed cards"))))
 
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters
@@ -1040,6 +1063,22 @@
       (is (= 9 (:credit (get-corp))) "Special Offer paid 5 credits")
       (is (= 1 (:position (get-in @state [:run])))
           "Run position updated; now approaching Ice Wall"))))
+
+
+(deftest sand-storm-alone
+  ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
+  (do-game
+    (new-game (default-corp [(qty "Sand Storm" 1) (qty "PAD Campaign" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Sand Storm" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-on state "Server 1")
+    (let [sand-storm (get-ice state :remote1 0)]
+      (core/rez state :corp sand-storm)
+      (card-subroutine state :corp sand-storm 0)
+      (prompt-choice :corp "Server 2")
+      (is (=  (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
 
 (deftest tithonium
   ;; Forfeit option as rez cost, can have hosted condition counters
