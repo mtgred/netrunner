@@ -1019,9 +1019,7 @@
     (new-game
       (make-deck "NEXT Design: Guarding the Net" [(qty "Snowflake" 10)])
       (default-runner)
-      ;{:dont-start-game true}
-      {:dont-start-turn true}
-      )
+      {:dont-start-turn true})
     (prompt-select :corp (find-card "Snowflake" (:hand (get-corp))))
     (prompt-choice :corp "HQ")
     (prompt-select :corp (find-card "Snowflake" (:hand (get-corp))))
