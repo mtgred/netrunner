@@ -977,7 +977,7 @@
     (is (= 4 (:credit (get-runner))))
     (run-empty-server state "Archives")
     (is (= 3 (:credit (get-runner))))
-	(run-empty-server state "HQ")
+    (run-empty-server state "HQ")
     (is (= 2 (:credit (get-runner))))))
 
 (deftest hostile-infrastructure
@@ -1022,27 +1022,27 @@
   ;; Illegal Arms Factory; draw a card, gain a credit, bad pub when trashed while rezzed
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 1)
-	                         (qty "Beanstalk Royalties" 1)
-	                         (qty "IPO" 1)
-							 (qty "Illegal Arms Factory" 3)])
+                             (qty "Beanstalk Royalties" 1)
+                             (qty "IPO" 1)
+                             (qty "Illegal Arms Factory" 3)])
               (default-runner))
     (core/gain state :runner :credit 20)
-	(core/move state :corp (find-card "IPO" (:hand (get-corp))) :deck)
-	(core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
-	(core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "IPO" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
     (play-from-hand state :corp "Illegal Arms Factory" "New remote")
     (play-from-hand state :corp "Illegal Arms Factory" "New remote")
     (let [iaf (get-content state :remote2 0)]
       (core/rez state :corp iaf)
       (take-credits state :corp)
-	  (run-empty-server state :remote1)
+      (run-empty-server state :remote1)
       (prompt-choice :runner "Yes")
       (is (= 0 (:bad-publicity (get-corp))) "Took no bad pub on unrezzed trash")
       (take-credits state :runner)
-	  (is (= 3 (count (:hand (get-corp)))) "Drew a card from IAF + mandatory")
+      (is (= 3 (count (:hand (get-corp)))) "Drew a card from IAF + mandatory")
       (is (= 4 (:credit (get-corp))) "Gained 1 credit from IAF")
       (take-credits state :corp)
-	  (run-empty-server state :remote2)
+      (run-empty-server state :remote2)
       (prompt-choice :runner "Yes")
       (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash"))))
 
@@ -1682,6 +1682,40 @@
       ; pay 8 per Chiyashi - 24 total
       (is (= 77 (:credit (get-corp))) "Corp has 77 creds")
       (is (empty? (:prompt (get-corp))) "No prompt to rez ICE"))))
+
+(deftest rashida-jaheem
+  ;; Rashida Jaheem
+  (testing "when there are enough cards in R&D"
+    (do-game
+      (new-game (default-corp [(qty "Rashida Jaheem" 1) (qty "Hedge Fund" 3)])
+                (default-runner))
+      (starting-hand state :corp ["Rashida Jaheem"])
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (let [credits (:credit (get-corp))
+            cards (count (:hand (get-corp)))]
+        (prompt-choice :corp "Yes")
+        (is (= (+ 3 credits) (:credit (get-corp))))
+        (is (= (+ 3 cards) (count (:hand (get-corp))))))))
+  (testing "when there aren't enough cards in R&D"
+    (do-game
+      (new-game (default-corp [(qty "Rashida Jaheem" 1) (qty "Hedge Fund" 4)])
+                (default-runner))
+      (starting-hand state :corp ["Rashida Jaheem"])
+      (play-from-hand state :corp "Rashida Jaheem" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (core/draw state :corp)
+      (core/draw state :corp)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (let [credits (:credit (get-corp))
+            cards (count (:hand (get-corp)))]
+        (prompt-choice :corp "Yes")
+        (is (= (+ 3 credits) (:credit (get-corp))))
+        (is (= (+ 2 cards) (count (:hand (get-corp)))))
+        (is (= :runner (:winner @state)) "Runner wins")))))
 
 (deftest reality-threedee
   ;; Reality Threedee - Take 1 bad pub on rez; gain 1c at turn start (2c if Runner tagged)
