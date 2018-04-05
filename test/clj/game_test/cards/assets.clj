@@ -79,6 +79,55 @@
       (card-ability state :corp alix 0)
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
 
+(deftest amani-senai
+  ;; Amani Senai - trace on score/steal to bounce, with base strength = advancement req of the agenda
+  (do-game
+    (new-game (default-corp [(qty "Amani Senai" 1)
+                             (qty "Medical Breakthrough" 2)])
+              (default-runner [(qty "Analog Dreamers" 1)]))
+    (play-from-hand state :corp "Amani Senai" "New remote")
+    (play-from-hand state :corp "Medical Breakthrough" "New remote")
+    (play-from-hand state :corp "Medical Breakthrough" "New remote")
+    (take-credits state :corp)
+    (let [senai (get-content state :remote1 0)
+          breakthrough (get-content state :remote3 0)]
+      (core/rez state :corp senai)
+      (play-from-hand state :runner "Analog Dreamers")
+      (run-empty-server state "Server 2")
+      (prompt-choice :runner "Steal")
+      (is (= 0 (count (get-in @state [:corp :servers :remote2 :content]))) "Agenda was stolen")
+      (prompt-choice :corp "Medical Breakthrough") ;simult. effect resolution
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp 0)  ;; Corp doesn't pump trace
+      (is (= 3  (get-in @state [:trace :strength])) "Trace base strength is 3 after stealing first Breakthrough")
+      (prompt-choice :runner 0)
+      (let [n (count (get-in @state [:runner :hand]))]
+        (is (= 1 (count (get-in @state [:runner :rig :program]))) "There is an Analog Dreamers installed")
+        (prompt-select :corp (first (get-in @state [:runner :rig :program])))
+        (is (= 0 (count (get-in @state [:runner :rig :program]))) "Analog Dreamers was uninstalled")
+        (is (= (+ n 1) (count (get-in @state [:runner :hand]))) "Analog Dreamers was added to hand"))
+      (take-credits state :runner)
+      (score-agenda state :corp breakthrough)
+      ;; (prompt-choice :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason
+      (prompt-choice :corp "Yes")       ;corp should get to trigger trace even when no runner cards are installed
+      (prompt-choice :corp 0)
+      (is (= 2 (get-in @state [:trace :strength])) "Trace base strength is 2 after scoring second Breakthrough"))))
+
+(deftest blacklist-steal
+  ;; Blacklist - #2426.  Need to allow steal.
+  (do-game
+    (new-game (default-corp [(qty "Fetal AI" 3) (qty "Blacklist" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Fetal AI")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (= 1 (count (get-in @state [:corp :discard])))
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
+    (= 1 (count (get-in @state [:runner :scored])))))
+
 (deftest bio-ethics-multiple
   ;; Bio-Ethics Association: preventing damage from multiple copies
   (do-game
