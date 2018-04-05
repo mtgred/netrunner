@@ -111,6 +111,10 @@
   [state pos]
   (get-in @state [:runner :rig :facedown pos]))
 
+(defn get-discarded
+  [state side pos]
+  (get-in @state [side :discard pos]))
+
 (defn get-scored
   "Get a card from the score area. Can find by name or index.
   If no index or name provided, get the first scored agenda."
@@ -141,14 +145,18 @@
 (defn play-run-event
   "Play a run event with a replace-access effect on an unprotected server.
   Advances the run timings to the point where replace-access occurs."
-  [state card server]
-  (core/play state :runner {:card card})
-  (is (= [server] (get-in @state [:run :server])) "Correct server is run")
-  (is (get-in @state [:run :run-effect]) "There is a run-effect")
-  (core/no-action state :corp nil)
-  (core/successful-run state :runner nil)
-  (is (get-in @state [:runner :prompt]) "A prompt is shown")
-  (is (get-in @state [:run :successful]) "Run is marked successful"))
+  ([state card server] (play-run-event state card server true))
+  ([state card server show-prompt]
+   (let [card (if (map? card) card (find-card card (get-in @state [:runner :hand])))]
+     (core/play state :runner {:card card})
+     (is (= [server] (get-in @state [:run :server])) "Correct server is run")
+     (is (get-in @state [:run :run-effect]) "There is a run-effect")
+     (core/no-action state :corp nil)
+     (core/successful-run state :runner nil)
+     (if show-prompt 
+       (is (get-in @state [:runner :prompt]) "A prompt is shown")
+       (is (not (get-in @state [:runner :prompt])) "A prompt is not shown"))
+     (is (get-in @state [:run :successful]) "Run is marked successful"))))
 
 (defn run-on
   "Start run on specified server."
