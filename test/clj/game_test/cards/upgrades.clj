@@ -781,7 +781,7 @@
     (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Imp installed")
     (is (empty? (:discard (get-corp))) "MVT is not force-trashed when Imp installed")
     (let [imp (get-program state 0)]
-      (card-ability state :runner imp 0)
+      (prompt-choice :runner "Yes")
       (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp)))))
           "MVT trashed with Imp")
       ;; Trash Imp to reset :slow-trash flag

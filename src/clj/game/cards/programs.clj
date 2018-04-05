@@ -435,10 +435,20 @@
    "Imp"
    {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))}
     :data {:counter {:virus 2}}
-    :abilities [{:counter-cost [:virus 1]
-                 :msg "trash at no cost"
-                 :once :per-turn
-                 :effect (effect (trash-no-cost))}]}
+    :events {:access {:delayed-completion true
+                      :req (req (pos? (get-in card [:counter :virus] 0)))
+                      :once :per-turn
+                      :counter-cost [:virus 1]
+                      :effect (req (show-wait-prompt state :corp "Runner to use Imp")
+                                   (continue-ability state side
+                                     {:optional
+                                      {:prompt "Trash accessed card at no cost?"
+                                       :once :per-turn
+                                       :yes-ability {:msg "trash at no cost"
+                                                     :effect (req (resolve-trash-no-cost state side target)
+                                                                  (clear-wait-prompt state :corp))}
+                                       :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                     card targets))}}}
 
    "Incubator"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}
