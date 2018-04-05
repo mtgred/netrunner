@@ -406,7 +406,7 @@
                                    newices (apply conj (subvec ices 0 bndx) newice (subvec ices bndx))]
                                (swap! state assoc-in (cons :corp (:zone card)) newices)
                                (swap! state update-in (cons :corp (:zone target))
-                                      (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                      (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
                                (card-init state side newice {:resolve-effect false
                                                              :init-data true})
                                (trigger-event state side :corp-install newice)))}]})
@@ -625,10 +625,13 @@
               :delayed-completion true
               :msg (msg "trash " (:title target))
               :effect (req (do (trash state side target {:unpreventable true})
-                               (continue-ability state side (reorder-choice
-                                                              :runner :runner (remove-once #(not= % target) cards)
-                                                              '() (count (remove-once #(not= % target) cards))
-                                                              (remove-once #(not= % target) cards)) card nil)))})]
+                               (continue-ability
+                                 state side
+                                 (reorder-choice
+                                   :runner :runner (remove-once #(= % target) cards)
+                                   '() (count (remove-once #(= % target) cards))
+                                   (remove-once #(= % target) cards))
+                                 card nil)))})]
      {:subroutines [(trace-ability 2 {:delayed-completion true
                                       :label "Look at the top of Stack"
                                       :msg "look at top X cards of Stack"
@@ -1006,7 +1009,7 @@
                                                             newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
                                                         (swap! state assoc-in (cons :corp (:zone card)) newices)
                                                         (swap! state update-in (cons :corp (:zone target))
-                                                               (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                                               (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
                                                         (update! state side (assoc card :howler-target newice))
                                                         (card-init state side newice {:resolve-effect false
                                                                                       :init-data true})
@@ -1228,7 +1231,7 @@
                    (continue-ability
                      state side
                      {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                      (remove-once #(not= (:cid %) (:cid magnet)) (all-active-installed state corp))))
+                                      (remove-once #(= (:cid %) (:cid magnet)) (all-active-installed state corp))))
                       :prompt "Select a Program to host on Magnet"
                       :choices {:req #(and (card-is? % :type "Program")
                                            (ice? (:host %))

@@ -56,9 +56,14 @@
    :delayed-completion true
    :effect (req (let [chosen (cons target chosen)]
                   (if (< (count chosen) n)
-                    (continue-ability state side (reorder-choice reorder-side wait-side (remove-once #(not= target %) remaining)
-                                                                 chosen n original dest) card nil)
-                    (continue-ability state side (reorder-final reorder-side wait-side chosen original dest) card nil))))}))
+                    (continue-ability
+                      state side
+                      (reorder-choice reorder-side wait-side (remove-once #(= target %) remaining) chosen n original dest)
+                      card nil)
+                    (continue-ability
+                      state side
+                      (reorder-final reorder-side wait-side chosen original dest)
+                      card nil))))}))
 
 (defn- reorder-final
   "Generates a recursive prompt structure for cards that do reordering (Indexing, Making an Entrance, etc.)

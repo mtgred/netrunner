@@ -33,7 +33,7 @@
                  {} jc) dc)))))
 
 (defn remove-once [pred coll]
-  (let [[head tail] (split-with pred coll)]
+  (let [[head tail] (split-with (complement pred) coll)]
     (vec (concat head (rest tail)))))
 
 (defn has?
@@ -266,6 +266,11 @@
 (defn get-server-type [zone]
   (or (#{:hq :rd :archives} zone) :remote))
 
+(defn get-cid
+  "Gets the cid of a given card"
+  [card]
+  (:cid (:card card)))
+
 (defn private-card [card]
   (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))
 
@@ -292,7 +297,7 @@
   each subtypes-to-remove"
   [subtype-string subtypes-to-remove]
   (let [types (split (or subtype-string " - ") #" - ")
-        part (join " - " (remove-once #(not= % (first subtypes-to-remove)) types))
+        part (join " - " (remove-once #(= % (first subtypes-to-remove)) types))
         left (rest subtypes-to-remove)]
     (if-not (empty? left)
       (remove-subtypes-once part left)

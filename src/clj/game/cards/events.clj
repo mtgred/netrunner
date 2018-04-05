@@ -161,7 +161,7 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (< (count chosen) n)
-                               (continue-ability state side (cbi-choice (remove-once #(not= target %) remaining)
+                               (continue-ability state side (cbi-choice (remove-once #(= target %) remaining)
                                                                         chosen n original) card nil)
                                (continue-ability state side (cbi-final chosen original) card nil))))})]
      {:req (req hq-runnable)
@@ -367,7 +367,7 @@
                                   (when-completed
                                     (resolve-ability state side chosen card nil)
                                     (if (= (count abis) 4)
-                                      (continue-ability state side (choice (remove-once #(not= % chosen) abis)) card nil)
+                                      (continue-ability state side (choice (remove-once #(= % chosen) abis)) card nil)
                                       (effect-completed state side eid)))))})]
      {:delayed-completion true
       :effect (effect (continue-ability (choice all) card nil))})
@@ -1057,7 +1057,7 @@
                                (do (clear-wait-prompt state :corp)
                                    (effect-completed state side eid card)))
                              (do (trash state side target {:unpreventable true})
-                                 (continue-ability state side (entrance-trash (remove-once #(not= % target) cards))
+                                 (continue-ability state side (entrance-trash (remove-once #(= % target) cards))
                                                    card nil))))})]
      {:msg "look at and trash or rearrange the top 6 cards of their Stack"
       :delayed-completion true

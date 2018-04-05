@@ -16,5 +16,5 @@
       (resp/status status-code)))
 
 (defn remove-once [pred coll]
-  (let [[head tail] (split-with pred coll)]
+  (let [[head tail] (split-with (complement pred) coll)]
     (vec (concat head (rest tail)))))

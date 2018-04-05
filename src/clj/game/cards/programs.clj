@@ -129,7 +129,7 @@
                                  (effect-completed state side eid card))
                              (do (host state side (get-card state card) target)
                                  (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
-                                 (continue-ability state side (custsec-host (remove-once #(not= % target) cards))
+                                 (continue-ability state side (custsec-host (remove-once #(= % target) cards))
                                                    card nil))))})]
      {:delayed-completion true
       :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))

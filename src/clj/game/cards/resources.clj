@@ -1542,7 +1542,7 @@
                              (install-cost-bonus state side [:credit -1])
                              (trash state side (update-in card [:hosted]
                                                           (fn [coll]
-                                                            (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                                            (remove-once #(= (:cid %) (:cid target)) coll)))
                                     {:cause :ability-cost})
                              (runner-install state side (dissoc target :facedown))))}]}
 
@@ -1693,7 +1693,7 @@
                                                           (assoc :supplier-installed (:cid target))
                                                           (update-in [:hosted]
                                                                      (fn [coll]
-                                                                       (remove-once #(not= (:cid %) (:cid target)) coll)))))))}]
+                                                                       (remove-once #(= (:cid %) (:cid target)) coll)))))))}]
    {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
     :abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
                  :prompt "Select a card to host on The Supplier"

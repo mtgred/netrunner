@@ -169,7 +169,7 @@
         (if (:selected c)
           (swap! state update-in [side :selected 0 :cards] #(conj % c))
           (swap! state update-in [side :selected 0 :cards]
-                 (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))
+                 (fn [coll] (remove-once #(= (:cid %) (:cid card)) coll))))
         (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side))))))))

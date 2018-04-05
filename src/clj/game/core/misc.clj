@@ -144,9 +144,9 @@
            (fn [events] (filter #(not (= (:cid scored) (get-in % [:card :cid]))) events)))
     ;; Move agendas
     (swap! state update-in [:corp :scored]
-           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid scored)) coll) stolen)))
+           (fn [coll] (conj (remove-once #(= (:cid %) (:cid scored)) coll) stolen)))
     (swap! state update-in [:runner :scored]
-           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid stolen)) coll)
+           (fn [coll] (conj (remove-once #(= (:cid %) (:cid stolen)) coll)
                             (if-not (card-flag? scored :has-abilities-when-stolen true)
                               (dissoc scored :abilities :events) scored))))
     ;; Update agenda points

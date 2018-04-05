@@ -110,7 +110,7 @@
          (doseq [s [:runner :corp]]
            (if host
              (remove-from-host state side card)
-             (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+             (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
          (let [z (vec (cons :corp (butlast zone)))]
            (when (and (not keep-server-alive)
                       (is-remote? z)

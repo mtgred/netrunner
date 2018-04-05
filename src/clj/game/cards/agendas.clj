@@ -986,8 +986,10 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (not= target "Done")
-                               (continue-ability state side (corp-choice (remove-once #(not= target %) remaining)
-                                                                       chosen original) card nil)
+                               (continue-ability
+                                 state side
+                                 (corp-choice (remove-once #(= target %) remaining) chosen original)
+                                 card nil)
                                (if (pos? (count (remove #(= % "Done") chosen)))
                                  (continue-ability state side (corp-final (remove #(= % "Done") chosen) original) card nil)
                                  (do (system-msg state side "does not add any cards from HQ to bottom of R&D")

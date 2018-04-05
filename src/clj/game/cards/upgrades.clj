@@ -383,7 +383,7 @@
 
    "Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]
-             (let [remaining (remove-once #(not= (:cid %) (:cid ice)) ices)]
+             (let [remaining (remove-once #(= (:cid %) (:cid ice)) ices)]
              {:delayed-completion true
               :effect (req (if (= "None" server)
                              (continue-ability state side (choose-ice remaining grids) card nil)
@@ -504,7 +504,7 @@
                                            newices (apply conj (subvec ices 0 cndx) newice (subvec ices cndx))]
                                        (swap! state assoc-in (cons :corp (:zone c)) newices)
                                        (swap! state update-in [:corp :hand]
-                                              (fn [coll] (remove-once #(not= (:cid %) (:cid hqice)) coll)))
+                                              (fn [coll] (remove-once #(= (:cid %) (:cid hqice)) coll)))
                                        (trigger-event state side :corp-install newice)
                                        (move state side c :hand)))} card nil)))}]}
 
@@ -585,7 +585,7 @@
                                                                  newdeck (seq (apply conj (subvec deck 0 rdcndx) target (subvec deck rdcndx)))]
                                                              (swap! state assoc-in [:corp :deck] newdeck)
                                                              (swap! state update-in [:corp :hand]
-                                                                    (fn [coll] (remove-once #(not= (:cid %) (:cid hqc)) coll)))
+                                                                    (fn [coll] (remove-once #(= (:cid %) (:cid hqc)) coll)))
                                                              (move state side rdc :hand)
                                                              (clear-wait-prompt state :runner)
                                                              (effect-completed state side eid)))}
