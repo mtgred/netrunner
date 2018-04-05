@@ -274,10 +274,10 @@
                  (= (:zone c) (:zone (get-card state c))))
           ;; if card wasn't moved by a pre-access effect
           (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                          (do (if (= (:zone c) (:zone (get-card state c)))
-                                ;; if the card wasn't moved by the access effect
-                                (access-non-agenda state side eid c)
-                                (effect-completed state side eid))))
+                          (if (= (:zone c) (:zone (get-card state c)))
+                            ;; if the card wasn't moved by the access effect
+                            (access-non-agenda state side eid c)
+                            (effect-completed state side eid)))
           (access-non-agenda state side eid c))))))
 
 (defn- handle-access-pay
@@ -483,7 +483,7 @@
   (access-helper-hq-or-rd state :hq "hand" from-hq
                           (fn [already-accessed] (some #(when-not (already-accessed %) %)
                                                        (shuffle (-> @state :corp :hand))))
-                          (fn [card] (:title card))
+                          :title
                           already-accessed))
 
 
@@ -506,8 +506,8 @@
           (get-in @state [:corp :discard])))
 
 (defn access-helper-archives [state amount already-accessed]
-  (let [root-content (fn [already-accessed] (filter (complement already-accessed) (-> @state :corp :servers :archives :content)))
-        faceup-accessible (fn [already-accessed] (filter (complement already-accessed) (get-archives-accessible state)))
+  (let [root-content (fn [already-accessed] (remove already-accessed (-> @state :corp :servers :archives :content)))
+        faceup-accessible (fn [already-accessed] (remove already-accessed (get-archives-accessible state)))
         facedown-cards (fn [already-accessed] (filter #(and (not (:seen %))
                                                             (not (already-accessed %)))
                                                       (-> @state :corp :discard)))
@@ -626,7 +626,7 @@
                              cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
                              n (count cards)]
                          ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
-                         (if (or (= (get-in @state [:run :max-access]) 0)
+                         (if (or (s-zero? (get-in @state [:run :max-access]))
                                  (empty? cards))
                            (system-msg state side "accessed no cards during the run")
                            (do (when (:run @state)
@@ -724,7 +724,7 @@
 
 (defn jack-out-prevent
   [state side]
-  (swap! state update-in [:jack-out :jack-out-prevent] #(+ (or % 0) 1))
+  (swap! state update-in [:jack-out :jack-out-prevent] #(inc (or % 0)))
   (prevent-jack-out state side))
 
 (defn- resolve-jack-out

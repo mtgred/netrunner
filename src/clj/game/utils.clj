@@ -10,6 +10,8 @@
 
 (defn abs [n] (max n (- n)))
 
+(defn s-zero? [n] ((fnil zero? 1) n))
+
 (defn clean-forfeit
   "Takes a flat :forfeit in costs and adds a cost of 1.
   Ignores cost vectors with an even count as these have forfeit value included"

@@ -91,9 +91,9 @@
                    (same-side? side (:side card))))
       (case server
         ("Heap" "Archives")
-        (do (let [action-str (if (= (first (:zone c)) :hand) "discards " "trashes ")]
-              (trash state s c {:unpreventable true})
-              (system-msg state side (str action-str label from-str))))
+        (let [action-str (if (= (first (:zone c)) :hand) "discards " "trashes ")]
+          (trash state s c {:unpreventable true})
+          (system-msg state side (str action-str label from-str)))
         ("Grip" "HQ")
         (do (move state s (dissoc c :seen :rezzed) :hand {:force true})
             (system-msg state side (str "moves " label from-str " to " server)))
@@ -205,7 +205,7 @@
   "Use the 'match strength with ice' function of icebreakers."
   [state side args]
   (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((get-run-ices state) (dec (:position run)))))
+        current-ice (when (and run (pos? (or (:position run) 0))) (get-card state ((get-run-ices state) (dec (:position run)))))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
         pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
@@ -324,7 +324,7 @@
                      ;; Deregister the derezzed-events before rezzing card
                      (when (:derezzed-events cdef)
                        (unregister-events state side card))
-                     (if (not disabled)
+                     (if-not disabled
                        (card-init state side (assoc card :rezzed :this-turn))
                        (update! state side (assoc card :rezzed :this-turn)))
                      (doseq [h (:hosted card)]

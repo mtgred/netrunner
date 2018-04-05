@@ -102,7 +102,7 @@
    (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
    (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
    (let [active-player (get-in @state [:active-player])
-         n (-> n (+ (or (get-in @state [:bonus :draw]) 0)))
+         n (+ n (or (get-in @state [:bonus :draw]) 0))
          draws-wanted n
          draws-after-prevent (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
                                   (min n (remaining-draws state side))
@@ -122,7 +122,7 @@
              (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
              (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
            (effect-completed state side eid))
-         (when (= 0 (remaining-draws state side))
+         (when (s-zero? (remaining-draws state side))
            (prevent-draw state side))))
      (when (< draws-after-prevent draws-wanted)
        (let [prevented (- draws-wanted draws-after-prevent)]

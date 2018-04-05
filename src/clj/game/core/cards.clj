@@ -19,11 +19,11 @@
 (defn get-scoring-owner
   "Returns the owner of the scoring area the card is in"
   [state {:keys [cid] :as card}]
-   (if (find-cid cid (get-in @state [:corp :scored]))
-      :corp
-      (if (find-cid cid (get-in @state [:runner :scored]))
-        :runner
-        nil)))
+  (cond
+    (find-cid cid (get-in @state [:corp :scored]))
+    :corp
+    (find-cid cid (get-in @state [:runner :scored]))
+    :runner))
 
 (defn get-card
   "Returns the most recent copy of the card from the current state, as identified
@@ -52,7 +52,7 @@
       (update-hosted! state side card)
       (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
             [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
-        (when-not (empty? tail)
+        (when (seq tail)
           (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
 
 (defn move

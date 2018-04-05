@@ -99,7 +99,7 @@
   [state side]
   (if (= side :runner)
     (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current]) (all-active-installed state side)))
-    (cons (get-in @state [:corp :identity]) (filter #(not (:disabled %))
+    (cons (get-in @state [:corp :identity]) (remove :disabled
                                                     (concat (all-active-installed state side)
                                                             (get-in @state [:corp :current])
                                                             (get-in @state [:corp :scored]))))))
@@ -141,7 +141,7 @@
         runner-ap-change (- runner-ap-scored runner-ap-stolen)]
     ;; Remove end of turn events for swapped out agenda
     (swap! state update-in [:corp :register :end-turn]
-           (fn [events] (filter #(not (= (:cid scored) (get-in % [:card :cid]))) events)))
+           (fn [events] (filter #(not= (:cid scored) (get-in % [:card :cid])) events)))
     ;; Move agendas
     (swap! state update-in [:corp :scored]
            (fn [coll] (conj (remove-once #(not= (:cid %) (:cid scored)) coll) stolen)))

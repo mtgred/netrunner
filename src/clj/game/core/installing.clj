@@ -234,51 +234,51 @@
              install-state (or install-state (:install-state cdef))]
          (when (and (corp-can-install? state side card dest-zone) (not (install-locked? state :corp)))
            (if-let [cost-str (pay state side card end-cost {:action action})]
-             (do (let [c (-> card
-                             (assoc :advanceable (:advanceable cdef) :new true)
-                             (dissoc :seen :disabled))]
-                   (when (= server "New remote")
-                     (trigger-event state side :server-created card))
-                   (when (not host-card)
-                     (corp-install-message state side c server install-state cost-str))
-                   (play-sfx state side "install-corp")
+             (let [c (-> card
+                         (assoc :advanceable (:advanceable cdef) :new true)
+                         (dissoc :seen :disabled))]
+               (when (= server "New remote")
+                 (trigger-event state side :server-created card))
+               (when-not host-card
+                 (corp-install-message state side c server install-state cost-str))
+               (play-sfx state side "install-corp")
 
-                   (let [moved-card (if host-card
-                                      (host state side host-card (assoc c :installed true))
-                                      (move state side c slot))]
-                     (trigger-event state side :corp-install moved-card)
-                     (when (is-type? c "Agenda")
-                       (update-advancement-cost state side moved-card))
+               (let [moved-card (if host-card
+                                  (host state side host-card (assoc c :installed true))
+                                  (move state side c slot))]
+                 (trigger-event state side :corp-install moved-card)
+                 (when (is-type? c "Agenda")
+                   (update-advancement-cost state side moved-card))
 
-                     ;; Check to see if a second agenda/asset was installed.
-                     (when-completed (corp-install-asset-agenda state side moved-card dest-zone server)
-                                     (do (cond
-                                           ;; Ignore all costs. Pass eid to rez.
-                                           (= install-state :rezzed-no-cost)
-                                           (rez state side eid moved-card {:ignore-cost :all-costs})
+                 ;; Check to see if a second agenda/asset was installed.
+                 (when-completed (corp-install-asset-agenda state side moved-card dest-zone server)
+                                 (do (cond
+                                       ;; Ignore all costs. Pass eid to rez.
+                                       (= install-state :rezzed-no-cost)
+                                       (rez state side eid moved-card {:ignore-cost :all-costs})
 
-                                           ;; Pay costs. Pass eid to rez.
-                                           (= install-state :rezzed)
-                                           (rez state side eid moved-card nil)
+                                       ;; Pay costs. Pass eid to rez.
+                                       (= install-state :rezzed)
+                                       (rez state side eid moved-card nil)
 
-                                           ;; "Face-up" cards. Trigger effect-completed manually.
-                                           (= install-state :face-up)
-                                           (do (if (:install-state cdef)
-                                                 (card-init state side
-                                                            (assoc (get-card state moved-card) :rezzed true :seen true)
-                                                            {:resolve-effect false
-                                                             :init-data true})
-                                                 (update! state side (assoc (get-card state moved-card) :rezzed true :seen true)))
-                                               (when-not (:delayed-completion cdef)
-                                                 (effect-completed state side eid)))
+                                       ;; "Face-up" cards. Trigger effect-completed manually.
+                                       (= install-state :face-up)
+                                       (do (if (:install-state cdef)
+                                             (card-init state side
+                                                        (assoc (get-card state moved-card) :rezzed true :seen true)
+                                                        {:resolve-effect false
+                                                         :init-data true})
+                                             (update! state side (assoc (get-card state moved-card) :rezzed true :seen true)))
+                                           (when-not (:delayed-completion cdef)
+                                             (effect-completed state side eid)))
 
-                                           ;; All other cards. Trigger effect-completed.
-                                           :else
-                                           (effect-completed state side eid))
+                                       ;; All other cards. Trigger effect-completed.
+                                       :else
+                                       (effect-completed state side eid))
 
-                                         (when-let [dre (:derezzed-events cdef)]
-                                           (when-not (:rezzed (get-card state moved-card))
-                                             (register-events state side dre moved-card))))))))))
+                                     (when-let [dre (:derezzed-events cdef)]
+                                       (when-not (:rezzed (get-card state moved-card))
+                                         (register-events state side dre moved-card)))))))))
          (clear-install-cost-bonus state side))))))
 
 

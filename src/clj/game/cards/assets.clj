@@ -7,8 +7,8 @@
   "Effect for triggering ambush on access.
   Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
   ([cost ability]
-   (let [ab (if (> cost 0) (assoc ability :cost [:credit cost]) ability)
-         prompt (if (> cost 0)
+   (let [ab (if (pos? cost) (assoc ability :cost [:credit cost]) ability)
+         prompt (if (pos? cost)
                   (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
                   (req (str "Use " (:title card) " ability?")))]
      (installed-access-trigger cost ab prompt)))

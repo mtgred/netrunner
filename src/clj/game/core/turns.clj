@@ -183,10 +183,10 @@
 
                         (cond
 
-                          (< extra-clicks 0)
+                          (neg? extra-clicks)
                           (lose state side :click (abs extra-clicks))
 
-                          (> extra-clicks 0)
+                          (pos? extra-clicks)
                           (gain state side :click extra-clicks))
 
                         (swap! state dissoc-in [side :extra-click-temp])
@@ -200,7 +200,7 @@
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 
-  (doseq [c (filter #(:new %) (all-installed state side))]
+  (doseq [c (filter :new (all-installed state side))]
     (update! state side (dissoc c :new)))
 
   (swap! state assoc :active-player side :per-turn nil :end-turn false)
@@ -252,7 +252,7 @@
              (clear-turn-register! state)
              (swap! state dissoc :turn-events)
              (when-let [extra-turns (get-in @state [side :extra-turns])]
-               (when (> extra-turns 0)
+               (when (pos? extra-turns)
                  (start-turn state side nil)
                  (swap! state update-in [side :extra-turns] dec)
                  (let [turns (if (= 1 extra-turns) "turn" "turns")]

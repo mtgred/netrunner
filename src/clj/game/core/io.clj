@@ -61,7 +61,7 @@
      ;; normal toast - add to list
      (swap! state update-in [side :toast] #(conj % {:msg msg :type type :options options}))
      ;; no msg - remove top toast from list
-     (swap! state update-in [side :toast] #(rest %)))))
+     (swap! state update-in [side :toast] rest))))
 
 (defn play-sfx
   "Adds a sound effect to play to the sfx queue.
@@ -71,7 +71,7 @@
   (when-let [current-id (get-in @state [:sfx-current-id])]
     (do
       (swap! state update-in [:sfx] #(take 3 (conj % {:id (inc current-id) :name sfx})))
-      (swap! state update-in [:sfx-current-id] #(inc %)))))
+      (swap! state update-in [:sfx-current-id] inc))))
 
 ;;; "ToString"-like methods
 (defn card-str
@@ -194,7 +194,7 @@
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (when (<= (count args) 2)
-      (if (= (first (first args)) \#)
+      (if (= (ffirst args) \#)
         (case command
           "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
           "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
@@ -208,9 +208,9 @@
                                                                             ": " (get-card state target))))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/card-info command"} nil)
-          "/clear-win"  #(clear-win %1 %2)
+          "/clear-win"  clear-win
           "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
-          "/close-prompt" #(command-close-prompt %1 %2)
+          "/close-prompt" command-close-prompt
           "/counter"    #(command-counter %1 %2 args)
           "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
           "/deck"       #(toast %1 %2 "/deck number takes the format #n")
@@ -218,7 +218,7 @@
           "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
           "/draw"       #(draw %1 %2 (max 0 value))
           "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
-          "/error"      #(show-error-toast %1 %2)
+          "/error"      show-error-toast
           "/handsize"   #(swap! %1 assoc-in [%2 :hand-size-modification] (- (max 0 value) (get-in @%1 [%2 :hand-size-base])))
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
           "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
