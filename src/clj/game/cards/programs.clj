@@ -146,24 +146,23 @@
                                   (runner-install state side target)))}]})
    "Consume"
    {:events {:runner-trash {:req (req (= (:side target) "Corp"))
-                              :optional
-                              {:prompt "Place a virus counter on Consume?"
-                               :yes-ability
-                               {:effect (effect (add-counter :runner card :virus 1)
+                            :optional {:prompt "Place a virus counter on Consume?"
+                                       :yes-ability
+                                       {:effect (effect (add-counter :runner card :virus 1)
                                                 (system-msg :runner (str "places 1 virus counter on Consume")))}}}}
     :abilities [{:cost [:click 1]
                  :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
                               (update! state side (assoc-in card [:counter :virus] 0))
-                         (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
-                                   (doseq [h hiveminds]
-                                          (update! state side (assoc-in h [:counter :virus] 0)))))
+                              (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
+                                        (doseq [h hiveminds]
+                                               (update! state side (assoc-in h [:counter :virus] 0)))))
                  :msg (msg (let [local-virus (get-in card [:counter :virus])
-                            global-virus (get-virus-counters state side card)
-                            hivemind-virus (- global-virus local-virus)]
-                            (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
-                            (when (pos? hivemind-virus)
-                                  (str " (and " hivemind-virus " from Hivemind)")))
-                                 ))}]}
+                                 global-virus (get-virus-counters state side card)
+                                 hivemind-virus (- global-virus local-virus)]
+                                 (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
+                                 (when (pos? hivemind-virus)
+                                       (str " (and " hivemind-virus " from Hivemind)")))
+                                     ))}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
