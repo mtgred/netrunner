@@ -159,10 +159,9 @@
                  :msg (msg (let [local-virus (get-in card [:counter :virus])
                                  global-virus (get-virus-counters state side card)
                                  hivemind-virus (- global-virus local-virus)]
-                                 (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
-                                 (when (pos? hivemind-virus)
-                                       (str " (and " hivemind-virus " from Hivemind)")))
-                                     ))}]}
+                             (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
+                             (when (pos? hivemind-virus)
+                                   (str " (and " hivemind-virus " from Hivemind)")))))}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
