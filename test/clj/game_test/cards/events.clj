@@ -122,7 +122,8 @@
     (play-from-hand state :runner "Apocalypse")
     (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
     (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
-    (is (= 3 (count (get-in @state [:runner :rig :facedown]))) "Scheherazade, Corroder, Hyperdriver facedown")
+    (is (= 0 (count (core/all-active-installed state :runner))) "No active installed runner cards")
+    (is (= 3 (count (filter :facedown (core/all-installed state :runner)))) "Scheherazade, Corroder, Hyperdriver facedown")
     (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
     (is (= 4 (:memory (get-runner))) "Memory back to 4")))
 

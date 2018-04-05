@@ -59,19 +59,16 @@
                    (doseq [c allcorp]
                      (trash state side (get-card state c))))
 
-                 ;; do hosted cards first so they don't get trashed twice
                  (let [installedcards (all-active-installed state :runner)
                        ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
                        hostedcards (filter ishosted installedcards)
                        nonhostedcards (remove ishosted installedcards)]
-                   (doseq [oc hostedcards :let [c (get-card state oc)]]
-                     (move state side c [:rig :facedown])
-                     (if (:memoryunits c)
-                       (gain state :runner :memory (:memoryunits c))))
+                   (doseq [oc hostedcards :let [c (get-card state oc)
+                                                c (deactivate state side c true)
+                                                c (assoc-in c [:facedown] true)]]
+                     (update! state side c))
                    (doseq [oc nonhostedcards :let [c (get-card state oc)]]
-                     (move state side c [:rig :facedown])
-                     (if (:memoryunits c)
-                       (gain state :runner :memory (:memoryunits c))))))}
+                     (move state side c [:rig :facedown]))))}
 
    "Blackmail"
    (run-event
