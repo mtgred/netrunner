@@ -1013,6 +1013,25 @@
     (is (not (:run @state)) "Run ended")
     (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall back in play")))
 
+(deftest next-design
+  ;; Next Design.  Install up to 3 ICE before game starts, one per server max, and re-draw to 5
+  (do-game
+    (new-game
+      (make-deck "NEXT Design: Guarding the Net" [(qty "Snowflake" 10)])
+      (default-runner)
+      ;{:dont-start-game true}
+      {:dont-start-turn true}
+      )
+    (prompt-select :corp (find-card "Snowflake" (:hand (get-corp))))
+    (prompt-choice :corp "HQ")
+    (prompt-select :corp (find-card "Snowflake" (:hand (get-corp))))
+    (prompt-choice :corp "R&D")
+    (prompt-select :corp (find-card "Snowflake" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (is (= 5 (count (:hand (get-corp)))) "Corp should start with 5 cards in hand")))
+
 (deftest nisei-division
   ;; Nisei Division - Gain 1 credit from every psi game
   (do-game
