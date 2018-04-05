@@ -1310,20 +1310,11 @@
    {:in-play [:hand-size-modification 2]}
 
    "Rachel Beckman"
-   (let [installed-active-beckman (fn [state]
-                             (some #(= "Rachel Beckman" %)
-                                   (map :title
-                                        (filter #(not (:disabled %))
-                                                (get-in @state [:runner :rig :resource]))))) ]
-     {:in-play [:click 1 :click-per-turn 1]
-      :effect (req (add-watch state :rachel-beckman
-                              (let [beckman card] 
-                                (fn [k ref old new]
-                                  (when (and (is-tagged? new)
-                                             (installed-active-beckman state))
-                                    (remove-watch ref :rachel-beckman)
-                                    (trash ref :runner card)
-                                    (system-msg ref side "trashes Rachel Beckman for being tagged"))))))})
+   {:in-play [:click 1 :click-per-turn 1]
+    :events {:runner-gain-tag {:effect (effect (trash card {:unpreventable true}))
+                               :msg (msg "trashes Rachel Beckman for being tagged")}}
+    :effect (req (when tagged
+                   (trash state :runner card {:unpreventable true})))}
 
    "Raymond Flint"
    {:effect (req (add-watch state :raymond-flint
