@@ -1380,6 +1380,15 @@
                                                 (when (not= target "No install")
                                                   (install-cost-bonus state side [:credit (- n)])
                                                   (runner-install state side target)))} card nil)))}]}
+   "Rogue Trading"
+   {:data {:counter {:credit 18}}
+    :abilities [{:cost [:click 2]
+                 :counter-cost [:credit 6]
+                 :msg "gain 6 [Credits] and take 1 tag"
+                 :effect (req (gain state :runner :credit 6)
+                              (when (zero? (get-in card [:counter :credit] 0))
+                                (trash state :runner card {:unpreventable true}))
+                              (tag-runner state :runner eid 1))}]}
 
    "Sacrificial Clone"
    {:prevent {:damage [:meat :net :brain]}
