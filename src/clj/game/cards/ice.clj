@@ -723,6 +723,12 @@
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
+   "Endless EULA"
+   {:implementation "Subroutine effect is manual. Runner choice is not implemented"
+    :subroutines [end-the-run]
+    :runner-abilities [(runner-break [:credit 1] 1)
+                       (runner-break [:credit 6] 6)]}
+
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
     :subroutines [trash-program
@@ -1599,10 +1605,22 @@
                    :choices (req (cancellable servers))
                    :msg (msg "move Sand Storm and the run.  The Runner is now running on " target ". Sand Storm is trashed")
                    :effect (req (let [dest (server->zone state target)]
-                                (trash state side card {:unpreventable true})
-                                (swap! state update-in [:run]
-                                       #(assoc % :position (count (get-in corp (conj dest :ices)))
-                                                 :server (rest dest)))))}]}
+                                  (swap! state update-in [:run]
+                                         #(assoc % :position (count (get-in corp (conj dest :ices)))
+                                                 :server (rest dest)))
+                                  (trash state side card {:unpreventable true})))}]}
+
+   "Sandman"
+   {:subroutines [{:label "Add an installed Runner card to the grip"
+                   :req (req (not-empty (all-installed state :runner)))
+                   :effect (effect (show-wait-prompt :runner "Corp to select Sandman target")
+                                   (resolve-ability {:choices {:req #(and (installed? %)
+                                                                           (= (:side %) "Runner"))}
+                                                      :msg (msg "to add " (:title target) " to the grip")
+                                                      :effect (effect (clear-wait-prompt :runner)
+                                                                      (move :runner target :hand true))
+                                                      :cancel-effect (effect (clear-wait-prompt :runner))}
+                                                     card nil))}]}
 
    "Sapper"
    {:subroutines [trash-program]
