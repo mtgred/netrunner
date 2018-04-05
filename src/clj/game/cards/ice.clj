@@ -1620,15 +1620,14 @@
                                        :delayed-completion true
                                        :effect
                                        (req (if (= target "Arrange cards")
-                                              (do
-                                                (when-completed
-                                                  (resolve-ability state side (reorder-choice :corp top-cards) card nil)
-                                                  (do
-                                                    (system-msg state :corp (str "rearranges the top "
-                                                                                 (quantify (count top-cards) "card")
-                                                                                 " of R&D"))
-                                                    (clear-wait-prompt state :runner)
-                                                    (continue-ability state side maybe-draw-effect card nil))))
+                                              (when-completed
+                                                (resolve-ability state side (reorder-choice :corp top-cards) card nil)
+                                                (do
+                                                  (system-msg state :corp (str "rearranges the top "
+                                                                               (quantify (count top-cards) "card")
+                                                                               " of R&D"))
+                                                  (clear-wait-prompt state :runner)
+                                                  (continue-ability state side maybe-draw-effect card nil)))
                                               (do
                                                 (shuffle! state :corp :deck)
                                                 (system-msg state :corp (str "shuffles R&D"))
