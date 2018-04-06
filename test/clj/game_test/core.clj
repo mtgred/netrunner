@@ -112,8 +112,13 @@
   (get-in @state [:runner :rig :facedown pos]))
 
 (defn get-discarded
-  [state side pos]
-  (get-in @state [side :discard pos]))
+  ([state side] (let [l (-> @state
+                            (get-in [side :discard])
+                            count
+                            dec)]
+                  (get-discarded state side l)))
+  ([state side pos]
+   (get-in @state [side :discard pos])))
 
 (defn get-scored
   "Get a card from the score area. Can find by name or index.
