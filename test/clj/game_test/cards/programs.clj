@@ -428,6 +428,18 @@
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
 
+(deftest nyashia
+  ;; Nyashia
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 10)])
+              (default-runner [(qty "Nyashia" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Nyashia")
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (+ (get-in @state [:runner :rd-access]) (:access-bonus (:run @state) 0))))))
+
 (deftest origami
   ;; Origami - Increases Runner max hand size
   (do-game
