@@ -836,7 +836,65 @@
       (core/remove-tag state :runner 1)
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
 
+(deftest sadaka-sub1
+  ;; Sadaka - Look at the top 3 cards of R&D, arrange those or shuffle R&D. You may draw 1 card.
+  (do-game
+    (new-game (default-corp [(qty "Sadaka" 1) (qty "Enigma" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Sadaka"])
+    (play-from-hand state :corp "Sadaka" "Archives")
+    (let [sadaka (get-ice state :archives 0)]
+      (take-credits state :corp)
+      (run-on state "archives")
+      (core/rez state :corp sadaka)
+      (is (= 0 (count (:hand (get-corp)))) "Corp starts with empty hand")
+      (card-subroutine state :corp (refresh sadaka) 0)
+      (prompt-choice :corp "Shuffle R&D")
+      (prompt-choice :corp "Yes")
+      (is (= 1 (count (:hand (get-corp)))) "Corp draws a card")
+      (card-subroutine state :corp (refresh sadaka) 0)
+      (prompt-choice :corp "Shuffle R&D")
+      (prompt-choice :corp "No")
+      (is (= 1 (count (:hand (get-corp)))) "Corp doesn't draw a card"))))
+
+(deftest sadaka-sub2
+  ;; Sadaka - You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka.
+  (do-game
+    (new-game (default-corp [(qty "Sadaka" 2) (qty "Enigma" 3)])
+              (default-runner [(qty "Bank Job" 1)]))
+    (play-from-hand state :corp "Sadaka" "Archives")
+    (play-from-hand state :corp "Sadaka" "HQ")
+    (let [sadaka (get-ice state :archives 0)
+          sadakaHQ (get-ice state :hq 0)]
+      (take-credits state :corp)
+
+      (play-from-hand state :runner "Bank Job")
+      (run-on state "archives")
+      (core/rez state :corp sadaka)
+      (is (= 3 (count (:hand (get-corp)))) "Corp starts with 3 cards in hand")
+      (is (= 0 (count (:discard (get-corp)))) "Corps starts with 0 cards in archives")
+      (card-subroutine state :corp (refresh sadaka) 1)
+      (prompt-choice :corp (find-card "Enigma" (:hand (get-corp))))
+      (is (= 2 (count (:hand (get-corp)))) "Corp discards 1 card")
+      (is (= 1 (count (:discard (get-corp)))) "1 card trashed")
+      (prompt-choice :corp "Done")
+      (is (= 2 (count (:discard (get-corp)))) "Sadaka trashed")
+      (run-jack-out state)
+
+      (run-on state "archives")
+      (core/rez state :corp sadakaHQ)
+      (is (= 2 (count (:hand (get-corp)))) "Corp starts with 2 cards in hand")
+      (is (= 2 (count (:discard (get-corp)))) "Corps starts with 2 cards in archives")
+      (is (= 0 (count (:discard (get-runner)))) "Runner starts with 0 cards in discard")
+      (card-subroutine state :corp (refresh sadakaHQ) 1)
+      (prompt-choice :corp (find-card "Enigma" (:hand (get-corp))))
+      (is (= 1 (count (:hand (get-corp)))) "Corp discards 1 card")
+      (is (= 3 (count (:discard (get-corp)))) "1 card trashed")
+      (prompt-select :corp (get-resource state 0))
+      (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
+      (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed"))))
 (deftest sandman
+
   ;; Sandman - add an installed runner card to the grip
   (do-game
     (new-game (default-corp [(qty "Sandman" 1)])
