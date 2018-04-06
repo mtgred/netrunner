@@ -292,7 +292,7 @@
    Returns :req if card-def :req check fails
    !! NB: This should only be used in a check with `true?` as all return values are truthy"
   [state side card facedown]
-  (let [req (:req (card-def card))
+  (let [c-req (:req (card-def card))
         uniqueness (:uniqueness card)]
     (cond
       ;; Can always install a card facedown
@@ -306,7 +306,7 @@
       ;; Uniqueness check
       (and uniqueness (in-play? state card)) :unique
       ;; Req check
-      (and req (not (req state side (make-eid state) card nil))) :req
+      (and c-req (not (c-req state side (make-eid state) card nil))) :req
       ;; Nothing preventing install
       :default true)))
 

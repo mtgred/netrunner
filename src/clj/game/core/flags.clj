@@ -318,7 +318,7 @@
   :req does not meet rez requirement"
   [state side card]
   (let [uniqueness (:uniqueness card)
-        req (:rez-req (card-def card))]
+        rez-req (:rez-req (card-def card))]
     (cond
       ;; Card on same side?
       (not (same-side? side (:side card))) :side
@@ -328,7 +328,7 @@
       ;; Uniqueness check
       (and uniqueness (some #(and (:rezzed %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
       ;; Rez req check
-      (and req (not (req state side (make-eid state) card nil))) :req
+      (and rez-req (not (rez-req state side (make-eid state) card nil))) :req
       ;; No problems - return true
       :default true)))
 

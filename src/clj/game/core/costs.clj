@@ -19,19 +19,19 @@
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
   [state side cost]
-  (let [type (first cost)
+  (let [c-type (first cost)
         amount (last cost)]
-    (when-not (or (some #(= type %) [:memory :net-damage])
-                  (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
-                  (and (= type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
-                  (and (= type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
-                  (and (= type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
-                  (and (= type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
-                  (and (= type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
-                  (and (= type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
+    (when-not (or (some #(= c-type %) [:memory :net-damage])
+                  (and (= c-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
+                  (and (= c-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
+                  (and (= c-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
+                  (and (= c-type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
+                  (and (= c-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
+                  (and (= c-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
+                  (and (= c-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
                                                                   (all-active-installed state :runner))) amount) 0))
-                  (and (= type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
-                  (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
+                  (and (= c-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
+                  (>= (- (or (get-in @state [side c-type]) -1 ) amount) 0))
       "Unable to pay")))
 
 (defn can-pay?
@@ -40,7 +40,7 @@
   explaining which cost they were unable to pay."
   [state side title & args]
   (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
-        cost-msg (or (some #(toast-msg-helper state side %) costs))]
+        cost-msg (some #(toast-msg-helper state side %) costs)]
     ;; no cost message - hence can pay
     (if-not cost-msg
       costs

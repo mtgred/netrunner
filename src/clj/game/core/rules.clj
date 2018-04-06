@@ -34,8 +34,8 @@
                                          [:credit (:cost card)]))
            eid (if-not eid (make-eid state) eid)]
        ;; ensure the instant can be played
-       (if (and (if-let [req (:req cdef)]
-                  (req state side eid card targets) true) ; req is satisfied
+       (if (and (if-let [c-req (:req cdef)]
+                  (c-req state side eid card targets) true) ; req is satisfied
                 (not (and (has-subtype? card "Current")
                           (get-in @state [side :register :cannot-play-current])))
                 (not (and (has-subtype? card "Run")
