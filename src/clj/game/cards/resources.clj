@@ -558,8 +558,11 @@
                                 (disable-card state side c)
                                 (register-events state side
                                                  {:post-runner-turn-ends
-                                                  {:effect (effect (enable-card (get-card state c))
-                                                                   (unregister-events card))}} card)))}]
+                                                  {:effect (req (enable-card state side (get-card state c))
+                                                                (when-let [reactivate-effect (:reactivate (card-def c))]
+                                                                  (resolve-ability state :runner reactivate-effect
+                                                                                   (get-card state c) nil))
+                                                                (unregister-events state side card))}} card)))}]
     :events {:post-runner-turn-ends nil}}
 
    "Drug Dealer"
@@ -1311,12 +1314,12 @@
 
    "Rachel Beckman"
    {:in-play [:click 1 :click-per-turn 1]
-    :effect (req (add-watch state :rachel-beckman
-                            (fn [k ref old new]
-                              (when (is-tagged? new)
-                                (remove-watch ref :rachel-beckman)
-                                (trash ref :runner card)
-                                (system-msg ref side "trashes Rachel Beckman for being tagged")))))}
+    :events {:runner-gain-tag {:effect (effect (trash card {:unpreventable true}))
+                               :msg (msg "trashes Rachel Beckman for being tagged")}}
+    :effect (req (when tagged
+                   (trash state :runner card {:unpreventable true})))
+    :reactivate {:effect (req (when tagged
+                                (trash state :runner card {:unpreventable true})))}}
 
    "Raymond Flint"
    {:effect (req (add-watch state :raymond-flint
@@ -1856,4 +1859,6 @@
                               (when (is-tagged? new)
                                 (remove-watch ref (keyword (str "zona-sul-shipping" (:cid card))))
                                 (trash ref :runner card)
-                                (system-msg ref side "trashes Zona Sul Shipping for being tagged")))))}})
+                                (system-msg ref side "trashes Zona Sul Shipping for being tagged")))))
+    :reactivate {:effect (req (when tagged
+                                (trash state :runner card {:unpreventable true})))}}})
