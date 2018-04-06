@@ -1103,6 +1103,46 @@
       (is (= 8 (get-in @state [:corp :credit])))
       (is (= 4 (get-counters (refresh launch) :credit))))))
 
+(deftest malia
+  ;; Malia Z0L0K4 - blank an installed non-virtual runner resource
+  (do-game
+   (new-game (default-corp [(qty "Malia Z0L0K4" 1)
+                            (qty "Mausolus" 1)])
+             (default-runner [(qty "Rachel Beckman" 1)
+                              (qty "Daily Casts" 1)]))
+   (play-from-hand state :corp "Malia Z0L0K4" "New remote")
+   (play-from-hand state :corp "Mausolus" "HQ")
+   (take-credits state :corp)
+   (let [malia (get-content state :remote1 0)
+         mausolus (get-ice state :hq 0)]
+     (play-from-hand state :runner "Daily Casts")
+     (take-credits state :runner)
+     (let [N (:credit (get-runner))]
+       (core/rez state :corp malia)
+       (prompt-select :corp (get-resource state 0))
+       (take-credits state :corp)
+       (is (= N (:credit (get-runner))) "Daily casts did not trigger when blanked"))
+     (take-credits state :runner)
+     (core/derez state :corp malia)
+     (let [N (:credit (get-runner))]
+       (take-credits state :corp)
+       (is (= (+ N 2) (:credit (get-runner))) "Daily casts triggers again when unblanked"))
+     (play-from-hand state :runner "Rachel Beckman")
+     (is (= 4 (:click (get-runner))) "Runner has 4 clicks after playing Beckman")
+     (core/rez state :corp malia)
+     (prompt-select :corp (get-resource state 1))
+     (is (= 3 (:click (get-runner))) "Runner has 3 clicks after Beckman is blank")
+     (core/derez state :corp malia)
+     (is (= 4 (:click (get-runner))) "Runner has 4 clicks after Beckman is unblanked")
+     (core/rez state :corp malia)
+     (prompt-select :corp (get-resource state 1))
+     (core/rez state :corp mausolus)
+     (card-subroutine state :corp mausolus 2)
+     (is (and (= 1 (:tag (get-runner)))
+              (= 0 (count (:discard (get-runner))))) "Runner has 1 tag, but Rachel Beckman not trashed")
+     (core/derez state :corp malia)
+     (is (= 1 (count (:discard (get-runner)))) "Rachel Beckman got trashed on unblanking"))))
+
 (deftest mark-yale
   ;; Mark Yale - Spend agenda counters or trash himself to gain credits
   (do-game
