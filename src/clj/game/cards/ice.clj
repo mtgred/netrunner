@@ -1607,7 +1607,7 @@
                            :no-ability {:effect (effect (clear-wait-prompt :runner)
                                                         (effect-completed eid))}}}
                          card nil))}]
-     {:subroutines [{:label "Look at the top 3 cards of R&D and either arrange them in any order or shuffle R&D. You may draw 1 card."
+     {:subroutines [{:label "Look at the top 3 cards of R&D"
                      :req (req (not-empty (:deck corp)))
                      :delayed-completion true
                      :effect (req (let [top-cards (take 3 (:deck corp))
@@ -1635,7 +1635,7 @@
                                                 (continue-ability state side maybe-draw-effect card nil))))}
                                       card nil)))}
 
-                    {:label "You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka."
+                    {:label "Trash 1 card in HQ"
                      :delayed-completion true
                      :effect
                      (req (show-wait-prompt state :runner "Corp to select cards to trash with Sadaka")
