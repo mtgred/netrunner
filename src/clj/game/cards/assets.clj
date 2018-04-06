@@ -835,7 +835,7 @@
 
       :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
                            (not (has-subtype? % "Virtual")))}
-      :derez-effect {:effect re-enable-target}
+      :leave-play re-enable-target
       :move-zone re-enable-target})
    
    "Marilyn Campaign"
