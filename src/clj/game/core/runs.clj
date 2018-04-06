@@ -55,8 +55,13 @@
                                        (when (card-flag? c :has-events-when-stolen true)
                                          (register-events state side (:events (card-def c)) c))
                                        (when-let [current (first (get-in @state [:corp :current]))]
-                                         (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-                                         (trash state side current)))}
+                                         (if (get-in current [:special :rfg-when-trashed])
+                                           (do
+                                             (say state side {:user "__system__" :text (str (:title current) " is removed from the game.")})
+                                             (move state (other-side side) current :rfg))
+                                           (do
+                                             (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+                                             (trash state side current)))))}
           :card-ability (ability-as-handler c (:stolen (card-def c)))}
          c)
        (effect-completed state side eid nil)))))

@@ -103,6 +103,18 @@
                                       :unsuccessful {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
                                                                      (trash card))}}}}}
 
+  "Bio Vault"
+  {:implementation "Installation restriction not enforced"
+   :advanceable :always
+   :abilities [{:label "[Trash]: End the run"
+                :advance-counter-cost 2
+                :req (req (:run @state))
+                :msg "end the run. Bio Vault is trashed"
+                :delayed-completion true
+                :effect (effect
+                          (end-run)
+                          (trash eid card {:cause :ability-cost}))}]}
+
    "Black Level Clearance"
    {:events {:successful-run
              {:interactive (req true)
@@ -134,12 +146,13 @@
                  :req (req (and (< (:credit runner) 6)
                                 (< 0 (count (filter #(and (is-type? % "Operation")
                                                           (has-subtype? % "Transaction")) (:discard corp))))))
-                 :label "Play a transaction operation from Archives ignoring all costs and remove it from the game"
+                 :label "Play a transaction operation from Archives, ignoring all costs, and remove it from the game"
                  :prompt "Choose a transaction operation to play"
-                 :msg (msg "play " (:title target) " from Archives ignoring all costs and remove it from the game")
+                 :msg (msg "play " (:title target) " from Archives, ignoring all costs, and removes it from the game")
                  :choices (req (cancellable (filter #(and (is-type? % "Operation")
                                                           (has-subtype? % "Transaction")) (:discard corp)) :sorted))
-                 :effect (effect (play-instant nil target {:ignore-cost true}) (move target :rfg))}]}
+                 :effect (effect (play-instant nil (assoc-in target [:special :rfg-when-trashed] true) {:ignore-cost true})
+                                 (move target :rfg))}]}
 
    "Calibration Testing"
    {:abilities [{:label "[Trash]: Place 1 advancement token on a card in this server"
@@ -802,6 +815,38 @@
                                              :effect (effect (rez-cost-bonus -2)
                                                              (rez target))}}}
                             card nil))}}}
+
+   "Tempus"
+   {:access {:req (req (not= (first (:zone card)) :discard))
+             :interactive (req true)
+             :effect (req (when (= (first (:zone card)) :deck)
+                            (system-msg state :runner (str "accesses Tempus"))))
+             :trace {:base 3
+                     :msg "make the Runner choose between losing [Click][Click] or suffering 1 brain damage"
+                     :delayed-completion true
+                     :effect (req (let [tempus card]
+                                    (if (< (:click runner) 2)
+                                      (do
+                                        (system-msg state side "suffers 1 brain damage")
+                                        (damage state side eid :brain 1 {:card tempus}))
+                                      (do
+                                        (show-wait-prompt state :corp "Runner to resolve Tempus")
+                                        (continue-ability
+                                          state :runner
+                                          {:prompt "Lose [Click][Click] or take 1 brain damage?"
+                                           :player :runner
+                                           :choices ["Lose [Click][Click]" "Take 1 brain damage"]
+                                           :delayed-completion true
+                                           :effect (req (clear-wait-prompt state :corp)
+                                                        (if (.startsWith target "Take")
+                                                          (do
+                                                            (system-msg state side (str "chooses to take 1 brain damage"))
+                                                            (damage state side eid :brain 1 {:card tempus}))
+                                                          (do
+                                                            (system-msg state side "chooses to lose [Click][Click]")
+                                                            (lose state :runner :click 2)
+                                                            (effect-completed state side eid))))}
+                                          card nil)))))}}}
 
    "The Twins"
    {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"

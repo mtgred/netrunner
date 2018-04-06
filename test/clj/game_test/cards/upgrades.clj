@@ -197,6 +197,31 @@
     (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
     (is (= 2 (count (:discard (get-runner)))) "Runner took 1 meat damage")))
 
+(deftest bio-vault
+  ;; Bio Vault - 2 advancement tokens + trash to end the run
+  (do-game
+    (new-game (default-corp [(qty "Bio Vault" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Bio Vault" "New remote")
+    (take-credits state :corp)
+
+    (let [bv (get-content state :remote1 0)]
+      (run-on state "Server 1")
+      (core/rez state :corp (refresh bv))
+      (card-ability state :corp (refresh bv) 0)
+      (is (:run @state) "Bio Vault doesn't fire if less than 2 advancements")
+      (run-successful state)
+      (prompt-choice :runner "OK")
+      (take-credits state :runner)
+
+      (advance state (refresh bv) 2)
+      (take-credits state :corp)
+
+      (run-on state "Server 1")
+      (card-ability state :corp (refresh bv) 0)
+      (is (not (:run @state)) "Bio Vault fires with 2 advancement tokens")
+      (is (= 1 (count (:discard (get-corp)))) "Bio Vault trashed"))))
+
 (deftest breaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
@@ -217,6 +242,47 @@
        (core/rez state :corp bbg2)
        (core/rez state :corp sbox)
        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
+
+(deftest bryan-stinson-current
+  ;; Bryan Stinson - play a transaction from archives and remove from game. Ensure Currents are RFG and not trashed.
+  (do-game
+   (new-game (default-corp [(qty "Bryan Stinson" 1) (qty "Death and Taxes" 1)
+                            (qty "Paywall Implementation" 1) (qty "Global Food Initiative" 1)
+                            (qty "IPO" 1)])
+             (default-runner [(qty "Interdiction" 1)]))
+    (trash-from-hand state :corp "Death and Taxes")
+    (play-from-hand state :corp "Bryan Stinson" "New remote")
+    (let [bs (get-content state :remote1 0)]
+      (core/rez state :corp (refresh bs))
+      (card-ability state :corp (refresh bs) 0)
+      (prompt-choice :corp (find-card "Death and Taxes" (:discard (get-corp))))
+      (is (find-card "Death and Taxes" (:current (get-corp))) "Death and Taxes is active Current")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Interdiction")
+      (is (find-card "Interdiction" (:current (get-runner))) "Interdiction is active Current")
+      (is (find-card "Death and Taxes" (:rfg (get-corp))) "Death and Taxes removed from game")
+      (is (not= "Death and Taxes" (:title (first (:discard (get-corp))))) "Death and Taxes not moved to trash")
+      (take-credits state :runner)
+
+      (core/lose state :runner :credit 3)
+      (trash-from-hand state :corp "Paywall Implementation")
+      (card-ability state :corp (refresh bs) 0)
+      (prompt-choice :corp (find-card "Paywall Implementation" (:discard (get-corp))))
+      (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall Implementation is active Current")
+      (is (find-card "Interdiction" (:discard (get-runner))) "Interdiction is trashed")
+      (trash-from-hand state :corp "IPO")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (run-successful state)
+      (prompt-choice :runner "Steal")
+      (is (find-card "Paywall Implementation" (:rfg (get-corp))) "Paywall Implementation removed from game")
+      (is (not= "Paywall Implementation" (:title (first (:discard (get-corp))))) "Paywall Implementation not moved to trash")
+      (take-credits state :runner)
+
+      (core/lose state :runner :credit 3)
+      (card-ability state :corp (refresh bs) 0)
+      (prompt-choice :corp (find-card "IPO" (:discard (get-corp))))
+      (is (find-card "IPO" (:rfg (get-corp))) "IPO is removed from game"))))
 
 (deftest calibration-testing
   ;; Calibration Testing - advanceable / non-advanceable
@@ -1197,6 +1263,55 @@
         (core/derez state :corp (refresh wrap))
         (core/rez state :corp enig)
         (is (= (:cid scg2) (-> (get-corp) :prompt first :card :cid)) "SCG did trigger for ICE protecting HQ")))))
+
+(deftest tempus
+  ;; Tempus - Trace^3, the runner chooses to lose 2 clicks or take 1 brain damage
+  (do-game
+    (new-game (default-corp [(qty "Tempus" 3)])
+              (default-runner [(qty "Sure Gamble" 3)]))
+    (starting-hand state :corp ["Tempus"])
+    (play-from-hand state :corp "Tempus" "New remote")
+    (take-credits state :corp)
+
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
+    (prompt-choice :runner "Lose [Click][Click]")
+    (is (= 1 (:click (get-runner))) "Runner loses 2 clicks")
+    (prompt-choice :runner "Yes") ; trash
+
+    (run-on state "Server 1")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (is (= 0 (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
+    (prompt-choice :runner 0)
+    (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+    (prompt-choice :runner "No") ; trash
+    (take-credits state :runner)
+
+    (take-credits state :corp)
+
+    (run-on state "Archives")
+    (run-successful state)
+    (is (= 1 (:brain-damage (get-runner))) "Runner takes no brain damage")
+    (is (= 3 (:click (get-runner))) "Runner loses no clicks")
+
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (is (= 1 (:brain-damage (get-runner))) "Runner starts with 1 brain damage")
+    (prompt-choice :runner "Take 1 brain damage")
+    (is (= 2 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+    (prompt-choice :runner "No") ; trash
+
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 4)
+    (prompt-choice :runner "Yes")))
 
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage

@@ -128,6 +128,20 @@
                  :effect (effect (trash card))
                  :msg (msg "swap " (:advance-counter card 0) " cards in HQ and Archives")}]}
 
+   "Amani Senai"
+   (let [get-last-stolen-pts (fn [state] (advancement-cost state :corp (last (get-in @state [:runner :scored]))))
+         get-last-scored-pts (fn [state] (advancement-cost state :corp (last (get-in @state [:corp :scored]))))
+         senai-ability (fn [trace-base-func]
+                         {:interactive (req true)
+                          :optional {:prompt "Trace with Amani Senai?" :player :corp
+                                     :yes-ability {:trace {:base (req (trace-base-func state))
+                                                           :choices {:req #(and (installed? %)
+                                                                                (card-is? % :side :runner))}
+                                                           :msg "add an installed Runner card to the grip"
+                                                           :effect (effect (move :runner target :hand true))}}}})]
+     {:events {:agenda-scored (senai-ability get-last-scored-pts)
+               :agenda-stolen (senai-ability get-last-stolen-pts)}})
+
    "Anson Rose"
    (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
                   :once :per-turn
@@ -613,7 +627,7 @@
 
    "Haas Arcology AI"
    {:advanceable :while-unrezzed
-    :abilities [{:label "Gain [Click]" :once :per-turn :msg "gain [Click]"
+    :abilities [{:label "Gain [Click][Click]" :once :per-turn :msg "gain [Click][Click]"
                  :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
 
    "Honeyfarm"
@@ -822,6 +836,22 @@
     :events {:corp-turn-begins {:effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}}}
 
+   "Malia Z0L0K4"
+   (let [re-enable-target (req (when-let [malia-target (:malia-target card)]
+                                 (system-msg state side (str "uses "  (:title card) " to unblank "
+                                                             (card-str state malia-target)))
+                                 (enable-card state :runner (get-card state malia-target))
+                                 (when-let [reactivate-effect (:reactivate (card-def malia-target))]
+                                   (resolve-ability state :runner reactivate-effect (get-card state malia-target) nil))))]
+     {:effect (effect (update! (assoc card :malia-target target))
+                      (disable-card :runner target))
+      :msg (msg (str "blank the text box of " (card-str state target)))
+
+      :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
+                           (not (has-subtype? % "Virtual")))}
+      :leave-play re-enable-target
+      :move-zone re-enable-target})
+   
    "Marilyn Campaign"
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
@@ -1150,7 +1180,8 @@
                  :counter-cost [:credit 2]
                  :msg "gain 2 [Credits]"
                  :effect (req (gain state :corp :credit 2)
-                              (when (= (get-in card [:counter :credit]) 0) (trash state :corp card)))}]}
+                              (when (= (get-in card [:counter :credit]) 0)
+                                (trash state :corp card)))}]}
 
    "Project Junebug"
    (advance-ambush 1 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
@@ -1220,6 +1251,22 @@
                                                                      (move state side target :hand)))}
                                                    card nil)))}
                                  card nil)))}]}
+
+   "Rashida Jaheem"
+   {:events {:corp-turn-begins {:delayed-completion true
+                                :effect (effect (show-wait-prompt :runner "Corp to use Rashida Jaheem")
+                                                (continue-ability
+                                                  {:optional
+                                                   {:prompt "Trash Rashida Jaheem to gain 3[Credits] and draw 3 cards?"
+                                                    :yes-ability {:msg "gain 3[Credits] and draw 3 cards"
+                                                                  :effect (effect (gain :credit 3)
+                                                                                  (draw 3)
+                                                                                  (trash card)
+                                                                                  (clear-wait-prompt :runner)
+                                                                                  (effect-completed eid))}
+                                                    :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                                                 (effect-completed eid))}}}
+                                                  card nil))}}}
 
    "Reality Threedee"
    (let [ability {:effect (req (gain state side :credit (if tagged 2 1)))

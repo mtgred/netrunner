@@ -836,6 +836,87 @@
       (core/remove-tag state :runner 1)
       (is (= 1 (:current-strength (refresh resistor))) "Runner removed 1 tag; down to 1 strength"))))
 
+(deftest sadaka-sub1
+  ;; Sadaka - Look at the top 3 cards of R&D, arrange those or shuffle R&D. You may draw 1 card.
+  (do-game
+    (new-game (default-corp [(qty "Sadaka" 1) (qty "Enigma" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Sadaka"])
+    (play-from-hand state :corp "Sadaka" "Archives")
+    (let [sadaka (get-ice state :archives 0)]
+      (take-credits state :corp)
+      (run-on state "archives")
+      (core/rez state :corp sadaka)
+      (is (= 0 (count (:hand (get-corp)))) "Corp starts with empty hand")
+      (card-subroutine state :corp (refresh sadaka) 0)
+      (prompt-choice :corp "Shuffle R&D")
+      (prompt-choice :corp "Yes")
+      (is (= 1 (count (:hand (get-corp)))) "Corp draws a card")
+      (card-subroutine state :corp (refresh sadaka) 0)
+      (prompt-choice :corp "Shuffle R&D")
+      (prompt-choice :corp "No")
+      (is (= 1 (count (:hand (get-corp)))) "Corp doesn't draw a card"))))
+
+(deftest sadaka-sub2
+  ;; Sadaka - You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka.
+  (do-game
+    (new-game (default-corp [(qty "Sadaka" 2) (qty "Enigma" 3)])
+              (default-runner [(qty "Bank Job" 1)]))
+    (play-from-hand state :corp "Sadaka" "Archives")
+    (play-from-hand state :corp "Sadaka" "HQ")
+    (let [sadaka (get-ice state :archives 0)
+          sadakaHQ (get-ice state :hq 0)]
+      (take-credits state :corp)
+
+      (play-from-hand state :runner "Bank Job")
+      (run-on state "archives")
+      (core/rez state :corp sadaka)
+      (is (= 3 (count (:hand (get-corp)))) "Corp starts with 3 cards in hand")
+      (is (= 0 (count (:discard (get-corp)))) "Corps starts with 0 cards in archives")
+      (card-subroutine state :corp (refresh sadaka) 1)
+      (prompt-choice :corp (find-card "Enigma" (:hand (get-corp))))
+      (is (= 2 (count (:hand (get-corp)))) "Corp discards 1 card")
+      (is (= 1 (count (:discard (get-corp)))) "1 card trashed")
+      (prompt-choice :corp "Done")
+      (is (= 2 (count (:discard (get-corp)))) "Sadaka trashed")
+      (run-jack-out state)
+
+      (run-on state "archives")
+      (core/rez state :corp sadakaHQ)
+      (is (= 2 (count (:hand (get-corp)))) "Corp starts with 2 cards in hand")
+      (is (= 2 (count (:discard (get-corp)))) "Corps starts with 2 cards in archives")
+      (is (= 0 (count (:discard (get-runner)))) "Runner starts with 0 cards in discard")
+      (card-subroutine state :corp (refresh sadakaHQ) 1)
+      (prompt-choice :corp (find-card "Enigma" (:hand (get-corp))))
+      (is (= 1 (count (:hand (get-corp)))) "Corp discards 1 card")
+      (is (= 3 (count (:discard (get-corp)))) "1 card trashed")
+      (prompt-select :corp (get-resource state 0))
+      (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
+      (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed"))))
+(deftest sandman
+
+  ;; Sandman - add an installed runner card to the grip
+  (do-game
+    (new-game (default-corp [(qty "Sandman" 1)])
+              (default-runner [(qty "Inti" 1) (qty "Scrubber" 1)]))
+    (play-from-hand state :corp "Sandman" "HQ")
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Inti")
+    (play-from-hand state :runner "Scrubber")
+    (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")
+    (run-on state "HQ")
+    (let [sand (get-ice state :hq 0)]
+      (core/rez state :corp (refresh sand))
+      (card-subroutine state :corp (refresh sand) 0)
+      (prompt-select :corp (find-card "Inti" (get-in (get-runner) [:rig :program])))
+      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+      (card-subroutine state :corp (refresh sand) 0)
+      (prompt-select :corp (find-card "Scrubber" (get-in (get-runner) [:rig :resource])))
+      (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+      (card-subroutine state :corp (refresh sand) 0)
+      (is (empty? (:prompt (get-corp))) "Sandman doesn't fire if no installed cards"))))
+
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters
   (do-game
@@ -982,6 +1063,22 @@
       (is (= 9 (:credit (get-corp))) "Special Offer paid 5 credits")
       (is (= 1 (:position (get-in @state [:run])))
           "Run position updated; now approaching Ice Wall"))))
+
+
+(deftest sand-storm-alone
+  ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
+  (do-game
+    (new-game (default-corp [(qty "Sand Storm" 1) (qty "PAD Campaign" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Sand Storm" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-on state "Server 1")
+    (let [sand-storm (get-ice state :remote1 0)]
+      (core/rez state :corp sand-storm)
+      (card-subroutine state :corp sand-storm 0)
+      (prompt-choice :corp "Server 2")
+      (is (=  (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
 
 (deftest tithonium
   ;; Forfeit option as rez cost, can have hosted condition counters

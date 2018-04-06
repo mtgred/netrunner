@@ -73,6 +73,16 @@
                      (if (:memoryunits c)
                        (gain state :runner :memory (:memoryunits c))))))}
 
+   "Because I Can"
+   (run-event
+    {:choices (req (filter #(can-run-server? state %) remotes))}
+    {:req (req (is-remote? target))
+     :replace-access {:mandatory true
+                      :msg "shuffle all cards in the server into R&D"
+                      :effect (req (doseq [c (:content run-server)]
+                                     (move state :corp c :deck))
+                                   (shuffle! state :corp :deck))}})
+
    "Blackmail"
    (run-event
     {:req (req has-bad-pub)
@@ -1552,7 +1562,7 @@
     {:req (req (is-remote? target))
      :replace-access {:mandatory true
                       :msg "trash all cards in the server at no cost"
-                      :effect (req (doseq [c (get-in (:servers corp) (conj (:server run) :content))]
+                      :effect (req (doseq [c (:content run-server)]
                                      (trash state side c)))}})
 
    "Social Engineering"

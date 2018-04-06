@@ -53,8 +53,13 @@
              (if (has-subtype? c "Current")
                (do (doseq [s [:corp :runner]]
                      (when-let [current (first (get-in @state [s :current]))] ; trash old current
-                       (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-                       (trash state side current)))
+                       (if (get-in current [:special :rfg-when-trashed])
+                         (do
+                           (say state side {:user "__system__" :text (str (:title current) " is removed from the game.")})
+                           (move state (other-side side) current :rfg))
+                         (do
+                           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
+                           (trash state side current)))))
                    (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
                          moved-card (move state side c :current)]
                      (card-init state side eid moved-card {:resolve-effect true
