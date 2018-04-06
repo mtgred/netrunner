@@ -118,15 +118,36 @@
     :data
     (map (partial translate-fields fields))))
 
-(defn- read-nrdb-data
+(defn download-nrdb-data
   "Translate data from NRDB"
   [path fields]
   (println "Downloading" path)
   (let [{:keys [status body error] :as resp} @(http/get (str base-url path))]
     (cond
-      error (throw (Exception. (str "Failed to download file" error)))
+      error (throw (Exception. (str "Failed to download file " error)))
       (= 200 status) (parse-response body fields)
-      :else (throw (Exception. (str "Failed to download file, status" status))))))
+      :else (throw (Exception. (str "Failed to download file, status " status))))))
+
+(defn read-local-data
+  "Translate data read from local files"
+  [base-path filename fields]
+  (let [filepath (str base-path "/" filename ".json")
+        _ (println "Reading" filepath)
+        content (slurp filepath)
+        wrapped (str "{\"data\": " content "}")]
+    (parse-response wrapped fields)))
+
+(defn read-card-dir
+  [base-path _ fields]
+  (let [dirpath (str base-path "/pack")
+        _ (println "Reading card directory" dirpath)
+        files (mapv str (filter #(.isFile %) (file-seq (clojure.java.io/file dirpath))))
+        json-files (filter #(string/ends-with? % ".json") files)
+        contents (map slurp json-files)
+        parsed (map #(json/parse-string % true) contents)
+        combined (flatten parsed)
+        wrapped (json/generate-string {:data combined})]
+    (parse-response wrapped fields)))
 
 (defn replace-collection
   "Remove existing collection and insert new data"
@@ -151,8 +172,9 @@
 (defn deaccent
   "Remove diacritical marks from a string, from http://www.matt-reid.co.uk/blog_post.php?id=69"
   [s]
-  (let [normalized (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)]
-    (string/replace normalized #"\p{InCombiningDiacriticalMarks}+" "")))
+  (if (nil? s) ""
+    (let [normalized (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)]
+      (string/replace normalized #"\p{InCombiningDiacriticalMarks}+" ""))))
 
 (defn- prune-null-fields
   "Remove specified fields if the value is nil"
@@ -184,10 +206,10 @@
 
 (defn fetch-data
   "Read NRDB json data. Modify function is mapped to all elements in the data collection."
-  ([m] (fetch-data m identity))
-  ([m modify-function] (fetch-data m modify-function replace-collection))
-  ([{:keys [path fields collection]} modify-function collection-function]
-  (let [data-list (->> (read-nrdb-data path fields)
+  ([download-fn m] (fetch-data download-fn m identity))
+  ([download-fn m modify-function] (fetch-data download-fn m modify-function replace-collection))
+  ([download-fn {:keys [path fields collection]} modify-function collection-function]
+  (let [data-list (->> (download-fn path fields)
                     (map modify-function))]
     (collection-function collection data-list)
     (make-map-by-code data-list))))
@@ -237,8 +259,9 @@
   
 (defn fetch-cards
   "Find the NRDB card json files and import them."
-  [{:keys [collection path] :as card-table} sets download-images]
-  (let [cards (fetch-data card-table
+  [download-fn {:keys [collection path] :as card-table} sets download-images]
+  (let [cards (fetch-data download-fn
+                          card-table
                           (partial add-card-fields sets)
                           (fn [c d] true))
         cards-replaced (->> cards
@@ -265,45 +288,3 @@
              {$inc {:cards-version 1}
               $currentDate {:last-updated true}}
              {:upsert true}))
-
-(comment
-  (defn compare-collections
-    [c1 c2 k]
-    (if (not= (mc/count db c1) (mc/count db c2))
-      (do
-        (println "Different number of elements in collections")
-        false)
-      (let [c1-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c1))))
-            c2-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c2))))
-            zipped (filter (fn [[x y]] (not= x y)) (map vector c1-data c2-data))]
-        (if (not-empty zipped)
-          (do
-            (println "First mismatch:")
-            (pprint zipped)
-            false)
-          true))))
-
-  (defn test-import
-    []
-    (println "MWL")
-    (if (compare-collections "mwl" "clj_mwl" :name)
-      (println "\tOK")
-      (println "\tFailed"))
-    (println "Cycles")
-    (if (compare-collections "cycles" "clj_cycles" :name)
-      (println "\tOK")
-      (println "\tFailed"))
-    (println "Sets")
-    (if (compare-collections "sets" "clj_sets" :name)
-      (println "\tOK")
-      (println "\tFailed"))
-    (println "Cards")
-    (if (compare-collections "cards" "clj_cards" :code)
-      (println "\tOK")
-      (println "\tFailed"))
-    (println "AltArts")
-    (if (compare-collections "altarts" "clj_altarts" :name)
-      (println "\tOK")
-      (println "\tFailed"))
-    )
-  )
