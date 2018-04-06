@@ -1180,7 +1180,8 @@
                  :counter-cost [:credit 2]
                  :msg "gain 2 [Credits]"
                  :effect (req (gain state :corp :credit 2)
-                              (when (= (get-in card [:counter :credit]) 0) (trash state :corp card)))}]}
+                              (when (= (get-in card [:counter :credit]) 0)
+                                (trash state :corp card)))}]}
 
    "Project Junebug"
    (advance-ambush 1 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
@@ -1250,6 +1251,22 @@
                                                                      (move state side target :hand)))}
                                                    card nil)))}
                                  card nil)))}]}
+
+   "Rashida Jaheem"
+   {:events {:corp-turn-begins {:delayed-completion true
+                                :effect (effect (show-wait-prompt :runner "Corp to use Rashida Jaheem")
+                                                (continue-ability
+                                                  {:optional
+                                                   {:prompt "Trash Rashida Jaheem to gain 3[Credits] and draw 3 cards?"
+                                                    :yes-ability {:msg "gain 3[Credits] and draw 3 cards"
+                                                                  :effect (effect (gain :credit 3)
+                                                                                  (draw 3)
+                                                                                  (trash card)
+                                                                                  (clear-wait-prompt :runner)
+                                                                                  (effect-completed eid))}
+                                                    :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                                                 (effect-completed eid))}}}
+                                                  card nil))}}}
 
    "Reality Threedee"
    (let [ability {:effect (req (gain state side :credit (if tagged 2 1)))
