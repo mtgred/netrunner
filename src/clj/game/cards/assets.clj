@@ -829,9 +829,12 @@
 
     :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
                          (not (has-subtype? % "Virtual")))}
-    :leave-play (effect (enable-card :runner (get-card state (:malia-target card)))
-                        (system-msg (str "uses "  (:title card) " to unblank "
-                                         (card-str state (:malia-target card)))))}
+    :leave-play (req (let [malia-target (:malia-target card)]
+                       (enable-card state :runner (get-card state malia-target))
+                       (when-let [reactivate-effect (:reactivate (card-def malia-target))]
+                         (resolve-ability state :runner reactivate-effect (get-card state malia-target) nil))
+                       (system-msg state side (str "uses "  (:title card) " to unblank "
+                                                   (card-str state malia-target)))))}
    "Marilyn Campaign"
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
