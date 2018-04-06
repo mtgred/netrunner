@@ -1140,7 +1140,11 @@
      (card-subroutine state :corp mausolus 2)
      (is (and (= 1 (:tag (get-runner)))
               (= 0 (count (:discard (get-runner))))) "Runner has 1 tag, but Rachel Beckman not trashed")
-     (core/derez state :corp malia)
+     (take-credits state :runner)
+     (is (= 0 (count (:discard (get-runner)))) "Rachel Beckman still not trashed")
+     (is (= 0 (count (:hand (get-corp)))) "Malia is not in hand")
+     (core/move-card state :corp {:card malia :server "HQ"})
+     (is (= 1 (count (:hand (get-corp)))) "Malia is in hand")
      (is (= 1 (count (:discard (get-runner)))) "Rachel Beckman got trashed on unblanking"))))
 
 (deftest mark-yale
