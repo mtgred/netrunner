@@ -71,6 +71,7 @@
        (trigger-event state side :pre-card-moved card src-zone target-zone)
        (let [dest (if (sequential? to) (vec to) [to])
              to-facedown (= dest [:rig :facedown])
+             to-installed (#{:servers :rig} (first dest))
              trash-hosted (fn [h]
                              (trash state side
                                     (update-in h [:zone] #(map to-keyword %))
@@ -97,7 +98,8 @@
                         (or (#{:hand :deck :discard :rfg} (first dest)) to-facedown)
                         (not (:facedown c)))
                  (deactivate state side c to-facedown) c)
-             c (if to-facedown (assoc c :facedown true :installed true) (dissoc c :facedown))
+             c (if to-installed (assoc c :installed true) (dissoc c :installed))
+             c (if to-facedown (assoc c :facedown true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted hosted :previous-zone (:zone c))
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)
