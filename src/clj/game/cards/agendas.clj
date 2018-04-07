@@ -141,7 +141,8 @@
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
              :effect (effect (show-wait-prompt :runner "Corp to place advancement tokens with Award Bait")
                              (continue-ability
@@ -429,7 +430,8 @@
                  :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Explode-a-palooza")
                              (continue-ability
                                {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
@@ -446,7 +448,8 @@
                                  (lose :runner :click 2))}]}
 
    "Fetal AI"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
              :effect (effect (damage eid :net 2 {:card card}))}
     :steal-cost-bonus (req [:credit 2])}
@@ -935,7 +938,8 @@
                                                     (clear-wait-prompt :runner))} card nil))}}}
 
    "Quantum Predictive Model"
-   {:steal-req (req (not tagged))
+   {:flags {:rd-reveal (req true)}
+    :steal-req (req (not tagged))
     :access {:req (req tagged)
              :effect (effect (as-agenda card 1))
              :msg "add it to their score area and gain 1 agenda point"}}
@@ -1127,7 +1131,8 @@
    (ice-boost-agenda "Barrier")
 
    "TGTBT"
-   {:access {:msg "give the Runner 1 tag"
+   {:flags {:rd-reveal (req true)}
+    :access {:msg "give the Runner 1 tag"
              :delayed-completion true
              :effect (effect (tag-runner :runner eid 1))}}
 
@@ -1146,7 +1151,8 @@
                     (move target :hand))}
 
    "The Future Perfect"
-   {:access
+   {:flags {:rd-reveal (req true)}
+    :access
     {:psi {:req (req (not installed))
            :not-equal {:msg (msg "prevent it from being stolen")
                        :effect (final-effect (register-run-flag! card :can-steal

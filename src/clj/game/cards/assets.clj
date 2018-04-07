@@ -201,7 +201,8 @@
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
    "Breached Dome"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
                             (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
                                                          " from the top of the Runner's Stack"))
@@ -631,7 +632,8 @@
                  :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
 
    "Honeyfarm"
-   {:access {:msg "force the Runner to lose 1 [Credits]"
+   {:flags {:rd-reveal (req true)}
+    :access {:msg "force the Runner to lose 1 [Credits]"
              :effect (effect (lose :runner :credit 1))}}
 
    "Hostile Infrastructure"
@@ -851,7 +853,7 @@
                            (not (has-subtype? % "Virtual")))}
       :leave-play re-enable-target
       :move-zone re-enable-target})
-   
+
    "Marilyn Campaign"
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
@@ -1036,7 +1038,8 @@
     :effect (effect (set-prop card :rec-counter (:link runner)))}
 
    "News Team"
-   {:access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
+   {:flags {:rd-reveal (req true)}
+    :access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
              :delayed-completion true
              :effect (effect (continue-ability
                                {:player :runner
@@ -1466,12 +1469,14 @@
                       card targets))}}
 
    "Shock!"
-   {:access {:msg "do 1 net damage"
+   {:flags {:rd-reveal (req true)}
+    :access {:msg "do 1 net damage"
              :delayed-completion true
              :effect (effect (damage eid :net 1 {:card card}))}}
 
    "Snare!"
-   {:access {:req (req (not= (first (:zone card)) :discard))
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
              :delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Snare!")
                              (continue-ability
@@ -1486,7 +1491,8 @@
                                card nil))}}
 
    "Space Camp"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Space Camp")
                              (continue-ability
                                {:optional
