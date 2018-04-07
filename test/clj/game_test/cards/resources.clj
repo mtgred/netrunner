@@ -463,57 +463,86 @@
 
   (deftest dj-fenris-chaos
     ;; DJ Fenris - host 1 g-mod id not in faction on DJ Fenris
-    (do-game
-      (new-game (default-corp)
-                ;; Runner id is Gabe, make sure Geist is not in list (would be first)
-                (make-deck sunny ["DJ Fenris"]) {:start-as :runner})
-      (play-from-hand state :runner "DJ Fenris")
-      (is (= (first (prompt-titles :runner)) geist) "List is sorted")
-      (is (every? #(some #{%} (prompt-titles :runner))
-                  [geist chaos reina maxx]))
-      (is (not-any? #(some #{%} (prompt-titles :runner))
-                    [professor whizzard jamie kate kit]))
+    (testing "Hosting Chaos Theory"
+      ;; Ensure +1 MU is handled correctly
+      (do-game
+        (new-game (default-corp)
+                  ;; Runner id is Gabe, make sure Geist is not in list (would be first)
+                  (make-deck sunny ["DJ Fenris"]) {:start-as :runner})
+        (play-from-hand state :runner "DJ Fenris")
+        (is (= (first (prompt-titles :runner)) geist) "List is sorted")
+        (is (every? #(some #{%} (prompt-titles :runner))
+                    [geist chaos reina maxx]))
+        (is (not-any? #(some #{%} (prompt-titles :runner))
+                      [professor whizzard jamie kate kit]))
 
-      (choose-runner chaos state prompt-map)
+        (choose-runner chaos state prompt-map)
 
-      (is (= chaos (get-in (get-resource state 0) [:hosted 0 :title])) "Chaos Theory hosted on DJ Fenris")
+        (is (= chaos (get-in (get-resource state 0) [:hosted 0 :title])) "Chaos Theory hosted on DJ Fenris")
 
-      (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
-      (is (= 2 (:link (get-runner))) "2 link from Sunny")
-      (is (= 5 (:memory (get-runner))) "+1 MU from Chaos Theory")
+        (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
+        (is (= 2 (:link (get-runner))) "2 link from Sunny")
+        (is (= 5 (:memory (get-runner))) "+1 MU from Chaos Theory")
 
-      ;; Try moving CT to hand
-      (game.core/move state :runner (get-in (get-resource state 0) [:hosted 0]) :hand)
-      (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
-      (is (= 0 (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
-      (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")))
+        ;; Trash DJ Fenris
+        (trash-resource state "DJ Fenris")
+        (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
+        (is (= 1 (count (:discard (get-runner)))) "1 card in heap: DJ Fenris")
+        (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")
 
-  (deftest dj-fenris-geist
-    ;; DJ Fenris - Ensure Geist effect triggers
-    (do-game
-      (new-game (default-corp)
-                ;; Runner id is Gabe, make sure Geist is not in list (would be first)
-                (make-deck sunny [(qty "DJ Fenris" 3) (qty "All-nighter" 3)]) {:start-as :runner})
-      (play-from-hand state :runner "All-nighter")
+        ;; Recover DJ Fenris
+        (core/move state :runner (get-in (get-runner) [:discard 0]) :hand)
+        (core/gain state :runner :credit 3)
 
-      (play-from-hand state :runner "DJ Fenris")
+        ;; Re-play DJ Fenris
+        (play-from-hand state :runner "DJ Fenris")
+        ;(clojure.pprint/pprint (get-in @state [:runner :prompt]))
+        (choose-runner chaos state prompt-map)
 
-      (is (= (first (prompt-titles :runner)) geist) "List is sorted")
-      (is (every? #(some #{%} (prompt-titles :runner))
-                  [geist chaos reina maxx]))
-      (is (not-any? #(some #{%} (prompt-titles :runner))
-                    [professor whizzard jamie kate kit]))
+        ;; Try moving CT to hand
+        (game.core/move state :runner (get-in (get-resource state 0) [:hosted 0]) :hand)
+        (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
+        (is (= 0 (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
+        (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")))
 
-      (choose-runner geist state prompt-map)
+    (testing "Hosting Geist"
+      ;; Ensure Geist effect triggers
+      (do-game
+        (new-game (default-corp)
+                  ;; Runner id is Gabe, make sure Geist is not in list (would be first)
+                  (make-deck sunny ["DJ Fenris" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]) {:start-as :runner})
+        (starting-hand state :runner ["DJ Fenris" "All-nighter" "All-nighter"])
+        (play-from-hand state :runner "All-nighter")
+        (play-from-hand state :runner "All-nighter")
 
-      (is (= geist (get-in (get-resource state 1) [:hosted 0 :title])) "Geist hosted on DJ Fenris")
+        (play-from-hand state :runner "DJ Fenris")
 
-      (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
+        (is (= (first (prompt-titles :runner)) geist) "List is sorted")
+        (is (every? #(some #{%} (prompt-titles :runner))
+                    [geist chaos reina maxx]))
+        (is (not-any? #(some #{%} (prompt-titles :runner))
+                      [professor whizzard jamie kate kit]))
 
-      (is (= 2 (:link (get-runner))) "2 link from Sunny, no extra link from Geist")
+        (choose-runner geist state prompt-map)
 
-      (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter
-      (is (= 4 (count (:hand (get-runner)))) "Drew one card with Geist when using All-nighter trash ability"))))
+        (is (= geist (get-in (get-resource state 2) [:hosted 0 :title])) "Geist hosted on DJ Fenris")
+
+        (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
+
+        (is (= 2 (:link (get-runner))) "2 link from Sunny, no extra link from Geist")
+
+        (let [hand-count (count (:hand (get-runner)))]
+          (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter
+          (is (= (+ 1 hand-count) (count (:hand (get-runner))))
+              "Drew one card with Geist when using All-nighter trash ability")
+
+          (trash-resource state "DJ Fenris")
+          (is (= geist (get-in (get-runner) [:rfg 0 :title])) "Geist moved to RFG")
+          (is (= 2 (count (:discard (get-runner)))) "2 cards in heap: All-nighter and DJ Fenris")
+
+          (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter (again)
+          (is (= (+ 1 hand-count) (count (:hand (get-runner))))
+              "Did not draw another card - Geist ability removed when DJ Fenris was trashed"))))))
 
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play

@@ -556,7 +556,9 @@
                                            c (assoc target :type "Fake-Identity")
                                            c (make-card c)
                                            c (assoc c :host (dissoc card :hosted)
-                                                      :zone '(:onhost))]
+                                                      :zone '(:onhost)
+                                                      ;; semi hack to get deactivate to work
+                                                      :installed true)]
 
                                        ;; Manually host id on card
                                        (update! state side (assoc card :hosted [c]))
