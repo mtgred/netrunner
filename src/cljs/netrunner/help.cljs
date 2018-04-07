@@ -74,7 +74,8 @@
                         [:li [:code "/take-brain n"] " - Take n brain damage (Runner only)"]
                         [:li [:code "/take-meat n"] " - Take n meat damage (Runner only)"]
                         [:li [:code "/take-net n"] " - Take n net damage (Runner only)"]
-                        [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]]]}
+                        [:li [:code "/trace n"] " - Start a trace with base strength n (Corp only)"]
+                        [:li [:code "/undo-turn"] " - Resets the game back to end of the last turn"]]]}
             {:id "documentation"
              :title "Is there more documentation on how to use Jinteki.net?"
              :content [:p "Read the "

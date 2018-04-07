@@ -197,6 +197,7 @@
 (defn start-turn
   "Start turn."
   [state side args]
+  (swap! state assoc :turn-state @state)
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 

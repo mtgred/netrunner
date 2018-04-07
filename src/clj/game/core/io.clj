@@ -183,6 +183,14 @@
 (defn command-roll [state side value]
   (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value)))))
 
+(defn command-undo-turn
+  "Resets the entire game state to how it was at end-of-turn."
+  [{:keys [gameid] :as state} _]
+  (when-let [turn-state (:turn-state @state)]
+    (reset! state (assoc turn-state :turn-state turn-state))
+    (toast state :runner "Game reset to start of turn")
+    (toast state :corp "Game reset to start of turn")))
+
 (defn command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]
     (swap! state update-in [side :prompt] rest)
@@ -267,6 +275,7 @@
                                                                {:title "/trace command" :side %2}
                                                                {:base (max 0 value)
                                                                 :msg "resolve successful trace effect"}))
+          "/undo-turn"  #(command-undo-turn %1 %2)
           nil)))))
 
 (defn corp-install-msg
