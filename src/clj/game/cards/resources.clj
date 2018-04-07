@@ -1731,7 +1731,7 @@
       :abilities [{:counter-cost [:power 2]
                    :req (req (:run @state))
                    :msg "access 1 additional card from HQ or R&D for the remainder of the run"
-                   :effect  (req (swap! state update-in [:run :ttw-spent] #(inc (or % 0)))
+                   :effect  (req (swap! state update-in [:run :ttw-spent] (fnil inc 0))
                                  (register-events state side
                                                   {:pre-access {:req (req (and (get-in @state [:run :ttw-spent]) (#{:hq :rd} target)))
                                                                 :effect (effect (access-bonus 1)

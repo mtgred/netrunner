@@ -34,8 +34,8 @@
                                          [:credit (:cost card)]))
            eid (if-not eid (make-eid state) eid)]
        ;; ensure the instant can be played
-       (if (and (if-let [c-req (:req cdef)]
-                  (c-req state side eid card targets) true) ; req is satisfied
+       (if (and (if-let [card-req (:req cdef)]
+                  (card-req state side eid card targets) true) ; req is satisfied
                 (not (and (has-subtype? card "Current")
                           (get-in @state [side :register :cannot-play-current])))
                 (not (and (has-subtype? card "Run")
@@ -102,7 +102,7 @@
    (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
    (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
    (let [active-player (get-in @state [:active-player])
-         n (+ n (or (get-in @state [:bonus :draw]) 0))
+         n (+ n (get-in @state [:bonus :draw] 0))
          draws-wanted n
          draws-after-prevent (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
                                   (min n (remaining-draws state side))
@@ -122,7 +122,7 @@
              (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
              (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
            (effect-completed state side eid))
-         (when (s-zero? (remaining-draws state side))
+         (when (safe-zero? (remaining-draws state side))
            (prevent-draw state side))))
      (when (< draws-after-prevent draws-wanted)
        (let [prevented (- draws-wanted draws-after-prevent)]
@@ -489,7 +489,7 @@
     (-> (if-let [costfun (:advancement-cost-bonus (card-def card))]
           (+ advancementcost (costfun state side (make-eid state) card nil))
           advancementcost)
-        (+ (or (get-in @state [:bonus :advancement-cost]) 0))
+        (+ (get-in @state [:bonus :advancement-cost] 0))
         (max 0))))
 
 (defn update-advancement-cost

@@ -18,21 +18,19 @@
 
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
-  [state side cost]
-  (let [c-type (first cost)
-        amount (last cost)]
-    (when-not (or (some #(= c-type %) [:memory :net-damage])
-                  (and (= c-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
-                  (and (= c-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
-                  (and (= c-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
-                  (and (= c-type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
-                  (and (= c-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
-                  (and (= c-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
-                  (and (= c-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                                  (all-active-installed state :runner))) amount) 0))
-                  (and (= c-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
-                  (>= (- (or (get-in @state [side c-type]) -1 ) amount) 0))
-      "Unable to pay")))
+  [state side [[cost-type amount] cost]]
+  (when-not (or (some #(= cost-type %) [:memory :net-damage])
+                (and (= cost-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
+                (and (= cost-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
+                (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
+                (and (= cost-type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
+                (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
+                (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
+                (and (= cost-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
+                                                                     (all-active-installed state :runner))) amount) 0))
+                (and (= cost-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
+                (>= (- (get-in @state [side cost-type] -1) amount) 0))
+    "Unable to pay"))
 
 (defn can-pay?
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
@@ -203,7 +201,7 @@
     (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]
           (+ cost (rezfun state side (make-eid state) card nil))
           cost)
-        (+ (or (get-in @state [:bonus :cost]) 0))
+        (+ (get-in @state [:bonus :cost] 0))
         (max 0))))
 
 (defn run-cost-bonus [state side n]
@@ -220,7 +218,7 @@
     (-> (if-let [trashfun (:trash-cost-bonus (card-def card))]
           (+ trash (trashfun state side (make-eid state) card nil))
           trash)
-        (+ (or (get-in @state [:bonus :trash]) 0))
+        (+ (get-in @state [:bonus :trash] 0))
         (max 0))))
 
 (defn install-cost-bonus [state side n]

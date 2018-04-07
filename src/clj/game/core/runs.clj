@@ -370,10 +370,10 @@
   title-fn: a function taking a card map being accessed and returning a string to print as the card's title, e.g.,
       'an unseen card from R&D' for an R&D run.
   already-accessed: a set of cards already accessed from this zone or its root."
-  [state c-zone label amount select-fn title-fn already-accessed]
+  [state card-zone label amount select-fn title-fn already-accessed]
   (let [get-root-content (fn [state]
-                           (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers c-zone :content])))
-        server-name (central->name c-zone)
+                           (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers card-zone :content])))
+        server-name (central->name card-zone)
         unrezzed-upgrade (str "Unrezzed upgrade in " server-name)
         card-from (str "Card from " label)]
     {:delayed-completion true
@@ -627,7 +627,7 @@
                              cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
                              n (count cards)]
                          ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
-                         (if (or (s-zero? (get-in @state [:run :max-access]))
+                         (if (or (safe-zero? (get-in @state [:run :max-access]))
                                  (empty? cards))
                            (system-msg state side "accessed no cards during the run")
                            (do (when (:run @state)
@@ -725,7 +725,7 @@
 
 (defn jack-out-prevent
   [state side]
-  (swap! state update-in [:jack-out :jack-out-prevent] #(inc (or % 0)))
+  (swap! state update-in [:jack-out :jack-out-prevent] (fnil inc 0))
   (prevent-jack-out state side))
 
 (defn- resolve-jack-out

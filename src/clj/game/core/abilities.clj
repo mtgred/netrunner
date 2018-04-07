@@ -15,12 +15,12 @@
     (should-trigger? state side (make-eid state) card targets ability))
   ([state side eid card targets {:keys [req optional psi trace] :as ability}]
    (when ability
-     (let [s-t? (partial should-trigger? state side eid card targets)]
+     (let [partial-should-trigger? (partial should-trigger? state side eid card targets)]
        (cond
          req (req state side eid card targets)
-         optional (s-t? optional)
-         psi (s-t? psi)
-         trace (s-t? trace)
+         optional (partial-should-trigger? optional)
+         psi (partial-should-trigger? psi)
+         trace (partial-should-trigger? trace)
          :else true)))))
 
 (defn can-trigger?
@@ -247,8 +247,8 @@
 (defn- print-msg
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets cost-str]
-  (when-let [a-msg (:msg ability)]
-    (when-let [desc (if (string? a-msg) a-msg (a-msg state side eid card targets))]
+  (when-let [ability-msg (:msg ability)]
+    (when-let [desc (if (string? ability-msg) ability-msg (ability-msg state side eid card targets))]
       (system-msg state (to-keyword (:side card))
                   (str (build-spend-msg cost-str "use")
                        (:title card) (when desc (str " to " desc)))))))
@@ -256,8 +256,8 @@
 (defn- do-effect
   "Trigger the effect"
   [state side {:keys [eid] :as ability} card targets]
-  (when-let [a-effect (:effect ability)]
-    (a-effect state side eid card targets)))
+  (when-let [ability-effect (:effect ability)]
+    (ability-effect state side eid card targets)))
 
 (defn- register-end-turn
   "Register :end-turn effect if present"
@@ -279,9 +279,9 @@
 ;;; Optional Ability
 (defn optional-ability
   "Shows a 'Yes/No' prompt and resolves the given ability if Yes is chosen."
-  ([state side card a-msg ability targets] (optional-ability state side (make-eid state) card a-msg ability targets))
-  ([state side eid card a-msg ability targets]
-   (show-prompt state side eid card a-msg ["Yes" "No"]
+  ([state side card message ability targets] (optional-ability state side (make-eid state) card message ability targets))
+  ([state side eid card message ability targets]
+   (show-prompt state side eid card message ["Yes" "No"]
                 #(let [yes-ability (:yes-ability ability)]
                   (if (and (= % "Yes")
                            yes-ability
@@ -537,7 +537,7 @@
   [state card {:keys [base priority] :as trace}]
   (trigger-event state :corp :pre-init-trace card)
   (let [base-trace (if (fn? base) (base state :corp (make-eid state) card nil) base)
-        bonus (or (get-in @state [:bonus :trace]) 0)]
+        bonus (get-in @state [:bonus :trace] 0)]
     (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority (or priority 2)})
     (show-trace-prompt state :corp card "Boost trace strength?"
                        #(init-trace state :corp card trace %) {:priority (or priority 2) :base base-trace :bonus bonus})))

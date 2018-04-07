@@ -10,7 +10,10 @@
 
 (defn abs [n] (max n (- n)))
 
-(defn s-zero? [n] ((fnil zero? 1) n))
+(defn safe-zero?
+  "`zero?` throws up on non numbers, so this is a safe version."
+  [n]
+  ((fnil zero? 1) n))
 
 (defn clean-forfeit
   "Takes a flat :forfeit in costs and adds a cost of 1.

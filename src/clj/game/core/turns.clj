@@ -174,7 +174,7 @@
   "End phase 1.2 and trigger appropriate events for the player."
   [state side args]
   (turn-message state side true)
-  (let [extra-clicks (or (get-in @state [side :extra-click-temp]) 0)]
+  (let [extra-clicks (get-in @state [side :extra-click-temp] 0)]
     (gain state side :click (get-in @state [side :click-per-turn]))
     (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
                     (do (when (= side :corp)
