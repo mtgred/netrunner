@@ -52,7 +52,7 @@
       (update-hosted! state side card)
       (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
             [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
-        (when (seq tail)
+        (when (not-empty tail)
           (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
 
 (defn move

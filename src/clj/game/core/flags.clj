@@ -61,7 +61,7 @@
 (defn has-flag?
   "Checks if the specified flag exists - used for Gene Conditioning Shoppe"
   [state side flag-type flag]
-  (seq (get-in @state [:stack flag-type flag])))
+  (not-empty (get-in @state [:stack flag-type flag])))
 
 (defn- clear-all-flags!
   "Clears all flags of specified type"

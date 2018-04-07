@@ -393,7 +393,7 @@
                                         (if (or (pos? amount) (< 1 (count from-root)))
                                           (continue-ability
                                             state side
-                                            (access-helper-hq-or-rd state c-zone label amount select-fn title-fn
+                                            (access-helper-hq-or-rd state card-zone label amount select-fn title-fn
                                                                     (conj already-accessed (first unrezzed)))
                                             card nil)
                                           (effect-completed state side eid)))
@@ -402,12 +402,12 @@
                           state side
                           {:delayed-completion true
                            :prompt (str "Choose an upgrade in " server-name " to access.")
-                           :choices {:req #(and (= (second (:zone %)) c-zone)
+                           :choices {:req #(and (= (second (:zone %)) card-zone)
                                                 (complement already-accessed))}
                            :effect (req (when-completed (handle-access state side [target])
                                                         (continue-ability
                                                           state side
-                                                          (access-helper-hq-or-rd state c-zone label amount select-fn title-fn
+                                                          (access-helper-hq-or-rd state card-zone label amount select-fn title-fn
                                                                                   (conj already-accessed target))
                                                           card nil)))}
                           card nil)))
@@ -421,11 +421,11 @@
                                         (if (or (< 1 amount) (not-empty from-root))
                                           (continue-ability
                                             state side
-                                            (access-helper-hq-or-rd state c-zone label (dec amount) select-fn title-fn
-                                                                    (if (-> @state :run :shuffled-during-access c-zone)
+                                            (access-helper-hq-or-rd state card-zone label (dec amount) select-fn title-fn
+                                                                    (if (-> @state :run :shuffled-during-access card-zone)
                                                                       ;; if the zone was shuffled because of the access,
                                                                       ;; the runner "starts over" excepting any upgrades that were accessed
-                                                                      (do (swap! state update-in [:run :shuffled-during-access] dissoc c-zone)
+                                                                      (do (swap! state update-in [:run :shuffled-during-access] dissoc card-zone)
                                                                           (set (filter #(= :servers (first (:zone %)))
                                                                                        already-accessed)))
                                                                       (conj already-accessed accessed)))
@@ -438,7 +438,7 @@
                                       (if (or (pos? amount) (< 1 (count (get-root-content state))))
                                         (continue-ability
                                           state side
-                                          (access-helper-hq-or-rd state c-zone label amount select-fn title-fn
+                                          (access-helper-hq-or-rd state card-zone label amount select-fn title-fn
                                                                   (conj already-accessed accessed))
                                           card nil)
                                         (effect-completed state side eid))))))}))
