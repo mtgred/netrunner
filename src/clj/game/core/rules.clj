@@ -1,19 +1,46 @@
 (in-ns 'game.core)
 
 (declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
-         in-corp-scored? prevent-draw resolve-steal-events make-result say show-prompt system-msg trash-cards untrashable-while-rezzed?
-         update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?)
+         in-corp-scored? prevent-draw resolve-steal-events make-result show-prompt system-say system-msg trash-cards
+         untrashable-while-rezzed? update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?
+         remove-old-current)
 
 ;;;; Functions for applying core Netrunner game rules.
 
 ;;; Playing cards.
+(defn- complete-play-instant
+  "Completes the play of the event / operation that the player can play for"
+  [state side eid {:keys [title] :as card} cost-str ignore-cost]
+  (let [c (move state side (assoc card :seen true) :play-area)
+        cdef (card-def card)]
+    (system-msg state side (str (if ignore-cost
+                                  "play "
+                                  (build-spend-msg cost-str "play"))
+                                title
+                                (when ignore-cost " at no cost")))
+    (play-sfx state side "play-instant")
+    (if (has-subtype? c "Current")
+      (do (doseq [s [:corp :runner]]
+            (remove-old-current state side s))
+          (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
+                moved-card (move state side c :current)]
+            (card-init state side eid moved-card {:resolve-effect true
+                                                  :init-data true})))
+      (do (resolve-ability state side (assoc cdef :eid eid) card nil)
+          (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
+            (move state side c :discard))
+          (when (has-subtype? card "Terminal")
+            (lose state side :click (-> @state side :click))
+            (swap! state assoc-in [:corp :register :terminal] true))))
+    (trigger-event state side (if (= side :corp) :play-operation :play-event) c)))
+
 (defn play-instant
   "Plays an Event or Operation."
   ([state side card] (play-instant state side (make-eid state) card nil))
   ([state side eid? card?] (if (:eid eid?)
                              (play-instant state side eid? card? nil)
                              (play-instant state side (make-eid state) eid? card?)))
-  ([state side eid {:keys [title] :as card} {:keys [targets ignore-cost extra-cost no-additional-cost]}]
+  ([state side eid card {:keys [targets ignore-cost extra-cost no-additional-cost]}]
    (swap! state update-in [:bonus] dissoc :play-cost)
    (trigger-event state side :pre-play-instant card)
    (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
@@ -42,37 +69,12 @@
                           (not (can-run? state :runner))))
                 (not (and (has-subtype? card "Priority")
                           (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
-         (if-let [cost-str (pay state side card (if ignore-cost 0 total-cost) {:action :play-instant})]
-           (let [c (move state side (assoc card :seen true) :play-area)]
-             (system-msg state side (str (if ignore-cost
-                                           "play "
-                                           (build-spend-msg cost-str "play"))
-                                         title
-                                         (when ignore-cost " at no cost")))
-             (play-sfx state side "play-instant")
-             (if (has-subtype? c "Current")
-               (do (doseq [s [:corp :runner]]
-                     (when-let [current (first (get-in @state [s :current]))] ; trash old current
-                       (if (get-in current [:special :rfg-when-trashed])
-                         (do
-                           (say state side {:user "__system__" :text (str (:title current) " is removed from the game.")})
-                           (move state (other-side side) current :rfg))
-                         (do
-                           (say state side {:user "__system__" :text (str (:title current) " is trashed.")})
-                           (trash state side current)))))
-                   (let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))
-                         moved-card (move state side c :current)]
-                     (card-init state side eid moved-card {:resolve-effect true
-                                                           :init-data true})))
-               (do (resolve-ability state side (assoc cdef :eid eid) card nil)
-                   (when-let [c (some #(when (= (:cid %) (:cid card)) %) (get-in @state [side :play-area]))]
-                     (move state side c :discard))
-                   (when (has-subtype? card "Terminal")
-                     (lose state side :click (-> @state side :click))
-                     (swap! state assoc-in [:corp :register :terminal] true))))
-             (trigger-event state side (if (= side :corp) :play-operation :play-event) c))
-           ;; could not pay the card's price; mark the effect as being over.
-           (effect-completed state side eid card))
+         ;; Wait on pay-sync to finish before triggering instant-effect
+         (when-completed (pay-sync state side card (if ignore-cost 0 total-cost) {:action :play-instant})
+                         (if-let [cost-str async-result]
+                           (complete-play-instant state side eid card cost-str ignore-cost)
+                           ;; could not pay the card's price; mark the effect as being over.
+                           (effect-completed state side eid card)))
          ;; card's req was not satisfied; mark the effect as being over.
          (effect-completed state side eid card))))))
 

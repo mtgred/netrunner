@@ -542,6 +542,37 @@
         (prompt-select :corp iwall)
         (is (= 4 (:advance-counter (refresh iwall))) "Jemison placed 4 advancements")))))
 
+(deftest jemison-24-intimidation
+  ;; Test Jemison - 24/7 - Armed Intimidation combination
+  ;; Expected result: 24/7 causes Forfeit, Jemison places counters, AI triggers
+  (do-game
+    (new-game
+      (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success."
+                 [(qty "Armed Intimidation" 1) (qty "Hostile Takeover" 1)
+                  (qty "24/7 News Cycle" 1) (qty "Ice Wall" 1)])
+      (default-runner))
+    (play-and-score state "Hostile Takeover")
+    (is (= 1 (:agenda-point (get-corp))) "Corp has 1 agenda points from Hostile Takeover")
+    (is (= 12 (:credit (get-corp))) "Corp has 12 credits after scoring Hostile Takeover with play-score")
+    (play-and-score state "Armed Intimidation")
+    (prompt-choice :runner "Take 2 tags")
+    (is (= 3 (:agenda-point (get-corp))) "Corp has 3 agenda points from HT + Armed Intimidation")
+    (is (= 2 (:tag (get-runner))) "Runner took 2 tags from AI")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "24/7 News Cycle")
+    (prompt-select :corp (get-scored state :corp 0))        ; select HT to forfeit
+
+    (let [ice-wall (get-ice state :hq 0)]
+      (prompt-select :corp ice-wall)                        ; The Jemison forfeit triggers
+      (is (= 2 (:advance-counter (refresh ice-wall))) "Ice Wall has 2 advancement counters from HT forfeit"))
+
+    (prompt-select :corp (get-scored state :corp 0))        ; select AI to trigger
+    (prompt-choice :runner "Take 2 tags")                   ; First runner has prompt
+    (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the delayed-completion")))
+
 (deftest jesminder-sareen-ability
   ;; Jesminder Sareen - avoid tags only during a run
   (do-game

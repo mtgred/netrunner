@@ -166,6 +166,16 @@
       (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
         (deactivate state :corp new-stolen)))))
 
+(defn remove-old-current
+  "Removes the old current when a new one is played, or an agenda is stolen / scored"
+  [state side current-side]
+  (when-let [current (first (get-in @state [current-side :current]))] ; trash old current
+    (if (get-in current [:special :rfg-when-trashed])
+      (do (system-say state side (str (:title current) " is removed from the game."))
+          (move state (other-side side) current :rfg))
+      (do (system-say state side (str (:title current) " is trashed."))
+          (trash state side current)))))
+
 ;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon
   "Adds an icon to a card. E.g. a Femme Fatale token.

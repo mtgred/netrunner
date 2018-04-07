@@ -1887,12 +1887,12 @@
     (play-from-hand state :corp "Success")
     (prompt-select :corp (get-in (get-corp) [:scored 0]))
     (let [gto (get-content state :remote1 0)]
-      ;; Prompt for Success
-      (prompt-select :corp (refresh gto))
-      (is (= 5 (:advance-counter (refresh gto))) "Advance 5 times from Success")
       ;; Prompt for Jemison
       (prompt-select :corp (refresh gto))
-      (is (= 9 (:advance-counter (refresh gto))) "Added 4 counters from Jemison trigger"))))
+      (is (= 4 (:advance-counter (refresh gto))) "Added 4 counters from Jemison trigger")
+      ;; Prompt for Success
+      (prompt-select :corp (refresh gto))
+      (is (= (+ 4 5) (:advance-counter (refresh gto))) "Advance 5 times from Success"))))
 
 (deftest successful-demonstration
   ;; Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits
