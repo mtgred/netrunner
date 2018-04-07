@@ -12,7 +12,7 @@
   (do-game
     (new-game
       (make-deck "Weyland Consortium: Builder of Nations"
-                 [(qty "PAD Campaign" 1) (qty "The Cleaners" 1) (qty "Pup" 3)])
+                 [(qty "PAD Campaign" 1) (qty "The Cleaners" 1) (qty "Pup" 3) (qty "Oaktown Renovation" 1)])
       (make-deck "419: Amoral Scammer" []))
     (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
     (play-from-hand state :corp "Pup" "HQ")
@@ -34,6 +34,11 @@
     (prompt-choice :runner "Yes")
     (prompt-choice :corp "No")
     (is (last-log-contains? state "exposes The Cleaners") "Installed card was exposed")
+    (take-credits state :corp)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
+    (is (empty? (:prompt (get-corp))) "Cannot expose faceup agendas")
     (take-credits state :corp)
     (take-credits state :runner)
 
