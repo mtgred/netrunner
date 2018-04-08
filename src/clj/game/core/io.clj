@@ -183,6 +183,15 @@
 (defn command-roll [state side value]
   (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value)))))
 
+(defn command-undo-click
+  "Resets the game state back to start of the click"
+  [state side]
+  (when-let [click-state (:click-state @state)]
+    (when (= (:active-player @state) side)
+      (reset! state (dissoc (assoc click-state :log (:log @state) :turn-state click-state) :run))
+      (doseq [s [:runner :corp]]
+        (toast state s "Game reset to start of click")))))
+
 (defn command-undo-turn
   "Resets the entire game state to how it was at end-of-turn if both players agree"
   [state side]
@@ -277,6 +286,7 @@
                                                                {:title "/trace command" :side %2}
                                                                {:base (max 0 value)
                                                                 :msg "resolve successful trace effect"}))
+          "/undo-click" #(command-undo-click %1 %2)
           "/undo-turn"  #(command-undo-turn %1 %2)
           nil)))))
 

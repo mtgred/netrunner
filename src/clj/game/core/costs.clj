@@ -106,7 +106,8 @@
   ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
   ([state side eid card action costs cost]
    (case (first cost)
-     :click (do (trigger-event state side
+     :click (do (swap! state assoc :click-state (dissoc @state :log))
+                (trigger-event state side
                                (if (= side :corp) :corp-spent-click :runner-spent-click)
                                (first (keep :action action)) (:click (into {} costs)))
                 (swap! state assoc-in [side :register :spent-click] true)
