@@ -1458,8 +1458,7 @@
 
    "The All-Seeing I"
    (let [trash-all-resources {:player :runner
-                              :effect (req (doseq [resource (get-in runner [:rig :resource])]
-                                             (trash state side resource)))
+                              :effect (req (trash-cards state side (get-in runner  [:rig :resource])))
                               :msg (msg "trash all resources")}]
        {:req (req tagged)
         :delayed-completion true

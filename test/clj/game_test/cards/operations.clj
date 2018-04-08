@@ -1910,6 +1910,31 @@
     (play-from-hand state :corp "Successful Demonstration")
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
 
+(deftest the-all-seeing-i-jarogniew-mercs
+  ;; The All-Seeing I should not trash Jarogniew Mercs if there are other installed resources
+  (do-game
+    (new-game (default-corp [(qty "The All-Seeing I" 4)])
+              (default-runner [(qty "Jarogniew Mercs" 2) (qty "Same Old Thing" 2)]))
+    (letfn [(res [] (count (get-in (get-runner) [:rig :resource])))]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Same Old Thing")
+      (play-from-hand state :runner "Jarogniew Mercs")
+      (take-credits state :runner)
+      (is (= 2 (res)) "There are two installed resources")
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 1 (res)) "Jarogniew Mercs still installed")
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 0 (res)) "There are no installed resources")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Jarogniew Mercs") ;; Testing if order matters
+      (play-from-hand state :runner "Same Old Thing")
+      (take-credits state :runner)
+      (is (= 2 (res)) "There are two installed resources")
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 1 (res)) "Jarogniew Mercs still installed")
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 0 (res)) "There are no installed resources"))))
+
 (deftest threat-assessment
   ;; Threat Assessment - play only if runner trashed a card last turn, move a card to the stack or take 2 tags
   (do-game

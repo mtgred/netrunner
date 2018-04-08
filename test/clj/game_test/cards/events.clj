@@ -1299,6 +1299,24 @@
     (is (= 4 (count (:discard (get-runner)))) "All 3 cards in Grip trashed by Scorched Earth")
     (is (= 3 (count (:deck (get-runner)))) "No cards drawn from I've Had Worse")))
 
+(deftest ive-had-worse-apocalypse-hostile-infrastructure
+  ;; I've Had Worse - Will save you if you apocalypse away a lot of cards vs Hostile Infrastructure
+  (do-game
+    (new-game (default-corp [(qty "Hostile Infrastructure" 1) (qty "Ice Wall" 2)])
+              (default-runner [(qty "I've Had Worse" 3) (qty "Sure Gamble" 3) (qty "Apocalypse" 2)]))
+    (starting-hand state :runner ["I've Had Worse" "Apocalypse"])
+    (starting-hand state :corp ["Hostile Infrastructure" "Ice Wall" "Ice Wall"])
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (play-from-hand state :runner "Apocalypse")
+    (is (not (= "Flatline" (:reason @state))) "Win condition does not report flatline")))
+
 (deftest lawyer-up
   ;; Lawyer Up - Lose 2 tags and draw 3 cards
   (do-game
