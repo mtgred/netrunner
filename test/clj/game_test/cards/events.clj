@@ -1448,9 +1448,9 @@
 (deftest noble-path
   ;; The Noble Path - Prevents damage during run
   (do-game
-    (new-game (default-corp) (default-runner [(qty "The Noble Path" 1) (qty "Hedge Fund" 2)]))
+    (new-game (default-corp) (default-runner [(qty "The Noble Path" 1) (qty "Sure Gamble" 2)]))
     (let [hand-count #(count (:hand (get-runner)))]
-      (starting-hand state :runner ["The Noble Path" "Hedge Fund"])
+      (starting-hand state :runner ["The Noble Path" "Sure Gamble"])
       (take-credits state :corp)
 
       ;; Play The Noble Path and confirm it trashes remaining cards in hand
@@ -1460,7 +1460,7 @@
 
       ;; Put a card into hand so I can confirm it's not discarded by damage
       ;; Don't want to dealing with checking damage on a zero card hand
-      (starting-hand state :runner ["Hedge Fund"])
+      (starting-hand state :runner ["Sure Gamble"])
 
       (core/damage state :runner :net 1)
       (is (= 1 (hand-count)) "Damage was prevented")
