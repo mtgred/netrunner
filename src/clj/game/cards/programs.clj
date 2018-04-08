@@ -149,8 +149,8 @@
                             :effect (req (let [trashed targets
                                                ab {:req (req (some #(card-is? % :side :corp) trashed))
                                                    :prompt "Place virus counters on Consume?"
-                                                   :choices {:number (req  (count (filter #(card-is? % :side :corp) trashed)))
-                                                             :default (req 1)}
+                                                   :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
+                                                             :default (req (count (filter #(card-is? % :side :corp) trashed)))}
                                                    :msg (msg "places " (quantify target "virus counter") " on Consume")
                                                    :effect (effect (add-counter :runner card :virus target))}] 
                                            (resolve-ability state side eid ab card targets)))}}
