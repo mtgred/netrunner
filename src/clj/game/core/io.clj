@@ -184,12 +184,14 @@
   (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value)))))
 
 (defn command-undo-turn
-  "Resets the entire game state to how it was at end-of-turn."
-  [{:keys [gameid] :as state} _]
+  "Resets the entire game state to how it was at end-of-turn if both players agree"
+  [state side]
   (when-let [turn-state (:turn-state @state)]
-    (reset! state (assoc turn-state :turn-state turn-state))
-    (toast state :runner "Game reset to start of turn")
-    (toast state :corp "Game reset to start of turn")))
+    (swap! state assoc-in [side :undo-turn] true)
+    (when (and (-> @state :runner :undo-turn) (-> @state :corp :undo-turn))
+      (reset! state (assoc turn-state :log (:log @state) :turn-state turn-state))
+      (doseq [s [:runner :corp]]
+        (toast state s "Game reset to start of turn")))))
 
 (defn command-close-prompt [state side]
   (when-let [fprompt (-> @state side :prompt first)]

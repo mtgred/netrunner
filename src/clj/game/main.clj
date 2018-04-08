@@ -150,7 +150,7 @@
   "Adds a message from a user to the chat log."
   [state side user msg]
   (when (and state side)
-    (core/say state side {:user user :text msg})))
+    (core/say state side {:user (select-keys user [:username :emailhash]) :text msg})))
 
 (defn handle-notification
   [state text]

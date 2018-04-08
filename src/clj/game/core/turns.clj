@@ -197,7 +197,11 @@
 (defn start-turn
   "Start turn."
   [state side args]
-  (swap! state assoc :turn-state @state)
+
+  ; Functions to set up state for undo-turn functionality
+  (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
+  (swap! state assoc :turn-state (dissoc @state :log))
+
   (when (= side :corp)
     (swap! state update-in [:turn] inc))
 
