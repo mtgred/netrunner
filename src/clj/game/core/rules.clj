@@ -438,10 +438,9 @@
   ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args}]
    (swap! state update-in [:trash] dissoc :trash-list)
    (when-completed (prevent-trash state side card args)
-                   (let [c (first (get-in @state [:trash :trash-list]))]
-                     (if c
-                       (resolve-trash state side eid c args)
-                       (effect-completed state side eid))))))
+                   (if-let [c (first (get-in @state [:trash :trash-list]))]
+                     (resolve-trash state side eid c args)
+                     (effect-completed state side eid)))))
 
 (defn trash-cards
   ([state side cards] (trash-cards state side (make-eid state) cards nil))
