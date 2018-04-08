@@ -161,6 +161,31 @@
       (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
       (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap"))))
 
+(deftest apocalypse-hostile-infrastructure
+  ;; Apocalypse with Hostile Infrastructure - should take damage equal to 2x cards on the table
+  (do-game
+    (new-game
+      (default-corp [(qty "Hostile Infrastructure" 2) (qty "Ice Wall" 2)])
+      (default-runner [(qty "Apocalypse" 1) (qty "Sure Gamble" 9)]))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (core/rez state :corp (get-content state :remote1 0) {:ignore-cost true})
+    (core/rez state :corp (get-content state :remote4 0) {:ignore-cost true})
+    (take-credits state :corp)
+    (core/draw state :runner 5)
+    (is (= 10 (count (:hand (get-runner)))) "Runner has 9 cards in hand")
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Apocalypse")
+    (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
+    (is (= 4 (count (:discard (get-corp)))) "4 Corp cards in Archives")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has one card in hand")
+    (is (= 9 (count (:discard (get-runner)))) "There are 9 cards in heap")))
+
 (deftest apocalypse-in-play-ability
   ;; Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains
   (do-game
