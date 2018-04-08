@@ -40,14 +40,15 @@
                                      :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
-   (let [corp-trash {:effect (req (let [ai (all-installed state :corp)
+   (let [corp-trash {:delayed-completion true
+                     :effect (req (let [ai (all-installed state :corp)
                                         onhost (filter #(= '(:onhost) (:zone %)) ai)
                                         unhosted (->> ai
                                                      (remove #(= '(:onhost) (:zone %)))
                                                      (sort-by #(vec (:zone %)))
                                                      (reverse))
                                         allcorp (concat onhost unhosted)] 
-                                    (trash-cards state :runner allcorp)))}
+                                    (trash-cards state :runner eid allcorp)))}
          runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
                                              ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
                                              hostedcards (filter ishosted installedcards)

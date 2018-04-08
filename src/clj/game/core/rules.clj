@@ -445,12 +445,13 @@
 
 (defn trash-cards
   ([state side cards] (trash-cards state side (make-eid state) cards nil))
+  ([state side eid cards] (trash-cards state side eid cards nil))
   ([state side eid cards {:keys [suppress-event] :as args}]
    (swap! state update-in [:trash] dissoc :trash-list)
    (letfn [(trashrec [cs]
              (if (not-empty cs)
                (when-completed (prevent-trash state side (get-card state (first cs)) args)
-                               (trashrec (next cs)))
+                               (trashrec (rest cs)))
                (let [trashlist (get-in @state [:trash :trash-list])
                      args (assoc args :suppress-event true)]
                  (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) trashlist)
