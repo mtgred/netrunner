@@ -70,10 +70,7 @@
       :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
       :effect (req (when-completed
                      (resolve-ability state side corp-trash card nil)
-                     (continue-ability state side runner-facedown card nil)
-                     )
-
-                   )})
+                     (continue-ability state side runner-facedown card nil)))})
 
    "Because I Can"
    (run-event
