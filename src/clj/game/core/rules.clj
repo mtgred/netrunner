@@ -450,15 +450,17 @@
    (swap! state update-in [:trash] dissoc :trash-list)
    (letfn [(trashrec [cs]
              (if (not-empty cs)
-               (when-completed (prevent-trash state side (get-card state (first cs)) args)
+               (when-completed (resolve-trash-end state side (get-card state (first cs)) args)
                                (trashrec (rest cs)))
-               (let [trashlist (get-in @state [:trash :trash-list])
-                     args (assoc args :suppress-event true)]
+               (effect-completed state side eid)))
+           (preventrec [cs]
+             (if (not-empty cs)
+               (when-completed (prevent-trash state side (get-card state (first cs)) args)
+                               (preventrec (rest cs)))
+               (let [trashlist (get-in @state [:trash :trash-list])]
                  (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) trashlist)
-                                 (do (doseq [c trashlist]
-                                       (resolve-trash state side eid (get-card state  c) args))
-                                     (effect-completed state side eid))))))]
-     (trashrec cards))))
+                                 (trashrec trashlist)))))]
+     (preventrec cards))))
 
 (defn- resolve-trash-no-cost
   [state side card & {:keys [seen]
