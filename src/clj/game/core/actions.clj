@@ -171,7 +171,7 @@
           (swap! state update-in [side :selected 0 :cards]
                  (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))
         (let [selected (get-in @state [side :selected 0])]
-          (when (= (count (:cards selected)) (:max selected 1))
+          (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side)))))))
 
 (defn- do-play-ability [state side card ability targets]
@@ -192,7 +192,7 @@
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
-             {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
+             {:msg "take 1 [Recurring Credits]" :req (req (pos? (:rec-counter card)))
               :effect (req (add-prop state side card :rec-counter -1)
                              (gain state side :credit 1)
                            (when (has-subtype? card "Stealth")
