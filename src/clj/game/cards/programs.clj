@@ -144,6 +144,24 @@
                    :msg (msg "install " (:title target))
                    :effect (req (when (can-pay? state side nil :credit (:cost target))
                                   (runner-install state side target)))}]})
+   "Consume"
+   {:events {:runner-trash {:req (req (= (:side target) "Corp"))
+                            :optional {:prompt "Place a virus counter on Consume?"
+                                       :yes-ability
+                                       {:effect (effect (add-counter :runner card :virus 1)
+                                                (system-msg :runner (str "places 1 virus counter on Consume")))}}}}
+    :abilities [{:cost [:click 1]
+                 :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
+                              (update! state side (assoc-in card [:counter :virus] 0))
+                              (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
+                                        (doseq [h hiveminds]
+                                               (update! state side (assoc-in h [:counter :virus] 0)))))
+                 :msg (msg (let [local-virus (get-in card [:counter :virus])
+                                 global-virus (get-virus-counters state side card)
+                                 hivemind-virus (- global-virus local-virus)]
+                             (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
+                             (when (pos? hivemind-virus)
+                                   (str " (and " hivemind-virus " from Hivemind)")))))}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
@@ -562,6 +580,22 @@
     :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
                  :effect (effect (damage-prevent :net 1))}]}
 
+   "Nyashia"
+   {:data {:counter {:power 3}}
+    :events {:pre-access {:delayed-completion true
+                          :req (req (and (pos? (get-in card [:counter :power] 0))
+                                         (= target :rd)))
+                          :effect (effect (show-wait-prompt :corp "Runner to use Nyashia")
+                                          (continue-ability
+                                            {:optional
+                                             {:prompt "Spend a power counter on Nyashia to access 1 additional card?"
+                                              :yes-ability {:msg "access 1 additional card from R&D"
+                                                            :effect (effect (access-bonus 1)
+                                                                            (add-counter card :power -1)
+                                                                            (clear-wait-prompt :corp))}
+                                              :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                            card nil))}}}
+
    "Origami"
    {:effect (effect (gain :hand-size-modification
                           (dec (* 2 (count (filter #(= (:title %) "Origami")
@@ -953,7 +987,6 @@
                              (continue-ability state side
                                                (expose-and-maybe-bounce target)
                                                card nil)))})
-           
            (expose-and-maybe-bounce [chosen-subtype]
              {:choices {:req #(and (ice? %) (not (rezzed? %)))}
               :delayed-completion true

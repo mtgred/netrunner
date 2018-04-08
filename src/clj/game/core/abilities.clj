@@ -386,7 +386,7 @@
                     (if-let [message (:prompt ability)]
                       message
                       (if-let [m (get-in ability [:choices :max])]
-                        (str "Select up to " m " targets for " (:title card))
+                        (str "Select " (if all "" "up to ") m " targets for " (:title card))
                         (str "Select a target for " (:title card))))
                     (if all ["Hide"] ["Done"])
                     (if all

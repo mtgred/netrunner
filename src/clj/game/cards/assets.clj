@@ -836,6 +836,22 @@
     :events {:corp-turn-begins {:effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}}}
 
+   "Malia Z0L0K4"
+   (let [re-enable-target (req (when-let [malia-target (:malia-target card)]
+                                 (system-msg state side (str "uses "  (:title card) " to unblank "
+                                                             (card-str state malia-target)))
+                                 (enable-card state :runner (get-card state malia-target))
+                                 (when-let [reactivate-effect (:reactivate (card-def malia-target))]
+                                   (resolve-ability state :runner reactivate-effect (get-card state malia-target) nil))))]
+     {:effect (effect (update! (assoc card :malia-target target))
+                      (disable-card :runner target))
+      :msg (msg (str "blank the text box of " (card-str state target)))
+
+      :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
+                           (not (has-subtype? % "Virtual")))}
+      :leave-play re-enable-target
+      :move-zone re-enable-target})
+   
    "Marilyn Campaign"
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
@@ -1164,7 +1180,8 @@
                  :counter-cost [:credit 2]
                  :msg "gain 2 [Credits]"
                  :effect (req (gain state :corp :credit 2)
-                              (when (= (get-in card [:counter :credit]) 0) (trash state :corp card)))}]}
+                              (when (= (get-in card [:counter :credit]) 0)
+                                (trash state :corp card)))}]}
 
    "Project Junebug"
    (advance-ambush 1 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
@@ -1234,6 +1251,22 @@
                                                                      (move state side target :hand)))}
                                                    card nil)))}
                                  card nil)))}]}
+
+   "Rashida Jaheem"
+   {:events {:corp-turn-begins {:delayed-completion true
+                                :effect (effect (show-wait-prompt :runner "Corp to use Rashida Jaheem")
+                                                (continue-ability
+                                                  {:optional
+                                                   {:prompt "Trash Rashida Jaheem to gain 3[Credits] and draw 3 cards?"
+                                                    :yes-ability {:msg "gain 3[Credits] and draw 3 cards"
+                                                                  :effect (effect (gain :credit 3)
+                                                                                  (draw 3)
+                                                                                  (trash card)
+                                                                                  (clear-wait-prompt :runner)
+                                                                                  (effect-completed eid))}
+                                                    :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                                                 (effect-completed eid))}}}
+                                                  card nil))}}}
 
    "Reality Threedee"
    (let [ability {:effect (req (gain state side :credit (if tagged 2 1)))
