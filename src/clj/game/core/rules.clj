@@ -391,7 +391,7 @@
   ([state side card] (trash state side (make-eid state) card nil))
   ([state side card args] (trash state side (make-eid state) card args))
   ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args} & targets]
-   (if (not (some #{:discard} zone))
+   (if (and card (not (some #{:discard} zone)))
      (cond
 
        (untrashable-while-rezzed? card)
@@ -434,7 +434,7 @@
   ([state side eid cards args & targets]
    (letfn [(trashrec [cs]
              (if (not-empty cs)
-               (when-completed (apply trash state side (first cs) args targets)
+               (when-completed (apply trash state side (get-card state (first cs)) args targets)
                                (trashrec (next cs)))
                (effect-completed state side eid)))]
      (trashrec cards))))

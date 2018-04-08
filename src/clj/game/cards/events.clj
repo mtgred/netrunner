@@ -42,15 +42,12 @@
    "Apocalypse"
    (let [corp-trash {:effect (req (let [ai (all-installed state :corp)
                                         onhost (filter #(= '(:onhost) (:zone %)) ai)
-                                        allcorp (->> ai
+                                        unhosted (->> ai
                                                      (remove #(= '(:onhost) (:zone %)))
                                                      (sort-by #(vec (:zone %)))
-                                                     (reverse))]
-                                    ; Trash hosted cards first so they don't get trashed twice
-                                    (doseq [c onhost]
-                                      (trash state side c))
-                                    (doseq [c allcorp]
-                                      (trash state side (get-card state c)))))}
+                                                     (reverse))
+                                        allcorp (concat onhost unhosted)] 
+                                    (trash-cards state :runner allcorp)))}
          runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
                                              ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
                                              hostedcards (filter ishosted installedcards)
