@@ -188,7 +188,7 @@
   [state side]
   (when-let [click-state (:click-state @state)]
     (when (= (:active-player @state) side)
-      (reset! state (dissoc (assoc click-state :log (:log @state) :turn-state click-state) :run))
+      (reset! state (dissoc (assoc click-state :log (:log @state) :click-state click-state) :run))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
 
