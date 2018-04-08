@@ -225,7 +225,7 @@
                                  {:label "Corp loses 1 [Credits]"
                                   :req (req (and (has-subtype? current-ice "Code Gate")
                                                  (rezzed? current-ice)))
-                                  :msg (msg "make the corp lose 1 [Credits]")
+                                  :msg (msg "make the Corp lose 1 [Credits]")
                                   :effect (effect (lose :corp :credit 1))}]})
 
    "Ankusa"
