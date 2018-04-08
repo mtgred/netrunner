@@ -165,7 +165,7 @@
   ;; Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
-              (default-runner [(qty "Logos" 3) (qty "Apocalypse" 3)]))
+              (default-runner [(qty "Logos" 1) (qty "Apocalypse" 1) (qty "Origami" 2)]))
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
@@ -173,20 +173,24 @@
     (play-from-hand state :runner "Logos")
     (is (= 1 (:hand-size-modification (get-runner))) "Hand-size increased from Logos")
     (is (= 5 (:memory (get-runner))) "Memory increased from Logos")
-    (core/gain state :runner :click 1 :credit 2)
+    (play-from-hand state :runner "Origami")
+    (play-from-hand state :runner "Origami")
+    (is (= 5 (:hand-size-modification (get-runner))) "Hand-size increased from Logos and Origami")
+    (is (= 3 (:memory (get-runner))) "Memory decreased from Origamis")
+    (core/gain state :runner :click 3 :credit 2)
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Apocalypse")
     (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
     (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
-    (let [logos (get-in @state [:runner :rig :facedown 0])]
+    (let [logos (find-card "Logos" (get-in (get-runner) [:rig :facedown]))]
       (is (:facedown (refresh logos)) "Logos is facedown")
-      (is (= 0 (:hand-size-modification (get-runner))) "Hand-size reset with Logos facedown")
-      (is (= 4 (:memory (get-runner))) "Memory reset with Logos facedown"))))
+      (is (= 0 (:hand-size-modification (get-runner))) "Hand-size reset with Logos and Origami facedown")
+      (is (= 4 (:memory (get-runner))) "Memory reset with Logos and Origami facedown"))))
 
 (deftest apocalypse-turn-facedown
-  ;; Apocalypse - Turn Runner cards facedown without firing their leave play effects
+  ;; Apocalypse - Turn Runner cards facedown without firing their trash effects
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
               (default-runner [(qty "Tri-maf Contact" 3) (qty "Apocalypse" 3)]))

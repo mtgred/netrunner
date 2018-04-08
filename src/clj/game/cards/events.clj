@@ -40,35 +40,42 @@
                                      :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
-   {:req (req (and (some #{:hq} (:successful-run runner-reg))
-                   (some #{:rd} (:successful-run runner-reg))
-                   (some #{:archives} (:successful-run runner-reg))))
-                           ;; trash cards from right to left
-                           ;; otherwise, auto-killing servers would move the cards to the next server
-                           ;; so they could no longer be trashed in the same loop
-    :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
-    :effect (req (let [ai (all-installed state :corp)
-                       onhost (filter #(= '(:onhost) (:zone %)) ai)
-                       allcorp (->> ai
-                                    (remove #(= '(:onhost) (:zone %)))
-                                    (sort-by #(vec (:zone %)))
-                                    (reverse))]
-                   ; Trash hosted cards first so they don't get trashed twice
-                   (doseq [c onhost]
-                     (trash state side c))
-                   (doseq [c allcorp]
-                     (trash state side (get-card state c))))
+   (let [corp-trash {:effect (req (let [ai (all-installed state :corp)
+                                        onhost (filter #(= '(:onhost) (:zone %)) ai)
+                                        allcorp (->> ai
+                                                     (remove #(= '(:onhost) (:zone %)))
+                                                     (sort-by #(vec (:zone %)))
+                                                     (reverse))]
+                                    ; Trash hosted cards first so they don't get trashed twice
+                                    (doseq [c onhost]
+                                      (trash state side c))
+                                    (doseq [c allcorp]
+                                      (trash state side (get-card state c)))))}
+         runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
+                                             ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                                             hostedcards (filter ishosted installedcards)
+                                             nonhostedcards (remove ishosted installedcards)]
+                                         (doseq [oc hostedcards :let [c (get-card state oc)
+                                                                      c (deactivate state side c true)
+                                                                      c (assoc-in c [:facedown] true)]]
+                                           (update! state side c))
+                                         (doseq [oc nonhostedcards :let [c (get-card state oc)]]
+                                           (move state side c [:rig :facedown]))
+                                         (effect-completed state side eid)))}]
+     {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                     (some #{:rd} (:successful-run runner-reg))
+                     (some #{:archives} (:successful-run runner-reg))))
+      :delayed-completion true
+      ;; trash cards from right to left
+      ;; otherwise, auto-killing servers would move the cards to the next server
+      ;; so they could no longer be trashed in the same loop
+      :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
+      :effect (req (when-completed
+                     (resolve-ability state side corp-trash card nil)
+                     (continue-ability state side runner-facedown card nil)
+                     )
 
-                 (let [installedcards (all-active-installed state :runner)
-                       ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
-                       hostedcards (filter ishosted installedcards)
-                       nonhostedcards (remove ishosted installedcards)]
-                   (doseq [oc hostedcards :let [c (get-card state oc)
-                                                c (deactivate state side c true)
-                                                c (assoc-in c [:facedown] true)]]
-                     (update! state side c))
-                   (doseq [oc nonhostedcards :let [c (get-card state oc)]]
-                     (move state side c [:rig :facedown]))))}
+                   )})
 
    "Because I Can"
    (run-event
