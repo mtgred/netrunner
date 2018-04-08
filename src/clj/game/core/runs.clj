@@ -244,10 +244,10 @@
 
 (defn msg-handle-access
   ([state side card title]
-   (let [msg (str "accesses " title
-                  (when card
-                    (str " from " (->> card :zone (name-zone side)))))]
-     (system-msg state side msg))))
+   (let [message (str "accesses " title
+                      (when card
+                        (str " from " (->> card :zone (name-zone side)))))]
+     (system-msg state side message))))
 
 (defn- resolve-handle-access
   [state side eid c title]
@@ -370,10 +370,10 @@
   title-fn: a function taking a card map being accessed and returning a string to print as the card's title, e.g.,
       'an unseen card from R&D' for an R&D run.
   already-accessed: a set of cards already accessed from this zone or its root."
-  [state card-zone label amount select-fn title-fn already-accessed]
+  [state chosen-zone label amount select-fn title-fn already-accessed]
   (let [get-root-content (fn [state]
-                           (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers card-zone :content])))
-        server-name (central->name card-zone)
+                           (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers chosen-zone :content])))
+        server-name (central->name chosen-zone)
         unrezzed-upgrade (str "Unrezzed upgrade in " server-name)
         card-from (str "Card from " label)]
     {:delayed-completion true
@@ -393,7 +393,7 @@
                                         (if (or (pos? amount) (< 1 (count from-root)))
                                           (continue-ability
                                             state side
-                                            (access-helper-hq-or-rd state card-zone label amount select-fn title-fn
+                                            (access-helper-hq-or-rd state chosen-zone label amount select-fn title-fn
                                                                     (conj already-accessed (first unrezzed)))
                                             card nil)
                                           (effect-completed state side eid)))
@@ -402,12 +402,12 @@
                           state side
                           {:delayed-completion true
                            :prompt (str "Choose an upgrade in " server-name " to access.")
-                           :choices {:req #(and (= (second (:zone %)) card-zone)
+                           :choices {:req #(and (= (second (:zone %)) chosen-zone)
                                                 (complement already-accessed))}
                            :effect (req (when-completed (handle-access state side [target])
                                                         (continue-ability
                                                           state side
-                                                          (access-helper-hq-or-rd state card-zone label amount select-fn title-fn
+                                                          (access-helper-hq-or-rd state chosen-zone label amount select-fn title-fn
                                                                                   (conj already-accessed target))
                                                           card nil)))}
                           card nil)))
@@ -421,11 +421,11 @@
                                         (if (or (< 1 amount) (not-empty from-root))
                                           (continue-ability
                                             state side
-                                            (access-helper-hq-or-rd state card-zone label (dec amount) select-fn title-fn
-                                                                    (if (-> @state :run :shuffled-during-access card-zone)
+                                            (access-helper-hq-or-rd state chosen-zone label (dec amount) select-fn title-fn
+                                                                    (if (-> @state :run :shuffled-during-access chosen-zone)
                                                                       ;; if the zone was shuffled because of the access,
                                                                       ;; the runner "starts over" excepting any upgrades that were accessed
-                                                                      (do (swap! state update-in [:run :shuffled-during-access] dissoc card-zone)
+                                                                      (do (swap! state update-in [:run :shuffled-during-access] dissoc chosen-zone)
                                                                           (set (filter #(= :servers (first (:zone %)))
                                                                                        already-accessed)))
                                                                       (conj already-accessed accessed)))
@@ -438,7 +438,7 @@
                                       (if (or (pos? amount) (< 1 (count (get-root-content state))))
                                         (continue-ability
                                           state side
-                                          (access-helper-hq-or-rd state card-zone label amount select-fn title-fn
+                                          (access-helper-hq-or-rd state chosen-zone label amount select-fn title-fn
                                                                   (conj already-accessed accessed))
                                           card nil)
                                         (effect-completed state side eid))))))}))

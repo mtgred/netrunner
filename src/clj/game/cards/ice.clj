@@ -79,9 +79,9 @@
 
 (defn power-counter-ability
   "Does specified ability using a power counter."
-  [{:keys [label msg] :as ability}]
+  [{:keys [label message] :as ability}]
   (assoc ability :label (str "Hosted power counter: " label)
-                 :msg (str msg " using 1 power counter")
+                 :msg (str message " using 1 power counter")
                  :counter-cost [:power 1]))
 
 (defn do-psi

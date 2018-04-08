@@ -247,8 +247,8 @@
 (defn- print-msg
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets cost-str]
-  (when-let [ability-msg (:msg ability)]
-    (when-let [desc (if (string? ability-msg) ability-msg (ability-msg state side eid card targets))]
+  (when-let [message (:msg ability)]
+    (when-let [desc (if (string? message) message (message state side eid card targets))]
       (system-msg state (to-keyword (:side card))
                   (str (build-spend-msg cost-str "use")
                        (:title card) (when desc (str " to " desc)))))))
@@ -306,11 +306,11 @@
   3. the keyword :credit -- shows a numeric selection box with a max value equal to the player's credits.
   4. the keyword :counter -- shows a numeric selection box with a max value equal to the :counter of the card.
   5. a map with keyword :number -- shows a numeric selection box with max value equal to the :number of the map."
-  ([state side card a-msg choices ability] (prompt! state side card a-msg choices ability nil))
-  ([state side card a-msg choices ability args]
+  ([state side card message choices ability] (prompt! state side card message choices ability nil))
+  ([state side card message choices ability args]
    (letfn [(wrap-function [args kw]
             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
-     (show-prompt state side (:eid ability) card a-msg choices #(resolve-ability state side ability card [%])
+     (show-prompt state side (:eid ability) card message choices #(resolve-ability state side ability card [%])
                   (-> args
                       (wrap-function :cancel-effect)
                       (wrap-function :end-effect))))))
@@ -327,11 +327,11 @@
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
   when the prompt is resolved. All prompts flow through this method."
-  ([state side card a-msg choices f] (show-prompt state side (make-eid state) card a-msg choices f nil))
-  ([state side card a-msg choices f args] (show-prompt state side (make-eid state) card a-msg choices f args))
-  ([state side eid card a-msg choices f
+  ([state side card message choices f] (show-prompt state side (make-eid state) card message choices f nil))
+  ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
+  ([state side eid card message choices f
     {:keys [priority prompt-type show-discard cancel-effect end-effect] :as args}]
-   (let [prompt (if (string? a-msg) a-msg (a-msg state side nil card nil))
+   (let [prompt (if (string? message) message (message state side nil card nil))
          newitem {:eid eid
                   :msg prompt
                   :choices choices
@@ -352,9 +352,9 @@
 (defn- show-trace-prompt
   "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
   Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
-  ([state side card a-msg f args] (show-trace-prompt state side (make-eid state) card a-msg f args))
-  ([state side eid card a-msg f {:keys [priority base bonus strength] :as args}]
-   (let [prompt (if (string? a-msg) a-msg (a-msg state side nil card nil))
+  ([state side card message f args] (show-trace-prompt state side (make-eid state) card message f args))
+  ([state side eid card message f {:keys [priority base bonus strength] :as args}]
+   (let [prompt (if (string? message) message (message state side nil card nil))
          newitem {:eid eid
                   :msg prompt
                   :choices :credit
@@ -383,8 +383,8 @@
                               :max (get-in ability [:choices :max])
                               :all all}))
        (show-prompt state side card
-                    (if-let [prompt (:prompt ability)]
-                      prompt
+                    (if-let [message (:prompt ability)]
+                      message
                       (if-let [m (get-in ability [:choices :max])]
                         (str "Select up to " m " targets for " (:title card))
                         (str "Select a target for " (:title card))))
@@ -419,10 +419,10 @@
   "Shows a 'Waiting for ...' prompt to the given side with the given message.
   The prompt cannot be closed except by a later call to clear-wait-prompt.
   The prompt has default priority 1, but can be overridden."
-  ([state side a-msg] (show-wait-prompt state side a-msg {:priority 1}))
-  ([state side a-msg {:keys [priority] :as args}]
-   (show-prompt state side nil (str "Waiting for " a-msg) nil
-                (fn [c] (system-msg state side (str "is waiting for " a-msg))) ; this function is never called, because the prompt has no button.
+  ([state side message] (show-wait-prompt state side message {:priority 1}))
+  ([state side message {:keys [priority] :as args}]
+   (show-prompt state side nil (str "Waiting for " message) nil
+                (fn [c] (system-msg state side (str "is waiting for " message))) ; this function is never called, because the prompt has no button.
                 {:priority priority :prompt-type :waiting})))
 
 (defn clear-wait-prompt
@@ -437,16 +437,16 @@
   "Calls show-prompt normally, but appends a 'roll d6' button to choices.
   If user chooses to roll d6, reveal the result to user and re-display
   the prompt without the 'roll d6 button'."
-  ([state side card a-msg other-choices f]
-   (show-prompt state side card a-msg other-choices f nil))
-  ([state side card a-msg other-choices f args]
+  ([state side card message other-choices f]
+   (show-prompt state side card message other-choices f nil))
+  ([state side card message other-choices f args]
    (let [dice-msg "Roll a d6",
          choices (conj other-choices dice-msg)]
-     (show-prompt state side card a-msg choices
+     (show-prompt state side card message choices
                   #(if (not= % dice-msg)
                      (f %)
                      (show-prompt state side card
-                                  (str a-msg " (Dice result: " (inc (rand-int 6)) ")")
+                                  (str message " (Dice result: " (inc (rand-int 6)) ")")
                                   other-choices f args))
                   args))))
 
@@ -548,18 +548,18 @@
    (move state side card :rfg)
    (continue-ability state side
                     {:show-discard  true
-                     :choices       {:max n
-                                     :req #(and (= (:side %) "Corp")
-                                                (= (:zone %) [:discard]))}
-                     :msg           (msg "shuffle "
-                                         (let [seen (filter :seen targets)
-                                               m (count (filter #(not (:seen %)) targets))]
-                                           (str (join ", " (map :title seen))
-                                                (when (pos? m)
-                                                  (str (when-not (empty? seen) " and ")
-                                                       (quantify m "unseen card")))))
-                                         " into R&D")
-                     :effect        (req (doseq [c targets] (move state side c :deck))
-                                         (shuffle! state side :deck))
+                     :choices {:max n
+                               :req #(and (= (:side %) "Corp")
+                                          (= (:zone %) [:discard]))}
+                     :msg (msg "shuffle "
+                               (let [seen (filter :seen targets)
+                                     m (count (filter #(not (:seen %)) targets))]
+                                 (str (join ", " (map :title seen))
+                                      (when (pos? m)
+                                        (str (when-not (empty? seen) " and ")
+                                             (quantify m "unseen card")))))
+                               " into R&D")
+                     :effect (req (doseq [c targets] (move state side c :deck))
+                                  (shuffle! state side :deck))
                      :cancel-effect (req (shuffle! state side :deck))}
                     card nil)))
