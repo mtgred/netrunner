@@ -1264,6 +1264,55 @@
         (core/rez state :corp enig)
         (is (= (:cid scg2) (-> (get-corp) :prompt first :card :cid)) "SCG did trigger for ICE protecting HQ")))))
 
+(deftest tempus
+  ;; Tempus - Trace^3, the runner chooses to lose 2 clicks or take 1 brain damage
+  (do-game
+    (new-game (default-corp [(qty "Tempus" 3)])
+              (default-runner [(qty "Sure Gamble" 3)]))
+    (starting-hand state :corp ["Tempus"])
+    (play-from-hand state :corp "Tempus" "New remote")
+    (take-credits state :corp)
+
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
+    (prompt-choice :runner "Lose [Click][Click]")
+    (is (= 1 (:click (get-runner))) "Runner loses 2 clicks")
+    (prompt-choice :runner "Yes") ; trash
+
+    (run-on state "Server 1")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (is (= 0 (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
+    (prompt-choice :runner 0)
+    (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+    (prompt-choice :runner "No") ; trash
+    (take-credits state :runner)
+
+    (take-credits state :corp)
+
+    (run-on state "Archives")
+    (run-successful state)
+    (is (= 1 (:brain-damage (get-runner))) "Runner takes no brain damage")
+    (is (= 3 (:click (get-runner))) "Runner loses no clicks")
+
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (is (= 1 (:brain-damage (get-runner))) "Runner starts with 1 brain damage")
+    (prompt-choice :runner "Take 1 brain damage")
+    (is (= 2 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+    (prompt-choice :runner "No") ; trash
+
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 4)
+    (prompt-choice :runner "Yes")))
+
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
   (do-game
