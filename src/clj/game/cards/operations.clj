@@ -1615,7 +1615,7 @@
                                                 "4 meat damage"]
                                       :delayed-completion true
                                       :effect (req (clear-wait-prompt state :corp)
-                                                   (move state side (last (:discard corp)) :rfg)
+                                                   (move state :corp (last (:discard corp)) :rfg)
                                                    (if (.startsWith target "Trash")
                                                      (do (system-msg state side (str "chooses to trash " (:title chosen)))
                                                          (trash state side eid chosen nil))

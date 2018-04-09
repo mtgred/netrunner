@@ -519,7 +519,8 @@
                       :choices {:req #(and (ice? %)
                                            (not (rezzed? %)))}
                       :msg (msg "trash " (card-str state target))
-                      :effect (effect (trash target))}
+                      :effect (req (trash state side target)
+                                   (swap! state assoc-in [:runner :register :trashed-card] true))}
                     card nil)))}
 
    "Escher"
