@@ -269,7 +269,7 @@
 (defn get-cid
   "Gets the cid of a given card"
   [card]
-  (:cid (:card card)))
+  (get-in card [:card :cid]))
 
 (defn private-card [card]
   (select-keys card [:zone :cid :side :new :host :counter :advance-counter :hosted :icon]))
