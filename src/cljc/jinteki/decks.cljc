@@ -49,7 +49,6 @@
     ;; Not an alliance card
     false))
 
-
 ;; Basic deck rules
 (defn min-deck-size
   "Contains implementation-specific decksize adjustments, if they need to be different from printed ones."
@@ -135,21 +134,15 @@
               (update infmap faction #(+ (or % 0) inf-cost))))]
     (reduce infhelper {} (:cards deck))))
 
-
-
-
 ;; Deck attribute calculations
 (defn agenda-points [{:keys [cards] :as deck}]
   (reduce #(if-let [point (get-in %2 [:card :agendapoints])]
              (+ (* point (:qty %2)) %1) %1) 0 cards))
 
-
 (defn influence-count
   "Returns sum of influence count used by a deck."
   [deck]
   (apply + (vals (influence-map deck))))
-
-
 
 ;; Rotation and MWL
 (defn banned-cards
@@ -193,7 +186,7 @@
        (count)))
 
 
-;; 1.1.1.1 and Cache Refresh validation
+;; 1.1.1.1, Cache Refresh , and Modded validation
 (defn group-cards-from-restricted-sets
   "Return map (big boxes and datapacks) of used sets that are restricted by given format"
   [sets allowed-sets deck]
@@ -209,9 +202,9 @@
   (let [one-box-num-copies? (fn [{:keys [qty card]}] (<= qty (or (:packquantity card) 3)))]
     (remove one-box-num-copies? (:cards deck))))
 
-(defn sets-in-two-newest-cycles
-  "Returns sets in two newest cycles of released datapacks - for Cache Refresh format"
-  [sets]
+(defn get-newest-cycles
+  "Returns n cycles of data packs from newest backwards"
+  [sets n]
   (let [cycles (group-by :cycle (remove :bigbox sets))
         parse-date #?(:clj  #(f/parse (f/formatters :date) %)
                       :cljs identity)
@@ -220,8 +213,34 @@
                                           cycle
                                           (first (sort (mapv #(parse-date (:available %)) sets-in-cycle)))))
                                       {} cycles)
-        valid-cycles (map first (take-last 2 (sort-by last (filter (fn [[cycle date]] (before-today? date)) cycle-release-date))))]
-    (map :name (filter (fn [set] (some #(= (:cycle set) %) valid-cycles)) sets))))
+        valid-cycles (map first (take-last n (sort-by last (filter (fn [[cycle date]] (before-today? date)) cycle-release-date))))]
+    valid-cycles))
+
+(defn sets-in-newest-cycle
+  "Returns sets in the newest cycle of released datapacks - for Modded format"
+  [sets]
+  (map :name (filter (fn [set] (some #(= (:cycle set) %) (get-newest-cycles sets 1))) sets)))
+
+(defn sets-in-two-newest-cycles
+  "Returns sets in two newest cycles of released datapacks - for Cache Refresh format"
+  [sets]
+  (map :name (filter (fn [set] (some #(= (:cycle set) %) (get-newest-cycles sets 2))) sets)))
+
+(defn modded-legal
+  "Returns true if deck is valid under Modded rules."
+  [sets deck]
+  (let [revised-core "Revised Core Set"
+        valid-sets (concat [revised-core] (sets-in-newest-cycle sets))
+        deck-with-id (assoc deck :cards (cons {:card (:identity deck) } (:cards deck))) ;identity should also be from valid sets
+        restricted-sets (group-cards-from-restricted-sets sets valid-sets deck-with-id)
+        restricted-bigboxes (remove #(= revised-core %) (:bigboxes restricted-sets))
+        restricted-datapacks (:datapacks restricted-sets)
+        example-card (fn [cardlist] (get-in (first cardlist) [:card :title]))
+        reasons {
+                 :bigbox (when (not= (count restricted-bigboxes) 0) (str "Only Revised Core Set permitted - check: " (example-card (second (first restricted-bigboxes)))))
+                 :datapack (when (not= (count restricted-datapacks) 0) (str "Only the most recent cycles permitted - check: " (example-card (second (first restricted-datapacks)))))
+                 }]
+    { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons)))}))
 
 (defn cache-refresh-legal
   "Returns true if deck is valid under Cache Refresh rules."
@@ -238,7 +257,7 @@
                  :bigbox (when (not= (count restricted-bigboxes) 0) (str "Only one Deluxe Expansion permitted - check: " (example-card (second (first restricted-bigboxes)))))
                  :datapack (when (not= (count restricted-datapacks) 0) (str "Only two most recent cycles permitted - check: " (example-card (second (first restricted-datapacks)))))
                  }]
-    { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons))) }))
+    { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons)))}))
 
 (defn onesies-legal
   "Returns true if deck is valid under 1.1.1.1 format rules."
@@ -257,8 +276,6 @@
                                          })]
     { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons))) }))
 
-
-
 ;; Card and deck validity
 (defn allowed?
   "Checks if a card is allowed in deck of a given identity - not accounting for influence"
@@ -273,7 +290,6 @@
            (not= (:faction card) "Jinteki"))))
 
 (defn valid-deck? [{:keys [identity cards] :as deck}]
-  ;(prn "valid?" (min-deck-size identity) (card-count cards) deck)
   (and (>= (card-count cards) (min-deck-size identity))
        (<= (influence-count deck) (id-inf-limit identity))
        (every? #(and (allowed? (:card %) identity)
@@ -307,13 +323,15 @@
         rotation (only-in-rotation? @cards/sets deck)
         onesies (onesies-legal @cards/sets deck)
         cache-refresh (cache-refresh-legal @cards/sets deck)
+        modded (modded-legal @cards/sets deck)
         status (deck-status mwl valid rotation)]
     {:valid         valid
      :mwl           mwl
      :rotation      rotation
      :status        status
      :onesies       onesies
-     :cache-refresh cache-refresh}))
+     :cache-refresh cache-refresh
+     :modded        modded}))
 
 (defn trusted-deck-status [{:keys [status name cards date] :as deck}]
   (let [parse-date #?(:clj  #(f/parse (f/formatters :date-time) %)

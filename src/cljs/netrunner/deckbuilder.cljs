@@ -30,9 +30,6 @@
   (let [name (:title (first cards))]
     (every? #(= (:title %) name) cards)))
 
-
-
-
 (defn noinfcost? [identity card]
   (or (= (:faction card) (:faction identity))
       (= 0 (:factioncost card)) (= INFINITY (decks/id-inf-limit identity))))
@@ -168,8 +165,6 @@
   (let [raw-deck-list (deck-string->list deck-string)]
     (lookup-deck side raw-deck-list)))
 
-
-
 (defn load-decks [decks]
   (swap! app-state assoc :decks decks)
   (put! select-channel (first (sort-by :date > decks)))
@@ -201,7 +196,6 @@
       (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
       (assoc card :display-name (:title card)))))
 
-
 (defn side-identities [side]
   (let [cards
         (->> @all-cards
@@ -231,19 +225,6 @@
   (let [cards (om/get-state owner [:deck :cards])
         str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) (insert-params %2) "\n") "" cards)]
     (om/set-state! owner :deck-edit str)))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (defn edit-deck [owner]
   (let [deck (om/get-state owner :deck)]
@@ -408,7 +389,7 @@
   [deck]
   (dots-html influence-dot (decks/influence-map deck)))
 
-(defn- build-deck-status-label [valid mwl rotation cache-refresh onesies onesies-details?]
+(defn- build-deck-status-label [valid mwl rotation cache-refresh onesies modded onesies-details?]
   (let [status (decks/deck-status mwl valid rotation)
         message (case status
                   "legal" "Tournament legal"
@@ -425,7 +406,9 @@
      [:div {:class (if (:legal cache-refresh) "legal" "invalid") :title (if onesies-details? (:reason cache-refresh)) }
       [:span.tick (if (:legal cache-refresh) "✔" "✘")] "Cache Refresh compliant"]
      [:div {:class (if (:legal onesies) "legal" "invalid") :title (if onesies-details? (:reason onesies))}
-      [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]]))
+      [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]
+     [:div {:class (if (:legal modded) "legal" "invalid") :title (if onesies-details? (:reason modded))}
+      [:span.tick (if (:legal modded) "✔" "✘") ] "Modded format compliant"]]))
 
 (defn- deck-status-details
   [deck use-trusted-info]
@@ -435,7 +418,7 @@
 
 (defn format-deck-status-span
   [deck-status tooltip? onesies-details?]
-  (let [{:keys [valid mwl rotation cache-refresh onesies status]} deck-status
+  (let [{:keys [valid mwl rotation cache-refresh onesies modded status]} deck-status
         message (case status
                   "legal" "Tournament legal"
                   "casual" "Casual play only"
@@ -443,7 +426,7 @@
                   "")]
     [:span.deck-status.shift-tooltip {:class status} message
      (when tooltip?
-       (build-deck-status-label valid mwl rotation cache-refresh onesies onesies-details?))]))
+       (build-deck-status-label valid mwl rotation cache-refresh onesies modded onesies-details?))]))
 
 (defn deck-status-span-impl [sets deck tooltip? onesies-details? use-trusted-info]
   (format-deck-status-span (deck-status-details deck use-trusted-info) tooltip? onesies-details?))
