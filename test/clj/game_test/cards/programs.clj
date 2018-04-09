@@ -604,6 +604,22 @@
         (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
         (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
 
+(deftest pheromones-no-counters
+  ;; Pheromones ability shouldn't have a NullPointerException when fired with 0 virus counter
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Pheromones" 1)]))
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Pheromones")
+    (let [ph (get-in @state [:runner :rig :program 0])]
+      (card-ability state :runner (refresh ph) 0)
+      (run-on state "HQ")
+      (run-successful state)
+      (prompt-choice :runner "Ok")
+      (is (= 1 (get-counters (refresh ph) :virus)) "Pheromones gained 1 counter")
+      (card-ability state :runner (refresh ph) 0)))) ; this doesn't do anything, but shouldn't crash
+
 (deftest plague
   ;; Plague
   (do-game
