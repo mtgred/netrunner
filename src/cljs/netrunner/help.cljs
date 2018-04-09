@@ -234,6 +234,15 @@
              :content [:p "This is most likely a websocket issue. Check if your network filters let through traffic from ws.jinteki.net. "
                        "Whitelisting *.jinteki.net should solve the problem."]}
             )}
+    {:id "alternativeformats"
+     :title "Alternative Formats"
+     :sub (list
+            {:id "modded"
+             :title "What is the Modded format?"
+             :content [:p "This is a format designed to make it easy for new players with a limited card pool. "
+                       "Deck building rules are up to 3 Revised Core Sets and data packs from the newest cycle only. "
+                       "There is no use of the MWL/Most Wanted List. The name originated from Modern but sounds more Netrunner. "]}
+            )}
     {:id "getinvolved"
      :title "Getting Involved"
      :sub (list

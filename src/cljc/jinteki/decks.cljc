@@ -186,7 +186,7 @@
        (count)))
 
 
-;; 1.1.1.1, Cache Refresh , and Modded validation
+;; alternative formats validation
 (defn group-cards-from-restricted-sets
   "Return map (big boxes and datapacks) of used sets that are restricted by given format"
   [sets allowed-sets deck]
@@ -216,21 +216,16 @@
         valid-cycles (map first (take-last n (sort-by last (filter (fn [[cycle date]] (before-today? date)) cycle-release-date))))]
     valid-cycles))
 
-(defn sets-in-newest-cycle
-  "Returns sets in the newest cycle of released datapacks - for Modded format"
-  [sets]
-  (map :name (filter (fn [set] (some #(= (:cycle set) %) (get-newest-cycles sets 1))) sets)))
-
-(defn sets-in-two-newest-cycles
-  "Returns sets in two newest cycles of released datapacks - for Cache Refresh format"
-  [sets]
-  (map :name (filter (fn [set] (some #(= (:cycle set) %) (get-newest-cycles sets 2))) sets)))
+(defn sets-in-newest-cycles
+  "Returns sets in the n cycles of released datapacks"
+  [sets n]
+  (map :name (filter (fn [set] (some #(= (:cycle set) %) (get-newest-cycles sets n))) sets)))
 
 (defn modded-legal
-  "Returns true if deck is valid under Modded rules."
+  "Returns true if deck is valid under Modded rules. https://forum.stimhack.com/t/modded-format-online-league-starts-april-14/9791"
   [sets deck]
   (let [revised-core "Revised Core Set"
-        valid-sets (concat [revised-core] (sets-in-newest-cycle sets))
+        valid-sets (concat [revised-core] (sets-in-newest-cycles sets 1))
         deck-with-id (assoc deck :cards (cons {:card (:identity deck) } (:cards deck))) ;identity should also be from valid sets
         restricted-sets (group-cards-from-restricted-sets sets valid-sets deck-with-id)
         restricted-bigboxes (remove #(= revised-core %) (:bigboxes restricted-sets))
@@ -246,7 +241,7 @@
   "Returns true if deck is valid under Cache Refresh rules."
   [sets deck]
   (let [over-one-core (cards-over-one-core deck)
-        valid-sets (concat ["Revised Core Set" "Terminal Directive"] (sets-in-two-newest-cycles sets))
+        valid-sets (concat ["Revised Core Set" "Terminal Directive"] (sets-in-newest-cycles sets 2))
         deck-with-id (assoc deck :cards (cons {:card (:identity deck) } (:cards deck))) ;identity should also be from valid sets
         restricted-sets (group-cards-from-restricted-sets sets valid-sets deck-with-id)
         restricted-bigboxes (rest (:bigboxes restricted-sets)) ;one big box is fine
