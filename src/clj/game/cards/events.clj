@@ -397,8 +397,9 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "install " (:title target))
-                                    :effect (req (runner-install state side target {:no-cost true})
-                                                 (swap! state update :diana #(conj % target)))}
+                                    :effect (req (let [diana-card (assoc-in target [:special :diana-installed] true)]
+                                                   (runner-install state side diana-card {:no-cost true})
+                                                   (swap! state update :diana #(conj % diana-card))))}
                                    card nil))}]
     :effect (effect (run target nil card)
                     (prompt! card (str "Click Diana's Hunt in the Temporary Zone to install a Program") ["OK"] {})
@@ -408,9 +409,10 @@
                                       (register-events state side
                                                        {:run-ends {:effect (req (let [hunt (:diana @state)]
                                                                                   (doseq [c hunt]
-                                                                                    (when-let [installed (find-cid (:cid c) (all-installed state side))]
-                                                                                      (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
-                                                                                      (trash state side installed {:unpreventable true})))
+                                                                                    (let [installed (find-cid (:cid c) (all-installed state side))]
+                                                                                      (when (get-in installed [:special :diana-installed])
+                                                                                        (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
+                                                                                        (trash state side installed {:unpreventable true}))))
                                                                                   (swap! state dissoc :diana)
                                                                                   (unregister-events state side card)
                                                                                   (trash state side c)))}} c)))}

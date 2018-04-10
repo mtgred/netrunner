@@ -1064,7 +1064,8 @@
                   (builder 2 8)]})
 
    "Open Forum"
-   {:events {:corp-mandatory-draw {:msg (msg (let [deck (:deck corp)]
+   {:events {:corp-mandatory-draw {:interactive (req true)
+                                   :msg (msg (let [deck (:deck corp)]
                                                (if (pos? (count deck))
                                                (str "reveal and draw " (:title (first deck)) " from R&D")
                                                "reveal & draw from R&D but it is empty")))

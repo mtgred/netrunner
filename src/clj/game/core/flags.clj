@@ -252,10 +252,11 @@
   (card-is? card :type type))
 
 (defn has-subtype?
-  "Checks if the specified subtype is present in the card.
-  Mostly sugar for the has? function."
+  "Checks if the specified subtype is present in the card."
   [card subtype]
-  (has? card :subtype subtype))
+  (or (has? card :subtype subtype)
+      (when-let [persistent-subs (-> card :persistent :subtype)]
+        (includes? persistent-subs subtype))))
 
 (defn can-host?
   "Checks if the specified card is able to host other cards"

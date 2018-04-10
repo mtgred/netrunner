@@ -733,6 +733,20 @@
     (is (empty? (get-in @state [:runner :prompt]))
         "There is no prompt for 0 damage")))
 
+(deftest guru-davinder-obokata-protocol
+  ;; Guru Davinder - cannot steal Obokata while installed
+  (do-game
+    (new-game (make-deck "Jinteki: Personal Evolution" [(qty "Obokata Protocol" 10)])
+              (default-runner [(qty "Guru Davinder" 1) (qty "Sure Gamble" 4)]))
+    (play-from-hand state :corp "Obokata Protocol" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :agenda-point 6)
+    (play-from-hand state :runner "Guru Davinder")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 0 (count (:discard (get-runner)))) "Runner did not pay damage")
+    (is (not= :runner (:winner @state)) "Runner has not won")))
+
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
   (do-game
@@ -776,6 +790,27 @@
     (is (= 0 (:click (get-runner))) "Spent 4 clicks")
     (is (= 1 (count (:discard (get-runner)))) "IJ is trashed")
     (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
+
+(deftest jak-sinclair-enigma
+  ;; Lost clicks carry through to when turn starts fully #1764
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 3)])
+              (default-runner [(qty "Jak Sinclair" 3)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jak Sinclair")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [eni (get-ice state :hq 0)
+          jak (get-resource state 0)]
+      (core/rez state :corp eni)
+      (is (:runner-phase-12 @state) "Runner in Step 1.2")
+      (card-ability state :runner jak 0)
+      (prompt-choice :runner "HQ")
+      (card-subroutine state :corp (refresh eni) 0)
+      (run-successful state)
+      (core/end-phase-12 state :runner nil)
+      (is (= 3 (:click (get-runner))) "Enigma took a click"))))
 
 (deftest john-masanori
   ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run
