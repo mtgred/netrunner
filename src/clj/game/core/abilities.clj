@@ -274,7 +274,8 @@
 (defn active-prompt?
   "Checks if this card has an active prompt"
   [state side card]
-  (some #(when (= (:cid card) (-> % :card :cid)) %) (-> @state side :prompt)))
+  (some #(when (= (:cid card) (-> % :card :cid)) %)
+        (flatten (map #(-> @state % :prompt) [side (other-side side)]))))
 
 ;;; Optional Ability
 (defn optional-ability
@@ -420,8 +421,8 @@
   The prompt cannot be closed except by a later call to clear-wait-prompt.
   The prompt has default priority 1, but can be overridden."
   ([state side msg] (show-wait-prompt state side msg {:priority 1}))
-  ([state side msg {:keys [priority] :as args}]
-   (show-prompt state side nil (str "Waiting for " msg) nil
+  ([state side msg {:keys [priority card] :as args}]
+   (show-prompt state side card (str "Waiting for " msg) nil
                 (fn [c] (system-msg state side (str "is waiting for " msg))) ; this function is never called, because the prompt has no button.
                 {:priority priority :prompt-type :waiting})))
 

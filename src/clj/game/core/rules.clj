@@ -156,11 +156,14 @@
 
 (defn damage-defer
   "Registers n damage of the given type to be deferred until later. (Chronos Protocol.)"
-  [state side dtype n]
-  (swap! state assoc-in [:damage :defer-damage dtype] n))
+  ([state side dtype n] (damage-defer state side dtype n nil))
+  ([state side dtype n {:keys [part-resolved] :as args}]
+   (swap! state assoc-in [:damage :defer-damage dtype] {:n n
+                                                        :part-resolved part-resolved})))
 
 (defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
-  (when-not unpreventable (get-in @state [:damage :defer-damage dtype])))
+  (let [{:keys [n part-resolved]} (get-in @state [:damage :defer-damage dtype])]
+    (when (or part-resolved (not unpreventable)) n)))
 
 (defn enable-runner-damage-choice
   [state side]
@@ -440,9 +443,9 @@
      (trashrec cards))))
 
 (defn- resolve-trash-no-cost
-  [state side card & {:keys [seen]
+  [state side card & {:keys [seen unpreventable]
                       :or {seen true}}]
-  (trash state side (assoc card :seen seen))
+  (trash state side (assoc card :seen seen) {:unpreventable unpreventable})
   (swap! state assoc-in [side :register :trashed-card] true))
 
 (defn trash-no-cost
@@ -556,7 +559,7 @@
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
-       (resolve-trash-no-cost state from-side card :seen false)))))
+       (resolve-trash-no-cost state from-side card :seen false :unpreventable true)))))
 
 ;; Exposing
 (defn expose-prevent

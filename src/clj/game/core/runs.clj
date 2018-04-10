@@ -225,7 +225,8 @@
                                                        (do (system-msg state side (str "pays " (costs-to-symbol cost)
                                                                                    " to steal " name))
                                                            (resolve-steal state side eid c)))
-                                       (resolve-steal-events state side eid c)))}
+                                       (do (trigger-event state side :no-steal card)
+                                           (resolve-steal-events state side eid c))))}
            :no-ability {:delayed-completion true
                         :effect (effect (trigger-event :no-steal card)
                                         (resolve-steal-events eid c))}}

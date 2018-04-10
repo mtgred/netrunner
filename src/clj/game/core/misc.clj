@@ -178,7 +178,7 @@
 
 (defn remove-icon
   "Remove the icon associated with the card and target."
-  ([state side card] (remove-icon state side card (find-cid (-> card :icon-target :cid) (get-all-installed state))))
+  ([state side card] (remove-icon state side card (:icon-target card)))
   ([state side card target]
-   (set-prop state side target :icon nil)
-   (set-prop state side card :icon-target nil)))
+   (when target (set-prop state side (find-latest state target) :icon nil))
+   (set-prop state side (find-latest state card) :icon-target nil)))
