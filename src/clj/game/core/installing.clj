@@ -393,9 +393,9 @@
                    (when (and (is-type? card "Program") (neg? (get-in @state [:runner :memory])))
                      (toast state :runner "You have run out of memory units!"))
                    (handle-virus-counter-flag state side installed-card)
-                   (when (is-type? card "Resource")
+                   (when (and (not facedown) (is-type? card "Resource"))
                      (swap! state assoc-in [:runner :register :installed-resource] true))
-                   (when (has-subtype? c "Icebreaker")
+                   (when (and (not facedown) (has-subtype? c "Icebreaker"))
                      (update-breaker-strength state side c))
                    (trigger-event-simult state side eid :runner-install
                                          {:card-ability (card-as-handler installed-card)}

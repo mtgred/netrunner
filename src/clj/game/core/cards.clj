@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
-(declare active? all-installed all-active-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run hardware? has-subtype? ice?
-         make-eid program? register-events remove-from-host remove-icon reset-card resource? rezzed? trash trigger-event update-hosted!
+(declare active? all-installed all-active-installed cards card-init deactivate card-flag? gain get-card-hosted handle-end-run hardware? has-subtype? ice?
+         make-eid program? register-events remove-from-host remove-icon reset-card resource? rezzed? toast trash trigger-event update-breaker-strength update-hosted!
          update-ice-strength unregister-events)
 
 ;;; Functions for loading card information.
@@ -254,3 +254,18 @@
           card (assoc-in card [:facedown] true)]
       (update! state side card))
     (move state side card [:rig :facedown])))
+
+(defn flip-faceup
+  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to correct area.
+  Wires events without calling effect/init-data"
+  [state side {:keys [host] :as card}]
+  (let [card (if host 
+               (dissoc card :facedown) 
+               (move state side card (type->rig-zone (:type card))))]
+   (card-init state side card {:resolve-effect false :init-data false})  
+   (when (:memoryunits card)
+     (gain state :runner :memory (- (:memoryunits card)))
+     (when (neg? (get-in @state [:runner :memory]))
+       (toast state :runner "You have run out of memory units!")))
+   (when (has-subtype? card "Icebreaker")
+     (update-breaker-strength state side card))))
