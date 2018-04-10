@@ -72,7 +72,7 @@
   "Remove all entries for specified card for flag-type and flag"
   [state side card flag-type flag]
   (swap! state update-in [:stack flag-type flag]
-         (fn [flag-map] (remove #(= (:cid (:card %)) (:cid card)) flag-map))))
+         (fn [flag-map] (remove #(= (get-cid %) (:cid card)) flag-map))))
 
 ;; Currently unused
 (defn clear-all-flags-for-card!

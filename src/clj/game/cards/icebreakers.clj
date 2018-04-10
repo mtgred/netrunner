@@ -137,7 +137,7 @@
                                                       newvec (apply conj (subvec devavec 0 devaindex) newdeva (subvec devavec devaindex))]
                                                   (lose state :runner :memory (:memoryunits card))
                                                   (swap! state assoc-in [:runner :rig :program] newvec)
-                                                  (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                                  (swap! state update-in [:runner :hand] (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
                                                   (card-init state side newdeva {:resolve-effect false
                                                                                  :init-data true})))
                                               (move state side card :hand))}]}))

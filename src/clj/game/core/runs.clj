@@ -192,9 +192,10 @@
                      (do (system-msg state side (str "pays " target
                                                    " to steal " (:title card)))
                          (if (< (count chosen) n)
-                           (continue-ability state side
-                                             (steal-pay-choice state :runner (remove-once #(not= target %)
-                                                                                     choices) chosen n card) card nil)
+                           (continue-ability
+                             state side
+                             (steal-pay-choice state :runner (remove-once #(= target %) choices) chosen n card)
+                             card nil)
                            (resolve-steal state side eid card))))
                    (resolve-steal-events state side eid card)))))})
 
