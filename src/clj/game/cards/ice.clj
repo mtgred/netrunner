@@ -1148,8 +1148,8 @@
                    :label "Force the Runner to access a card in HQ"
                    :msg (msg "force the Runner to access " (:title target))
                    :effect (req (trash state side card)
-                                (when-completed (handle-access state side targets)
-                                  (when-completed (trigger-event-sync state side :pre-access :hq)
+                                (when-completed (trigger-event-sync state side :pre-access :hq)
+                                  (when-completed (handle-access state side targets)
                                     (let [from-hq (dec (access-count state side :hq-access))]
                                       (continue-ability
                                         state :runner
@@ -1796,9 +1796,11 @@
                                     (do (clear-wait-prompt state :runner)
                                         (effect-completed state side eid card)))))}
                   {:label "Force the Runner to access the top card of R&D"
-                   :effect (req (doseq [c (take (get-in @state [:runner :rd-access]) (:deck corp))]
-                                  (system-msg state :runner (str "accesses " (:title c)))
-                                  (handle-access state side [c])))}]}
+                   :effect (req (when-completed (trigger-event-sync state side :pre-access :rd)
+                                                (let [total-cards (access-count state side :rd-access)]
+                                                  (doseq [c (take total-cards (:deck corp))]
+                                                    (system-msg state :runner (str "accesses " (:title c)))
+                                                    (handle-access state side [c])))))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"
