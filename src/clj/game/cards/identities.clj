@@ -31,7 +31,8 @@
    "419: Amoral Scammer"
    {:events {:corp-install
              {:delayed-completion true
-              :req (req (first-event? state :corp :corp-install))
+              :req (req (and (first-event? state :corp :corp-install)
+                             (not (rezzed? target))))
               :effect
               (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
                      (let [itarget target]

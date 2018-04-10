@@ -579,24 +579,26 @@
   ([state side target] (expose state side (make-eid state) target))
   ([state side eid target] (expose state side eid target nil))
   ([state side eid target {:keys [unpreventable] :as args}]
-   (swap! state update-in [:expose] dissoc :expose-prevent)
-   (when-completed (trigger-event-sync state side :pre-expose target)
-                   (let [prevent (get-in @state [:prevent :expose :all])]
-                     (if (and (not unpreventable) (pos? (count prevent)))
-                       (do (system-msg state :corp "has the option to prevent a card from being exposed")
-                           (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
-                           (show-prompt state :corp nil
-                                        (str "Prevent " (:title target) " from being exposed?") ["Done"]
-                                        (fn [_]
-                                          (clear-wait-prompt state :runner)
-                                          (if-let [_ (get-in @state [:expose :expose-prevent])]
-                                            (effect-completed state side (make-result eid false)) ;; ??
-                                            (do (system-msg state :corp "will not prevent a card from being exposed")
-                                                (resolve-expose state side eid target args))))
-                                        {:priority 10}))
-                       (if-not (get-in @state [:expose :expose-prevent])
-                         (resolve-expose state side eid target args)
-                         (effect-completed state side (make-result eid false))))))))
+    (swap! state update-in [:expose] dissoc :expose-prevent)
+    (if (rezzed? target)
+      (effect-completed state side eid) ; cannot expose faceup cards
+      (when-completed (trigger-event-sync state side :pre-expose target)
+                      (let [prevent (get-in @state [:prevent :expose :all])]
+                        (if (and (not unpreventable) (pos? (count prevent)))
+                          (do (system-msg state :corp "has the option to prevent a card from being exposed")
+                              (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
+                              (show-prompt state :corp nil
+                                           (str "Prevent " (:title target) " from being exposed?") ["Done"]
+                                           (fn [_]
+                                             (clear-wait-prompt state :runner)
+                                             (if-let [_ (get-in @state [:expose :expose-prevent])]
+                                               (effect-completed state side (make-result eid false)) ;; ??
+                                               (do (system-msg state :corp "will not prevent a card from being exposed")
+                                                   (resolve-expose state side eid target args))))
+                                           {:priority 10}))
+                          (if-not (get-in @state [:expose :expose-prevent])
+                            (resolve-expose state side eid target args)
+                            (effect-completed state side (make-result eid false)))))))))
 
 (defn reveal-hand
   "Reveals a side's hand to opponent and spectators."
