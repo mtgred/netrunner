@@ -104,6 +104,14 @@
                                        #(assoc % :position (count (get-in corp (conj dest :ices)))
                                                  :server (rest dest)))))}]}
 
+   "Akiko Nisei: Head Case"
+   {:events {:successful-run {:req (req (= target :rd))
+                              :interactive (req true)
+                              :psi {:player :runner
+                                    :equal {:msg "access 1 additional card"
+                                            :effect (effect (access-bonus 1)
+                                                            (effect-completed eid))}}}}}
+
    "Alice Merchant: Clan Agitator"
    {:events {:successful-run
              {:delayed-completion true

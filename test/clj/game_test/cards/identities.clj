@@ -171,6 +171,18 @@
     (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "2nd console installed facedown")))
 
+(deftest akiko-nisei
+  ;; Akiko Nisei
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 10)])
+              (make-deck "Akiko Nisei: Head Case" [(qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (run-on state :rd)
+    (run-successful state)
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "0 [Credits]")
+    (is (= 2 (+ (get-in @state [:runner :rd-access]) (:access-bonus (:run @state) 0))))))
+
 (deftest ayla
   ;; Ayla - choose & use cards for NVRAM
   (do-game
