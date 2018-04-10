@@ -53,13 +53,10 @@
                                              ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
                                              hostedcards (filter ishosted installedcards)
                                              nonhostedcards (remove ishosted installedcards)]
-                                         (doseq [oc hostedcards :let [c (get-card state oc)
-                                                                      c (deactivate state side c true)
-                                                                      c (assoc-in c [:facedown] true)]]
-                                           (update! state side c))
+                                         (doseq [oc hostedcards :let [c (get-card state oc)]]
+                                           (flip-facedown state side c))
                                          (doseq [oc nonhostedcards :let [c (get-card state oc)]]
-                                           (move state side c [:rig :facedown]))
-                                         (effect-completed state side eid)))}]
+                                           (flip-facedown state side c))))}]
      {:req (req (and (some #{:hq} (:successful-run runner-reg))
                      (some #{:rd} (:successful-run runner-reg))
                      (some #{:archives} (:successful-run runner-reg))))

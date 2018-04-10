@@ -245,3 +245,12 @@
       (update! state side c)
       (when (active? card)
         (card-init state side c {:resolve-effect false})))))
+
+(defn flip-facedown
+  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to facedown"
+  [state side {:keys [host] :as card}]
+  (if host
+    (let [card (deactivate state side card true)
+          card (assoc-in card [:facedown] true)]
+      (update! state side card))
+    (move state side card [:rig :facedown])))

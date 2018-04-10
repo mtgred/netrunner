@@ -10,7 +10,7 @@
   "Dissoc relevant keys in card"
   [card keep-counter]
   (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :rezzed :special :new
-                  :added-virus-counter :subtype-target :sifr-used :sifr-target)
+                  :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
     c))
 
