@@ -444,6 +444,106 @@
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
     (is (= 0 (:tag (get-runner))) "Tag avoided")))
 
+(let [choose-runner (fn [name state prompt-map]
+                      (let [the-choice (some #(when (= name (:title %)) %) (:choices (prompt-map :runner)))]
+                        (core/resolve-prompt state :runner {:card the-choice})))
+
+      ;; Start id
+      sunny "Sunny Lebeau: Security Specialist"
+      ;; List of all G-Mod identities
+      geist "Armand \"Geist\" Walker: Tech Lord"
+      kate "Kate \"Mac\" McCaffrey: Digital Tinker"
+      kit "Rielle \"Kit\" Peddler: Transhuman"
+      professor "The Professor: Keeper of Knowledge"
+      jamie "Jamie \"Bzzz\" Micken: Techno Savant"
+      chaos "Chaos Theory: Wünderkind"
+      whizzard "Whizzard: Master Gamer"
+      reina "Reina Roja: Freedom Fighter"
+      maxx "MaxX: Maximum Punk Rock"]
+
+  (deftest dj-fenris-chaos
+    ;; DJ Fenris - host 1 g-mod id not in faction on DJ Fenris
+    (testing "Hosting Chaos Theory"
+      ;; Ensure +1 MU is handled correctly
+      (do-game
+        (new-game (default-corp)
+                  ;; Runner id is Gabe, make sure Geist is not in list (would be first)
+                  (make-deck sunny ["DJ Fenris"]) {:start-as :runner})
+        (play-from-hand state :runner "DJ Fenris")
+        (is (= (first (prompt-titles :runner)) geist) "List is sorted")
+        (is (every? #(some #{%} (prompt-titles :runner))
+                    [geist chaos reina maxx]))
+        (is (not-any? #(some #{%} (prompt-titles :runner))
+                      [professor whizzard jamie kate kit]))
+
+        (choose-runner chaos state prompt-map)
+
+        (is (= chaos (get-in (get-resource state 0) [:hosted 0 :title])) "Chaos Theory hosted on DJ Fenris")
+
+        (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
+        (is (= 2 (:link (get-runner))) "2 link from Sunny")
+        (is (= 5 (:memory (get-runner))) "+1 MU from Chaos Theory")
+
+        ;; Trash DJ Fenris
+        (trash-resource state "DJ Fenris")
+        (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
+        (is (= 1 (count (:discard (get-runner)))) "1 card in heap: DJ Fenris")
+        (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")
+
+        ;; Recover DJ Fenris
+        (core/move state :runner (get-in (get-runner) [:discard 0]) :hand)
+        (core/gain state :runner :credit 3)
+
+        ;; Re-play DJ Fenris
+        (play-from-hand state :runner "DJ Fenris")
+        ;(clojure.pprint/pprint (get-in @state [:runner :prompt]))
+        (choose-runner chaos state prompt-map)
+
+        ;; Try moving CT to hand
+        (game.core/move state :runner (get-in (get-resource state 0) [:hosted 0]) :hand)
+        (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
+        (is (= 0 (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
+        (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")))
+
+    (testing "Hosting Geist"
+      ;; Ensure Geist effect triggers
+      (do-game
+        (new-game (default-corp)
+                  ;; Runner id is Gabe, make sure Geist is not in list (would be first)
+                  (make-deck sunny ["DJ Fenris" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]) {:start-as :runner})
+        (starting-hand state :runner ["DJ Fenris" "All-nighter" "All-nighter"])
+        (play-from-hand state :runner "All-nighter")
+        (play-from-hand state :runner "All-nighter")
+
+        (play-from-hand state :runner "DJ Fenris")
+
+        (is (= (first (prompt-titles :runner)) geist) "List is sorted")
+        (is (every? #(some #{%} (prompt-titles :runner))
+                    [geist chaos reina maxx]))
+        (is (not-any? #(some #{%} (prompt-titles :runner))
+                      [professor whizzard jamie kate kit]))
+
+        (choose-runner geist state prompt-map)
+
+        (is (= geist (get-in (get-resource state 2) [:hosted 0 :title])) "Geist hosted on DJ Fenris")
+
+        (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
+
+        (is (= 2 (:link (get-runner))) "2 link from Sunny, no extra link from Geist")
+
+        (let [hand-count (count (:hand (get-runner)))]
+          (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter
+          (is (= (+ 1 hand-count) (count (:hand (get-runner))))
+              "Drew one card with Geist when using All-nighter trash ability")
+
+          (trash-resource state "DJ Fenris")
+          (is (= geist (get-in (get-runner) [:rfg 0 :title])) "Geist moved to RFG")
+          (is (= 2 (count (:discard (get-runner)))) "2 cards in heap: All-nighter and DJ Fenris")
+
+          (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter (again)
+          (is (= (+ 1 hand-count) (count (:hand (get-runner))))
+              "Did not draw another card - Geist ability removed when DJ Fenris was trashed"))))))
+
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
   (do-game
@@ -733,6 +833,20 @@
     (is (empty? (get-in @state [:runner :prompt]))
         "There is no prompt for 0 damage")))
 
+(deftest guru-davinder-obokata-protocol
+  ;; Guru Davinder - cannot steal Obokata while installed
+  (do-game
+    (new-game (make-deck "Jinteki: Personal Evolution" [(qty "Obokata Protocol" 10)])
+              (default-runner [(qty "Guru Davinder" 1) (qty "Sure Gamble" 4)]))
+    (play-from-hand state :corp "Obokata Protocol" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :agenda-point 6)
+    (play-from-hand state :runner "Guru Davinder")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (is (= 0 (count (:discard (get-runner)))) "Runner did not pay damage")
+    (is (not= :runner (:winner @state)) "Runner has not won")))
+
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
   (do-game
@@ -776,6 +890,27 @@
     (is (= 0 (:click (get-runner))) "Spent 4 clicks")
     (is (= 1 (count (:discard (get-runner)))) "IJ is trashed")
     (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
+
+(deftest jak-sinclair-enigma
+  ;; Lost clicks carry through to when turn starts fully #1764
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 3)])
+              (default-runner [(qty "Jak Sinclair" 3)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jak Sinclair")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [eni (get-ice state :hq 0)
+          jak (get-resource state 0)]
+      (core/rez state :corp eni)
+      (is (:runner-phase-12 @state) "Runner in Step 1.2")
+      (card-ability state :runner jak 0)
+      (prompt-choice :runner "HQ")
+      (card-subroutine state :corp (refresh eni) 0)
+      (run-successful state)
+      (core/end-phase-12 state :runner nil)
+      (is (= 3 (:click (get-runner))) "Enigma took a click"))))
 
 (deftest john-masanori
   ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run

@@ -245,7 +245,7 @@
                    (let [moved-card (if host-card
                                       (host state side host-card (assoc c :installed true))
                                       (move state side c slot))]
-                     (trigger-event state side :corp-install moved-card)
+
                      (when (is-type? c "Agenda")
                        (update-advancement-cost state side moved-card))
 
@@ -275,6 +275,7 @@
                                            :else
                                            (effect-completed state side eid))
 
+                                         (trigger-event state side :corp-install (get-card state moved-card))
                                          (when-let [dre (:derezzed-events cdef)]
                                            (when-not (:rezzed (get-card state moved-card))
                                              (register-events state side dre moved-card))))))))))

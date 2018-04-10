@@ -16,23 +16,36 @@
   (when-let [cost-name (cost-names value attr)]
     cost-name))
 
+(defn flag-stops-pay?
+  "Checks installed cards to see if payment type is prevented by a flag"
+  [state side type]
+  (let [flag (keyword (str "cannot-pay-" (name type)))]
+    (some #(card-flag? % flag true) (all-active-installed state side))))
+
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
   [state side cost]
   (let [type (first cost)
-        amount (last cost)]
-    (when-not (or (some #(= type %) [:memory :net-damage])
-                  (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
-                  (and (= type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
-                  (and (= type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
-                  (and (= type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
-                  (and (= type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
-                  (and (= type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
-                  (and (= type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                                  (all-active-installed state :runner))) amount) 0))
-                  (and (= type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
-                  (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
-      "Unable to pay")))
+        amount (last cost)
+        computer-says-no "Unable to pay"]
+
+    (cond
+
+      (flag-stops-pay? state side type)
+      computer-says-no
+
+      (not (or (some #(= type %) [:memory :net-damage])
+               (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
+               (and (= type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
+               (and (= type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
+               (and (= type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
+               (and (= type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
+               (and (= type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
+               (and (= type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
+                                                               (all-active-installed state :runner))) amount) 0))
+               (and (= type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
+               (>= (- (or (get-in @state [side type]) -1 ) amount) 0)))
+      computer-says-no)))
 
 (defn can-pay?
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.

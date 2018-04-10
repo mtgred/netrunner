@@ -144,9 +144,9 @@
            (fn [events] (filter #(not (= (:cid scored) (get-in % [:card :cid]))) events)))
     ;; Move agendas
     (swap! state update-in [:corp :scored]
-           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid scored)) coll) stolen)))
+           (fn [coll] (conj (remove-once #(= (:cid %) (:cid scored)) coll) stolen)))
     (swap! state update-in [:runner :scored]
-           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid stolen)) coll)
+           (fn [coll] (conj (remove-once #(= (:cid %) (:cid stolen)) coll)
                             (if-not (card-flag? scored :has-abilities-when-stolen true)
                               (dissoc scored :abilities :events) scored))))
     ;; Update agenda points
@@ -178,7 +178,7 @@
 
 (defn remove-icon
   "Remove the icon associated with the card and target."
-  ([state side card] (remove-icon state side card (find-cid (-> card :icon-target :cid) (get-all-installed state))))
+  ([state side card] (remove-icon state side card (:icon-target card)))
   ([state side card target]
-   (set-prop state side target :icon nil)
-   (set-prop state side card :icon-target nil)))
+   (when target (set-prop state side (find-latest state target) :icon nil))
+   (set-prop state side (find-latest state card) :icon-target nil)))

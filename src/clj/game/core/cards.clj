@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare active? all-installed all-active-installed cards card-init deactivate card-flag? gain get-card-hosted handle-end-run hardware? has-subtype? ice?
-         make-eid program? register-events remove-from-host remove-icon reset-card resource? rezzed? toast trash trigger-event update-breaker-strength update-hosted!
-         update-ice-strength unregister-events)
+(declare active? all-installed all-active-installed cards card-init deactivate card-flag? gain get-card-hosted handle-end-run 
+         hardware? has-subtype? ice? is-type? make-eid program? register-events remove-from-host remove-icon reset-card 
+         resource? rezzed? toast trash trigger-event update-breaker-strength update-hosted! update-ice-strength unregister-events)
 
 ;;; Functions for loading card information.
 (defn card-def
@@ -15,6 +15,13 @@
   "Return a card with specific :cid from given sequence"
   [cid from]
   (some #(when (= (:cid %) cid) %) from))
+
+(defn find-latest
+  "Returns the newest version of a card where-ever it may be"
+  [state card]
+  (let [side (-> card :side to-keyword)]
+    (find-cid (:cid card) (concat (all-installed state side)
+                                  (-> (map #(-> @state side %) [:hand :discard :deck :rfg]) concat flatten)))))
 
 (defn get-scoring-owner
   "Returns the owner of the scoring area the card is in"
@@ -59,7 +66,8 @@
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
   ([state side {:keys [zone cid host installed] :as card} to {:keys [front keep-server-alive force] :as options}]
-   (let [zone (if host (map to-keyword (:zone host)) zone)
+   (let [to (if (is-type? card "Fake-Identity") :rfg to)          ; Fake-Identities always get moved to RFG
+         zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)
          same-zone? (= src-zone target-zone)]
@@ -111,7 +119,7 @@
          (doseq [s [:runner :corp]]
            (if host
              (remove-from-host state side card)
-             (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+             (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
          (let [z (vec (cons :corp (butlast zone)))]
            (when (and (not keep-server-alive)
                       (is-remote? z)
@@ -124,10 +132,12 @@
          (when-let [card-moved (:move-zone (card-def c))]
            (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card moved-card)
-         (when (#{:discard :hand} to) (reset-card state side moved-card))
-         (when-let [icon-card (get-card state (get-in moved-card [:icon :card]))]
-           ;; remove icon if card moved to :discard or :hand
-           (when (#{:discard :hand} to) (remove-icon state side icon-card moved-card)))
+         ; Default a card when moved to inactive zones (except :persistent key)
+         (when (#{:discard :hand :deck :rfg} to)
+           (reset-card state side moved-card)
+           (when-let [icon-card (get-in moved-card [:icon :card])]
+             ; Remove icon and icon-card keys
+             (remove-icon state side icon-card moved-card)))
          moved-card)))))
 
 (defn move-zone

@@ -540,6 +540,34 @@
    {:prevent {:tag [:all]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
+   "DJ Fenris"
+   (let [is-draft-id? #(.startsWith (:code %) "00")
+         can-host? (fn [runner c] (and (is-type? c "Identity")
+                                       (has-subtype? c "G-Mod")
+                                       (not= (-> runner :identity :faction) (:faction c))
+                                       (not (is-draft-id? c))))
+         fenris-effect {:prompt "Choose a g-mod identity to host on DJ Fenris"
+                        :choices (req (cancellable (filter (partial can-host? runner) (vals @all-cards)) :sorted))
+                        :msg (msg "host " (:title target))
+                        :effect (req (let [card (assoc-host-zones card)
+                                           ;; Work around for get-card and update!
+                                           c (assoc target :type "Fake-Identity")
+                                           c (make-card c)
+                                           c (assoc c :host (dissoc card :hosted)
+                                                      :zone '(:onhost)
+                                                      ;; semi hack to get deactivate to work
+                                                      :installed true)]
+
+                                       ;; Manually host id on card
+                                       (update! state side (assoc card :hosted [c]))
+                                       (card-init state :runner c)
+
+                                       (clear-wait-prompt state :corp)
+                                       (effect-completed state side eid)))}]
+     {:delayed-completion true
+      :effect (req (show-wait-prompt state :corp "Runner to pick identity to host on DJ Fenris")
+                   (continue-ability state side fenris-effect card nil))})
+
    "Donut Taganes"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
     :events {:pre-play-instant
@@ -671,16 +699,15 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :successful-run {:interactive (req true)
-                              :optional
-                              {:delayed-completion true
-                               :req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
-                               :prompt "Use Find the Truth to look at the top card of R&D?"
-                               :yes-ability {:msg "look at the top card of R&D"
-                                             :effect (req (prompt! state :runner card (str "The top card of R&D is "
-                                                                                           (:title (first (:deck corp)))) ["OK"] {})
-                                                          (effect-completed state side eid))}
-                               :no-ability {:effect (req (effect-completed state side eid))}}}}}
+             :pre-successful-run {:interactive (req true)
+                                  :optional {:delayed-completion true
+                                             :req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
+                                             :prompt "Use Find the Truth to look at the top card of R&D?"
+                                             :yes-ability {:msg "look at the top card of R&D"
+                                                           :effect (req (prompt! state :runner card (str "The top card of R&D is "
+                                                                                                         (:title (first (:deck corp)))) ["OK"] {})
+                                                                        (effect-completed state side eid))}
+                                             :no-ability {:effect (req (effect-completed state side eid))}}}}}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
@@ -748,7 +775,8 @@
                              (resolve-ability state side ab card targets)))}}}
 
    "Guru Davinder"
-   {:events {:pre-damage
+   {:flags {:cannot-pay-net-damage true}
+    :events {:pre-damage
              {:req    (req (and (or (= target :meat) (= target :net))
                                 (pos? (last targets))))
               :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
@@ -1552,7 +1580,7 @@
                              (install-cost-bonus state side [:credit -1])
                              (trash state side (update-in card [:hosted]
                                                           (fn [coll]
-                                                            (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                                            (remove-once #(= (:cid %) (:cid target)) coll)))
                                     {:cause :ability-cost})
                              (runner-install state side (dissoc target :facedown))))}]}
 
@@ -1703,7 +1731,7 @@
                                                           (assoc :supplier-installed (:cid target))
                                                           (update-in [:hosted]
                                                                      (fn [coll]
-                                                                       (remove-once #(not= (:cid %) (:cid target)) coll)))))))}]
+                                                                       (remove-once #(= (:cid %) (:cid target)) coll)))))))}]
    {:flags {:drip-economy true}  ; not technically drip economy, but has an interaction with Drug Dealer
     :abilities [{:label "Host a resource or piece of hardware" :cost [:click 1]
                  :prompt "Select a card to host on The Supplier"
@@ -1727,26 +1755,23 @@
              :pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 3]))}}}
 
    "The Turning Wheel"
-   (letfn [(find-latest [state c] (find-cid (:cid c) (concat (all-installed state :runner)
-                                                             (-> @state :runner :discard)
-                                                             (-> @state :runner :rfg))))]
-     {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
-                               :silent (req true)}
-               :run-ends {:effect (req (when (and (not (:agenda-stolen card))
-                                                  (#{:hq :rd} target))
-                                         (add-counter state side card :power 1)
-                                         (system-msg state :runner (str "places a power counter on " (:title card))))
-                                       (update! state side (dissoc (get-card state card) :agenda-stolen)))
-                          :silent (req true)}}
-      :abilities [{:counter-cost [:power 2]
-                   :req (req (:run @state))
-                   :msg "access 1 additional card from HQ or R&D for the remainder of the run"
-                   :effect  (req (swap! state update-in [:run :ttw-spent] #(inc (or % 0)))
-                                 (register-events state side
-                                                  {:pre-access {:req (req (and (get-in @state [:run :ttw-spent]) (#{:hq :rd} target)))
-                                                                :effect (effect (access-bonus 1)
-                                                                                (unregister-events #(find-latest state card) {:events {:pre-access nil}}))
-                                                                :silent (req true)}} #(find-latest state card)))}]})
+   {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
+                             :silent (req true)}
+             :run-ends {:effect (req (when (and (not (:agenda-stolen card))
+                                                (#{:hq :rd} target))
+                                       (add-counter state side card :power 1)
+                                       (system-msg state :runner (str "places a power counter on " (:title card))))
+                                     (update! state side (dissoc (get-card state card) :agenda-stolen)))
+                        :silent (req true)}}
+    :abilities [{:counter-cost [:power 2]
+                 :req (req (:run @state))
+                 :msg "access 1 additional card from HQ or R&D for the remainder of the run"
+                 :effect  (req (swap! state update-in [:run :ttw-spent] #(inc (or % 0)))
+                               (register-events state side
+                                                {:pre-access {:req (req (and (get-in @state [:run :ttw-spent]) (#{:hq :rd} target)))
+                                                              :effect (effect (access-bonus 1)
+                                                                              (unregister-events #(find-latest state card) {:events {:pre-access nil}}))
+                                                              :silent (req true)}} #(find-latest state card)))}]}
 
    "Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all :run-credit :all)

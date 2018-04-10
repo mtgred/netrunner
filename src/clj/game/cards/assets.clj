@@ -1068,7 +1068,8 @@
                   (builder 2 8)]})
 
    "Open Forum"
-   {:events {:corp-mandatory-draw {:msg (msg (let [deck (:deck corp)]
+   {:events {:corp-mandatory-draw {:interactive (req true)
+                                   :msg (msg (let [deck (:deck corp)]
                                                (if (pos? (count deck))
                                                (str "reveal and draw " (:title (first deck)) " from R&D")
                                                "reveal & draw from R&D but it is empty")))
@@ -1251,7 +1252,7 @@
                                                                         newarch (apply conj (subvec arch 0 archndx) swappedcard (subvec arch archndx))]
                                                                      (swap! state assoc-in [:corp :discard] newarch)
                                                                      (swap! state update-in [:corp :hand]
-                                                                            (fn [coll] (remove-once #(not= (:cid %) (:cid hqcard)) coll)))
+                                                                            (fn [coll] (remove-once #(= (:cid %) (:cid hqcard)) coll)))
                                                                      (move state side target :hand)))}
                                                    card nil)))}
                                  card nil)))}]}
@@ -1621,7 +1622,7 @@
                                        (resolve-ability state side
                                          {:effect (req (swap! state assoc-in (cons :corp (:zone card)) newcont)
                                                        (swap! state update-in [:corp :hand]
-                                                         (fn [coll] (remove-once #(not= (:cid %) (:cid newcard)) coll)))
+                                                         (fn [coll] (remove-once #(= (:cid %) (:cid newcard)) coll)))
                                                        (trigger-event state side :corp-install newcard)
                                                        (move state side card :hand))} card nil)
                                        (resolve-prompt state :runner {:choice "No"})

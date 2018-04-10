@@ -111,9 +111,9 @@
       (dissoc :setname :text :_id :influence :number :influencelimit :factioncost))))
 
 (defn reset-card
-  "Resets a card back to its original state overlaid with any play-state data"
+  "Resets a card back to its original state - retaining any data in the :persistent key"
   ([state side card]
-   (update! state side (merge card (make-card (get @all-cards (:title card)) (:cid card))))))
+   (update! state side (merge (make-card (get @all-cards (:title card)) (:cid card)) {:persistent card}))))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
@@ -172,27 +172,28 @@
 
 (defn end-phase-12
   "End phase 1.2 and trigger appropriate events for the player."
-  [state side args]
-  (turn-message state side true)
-  (let [extra-clicks (or (get-in @state [side :extra-click-temp]) 0)]
-    (gain state side :click (get-in @state [side :click-per-turn]))
-    (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-                    (do (when (= side :corp)
-                          (draw state side)
-                          (trigger-event state side :corp-mandatory-draw))
+  ([state side args] (end-phase-12 state side (make-eid state) args))
+  ([state side eid args]
+   (turn-message state side true)
+   (let [extra-clicks (or (get-in @state [side :extra-click-temp]) 0)]
+     (gain state side :click (get-in @state [side :click-per-turn]))
+     (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
+                     (do (when (= side :corp)
+                           (draw state side)
+                           (trigger-event-simult state side eid :corp-mandatory-draw nil nil))
 
-                        (cond
+                         (cond
 
-                          (< extra-clicks 0)
-                          (lose state side :click (abs extra-clicks))
+                           (< extra-clicks 0)
+                           (lose state side :click (abs extra-clicks))
 
                           (> extra-clicks 0)
-                          (gain state side :click extra-clicks))
+                           (gain state side :click extra-clicks))
 
-                        (swap! state dissoc-in [side :extra-click-temp])
-                        (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-                        (when (= side :corp)
-                          (update-all-advancement-costs state side))))))
+                         (swap! state dissoc-in [side :extra-click-temp])
+                         (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+                         (when (= side :corp)
+                           (update-all-advancement-costs state side)))))))
 
 (defn start-turn
   "Start turn."

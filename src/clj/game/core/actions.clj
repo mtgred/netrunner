@@ -119,7 +119,7 @@
     (swap! state dissoc :access)))
 
 (defn resolve-prompt
-  "Resolves a prompt by invoking its effect funtion with the selected target of the prompt.
+  "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
   [state side {:keys [choice card] :as args}]
   (let [servercard (get-card state card)
@@ -169,7 +169,7 @@
         (if (:selected c)
           (swap! state update-in [side :selected 0 :cards] #(conj % c))
           (swap! state update-in [side :selected 0 :cards]
-                 (fn [coll] (remove-once #(not= (:cid %) (:cid card)) coll))))
+                 (fn [coll] (remove-once #(= (:cid %) (:cid card)) coll))))
         (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side))))))))

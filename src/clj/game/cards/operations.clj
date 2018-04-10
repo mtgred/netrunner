@@ -559,7 +559,7 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (< (count chosen) n)
-                               (continue-ability state side (hr-choice (remove-once #(not= target %) remaining)
+                               (continue-ability state side (hr-choice (remove-once #(= target %) remaining)
                                                                         chosen n original) card nil)
                                (continue-ability state side (hr-final chosen original) card nil))))})]
      {:additional-cost [:mill 1]
@@ -679,7 +679,9 @@
    {:msg "gain 13 [Credits]" :effect (effect (gain :credit 13))}
 
    "Kill Switch"
-   (let [trace-for-brain-damage {:trace {:base 3 :msg "give the Runner 1 brain damage"
+   (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
+                                 :trace {:base 3 
+                                         :msg "do 1 brain damage"
                                          :delayed-completion true
                                          :effect (effect (damage :runner eid :brain 1 {:card card}))}}]
      {:events {:pre-access-card (assoc trace-for-brain-damage :req (req (is-type? target "Agenda")))
@@ -827,7 +829,7 @@
                                                    ices (get-in @state (cons :corp (:zone target)))
                                                    newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
                                                (swap! state assoc-in (cons :corp (:zone target)) newices)
-                                               (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(not= (:cid %) (:cid newice)) coll)))
+                                               (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(= (:cid %) (:cid newice)) coll)))
                                                (trigger-event state side :corp-install newice)
                                                (card-init state side newice {:resolve-effect false})
                                                (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
