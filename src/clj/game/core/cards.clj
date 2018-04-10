@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare active? all-installed all-active-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run hardware? has-subtype? ice?
-         make-eid program? register-events remove-from-host remove-icon reset-card resource? rezzed? trash trigger-event update-hosted!
-         update-ice-strength unregister-events)
+(declare active? all-installed all-active-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run
+         hardware? has-subtype? ice? is-type? make-eid program? register-events remove-from-host remove-icon reset-card
+         resource? rezzed? trash trigger-event update-hosted! update-ice-strength unregister-events)
 
 ;;; Functions for loading card information.
 (defn card-def
@@ -66,7 +66,8 @@
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
   ([state side {:keys [zone cid host installed] :as card} to {:keys [front keep-server-alive force] :as options}]
-   (let [zone (if host (map to-keyword (:zone host)) zone)
+   (let [to (if (is-type? card "Fake-Identity") :rfg to)          ; Fake-Identities always get moved to RFG
+         zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)
          same-zone? (= src-zone target-zone)]

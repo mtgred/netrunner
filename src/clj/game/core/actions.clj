@@ -119,7 +119,7 @@
     (swap! state dissoc :access)))
 
 (defn resolve-prompt
-  "Resolves a prompt by invoking its effect funtion with the selected target of the prompt.
+  "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
   [state side {:keys [choice card] :as args}]
   (let [servercard (get-card state card)

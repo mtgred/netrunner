@@ -319,11 +319,11 @@
 (defn- add-to-prompt-queue
   "Adds a newly created prompt to the current prompt queue"
   [state side {:keys [priority] :as prompt}]
-  (let [priority-comp #(case % true 1 nil 0 %)]
-    (swap! state update-in [side :prompt]
-           ;; insert the new prompt into the already-sorted queue based on its priority.
-           #(let [[head tail] (split-with (fn [p] (>= (priority-comp (:priority p)) (priority-comp priority))) %)]
-              (concat head (cons prompt tail))))))
+  (let [priority-comp #(case % true 1 nil 0 %)
+        split-fn #(>= (priority-comp (:priority %)) (priority-comp priority))
+        ;; insert the new prompt into the already-sorted queue based on its priority.
+        update-fn #(let [[head tail] (split-with split-fn %)] (concat head (cons prompt tail)))]
+    (swap! state update-in [side :prompt] update-fn)))
 
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
@@ -510,7 +510,7 @@
                                  " + " boost " [Credits]) (" (make-label ability) ")"))
     (swap! state update-in [:bonus] dissoc :trace)
     (show-trace-prompt state :runner card "Boost link strength?"
-                       #(resolve-trace state side eid %) 
+                       #(resolve-trace state side eid %)
                        {:priority (or priority 2) :base link :strength total})
     (swap! state assoc :trace {:strength total :ability ability :card card})
     (trigger-event state side :trace nil)))
