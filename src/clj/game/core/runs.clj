@@ -188,7 +188,7 @@
                      val (if (pos? clicks) clicks (string->num (first (split target #" "))))]
                  (if (can-pay? state side name [kw val])
                    (when-completed
-                     (pay-sync state side nil [kw val])
+                     (pay-sync state side nil [kw val] {:action :steal-cost})
                      (do (system-msg state side (str "pays " target
                                                    " to steal " (:title card)))
                          (if (< (count chosen) n)
@@ -221,7 +221,7 @@
           {:yes-ability
                        {:delayed-completion true
                         :effect (req (if (can-pay? state side name cost)
-                                       (when-completed (pay-sync state side nil cost)
+                                       (when-completed (pay-sync state side nil cost {:action :steal-cost})
                                                        (do (system-msg state side (str "pays " (costs-to-symbol cost)
                                                                                    " to steal " name))
                                                            (resolve-steal state side eid c)))

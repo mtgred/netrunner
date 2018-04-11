@@ -105,40 +105,43 @@
   "Calls the relevant function for a cost depending on the keyword passed in"
   ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
   ([state side eid card action costs cost]
-   (case (first cost)
-     :click (do (swap! state assoc :click-state (dissoc @state :log))
-                (trigger-event state side
-                               (if (= side :corp) :corp-spent-click :runner-spent-click)
-                               (first (keep :action action)) (:click (into {} costs)))
-                (swap! state assoc-in [side :register :spent-click] true)
-                (let [r (deduce state side cost) ]
-                  (effect-completed state side (make-result eid r))
-                  r))
-     :forfeit (pay-forfeit state side eid card (second cost))
-     :hardware (pay-trash state side eid card "piece of hardware" (second cost) (every-pred installed? #(is-type? % :hardware) (complement facedown?)))
-     :program (pay-trash state side eid card "program" (second cost) (every-pred installed? #(is-type? % :program) (complement facedown?)))
+   (let [a (first (keep :action action))]
+     (case (first cost)
+       :click (do (when (not= a :steal-cost)
+                    ; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
+                    (swap! state assoc :click-state (dissoc @state :log)))
+                    (trigger-event state side
+                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
+                                   a (:click (into {} costs)))
+                    (swap! state assoc-in [side :register :spent-click] true)
+                    (let [r (deduce state side cost) ]
+                      (effect-completed state side (make-result eid r))
+                      r))
+       :forfeit (pay-forfeit state side eid card (second cost))
+       :hardware (pay-trash state side eid card "piece of hardware" (second cost) (every-pred installed? #(is-type? % :hardware) (complement facedown?)))
+       :program (pay-trash state side eid card "program" (second cost) (every-pred installed? #(is-type? % :program) (complement facedown?)))
 
-     ;; Connection
-     :connection (pay-trash state side eid card "connection" (second cost) (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
+       ;; Connection
+       :connection (pay-trash state side eid card "connection" (second cost) (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
 
-     ;; Rezzed ICE
-     :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
+       ;; Rezzed ICE
+       :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
 
-     :tag (let [r (deduce state :runner cost)]
-            (effect-completed state side (make-result eid r))
-            r)
-     :net-damage (damage state side eid :net (second cost) {:unpreventable true})
-     :mill (let [r (mill state side (second cost))]
-             (effect-completed state side (make-result eid r))
-             r)
+       :tag (let [r (deduce state :runner cost)]
+              (effect-completed state side (make-result eid r))
+              r)
+       :net-damage (damage state side eid :net (second cost) {:unpreventable true})
+       :mill (let [r (mill state side (second cost))]
+               (effect-completed state side (make-result eid r))
+               r)
 
-     ;; Shuffle installed runner cards into the stack (eg Degree Mill)
-     :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))
+       ;; Shuffle installed runner cards into the stack (eg Degree Mill)
+       :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))
 
-     ;; Else
-     (let [r (deduce state side cost)]
-       (effect-completed state side (make-result eid r))
-       r))))
+       ;; Else
+       (let [r (deduce state side cost)]
+         (effect-completed state side (make-result eid r))
+         r)))))
 
 (defn pay
   "Deducts each cost from the player.
