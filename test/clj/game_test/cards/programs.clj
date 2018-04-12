@@ -475,134 +475,124 @@
       (run-empty-server state "Archives")
       (is (= false (has? (refresh iwall) :subtype "Code Gate")) "Ice Wall lost Code Gate at the end of the run"))))
 
-(deftest parasite-apex
-  ;; Parasite - Installed facedown w/ Apex
-  (do-game
-    (new-game (default-corp)
-              (make-deck "Apex: Invasive Predator" [(qty "Parasite" 1)]))
-    (take-credits state :corp)
-    (core/end-phase-12 state :runner nil)
-    (prompt-select :runner (find-card "Parasite" (:hand (get-runner))))
-    (is (empty? (:prompt (get-runner))) "No prompt to host Parasite")
-    (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "Parasite installed face down")))
-
-(deftest parasite-architect
-  ;; Parasite - Installed on untrashable Architect should keep gaining counters past 3 and make strength go negative
-  (do-game
-    (new-game (default-corp [(qty "Architect" 3) (qty "Hedge Fund" 3)])
-              (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
-    (play-from-hand state :corp "Architect" "HQ")
-    (let [arch (get-ice state :hq 0)]
-      (core/rez state :corp arch)
+(deftest parasite
+  (testing "Basic functionality: Gain 1 counter every Runner turn"
+    (do-game
+      (new-game (default-corp [(qty "Wraparound" 3) (qty "Hedge Fund" 3)])
+                (default-runner [(qty "Parasite" 3) (qty "Sure Gamble" 3)]))
+      (play-from-hand state :corp "Wraparound" "HQ")
+      (let [wrap (get-ice state :hq 0)]
+        (core/rez state :corp wrap)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Parasite")
+        (prompt-select :runner wrap)
+        (is (= 3 (:memory (get-runner))) "Parasite consumes 1 MU")
+        (let [psite (first (:hosted (refresh wrap)))]
+          (is (= 0 (get-counters psite :virus)) "Parasite has no counters yet")
+          (take-credits state :runner)
+          (take-credits state :corp)
+          (is (= 1 (get-counters (refresh psite) :virus))
+              "Parasite gained 1 virus counter at start of Runner turn")
+          (is (= 6 (:current-strength (refresh wrap))) "Wraparound reduced to 6 strength")))))
+  (testing "Installed facedown w/ Apex"
+    (do-game
+      (new-game (default-corp)
+                (make-deck "Apex: Invasive Predator" [(qty "Parasite" 1)]))
       (take-credits state :corp)
-      (play-from-hand state :runner "Grimoire")
-      (play-from-hand state :runner "Parasite")
-      (prompt-select :runner arch)
-      (let [psite (first (:hosted (refresh arch)))]
-        (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
-        (take-credits state :runner)
+      (core/end-phase-12 state :runner nil)
+      (prompt-select :runner (find-card "Parasite" (:hand (get-runner))))
+      (is (empty? (:prompt (get-runner))) "No prompt to host Parasite")
+      (is (= 1 (count (get-in @state [:runner :rig :facedown]))) "Parasite installed face down")))
+  (testing "Installed on untrashable Architect should keep gaining counters past 3 and make strength go negative"
+    (do-game
+      (new-game (default-corp [(qty "Architect" 3) (qty "Hedge Fund" 3)])
+                (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
+      (play-from-hand state :corp "Architect" "HQ")
+      (let [arch (get-ice state :hq 0)]
+        (core/rez state :corp arch)
         (take-credits state :corp)
-        (take-credits state :runner)
+        (play-from-hand state :runner "Grimoire")
+        (play-from-hand state :runner "Parasite")
+        (prompt-select :runner arch)
+        (let [psite (first (:hosted (refresh arch)))]
+          (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
+          (take-credits state :runner)
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (take-credits state :corp)
+          (take-credits state :runner)
+          (take-credits state :corp)
+          (is (= 4 (get-counters (refresh psite) :virus)) "Parasite has 4 counters")
+          (is (= -1 (:current-strength (refresh arch))) "Architect at -1 strength")))))
+  (testing "Should stay on hosted card moved by Builder"
+    (do-game
+      (new-game (default-corp [(qty "Builder" 3) (qty "Ice Wall" 1)])
+                (default-runner [(qty "Parasite" 3)]))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Builder" "Archives")
+      (let [builder (get-ice state :archives 0)]
+        (core/rez state :corp builder)
         (take-credits state :corp)
-        (take-credits state :runner)
+        (play-from-hand state :runner "Parasite")
+        (prompt-select :runner builder)
+        (let [psite (first (:hosted (refresh builder)))]
+          (take-credits state :runner)
+          (take-credits state :corp)
+          (is (= 3 (:current-strength (refresh builder))) "Builder reduced to 3 strength")
+          (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
+          (take-credits state :runner))
+        (let [orig-builder (refresh builder)]
+          (card-ability state :corp builder 0)
+          (prompt-choice :corp "HQ")
+          (let [moved-builder (get-ice state :hq 1)]
+            (is (= (:current-strength orig-builder) (:current-strength moved-builder)) "Builder's state is maintained")
+            (let [orig-psite (dissoc (first (:hosted orig-builder)) :host)
+                  moved-psite (dissoc (first (:hosted moved-builder)) :host)]
+              (is (= orig-psite moved-psite) "Hosted Parasite is maintained"))
+            (take-credits state :corp)
+            (let [updated-builder (refresh moved-builder)
+                  updated-psite (first (:hosted updated-builder))]
+              (is (= 2 (:current-strength updated-builder)) "Builder strength still reduced")
+              (is (= 2 (get-counters (refresh updated-psite) :virus)) "Parasite counters still incremented")))))))
+  (testing "Use Hivemind counters when installed; instantly trash ICE if counters >= ICE strength"
+    (do-game
+      (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
+                (default-runner [(qty "Parasite" 1)
+                                 (qty "Grimoire" 1)
+                                 (qty "Hivemind" 1)
+                                 (qty "Sure Gamble" 1)]))
+      (play-from-hand state :corp "Enigma" "HQ")
+      (let [enig (get-ice state :hq 0)]
+        (core/rez state :corp enig)
         (take-credits state :corp)
-        (is (= 4 (get-counters (refresh psite) :virus)) "Parasite has 4 counters")
-        (is (= -1 (:current-strength (refresh arch))) "Architect at -1 strength")))))
-
-(deftest parasite-builder-moved
-  ;; Parasite - Should stay on hosted card moved by Builder
-  (do-game
-    (new-game (default-corp [(qty "Builder" 3) (qty "Ice Wall" 1)])
-              (default-runner [(qty "Parasite" 3)]))
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Builder" "Archives")
-    (let [builder (get-ice state :archives 0)
-          _ (core/rez state :corp builder)
-          _ (take-credits state :corp)
-          _ (play-from-hand state :runner "Parasite")
-          _ (prompt-select :runner builder)
-          psite (first (:hosted (refresh builder)))
-          _ (take-credits state :runner)
-          _ (take-credits state :corp)
-          _ (is (= 3 (:current-strength (refresh builder))) "Builder reduced to 3 strength")
-          _ (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
-          _ (take-credits state :runner)
-          orig-builder (refresh builder)
-          _ (card-ability state :corp builder 0)
-          _ (prompt-choice :corp "HQ")
-          moved-builder (get-ice state :hq 1)
-          _ (is (= (:current-strength orig-builder) (:current-strength moved-builder)) "Builder's state is maintained")
-          orig-psite (dissoc (first (:hosted orig-builder)) :host)
-          moved-psite (dissoc (first (:hosted moved-builder)) :host)
-          _ (is (= orig-psite moved-psite) "Hosted Parasite is maintained")
-          _ (take-credits state :corp)
-          updated-builder (refresh moved-builder)
-          updated-psite (first (:hosted updated-builder))
-          _ (is (= 2 (:current-strength updated-builder)) "Builder strength still reduced")
-          _ (is (= 2 (get-counters (refresh updated-psite) :virus)) "Parasite counters still incremented")])))
-
-(deftest parasite-gain-counter
-  ;; Parasite - Gain 1 counter every Runner turn
-  (do-game
-    (new-game (default-corp [(qty "Wraparound" 3) (qty "Hedge Fund" 3)])
-              (default-runner [(qty "Parasite" 3) (qty "Sure Gamble" 3)]))
-    (play-from-hand state :corp "Wraparound" "HQ")
-    (let [wrap (get-ice state :hq 0)]
-      (core/rez state :corp wrap)
-      (take-credits state :corp)
-      (play-from-hand state :runner "Parasite")
-      (prompt-select :runner wrap)
-      (is (= 3 (:memory (get-runner))) "Parasite consumes 1 MU")
-      (let [psite (first (:hosted (refresh wrap)))]
-        (is (= 0 (get-counters psite :virus)) "Parasite has no counters yet")
-        (take-credits state :runner)
+        (play-from-hand state :runner "Sure Gamble")
+        (play-from-hand state :runner "Grimoire")
+        (play-from-hand state :runner "Hivemind")
+        (let [hive (get-in @state [:runner :rig :program 0])]
+          (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind has 2 counters")
+          (play-from-hand state :runner "Parasite")
+          (prompt-select :runner enig)
+          (is (= 1 (count (:discard (get-corp)))) "Enigma trashed instantly")
+          (is (= 4 (:memory (get-runner))))
+          (is (= 2 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
+  (testing "Trashed along with host ICE when its strength has been reduced to 0"
+    (do-game
+      (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
+                (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
+      (play-from-hand state :corp "Enigma" "HQ")
+      (let [enig (get-ice state :hq 0)]
+        (core/rez state :corp enig)
         (take-credits state :corp)
-        (is (= 1 (get-counters (refresh psite) :virus))
-            "Parasite gained 1 virus counter at start of Runner turn")
-        (is (= 6 (:current-strength (refresh wrap))) "Wraparound reduced to 6 strength")))))
-
-(deftest parasite-hivemind-instant-ice-trash
-  ;; Parasite - Use Hivemind counters when installed; instantly trash ICE if counters >= ICE strength
-  (do-game
-    (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
-              (default-runner [(qty "Parasite" 1)
-                               (qty "Grimoire" 1)
-                               (qty "Hivemind" 1)
-                               (qty "Sure Gamble" 1)]))
-    (play-from-hand state :corp "Enigma" "HQ")
-    (let [enig (get-ice state :hq 0)]
-      (core/rez state :corp enig)
-      (take-credits state :corp)
-      (play-from-hand state :runner "Sure Gamble")
-      (play-from-hand state :runner "Grimoire")
-      (play-from-hand state :runner "Hivemind")
-      (let [hive (get-in @state [:runner :rig :program 0])]
-        (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind has 2 counters")
+        (play-from-hand state :runner "Grimoire")
         (play-from-hand state :runner "Parasite")
         (prompt-select :runner enig)
-        (is (= 1 (count (:discard (get-corp)))) "Enigma trashed instantly")
-        (is (= 4 (:memory (get-runner))))
-        (is (= 2 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
-
-(deftest parasite-ice-trashed
-  ;; Parasite - Trashed along with host ICE when its strength has been reduced to 0
-  (do-game
-    (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
-              (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
-    (play-from-hand state :corp "Enigma" "HQ")
-    (let [enig (get-ice state :hq 0)]
-      (core/rez state :corp enig)
-      (take-credits state :corp)
-      (play-from-hand state :runner "Grimoire")
-      (play-from-hand state :runner "Parasite")
-      (prompt-select :runner enig)
-      (let [psite (first (:hosted (refresh enig)))]
-        (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
-        (is (= 1 (:current-strength (refresh enig))) "Enigma reduced to 1 strength")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
-        (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
+        (let [psite (first (:hosted (refresh enig)))]
+          (is (= 1 (get-counters (refresh psite) :virus)) "Parasite has 1 counter")
+          (is (= 1 (:current-strength (refresh enig))) "Enigma reduced to 1 strength")
+          (take-credits state :runner)
+          (take-credits state :corp)
+          (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
+          (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed"))))))
 
 (deftest pheromones-no-counters
   ;; Pheromones ability shouldn't have a NullPointerException when fired with 0 virus counter
@@ -820,81 +810,74 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (card-ability state :runner smc2 0)
-      (= 1 (count (:hand (get-runner))) "1 card drawn due to Reaver before SMC program selection")
-      (= 0 (count (:deck (get-runner))) "Deck empty"))))
+      (is (= 1 (count (:hand (get-runner)))) "1 card drawn due to Reaver before SMC program selection")
+      (is (= 0 (count (:deck (get-runner)))) "Deck empty"))))
 
-(deftest sneakdoor-nerve-agent
-  ;; Sneakdoor Beta - Allow Nerve Agent to gain counters. Issue #1158/#955
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Sneakdoor Beta" 1) (qty "Nerve Agent" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :credit 10)
-    (play-from-hand state :runner "Nerve Agent")
-    (play-from-hand state :runner "Sneakdoor Beta")
-    (let [nerve (get-in @state [:runner :rig :program 0])
-          sb (get-in @state [:runner :rig :program 1])]
-      (card-ability state :runner sb 0)
-      (run-successful state)
-      (is (= 1 (get-counters (refresh nerve) :virus)))
-      (card-ability state :runner sb 0)
-      (run-successful state)
-      (is (= 2 (get-counters (refresh nerve) :virus))))))
-
-(deftest sneakdoor-ash
-  ;; Sneakdoor Beta - Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits.
-  ;; Issue #1138.
-  (do-game
-    (new-game (default-corp [(qty "Ash 2X3ZB9CY" 1)])
-              (make-deck "Gabriel Santiago: Consummate Professional" [(qty "Sneakdoor Beta" 1)]))
-    (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Sneakdoor Beta")
-    (is (= 1 (:credit (get-runner))) "Sneakdoor cost 4 credits")
-    (let [sb (get-in @state [:runner :rig :program 0])
-          ash (get-content state :hq 0)]
-      (core/rez state :corp ash)
-      (card-ability state :runner sb 0)
-      (run-successful state)
-      (prompt-choice :corp 0)
-      (prompt-choice :runner 0)
-      (is (= 3 (:credit (get-runner))) "Gained 2 credits from Gabe's ability")
-      (is (= (:cid ash) (-> (get-runner) :prompt first :card :cid)) "Ash interrupted HQ access after Sneakdoor run")
-      (is (= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ recorded"))))
-
-(deftest sneakdoor-crisium
-  ;; Sneakdoor Beta - do not switch to HQ if Archives has Crisium Grid. Issue #1229.
-  (do-game
-    (new-game (default-corp [(qty "Crisium Grid" 1) (qty "Priority Requisition" 1) (qty "Private Security Force" 1)])
-              (default-runner [(qty "Sneakdoor Beta" 1)]))
-    (play-from-hand state :corp "Crisium Grid" "Archives")
-    (trash-from-hand state :corp "Priority Requisition")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Sneakdoor Beta")
-    (let [sb (get-program state 0)
-          cr (get-content state :archives 0)]
-      (core/rez state :corp cr)
-      (card-ability state :runner sb 0)
-      (run-successful state)
-      (is (= :archives (get-in @state [:run :server 0])) "Crisium Grid stopped Sneakdoor Beta from switching to HQ"))))
-
-(deftest sneakdoor-sectest
-  ;; Sneakdoor Beta - Grant Security Testing credits on HQ.
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Security Testing" 1) (qty "Sneakdoor Beta" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Sneakdoor Beta")
-    (play-from-hand state :runner "Security Testing")
-    (take-credits state :runner)
-    (is (= 3 (:credit (get-runner))))
-    (take-credits state :corp)
-    (let [sb (get-in @state [:runner :rig :program 0])]
-      (prompt-choice :runner "HQ")
-      (card-ability state :runner sb 0)
-      (run-successful state)
-      (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
-      (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits"))))
+(deftest sneakdoor-beta
+  (testing "Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits. Issue #1138."
+    (do-game
+      (new-game (default-corp [(qty "Ash 2X3ZB9CY" 1)])
+                (make-deck "Gabriel Santiago: Consummate Professional" [(qty "Sneakdoor Beta" 1)]))
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sneakdoor Beta")
+      (is (= 1 (:credit (get-runner))) "Sneakdoor cost 4 credits")
+      (let [sb (get-in @state [:runner :rig :program 0])
+            ash (get-content state :hq 0)]
+        (core/rez state :corp ash)
+        (card-ability state :runner sb 0)
+        (run-successful state)
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (= 3 (:credit (get-runner))) "Gained 2 credits from Gabe's ability")
+        (is (= (:cid ash) (-> (get-runner) :prompt first :card :cid)) "Ash interrupted HQ access after Sneakdoor run")
+        (is (= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ recorded"))))
+  (testing "do not switch to HQ if Archives has Crisium Grid. Issue #1229."
+    (do-game
+      (new-game (default-corp [(qty "Crisium Grid" 1) (qty "Priority Requisition" 1) (qty "Private Security Force" 1)])
+                (default-runner [(qty "Sneakdoor Beta" 1)]))
+      (play-from-hand state :corp "Crisium Grid" "Archives")
+      (trash-from-hand state :corp "Priority Requisition")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sneakdoor Beta")
+      (let [sb (get-program state 0)
+            cr (get-content state :archives 0)]
+        (core/rez state :corp cr)
+        (card-ability state :runner sb 0)
+        (run-successful state)
+        (is (= :archives (get-in @state [:run :server 0])) "Crisium Grid stopped Sneakdoor Beta from switching to HQ"))))
+  (testing "Allow Nerve Agent to gain counters. Issue #1158/#955"
+    (do-game
+      (new-game (default-corp)
+                (default-runner [(qty "Sneakdoor Beta" 1) (qty "Nerve Agent" 1)]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Nerve Agent")
+      (play-from-hand state :runner "Sneakdoor Beta")
+      (let [nerve (get-in @state [:runner :rig :program 0])
+            sb (get-in @state [:runner :rig :program 1])]
+        (card-ability state :runner sb 0)
+        (run-successful state)
+        (is (= 1 (get-counters (refresh nerve) :virus)))
+        (card-ability state :runner sb 0)
+        (run-successful state)
+        (is (= 2 (get-counters (refresh nerve) :virus))))))
+  (testing "Grant Security Testing credits on HQ."
+    (do-game
+      (new-game (default-corp)
+                (default-runner [(qty "Security Testing" 1) (qty "Sneakdoor Beta" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sneakdoor Beta")
+      (play-from-hand state :runner "Security Testing")
+      (take-credits state :runner)
+      (is (= 3 (:credit (get-runner))))
+      (take-credits state :corp)
+      (let [sb (get-in @state [:runner :rig :program 0])]
+        (prompt-choice :runner "HQ")
+        (card-ability state :runner sb 0)
+        (run-successful state)
+        (is (not (:run @state)) "Switched to HQ and ended the run from Security Testing")
+        (is (= 5 (:credit (get-runner))) "Sneakdoor switched to HQ and earned Security Testing credits")))))
 
 (deftest snitch
   ;; Snitch - Only works on unrezzed ice

@@ -61,7 +61,7 @@
 (defn has-flag?
   "Checks if the specified flag exists - used for Gene Conditioning Shoppe"
   [state side flag-type flag]
-  (not (empty? (get-in @state [:stack flag-type flag]))))
+  (not-empty (get-in @state [:stack flag-type flag])))
 
 (defn- clear-all-flags!
   "Clears all flags of specified type"
@@ -72,7 +72,7 @@
   "Remove all entries for specified card for flag-type and flag"
   [state side card flag-type flag]
   (swap! state update-in [:stack flag-type flag]
-         (fn [flag-map] (remove #(= (:cid (:card %)) (:cid card)) flag-map))))
+         (fn [flag-map] (remove #(= (get-cid %) (:cid card)) flag-map))))
 
 ;; Currently unused
 (defn clear-all-flags-for-card!
@@ -252,10 +252,11 @@
   (card-is? card :type type))
 
 (defn has-subtype?
-  "Checks if the specified subtype is present in the card.
-  Mostly sugar for the has? function."
+  "Checks if the specified subtype is present in the card."
   [card subtype]
-  (has? card :subtype subtype))
+  (or (has? card :subtype subtype)
+      (when-let [persistent-subs (-> card :persistent :subtype)]
+        (includes? persistent-subs subtype))))
 
 (defn can-host?
   "Checks if the specified card is able to host other cards"
@@ -318,7 +319,7 @@
   :req does not meet rez requirement"
   [state side card]
   (let [uniqueness (:uniqueness card)
-        req (:rez-req (card-def card))]
+        rez-req (:rez-req (card-def card))]
     (cond
       ;; Card on same side?
       (not (same-side? side (:side card))) :side
@@ -328,7 +329,7 @@
       ;; Uniqueness check
       (and uniqueness (some #(and (:rezzed %) (= (:code card) (:code %))) (all-installed state :corp))) :unique
       ;; Rez req check
-      (and req (not (req state side (make-eid state) card nil))) :req
+      (and rez-req (not (rez-req state side (make-eid state) card nil))) :req
       ;; No problems - return true
       :default true)))
 

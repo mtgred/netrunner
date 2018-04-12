@@ -47,8 +47,8 @@
             'hq-runnable '(not (:hq (get-in runner [:register :cannot-run-on-server])))
             'rd-runnable '(not (:rd (get-in runner [:register :cannot-run-on-server])))
             'archives-runnable '(not (:archives (get-in runner [:register :cannot-run-on-server])))
-            'tagged '(or (> (:tagged runner) 0) (> (:tag runner) 0))
-            'has-bad-pub '(or (> (:bad-publicity corp) 0) (> (:has-bad-pub corp) 0))
+            'tagged '(or (pos? (:tagged runner)) (pos? (:tag runner)))
+            'has-bad-pub '(or (pos? (:bad-publicity corp)) (pos? (:has-bad-pub corp)))
             'this-server '(let [s (-> card :zone rest butlast)
                                 r (:server run)]
                             (and (= (first r) (first s))
@@ -71,7 +71,7 @@
                             (when (and (pos? run-pos) (<= run-pos (count (:ices run-server))))
                               (nth (:ices run-server) (dec run-pos))))
             'target '(first targets)
-            'tagged '(or (> (:tagged runner) 0) (> (:tag runner) 0))]
+            'tagged '(or (pos? (:tagged runner)) (pos? (:tag runner)))]
        (str ~@expr))))
 
 (defmacro when-completed
@@ -85,7 +85,7 @@
          th (nth action totake)]
      `(let [~'use-eid (and (map? ~th) (:eid ~th))
             ~'new-eid (if ~'use-eid ~th (game.core/make-eid ~'state))]
-        (~'register-effect-completed ~'state ~'side ~'new-eid ~(if (resolve 'card) ~'card nil) ~reqmac)
+        (~'register-effect-completed ~'state ~'side ~'new-eid ~(when (resolve 'card) ~'card) ~reqmac)
         (if ~'use-eid
           ~(concat (take totake action) (list 'new-eid) (drop (inc totake) action))
           ~(concat (take totake action) (list 'new-eid) (drop totake action)))))))

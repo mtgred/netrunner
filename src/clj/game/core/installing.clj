@@ -10,10 +10,9 @@
   "Dissoc relevant keys in card"
   [card keep-counter]
   (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :rezzed :special :new
-                  :added-virus-counter :subtype-target :sifr-used :sifr-target)
+                  :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
-    (if (and (= (:side c) "Runner") (not= (last (:zone c)) :facedown))
-      (dissoc c :installed :facedown :counter :rec-counter :pump :server-target) c)))
+    c))
 
 (defn- trigger-leave-effect
   "Triggers leave effects for specified card if relevant"
@@ -234,51 +233,51 @@
              install-state (or install-state (:install-state cdef))]
          (when (and (corp-can-install? state side card dest-zone) (not (install-locked? state :corp)))
            (if-let [cost-str (pay state side card end-cost {:action action})]
-             (do (let [c (-> card
-                             (assoc :advanceable (:advanceable cdef) :new true)
-                             (dissoc :seen :disabled))]
-                   (when (= server "New remote")
-                     (trigger-event state side :server-created card))
-                   (when (not host-card)
-                     (corp-install-message state side c server install-state cost-str))
-                   (play-sfx state side "install-corp")
+             (let [c (-> card
+                         (assoc :advanceable (:advanceable cdef) :new true)
+                         (dissoc :seen :disabled))]
+               (when (= server "New remote")
+                 (trigger-event state side :server-created card))
+               (when-not host-card
+                 (corp-install-message state side c server install-state cost-str))
+               (play-sfx state side "install-corp")
 
-                   (let [moved-card (if host-card
-                                      (host state side host-card (assoc c :installed true))
-                                      (move state side c slot))]
-                     (trigger-event state side :corp-install moved-card)
-                     (when (is-type? c "Agenda")
-                       (update-advancement-cost state side moved-card))
+               (let [moved-card (if host-card
+                                  (host state side host-card (assoc c :installed true))
+                                  (move state side c slot))]
+                 (when (is-type? c "Agenda")
+                   (update-advancement-cost state side moved-card))
 
-                     ;; Check to see if a second agenda/asset was installed.
-                     (when-completed (corp-install-asset-agenda state side moved-card dest-zone server)
-                                     (do (cond
-                                           ;; Ignore all costs. Pass eid to rez.
-                                           (= install-state :rezzed-no-cost)
-                                           (rez state side eid moved-card {:ignore-cost :all-costs})
+                 ;; Check to see if a second agenda/asset was installed.
+                 (when-completed (corp-install-asset-agenda state side moved-card dest-zone server)
+                                 (do (cond
+                                       ;; Ignore all costs. Pass eid to rez.
+                                       (= install-state :rezzed-no-cost)
+                                       (rez state side eid moved-card {:ignore-cost :all-costs})
 
-                                           ;; Pay costs. Pass eid to rez.
-                                           (= install-state :rezzed)
-                                           (rez state side eid moved-card nil)
+                                       ;; Pay costs. Pass eid to rez.
+                                       (= install-state :rezzed)
+                                       (rez state side eid moved-card nil)
 
-                                           ;; "Face-up" cards. Trigger effect-completed manually.
-                                           (= install-state :face-up)
-                                           (do (if (:install-state cdef)
-                                                 (card-init state side
-                                                            (assoc (get-card state moved-card) :rezzed true :seen true)
-                                                            {:resolve-effect false
-                                                             :init-data true})
-                                                 (update! state side (assoc (get-card state moved-card) :rezzed true :seen true)))
-                                               (when-not (:delayed-completion cdef)
-                                                 (effect-completed state side eid)))
+                                       ;; "Face-up" cards. Trigger effect-completed manually.
+                                       (= install-state :face-up)
+                                       (do (if (:install-state cdef)
+                                             (card-init state side
+                                                        (assoc (get-card state moved-card) :rezzed true :seen true)
+                                                        {:resolve-effect false
+                                                         :init-data true})
+                                             (update! state side (assoc (get-card state moved-card) :rezzed true :seen true)))
+                                           (when-not (:delayed-completion cdef)
+                                             (effect-completed state side eid)))
 
-                                           ;; All other cards. Trigger effect-completed.
-                                           :else
-                                           (effect-completed state side eid))
+                                       ;; All other cards. Trigger effect-completed.
+                                       :else
+                                       (effect-completed state side eid))
 
-                                         (when-let [dre (:derezzed-events cdef)]
-                                           (when-not (:rezzed (get-card state moved-card))
-                                             (register-events state side dre moved-card))))))))))
+                                     (trigger-event state side :corp-install (get-card state moved-card))
+                                     (when-let [dre (:derezzed-events cdef)]
+                                       (when-not (:rezzed (get-card state moved-card))
+                                         (register-events state side dre moved-card)))))))))
          (clear-install-cost-bonus state side))))))
 
 
@@ -292,7 +291,7 @@
    Returns :req if card-def :req check fails
    !! NB: This should only be used in a check with `true?` as all return values are truthy"
   [state side card facedown]
-  (let [req (:req (card-def card))
+  (let [card-req (:req (card-def card))
         uniqueness (:uniqueness card)]
     (cond
       ;; Can always install a card facedown
@@ -306,7 +305,7 @@
       ;; Uniqueness check
       (and uniqueness (in-play? state card)) :unique
       ;; Req check
-      (and req (not (req state side (make-eid state) card nil))) :req
+      (and card-req (not (card-req state side (make-eid state) card nil))) :req
       ;; Nothing preventing install
       :default true)))
 
@@ -394,9 +393,9 @@
                    (when (and (is-type? card "Program") (neg? (get-in @state [:runner :memory])))
                      (toast state :runner "You have run out of memory units!"))
                    (handle-virus-counter-flag state side installed-card)
-                   (when (is-type? card "Resource")
+                   (when (and (not facedown) (is-type? card "Resource"))
                      (swap! state assoc-in [:runner :register :installed-resource] true))
-                   (when (has-subtype? c "Icebreaker")
+                   (when (and (not facedown) (has-subtype? c "Icebreaker"))
                      (update-breaker-strength state side c))
                    (trigger-event-simult state side eid :runner-install
                                          {:card-ability (card-as-handler installed-card)}
