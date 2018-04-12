@@ -52,7 +52,7 @@
    "close-deck" core/close-deck})
 
 (defn strip [state]
-  (dissoc state :events :turn-events :per-turn :prevent :damage :effect-completed))
+  (dissoc state :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state))
 
 (defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"
@@ -151,7 +151,7 @@
   "Adds a message from a user to the chat log."
   [state side user message]
   (when (and state side)
-    (core/say state side {:user user :text message})))
+    (core/say state side {:user (select-keys user [:username :emailhash]) :text message})))
 
 (defn handle-notification
   [state text]
