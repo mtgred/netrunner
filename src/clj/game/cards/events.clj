@@ -40,38 +40,34 @@
                                      :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
-   {:req (req (and (some #{:hq} (:successful-run runner-reg))
-                   (some #{:rd} (:successful-run runner-reg))
-                   (some #{:archives} (:successful-run runner-reg))))
-                           ;; trash cards from right to left
-                           ;; otherwise, auto-killing servers would move the cards to the next server
-                           ;; so they could no longer be trashed in the same loop
-    :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
-    :effect (req (let [ai (all-installed state :corp)
-                       onhost (filter #(= '(:onhost) (:zone %)) ai)
-                       allcorp (->> ai
-                                    (remove #(= '(:onhost) (:zone %)))
-                                    (sort-by #(vec (:zone %)))
-                                    (reverse))]
-                   ; Trash hosted cards first so they don't get trashed twice
-                   (doseq [c onhost]
-                     (trash state side c))
-                   (doseq [c allcorp]
-                     (trash state side (get-card state c))))
-
-                 ;; do hosted cards first so they don't get trashed twice
-                 (let [installedcards (all-active-installed state :runner)
-                       ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
-                       hostedcards (filter ishosted installedcards)
-                       nonhostedcards (remove ishosted installedcards)]
-                   (doseq [oc hostedcards :let [c (get-card state oc)]]
-                     (move state side c [:rig :facedown])
-                     (if (:memoryunits c)
-                       (gain state :runner :memory (:memoryunits c))))
-                   (doseq [oc nonhostedcards :let [c (get-card state oc)]]
-                     (move state side c [:rig :facedown])
-                     (if (:memoryunits c)
-                       (gain state :runner :memory (:memoryunits c))))))}
+   (let [corp-trash {:delayed-completion true
+                     :effect (req (let [ai (all-installed state :corp)
+                                        onhost (filter #(= '(:onhost) (:zone %)) ai)
+                                        unhosted (->> ai
+                                                     (remove #(= '(:onhost) (:zone %)))
+                                                     (sort-by #(vec (:zone %)))
+                                                     (reverse))
+                                        allcorp (concat onhost unhosted)] 
+                                    (trash-cards state :runner eid allcorp)))}
+         runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
+                                             ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                                             hostedcards (filter ishosted installedcards)
+                                             nonhostedcards (remove ishosted installedcards)]
+                                         (doseq [oc hostedcards :let [c (get-card state oc)]]
+                                           (flip-facedown state side c))
+                                         (doseq [oc nonhostedcards :let [c (get-card state oc)]]
+                                           (flip-facedown state side c))))}]
+     {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                     (some #{:rd} (:successful-run runner-reg))
+                     (some #{:archives} (:successful-run runner-reg))))
+      :delayed-completion true
+      ;; trash cards from right to left
+      ;; otherwise, auto-killing servers would move the cards to the next server
+      ;; so they could no longer be trashed in the same loop
+      :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
+      :effect (req (when-completed
+                     (resolve-ability state side corp-trash card nil)
+                     (continue-ability state side runner-facedown card nil)))})
 
    "Because I Can"
    (run-event
@@ -171,7 +167,7 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (< (count chosen) n)
-                               (continue-ability state side (cbi-choice (remove-once #(not= target %) remaining)
+                               (continue-ability state side (cbi-choice (remove-once #(= target %) remaining)
                                                                         chosen n original) card nil)
                                (continue-ability state side (cbi-final chosen original) card nil))))})]
      {:req (req hq-runnable)
@@ -378,7 +374,7 @@
                                   (when-completed
                                     (resolve-ability state side chosen card nil)
                                     (if (= (count abis) 4)
-                                      (continue-ability state side (choice (remove-once #(not= % chosen) abis)) card nil)
+                                      (continue-ability state side (choice (remove-once #(= % chosen) abis)) card nil)
                                       (effect-completed state side eid)))))})]
      {:delayed-completion true
       :effect (effect (continue-ability (choice all) card nil))})
@@ -397,8 +393,9 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "install " (:title target))
-                                    :effect (req (runner-install state side target {:no-cost true})
-                                                 (swap! state update :diana #(conj % target)))}
+                                    :effect (req (let [diana-card (assoc-in target [:special :diana-installed] true)]
+                                                   (runner-install state side diana-card {:no-cost true})
+                                                   (swap! state update :diana #(conj % diana-card))))}
                                    card nil))}]
     :effect (effect (run target nil card)
                     (prompt! card (str "Click Diana's Hunt in the Temporary Zone to install a Program") ["OK"] {})
@@ -408,9 +405,10 @@
                                       (register-events state side
                                                        {:run-ends {:effect (req (let [hunt (:diana @state)]
                                                                                   (doseq [c hunt]
-                                                                                    (when-let [installed (find-cid (:cid c) (all-installed state side))]
-                                                                                      (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
-                                                                                      (trash state side installed {:unpreventable true})))
+                                                                                    (let [installed (find-cid (:cid c) (all-installed state side))]
+                                                                                      (when (get-in installed [:special :diana-installed])
+                                                                                        (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
+                                                                                        (trash state side installed {:unpreventable true}))))
                                                                                   (swap! state dissoc :diana)
                                                                                   (unregister-events state side card)
                                                                                   (trash state side c)))}} c)))}
@@ -1113,7 +1111,7 @@
                                (do (clear-wait-prompt state :corp)
                                    (effect-completed state side eid card)))
                              (do (trash state side target {:unpreventable true})
-                                 (continue-ability state side (entrance-trash (remove-once #(not= % target) cards))
+                                 (continue-ability state side (entrance-trash (remove-once #(= % target) cards))
                                                    card nil))))})]
      {:msg "look at and trash or rearrange the top 6 cards of their Stack"
       :delayed-completion true

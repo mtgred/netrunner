@@ -7,6 +7,47 @@
 
 (use-fixtures :once load-all-cards)
 
+(deftest undo-turn
+  (do-game
+    (new-game (default-corp)
+              (default-runner))
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (is (= 1 (:click (get-corp))) "Corp spent 2 clicks")
+    (is (= 13 (:credit (get-corp))) "Corp has 13 credits")
+    (is (= 1 (count (:hand (get-corp)))) "Corp has 1 card in HQ")
+    (core/command-undo-turn state :runner)
+    (core/command-undo-turn state :corp)
+    (is (= 3 (count (:hand (get-corp)))) "Corp has 3 cards in HQ")
+    (is (= 0 (:click (get-corp))) "Corp has no clicks - turn not yet started")
+    (is (= 5 (:credit (get-corp))) "Corp has 5 credits")))
+
+(deftest undo-click
+  (do-game
+    (new-game (default-corp [(qty "Ikawah Project" 1)])
+              (default-runner [(qty "Day Job" 1)]))
+    (play-from-hand state :corp "Ikawah Project" "New remote")
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (run-empty-server state :remote1)
+    (prompt-choice :runner "[Click]")
+    (prompt-choice :runner "2 [Credits]")
+    (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
+    (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
+    (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project")
+    (core/command-undo-click state :corp)
+    (is (= 1 (count (:scored (get-runner)))) "Corp attempt to undo click does nothing")
+    (core/command-undo-click state :runner)
+    (is (= 0 (count (:scored (get-runner)))) "Runner attempt to undo click works ok")
+    (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
+    (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")
+    (play-from-hand state :runner "Day Job")
+    (is (= 0 (:click (get-runner))) "Runner spent 4 clicks")
+    (core/command-undo-click state :runner)
+    (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
+    (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
+
 (deftest corp-rez-unique
   ;; Rezzing a second copy of a unique Corp card
   (do-game

@@ -126,10 +126,10 @@
   [client-id gameid]
   (when-let [{:keys [players started state] :as game} (game-for-id gameid)]
     (cond (player? client-id gameid)
-          (swap! all-games update-in [gameid :players] #(remove-once (fn [p] (not= client-id (:ws-id p))) %))
+          (swap! all-games update-in [gameid :players] #(remove-once (fn [p] (= client-id (:ws-id p))) %))
 
           (spectator? client-id gameid)
-          (swap! all-games update-in [gameid :spectators] #(remove-once (fn [p] (not= client-id (:ws-id p))) %)))
+          (swap! all-games update-in [gameid :spectators] #(remove-once (fn [p] (= client-id (:ws-id p))) %)))
 
     ;; update ending-players when someone drops to credit a completion properly.  Not if game is over.
     ; TODO add other player back in if other player rejoins

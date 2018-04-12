@@ -1,8 +1,8 @@
 (in-ns 'game.core)
 
-(declare active? all-installed all-active-installed cards card-init deactivate card-flag? get-card-hosted handle-end-run hardware? has-subtype? ice?
-         make-eid program? register-events remove-from-host remove-icon reset-card resource? rezzed? trash trigger-event update-hosted!
-         update-ice-strength unregister-events)
+(declare active? all-installed all-active-installed cards card-init deactivate card-flag? gain get-card-hosted handle-end-run 
+         hardware? has-subtype? ice? is-type? make-eid program? register-events remove-from-host remove-icon reset-card 
+         resource? rezzed? toast trash trigger-event update-breaker-strength update-hosted! update-ice-strength unregister-events)
 
 ;;; Functions for loading card information.
 (defn card-def
@@ -16,14 +16,21 @@
   [cid from]
   (some #(when (= (:cid %) cid) %) from))
 
+(defn find-latest
+  "Returns the newest version of a card where-ever it may be"
+  [state card]
+  (let [side (-> card :side to-keyword)]
+    (find-cid (:cid card) (concat (all-installed state side)
+                                  (-> (map #(-> @state side %) [:hand :discard :deck :rfg]) concat flatten)))))
+
 (defn get-scoring-owner
   "Returns the owner of the scoring area the card is in"
   [state {:keys [cid] :as card}]
-   (if (find-cid cid (get-in @state [:corp :scored]))
-      :corp
-      (if (find-cid cid (get-in @state [:runner :scored]))
-        :runner
-        nil)))
+  (cond
+    (find-cid cid (get-in @state [:corp :scored]))
+    :corp
+    (find-cid cid (get-in @state [:runner :scored]))
+    :runner))
 
 (defn get-card
   "Returns the most recent copy of the card from the current state, as identified
@@ -52,14 +59,15 @@
       (update-hosted! state side card)
       (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
             [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
-        (when-not (empty? tail)
+        (when (not-empty tail)
           (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
 
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
   ([state side {:keys [zone cid host installed] :as card} to {:keys [front keep-server-alive force] :as options}]
-   (let [zone (if host (map to-keyword (:zone host)) zone)
+   (let [to (if (is-type? card "Fake-Identity") :rfg to)          ; Fake-Identities always get moved to RFG
+         zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)
          same-zone? (= src-zone target-zone)]
@@ -70,6 +78,8 @@
                     force))
        (trigger-event state side :pre-card-moved card src-zone target-zone)
        (let [dest (if (sequential? to) (vec to) [to])
+             to-facedown (= dest [:rig :facedown])
+             to-installed (#{:servers :rig} (first dest))
              trash-hosted (fn [h]
                              (trash state side
                                     (update-in h [:zone] #(map to-keyword %))
@@ -93,13 +103,12 @@
              c (if (and (= side :corp) (= (first dest) :discard) (rezzed? card))
                  (assoc card :seen true) card)
              c (if (and (or installed host (#{:servers :scored :current} (first zone)))
-                        (#{:hand :deck :discard :rfg} (first dest))
+                        (or (#{:hand :deck :discard :rfg} (first dest)) to-facedown)
                         (not (:facedown c)))
-                 (deactivate state side c) c)
-             c (if (= dest [:rig :facedown]) (assoc c :facedown true :installed true) (dissoc c :facedown))
+                 (deactivate state side c to-facedown) c)
+             c (if to-installed (assoc c :installed true) (dissoc c :installed))
+             c (if to-facedown (assoc c :facedown true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted hosted :previous-zone (:zone c))
-             moved-card (if (and (:facedown moved-card) (:installed moved-card))
-                          (deactivate state side moved-card) moved-card)
              moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
                           (dissoc moved-card :seen) moved-card)
              moved-card (if (and (= (first (:zone moved-card)) :scored) (card-flag? moved-card :has-abilities-when-stolen true))
@@ -110,7 +119,7 @@
          (doseq [s [:runner :corp]]
            (if host
              (remove-from-host state side card)
-             (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+             (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
          (let [z (vec (cons :corp (butlast zone)))]
            (when (and (not keep-server-alive)
                       (is-remote? z)
@@ -123,10 +132,12 @@
          (when-let [card-moved (:move-zone (card-def c))]
            (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card moved-card)
-         (when (#{:discard :hand} to) (reset-card state side moved-card))
-         (when-let [icon-card (get-card state (get-in moved-card [:icon :card]))]
-           ;; remove icon if card moved to :discard or :hand
-           (when (#{:discard :hand} to) (remove-icon state side icon-card moved-card)))
+         ; Default a card when moved to inactive zones (except :persistent key)
+         (when (#{:discard :hand :deck :rfg} to)
+           (reset-card state side moved-card)
+           (when-let [icon-card (get-in moved-card [:icon :card])]
+             ; Remove icon and icon-card keys
+             (remove-icon state side icon-card moved-card)))
          moved-card)))))
 
 (defn move-zone
@@ -244,3 +255,27 @@
       (update! state side c)
       (when (active? card)
         (card-init state side c {:resolve-effect false})))))
+
+(defn flip-facedown
+  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to facedown"
+  [state side {:keys [host] :as card}]
+  (if host
+    (let [card (deactivate state side card true)
+          card (assoc-in card [:facedown] true)]
+      (update! state side card))
+    (move state side card [:rig :facedown])))
+
+(defn flip-faceup
+  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to correct area.
+  Wires events without calling effect/init-data"
+  [state side {:keys [host] :as card}]
+  (let [card (if host 
+               (dissoc card :facedown) 
+               (move state side card (type->rig-zone (:type card))))]
+   (card-init state side card {:resolve-effect false :init-data false})  
+   (when (:memoryunits card)
+     (gain state :runner :memory (- (:memoryunits card)))
+     (when (neg? (get-in @state [:runner :memory]))
+       (toast state :runner "You have run out of memory units!")))
+   (when (has-subtype? card "Icebreaker")
+     (update-breaker-strength state side card))))

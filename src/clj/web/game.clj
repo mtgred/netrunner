@@ -1,6 +1,6 @@
 (ns web.game
   (:require [web.ws :as ws]
-            [web.lobby :refer [all-games old-states] :as lobby ]
+            [web.lobby :refer [all-games old-states] :as lobby]
             [web.utils :refer [response]]
             [game.main :as main]
             [game.core :as core]
@@ -38,15 +38,17 @@
    (doseq [{:keys [ws-id] :as pl} spectators]
      (ws/send! ws-id [event (json/generate-string spect-state)]))))
 
-(defn swap-and-send-state! [{:keys [gameid state] :as game}]
+(defn swap-and-send-state!
   "Updates the old-states atom with the new game state, then sends a :netrunner/state
   message to game clients."
+  [{:keys [gameid state] :as game}]
   (swap! old-states assoc gameid @state)
   (send-state! game (main/public-states state)))
 
-(defn swap-and-send-diffs! [{:keys [gameid state] :as game}]
+(defn swap-and-send-diffs!
   "Updates the old-states atom with the new game state, then sends a :netrunner/diff
   message to game clients."
+  [{:keys [gameid state] :as game}]
   (let [old-state (get @old-states gameid)]
     (when (and state @state)
       (swap! old-states assoc gameid @state)

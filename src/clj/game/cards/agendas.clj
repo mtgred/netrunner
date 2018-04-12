@@ -951,17 +951,15 @@
                                                    (:hand corp)
                                                    (:discard corp))))
            (add-ad [state side c]
-             (update! state side (assoc c :subtype (combine-subtypes false ;append ad even if it is already an ad
-                                                                     (:subtype c "")
-                                                                     "Advertisement"))))]
+             (update! state side (assoc-in c [:persistent :subtype] "Advertisement")))]
      {:interactive (req true)
       :msg "make all assets gain Advertisement"
       :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))
       :swapped {:msg "make all assets gain Advertisement"
                 :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))}
       :leave-play (req (doseq [c (get-assets state corp)]
-                         (update! state side (assoc c :subtype
-                                                      (->> (split (or (:subtype c) "") #" - ")
+                         (update! state side (assoc-in c [:persistent :subtype]
+                                                      (->> (split (or (-> c :persistent :subtype) "") #" - ")
                                                            (drop 1) ;so that all actual ads remain ads if agenda leaves play
                                                            (join " - "))))))})
 
@@ -990,8 +988,10 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (not= target "Done")
-                               (continue-ability state side (corp-choice (remove-once #(not= target %) remaining)
-                                                                       chosen original) card nil)
+                               (continue-ability
+                                 state side
+                                 (corp-choice (remove-once #(= target %) remaining) chosen original)
+                                 card nil)
                                (if (pos? (count (remove #(= % "Done") chosen)))
                                  (continue-ability state side (corp-final (remove #(= % "Done") chosen) original) card nil)
                                  (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
@@ -1177,7 +1177,7 @@
     :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
 
    "Utopia Fragment"
-   {:events {:pre-steal-cost {:req (req (pos? (or (:advance-counter target) 0)))
+   {:events {:pre-steal-cost {:req (req (pos? (:advance-counter target 0)))
                               :effect (req (let [counter (:advance-counter target)]
                                              (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 

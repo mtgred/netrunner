@@ -22,7 +22,7 @@
   "Removes a card from its host."
   [state side {:keys [cid] :as card}]
   (let [host-card (get-card state (:host card))]
-    (update-hosted! state side (update-in host-card [:hosted] (fn [coll] (remove-once #(not= (:cid %) cid) coll))))
+    (update-hosted! state side (update-in host-card [:hosted] (fn [coll] (remove-once #(= (:cid %) cid) coll))))
     (when-let [hosted-lost (:hosted-lost (card-def host-card))]
       (hosted-lost state side (make-eid state) (get-card state host-card) (dissoc card :host)))))
 
@@ -57,10 +57,10 @@
          (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
                                     (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
            (update! state side (update-in host-card [:hosted]
-                                          (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
+                                          (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
          (swap! state update-in (cons s (vec zone))
-                (fn [coll] (remove-once #(not= (:cid %) cid) coll)))))
-     (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(not= (:cid %) cid) coll)))
+                (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
+     (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))
      (let [card (assoc-host-zones card)
            c (assoc target :host (dissoc card :hosted)
                            :facedown facedown

@@ -125,7 +125,7 @@
     :effect (effect (damage eid :brain 1 {:card card}))}
 
    "Brain Chip"
-   (let [runner-points (fn [s] (max (or (get-in s [:runner :agenda-point]) 0) 0))]
+   (let [runner-points (fn [s] (max (get-in s [:runner :agenda-point] 0) 0))]
      {:effect (req (gain state :runner
                          :memory (runner-points @state)
                          :hand-size-modification (runner-points @state))
@@ -1113,5 +1113,5 @@
    "Zamba"
    {:implementation "Credit gain is automatic"
     :in-play [:memory 2]
-    :events {:expose {:effect (effect (gain :credit 1))
+    :events {:expose {:effect (effect (gain :runner :credit 1))
                       :msg "gain 1 [Credits]"}}}})
