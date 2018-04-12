@@ -129,7 +129,7 @@
                                  (effect-completed state side eid card))
                              (do (host state side (get-card state card) target)
                                  (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
-                                 (continue-ability state side (custsec-host (remove-once #(not= % target) cards))
+                                 (continue-ability state side (custsec-host (remove-once #(= % target) cards))
                                                    card nil))))})]
      {:delayed-completion true
       :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
@@ -145,11 +145,15 @@
                    :effect (req (when (can-pay? state side nil :credit (:cost target))
                                   (runner-install state side target)))}]})
    "Consume"
-   {:events {:runner-trash {:req (req (= (:side target) "Corp"))
-                            :optional {:prompt "Place a virus counter on Consume?"
-                                       :yes-ability
-                                       {:effect (effect (add-counter :runner card :virus 1)
-                                                (system-msg :runner (str "places 1 virus counter on Consume")))}}}}
+   {:events {:runner-trash {:delayed-completion true
+                            :effect (req (let [trashed targets
+                                               ab {:req (req (some #(card-is? % :side :corp) trashed))
+                                                   :prompt "Place virus counters on Consume?"
+                                                   :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
+                                                             :default (req (count (filter #(card-is? % :side :corp) trashed)))}
+                                                   :msg (msg "places " (quantify target "virus counter") " on Consume")
+                                                   :effect (effect (add-counter :runner card :virus target))}] 
+                                           (resolve-ability state side eid ab card targets)))}}
     :abilities [{:cost [:click 1]
                  :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
                               (update! state side (assoc-in card [:counter :virus] 0))
@@ -737,7 +741,7 @@
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
                                         (update! state side (assoc-in card [:special :numpurged] (get-in c [:counter :virus] 0)))))}
-             :purge {:req (req (pos? (or (get-in card [:special :numpurged]) 0)))
+             :purge {:req (req (pos? (get-in card [:special :numpurged] 0)))
                      :effect (req (when-let [c (first (:hosted card))]
                                     (add-counter state side c :virus 1)))}
              :card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))

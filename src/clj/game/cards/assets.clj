@@ -7,8 +7,8 @@
   "Effect for triggering ambush on access.
   Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
   ([cost ability]
-   (let [ab (if (> cost 0) (assoc ability :cost [:credit cost]) ability)
-         prompt (if (> cost 0)
+   (let [ab (if (pos? cost) (assoc ability :cost [:credit cost]) ability)
+         prompt (if (pos? cost)
                   (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
                   (req (str "Use " (:title card) " ability?")))]
      (installed-access-trigger cost ab prompt)))
@@ -639,8 +639,12 @@
                             :req (req (some #(card-is? % :side :corp) targets))
                             :msg (msg (str "do " (count (filter #(card-is? % :side :corp) targets))
                                            " net damage"))
-                            :effect (effect (damage eid :net (count (filter #(card-is? % :side :corp) targets))
-                                                    {:card card}))}}
+                            :effect (req (letfn [(do-damage [t]
+                                                   (if-not (empty? t)
+                                                     (when-completed (damage state side :net 1 {:card card})
+                                                                     (do-damage (rest t)))
+                                                     (effect-completed state side eid card)))]
+                                           (do-damage (filter #(card-is? % :side :corp) targets))))}}
     :abilities [{:msg "do 1 net damage"
                  :delayed-completion true
                  :effect (effect (damage eid :net 1 {:card card}))}]}
@@ -1064,7 +1068,8 @@
                   (builder 2 8)]})
 
    "Open Forum"
-   {:events {:corp-mandatory-draw {:msg (msg (let [deck (:deck corp)]
+   {:events {:corp-mandatory-draw {:interactive (req true)
+                                   :msg (msg (let [deck (:deck corp)]
                                                (if (pos? (count deck))
                                                (str "reveal and draw " (:title (first deck)) " from R&D")
                                                "reveal & draw from R&D but it is empty")))
@@ -1247,7 +1252,7 @@
                                                                         newarch (apply conj (subvec arch 0 archndx) swappedcard (subvec arch archndx))]
                                                                      (swap! state assoc-in [:corp :discard] newarch)
                                                                      (swap! state update-in [:corp :hand]
-                                                                            (fn [coll] (remove-once #(not= (:cid %) (:cid hqcard)) coll)))
+                                                                            (fn [coll] (remove-once #(= (:cid %) (:cid hqcard)) coll)))
                                                                      (move state side target :hand)))}
                                                    card nil)))}
                                  card nil)))}]}
@@ -1617,7 +1622,7 @@
                                        (resolve-ability state side
                                          {:effect (req (swap! state assoc-in (cons :corp (:zone card)) newcont)
                                                        (swap! state update-in [:corp :hand]
-                                                         (fn [coll] (remove-once #(not= (:cid %) (:cid newcard)) coll)))
+                                                         (fn [coll] (remove-once #(= (:cid %) (:cid newcard)) coll)))
                                                        (trigger-event state side :corp-install newcard)
                                                        (move state side card :hand))} card nil)
                                        (resolve-prompt state :runner {:choice "No"})

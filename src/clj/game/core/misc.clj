@@ -35,29 +35,33 @@
       "New remote" [:servers (keyword (str "remote" (make-rid state)))]
       [:servers (->> (split server #" ") last (str "remote") keyword)])))
 
-(defn same-server? [card1 card2]
+(defn same-server?
   "True if the two cards are IN or PROTECTING the same server."
+  [card1 card2]
   (let [zone1 (get-nested-zone card1)
         zone2 (get-nested-zone card2)]
     (= (second zone1) (second zone2))))
 
-(defn protecting-same-server? [card ice]
+(defn protecting-same-server?
   "True if an ice is protecting the server that the card is in or protecting."
+  [card ice]
   (let [zone1 (get-nested-zone card)
         zone2 (get-nested-zone ice)]
     (and (= (second zone1) (second zone2))
          (= :ices (last zone2)))))
 
-(defn in-same-server? [card1 card2]
+(defn in-same-server?
   "True if the two cards are installed IN the same server, or hosted on cards IN the same server."
+  [card1 card2]
   (let [zone1 (get-nested-zone card1)
         zone2 (get-nested-zone card2)]
     (and (= zone1 zone2)
          (is-remote? (second zone1)) ; cards in centrals are in the server's root, not in the server.
          (= :content (last zone1)))))
 
-(defn from-same-server? [upgrade target]
+(defn from-same-server?
   "True if the upgrade is in the root of the server that the target is in."
+  [upgrade target]
   (= (central->zone (:zone target))
      (butlast (get-nested-zone upgrade))))
 
@@ -99,7 +103,7 @@
   [state side]
   (if (= side :runner)
     (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current]) (all-active-installed state side)))
-    (cons (get-in @state [:corp :identity]) (filter #(not (:disabled %))
+    (cons (get-in @state [:corp :identity]) (remove :disabled
                                                     (concat (all-active-installed state side)
                                                             (get-in @state [:corp :current])
                                                             (get-in @state [:corp :scored]))))))
@@ -141,12 +145,12 @@
         runner-ap-change (- runner-ap-scored runner-ap-stolen)]
     ;; Remove end of turn events for swapped out agenda
     (swap! state update-in [:corp :register :end-turn]
-           (fn [events] (filter #(not (= (:cid scored) (get-in % [:card :cid]))) events)))
+           (fn [events] (filter #(not= (:cid scored) (get-in % [:card :cid])) events)))
     ;; Move agendas
     (swap! state update-in [:corp :scored]
-           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid scored)) coll) stolen)))
+           (fn [coll] (conj (remove-once #(= (:cid %) (:cid scored)) coll) stolen)))
     (swap! state update-in [:runner :scored]
-           (fn [coll] (conj (remove-once #(not= (:cid %) (:cid stolen)) coll)
+           (fn [coll] (conj (remove-once #(= (:cid %) (:cid stolen)) coll)
                             (if-not (card-flag? scored :has-abilities-when-stolen true)
                               (dissoc scored :abilities :events) scored))))
     ;; Update agenda points
@@ -178,7 +182,7 @@
 
 (defn remove-icon
   "Remove the icon associated with the card and target."
-  ([state side card] (remove-icon state side card (find-cid (-> card :icon-target :cid) (get-all-installed state))))
+  ([state side card] (remove-icon state side card (:icon-target card)))
   ([state side card target]
-   (set-prop state side target :icon nil)
-   (set-prop state side card :icon-target nil)))
+   (when target (set-prop state side (find-latest state target) :icon nil))
+   (set-prop state side (find-latest state card) :icon-target nil)))

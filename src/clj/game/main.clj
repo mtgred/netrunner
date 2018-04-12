@@ -91,9 +91,10 @@
     deck
     (private-card-vector state side deck)))
 
-(defn- private-states [state]
+(defn- private-states
   "Generates privatized states for the Corp, Runner and any spectators from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well."
+  [state]
   ;; corp, runner, spectator
   (let [corp-private (make-private-corp state)
         runner-private (make-private-runner state)
@@ -148,9 +149,9 @@
 
 (defn handle-say
   "Adds a message from a user to the chat log."
-  [state side user msg]
+  [state side user message]
   (when (and state side)
-    (core/say state side {:user (select-keys user [:username :emailhash]) :text msg})))
+    (core/say state side {:user (select-keys user [:username :emailhash]) :text message})))
 
 (defn handle-notification
   [state text]

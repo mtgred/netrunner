@@ -77,7 +77,7 @@
       (is (= 2 (get-counters (refresh alix) :power)) "Two counters on Alix")
       (is (= 4 (get-in @state [:corp :credit])))
       (card-ability state :corp alix 0)
-      (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
+      (is (= 8 (get-in @state [:corp :credit])) "Gain 4 credits from Alix"))))
 
 (deftest amani-senai
   ;; Amani Senai - trace on score/steal to bounce, with base strength = advancement req of the agenda
@@ -113,21 +113,6 @@
       (prompt-choice :corp 0)
       (is (= 2 (get-in @state [:trace :strength])) "Trace base strength is 2 after scoring second Breakthrough"))))
 
-(deftest blacklist-steal
-  ;; Blacklist - #2426.  Need to allow steal.
-  (do-game
-    (new-game (default-corp [(qty "Fetal AI" 3) (qty "Blacklist" 1)])
-              (default-runner))
-    (trash-from-hand state :corp "Fetal AI")
-    (play-from-hand state :corp "Blacklist" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (= 1 (count (get-in @state [:corp :discard])))
-    (take-credits state :corp)
-    (run-empty-server state :archives)
-    (prompt-choice :runner "Yes")
-    (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
-    (= 1 (count (get-in @state [:runner :scored])))))
-
 (deftest bio-ethics-multiple
   ;; Bio-Ethics Association: preventing damage from multiple copies
   (do-game
@@ -150,20 +135,21 @@
       (prompt-choice :runner "Done")
       (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage"))))
 
-(deftest blacklist-steal
-  ;; Blacklist - #2426.  Need to allow steal.
-  (do-game
-    (new-game (default-corp [(qty "Fetal AI" 3) (qty "Blacklist" 1)])
-              (default-runner))
-    (trash-from-hand state :corp "Fetal AI")
-    (play-from-hand state :corp "Blacklist" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (= 1 (count (get-in @state [:corp :discard])))
-    (take-credits state :corp)
-    (run-empty-server state :archives)
-    (prompt-choice :runner "Yes")
-    (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
-    (= 1 (count (get-in @state [:runner :scored])))))
+(deftest blacklist
+  ;; Blacklist
+  (testing "#2426.  Need to allow steal."
+    (do-game
+      (new-game (default-corp [(qty "Fetal AI" 3) (qty "Blacklist" 1)])
+                (default-runner))
+      (trash-from-hand state :corp "Fetal AI")
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 1 (count (get-in @state [:corp :discard]))))
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (prompt-choice :runner "Yes")
+      (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
+      (is (= 1 (count (get-in @state [:runner :scored])))))))
 
 (deftest brain-taping-warehouse
   ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ICE by 1 for each unspent Runner click

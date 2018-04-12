@@ -34,8 +34,8 @@
                                          [:credit (:cost card)]))
            eid (if-not eid (make-eid state) eid)]
        ;; ensure the instant can be played
-       (if (and (if-let [req (:req cdef)]
-                  (req state side eid card targets) true) ; req is satisfied
+       (if (and (if-let [cdef-req (:req cdef)]
+                  (cdef-req state side eid card targets) true) ; req is satisfied
                 (not (and (has-subtype? card "Current")
                           (get-in @state [side :register :cannot-play-current])))
                 (not (and (has-subtype? card "Run")
@@ -102,7 +102,7 @@
    (swap! state update-in [side :register] dissoc :most-recent-drawn) ;clear the most recent draw in case draw prevented
    (trigger-event state side (if (= side :corp) :pre-corp-draw :pre-runner-draw) n)
    (let [active-player (get-in @state [:active-player])
-         n (-> n (+ (or (get-in @state [:bonus :draw]) 0)))
+         n (+ n (get-in @state [:bonus :draw] 0))
          draws-wanted n
          draws-after-prevent (if (and (= side active-player) (get-in @state [active-player :register :max-draw]))
                                   (min n (remaining-draws state side))
@@ -122,7 +122,7 @@
              (trigger-event-sync state side (if (= side :corp) :corp-draw :runner-draw) draws-after-prevent)
              (trigger-event-sync state side eid (if (= side :corp) :post-corp-draw :post-runner-draw) draws-after-prevent))
            (effect-completed state side eid))
-         (when (= 0 (remaining-draws state side))
+         (when (safe-zero? (remaining-draws state side))
            (prevent-draw state side))))
      (when (< draws-after-prevent draws-wanted)
        (let [prevented (- draws-wanted draws-after-prevent)]
@@ -156,11 +156,14 @@
 
 (defn damage-defer
   "Registers n damage of the given type to be deferred until later. (Chronos Protocol.)"
-  [state side dtype n]
-  (swap! state assoc-in [:damage :defer-damage dtype] n))
+  ([state side dtype n] (damage-defer state side dtype n nil))
+  ([state side dtype n {:keys [part-resolved] :as args}]
+   (swap! state assoc-in [:damage :defer-damage dtype] {:n n
+                                                        :part-resolved part-resolved})))
 
 (defn get-defer-damage [state side dtype {:keys [unpreventable] :as args}]
-  (when-not unpreventable (get-in @state [:damage :defer-damage dtype])))
+  (let [{:keys [n part-resolved]} (get-in @state [:damage :defer-damage dtype])]
+    (when (or part-resolved (not unpreventable)) n)))
 
 (defn enable-runner-damage-choice
   [state side]
@@ -364,7 +367,7 @@
 
 (defn- resolve-trash-end
   [state side eid {:keys [zone type disabled] :as card}
-   {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args} & targets]
+   {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args}]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})
         card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
@@ -374,26 +377,26 @@
                                          (:installed card))
                                     (and (:rezzed card) (not host-trashed))
                                     (and (:when-inactive trash-effect) (not host-trashed))))
-        (resolve-ability state side trash-effect moved-card (cons cause targets))))
+        (resolve-ability state side trash-effect moved-card (list cause))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
     (effect-completed state side eid)))
 
 (defn- resolve-trash
   [state side eid {:keys [zone type] :as card}
-   {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
+   {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
   (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
-    (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
-                    (apply resolve-trash-end state side eid card args targets))
-    (apply resolve-trash-end state side eid card args targets)))
+    (when-completed (trigger-event-sync state side (keyword (str (name side) "-trash")) card cause)
+                    (resolve-trash-end state side eid card args))
+    (resolve-trash-end state side eid card args)))
 
-(defn trash
-  "Attempts to trash the given card, allowing for boosting/prevention effects."
-  ([state side card] (trash state side (make-eid state) card nil))
-  ([state side card args] (trash state side (make-eid state) card args))
-  ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args} & targets]
-   (if (not (some #{:discard} zone))
+(defn- prevent-trash
+  ([state side card] (prevent-trash state side (make-eid state) card nil))
+  ([state side card args] (prevent-trash state side (make-eid state) card nil))
+  ([state side eid {:keys [zone type] :as card}
+    {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
+   (if (and card (not (some #{:discard} zone)))
      (cond
-
+       
        (untrashable-while-rezzed? card)
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))
@@ -423,26 +426,48 @@
                                       (swap! state update-in [:trash :trash-prevent] dissoc ktype)
                                       (effect-completed state side eid))
                                   (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                      (apply resolve-trash state side eid card args targets))))
+                                      (swap! state update-in [:trash :trash-list] concat [card])
+                                      (effect-completed state side eid))))
                               {:priority 10}))
-             ;; No prevention effects; resolve the trash.
-             (apply resolve-trash state side eid card args targets)))))
+             ;; No prevention effects: add the card to the trash-list
+             (do (swap! state update-in [:trash :trash-list] concat [card])
+                 (effect-completed state side eid))))))
      (effect-completed state side eid))))
+
+(defn trash
+  "Attempts to trash the given card, allowing for boosting/prevention effects."
+  ([state side card] (trash state side (make-eid state) card nil))
+  ([state side card args] (trash state side (make-eid state) card args))
+  ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args}]
+   (swap! state update-in [:trash] dissoc :trash-list)
+   (when-completed (prevent-trash state side card args)
+                   (if-let [c (first (get-in @state [:trash :trash-list]))]
+                     (resolve-trash state side eid c args)
+                     (effect-completed state side eid)))))
 
 (defn trash-cards
   ([state side cards] (trash-cards state side (make-eid state) cards nil))
-  ([state side eid cards args & targets]
+  ([state side eid cards] (trash-cards state side eid cards nil))
+  ([state side eid cards {:keys [suppress-event] :as args}]
+   (swap! state update-in [:trash] dissoc :trash-list)
    (letfn [(trashrec [cs]
              (if (not-empty cs)
-               (when-completed (apply trash state side (first cs) args targets)
-                               (trashrec (next cs)))
-               (effect-completed state side eid)))]
-     (trashrec cards))))
+               (when-completed (resolve-trash-end state side (get-card state (first cs)) args)
+                               (trashrec (rest cs)))
+               (effect-completed state side eid)))
+           (preventrec [cs]
+             (if (not-empty cs)
+               (when-completed (prevent-trash state side (get-card state (first cs)) args)
+                               (preventrec (rest cs)))
+               (let [trashlist (get-in @state [:trash :trash-list])]
+                 (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) trashlist)
+                                 (trashrec trashlist)))))]
+     (preventrec cards))))
 
 (defn- resolve-trash-no-cost
-  [state side card & {:keys [seen]
+  [state side card & {:keys [seen unpreventable]
                       :or {seen true}}]
-  (trash state side (assoc card :seen seen))
+  (trash state side (assoc card :seen seen) {:unpreventable unpreventable})
   (swap! state assoc-in [side :register :trashed-card] true))
 
 (defn trash-no-cost
@@ -489,7 +514,7 @@
     (-> (if-let [costfun (:advancement-cost-bonus (card-def card))]
           (+ advancementcost (costfun state side (make-eid state) card nil))
           advancementcost)
-        (+ (or (get-in @state [:bonus :advancement-cost]) 0))
+        (+ (get-in @state [:bonus :advancement-cost] 0))
         (max 0))))
 
 (defn update-advancement-cost
@@ -556,7 +581,7 @@
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
-       (resolve-trash-no-cost state from-side card :seen false)))))
+       (resolve-trash-no-cost state from-side card :seen false :unpreventable true)))))
 
 ;; Exposing
 (defn expose-prevent
@@ -576,24 +601,26 @@
   ([state side target] (expose state side (make-eid state) target))
   ([state side eid target] (expose state side eid target nil))
   ([state side eid target {:keys [unpreventable] :as args}]
-   (swap! state update-in [:expose] dissoc :expose-prevent)
-   (when-completed (trigger-event-sync state side :pre-expose target)
-                   (let [prevent (get-in @state [:prevent :expose :all])]
-                     (if (and (not unpreventable) (pos? (count prevent)))
-                       (do (system-msg state :corp "has the option to prevent a card from being exposed")
-                           (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
-                           (show-prompt state :corp nil
-                                        (str "Prevent " (:title target) " from being exposed?") ["Done"]
-                                        (fn [_]
-                                          (clear-wait-prompt state :runner)
-                                          (if-let [_ (get-in @state [:expose :expose-prevent])]
-                                            (effect-completed state side (make-result eid false)) ;; ??
-                                            (do (system-msg state :corp "will not prevent a card from being exposed")
-                                                (resolve-expose state side eid target args))))
-                                        {:priority 10}))
-                       (if-not (get-in @state [:expose :expose-prevent])
-                         (resolve-expose state side eid target args)
-                         (effect-completed state side (make-result eid false))))))))
+    (swap! state update-in [:expose] dissoc :expose-prevent)
+    (if (rezzed? target)
+      (effect-completed state side eid) ; cannot expose faceup cards
+      (when-completed (trigger-event-sync state side :pre-expose target)
+                      (let [prevent (get-in @state [:prevent :expose :all])]
+                        (if (and (not unpreventable) (pos? (count prevent)))
+                          (do (system-msg state :corp "has the option to prevent a card from being exposed")
+                              (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
+                              (show-prompt state :corp nil
+                                           (str "Prevent " (:title target) " from being exposed?") ["Done"]
+                                           (fn [_]
+                                             (clear-wait-prompt state :runner)
+                                             (if-let [_ (get-in @state [:expose :expose-prevent])]
+                                               (effect-completed state side (make-result eid false)) ;; ??
+                                               (do (system-msg state :corp "will not prevent a card from being exposed")
+                                                   (resolve-expose state side eid target args))))
+                                           {:priority 10}))
+                          (if-not (get-in @state [:expose :expose-prevent])
+                            (resolve-expose state side eid target args)
+                            (effect-completed state side (make-result eid false)))))))))
 
 (defn reveal-hand
   "Reveals a side's hand to opponent and spectators."
