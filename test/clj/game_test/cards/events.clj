@@ -436,7 +436,6 @@
       (run-successful state)
       (prompt-choice :runner "Yes")
       (prompt-choice :runner "Yes")
-      ; (card-ability state :runner (get-program state 0) 0)
       (prompt-select :runner (get-program state 0))
       (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
       ; Cold Read works when Blacklist rezzed - #2378

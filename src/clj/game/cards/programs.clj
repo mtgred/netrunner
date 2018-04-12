@@ -152,7 +152,7 @@
                                                    :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
                                                              :default (req (count (filter #(card-is? % :side :corp) trashed)))}
                                                    :msg (msg "places " (quantify target "virus counter") " on Consume")
-                                                   :effect (effect (add-counter :runner card :virus target))}] 
+                                                   :effect (effect (add-counter :runner card :virus target))}]
                                            (resolve-ability state side eid ab card targets)))}}
     :abilities [{:cost [:click 1]
                  :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
@@ -458,16 +458,17 @@
    {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))}
     :data {:counter {:virus 2}}
     :events {:access {:delayed-completion true
-                      :req (req (pos? (get-in card [:counter :virus] 0)))
-                      :once :per-turn
-                      :counter-cost [:virus 1]
+                      :req (req (and (pos? (get-in card [:counter :virus] 0))
+                                     (not (get-in @state [:per-turn (:cid card)]))))
                       :effect (req (show-wait-prompt state :corp "Runner to use Imp")
                                    (continue-ability state side
                                      {:optional
-                                      {:prompt "Trash accessed card at no cost?"
+                                      {:prompt (str "Trash " (:title (first targets)) " at no cost?")
                                        :once :per-turn
-                                       :yes-ability {:msg "trash at no cost"
+                                       :yes-ability {:msg (msg "trash " (:title target) " at no cost")
                                                      :effect (req (resolve-trash-no-cost state side target)
+                                                                  (add-counter state side card :virus -1)
+                                                                  (swap! state assoc-in [:per-turn (:cid card)] true)
                                                                   (clear-wait-prompt state :corp))}
                                        :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                                      card targets))}}}
