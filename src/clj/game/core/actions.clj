@@ -91,9 +91,9 @@
                    (same-side? side (:side card))))
       (case server
         ("Heap" "Archives")
-        (do (let [action-str (if (= (first (:zone c)) :hand) "discards " "trashes ")]
-              (trash state s c {:unpreventable true})
-              (system-msg state side (str action-str label from-str))))
+        (let [action-str (if (= (first (:zone c)) :hand) "discards " "trashes ")]
+          (trash state s c {:unpreventable true})
+          (system-msg state side (str action-str label from-str)))
         ("Grip" "HQ")
         (do (move state s (dissoc c :seen :rezzed) :hand {:force true})
             (system-msg state side (str "moves " label from-str " to " server)))
@@ -163,7 +163,7 @@
   (let [card (get-card state card)
         r (get-in @state [side :selected 0 :req])
         cid (get-in @state [side :selected 0 :not-self])]
-    (when (and (not= (:cid card) cid) (or (not r) (r card))
+    (when (and (not= (:cid card) cid) (or (not r) (r card)))
       (let [c (update-in card [:selected] not)]
         (update! state side c)
         (if (:selected c)
@@ -172,7 +172,7 @@
                  (fn [coll] (remove-once #(= (:cid %) (:cid card)) coll))))
         (let [selected (get-in @state [side :selected 0])]
           (when (= (count (:cards selected)) (or (:max selected) 1))
-            (resolve-select state side))))))))
+            (resolve-select state side)))))))
 
 (defn- do-play-ability [state side card ability targets]
   (let [cost (:cost ability)]
@@ -192,7 +192,7 @@
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
-             {:msg "take 1 [Recurring Credits]" :req (req (> (:rec-counter card) 0))
+             {:msg "take 1 [Recurring Credits]" :req (req (pos? (:rec-counter card)))
               :effect (req (add-prop state side card :rec-counter -1)
                              (gain state side :credit 1)
                            (when (has-subtype? card "Stealth")
@@ -205,7 +205,7 @@
   "Use the 'match strength with ice' function of icebreakers."
   [state side args]
   (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (> (or (:position run) 0) 0)) (get-card state ((get-run-ices state) (dec (:position run)))))
+        current-ice (when (and run (pos? (:position run 0))) (get-card state ((get-run-ices state) (dec (:position run)))))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
         pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
@@ -261,7 +261,7 @@
 (defn trash-resource
   "Click to trash a resource."
   [state side args]
-  (let [trash-cost (max 0 (- 2 (or (get-in @state [:corp :trash-cost-bonus]) 0)))]
+  (let [trash-cost (max 0 (- 2 (get-in @state [:corp :trash-cost-bonus] 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit trash-cost {:action :corp-trash-resource})]
       (resolve-ability state side
                        {:prompt  "Choose a resource to trash"
@@ -324,7 +324,7 @@
                      ;; Deregister the derezzed-events before rezzing card
                      (when (:derezzed-events cdef)
                        (unregister-events state side card))
-                     (if (not disabled)
+                     (if-not disabled
                        (card-init state side (assoc card :rezzed :this-turn))
                        (update! state side (assoc card :rezzed :this-turn)))
                      (doseq [h (:hosted card)]
@@ -449,7 +449,7 @@
 (defn remove-tag
   "Click to remove a tag."
   [state side args]
-  (let [remove-cost (max 0 (- 2 (or (get-in @state [:runner :tag-remove-bonus]) 0)))]
+  (let [remove-cost (max 0 (- 2 (get-in @state [:runner :tag-remove-bonus] 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit remove-cost)]
       (lose state side :tag 1)
       (system-msg state side (build-spend-msg cost-str "remove 1 tag"))

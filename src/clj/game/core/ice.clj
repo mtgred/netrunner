@@ -16,7 +16,7 @@
   (+ (if-let [strfun (:strength-bonus (card-def card))]
        (+ strength (strfun state side (make-eid state) card nil))
        strength)
-     (or (get-in @state [:bonus :ice-strength]) 0)))
+     (get-in @state [:bonus :ice-strength] 0)))
 
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."

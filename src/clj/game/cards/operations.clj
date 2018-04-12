@@ -277,9 +277,9 @@
     :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
-   {:msg (msg "gain " (or (:advance-counter target) 0) " [Credits]")
+   {:msg (msg "gain " (:advance-counter target 0) " [Credits]")
     :choices {:req ice?}
-    :effect (final-effect (gain :credit (or (:advance-counter target) 0)))}
+    :effect (final-effect (gain :credit (:advance-counter target 0)))}
 
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
@@ -680,7 +680,7 @@
 
    "Kill Switch"
    (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
-                                 :trace {:base 3 
+                                 :trace {:base 3
                                          :msg "do 1 brain damage"
                                          :delayed-completion true
                                          :effect (effect (damage :runner eid :brain 1 {:card card}))}}]

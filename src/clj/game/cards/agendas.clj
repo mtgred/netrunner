@@ -1171,7 +1171,7 @@
     :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
 
    "Utopia Fragment"
-   {:events {:pre-steal-cost {:req (req (pos? (or (:advance-counter target) 0)))
+   {:events {:pre-steal-cost {:req (req (pos? (:advance-counter target 0)))
                               :effect (req (let [counter (:advance-counter target)]
                                              (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 

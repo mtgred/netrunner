@@ -471,7 +471,8 @@
                  :prompt "Select a card from your grip to trash for Faust"
                  :choices {:req in-hand?}
                  :msg (msg "trash " (:title target) " and add 2 strength")
-                 :effect (effect (trash target {:unpreventable true}) (pump card 2))}]}
+                 :effect (effect (trash target {:unpreventable true})
+                                 (pump card 2))}]}
 
    "Fawkes"
    {:implementation "Stealth credit restriction not enforced"

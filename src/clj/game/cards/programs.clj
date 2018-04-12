@@ -741,7 +741,7 @@
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
                                         (update! state side (assoc-in card [:special :numpurged] (get-in c [:counter :virus] 0)))))}
-             :purge {:req (req (pos? (or (get-in card [:special :numpurged]) 0)))
+             :purge {:req (req (pos? (get-in card [:special :numpurged] 0)))
                      :effect (req (when-let [c (first (:hosted card))]
                                     (add-counter state side c :virus 1)))}
              :card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))

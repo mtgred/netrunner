@@ -246,10 +246,10 @@
 
 (defn msg-handle-access
   ([state side card title]
-   (let [msg (str "accesses " title
-                  (when card
-                    (str " from " (->> card :zone (name-zone side)))))]
-     (system-msg state side msg))))
+   (let [message (str "accesses " title
+                      (when card
+                        (str " from " (->> card :zone (name-zone side)))))]
+     (system-msg state side message))))
 
 (defn- resolve-handle-access
   [state side eid c title]
@@ -276,10 +276,10 @@
                  (= (:zone c) (:zone (get-card state c))))
           ;; if card wasn't moved by a pre-access effect
           (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                          (do (if (= (:zone c) (:zone (get-card state c)))
-                                ;; if the card wasn't moved by the access effect
-                                (access-non-agenda state side eid c)
-                                (effect-completed state side eid))))
+                          (if (= (:zone c) (:zone (get-card state c)))
+                            ;; if the card wasn't moved by the access effect
+                            (access-non-agenda state side eid c)
+                            (effect-completed state side eid)))
           (access-non-agenda state side eid c))))))
 
 (defn- handle-access-pay
@@ -362,7 +362,7 @@
                   (handle-access state side eid cards)
                   (continue-ability state side (access-helper-remote cards) card nil)))})
 
-(defn access-helper-hq-or-rd [state zone label amount select-fn title-fn already-accessed]
+(defn access-helper-hq-or-rd
   "Shows a prompt to access card(s) from the given zone.
   zone: :rd or :hq, for finding Upgrades to access.
   label: a string label to describe what is being accessed, e.g., 'Card from deck' -- 'deck' being the label.
@@ -372,10 +372,10 @@
   title-fn: a function taking a card map being accessed and returning a string to print as the card's title, e.g.,
       'an unseen card from R&D' for an R&D run.
   already-accessed: a set of cards already accessed from this zone or its root."
-
+  [state chosen-zone label amount select-fn title-fn already-accessed]
   (let [get-root-content (fn [state]
-                           (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers zone :content])))
-        server-name (central->name zone)
+                           (filter #(not (contains? already-accessed %)) (get-in @state [:corp :servers chosen-zone :content])))
+        server-name (central->name chosen-zone)
         unrezzed-upgrade (str "Unrezzed upgrade in " server-name)
         card-from (str "Card from " label)]
     {:delayed-completion true
@@ -395,7 +395,7 @@
                                         (if (or (pos? amount) (< 1 (count from-root)))
                                           (continue-ability
                                             state side
-                                            (access-helper-hq-or-rd state zone label amount select-fn title-fn
+                                            (access-helper-hq-or-rd state chosen-zone label amount select-fn title-fn
                                                                     (conj already-accessed (first unrezzed)))
                                             card nil)
                                           (effect-completed state side eid)))
@@ -404,12 +404,12 @@
                           state side
                           {:delayed-completion true
                            :prompt (str "Choose an upgrade in " server-name " to access.")
-                           :choices {:req #(and (= (second (:zone %)) zone)
+                           :choices {:req #(and (= (second (:zone %)) chosen-zone)
                                                 (complement already-accessed))}
                            :effect (req (when-completed (handle-access state side [target])
                                                         (continue-ability
                                                           state side
-                                                          (access-helper-hq-or-rd state zone label amount select-fn title-fn
+                                                          (access-helper-hq-or-rd state chosen-zone label amount select-fn title-fn
                                                                                   (conj already-accessed target))
                                                           card nil)))}
                           card nil)))
@@ -423,11 +423,11 @@
                                         (if (or (< 1 amount) (not-empty from-root))
                                           (continue-ability
                                             state side
-                                            (access-helper-hq-or-rd state zone label (dec amount) select-fn title-fn
-                                                                    (if (-> @state :run :shuffled-during-access zone)
+                                            (access-helper-hq-or-rd state chosen-zone label (dec amount) select-fn title-fn
+                                                                    (if (-> @state :run :shuffled-during-access chosen-zone)
                                                                       ;; if the zone was shuffled because of the access,
                                                                       ;; the runner "starts over" excepting any upgrades that were accessed
-                                                                      (do (swap! state update-in [:run :shuffled-during-access] dissoc zone)
+                                                                      (do (swap! state update-in [:run :shuffled-during-access] dissoc chosen-zone)
                                                                           (set (filter #(= :servers (first (:zone %)))
                                                                                        already-accessed)))
                                                                       (conj already-accessed accessed)))
@@ -440,7 +440,7 @@
                                       (if (or (pos? amount) (< 1 (count (get-root-content state))))
                                         (continue-ability
                                           state side
-                                          (access-helper-hq-or-rd state zone label amount select-fn title-fn
+                                          (access-helper-hq-or-rd state chosen-zone label amount select-fn title-fn
                                                                   (conj already-accessed accessed))
                                           card nil)
                                         (effect-completed state side eid))))))}))
@@ -480,12 +480,13 @@
                   (effect-completed state side eid)))})
 
 
-(defn access-helper-hq [state from-hq already-accessed]
+(defn access-helper-hq
   "This is a helper for cards to invoke HQ access without knowing how to use the full access method. See Dedicated Neural Net."
+  [state from-hq already-accessed]
   (access-helper-hq-or-rd state :hq "hand" from-hq
                           (fn [already-accessed] (some #(when-not (already-accessed %) %)
                                                        (shuffle (-> @state :corp :hand))))
-                          (fn [card] (:title card))
+                          :title
                           already-accessed))
 
 
@@ -508,8 +509,8 @@
           (get-in @state [:corp :discard])))
 
 (defn access-helper-archives [state amount already-accessed]
-  (let [root-content (fn [already-accessed] (filter (complement already-accessed) (-> @state :corp :servers :archives :content)))
-        faceup-accessible (fn [already-accessed] (filter (complement already-accessed) (get-archives-accessible state)))
+  (let [root-content (fn [already-accessed] (remove already-accessed (-> @state :corp :servers :archives :content)))
+        faceup-accessible (fn [already-accessed] (remove already-accessed (get-archives-accessible state)))
         facedown-cards (fn [already-accessed] (filter #(and (not (:seen %))
                                                             (not (already-accessed %)))
                                                       (-> @state :corp :discard)))
@@ -628,7 +629,7 @@
                              cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
                              n (count cards)]
                          ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
-                         (if (or (= (get-in @state [:run :max-access]) 0)
+                         (if (or (safe-zero? (get-in @state [:run :max-access]))
                                  (empty? cards))
                            (system-msg state side "accessed no cards during the run")
                            (do (when (:run @state)
@@ -726,7 +727,7 @@
 
 (defn jack-out-prevent
   [state side]
-  (swap! state update-in [:jack-out :jack-out-prevent] #(+ (or % 0) 1))
+  (swap! state update-in [:jack-out :jack-out-prevent] (fnil inc 0))
   (prevent-jack-out state side))
 
 (defn- resolve-jack-out

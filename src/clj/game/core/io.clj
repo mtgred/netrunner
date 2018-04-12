@@ -45,23 +45,23 @@
   (say state nil {:user (get-in card [:title]) :text (str (:title card) " " text ".")}))
 
 (defn toast
-  "Adds a message to toast with specified severity (default as a warning) to the toast msg list.
+  "Adds a message to toast with specified severity (default as a warning) to the toast message list.
   If message is nil, removes first toast in the list.
   For options see http://codeseven.github.io/toastr/demo.html
   Currently implemented options:
-    - type (warning, info etc)
+    - msg-type (warning, info etc)
     - time-out (sets both timeOut and extendedTimeOut currently)
     - close-button
     - prevent-duplicates"
-  ([state side msg] (toast state side msg "warning" nil))
-  ([state side msg type] (toast state side msg type nil))
-  ([state side msg type options]
-   ;; Allows passing just the toast type as the options parameter
-   (if msg
+  ([state side message] (toast state side message "warning" nil))
+  ([state side message msg-type] (toast state side message msg-type nil))
+  ([state side message msg-type options]
+   ;; Allows passing just the toast msg-type as the options parameter
+   (if message
      ;; normal toast - add to list
-     (swap! state update-in [side :toast] #(conj % {:msg msg :type type :options options}))
-     ;; no msg - remove top toast from list
-     (swap! state update-in [side :toast] #(rest %)))))
+     (swap! state update-in [side :toast] #(conj % {:msg message :type msg-type :options options}))
+     ;; no message - remove top toast from list
+     (swap! state update-in [side :toast] rest))))
 
 (defn play-sfx
   "Adds a sound effect to play to the sfx queue.
@@ -71,7 +71,7 @@
   (when-let [current-id (get-in @state [:sfx-current-id])]
     (do
       (swap! state update-in [:sfx] #(take 3 (conj % {:id (inc current-id) :name sfx})))
-      (swap! state update-in [:sfx-current-id] #(inc %)))))
+      (swap! state update-in [:sfx-current-id] inc))))
 
 ;;; "ToString"-like methods
 (defn card-str
@@ -124,19 +124,25 @@
     state side
     {:effect (req (let [existing (:counter target)
                         value (if-let [n (string->num (first args))] n 0)
-                        c-type (cond (= 1 (count existing)) (first (keys existing))
+                        counter-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
                                      (and (is-type? target "Agenda") (is-scored? target)) :agenda
                                      (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
-                        advance (= :advance-counter c-type)]
-                    (cond advance (set-adv-counter state side target value)
-                          (not c-type) (toast state side (str "Could not infer what counter type you mean. Please specify one manually, by typing "
-                                                              "'/counter TYPE " value "', where TYPE is advance, agenda, credit, power, or virus.")
-                                              "error"
-                                              {:time-out 0 :close-button true})
-                          :else (do (set-prop state side target :counter (merge (:counter target) {c-type value}))
-                                    (system-msg state side (str "sets " (name c-type) " counters to " value " on "
-                                                                (card-str state target)))))))
+                        advance (= :advance-counter counter-type)]
+                    (cond
+                      advance
+                      (set-adv-counter state side target value)
+
+                      (not counter-type)
+                      (toast state side
+                             (str "Could not infer what counter type you mean. Please specify one manually, by typing "
+                                  "'/counter TYPE " value "', where TYPE is advance, agenda, credit, power, or virus.")
+                             "error" {:time-out 0 :close-button true})
+
+                      :else
+                      (do (set-prop state side target :counter (merge (:counter target) {counter-type value}))
+                          (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
+                                                      (card-str state target)))))))
      :choices {:req (fn [t] (card-is? t :side side))}}
     {:title "/counter command"} nil))
 
@@ -155,17 +161,17 @@
           value (if-let [n (string->num (second args))] n 0)
           one-letter (if (<= 1 (.length typestr)) (.substring typestr 0 1) "")
           two-letter (if (<= 2 (.length typestr)) (.substring typestr 0 2) one-letter)
-          c-type (cond (= "v" one-letter) :virus
-                       (= "p" one-letter) :power
-                       (= "c" one-letter) :credit
-                       (= "ag" two-letter) :agenda
-                       :else :advance-counter)
-          advance (= :advance-counter c-type)]
+          counter-type (cond (= "v" one-letter) :virus
+                             (= "p" one-letter) :power
+                             (= "c" one-letter) :credit
+                             (= "ag" two-letter) :agenda
+                             :else :advance-counter)
+          advance (= :advance-counter counter-type)]
       (if advance
         (command-adv-counter state side value)
         (resolve-ability state side
-                       {:effect (effect (set-prop target :counter (merge (:counter target) {c-type value}))
-                                        (system-msg (str "sets " (name c-type) " counters to " value " on "
+                       {:effect (effect (set-prop target :counter (merge (:counter target) {counter-type value}))
+                                        (system-msg (str "sets " (name counter-type) " counters to " value " on "
                                                          (card-str state target))))
                         :choices {:req (fn [t] (card-is? t :side side))}}
                        {:title "/counter command"} nil)))))
@@ -194,7 +200,7 @@
         value (if-let [n (string->num (first args))] n 1)
         num   (if-let [n (-> args first (safe-split #"#") second string->num)] (dec n) 0)]
     (when (<= (count args) 2)
-      (if (= (first (first args)) \#)
+      (if (= (ffirst args) \#)
         (case command
           "/deck"       #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :deck {:front true})
           "/discard"    #(move %1 %2 (nth (get-in @%1 [%2 :hand]) num nil) :discard)
@@ -208,9 +214,9 @@
                                                                             ": " (get-card state target))))
                                            :choices {:req (fn [t] (card-is? t :side %2))}}
                                           {:title "/card-info command"} nil)
-          "/clear-win"  #(clear-win %1 %2)
+          "/clear-win"  clear-win
           "/click"      #(swap! %1 assoc-in [%2 :click] (max 0 value))
-          "/close-prompt" #(command-close-prompt %1 %2)
+          "/close-prompt" command-close-prompt
           "/counter"    #(command-counter %1 %2 args)
           "/credit"     #(swap! %1 assoc-in [%2 :credit] (max 0 value))
           "/deck"       #(toast %1 %2 "/deck number takes the format #n")
@@ -218,7 +224,7 @@
           "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
           "/draw"       #(draw %1 %2 (max 0 value))
           "/end-run"    #(when (= %2 :corp) (end-run %1 %2))
-          "/error"      #(show-error-toast %1 %2)
+          "/error"      show-error-toast
           "/handsize"   #(swap! %1 assoc-in [%2 :hand-size-modification] (- (max 0 value) (get-in @%1 [%2 :hand-size-base])))
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
           "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
