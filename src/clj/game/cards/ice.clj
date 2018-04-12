@@ -261,7 +261,8 @@
       :abilities [(do-net-damage 3)]})
 
    "Archangel"
-   {:access
+   {:flags {:rd-reveal (req true)}
+    :access
     {:delayed-completion true
      :req (req (not= (first (:zone card)) :discard))
      :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
@@ -527,7 +528,8 @@
                   end-the-run]}
 
    "Chrysalis"
-   {:subroutines [(do-net-damage 2)]
+   {:flags {:rd-reveal (req true)}
+    :subroutines [(do-net-damage 2)]
     :access {:delayed-completion true
              :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Chrysalis subroutine")
@@ -934,7 +936,8 @@
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Herald"
-   {:subroutines [(gain-credits 2)
+   {:flags {:rd-reveal (req true)}
+    :subroutines [(gain-credits 2)
                   {:label "Pay 1 [Credits] to place 1 advancement token on a card that can be advanced"
                    :msg (msg "place 1 advancement token on " (card-str state target))
                    :choices {:req can-be-advanced?}
@@ -1704,7 +1707,8 @@
                                                      card nil))}]}
 
    "Sapper"
-   {:subroutines [trash-program]
+   {:flags {:rd-reveal (req true)}
+    :subroutines [trash-program]
     :access {:delayed-completion true
              :req (req (and (not= (first (:zone card)) :discard)
                             (some #(is-type? % "Program") (all-active-installed state :runner))))

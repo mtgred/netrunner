@@ -232,7 +232,8 @@
                                                  (swap! state update-in [:runner :register :successful-run] #(next %)))}}})
 
    "Cyberdex Virus Suite"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Cyberdex Virus Suite")
                              (continue-ability
                                {:optional {:prompt "Purge virus counters with Cyberdex Virus Suite?"
@@ -279,7 +280,8 @@
                                (clear-wait-prompt state :runner)
                                (effect-completed state side eid))))
               :cancel-effect (final-effect (clear-wait-prompt :runner))})]
-     {:access {:delayed-completion true
+     {:flags {:rd-reveal (req true)}
+      :access {:delayed-completion true
                :effect (req (let [n (count (:hand corp))]
                               (show-wait-prompt state :runner "Corp to finish using Disposable HQ")
                               (continue-ability state side
@@ -318,9 +320,9 @@
     :abilities [ability]})
 
    "Forced Connection"
-   {:access {:req (req (not= (first (:zone card)) :discard))
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
              :interactive (req true)
-             :effect (effect (system-msg :runner (str "accesses Forced Connection")))
              :trace {:base 3
                      :msg "give the Runner 2 tags"
                      :delayed-completion true
@@ -681,7 +683,8 @@
                                card nil))}}
 
    "Product Placement"
-   {:access {:req (req (not= (first (:zone card)) :discard))
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
              :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
 
    "Red Herrings"
@@ -817,7 +820,8 @@
                             card nil))}}}
 
    "Tempus"
-   {:access {:req (req (not= (first (:zone card)) :discard))
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
              :interactive (req true)
              :effect (req (when (= (first (:zone card)) :deck)
                             (system-msg state :runner (str "accesses Tempus"))))

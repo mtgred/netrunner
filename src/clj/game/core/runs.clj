@@ -237,12 +237,31 @@
                            :prompt (str "You access " name) :choices ["Steal"]
                            :effect (req (resolve-steal state :runner eid c))} c nil)))))
 
+(defn- reveal-access?
+  "Check if the card should be revealed on access"
+  ;; If any special reveal message is wanted it can go in this function
+  [state side {:keys [zone] :as card}]
+  (let [cdef (card-def card)
+        ;; Add more kw here as the maybe become relevant. Only think rd is relevant,
+        ;; everything else should not be "unseen".
+        reveal-kw (match (vec zone)
+                         [:deck] :rd-reveal
+                         [:hand] :hq-reveal
+                         [:discard] :archives-reveal
+                         :else :reveal)]
+    ;; Check if the zone-reveal keyword exists in the flags property of the card definition
+    (when-let [reveal-fn (get-in cdef [:flags reveal-kw])]
+      (reveal-fn state side (make-eid state) card nil))))
+
 (defn msg-handle-access
-  ([state side card title]
-   (let [message (str "accesses " title
-                      (when card
-                        (str " from " (->> card :zone (name-zone side)))))]
-     (system-msg state side message))))
+  "Generate the message from the access"
+  [state side {:keys [zone] :as card} title]
+  (let [msg (str "accesses " title
+                 (when card
+                   (str " from " (name-zone side zone))))]
+    (system-msg state side msg)
+    (when (reveal-access? state side card)
+      (system-msg state side (str "must reveal they accessed " (:title card))))))
 
 (defn- resolve-handle-access
   [state side eid c title]
