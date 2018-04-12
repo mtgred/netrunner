@@ -14,7 +14,7 @@
 (declare faction-map)
 
 (def ^:const base-url "http://www.netrunnerdb.com/api/2.0/public/")
-(def ^:const base-image-url "http://www.netrunnerdb.com/card_image/")
+(def ^:const base-image-url "https://www.cardgamedb.com/forums/uploads/an/")
 
 (defmacro rename
   "Rename a card field"
@@ -38,6 +38,7 @@
    :size (fn [[k v]] [:bigbox (> (or v -1) 20)])
    :code identity
    :position identity
+   :ffg_id identity
    })
 
 (def mwl-fields
@@ -185,12 +186,17 @@
               acc))
           c fields))
 
+(defn- make-image-url
+  "Create a URI to the card in CardGameDB"
+  [card set]
+  (str base-image-url "med_ADN" (:ffg_id set) "_" (:number card) ".png"))
+
 (defn- get-uri
   "Figure out the card art image uri"
-  [card]
+  [card set]
   (if (contains? card :image_url)
     (:image_url card)
-    (str base-image-url (:code card) ".png")))
+    (make-image-url card set)))
 
 (defn- add-card-fields
   "Add additional fields to the card documents"
@@ -201,7 +207,7 @@
       (assoc :setname (:name s)
              :cycle_code (:cycle_code s)
              :rotated (:rotated s)
-             :image_url (get-uri c)
+             :image_url (get-uri c s)
              :normalizedtitle (string/lower-case (deaccent (:title c)))))))
 
 (defn fetch-data
