@@ -47,7 +47,7 @@
                             :effect (req (clear-wait-prompt state :corp)
                                          (if (not (can-pay? state :corp nil :credit 1))
                                            (do
-                                             (toast state :corp "Cannot afford to pay 1 [Credits] to block card exposure" "info")
+                                             (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
                                              (expose state side eid itarget))
                                            (do
                                              (show-wait-prompt state :runner "Corp decision")
