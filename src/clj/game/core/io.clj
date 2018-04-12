@@ -31,12 +31,18 @@
     ;; say something to force update in client side rendering
     (say state side {:user "__system__" :text "typing"})))
 
+(defn system-say
+  "Prints a system message to log (`say` from user __system__)"
+  ([state side text] (system-say state side text nil))
+  ([state side text {:keys [hr]}]
+   (say state side {:user "__system__" :text (str text (when hr "[hr]"))})))
+
 (defn system-msg
   "Prints a message to the log without a username."
   ([state side text] (system-msg state side text nil))
-  ([state side text {:keys [hr]}]
+  ([state side text args]
    (let [username (get-in @state [side :user :username])]
-     (say state side {:user "__system__" :text (str username " " text "." (when hr "[hr]"))}))))
+     (system-say state side (str username " " text ".") args))))
 
 (defn enforce-msg
   "Prints a message related to a rules enforcement on a given card.

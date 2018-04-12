@@ -920,7 +920,7 @@
    (new-game (default-corp [(qty "Zaibatsu Loyalty" 1)
                             (qty "Project Atlas" 1)])
              (default-runner [(qty "Falsified Credentials" 2)]))
-   
+
     (play-from-hand state :corp "Project Atlas" "New remote")
     (play-from-hand state :corp "Zaibatsu Loyalty" "New remote")
     (take-credits state :corp)
@@ -937,7 +937,7 @@
       (prompt-choice :runner "Agenda")
       (prompt-select :runner atl)
       (card-ability state :corp (refresh zaibatsu) 0) ; prevent the expose!
-      (prompt-choice :corp "Done")      
+      (prompt-choice :corp "Done")
       (is (= 8 (:credit (get-runner))) "A prevented expose does not"))))
 
 (deftest frantic-coding-install
@@ -1729,7 +1729,7 @@
 (let [choose-runner (fn [name state prompt-map]
                       (let [kate-choice (some #(when (= name (:title %)) %) (:choices (prompt-map :runner)))]
                         (core/resolve-prompt state :runner {:card kate-choice})))
-  
+
       akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
       kit "Rielle \"Kit\" Peddler: Transhuman"
@@ -2247,9 +2247,9 @@
     (play-from-hand state :runner "Kati Jones")
     (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Kati Jones was installed")
     (play-from-hand state :runner "The Price of Freedom")
-    (is (= 0 (count (get-in @state [:runner :hand]))) "The Price of Freedom can be played because a connection is in play")
     (let [kj (get-resource state 0)]
       (prompt-select :runner kj)
+      (is (= 0 (count (get-in @state [:runner :hand]))) "The Price of Freedom can be played because a connection is in play")
       (is (= 0 (count (get-in (get-runner) [:rig :resource]))) "Kati Jones was trashed wth The Price of Freedom")
       (is (= 1 (count (get-in (get-runner) [:discard]))) "The Price of Freedom was removed from game, and only Kati Jones is in the discard"))
     (take-credits state :runner)
