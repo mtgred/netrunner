@@ -1887,12 +1887,12 @@
     (play-from-hand state :corp "Success")
     (prompt-select :corp (get-in (get-corp) [:scored 0]))
     (let [gto (get-content state :remote1 0)]
-      ;; Prompt for Success
-      (prompt-select :corp (refresh gto))
-      (is (= 5 (:advance-counter (refresh gto))) "Advance 5 times from Success")
       ;; Prompt for Jemison
       (prompt-select :corp (refresh gto))
-      (is (= 9 (:advance-counter (refresh gto))) "Added 4 counters from Jemison trigger"))))
+      (is (= 4 (:advance-counter (refresh gto))) "Added 4 counters from Jemison trigger")
+      ;; Prompt for Success
+      (prompt-select :corp (refresh gto))
+      (is (= (+ 4 5) (:advance-counter (refresh gto))) "Advance 5 times from Success"))))
 
 (deftest successful-demonstration
   ;; Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits
@@ -1909,6 +1909,31 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Successful Demonstration")
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
+
+(deftest the-all-seeing-i-jarogniew-mercs
+  ;; The All-Seeing I should not trash Jarogniew Mercs if there are other installed resources
+  (do-game
+    (new-game (default-corp [(qty "The All-Seeing I" 4)])
+              (default-runner [(qty "Jarogniew Mercs" 2) (qty "Same Old Thing" 2)]))
+    (letfn [(res [] (count (get-in (get-runner) [:rig :resource])))]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Same Old Thing")
+      (play-from-hand state :runner "Jarogniew Mercs")
+      (take-credits state :runner)
+      (is (= 2 (res)) "There are two installed resources")
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 1 (res)) "Jarogniew Mercs still installed")
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 0 (res)) "There are no installed resources")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Jarogniew Mercs") ;; Testing if order matters
+      (play-from-hand state :runner "Same Old Thing")
+      (take-credits state :runner)
+      (is (= 2 (res)) "There are two installed resources")
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 1 (res)) "Jarogniew Mercs still installed")
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 0 (res)) "There are no installed resources"))))
 
 (deftest threat-assessment
   ;; Threat Assessment - play only if runner trashed a card last turn, move a card to the stack or take 2 tags
@@ -2001,6 +2026,31 @@
       (is (= 6 (:credit (get-corp))) "Transparency initiative didn't fire")
       (core/advance state :corp {:card (refresh atlas)})
       (is (= 5 (:credit (get-corp))) "Transparency initiative didn't fire"))))
+
+(deftest wake-up-call-en-passant
+  ;; Wake Up Call - should fire after using En Passant to trash ice
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 1) (qty "Wake Up Call" 1)])
+              (default-runner [(qty "En Passant" 1) (qty "Maya" 1)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Maya")
+    (run-on state :hq)
+    (run-successful state)
+    (prompt-choice :runner "Ok")
+    (is (= 0 (count (:discard (get-corp)))) "Corp starts with no discards")
+    (play-from-hand state :runner "En Passant")
+    (prompt-select :runner (get-ice state :hq 0))
+    (is (= 1 (count (:discard (get-corp)))) "Corp trashes installed ice")
+    (take-credits state :runner)
+
+    (is (= 1 (count (:discard (get-runner)))) "Runner starts with 1 trashed card (En Passant)")
+    (play-from-hand state :corp "Wake Up Call")
+    (prompt-select :corp (get-in @state [:runner :rig :hardware 0]))
+    (prompt-choice :runner "Trash Maya")
+    (is (= 2 (count (:discard (get-runner)))) "Maya is trashed")
+    (is (= 1 (count (:rfg (get-corp)))) "Wake Up Call is removed from the game")))
 
 (deftest wetwork-refit
   ;; Wetwork Refit - Only works on Bioroid ICE and adds a subroutine

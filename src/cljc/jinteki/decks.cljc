@@ -83,9 +83,12 @@
        (= "Program" (:type card))))
 
 (defn- before-today? [date]
-  #?(:clj  (t/before?
-             (if (string? date) (f/parse (f/formatters :date) date) date)
-             (t/now))
+  #?(:clj  (let [parsed-date (if (string? date)
+                               (f/parse (f/formatters :date) date)
+                               date)]
+             (if (nil? parsed-date)
+               false
+               (t/before? parsed-date (t/now))))
      :cljs (< date (.toJSON (js/Date.)))))
 
 (defn released?
@@ -96,6 +99,7 @@
         date (some #(when (= (:name %) card-set) (:available %)) sets)]
     (and (not rotated)
          (not= date "")
+         (not (nil? date))
          (before-today? date))))
 
 ;; Influence

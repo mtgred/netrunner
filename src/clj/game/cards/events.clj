@@ -40,38 +40,34 @@
                                      :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
-   {:req (req (and (some #{:hq} (:successful-run runner-reg))
-                   (some #{:rd} (:successful-run runner-reg))
-                   (some #{:archives} (:successful-run runner-reg))))
-                           ;; trash cards from right to left
-                           ;; otherwise, auto-killing servers would move the cards to the next server
-                           ;; so they could no longer be trashed in the same loop
-    :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
-    :effect (req (let [ai (all-installed state :corp)
-                       onhost (filter #(= '(:onhost) (:zone %)) ai)
-                       allcorp (->> ai
-                                    (remove #(= '(:onhost) (:zone %)))
-                                    (sort-by #(vec (:zone %)))
-                                    (reverse))]
-                   ; Trash hosted cards first so they don't get trashed twice
-                   (doseq [c onhost]
-                     (trash state side c))
-                   (doseq [c allcorp]
-                     (trash state side (get-card state c))))
-
-                 ;; do hosted cards first so they don't get trashed twice
-                 (let [installedcards (all-active-installed state :runner)
-                       ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
-                       hostedcards (filter ishosted installedcards)
-                       nonhostedcards (remove ishosted installedcards)]
-                   (doseq [oc hostedcards :let [c (get-card state oc)]]
-                     (move state side c [:rig :facedown])
-                     (if (:memoryunits c)
-                       (gain state :runner :memory (:memoryunits c))))
-                   (doseq [oc nonhostedcards :let [c (get-card state oc)]]
-                     (move state side c [:rig :facedown])
-                     (if (:memoryunits c)
-                       (gain state :runner :memory (:memoryunits c))))))}
+   (let [corp-trash {:delayed-completion true
+                     :effect (req (let [ai (all-installed state :corp)
+                                        onhost (filter #(= '(:onhost) (:zone %)) ai)
+                                        unhosted (->> ai
+                                                     (remove #(= '(:onhost) (:zone %)))
+                                                     (sort-by #(vec (:zone %)))
+                                                     (reverse))
+                                        allcorp (concat onhost unhosted)] 
+                                    (trash-cards state :runner eid allcorp)))}
+         runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
+                                             ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
+                                             hostedcards (filter ishosted installedcards)
+                                             nonhostedcards (remove ishosted installedcards)]
+                                         (doseq [oc hostedcards :let [c (get-card state oc)]]
+                                           (flip-facedown state side c))
+                                         (doseq [oc nonhostedcards :let [c (get-card state oc)]]
+                                           (flip-facedown state side c))))}]
+     {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                     (some #{:rd} (:successful-run runner-reg))
+                     (some #{:archives} (:successful-run runner-reg))))
+      :delayed-completion true
+      ;; trash cards from right to left
+      ;; otherwise, auto-killing servers would move the cards to the next server
+      ;; so they could no longer be trashed in the same loop
+      :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
+      :effect (req (when-completed
+                     (resolve-ability state side corp-trash card nil)
+                     (continue-ability state side runner-facedown card nil)))})
 
    "Because I Can"
    (run-event
@@ -171,7 +167,7 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (< (count chosen) n)
-                               (continue-ability state side (cbi-choice (remove-once #(not= target %) remaining)
+                               (continue-ability state side (cbi-choice (remove-once #(= target %) remaining)
                                                                         chosen n original) card nil)
                                (continue-ability state side (cbi-final chosen original) card nil))))})]
      {:req (req hq-runnable)
@@ -179,6 +175,7 @@
             :effect (effect (run :hq {:replace-access
                                 {:msg "force the Corp to add all cards in HQ to the top of R&D"
                                  :delayed-completion true
+                                 :mandatory true
                                  :effect (req (show-wait-prompt state :runner "Corp to add all cards in HQ to the top of R&D")
                                               (let [from (:hand corp)]
                                                 (if (pos? (count from))
@@ -377,7 +374,7 @@
                                   (when-completed
                                     (resolve-ability state side chosen card nil)
                                     (if (= (count abis) 4)
-                                      (continue-ability state side (choice (remove-once #(not= % chosen) abis)) card nil)
+                                      (continue-ability state side (choice (remove-once #(= % chosen) abis)) card nil)
                                       (effect-completed state side eid)))))})]
      {:delayed-completion true
       :effect (effect (continue-ability (choice all) card nil))})
@@ -396,8 +393,9 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "install " (:title target))
-                                    :effect (req (runner-install state side target {:no-cost true})
-                                                 (swap! state update :diana #(conj % target)))}
+                                    :effect (req (let [diana-card (assoc-in target [:special :diana-installed] true)]
+                                                   (runner-install state side diana-card {:no-cost true})
+                                                   (swap! state update :diana #(conj % diana-card))))}
                                    card nil))}]
     :effect (effect (run target nil card)
                     (prompt! card (str "Click Diana's Hunt in the Temporary Zone to install a Program") ["OK"] {})
@@ -407,9 +405,10 @@
                                       (register-events state side
                                                        {:run-ends {:effect (req (let [hunt (:diana @state)]
                                                                                   (doseq [c hunt]
-                                                                                    (when-let [installed (find-cid (:cid c) (all-installed state side))]
-                                                                                      (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
-                                                                                      (trash state side installed {:unpreventable true})))
+                                                                                    (let [installed (find-cid (:cid c) (all-installed state side))]
+                                                                                      (when (get-in installed [:special :diana-installed])
+                                                                                        (system-msg state side (str "trashes " (:title c) " at the end of the run from Diana's Hunt"))
+                                                                                        (trash state side installed {:unpreventable true}))))
                                                                                   (swap! state dissoc :diana)
                                                                                   (unregister-events state side card)
                                                                                   (trash state side c)))}} c)))}
@@ -518,7 +517,8 @@
                       :choices {:req #(and (ice? %)
                                            (not (rezzed? %)))}
                       :msg (msg "trash " (card-str state target))
-                      :effect (effect (trash target))}
+                      :effect (req (trash state side target)
+                                   (swap! state assoc-in [:runner :register :trashed-card] true))}
                     card nil)))}
 
    "Escher"
@@ -594,6 +594,7 @@
    "Falsified Credentials"
    {:prompt "Choose a type"
     :choices ["Agenda" "Asset" "Upgrade"]
+    :msg (msg "to guess " target)
     :delayed-completion true
     :effect (effect
              (continue-ability
@@ -743,6 +744,51 @@
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
+
+  "Glut Cipher"
+  (let [corp-choose {:show-discard true
+                     :delayed-completion true
+                     :player :corp
+                     :prompt (msg "Select 5 cards from Archives to add to HQ")
+                     :choices {:max 5
+                               :all true
+                               :req #(and (= (:side %) "Corp")
+                                          (= (:zone %) [:discard]))}
+                     :msg (msg "move "
+                               (let [seen (filter :seen targets)
+                                     m (count  (remove :seen targets))]
+                                 (str (join ", " (map :title seen))
+                                      (when (pos? m)
+                                        (str (when-not (empty? seen) " and ")
+                                             (quantify m "unseen card")))
+                                      " into HQ, then trash 5 cards")))
+                     :effect (req (when-completed
+                                    (resolve-ability state side 
+                                                     {:effect (req (doseq [c targets]
+                                                                     (move state side c :hand)))}
+                                                     card targets)
+                                    (continue-ability state side 
+                                                      {:delayed-completion true
+                                                       :effect (req (doseq [c (take 5 (shuffle (:hand corp)))]
+                                                                      (trash state :corp c))
+                                                                    (clear-wait-prompt state :runner)
+                                                                    (effect-completed state :runner eid card))}
+                                                      card nil)))}
+        access-effect {:mandatory true 
+                       :delayed-completion true
+                       :req (req (>= (count (:discard corp)) 5))
+                       :effect (req (show-wait-prompt 
+                                      state :runner 
+                                      "Corp to choose which cards to pick up from Archives") ;; For some reason it just shows successful-run-trigger-message, but this works!?
+                                    (continue-ability state side 
+                                                      corp-choose
+                                                      card nil))}]
+    {:req (req archives-runnable)
+     :makes-run true
+     :effect (effect (run :archives 
+                          {:req (req (= target :archives))
+                           :replace-access access-effect}
+                          card))})
 
    "High-Stakes Job"
    (run-event
@@ -1067,7 +1113,7 @@
                                (do (clear-wait-prompt state :corp)
                                    (effect-completed state side eid card)))
                              (do (trash state side target {:unpreventable true})
-                                 (continue-ability state side (entrance-trash (remove-once #(not= % target) cards))
+                                 (continue-ability state side (entrance-trash (remove-once #(= % target) cards))
                                                    card nil))))})]
      {:msg "look at and trash or rearrange the top 6 cards of their Stack"
       :delayed-completion true

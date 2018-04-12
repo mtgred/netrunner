@@ -90,7 +90,7 @@
                   (let [to-resolve
                         (if (= 1 (count non-silent)) (first non-silent) (first handlers))
                         others (if (= 1 (count non-silent))
-                                 (remove-once #(not= (:cid (:card to-resolve)) (:cid (:card %))) handlers)
+                                 (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
                                  (next handlers))]
                     (if-let [the-card (get-card state (:card to-resolve))]
                       {:delayed-completion true
@@ -114,7 +114,7 @@
                                     (if (< 1 (count handlers))
                                       (continue-ability state side
                                                         (choose-handler
-                                                          (remove-once #(not= target (:title (:card %))) handlers))
+                                                          (remove-once #(= target (:title (:card %))) handlers))
                                                         nil event-targets)
                                       (effect-completed state side eid nil)))))})))]
 

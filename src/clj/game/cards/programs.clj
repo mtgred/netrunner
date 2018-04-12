@@ -129,7 +129,7 @@
                                  (effect-completed state side eid card))
                              (do (host state side (get-card state card) target)
                                  (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
-                                 (continue-ability state side (custsec-host (remove-once #(not= % target) cards))
+                                 (continue-ability state side (custsec-host (remove-once #(= % target) cards))
                                                    card nil))))})]
      {:delayed-completion true
       :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
@@ -144,6 +144,28 @@
                    :msg (msg "install " (:title target))
                    :effect (req (when (can-pay? state side nil :credit (:cost target))
                                   (runner-install state side target)))}]})
+   "Consume"
+   {:events {:runner-trash {:delayed-completion true
+                            :effect (req (let [trashed targets
+                                               ab {:req (req (some #(card-is? % :side :corp) trashed))
+                                                   :prompt "Place virus counters on Consume?"
+                                                   :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
+                                                             :default (req (count (filter #(card-is? % :side :corp) trashed)))}
+                                                   :msg (msg "places " (quantify target "virus counter") " on Consume")
+                                                   :effect (effect (add-counter :runner card :virus target))}] 
+                                           (resolve-ability state side eid ab card targets)))}}
+    :abilities [{:cost [:click 1]
+                 :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
+                              (update! state side (assoc-in card [:counter :virus] 0))
+                              (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
+                                        (doseq [h hiveminds]
+                                               (update! state side (assoc-in h [:counter :virus] 0)))))
+                 :msg (msg (let [local-virus (get-in card [:counter :virus])
+                                 global-virus (get-virus-counters state side card)
+                                 hivemind-virus (- global-virus local-virus)]
+                             (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
+                             (when (pos? hivemind-virus)
+                                   (str " (and " hivemind-virus " from Hivemind)")))))}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
@@ -572,6 +594,22 @@
     :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
                  :effect (effect (damage-prevent :net 1))}]}
 
+   "Nyashia"
+   {:data {:counter {:power 3}}
+    :events {:pre-access {:delayed-completion true
+                          :req (req (and (pos? (get-in card [:counter :power] 0))
+                                         (= target :rd)))
+                          :effect (effect (show-wait-prompt :corp "Runner to use Nyashia")
+                                          (continue-ability
+                                            {:optional
+                                             {:prompt "Spend a power counter on Nyashia to access 1 additional card?"
+                                              :yes-ability {:msg "access 1 additional card from R&D"
+                                                            :effect (effect (access-bonus 1)
+                                                                            (add-counter card :power -1)
+                                                                            (clear-wait-prompt :corp))}
+                                              :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                            card nil))}}}
+
    "Origami"
    {:effect (effect (gain :hand-size-modification
                           (dec (* 2 (count (filter #(= (:title %) "Origami")
@@ -713,7 +751,7 @@
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
                                         (update! state side (assoc-in card [:special :numpurged] (get-in c [:counter :virus] 0)))))}
-             :purge {:req (req (pos? (or (get-in card [:special :numpurged]) 0)))
+             :purge {:req (req (pos? (get-in card [:special :numpurged] 0)))
                      :effect (req (when-let [c (first (:hosted card))]
                                     (add-counter state side c :virus 1)))}
              :card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
@@ -963,7 +1001,6 @@
                              (continue-ability state side
                                                (expose-and-maybe-bounce target)
                                                card nil)))})
-           
            (expose-and-maybe-bounce [chosen-subtype]
              {:choices {:req #(and (ice? %) (not (rezzed? %)))}
               :delayed-completion true

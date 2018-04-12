@@ -141,7 +141,8 @@
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
              :effect (effect (show-wait-prompt :runner "Corp to place advancement tokens with Award Bait")
                              (continue-ability
@@ -429,7 +430,8 @@
                  :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Explode-a-palooza")
                              (continue-ability
                                {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
@@ -446,7 +448,8 @@
                                  (lose :runner :click 2))}]}
 
    "Fetal AI"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
              :effect (effect (damage eid :net 2 {:card card}))}
     :steal-cost-bonus (req [:credit 2])}
@@ -935,7 +938,8 @@
                                                     (clear-wait-prompt :runner))} card nil))}}}
 
    "Quantum Predictive Model"
-   {:steal-req (req (not tagged))
+   {:flags {:rd-reveal (req true)}
+    :steal-req (req (not tagged))
     :access {:req (req tagged)
              :effect (effect (as-agenda card 1))
              :msg "add it to their score area and gain 1 agenda point"}}
@@ -947,17 +951,15 @@
                                                    (:hand corp)
                                                    (:discard corp))))
            (add-ad [state side c]
-             (update! state side (assoc c :subtype (combine-subtypes false ;append ad even if it is already an ad
-                                                                     (:subtype c "")
-                                                                     "Advertisement"))))]
+             (update! state side (assoc-in c [:persistent :subtype] "Advertisement")))]
      {:interactive (req true)
       :msg "make all assets gain Advertisement"
       :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))
       :swapped {:msg "make all assets gain Advertisement"
                 :effect (req (doseq [c (get-assets state corp)] (add-ad state side c)))}
       :leave-play (req (doseq [c (get-assets state corp)]
-                         (update! state side (assoc c :subtype
-                                                      (->> (split (or (:subtype c) "") #" - ")
+                         (update! state side (assoc-in c [:persistent :subtype]
+                                                      (->> (split (or (-> c :persistent :subtype) "") #" - ")
                                                            (drop 1) ;so that all actual ads remain ads if agenda leaves play
                                                            (join " - "))))))})
 
@@ -986,8 +988,10 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (not= target "Done")
-                               (continue-ability state side (corp-choice (remove-once #(not= target %) remaining)
-                                                                       chosen original) card nil)
+                               (continue-ability
+                                 state side
+                                 (corp-choice (remove-once #(= target %) remaining) chosen original)
+                                 card nil)
                                (if (pos? (count (remove #(= % "Done") chosen)))
                                  (continue-ability state side (corp-final (remove #(= % "Done") chosen) original) card nil)
                                  (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
@@ -1127,7 +1131,8 @@
    (ice-boost-agenda "Barrier")
 
    "TGTBT"
-   {:access {:msg "give the Runner 1 tag"
+   {:flags {:rd-reveal (req true)}
+    :access {:msg "give the Runner 1 tag"
              :delayed-completion true
              :effect (effect (tag-runner :runner eid 1))}}
 
@@ -1146,7 +1151,8 @@
                     (move target :hand))}
 
    "The Future Perfect"
-   {:access
+   {:flags {:rd-reveal (req true)}
+    :access
     {:psi {:req (req (not installed))
            :not-equal {:msg (msg "prevent it from being stolen")
                        :effect (final-effect (register-run-flag! card :can-steal
@@ -1171,7 +1177,7 @@
     :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
 
    "Utopia Fragment"
-   {:events {:pre-steal-cost {:req (req (pos? (or (:advance-counter target) 0)))
+   {:events {:pre-steal-cost {:req (req (pos? (:advance-counter target 0)))
                               :effect (req (let [counter (:advance-counter target)]
                                              (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 

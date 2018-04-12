@@ -16,23 +16,36 @@
   (when-let [cost-name (cost-names value attr)]
     cost-name))
 
+(defn flag-stops-pay?
+  "Checks installed cards to see if payment type is prevented by a flag"
+  [state side type]
+  (let [flag (keyword (str "cannot-pay-" (name type)))]
+    (some #(card-flag? % flag true) (all-active-installed state side))))
+
 (defn toast-msg-helper
   "Creates a toast message for given cost and title if applicable"
   [state side cost]
-  (let [type (first cost)
-        amount (last cost)]
-    (when-not (or (some #(= type %) [:memory :net-damage])
-                  (and (= type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
-                  (and (= type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
-                  (and (= type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
-                  (and (= type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
-                  (and (= type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
-                  (and (= type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
-                  (and (= type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                                  (all-active-installed state :runner))) amount) 0))
-                  (and (= type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
-                  (>= (- (or (get-in @state [side type]) -1 ) amount) 0))
-      "Unable to pay")))
+  (let [cost-type (first cost)
+        amount (last cost)
+        computer-says-no "Unable to pay"]
+
+    (cond
+
+      (flag-stops-pay? state side cost-type)
+      computer-says-no
+
+      (not (or (some #(= cost-type %) [:memory :net-damage])
+               (and (= cost-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
+               (and (= cost-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
+               (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
+               (and (= cost-type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
+               (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
+               (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
+               (and (= cost-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
+                                                               (all-active-installed state :runner))) amount) 0))
+               (and (= cost-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
+               (>= (- (get-in @state [side cost-type] -1) amount) 0)))
+      computer-says-no)))
 
 (defn can-pay?
   "Returns false if the player cannot pay the cost args, or a truthy map otherwise.
@@ -40,7 +53,7 @@
   explaining which cost they were unable to pay."
   [state side title & args]
   (let [costs (merge-costs (remove #(or (nil? %) (map? %)) args))
-        cost-msg (or (some #(toast-msg-helper state side %) costs))]
+        cost-msg (some #(toast-msg-helper state side %) costs)]
     ;; no cost message - hence can pay
     (if-not cost-msg
       costs
@@ -105,39 +118,43 @@
   "Calls the relevant function for a cost depending on the keyword passed in"
   ([state side card action costs cost] (cost-handler state side (make-eid state) card action costs cost))
   ([state side eid card action costs cost]
-   (case (first cost)
-     :click (do (trigger-event state side
-                               (if (= side :corp) :corp-spent-click :runner-spent-click)
-                               (first (keep :action action)) (:click (into {} costs)))
-                (swap! state assoc-in [side :register :spent-click] true)
-                (let [r (deduce state side cost) ]
-                  (effect-completed state side (make-result eid r))
-                  r))
-     :forfeit (pay-forfeit state side eid card (second cost))
-     :hardware (pay-trash state side eid card "piece of hardware" (second cost) (every-pred installed? #(is-type? % :hardware) (complement facedown?)))
-     :program (pay-trash state side eid card "program" (second cost) (every-pred installed? #(is-type? % :program) (complement facedown?)))
+   (let [a (first (keep :action action))]
+     (case (first cost)
+       :click (do (when (not= a :steal-cost)
+                    ; do not create an undo state if click is being spent due to a steal cost (eg. Ikawah Project)
+                    (swap! state assoc :click-state (dissoc @state :log)))
+                    (trigger-event state side
+                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
+                                   a (:click (into {} costs)))
+                    (swap! state assoc-in [side :register :spent-click] true)
+                    (let [r (deduce state side cost) ]
+                      (effect-completed state side (make-result eid r))
+                      r))
+       :forfeit (pay-forfeit state side eid card (second cost))
+       :hardware (pay-trash state side eid card "piece of hardware" (second cost) (every-pred installed? #(is-type? % :hardware) (complement facedown?)))
+       :program (pay-trash state side eid card "program" (second cost) (every-pred installed? #(is-type? % :program) (complement facedown?)))
 
-     ;; Connection
-     :connection (pay-trash state side eid card "connection" (second cost) (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
+       ;; Connection
+       :connection (pay-trash state side eid card "connection" (second cost) (every-pred installed? #(has-subtype? % "Connection") (complement facedown?)))
 
-     ;; Rezzed ICE
-     :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
+       ;; Rezzed ICE
+       :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
 
-     :tag (let [r (deduce state :runner cost)]
-            (effect-completed state side (make-result eid r))
-            r)
-     :net-damage (damage state side eid :net (second cost) {:unpreventable true})
-     :mill (let [r (mill state side (second cost))]
-             (effect-completed state side (make-result eid r))
-             r)
+       :tag (let [r (deduce state :runner cost)]
+              (effect-completed state side (make-result eid r))
+              r)
+       :net-damage (damage state side eid :net (second cost) {:unpreventable true})
+       :mill (let [r (mill state side (second cost))]
+               (effect-completed state side (make-result eid r))
+               r)
 
-     ;; Shuffle installed runner cards into the stack (eg Degree Mill)
-     :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))
+       ;; Shuffle installed runner cards into the stack (eg Degree Mill)
+       :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))
 
-     ;; Else
-     (let [r (deduce state side cost)]
-       (effect-completed state side (make-result eid r))
-       r))))
+       ;; Else
+       (let [r (deduce state side cost)]
+         (effect-completed state side (make-result eid r))
+         r)))))
 
 (defn pay
   "Deducts each cost from the player.
@@ -203,7 +220,7 @@
     (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]
           (+ cost (rezfun state side (make-eid state) card nil))
           cost)
-        (+ (or (get-in @state [:bonus :cost]) 0))
+        (+ (get-in @state [:bonus :cost] 0))
         (max 0))))
 
 (defn run-cost-bonus [state side n]
@@ -220,7 +237,7 @@
     (-> (if-let [trashfun (:trash-cost-bonus (card-def card))]
           (+ trash (trashfun state side (make-eid state) card nil))
           trash)
-        (+ (or (get-in @state [:bonus :trash]) 0))
+        (+ (get-in @state [:bonus :trash] 0))
         (max 0))))
 
 (defn install-cost-bonus [state side n]

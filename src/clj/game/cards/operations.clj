@@ -277,9 +277,9 @@
     :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
-   {:msg (msg "gain " (or (:advance-counter target) 0) " [Credits]")
+   {:msg (msg "gain " (:advance-counter target 0) " [Credits]")
     :choices {:req ice?}
-    :effect (final-effect (gain :credit (or (:advance-counter target) 0)))}
+    :effect (final-effect (gain :credit (:advance-counter target 0)))}
 
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
@@ -559,7 +559,7 @@
               :delayed-completion true
               :effect (req (let [chosen (cons target chosen)]
                              (if (< (count chosen) n)
-                               (continue-ability state side (hr-choice (remove-once #(not= target %) remaining)
+                               (continue-ability state side (hr-choice (remove-once #(= target %) remaining)
                                                                         chosen n original) card nil)
                                (continue-ability state side (hr-final chosen original) card nil))))})]
      {:additional-cost [:mill 1]
@@ -677,6 +677,15 @@
 
    "IPO"
    {:msg "gain 13 [Credits]" :effect (effect (gain :credit 13))}
+
+   "Kill Switch"
+   (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
+                                 :trace {:base 3
+                                         :msg "do 1 brain damage"
+                                         :delayed-completion true
+                                         :effect (effect (damage :runner eid :brain 1 {:card card}))}}]
+     {:events {:pre-access-card (assoc trace-for-brain-damage :req (req (is-type? target "Agenda")))
+               :agenda-scored trace-for-brain-damage}})
 
    "Lag Time"
    {:effect (effect (update-all-ice))
@@ -820,7 +829,7 @@
                                                    ices (get-in @state (cons :corp (:zone target)))
                                                    newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
                                                (swap! state assoc-in (cons :corp (:zone target)) newices)
-                                               (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(not= (:cid %) (:cid newice)) coll)))
+                                               (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(= (:cid %) (:cid newice)) coll)))
                                                (trigger-event state side :corp-install newice)
                                                (card-init state side newice {:resolve-effect false})
                                                (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
@@ -1451,8 +1460,7 @@
 
    "The All-Seeing I"
    (let [trash-all-resources {:player :runner
-                              :effect (req (doseq [resource (get-in runner [:rig :resource])]
-                                             (trash state side resource)))
+                              :effect (req (trash-cards state side (get-in runner  [:rig :resource])))
                               :msg (msg "trash all resources")}]
        {:req (req tagged)
         :delayed-completion true
@@ -1608,7 +1616,7 @@
                                                 "4 meat damage"]
                                       :delayed-completion true
                                       :effect (req (clear-wait-prompt state :corp)
-                                                   (move state side (last (:discard corp)) :rfg)
+                                                   (move state :corp (last (:discard corp)) :rfg)
                                                    (if (.startsWith target "Trash")
                                                      (do (system-msg state side (str "chooses to trash " (:title chosen)))
                                                          (trash state side eid chosen nil))
