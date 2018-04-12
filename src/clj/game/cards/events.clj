@@ -597,6 +597,7 @@
    "Falsified Credentials"
    {:prompt "Choose a type"
     :choices ["Agenda" "Asset" "Upgrade"]
+    :msg (msg "to guess " target)
     :delayed-completion true
     :effect (effect
              (continue-ability
