@@ -192,9 +192,10 @@
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
-             {:msg "take 1 [Recurring Credits]" :req (req (pos? (:rec-counter card)))
+             {:msg "take 1 [Recurring Credits]" 
+              :req (req (pos? (:rec-counter card 0)))
               :effect (req (add-prop state side card :rec-counter -1)
-                             (gain state side :credit 1)
+                           (gain state side :credit 1)
                            (when (has-subtype? card "Stealth")
                              (trigger-event state side :spent-stealth-credit card)))}
              (get-in cdef [:abilities ability]))]
