@@ -2027,6 +2027,31 @@
       (core/advance state :corp {:card (refresh atlas)})
       (is (= 5 (:credit (get-corp))) "Transparency initiative didn't fire"))))
 
+(deftest wake-up-call-en-passant
+  ;; Wake Up Call - should fire after using En Passant to trash ice
+  (do-game
+    (new-game (default-corp [(qty "Enigma" 1) (qty "Wake Up Call" 1)])
+              (default-runner [(qty "En Passant" 1) (qty "Maya" 1)]))
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Maya")
+    (run-on state :hq)
+    (run-successful state)
+    (prompt-choice :runner "Ok")
+    (is (= 0 (count (:discard (get-corp)))) "Corp starts with no discards")
+    (play-from-hand state :runner "En Passant")
+    (prompt-select :runner (get-ice state :hq 0))
+    (is (= 1 (count (:discard (get-corp)))) "Corp trashes installed ice")
+    (take-credits state :runner)
+
+    (is (= 1 (count (:discard (get-runner)))) "Runner starts with 1 trashed card (En Passant)")
+    (play-from-hand state :corp "Wake Up Call")
+    (prompt-select :corp (get-in @state [:runner :rig :hardware 0]))
+    (prompt-choice :runner "Trash Maya")
+    (is (= 2 (count (:discard (get-runner)))) "Maya is trashed")
+    (is (= 1 (count (:rfg (get-corp)))) "Wake Up Call is removed from the game")))
+
 (deftest wetwork-refit
   ;; Wetwork Refit - Only works on Bioroid ICE and adds a subroutine
   (do-game
