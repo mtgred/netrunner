@@ -103,26 +103,38 @@
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
               (default-runner [(qty "Scheherazade" 1) (qty "Corroder" 1)
-                               (qty "Hyperdriver" 1) (qty "Apocalypse" 2)]))
+                               (qty "Hivemind" 1) (qty "Apocalypse" 2)]))
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (take-credits state :corp)
     (core/gain state :runner :click 3)
+    (core/gain state :runner :credit 2)
     (play-from-hand state :runner "Scheherazade")
     (let [scheherazade (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner scheherazade 0)
       (prompt-select :runner (find-card "Corroder" (:hand (get-runner))))
       (is (= 3 (:memory (get-runner))) "Memory at 3 (-1 from Corroder)"))
-    (play-from-hand state :runner "Hyperdriver")
-    (is (= 0 (:memory (get-runner))) "Memory at 0 (-1 from Corroder, -3 from Hyperdriver)")
+    (play-from-hand state :runner "Hivemind")
+    (is (= 1 (:memory (get-runner))) "Memory at 1 (-1 from Corroder, -2 from Hivemind)")
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Apocalypse")
     (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
     (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
-    (is (= 3 (count (get-in @state [:runner :rig :facedown]))) "Scheherazade, Corroder, Hyperdriver facedown")
+    (is (= 0 (count (core/all-active-installed state :runner))) "No active installed runner cards")
+    (let [facedowns (filter :facedown (core/all-installed state :runner))
+          scheherazade (find-card "Scheherazade" facedowns)
+          corroder (find-card "Corroder" facedowns)
+          hivemind (find-card "Hivemind" facedowns)]
+      (is scheherazade "Scheherazade facedown")
+      (is corroder "Corroder facedown")
+      (is hivemind "Hivemind facedown")
+      (is (= 3 (count facedowns)) "No other cards facedown")
+      (is (= corroder (first (:hosted scheherazade))) "Corroder is still hosted on Scheherazade")
+      (is (= 1 (get-in hivemind [:counter :virus])) "Hivemind still has a virus counters"))
+    (is (find-card "Apocalypse" (:discard (get-runner))) "Apocalypse is in the heap")
     (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
     (is (= 4 (:memory (get-runner))) "Memory back to 4")))
 
@@ -149,11 +161,36 @@
       (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
       (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap"))))
 
+(deftest apocalypse-hostile-infrastructure
+  ;; Apocalypse with Hostile Infrastructure - should take damage equal to 2x cards on the table
+  (do-game
+    (new-game
+      (default-corp [(qty "Hostile Infrastructure" 2) (qty "Ice Wall" 2)])
+      (default-runner [(qty "Apocalypse" 1) (qty "Sure Gamble" 9)]))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (core/rez state :corp (get-content state :remote1 0) {:ignore-cost true})
+    (core/rez state :corp (get-content state :remote4 0) {:ignore-cost true})
+    (take-credits state :corp)
+    (core/draw state :runner 5)
+    (is (= 10 (count (:hand (get-runner)))) "Runner has 9 cards in hand")
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (run-empty-server state "HQ")
+    (play-from-hand state :runner "Apocalypse")
+    (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
+    (is (= 4 (count (:discard (get-corp)))) "4 Corp cards in Archives")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has one card in hand")
+    (is (= 9 (count (:discard (get-runner)))) "There are 9 cards in heap")))
+
 (deftest apocalypse-in-play-ability
   ;; Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
-              (default-runner [(qty "Logos" 3) (qty "Apocalypse" 3)]))
+              (default-runner [(qty "Logos" 1) (qty "Apocalypse" 1) (qty "Origami" 2)]))
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
@@ -161,20 +198,24 @@
     (play-from-hand state :runner "Logos")
     (is (= 1 (:hand-size-modification (get-runner))) "Hand-size increased from Logos")
     (is (= 5 (:memory (get-runner))) "Memory increased from Logos")
-    (core/gain state :runner :click 1 :credit 2)
+    (play-from-hand state :runner "Origami")
+    (play-from-hand state :runner "Origami")
+    (is (= 5 (:hand-size-modification (get-runner))) "Hand-size increased from Logos and Origami")
+    (is (= 3 (:memory (get-runner))) "Memory decreased from Origamis")
+    (core/gain state :runner :click 3 :credit 2)
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Apocalypse")
     (is (= 0 (count (core/all-installed state :corp))) "All installed Corp cards trashed")
     (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
-    (let [logos (get-in @state [:runner :rig :facedown 0])]
+    (let [logos (find-card "Logos" (get-in (get-runner) [:rig :facedown]))]
       (is (:facedown (refresh logos)) "Logos is facedown")
-      (is (= 0 (:hand-size-modification (get-runner))) "Hand-size reset with Logos facedown")
-      (is (= 4 (:memory (get-runner))) "Memory reset with Logos facedown"))))
+      (is (= 0 (:hand-size-modification (get-runner))) "Hand-size reset with Logos and Origami facedown")
+      (is (= 4 (:memory (get-runner))) "Memory reset with Logos and Origami facedown"))))
 
 (deftest apocalypse-turn-facedown
-  ;; Apocalypse - Turn Runner cards facedown without firing their leave play effects
+  ;; Apocalypse - Turn Runner cards facedown without firing their trash effects
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Ice Wall" 1)])
               (default-runner [(qty "Tri-maf Contact" 3) (qty "Apocalypse" 3)]))
@@ -1258,6 +1299,24 @@
     (is (= 4 (count (:discard (get-runner)))) "All 3 cards in Grip trashed by Scorched Earth")
     (is (= 3 (count (:deck (get-runner)))) "No cards drawn from I've Had Worse")))
 
+(deftest ive-had-worse-apocalypse-hostile-infrastructure
+  ;; I've Had Worse - Will save you if you apocalypse away a lot of cards vs Hostile Infrastructure
+  (do-game
+    (new-game (default-corp [(qty "Hostile Infrastructure" 1) (qty "Ice Wall" 2)])
+              (default-runner [(qty "I've Had Worse" 3) (qty "Sure Gamble" 3) (qty "Apocalypse" 2)]))
+    (starting-hand state :runner ["I've Had Worse" "Apocalypse"])
+    (starting-hand state :corp ["Hostile Infrastructure" "Ice Wall" "Ice Wall"])
+    (play-from-hand state :corp "Hostile Infrastructure" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (run-empty-server state "Archives")
+    (run-empty-server state "R&D")
+    (play-from-hand state :runner "Apocalypse")
+    (is (not (= "Flatline" (:reason @state))) "Win condition does not report flatline")))
+
 (deftest lawyer-up
   ;; Lawyer Up - Lose 2 tags and draw 3 cards
   (do-game
@@ -1432,9 +1491,9 @@
 (deftest noble-path
   ;; The Noble Path - Prevents damage during run
   (do-game
-    (new-game (default-corp) (default-runner [(qty "The Noble Path" 1) (qty "Hedge Fund" 2)]))
+    (new-game (default-corp) (default-runner [(qty "The Noble Path" 1) (qty "Sure Gamble" 2)]))
     (let [hand-count #(count (:hand (get-runner)))]
-      (starting-hand state :runner ["The Noble Path" "Hedge Fund"])
+      (starting-hand state :runner ["The Noble Path" "Sure Gamble"])
       (take-credits state :corp)
 
       ;; Play The Noble Path and confirm it trashes remaining cards in hand
@@ -1444,7 +1503,7 @@
 
       ;; Put a card into hand so I can confirm it's not discarded by damage
       ;; Don't want to dealing with checking damage on a zero card hand
-      (starting-hand state :runner ["Hedge Fund"])
+      (starting-hand state :runner ["Sure Gamble"])
 
       (core/damage state :runner :net 1)
       (is (= 1 (hand-count)) "Damage was prevented")

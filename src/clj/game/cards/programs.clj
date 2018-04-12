@@ -145,11 +145,15 @@
                    :effect (req (when (can-pay? state side nil :credit (:cost target))
                                   (runner-install state side target)))}]})
    "Consume"
-   {:events {:runner-trash {:req (req (= (:side target) "Corp"))
-                            :optional {:prompt "Place a virus counter on Consume?"
-                                       :yes-ability
-                                       {:effect (effect (add-counter :runner card :virus 1)
-                                                (system-msg :runner (str "places 1 virus counter on Consume")))}}}}
+   {:events {:runner-trash {:delayed-completion true
+                            :effect (req (let [trashed targets
+                                               ab {:req (req (some #(card-is? % :side :corp) trashed))
+                                                   :prompt "Place virus counters on Consume?"
+                                                   :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
+                                                             :default (req (count (filter #(card-is? % :side :corp) trashed)))}
+                                                   :msg (msg "places " (quantify target "virus counter") " on Consume")
+                                                   :effect (effect (add-counter :runner card :virus target))}] 
+                                           (resolve-ability state side eid ab card targets)))}}
     :abilities [{:cost [:click 1]
                  :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
                               (update! state side (assoc-in card [:counter :virus] 0))

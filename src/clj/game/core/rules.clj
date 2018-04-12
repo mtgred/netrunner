@@ -367,7 +367,7 @@
 
 (defn- resolve-trash-end
   [state side eid {:keys [zone type disabled] :as card}
-   {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args} & targets]
+   {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args}]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})
         card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
@@ -377,26 +377,26 @@
                                          (:installed card))
                                     (and (:rezzed card) (not host-trashed))
                                     (and (:when-inactive trash-effect) (not host-trashed))))
-        (resolve-ability state side trash-effect moved-card (cons cause targets))))
+        (resolve-ability state side trash-effect moved-card (list cause))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
     (effect-completed state side eid)))
 
 (defn- resolve-trash
   [state side eid {:keys [zone type] :as card}
-   {:keys [unpreventable cause keep-server-alive suppress-event] :as args} & targets]
+   {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
   (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
-    (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) card cause targets)
-                    (apply resolve-trash-end state side eid card args targets))
-    (apply resolve-trash-end state side eid card args targets)))
+    (when-completed (trigger-event-sync state side (keyword (str (name side) "-trash")) card cause)
+                    (resolve-trash-end state side eid card args))
+    (resolve-trash-end state side eid card args)))
 
-(defn trash
-  "Attempts to trash the given card, allowing for boosting/prevention effects."
-  ([state side card] (trash state side (make-eid state) card nil))
-  ([state side card args] (trash state side (make-eid state) card args))
-  ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args} & targets]
-   (if (not (some #{:discard} zone))
+(defn- prevent-trash
+  ([state side card] (prevent-trash state side (make-eid state) card nil))
+  ([state side card args] (prevent-trash state side (make-eid state) card nil))
+  ([state side eid {:keys [zone type] :as card}
+    {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
+   (if (and card (not (some #{:discard} zone)))
      (cond
-
+       
        (untrashable-while-rezzed? card)
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))
@@ -426,21 +426,43 @@
                                       (swap! state update-in [:trash :trash-prevent] dissoc ktype)
                                       (effect-completed state side eid))
                                   (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                      (apply resolve-trash state side eid card args targets))))
+                                      (swap! state update-in [:trash :trash-list] concat [card])
+                                      (effect-completed state side eid))))
                               {:priority 10}))
-             ;; No prevention effects; resolve the trash.
-             (apply resolve-trash state side eid card args targets)))))
+             ;; No prevention effects: add the card to the trash-list
+             (do (swap! state update-in [:trash :trash-list] concat [card])
+                 (effect-completed state side eid))))))
      (effect-completed state side eid))))
+
+(defn trash
+  "Attempts to trash the given card, allowing for boosting/prevention effects."
+  ([state side card] (trash state side (make-eid state) card nil))
+  ([state side card args] (trash state side (make-eid state) card args))
+  ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args}]
+   (swap! state update-in [:trash] dissoc :trash-list)
+   (when-completed (prevent-trash state side card args)
+                   (if-let [c (first (get-in @state [:trash :trash-list]))]
+                     (resolve-trash state side eid c args)
+                     (effect-completed state side eid)))))
 
 (defn trash-cards
   ([state side cards] (trash-cards state side (make-eid state) cards nil))
-  ([state side eid cards args & targets]
+  ([state side eid cards] (trash-cards state side eid cards nil))
+  ([state side eid cards {:keys [suppress-event] :as args}]
+   (swap! state update-in [:trash] dissoc :trash-list)
    (letfn [(trashrec [cs]
              (if (not-empty cs)
-               (when-completed (apply trash state side (first cs) args targets)
-                               (trashrec (next cs)))
-               (effect-completed state side eid)))]
-     (trashrec cards))))
+               (when-completed (resolve-trash-end state side (get-card state (first cs)) args)
+                               (trashrec (rest cs)))
+               (effect-completed state side eid)))
+           (preventrec [cs]
+             (if (not-empty cs)
+               (when-completed (prevent-trash state side (get-card state (first cs)) args)
+                               (preventrec (rest cs)))
+               (let [trashlist (get-in @state [:trash :trash-list])]
+                 (when-completed (apply trigger-event-sync state side (keyword (str (name side) "-trash")) trashlist)
+                                 (trashrec trashlist)))))]
+     (preventrec cards))))
 
 (defn- resolve-trash-no-cost
   [state side card & {:keys [seen unpreventable]

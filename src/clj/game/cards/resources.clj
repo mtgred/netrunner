@@ -152,9 +152,7 @@
                                 ;; Consoles and events are immediately unpreventably trashed.
                                 (trash state side target {:unpreventable true})
                                 ;; Other cards are moved to rig and have events wired.
-                                (let [temp (move state side target :play-area)
-                                      moved (move state side temp (type->rig-zone (:type temp)))]
-                                  (card-init state side (make-eid state) moved {:resolve-effect false :init-data false}))))
+                                (flip-faceup state side target)))
                  :msg (msg "turn " (:title target) " faceup")}]}
 
    "Bhagat"
