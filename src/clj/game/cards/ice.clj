@@ -236,10 +236,12 @@
                                              :effect (effect (draw eid 1 nil))}}}
          runner-draw {:player :runner
                       :optional {:prompt "Pay 2[Credits] to draw 1 card?"
+                                 :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}
                                  :yes-ability {:delayed-completion true
-                                               :msg "pay 2[Credits] to draw 1 card"
-                                               :effect (effect (lose :credit 2)
-                                                               (draw eid 1 nil))}}}]
+                                               :effect (effect
+                                                         (system-msg :runner "pays 2[Credits] to draw 1 card")
+                                                         (lose :credit 2)
+                                                         (draw eid 1 nil))}}}]
      {:implementation "Encounter-ends effect is manually triggered."
       :subroutines [{:msg "rearrange the top 5 cards of R&D"
                      :delayed-completion true
