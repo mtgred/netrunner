@@ -14,7 +14,8 @@
 (declare faction-map)
 
 (def ^:const base-url "http://www.netrunnerdb.com/api/2.0/public/")
-(def ^:const base-image-url "http://www.netrunnerdb.com/card_image/")
+(def ^:const cgdb-image-url "https://www.cardgamedb.com/forums/uploads/an/")
+(def ^:const nrdb-image-url "https://netrunnerdb.com/card_image/")
 
 (defmacro rename
   "Rename a card field"
@@ -38,6 +39,7 @@
    :size (fn [[k v]] [:bigbox (> (or v -1) 20)])
    :code identity
    :position identity
+   :ffg_id identity
    })
 
 (def mwl-fields
@@ -185,12 +187,19 @@
               acc))
           c fields))
 
+(defn- make-image-url
+  "Create a URI to the card in CardGameDB"
+  [card set]
+  (if (:ffg_id set)
+    (str cgdb-image-url "med_ADN" (:ffg_id set) "_" (:number card) ".png")
+    (str nrdb-image-url (:code card) ".png")))
+
 (defn- get-uri
   "Figure out the card art image uri"
-  [card]
+  [card set]
   (if (contains? card :image_url)
     (:image_url card)
-    (str base-image-url (:code card) ".png")))
+    (make-image-url card set)))
 
 (defn- add-card-fields
   "Add additional fields to the card documents"
@@ -201,7 +210,7 @@
       (assoc :setname (:name s)
              :cycle_code (:cycle_code s)
              :rotated (:rotated s)
-             :image_url (get-uri c)
+             :image_url (get-uri c s)
              :normalizedtitle (string/lower-case (deaccent (:title c)))))))
 
 (defn fetch-data
@@ -228,9 +237,15 @@
 
 (defn- download-card-image
   "Download a single card image from NRDB"
-  [acc card]
-  (println "Downloading: " (:title card))
-  (concat acc (list [card (http/get (:image_url card) {:as :byte-array :timeout 120000})])))
+  [card]
+  (println "Downloading: " (:title card) "\t\t(" (:image_url card) ")")
+  (http/get (:image_url card) {:as :byte-array :timeout 120000}
+            (fn [{:keys [status body error]}]
+              (case status
+                404 (println "No image for card" (:code card) (:title card))
+                200 (with-open [w (io/output-stream (.getPath (card-image-file card)))]
+                      (.write w body))
+                (println "Error downloading art for card" (:code card) error)))))
 
 (def download-card-image-throttled (throttle-fn download-card-image 5 :second))
 
@@ -246,16 +261,11 @@
            missing (count missing-cards)]
        (when (> missing 0)
          (println "Downloading art for" missing "cards...")
-         (let [futures (reduce download-card-image-throttled nil missing-cards)]
-           (doseq [[card resp] futures]
-             (let [status (:status @resp)]
-               (cond
-                 (= 404 status) (println "No image for card" (:code card) (:title card))
-                 (= 200 status) (with-open [w (io/output-stream (.getPath (card-image-file card)))]
-                                  (.write w (:body @resp))
-                                  (println "Downloaded art for card" (:code card) (:title card)))
-                 :else (println "Error downloading art for card" (:code card) (:error @resp)))))
-           (println "Finished downloading card art"))))))
+         (let [futures (doall (map download-card-image-throttled missing-cards))]
+           (doseq [resp futures]
+             ; wait for all the GETs to complete
+             (:status @resp)))
+         (println "Finished downloading card art")))))
   
 (defn fetch-cards
   "Find the NRDB card json files and import them."
