@@ -6,6 +6,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.account :refer [alt-art-name]]
             [netrunner.ajax :refer [GET]]
+            [netrunner.utils :refer [toastr-options banned-span restricted-span rotated-span influence-dots]]
             [jinteki.cards :refer [all-cards] :as cards]
             [jinteki.decks :as decks]))
 
@@ -116,7 +117,7 @@
 (defn non-game-toast
   "Display a toast warning with the specified message."
   [msg type options]
-  (set! (.-options js/toastr) (netrunner.gameboard/toastr-options options))
+  (set! (.-options js/toastr) (toastr-options options))
   (let [f (aget js/toastr type)]
     (f msg)))
 
@@ -161,9 +162,9 @@
      {:class (if-let [faction (:faction card)]
                (-> faction .toLowerCase (.replace " " "-"))
                "neutral")}
-     (when (decks/banned? card) netrunner.deckbuilder/banned-span)
-     (when (decks/restricted? card) netrunner.deckbuilder/restricted-span)
-     (when (:rotated card) netrunner.deckbuilder/rotated-span)]]
+     (when (decks/banned? card) banned-span)
+     (when (decks/restricted? card) restricted-span)
+     (when (:rotated card) rotated-span)]]
    (when-let [memory (:memoryunits card)]
      (if (< memory 3)
        [:div.anr-icon {:class (str "mu" memory)} ""]
@@ -186,7 +187,7 @@
      (when-let [faction (:faction card)]
        [:div.heading "Influence "
         [:span.influence
-         {:dangerouslySetInnerHTML #js {:__html (netrunner.deckbuilder/influence-dots influence)}
+         {:dangerouslySetInnerHTML #js {:__html (influence-dots influence)}
           :class                   (-> faction .toLowerCase (.replace " " "-"))}]]))
    [:div.text
     [:p [:span.type (str (:type card))] (if (empty? (:subtype card))

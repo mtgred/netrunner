@@ -9,6 +9,7 @@
             [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title expand-alts] :as cb]
             [netrunner.account :refer [load-alt-arts]]
             [netrunner.ajax :refer [POST GET DELETE PUT]]
+            [netrunner.utils :refer [banned-span restricted-span rotated-span influence-dot influence-dots alliance-dots dots-html make-dots]]
             [goog.string :as gstring]
             [goog.string.format]
             [jinteki.utils :refer [str->int INFINITY] :as utils]
@@ -29,9 +30,6 @@
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
     (every? #(= (:title %) name) cards)))
-
-
-
 
 (defn noinfcost? [identity card]
   (or (= (:faction card) (:faction identity))
@@ -232,19 +230,6 @@
         str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) (insert-params %2) "\n") "" cards)]
     (om/set-state! owner :deck-edit str)))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 (defn edit-deck [owner]
   (let [deck (om/get-state owner :deck)]
     (om/set-state! owner :old-deck deck)
@@ -344,45 +329,6 @@
 
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
-
-;; Dot definitions
-(def zws "\u200B")                                          ; zero-width space for wrapping dots
-(def influence-dot (str "●" zws))                           ; normal influence dot
-(def banned-dot (str "✘" zws))                              ; on the banned list
-(def restricted-dot (str "🦄" zws))                         ; on the restricted list
-(def alliance-dot (str "○" zws))                            ; alliance free-inf dot
-(def rotated-dot (str "↻" zws))                             ; on the rotation list
-
-(def banned-span
-  [:span.invalid {:title "Removed"} " " banned-dot])
-
-(def restricted-span
-  [:span {:title "Restricted"} " " restricted-dot])
-
-(def rotated-span
-  [:span.casual {:title "Rotated"} " " rotated-dot])
-
-(defn- make-dots
-  "Returns string of specified dots and number. Uses number for n > 20"
-  [dot n]
-  (if (<= 20 n)
-    (str n dot)
-    (join (conj (repeat n dot) ""))))
-
-(defn influence-dots
-  "Returns a string with UTF-8 full circles representing influence."
-  [num]
-  (make-dots influence-dot num))
-
-(defn alliance-dots
-  [num]
-  (make-dots alliance-dot num))
-
-(defn- dots-html
-  "Make a hiccup-ready vector for the specified dot and cost-map (influence or mwl)"
-  [dot cost-map]
-  (for [factionkey (sort (keys cost-map))]
-    [:span.influence {:class (name factionkey)} (make-dots dot (factionkey cost-map))]))
 
 (defn card-influence-html
   "Returns hiccup-ready vector with dots for influence as well as restricted / rotated / banned symbols"

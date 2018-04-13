@@ -8,6 +8,7 @@
             [netrunner.auth :refer [avatar authenticated] :as auth]
             [netrunner.gameboard :refer [card-preview-mouse-over card-preview-mouse-out get-message-parts create-span card-zoom] :as gameboard]
             [netrunner.ajax :refer [GET PUT]]
+            [netrunner.utils :refer [toastr-options]]
             [netrunner.ws :as ws]))
 
 (declare fetch-messages)
@@ -43,7 +44,7 @@
 (defn non-game-toast
   "Display a toast warning with the specified message."
   [msg type options]
-  (set! (.-options js/toastr) (netrunner.gameboard/toastr-options options))
+  (set! (.-options js/toastr) (toastr-options options))
   (let [f (aget js/toastr type)]
     (f msg)))
 
