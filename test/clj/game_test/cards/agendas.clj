@@ -2265,16 +2265,27 @@
 
 (deftest the-future-is-now
   ;; The Future is Now
-  (do-game
-    (new-game (default-corp [(qty "The Future is Now" 1) (qty "Ice Wall" 1)])
-              (default-runner))
-    (starting-hand state :corp ["The Future is Now"])
-    (is (= 1 (count (:hand (get-corp)))))
-    (is (= 1 (count (:deck (get-corp)))))
-    (play-and-score state "The Future is Now")
-    (prompt-choice :corp (find-card "Ice Wall" (:deck (get-corp))))
-    (is (= 1 (count (:hand (get-corp)))))
-    (is (= 0 (count (:deck (get-corp)))))))
+  (testing "With at least one card in deck"
+    (do-game
+      (new-game (default-corp [(qty "The Future is Now" 1) (qty "Ice Wall" 1)])
+                (default-runner))
+      (starting-hand state :corp ["The Future is Now"])
+      (is (= 1 (count (:hand (get-corp)))))
+      (is (= 1 (count (:deck (get-corp)))))
+      (play-and-score state "The Future is Now")
+      (prompt-choice :corp (find-card "Ice Wall" (:deck (get-corp))))
+      (is (= 1 (count (:hand (get-corp)))))
+      (is (= 0 (count (:deck (get-corp)))))))
+  (testing "With an empty deck"
+    (do-game
+      (new-game (default-corp [(qty "The Future is Now" 1)])
+                (default-runner))
+      (is (= 1 (count (:hand (get-corp)))))
+      (is (= 0 (count (:deck (get-corp)))))
+      (play-and-score state "The Future is Now")
+      (is (empty? (:prompt (get-corp))) "Ability shouldn't fire if deck is empty")
+      (is (= 0 (count (:hand (get-corp)))))
+      (is (= 0 (count (:deck (get-corp))))))))
 
 (deftest the-future-perfect
   ;; The Future Perfect
