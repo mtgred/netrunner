@@ -463,7 +463,7 @@
                       :effect (req (show-wait-prompt state :corp "Runner to use Imp")
                                    (continue-ability state side
                                      {:optional
-                                      {:prompt (str "Trash " (:title (first targets)) " at no cost?")
+                                      {:prompt (str "Use Imp to trash " (:title (first targets)) " at no cost?")
                                        :once :per-turn
                                        :yes-ability {:msg (msg "trash " (:title target) " at no cost")
                                                      :effect (req (resolve-trash-no-cost state side target)
