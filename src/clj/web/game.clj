@@ -2,6 +2,7 @@
   (:require [web.ws :as ws]
             [web.lobby :refer [all-games old-states] :as lobby]
             [web.utils :refer [response]]
+            [web.stats :as stats]
             [game.main :as main]
             [game.core :as core]
             [jinteki.utils :refer [side-from-str]]
@@ -73,6 +74,7 @@
                        (update-in g [:players] #(mapv strip-deck %)))]
         (swap! all-games assoc gameid game)
         (swap! old-states assoc gameid @(:state game))
+        (stats/game-started game)
         (lobby/refresh-lobby :update gameid)
         (send-state! :netrunner/start game (main/public-states (:state game)))))))
 

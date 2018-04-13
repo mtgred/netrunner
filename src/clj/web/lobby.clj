@@ -112,12 +112,13 @@
   (swap! all-games dissoc gameid)
   (swap! old-states dissoc gameid))
 
-
 (defn clear-inactive-lobbies
   "Called by a background thread to close lobbies that are inactive for some number of seconds."
   [time-inactive]
-  (doseq [{:keys [gameid last-update] :as game} (vals @all-games)]
+  (doseq [{:keys [gameid last-update started] :as game} (vals @all-games)]
     (when (and gameid (t/after? (t/now) (t/plus last-update (t/seconds time-inactive))))
+      (when started
+        (stats/game-finished game))
       (close-lobby game))))
 
 (defn remove-user
@@ -143,7 +144,9 @@
       (swap! client-gameids dissoc client-id)
 
       (if (empty? players)
-        (close-lobby game)
+        (do
+          (stats/game-finished game)
+          (close-lobby game))
         (refresh-lobby :update gameid)))))
 
 (defn lobby-clients
