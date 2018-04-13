@@ -198,7 +198,6 @@
       (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
       (assoc card :display-name (:title card)))))
 
-
 (defn side-identities [side]
   (let [cards
         (->> @all-cards
@@ -228,19 +227,6 @@
   (let [cards (om/get-state owner [:deck :cards])
         str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) (insert-params %2) "\n") "" cards)]
     (om/set-state! owner :deck-edit str)))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (defn edit-deck [owner]
   (let [deck (om/get-state owner :deck)]
@@ -293,9 +279,11 @@
          (end-delete owner))))))
 
 (defn new-deck [side owner]
-  (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
-  (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
-  (edit-deck owner))
+  (let [old-deck (om/get-state owner :deck)]
+    (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
+    (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
+    (edit-deck owner)
+    (om/set-state! owner :old-deck old-deck)))
 
 (defn save-deck [cursor owner]
   (authenticated
