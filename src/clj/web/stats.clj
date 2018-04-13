@@ -147,11 +147,12 @@
                                :runnerIdentity (get-in runner [:deck :identity :title])})))
 
 (defn game-finished [{:keys [state gameid]}]
-  (mc/update db "gamestats"
-             {:gameid (str gameid)}
-             {"$set" {:winner       (:winner @state)
-                      :reason       (:reason @state)
-                      :endDate      (java.util.Date.)
-                      :turn         (:turn @state)
-                      :corpAgenda   (get-in @state [:corp :agenda-point])
-                      :runnerAgenda (get-in @state [:runner :agenda-point])}}))
+  (when state
+    (mc/update db "gamestats"
+               {:gameid (str gameid)}
+               {"$set" {:winner       (:winner @state)
+                        :reason       (:reason @state)
+                        :endDate      (java.util.Date.)
+                        :turn         (:turn @state)
+                        :corpAgenda   (get-in @state [:corp :agenda-point])
+                        :runnerAgenda (get-in @state [:runner :agenda-point])}})))
