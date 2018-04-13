@@ -137,7 +137,7 @@
 (defn game-started [{:keys [gameid date title room players]}]
   (let [corp (some #(when (= "Corp" (:side %)) %) players)
         runner (some #(when (= "Runner" (:side %)) %) players)]
-    (mc/insert db "gamestats" {:gameid         gameid
+    (mc/insert db "gamestats" {:gameid         (str gameid)
                                :startDate      date
                                :title          title
                                :room           room
@@ -148,10 +148,10 @@
 
 (defn game-finished [{:keys [state gameid]}]
   (mc/update db "gamestats"
-             {:gameid gameid}
+             {:gameid (str gameid)}
              {"$set" {:winner       (:winner @state)
                       :reason       (:reason @state)
-                      :endDate      (t/now)
+                      :endDate      (java.util.Date.)
                       :turn         (:turn @state)
                       :corpAgenda   (get-in @state [:corp :agenda-point])
                       :runnerAgenda (get-in @state [:runner :agenda-point])}}))
