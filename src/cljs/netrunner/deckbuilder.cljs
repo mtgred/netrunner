@@ -30,9 +30,6 @@
   (let [name (:title (first cards))]
     (every? #(= (:title %) name) cards)))
 
-
-
-
 (defn noinfcost? [identity card]
   (or (= (:faction card) (:faction identity))
       (= 0 (:factioncost card)) (= INFINITY (decks/id-inf-limit identity))))
@@ -664,7 +661,9 @@
                   (om/set-state! owner [:deck :cards] new-cards))
                 (deck->str owner)))))
       (go (while true
-            (om/set-state! owner :deck (<! select-channel)))))
+            (let [deck (<! select-channel)]
+              (end-delete owner)
+              (om/set-state! owner :deck deck)))))
 
     om/IRenderState
     (render-state [this state]
