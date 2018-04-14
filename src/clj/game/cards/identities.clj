@@ -61,7 +61,7 @@
                                                   :effect (req (expose state side eid itarget)
                                                                (clear-wait-prompt state :runner))}
                                                  :yes-ability
-                                                 {:effect (req (lose state :corp :credit 1)
+                                                 {:effect (req (pay state :corp card [:credit 1])
                                                                (system-msg state :corp (str "spends 1 [Credits] to prevent "
                                                                                             " card from being exposed"))
                                                                (clear-wait-prompt state :runner))}}}
