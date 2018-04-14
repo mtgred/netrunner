@@ -22,9 +22,14 @@
                          "to their numbers in the panel on the left."])}
             {:id "undo"
              :title "How do I undo an action?"
-             :content [:p "There is no \"general purpose undo button\". Surplus/missing credits, clicks can be manipulated with "
-                       "the panel on the left. Trashed/played cards can be dragged back to hand and reinstalled if needed. If there
-                       are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."]}
+             :content (list
+                        [:p "There are two undo functions - undo to turn start, and undo the last click. "
+                         "To undo the start of the current turn both players must use the /undo-turn command. "
+                         "To undo to the start of the click the active player must use the /undo-click command. "]
+                        [:p "There are some non-click based interactions such as using clone-chip and rezzing ICE or assets which are "
+                         "not supported via the undo-click function and players will need to handle manually. "
+                         " Trashed/played cards can be dragged back to hand and reinstalled if needed. If there"
+                          " are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."])}
             {:id "breakice"
              :title "How do I break ICE and fire ICE subroutines?"
              :content (list
