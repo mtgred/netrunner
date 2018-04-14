@@ -238,7 +238,7 @@
     { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons)))}))
 
 (defn cache-refresh-legal
-  "Returns true if deck is valid under Cache Refresh rules."
+  "Returns true if deck is valid under Cache Refresh rules. http://www.cache-refresh.info/"
   [sets deck]
   (let [over-one-core (cards-over-one-core deck)
         valid-sets (concat ["Revised Core Set" "Terminal Directive"] (sets-in-newest-cycles sets 2))
@@ -255,7 +255,7 @@
     { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons)))}))
 
 (defn onesies-legal
-  "Returns true if deck is valid under 1.1.1.1 format rules."
+  "Returns true if deck is valid under 1.1.1.1 format rules. https://www.reddit.com/r/Netrunner/comments/5238a4/1111_onesies/"
   [sets deck]
   (let [over-one-core (cards-over-one-core deck)
         valid-sets ["Core Set"]
