@@ -754,7 +754,7 @@
       (let [actions (action-list cursor)
             dynabi-count (count (filter :dynamic abilities))]
         (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
-                  (some #{"derez" "advance"} actions)
+                  (some #{"derez" "rez" "advance"} actions)
                   (= type "ICE"))
           [:div.panel.blue-shade.abilities {:ref "abilities"}
            (map (fn [action]
