@@ -171,7 +171,10 @@
                                  (trash state :corp t {:unpreventable true}))
                                (doseq [h to-hq]
                                  (move state :corp h :hand))
-                               (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
+                               (if (not-empty remaining)
+                                 (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
+                                 (do (clear-wait-prompt state :runner)
+                                     (effect-completed state :corp eid)))
                                (system-msg state :corp (str "uses Bacterial Programming to add " (count to-hq)
                                                             " cards to HQ, discard " (count to-trash)
                                                             ", and arrange the top cards of R&D")))

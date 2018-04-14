@@ -231,20 +231,46 @@
       (prompt-choice :runner "Steal")
       (is (= 4 (:advance-counter (refresh iw))) "Ice Wall should gain 2 advancement tokens"))))
 
-(deftest bacterial-programming-run
-  ;; Bacterial Programming - scoring should not cause a run to exist for runner.
-  (do-game
-    (new-game (default-corp [(qty "Bacterial Programming" 1) (qty "Hedge Fund" 1)])
-              (default-runner))
-    (starting-hand state :corp ["Bacterial Programming"])
-    (play-and-score state "Bacterial Programming")
-    (prompt-choice :corp "Yes")
-    (prompt-choice :corp "Done")
-    (prompt-choice :corp "Done")
-    (prompt-card :corp (first (:deck (get-corp))))
-    (prompt-choice :corp "Done")
-    (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
-    (is (not (:run @state)) "No run is active")))
+(deftest bacterial-programming
+  ;; Bacterial Programming
+  (testing "Scoring should not cause a run to exist for runner."
+    (do-game
+      (new-game (default-corp [(qty "Bacterial Programming" 1) (qty "Hedge Fund" 1)])
+                (default-runner))
+      (starting-hand state :corp ["Bacterial Programming"])
+      (play-and-score state "Bacterial Programming")
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp "Done")
+      (prompt-choice :corp "Done")
+      (prompt-card :corp (first (:deck (get-corp))))
+      (prompt-choice :corp "Done")
+      (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
+      (is (not (:run @state)) "No run is active")))
+  (testing "Removing all cards from R&D should not freeze for runner, nor give an extra access."
+    (do-game
+      (new-game (default-corp [(qty "Bacterial Programming" 8)])
+                (default-runner)
+                {:start-as :runner})
+      (starting-hand state :corp [])
+      (run-empty-server state :rd)
+      (prompt-choice :runner "Access")
+      (prompt-choice :runner "Steal")
+      (prompt-choice :corp "Yes")
+      ;; Move all 7 cards to trash
+      (doseq [_ (range 7)
+              ;; Get the first card listed in the prompt choice
+              ;; TODO make this function
+              :let [card (-> @state
+                             (get-in [:corp :prompt])
+                             first
+                             (get-in [:choices 0]))]]
+        (prompt-card :corp card))
+      (prompt-choice :corp "Done")                          ; Finished with trashing
+      (prompt-choice :corp "Done")                          ; Finished with move-to-hq (no cards to move)
+      ;; Run and prompts should be over now
+      (is (empty (:prompt (get-corp))) "Bacterial Programming prompts finished")
+      (is (empty (:prompt (get-runner))) "Bacterial Programming prompts finished")
+      (is (not (:run @state))))))
 
 (deftest bifrost-array
   ;; Bifrost Array
