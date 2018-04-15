@@ -206,11 +206,13 @@
 
    "Better Citizen Program"
    {:events {:play-event {:req (req (has-subtype? target "Run"))
+                          :delayed-completion true
                           :msg "give the Runner a tag for playing a run event"
                           :effect (effect (tag-runner :runner eid 1))
                           :once :per-turn}
              :runner-install {:silent (req true)
                               :req (req (has-subtype? target "Icebreaker"))
+                              :delayed-completion true
                               :msg "give the Runner a tag for installing an icebreaker"
                               :effect (effect (tag-runner :runner eid 1))
                               :once :per-turn}}}
