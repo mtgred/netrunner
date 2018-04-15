@@ -241,7 +241,18 @@
              :title "What is the Modded format?"
              :content [:p "This is a format designed to make it easy for new players with a limited card pool. "
                        "Deck building rules are up to 3 Revised Core Sets and data packs from the newest cycle only. "
-                       "There is no use of the MWL/Most Wanted List. The name originated from Modern but sounds more Netrunner. "]}
+                       "There is no use of the MWL/Most Wanted List. The name originated from Modern but sounds more Netrunner. "
+                       "Refer to " [:a {:href "https://forum.stimhack.com/t/modded-format-online-league-starts-april-14/9791"} "Modded"]]}
+            {:id "onesies"
+             :title "What is Onesies or 1.1.1.1 format?"
+             :content [:p "This is a community designed format designed to vary the card choice options. "
+                       "Deck building rules are that cards must be taken from 1 Revised Core Set, 1 Deluxe expansion, 1 data pack, and 1 other card from anywhere. "
+                       "There is no use of the MWL/Most Wanted List. Refer to " [:a {:href "https://www.reddit.com/r/Netrunner/comments/5238a4/1111_onesies/"} "Onesies"]]}
+            {:id "cache"
+             :title "What is the Cache Refresh format?"
+             :content [:p "This is a format created in 2017 by Fantasy Flight Games. "
+                       "Deck building rules are that cards must be taken from 1 Revised Core Set, Terminal Directive, and the latest two cycles of data packs. "
+                       "Refer to " [:a {:href "http://www.cache-refresh.info/"} "Cache Refresh"]]}
             )}
     {:id "getinvolved"
      :title "Getting Involved"
