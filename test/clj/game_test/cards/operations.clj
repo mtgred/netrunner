@@ -1910,6 +1910,54 @@
     (play-from-hand state :corp "Successful Demonstration")
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
 
+(deftest the-all-seeing-i-prevent-trash
+  ;; Counts number of cards if one card is prevented trashed with fall guy
+  (do-game
+    (new-game (default-corp [(qty "The All-Seeing I" 1)])
+              (default-runner [(qty "Fall Guy" 1) (qty "Same Old Thing" 2)]))
+    (letfn [(res [] (count (get-in (get-runner) [:rig :resource])))]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Same Old Thing")
+      (play-from-hand state :runner "Fall Guy")
+      (play-from-hand state :runner "Same Old Thing")
+      (take-credits state :runner)
+      (play-from-hand state :corp "The All-Seeing I")
+      (is (= 1 (count (:hand (get-corp)))) "Corp could not play All Seeing I when runner was not tagged")
+      (core/gain state :runner :tag 1)
+      (play-from-hand state :corp "The All-Seeing I")
+      (let [fall-guy (get-resource state 1)]
+        (card-ability state :runner fall-guy 0))
+      (prompt-choice :runner "Done")
+      (is (= 1 (res)) "One installed resource saved by Fall Guy")
+      (is (= 2 (count (:discard (get-runner)))) "Two cards in heap"))))
+
+(deftest the-all-seeing-i-hosted-cards
+  ;; Checks that All-seeing I does not double-trash hosted cards, trashes hosted cards
+  (do-game
+    (new-game (default-corp [(qty "The All-Seeing I" 1)])
+              (default-runner [(qty "Fall Guy" 2) (qty "Off-Campus Apartment" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Off-Campus Apartment")
+    (let [oca (get-resource state 0)
+          fg1 (get-in (get-runner) [:hand 0])
+          fg2 (get-in (get-runner) [:hand 1])]
+      (card-ability state :runner oca 0)
+      (prompt-select :runner fg1)
+      (card-ability state :runner oca 0)
+      (prompt-select :runner fg2))
+    (core/gain state :runner :tag 1)
+    (take-credits state :runner)
+    (play-from-hand state :corp "The All-Seeing I")
+    (prompt-choice :runner "Done")
+    (prompt-choice :runner "Done")
+    (let  [fall-guy (find-card "Fall Guy" (core/all-active-installed state :runner))]
+      (card-ability state :runner fall-guy 0))
+    (prompt-choice :runner "Done") ;; This assumes hosted cards get put in trash-list before host
+    (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
+    (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")
+    )
+  )
+
 (deftest the-all-seeing-i-jarogniew-mercs
   ;; The All-Seeing I should not trash Jarogniew Mercs if there are other installed resources
   (do-game
