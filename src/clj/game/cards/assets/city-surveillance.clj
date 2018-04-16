@@ -1,0 +1,16 @@
+(in-ns 'game.core)
+
+(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
+
+(def card-assets-city-surveillance
+  {"City Surveillance"
+   {:events {:runner-turn-begins
+             {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 [Credits]" "Take 1 tag"]
+              :player :runner :msg "make the Runner pay 1 [Credits] or take 1 tag"
+              :delayed-completion true
+              :effect (req (if-not (and (= target "Pay 1 [Credits]")
+                                        (pay state side card :credit 1)
+                                        (effect-completed state side eid))
+                             (do (tag-runner state side eid 1)
+                                 (system-msg state side "takes 1 tag"))
+                             (system-msg state side "pays 1 [Credits]")))}}}})

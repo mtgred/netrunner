@@ -1,0 +1,13 @@
+(in-ns 'game.core)
+
+(declare close-access-prompt genetics-trigger? shard-constructor)
+
+(def card-resources-maxwell-james
+  {"Maxwell James"
+   {:in-play [:link 1]
+    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
+                 :prompt "Choose a piece of ICE protecting a remote server"
+                 :choices {:req #(and (ice? %) (rezzed? %) (is-remote? (second (:zone %))))}
+                 :msg "derez a piece of ICE protecting a remote server"
+                 :effect (effect (derez target)
+                                 (trash card {:cause :ability-cost}))}]}})
