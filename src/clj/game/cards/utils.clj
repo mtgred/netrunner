@@ -213,7 +213,6 @@
    :subroutines (vec abilities)
    :rez-cost-bonus space-ice-rez-bonus})
 
-
 ;;; For Grail ICE
 (defn grail-in-hand
   "Req that specified card is a Grail card in the Corp's hand."
@@ -244,7 +243,6 @@
   {:abilities [reveal-grail]
    :subroutines [ability resolve-grail]})
 
-
 ;;; For NEXT ICE
 (defn next-ice-count
   "Counts number of rezzed NEXT ICE - for use with NEXT Bronze and NEXT Gold"
@@ -252,7 +250,6 @@
   (let [servers (flatten (seq (:servers corp)))
         rezzed-next? #(and (rezzed? %) (has-subtype? % "NEXT"))]
     (reduce (fn [c server] (+ c (count (filter rezzed-next? (:ices server))))) 0 servers)))
-
 
 ;;; For Morph ICE
 (defn morph [state side card new old]
@@ -280,7 +277,6 @@
      :subroutines [ability]
      :events {:advance ab :advancement-placed ab}}))
 
-
 ;;; For Constellation ICE
 (defn constellation-ice
   "Generates map for Constellation ICE with specified effect."
@@ -292,7 +288,6 @@
   "Adds an implementation note to the ice-definition"
   [note ice-def]
   (assoc ice-def :implementation note))
-
 
 ;; Icebreaker-specific helper functions
 (declare add-icon remove-icon can-host?)

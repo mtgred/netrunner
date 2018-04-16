@@ -140,6 +140,7 @@
           (unregister-events state side h)
           (register-events state side (:events (card-def newh)) newh))))))
 
+;; Taken from Stack Overflow: https://stackoverflow.com/a/20708175/3023252
 (defn load-files [path]
   (let [file  (java.io.File. path)
         files (.listFiles file)]
@@ -147,6 +148,11 @@
       (when (.isFile x)
         (load-file (.getCanonicalPath x))))))
 
+;; Taken from Stack Overflow: https://stackoverflow.com/a/23200627/302325
+(defn diff [s1 s2]
+  (mapcat
+    (fn [[x n]] (repeat n x))
+    (apply merge-with - (map frequencies [s1 s2]))))
 
 ;; Load all card definitions into the current namespace.
 (load "cards/utils")
@@ -167,17 +173,8 @@
 
 (def post-defs (keys (ns-map 'game.core)))
 
-(defn diff [s1 s2]
-  (mapcat
-    (fn [[x n]] (repeat n x))
-    (apply merge-with - (map frequencies [s1 s2]))))
-
-; (def card-defs (diff pre-defs post-defs))
-
-(def cards (merge (doall (map resolve (map symbol (diff pre-defs post-defs))))))
-(prn cards)
-; (prn cards)
-; (prn (merge-with into (diff pre-defs post-defs)))
-
-; (def cards (merge cards-agendas cards-assets cards-events cards-hardware cards-ice cards-icebreakers cards-identities
-;                   cards-operations cards-programs cards-resources cards-upgrades))
+(def card-defs (filter #(clojure.string/starts-with? % "card") (map name (diff pre-defs post-defs))))
+(def cards (into {} (->> card-defs
+                         (map symbol)
+                         (map resolve)
+                         (map var-get))))
