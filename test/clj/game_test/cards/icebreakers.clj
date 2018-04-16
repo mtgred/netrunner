@@ -344,6 +344,33 @@
      (is (= 1 (:tag (get-runner))))
      (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
 
+(deftest inversificator
+  ;; Inversificator shouldn't hook up events for unrezzed ice
+  (do-game
+    (new-game (default-corp [(qty "Turing" 1) (qty "Kakugo" 1)])
+              (default-runner [(qty "Inversificator" 1) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Kakugo" "HQ")
+    (play-from-hand state :corp "Turing" "HQ")
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Inversificator")
+    (let [inv (get-program state 0)
+          tur (get-ice state :hq 1)]
+      (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 card in hand")
+      (run-on state :hq)
+      (core/rez state :corp (refresh tur))
+      (run-continue state)
+      (card-ability state :runner (refresh inv) 0)
+      (prompt-select :runner (get-ice state :hq 1))
+      (prompt-select :runner (get-ice state :hq 0))
+      (run-jack-out state)
+      (is (= 1 (count (:hand (get-runner)))) "Runner still has 1 card in hand")
+
+      (run-on state :hq)
+      (run-continue state)
+      (is (= 1 (count (:hand (get-runner)))) "Kakugo doesn't fire when unrezzed"))))
+
 (deftest mammon
   ;; Mammon - Pay to add X power counters at start of turn, all removed at end of turn
   (do-game
