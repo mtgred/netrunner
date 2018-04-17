@@ -297,7 +297,6 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (req (gain state side :memory (:memoryunits target))
-                              (update-breaker-strength state side target)
                               (->> target
                                 (get-card state)
                                 (host state side card)

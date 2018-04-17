@@ -216,7 +216,7 @@
 
    "Dhegdheer"
    {:abilities [{:label "Install a program on Dhegdheer"
-                 :req (req (empty? (:hosted card)))
+                 :req (req (nil? (get-in card [:special :dheg-prog])))
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program in your Grip to install on Dhegdheer"
@@ -228,10 +228,10 @@
                                                     (when (-> target :cost pos?)
                                                       (install-cost-bonus state side [:credit -1]))
                                                     (runner-install target {:host-card card})
-                                                    (update! (assoc (get-card state card) :dheg-prog (:cid target))))}
+                                                    (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
                                   card nil))}
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
-                 :req (req (empty? (:hosted card)))
+                 :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer with [Credit] discount"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
@@ -241,9 +241,9 @@
                                 (gain state side :credit 1))
                               (update-breaker-strength state side target)
                               (host state side card (get-card state target))
-                              (update! state side (assoc (get-card state card) :dheg-prog (:cid target))))}
+                              (update! state side (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
                 {:label "Host an installed program on Dhegdheer"
-                 :req (req (empty? (:hosted card)))
+                 :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
@@ -251,9 +251,9 @@
                  :effect (effect (gain :memory (:memoryunits target))
                                  (update-breaker-strength target)
                                  (host card (get-card state target))
-                                 (update! (assoc (get-card state card) :dheg-prog (:cid target))))}]
-    :events {:card-moved {:req (req (= (:cid target) (:dheg-prog (get-card state card))))
-                          :effect (effect (update! (dissoc card :dheg-prog))
+                                 (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}]
+    :events {:card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dheg-prog])))
+                          :effect (effect (update! (dissoc-in card [:special :dheg-prog]))
                                           (lose :memory (:memoryunits target)))}}}
 
    "Diwan"
@@ -500,7 +500,7 @@
 
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
-                 :req (req (< (count (:hosted card)) 2))
+                 :req (req (< (count (get-in card [:special :hosted-programs])) 2))
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program in your Grip to install on Leprechaun"
@@ -510,12 +510,13 @@
                                     :msg (msg "host " (:title target))
                                     :effect (effect (gain :memory (:memoryunits target))
                                                     (runner-install target {:host-card card})
-                                                    (update! (assoc (get-card state card)
-                                                                    :hosted-programs
-                                                                    (cons (:cid target) (:hosted-programs card)))))}
+                                                    (update! (assoc-in (get-card state card)
+                                                                    [:special :hosted-programs]
+                                                                    (cons (:cid target)
+                                                                          (get-in card [:special :hosted-programs])))))}
                                   card nil))}
                 {:label "Host an installed program on Leprechaun"
-                 :req (req (< (count (:hosted card)) 2))
+                 :req (req (< (count (get-in card [:special :hosted-programs])) 2))
                  :prompt "Choose an installed program to host on Leprechaun"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
@@ -523,11 +524,15 @@
                  :effect (effect (gain :memory (:memoryunits target))
                                  (update-breaker-strength target)
                                  (host card (get-card state target))
-                                 (update! (assoc (get-card state card)
-                                                 :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
-    :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
-                          :effect (effect (update! (assoc card
-                                                          :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
+                                 (update! (assoc-in (get-card state card)
+                                                    [:special :hosted-programs]
+                                                    (cons (:cid target)
+                                                          (get-in card [:special :hosted-programs])))))}]
+    :events {:card-moved {:req (req (some #{(:cid target)} (get-in card [:special :hosted-programs])))
+                          :effect (effect (update! (assoc-in card
+                                                             [:special :hosted-programs]
+                                                             (remove #(= (:cid target) %)
+                                                                     (get-in card [:special :hosted-programs]))))
                                           (lose :memory (:memoryunits target)))}}}
 
    "LLDS Energy Regulator"
