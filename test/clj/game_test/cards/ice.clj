@@ -553,7 +553,7 @@
      (run-jack-out state)
      (is (= 2 (count (:hand (get-runner)))) "Runner took damage before swap")
 
-     (core/swap-ice state :corp kakugo ice-wall)
+     (core/swap-ice state :corp (refresh kakugo) (refresh ice-wall))
 
      (run-on state "Archives")
      (run-continue state)
