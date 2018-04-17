@@ -103,6 +103,18 @@
                                       :unsuccessful {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
                                                                      (trash card))}}}}}
 
+  "Bio Vault"
+  {:implementation "Installation restriction not enforced"
+   :advanceable :always
+   :abilities [{:label "[Trash]: End the run"
+                :advance-counter-cost 2
+                :req (req (:run @state))
+                :msg "end the run. Bio Vault is trashed"
+                :delayed-completion true
+                :effect (effect
+                          (end-run)
+                          (trash eid card {:cause :ability-cost}))}]}
+
    "Black Level Clearance"
    {:events {:successful-run
              {:interactive (req true)
@@ -134,12 +146,13 @@
                  :req (req (and (< (:credit runner) 6)
                                 (< 0 (count (filter #(and (is-type? % "Operation")
                                                           (has-subtype? % "Transaction")) (:discard corp))))))
-                 :label "Play a transaction operation from Archives ignoring all costs and remove it from the game"
+                 :label "Play a transaction operation from Archives, ignoring all costs, and remove it from the game"
                  :prompt "Choose a transaction operation to play"
-                 :msg (msg "play " (:title target) " from Archives ignoring all costs and remove it from the game")
+                 :msg (msg "play " (:title target) " from Archives, ignoring all costs, and removes it from the game")
                  :choices (req (cancellable (filter #(and (is-type? % "Operation")
                                                           (has-subtype? % "Transaction")) (:discard corp)) :sorted))
-                 :effect (effect (play-instant nil target {:ignore-cost true}) (move target :rfg))}]}
+                 :effect (effect (play-instant nil (assoc-in target [:special :rfg-when-trashed] true) {:ignore-cost true})
+                                 (move target :rfg))}]}
 
    "Calibration Testing"
    {:abilities [{:label "[Trash]: Place 1 advancement token on a card in this server"

@@ -349,24 +349,6 @@
       (prompt-choice :corp (find-card "Green Level Clearance" (:deck (get-corp))))
       (is (= 5 (:credit (get-corp)))))))
 
-(deftest defective-brainchips
-  ;; Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn
-  (do-game
-    (new-game (default-corp [(qty "Defective Brainchips" 1) (qty "Viktor 1.0" 1)])
-              (default-runner [(qty "Sure Gamble" 2) (qty "Shiv" 2)]))
-    (play-from-hand state :corp "Defective Brainchips")
-    (play-from-hand state :corp "Viktor 1.0" "HQ")
-    (take-credits state :corp)
-    (run-on state :hq)
-    (let [vik (get-ice state :hq 0)]
-      (core/rez state :corp vik)
-      (card-subroutine state :corp vik 0)
-      (is (= 2 (count (:discard (get-runner)))) "2 cards lost to brain damage")
-      (is (= 2 (:brain-damage (get-runner))) "Brainchips dealt 1 additional brain dmg")
-      (card-subroutine state :corp vik 0)
-      (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
-      (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
-
 (deftest death-and-taxes
   ;; Death and Taxes gain credit on runner install, runner trash installed card
   ;; Also regression test for #3160
@@ -389,6 +371,24 @@
       (run-empty-server state :remote1)
       (prompt-choice :runner "Yes")                         ;; Runner trashes PAD Campaign
       (is (= (+ 4 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed PAD Campaign"))))
+
+(deftest defective-brainchips
+  ;; Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn
+  (do-game
+    (new-game (default-corp [(qty "Defective Brainchips" 1) (qty "Viktor 1.0" 1)])
+              (default-runner [(qty "Sure Gamble" 2) (qty "Shiv" 2)]))
+    (play-from-hand state :corp "Defective Brainchips")
+    (play-from-hand state :corp "Viktor 1.0" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (let [vik (get-ice state :hq 0)]
+      (core/rez state :corp vik)
+      (card-subroutine state :corp vik 0)
+      (is (= 2 (count (:discard (get-runner)))) "2 cards lost to brain damage")
+      (is (= 2 (:brain-damage (get-runner))) "Brainchips dealt 1 additional brain dmg")
+      (card-subroutine state :corp vik 0)
+      (is (= 3 (count (:discard (get-runner)))) "2 cards lost to brain damage")
+      (is (= 3 (:brain-damage (get-runner))) "Brainchips didn't do additional brain dmg"))))
 
 (deftest distract-the-masses
   (do-game
@@ -454,54 +454,40 @@
     (play-from-hand state :corp "Economic Warfare")
     (is (= 3 (:credit (get-runner))) "Runner has 3 credits")))
 
-(deftest market-forces
-  (testing "when the runner is not tagged"
-    (do-game
-     (new-game (default-corp [(qty "Market Forces" 6)])
-               (default-runner))
+(deftest election-day
+  (do-game
+    (new-game (default-corp [(qty "Election Day" 7)])
+                (default-runner))
+      (is (= 6 (count (:hand (get-corp)))) "Corp starts with 5 + 1 cards")
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
+      (play-from-hand state :corp "Election Day")
+      (is (= 1 (count (:hand (get-corp)))) "Could not play Election Day")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 2 (count (:hand (get-corp)))) "Corp has now 1 + 1 cards before Election Day")
+      (play-from-hand state :corp "Election Day")
+      (is (= 5 (count (:hand (get-corp)))) "Corp has now 5 cards due to Election Day")))
 
-     (play-from-hand state :corp "Market Forces")
-
-     (is (= 6 (count (:hand (get-corp))))
-         "Market Forces is not played")
-     (is (= 3 (:click (get-corp)))
-         "the corp does not spend a click")
-     (is (= 5 (:credit (get-corp)) (:credit (get-runner)))
-         "credits are unaffected")))
-
-    (letfn [(market-forces-credit-test
-              [{:keys [tag-count runner-creds expected-credit-diff]}]
-              (testing (str "when the runner has " tag-count " tags and " runner-creds " credits")
-                (do-game
-                 (new-game (default-corp [(qty "Market Forces" 6)])
-                           (default-runner))
-
-                 (swap! state assoc-in [:corp :credit] 0)
-                 (swap! state assoc-in [:runner :credit] runner-creds)
-                 (core/gain state :runner :tag tag-count)
-
-                 (play-from-hand state :corp "Market Forces")
-
-                 (is (= expected-credit-diff (:credit (get-corp)))
-                     (str "the corp gains " expected-credit-diff " credits"))
-                 (is (= expected-credit-diff (- runner-creds (:credit (get-runner))))
-                     (str "the runner loses " expected-credit-diff " credits")))))]
-      (doall (map market-forces-credit-test
-                  [{:tag-count            1
-                    :runner-creds         10
-                    :expected-credit-diff 3}
-                   {:tag-count            2
-                    :runner-creds         10
-                    :expected-credit-diff 6}
-                   {:tag-count            3
-                    :runner-creds         10
-                    :expected-credit-diff 9}
-                   {:tag-count            3
-                    :runner-creds         0
-                    :expected-credit-diff 0}
-                   {:tag-count            3
-                    :runner-creds         5
-                    :expected-credit-diff 5}]))))
+(deftest enforcing-loyalty
+  ;; Enforcing Loyalty - Win trace to trash installed card not of Runner's faction
+  (do-game
+    (new-game (default-corp [(qty "Enforcing Loyalty" 2)])
+              (make-deck "Chaos Theory: Wünderkind" [(qty "Inti" 1) (qty "Caldera" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Inti")
+    (play-from-hand state :runner "Caldera")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Enforcing Loyalty")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-program state 0))
+    (is (empty? (:discard (get-runner))) "Can't target Inti; matches Runner faction")
+    (prompt-select :corp (get-resource state 0))
+    (is (= 1 (count (:discard (get-runner)))) "Caldera trashed")))
 
 (deftest enhanced-login-protocol
   ;; Enhanced Login Protocol - First click run each turn costs an additional click
@@ -815,23 +801,23 @@
     (is (= 3 (:click (get-corp))))
     (is (= 3 (:click-per-turn (get-corp))))))
 
-(deftest election-day
+(deftest hatchet-job
+  ;; Hatchet Job - Win trace to add installed non-virtual to grip
   (do-game
-    (new-game (default-corp [(qty "Election Day" 7)])
-                (default-runner))
-      (is (= 6 (count (:hand (get-corp)))) "Corp starts with 5 + 1 cards")
-      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
-      (core/move state :corp (find-card "Election Day" (:hand (get-corp))) :deck)
-      (play-from-hand state :corp "Election Day")
-      (is (= 1 (count (:hand (get-corp)))) "Could not play Election Day")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (is (= 2 (count (:hand (get-corp)))) "Corp has now 1 + 1 cards before Election Day")
-      (play-from-hand state :corp "Election Day")
-      (is (= 5 (count (:hand (get-corp)))) "Corp has now 5 cards due to Election Day")))
+    (new-game (default-corp [(qty "Hatchet Job" 1)])
+              (default-runner [(qty "Upya" 1) (qty "Ghost Runner" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ghost Runner")
+    (play-from-hand state :runner "Upya")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hatchet Job")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (is (empty? (:hand (get-runner))) "Can't choose virtual card")
+    (is (not (empty? (:prompt (get-corp)))))
+    (prompt-select :corp (get-program state 0))
+    (is (= 1 (count (:hand (get-runner)))) "Upya returned to grip")))
 
 (deftest hedge-fund
   (do-game
@@ -975,23 +961,6 @@
       "Breaking News installed by Lateral Growth")
     (is (= 7 (:credit (get-corp))))))
 
-(deftest mass-commercialization
-  ;; Mass Commercialization
-  (do-game
-    (new-game (default-corp [(qty "Mass Commercialization" 1)
-                             (qty "Ice Wall" 3)])
-              (default-runner))
-    (play-from-hand state :corp "Ice Wall" "HQ")
-    (play-from-hand state :corp "Ice Wall" "R&D")
-    (play-from-hand state :corp "Ice Wall" "Archives")
-    (take-credits state :runner)
-    (core/advance state :corp {:card (refresh (get-ice state :hq 0))})
-    (core/advance state :corp {:card (refresh (get-ice state :archives 0))})
-    (core/advance state :corp {:card (refresh (get-ice state :rd 0))})
-    (take-credits state :runner)
-    (play-from-hand state :corp "Mass Commercialization")
-    (is (= 8 (:credit (get-corp))) "Gained 6 for 3 advanced ice from Mass Commercialization")))
-
 (deftest manhunt-every-run
   ;; Manhunt - only fires once per turn. Unreported issue.
   (do-game
@@ -1010,6 +979,72 @@
     (is (empty? (:prompt (get-corp))) "No Manhunt trace on second run")
     (prompt-choice :runner "OK")
     (is (not (:run @state)) "Run ended")))
+
+(deftest market-forces
+  (testing "when the runner is not tagged"
+    (do-game
+     (new-game (default-corp [(qty "Market Forces" 6)])
+               (default-runner))
+
+     (play-from-hand state :corp "Market Forces")
+
+     (is (= 6 (count (:hand (get-corp))))
+         "Market Forces is not played")
+     (is (= 3 (:click (get-corp)))
+         "the corp does not spend a click")
+     (is (= 5 (:credit (get-corp)) (:credit (get-runner)))
+         "credits are unaffected")))
+
+    (letfn [(market-forces-credit-test
+              [{:keys [tag-count runner-creds expected-credit-diff]}]
+              (testing (str "when the runner has " tag-count " tags and " runner-creds " credits")
+                (do-game
+                 (new-game (default-corp [(qty "Market Forces" 6)])
+                           (default-runner))
+
+                 (swap! state assoc-in [:corp :credit] 0)
+                 (swap! state assoc-in [:runner :credit] runner-creds)
+                 (core/gain state :runner :tag tag-count)
+
+                 (play-from-hand state :corp "Market Forces")
+
+                 (is (= expected-credit-diff (:credit (get-corp)))
+                     (str "the corp gains " expected-credit-diff " credits"))
+                 (is (= expected-credit-diff (- runner-creds (:credit (get-runner))))
+                     (str "the runner loses " expected-credit-diff " credits")))))]
+      (doall (map market-forces-credit-test
+                  [{:tag-count            1
+                    :runner-creds         10
+                    :expected-credit-diff 3}
+                   {:tag-count            2
+                    :runner-creds         10
+                    :expected-credit-diff 6}
+                   {:tag-count            3
+                    :runner-creds         10
+                    :expected-credit-diff 9}
+                   {:tag-count            3
+                    :runner-creds         0
+                    :expected-credit-diff 0}
+                   {:tag-count            3
+                    :runner-creds         5
+                    :expected-credit-diff 5}]))))
+
+(deftest mass-commercialization
+  ;; Mass Commercialization
+  (do-game
+    (new-game (default-corp [(qty "Mass Commercialization" 1)
+                             (qty "Ice Wall" 3)])
+              (default-runner))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (play-from-hand state :corp "Ice Wall" "Archives")
+    (take-credits state :runner)
+    (core/advance state :corp {:card (refresh (get-ice state :hq 0))})
+    (core/advance state :corp {:card (refresh (get-ice state :archives 0))})
+    (core/advance state :corp {:card (refresh (get-ice state :rd 0))})
+    (take-credits state :runner)
+    (play-from-hand state :corp "Mass Commercialization")
+    (is (= 8 (:credit (get-corp))) "Gained 6 for 3 advanced ice from Mass Commercialization")))
 
 (deftest midseason-replacements
   ;; Midseason Replacements - Trace to give Runner tags after they steal an agenda
@@ -1259,6 +1294,46 @@
     (prompt-choice :runner 0)
     (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
 
+(deftest red-planet-couriers
+  ;; Red Planet Couriers - Move all advancements on cards to 1 advanceable card
+  (do-game
+    (new-game (default-corp [(qty "Red Planet Couriers" 1) (qty "Ice Wall" 2)
+                             (qty "GRNDL Refinery" 1) (qty "Government Takeover" 1)])
+              (default-runner))
+    (core/gain state :corp :click 4)
+    (play-from-hand state :corp "Government Takeover" "New remote")
+    (play-from-hand state :corp "GRNDL Refinery" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (let [gt (get-content state :remote1 0)
+          gr (get-content state :remote2 0)
+          iw1 (get-ice state :hq 0)
+          iw2 (get-ice state :rd 0)]
+      (core/add-prop state :corp gr :advance-counter 3)
+      (core/add-prop state :corp iw1 :advance-counter 2)
+      (core/add-prop state :corp iw2 :advance-counter 1)
+      (play-from-hand state :corp "Red Planet Couriers")
+      (prompt-select :corp gt)
+      (is (nil? (:advance-counter (refresh gr))) "Advancements removed")
+      (is (nil? (:advance-counter (refresh iw1))) "Advancements removed")
+      (is (nil? (:advance-counter (refresh iw2))) "Advancements removed")
+      (is (= 6 (:advance-counter (refresh gt))) "Gained 6 advancements"))))
+
+(deftest reuse
+  ;; Reuse - Gain 2 credits for each card trashed from HQ
+  (do-game
+    (new-game (default-corp [(qty "Reuse" 2) (qty "Hive" 1) (qty "IQ" 1)
+                             (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Reuse")
+    (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+    (prompt-select :corp (find-card "Hive" (:hand (get-corp))))
+    (prompt-select :corp (find-card "IQ" (:hand (get-corp))))
+    (prompt-choice :corp "Done")
+    (is (= 4 (count (:discard (get-corp)))) "3 cards trashed plus operation played")
+    (is (= 11 (:credit (get-corp))) "Gained 6 credits")
+    (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
+
 (deftest reverse-infection
   ;; Reverse Infection - purge and trash 1 card from stack for every 3 counters purged - or gain 2 credits
   (do-game
@@ -1281,20 +1356,26 @@
     (is (zero? (get-counters (get-program state 0) :virus)) "Viruses purged from Datasucker")
     (is (= 2 (count (:discard (get-runner)))) "Two cards trashed from stack")))
 
-(deftest reuse
-  ;; Reuse - Gain 2 credits for each card trashed from HQ
+(deftest rolling-brownout
+  ;; Rolling Brownout - Increase cost of events/operations by 1, gain 1c on first Runner event of turn
   (do-game
-    (new-game (default-corp [(qty "Reuse" 2) (qty "Hive" 1) (qty "IQ" 1)
-                             (qty "Ice Wall" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Reuse")
-    (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
-    (prompt-select :corp (find-card "Hive" (:hand (get-corp))))
-    (prompt-select :corp (find-card "IQ" (:hand (get-corp))))
-    (prompt-choice :corp "Done")
-    (is (= 4 (count (:discard (get-corp)))) "3 cards trashed plus operation played")
-    (is (= 11 (:credit (get-corp))) "Gained 6 credits")
-    (is (= 1 (:click (get-corp))) "Spent 2 clicks")))
+    (new-game (default-corp [(qty "Rolling Brownout" 1) (qty "Beanstalk Royalties" 1)
+                             (qty "Domestic Sleepers" 1)])
+              (default-runner [(qty "Easy Mark" 3)]))
+    (play-from-hand state :corp "Rolling Brownout")
+    (play-from-hand state :corp "Beanstalk Royalties")
+    (is (= 5 (:credit (get-corp))) "Beanstalk netted only 2c")
+    (play-from-hand state :corp "Domestic Sleepers" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Easy Mark")
+    (is (= 7 (:credit (get-runner))) "Easy Mark netted only 2c")
+    (is (= 6 (:credit (get-corp))) "Corp gained 1c from Brownout")
+    (play-from-hand state :runner "Easy Mark")
+    (is (= 6 (:credit (get-corp))) "No Corp credit gain from 2nd event")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Steal")
+    (play-from-hand state :runner "Easy Mark")
+    (is (= 12 (:credit (get-runner))) "Easy Mark netted 3c after Brownout trashed")))
 
 (deftest salems-hospitality
   ;; Salem's Hospitality - Full test
@@ -1338,39 +1419,6 @@
     (is (= 0 (count (:hand (get-runner)))) "Runner has 0 cards in hand")
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
-
-(deftest subcontract-scorched
-  ;; Subcontract - Don't allow second operation until damage prevention completes
-  (do-game
-    (new-game (default-corp [(qty "Scorched Earth" 2) (qty "Subcontract" 1)])
-              (default-runner [(qty "Plascrete Carapace" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :tag 1)
-    (play-from-hand state :runner "Plascrete Carapace")
-    (take-credits state :runner)
-    (play-from-hand state :corp "Subcontract")
-    (prompt-select :corp (find-card "Scorched Earth" (:hand (get-corp))))
-    (is (and (= 1 (count (:prompt (get-corp)))) (= :waiting (-> (get-corp) :prompt first :prompt-type)))
-        "Corp does not have Subcontract prompt until damage prevention completes")
-    (prompt-choice :runner "Done")
-    (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
-
-(deftest subcontract-terminal
-  ;; Subcontract - interaction with Terminal operations
-  (do-game
-    (new-game
-      (default-corp [(qty "Hard-Hitting News" 2) (qty "Subcontract" 1)])
-      (default-runner))
-    (core/gain state :runner :tag 1)
-    (take-credits state :corp)
-    (run-empty-server state :archives)
-    (take-credits state :runner)
-    (play-from-hand state :corp "Subcontract")
-    (prompt-select :corp (find-card "Hard-Hitting News" (:hand (get-corp))))
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 0)
-    (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
-    (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
 
 (deftest self-growth-program
   ;; Self-Growth Program - Add 2 installed cards to grip if runner is tagged
@@ -1622,6 +1670,39 @@
       (is (core/has-subtype? (refresh qu) "Code Gate") "Quandary has Code Gate")
       (is (core/has-subtype? (refresh qu) "Barrier") "Quandary ICE Barrier"))))
 
+(deftest subcontract-scorched
+  ;; Subcontract - Don't allow second operation until damage prevention completes
+  (do-game
+    (new-game (default-corp [(qty "Scorched Earth" 2) (qty "Subcontract" 1)])
+              (default-runner [(qty "Plascrete Carapace" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :tag 1)
+    (play-from-hand state :runner "Plascrete Carapace")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Subcontract")
+    (prompt-select :corp (find-card "Scorched Earth" (:hand (get-corp))))
+    (is (and (= 1 (count (:prompt (get-corp)))) (= :waiting (-> (get-corp) :prompt first :prompt-type)))
+        "Corp does not have Subcontract prompt until damage prevention completes")
+    (prompt-choice :runner "Done")
+    (is (not-empty (:prompt (get-corp))) "Corp can now play second Subcontract operation")))
+
+(deftest subcontract-terminal
+  ;; Subcontract - interaction with Terminal operations
+  (do-game
+    (new-game
+      (default-corp [(qty "Hard-Hitting News" 2) (qty "Subcontract" 1)])
+      (default-runner))
+    (core/gain state :runner :tag 1)
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Subcontract")
+    (prompt-select :corp (find-card "Hard-Hitting News" (:hand (get-corp))))
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 5 (:tag (get-runner))) "Runner has 5 tags")
+    (is (empty? (:prompt (get-corp))) "Corp does not have a second Subcontract selection prompt")))
+
 (deftest subliminal-messaging
   ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
   (do-game
@@ -1866,6 +1947,24 @@
 
     (play-from-hand state :corp "Threat Assessment")
     (is (empty? (:prompt (get-corp))) "Threat Assessment triggered with no trash")))
+
+(deftest threat-level-alpha
+  ;; Threat Level Alpha - Win trace to give tags = Runner tags; or 1 tag if 0
+  (do-game
+    (new-game (default-corp [(qty "Threat Level Alpha" 2)])
+              (default-runner))
+    (core/gain state :corp :click 2)
+    (core/gain state :corp :credit 2)
+    (is (= 0 (:tag (get-runner))))
+    (play-from-hand state :corp "Threat Level Alpha")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner took 1 tag because they had 0")
+    (core/gain state :runner :tag 2)
+    (play-from-hand state :corp "Threat Level Alpha")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 6 (:tag (get-runner))) "Runner took 3 tag because they had 3")))
 
 (deftest transparency-initiative
   ;; Transparency Initiative - Full test

@@ -79,6 +79,40 @@
       (card-ability state :corp alix 0)
       (is (= 8 (get-in @state [:corp :credit]))))) "Gain 4 credits from Alix")
 
+(deftest amani-senai
+  ;; Amani Senai - trace on score/steal to bounce, with base strength = advancement req of the agenda
+  (do-game
+    (new-game (default-corp [(qty "Amani Senai" 1)
+                             (qty "Medical Breakthrough" 2)])
+              (default-runner [(qty "Analog Dreamers" 1)]))
+    (play-from-hand state :corp "Amani Senai" "New remote")
+    (play-from-hand state :corp "Medical Breakthrough" "New remote")
+    (play-from-hand state :corp "Medical Breakthrough" "New remote")
+    (take-credits state :corp)
+    (let [senai (get-content state :remote1 0)
+          breakthrough (get-content state :remote3 0)]
+      (core/rez state :corp senai)
+      (play-from-hand state :runner "Analog Dreamers")
+      (run-empty-server state "Server 2")
+      (prompt-choice :runner "Steal")
+      (is (= 0 (count (get-in @state [:corp :servers :remote2 :content]))) "Agenda was stolen")
+      (prompt-choice :corp "Medical Breakthrough") ;simult. effect resolution
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp 0)  ;; Corp doesn't pump trace
+      (is (= 3  (get-in @state [:trace :strength])) "Trace base strength is 3 after stealing first Breakthrough")
+      (prompt-choice :runner 0)
+      (let [n (count (get-in @state [:runner :hand]))]
+        (is (= 1 (count (get-in @state [:runner :rig :program]))) "There is an Analog Dreamers installed")
+        (prompt-select :corp (first (get-in @state [:runner :rig :program])))
+        (is (= 0 (count (get-in @state [:runner :rig :program]))) "Analog Dreamers was uninstalled")
+        (is (= (+ n 1) (count (get-in @state [:runner :hand]))) "Analog Dreamers was added to hand"))
+      (take-credits state :runner)
+      (score-agenda state :corp breakthrough)
+      ;; (prompt-choice :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason
+      (prompt-choice :corp "Yes")       ;corp should get to trigger trace even when no runner cards are installed
+      (prompt-choice :corp 0)
+      (is (= 2 (get-in @state [:trace :strength])) "Trace base strength is 2 after scoring second Breakthrough"))))
+
 (deftest blacklist-steal
   ;; Blacklist - #2426.  Need to allow steal.
   (do-game
@@ -115,6 +149,21 @@
       (is (= 1 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
       (prompt-choice :runner "Done")
       (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage"))))
+
+(deftest blacklist-steal
+  ;; Blacklist - #2426.  Need to allow steal.
+  (do-game
+    (new-game (default-corp [(qty "Fetal AI" 3) (qty "Blacklist" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "Fetal AI")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (= 1 (count (get-in @state [:corp :discard])))
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Yes")
+    (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
+    (= 1 (count (get-in @state [:runner :scored])))))
 
 (deftest brain-taping-warehouse
   ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ICE by 1 for each unspent Runner click
@@ -269,6 +318,23 @@
       (is (= 7 (:credit (get-runner))))
       (is (= 0 (count (:deck (get-runner))))))))
 
+(deftest commercial-bankers-group
+  ;; Commercial Bankers Group - Gain 3 credits at turn start if unprotected by ice
+  (do-game
+    (new-game (default-corp [(qty "Commercial Bankers Group" 1) (qty "Ice Wall" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Commercial Bankers Group" "New remote")
+    (let [cbg (get-content state :remote1 0)]
+      (core/rez state :corp cbg)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 9 (:credit (get-corp))) "Bankers Group paid 3 credits")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (take-credits state :corp)
+      (is (= 11 (:credit (get-corp))))
+      (take-credits state :runner)
+      (is (= 11 (:credit (get-corp))) "Bankers Group didn't pay credits"))))
+
 (deftest daily-business-show
   ;; Daily Business Show - Full test
   (do-game
@@ -399,7 +465,7 @@
       (is (= 1 (:advance-counter (refresh gb))) "1 advancement on Ghost Branch")
       (is (= 4 (:credit (get-corp)))))))
 
-(deftest echochamber
+(deftest echo-chamber
   ;; Echo Chamber - 3 clicks to become 1 point agenda
   (do-game
     (new-game (default-corp [(qty "Echo Chamber" 1)])
@@ -531,72 +597,6 @@
       (is (not (:corp-phase-12 @state)) "With nothing to rez, EBC does not trigger Step 1.2")
       (is (= 14 (get-counters (refresh eve) :credit)) "Took counters from Eve"))))
 
-(deftest franchise-city
-  (do-game
-    (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Franchise City" "New remote")
-    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (take-credits state :corp 1)
-    (run-empty-server state "Server 2")
-    (prompt-choice :runner "Steal")
-    (is (= 0 (count (get-in @state [:corp :servers :server2 :content]))) "Agenda was stolen")
-    (is (= 2 (:agenda-point (get-runner))) "Runner stole 2 points")
-    (is (= 0 (count (get-in @state [:corp :servers :server1 :content])))
-        "Franchise City no longer installed")
-    (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
-    (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
-
-(deftest full-immersion-recstudio
-  ;; Full Immmersion RecStudio - install directly, and via Interns
-  (do-game
-    (new-game
-      (default-corp [(qty "Full Immersion RecStudio" 1)
-                     (qty "Interns" 2)
-                     (qty "Launch Campaign" 3)])
-      (default-runner))
-    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
-    (let [fir (get-content state :remote1 0)]
-      (core/rez state :corp fir)
-      (card-ability state :corp fir 0)
-      (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
-      (let [lc (first (:hosted (refresh fir)))]
-        (is lc "Launch Campaign hosted on Full Immersion RecStudio")
-        (core/rez state :corp lc)
-        (is (and (:installed (refresh lc)) (:rezzed (refresh lc))) "Rezzed Launch Campaign")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (is (= 5 (:credit (get-corp))) "Gained 2cr from Launch Campaign")
-        (is (= 4 (get-counters (refresh lc) :credit)) "4cr left on Launch Campaign")
-        (play-from-hand state :corp "Interns")
-        (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
-        (prompt-choice :corp (refresh fir))
-        (is (= 2 (count (:hosted (refresh fir)))) "Interns installed onto FIR")))))
-
-(deftest full-immersion-recstudio-sandburg
-  ;; Full Immmersion RecStudio - hosting an asset with events does not double-register events. Issue #1827.
-  (do-game
-    (new-game
-      (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Sandburg" 1) (qty "Vanilla" 1)
-                     (qty "Oaktown Renovation" 1)])
-      (default-runner))
-    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
-    (play-from-hand state :corp "Vanilla" "HQ")
-    (let [fir (get-content state :remote1 0)
-          van (get-ice state :hq 0)]
-      (core/rez state :corp fir)
-      (core/rez state :corp van)
-      (card-ability state :corp fir 0)
-      (prompt-select :corp (find-card "Sandburg" (:hand (get-corp))))
-      (core/gain state :corp :credit 7 :click 3)
-      (core/rez state :corp (first (:hosted (refresh fir))))
-      (is (= 2 (:current-strength (refresh van))) "Vanilla at 2 strength")
-      (card-ability state :corp fir 0)
-      (prompt-select :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
-      (core/advance state :corp {:card (last (:hosted (refresh fir)))})
-      (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
-
 (deftest false-flag
   (testing "when the corp attempts to score False Flag"
     (testing "and False Flag has 7 advancements"
@@ -662,6 +662,72 @@
                    [2 1]
                    [5 2]
                    [10 5]])))))
+
+(deftest franchise-city
+  (do-game
+    (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Franchise City" "New remote")
+    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp 1)
+    (run-empty-server state "Server 2")
+    (prompt-choice :runner "Steal")
+    (is (= 0 (count (get-in @state [:corp :servers :server2 :content]))) "Agenda was stolen")
+    (is (= 2 (:agenda-point (get-runner))) "Runner stole 2 points")
+    (is (= 0 (count (get-in @state [:corp :servers :server1 :content])))
+        "Franchise City no longer installed")
+    (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
+    (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
+
+(deftest full-immersion-recstudio
+  ;; Full Immmersion RecStudio - install directly, and via Interns
+  (do-game
+    (new-game
+      (default-corp [(qty "Full Immersion RecStudio" 1)
+                     (qty "Interns" 2)
+                     (qty "Launch Campaign" 3)])
+      (default-runner))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [fir (get-content state :remote1 0)]
+      (core/rez state :corp fir)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
+      (let [lc (first (:hosted (refresh fir)))]
+        (is lc "Launch Campaign hosted on Full Immersion RecStudio")
+        (core/rez state :corp lc)
+        (is (and (:installed (refresh lc)) (:rezzed (refresh lc))) "Rezzed Launch Campaign")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 5 (:credit (get-corp))) "Gained 2cr from Launch Campaign")
+        (is (= 4 (get-counters (refresh lc) :credit)) "4cr left on Launch Campaign")
+        (play-from-hand state :corp "Interns")
+        (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
+        (prompt-choice :corp (refresh fir))
+        (is (= 2 (count (:hosted (refresh fir)))) "Interns installed onto FIR")))))
+
+(deftest full-immersion-recstudio-sandburg
+  ;; Full Immmersion RecStudio - hosting an asset with events does not double-register events. Issue #1827.
+  (do-game
+    (new-game
+      (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Sandburg" 1) (qty "Vanilla" 1)
+                     (qty "Oaktown Renovation" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (let [fir (get-content state :remote1 0)
+          van (get-ice state :hq 0)]
+      (core/rez state :corp fir)
+      (core/rez state :corp van)
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Sandburg" (:hand (get-corp))))
+      (core/gain state :corp :credit 7 :click 3)
+      (core/rez state :corp (first (:hosted (refresh fir))))
+      (is (= 2 (:current-strength (refresh van))) "Vanilla at 2 strength")
+      (card-ability state :corp fir 0)
+      (prompt-select :corp (find-card "Oaktown Renovation" (:hand (get-corp))))
+      (core/advance state :corp {:card (last (:hosted (refresh fir)))})
+      (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
 
 (deftest gene-splicer-access-unadvanced-no-trash
   ;; Runner accesses an unadvanced Gene Splicer and doesn't trash
@@ -880,6 +946,25 @@
       (prompt-choice :corp "Yes") ; choose to do the optional ability
       (is (= 2 (:tag (get-runner))) "Runner given 2 tags"))))
 
+(deftest haas-arcology-ai
+  ;; Haas Arcology AI - Click and advancement to gain 2 clicks, once per turn
+  (do-game
+    (new-game (default-corp [(qty "Haas Arcology AI" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Haas Arcology AI" "New remote")
+    (let [haa (get-content state :remote1 0)]
+      (advance state haa 2)
+      (core/rez state :corp (refresh haa))
+      (is (= 1 (:click (get-corp))))
+      (is (= 2 (:advance-counter (refresh haa))))
+      (card-ability state :corp (refresh haa) 0)
+      (is (= 1 (:advance-counter (refresh haa))) "Spent 1 advancement")
+      (is (= 2 (:click (get-corp))) "Spent last click to gain 2 clicks")
+      (card-ability state :corp (refresh haa) 0)
+      (is (= 1 (:advance-counter (refresh haa))) "Can't use twice in a turn")
+      (is (= 2 (:click (get-corp))) "Didn't spend a click"))))
+
 (deftest honeyfarm
   ;; lose one credit on access
   (do-game
@@ -1089,6 +1174,36 @@
       (is (last-log-contains? state "Sure Gamble")
           "Kala Ghoda did log trashed card names"))))
 
+(deftest lakshmi-smartfabrics
+  ;; Lakshmi Smartfabrics - Gain power counter when rezzing a card; use counters to protect agenda in HQ
+  (do-game
+    (new-game (default-corp [(qty "Lakshmi Smartfabrics" 1) (qty "Vanilla" 1)
+                             (qty "Marked Accounts" 1) (qty "Elective Upgrade" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Lakshmi Smartfabrics" "New remote")
+    (let [lak (get-content state :remote1 0)]
+      (core/rez state :corp lak)
+      (is (= 1 (get-counters (refresh lak) :power)) "Smartfabrics gained 1 power counter for itself")
+      (play-from-hand state :corp "Vanilla" "R&D")
+      (play-from-hand state :corp "Marked Accounts" "New remote")
+      (core/rez state :corp (get-ice state :rd 0))
+      (is (= 2 (get-counters (refresh lak) :power)) "Smartfabrics gained 1 power counter")
+      (core/rez state :corp (get-content state :remote2 0))
+      (is (= 3 (get-counters (refresh lak) :power)) "Smartfabrics gained 1 power counter")
+      (take-credits state :corp)
+      (card-ability state :corp (refresh lak) 0)
+      (prompt-select :corp (find-card "Elective Upgrade" (:hand (get-corp))))
+      (is (last-log-contains? state "Elective Upgrade") "Revealed agenda")
+      (is (= 0 (get-counters (refresh lak) :power)) "Spent 3 power counters")
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (empty? (:scored (get-runner))) "Steal prevented by Smartfabrics")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (= 3 (:agenda-point (get-runner))) "Runner could steal on later turn"))))
+
 (deftest launch-campaign
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 1)])
@@ -1177,26 +1292,6 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
-(deftest news-team
-  ;; News Team - on access take 2 tags or take as agenda worth -1
-  (do-game
-    (new-game (default-corp [(qty "News Team" 3) (qty "Blacklist" 1)])
-              (default-runner))
-    (trash-from-hand state :corp "News Team")
-    (play-from-hand state :corp "Blacklist" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state :archives)
-    (prompt-choice :runner "Take 2 tags")
-    (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
-    (run-empty-server state :archives)
-    (prompt-choice :runner "Add News Team to score area")
-    (is (= 1 (count (:scored (get-runner)))) "News Team added to Runner score area")
-    (trash-from-hand state :corp "News Team")
-    (core/rez state :corp (get-content state :remote1 0))
-    (run-empty-server state :archives)
-    (prompt-choice :runner "Add News Team to score area")
-    (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
-
 (deftest net-analytics
   ;; Draw a card when runner avoids or removes 1 or more tags
   (do-game
@@ -1253,6 +1348,26 @@
       (take-credits state :runner)
       (is (= 4 (:rec-counter (refresh netpol))) "4 recurring for Runner's 4 link"))))
 
+(deftest news-team
+  ;; News Team - on access take 2 tags or take as agenda worth -1
+  (do-game
+    (new-game (default-corp [(qty "News Team" 3) (qty "Blacklist" 1)])
+              (default-runner))
+    (trash-from-hand state :corp "News Team")
+    (play-from-hand state :corp "Blacklist" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Take 2 tags")
+    (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Add News Team to score area")
+    (is (= 1 (count (:scored (get-runner)))) "News Team added to Runner score area")
+    (trash-from-hand state :corp "News Team")
+    (core/rez state :corp (get-content state :remote1 0))
+    (run-empty-server state :archives)
+    (prompt-choice :runner "Add News Team to score area")
+    (is (= 2 (count (:scored (get-runner)))) "News Team added to Runner score area with Blacklist rez")))
+
 (deftest ngo-front
   ;; NGO Front - full test
   (do-game
@@ -1286,6 +1401,45 @@
       (is (= 15 (:credit (get-corp))) "Corp gained 8 credits")
       (is (= 2 (count (:discard (get-corp)))) "2 NGO Front Trashed")
       )))
+
+(deftest pad-factory
+  ;; PAD Factory - Click to place an advancement, cannot score target until next turn
+  (do-game
+    (new-game (default-corp [(qty "PAD Factory" 1) (qty "15 Minutes" 1)])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "PAD Factory" "New remote")
+    (play-from-hand state :corp "15 Minutes" "New remote")
+    (let [pf (get-content state :remote1 0)
+          fif (get-content state :remote2 0)]
+      (core/rez state :corp pf)
+      (card-ability state :corp (refresh pf) 0)
+      (prompt-select :corp fif)
+      (card-ability state :corp (refresh pf) 0)
+      (prompt-select :corp (refresh fif))
+      (is (= 0 (:click (get-corp))) "Spent 2 clicks using PAD Factory twice")
+      (is (= 2 (:advance-counter (refresh fif))) "Agenda has 2 advancements")
+      (core/score state :corp {:card (refresh fif)})
+      (is (empty? (:scored (get-corp))) "Prevented from scoring this turn")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/score state :corp {:card (refresh fif)})
+      (is (= 1 (count (:scored (get-corp)))) "Scored agenda"))))
+
+(deftest palana-agroplex
+  ;; Pālanā Agroplex - Both players draw 1 at start of Corp turn
+  (do-game
+    (new-game (default-corp [(qty "Pālanā Agroplex" 1) (qty "Hedge Fund" 3)])
+              (default-runner))
+    (starting-hand state :corp ["Pālanā Agroplex"])
+    (starting-hand state :runner ["Sure Gamble"])
+    (play-from-hand state :corp "Pālanā Agroplex" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (core/end-phase-12 state :corp nil)
+    (is (= 2 (count (:hand (get-corp)))) "Corp drew 1 from Agroplex")
+    (is (= 2 (count (:hand (get-runner)))) "Runner drew 1 from Agroplex")))
 
 (deftest personalized-portal
   ;; Personalized Portal - on corp turn start, force the runner to draw 1 card
@@ -1979,6 +2133,28 @@
     (play-from-hand state :runner "Fall Guy")
     (is (= 8 (:credit (get-corp))) "Corp did not gain a credit")
     (is (= 2 (:credit (get-runner))) "Runner did not spend an extra credit")))
+
+(deftest tenma-line
+  ;; Tenma Line - Swap 2 pieces of installed ICE
+  (do-game
+    (new-game (default-corp [(qty "Tenma Line" 1) (qty "Harvester" 1)
+                             (qty "Aimor" 1) (qty "Lockdown" 1)])
+              (default-runner))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Tenma Line" "New remote")
+    (play-from-hand state :corp "Harvester" "HQ")
+    (play-from-hand state :corp "Aimor" "HQ")
+    (play-from-hand state :corp "Lockdown" "R&D")
+    (core/rez state :corp (get-content state :rd 0))
+    (core/rez state :corp (get-content state :remote1 0))
+    (is (= 1 (:click (get-corp))))
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (prompt-select :corp (get-ice state :rd 0))
+    (prompt-select :corp (get-ice state :hq 1))
+    (is (empty? (:prompt (get-corp))))
+    (is (= 0 (:click (get-corp))) "Spent 1 click")
+    (is (= "Aimor" (:title (get-ice state :rd 0))) "Aimor swapped to R&D")
+    (is (= "Lockdown" (:title (get-ice state :hq 1))) "Lockdown swapped to HQ outer position")))
 
 (deftest the-board
   ;; The Board - Modify everything in the score area (regression test for #1938)
