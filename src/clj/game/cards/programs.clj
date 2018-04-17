@@ -520,14 +520,16 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (update-breaker-strength target)
+                                 (host card (get-card state target))
                                  (update! (assoc (get-card state card)
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
                           :effect (effect (update! (assoc card
                                                           :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
                                           (lose :memory (:memoryunits target)))}}}
+
    "LLDS Energy Regulator"
    {:prevent {:trash [:hardware]}
     :abilities [{:cost [:credit 3]

@@ -413,6 +413,26 @@
       (core/purge state :corp)
       (is (empty? (get-in @state [:runner :rig :program])) "Lamprey trashed by purge"))))
 
+(deftest leprechaun-adept
+  ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Adept" 1)
+                               (qty "Leprechaun" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Leprechaun")
+    (play-from-hand state :runner "Adept")
+    (is (= 1 (:memory (get-runner))) "3 MU used")
+    (let [lep (get-program state 0)
+          adpt (get-program state 1)]
+      (is (= 3 (:current-strength (refresh adpt))) "Adept at 3 strength individually")
+      (card-ability state :runner lep 1)
+      (prompt-select :runner (refresh adpt))
+      (let [hosted-adpt (first (:hosted (refresh lep)))]
+        (is (= 3 (:memory (get-runner))) "1 MU used")
+        (is (= 5 (:current-strength (refresh hosted-adpt))) "Adept at 5 strength hosted")))))
+
 (deftest leprechaun-mu-savings
   ;; Leprechaun - Keep MU the same when hosting or trashing hosted programs
   (do-game
