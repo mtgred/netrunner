@@ -34,14 +34,14 @@
                  [clj-http "3.7.0"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
-            [lein-figwheel "0.5.11"]
+            [lein-figwheel "0.5.15"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
             [lein-exec "0.3.7"]]
 
-  :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
+  :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.15"]
                                   [com.cemerick/piggieback "0.2.1"]]
-                   :plugins [[lein-figwheel "0.5.11"]]
+                   :plugins [[lein-figwheel "0.5.15"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
