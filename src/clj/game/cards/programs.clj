@@ -236,19 +236,21 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
-                 :effect (effect (host card target)
-                                 (when (-> target :cost pos?)
-                                   (gain state side :credit 1))
-                                 (gain :memory (:memoryunits target))
-                                 (update! (assoc (get-card state card) :dheg-prog (:cid target))))}
+                 :effect (req (gain state side :memory (:memoryunits target))
+                              (when (-> target :cost pos?)
+                                (gain state side :credit 1))
+                              (update-breaker-strength state side target)
+                              (host state side card (get-card state target))
+                              (update! state side (assoc (get-card state card) :dheg-prog (:cid target))))}
                 {:label "Host an installed program on Dhegdheer"
                  :req (req (empty? (:hosted card)))
                  :prompt "Choose an installed program to host on Dhegdheer"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) (when (-> target :cost pos?)))
-                 :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
+                 :effect (effect (gain :memory (:memoryunits target))
+                                 (update-breaker-strength target)
+                                 (host card (get-card state target))
                                  (update! (assoc (get-card state card) :dheg-prog (:cid target))))}]
     :events {:card-moved {:req (req (= (:cid target) (:dheg-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :dheg-prog))
