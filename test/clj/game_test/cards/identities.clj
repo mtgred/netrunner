@@ -8,59 +8,72 @@
 (use-fixtures :once load-all-cards)
 
 (deftest FourHundredAndNineTeen-amoral-scammer
-  ;; 419: Amoral Scammer - expose first installed card unless corp pays 1 credit
-  (do-game
-    (new-game
-      (make-deck "Weyland Consortium: Builder of Nations"
-                 [(qty "PAD Campaign" 1) (qty "The Cleaners" 1) (qty "Pup" 3)])
-      (make-deck "419: Amoral Scammer" []))
-    (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
-    (play-from-hand state :corp "Pup" "HQ")
-    (prompt-choice :runner "Yes")
-    (prompt-choice :corp "Yes")
-    (is (= 4 (:credit (get-corp))) "Pays 1 credit to not expose card")
-    (play-from-hand state :corp "Pup" "HQ")
-    (is (empty? (:prompt (get-runner))) "No option on second install")
-    (take-credits state :corp)
-    (take-credits state :runner)
-
-    (play-from-hand state :corp "Pup" "Archives")
-    (prompt-choice :runner "No")
-    (is (empty? (:prompt (get-corp))) "No prompt if Runner chooses No")
-    (take-credits state :corp)
-    (take-credits state :runner)
-
-    (play-from-hand state :corp "The Cleaners" "New remote")
-    (prompt-choice :runner "Yes")
-    (prompt-choice :corp "No")
-    (is (last-log-contains? state "exposes The Cleaners") "Installed card was exposed")
-    (take-credits state :corp)
-    (take-credits state :runner)
-
-    (core/lose state :corp :credit (:credit (get-corp)))
-    (is (= 0 (:credit (get-corp))) "Corp has no credits")
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (prompt-choice :runner "Yes")
-    (is (empty? (:prompt (get-corp))) "No prompt if Corp has no credits")
-    (is (last-log-contains? state "exposes PAD Campaign") "Installed card was exposed")))
-
-(deftest FourHundredAndNineTeen-amoral-scammer-block-expose
-  ;; 419: Amoral Scammer - verify expose can be blocked
-  (do-game
-    (new-game
-      (make-deck "Weyland Consortium: Builder of Nations" [(qty "Underway Grid" 1) (qty "Pup" 1)])
-      (make-deck "419: Amoral Scammer" []))
-    (play-from-hand state :corp "Underway Grid" "New remote")
-    (prompt-choice :runner "No")
-    (take-credits state :corp)
-    (take-credits state :runner)
-
-    (play-from-hand state :corp "Pup" "Server 1")
-    (prompt-choice :runner "Yes")
-    (let [ug (get-in @state [:corp :servers :remote1 :content 0])]
-      (core/rez state :corp ug)
+  ;; 419
+  (testing "basic test: Amoral Scammer - expose first installed card unless corp pays 1 credit"
+    (do-game
+      (new-game
+        (make-deck "Weyland Consortium: Builder of Nations"
+                   [(qty "PAD Campaign" 1) (qty "The Cleaners" 1) (qty "Pup" 3) (qty "Oaktown Renovation" 1)])
+        (make-deck "419: Amoral Scammer" []))
+      (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
+      (play-from-hand state :corp "Pup" "HQ")
+      (prompt-choice :runner "Yes")
+      (prompt-choice :corp "Yes")
+      (is (= 4 (:credit (get-corp))) "Pays 1 credit to not expose card")
+      (play-from-hand state :corp "Pup" "HQ")
+      (is (empty? (:prompt (get-runner))) "No option on second install")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Pup" "Archives")
+      (prompt-choice :runner "No")
+      (is (empty? (:prompt (get-corp))) "No prompt if Runner chooses No")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "The Cleaners" "New remote")
+      (prompt-choice :runner "Yes")
       (prompt-choice :corp "No")
-      (is (last-log-contains? state "uses Underway Grid to prevent 1 card from being exposed") "Exposure was prevented"))))
+      (is (last-log-contains? state "exposes The Cleaners") "Installed card was exposed")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Oaktown Renovation" "New remote")
+      (is (empty? (:prompt (get-corp))) "Cannot expose faceup agendas")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/lose state :corp :credit (:credit (get-corp)))
+      (is (= 0 (:credit (get-corp))) "Corp has no credits")
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (prompt-choice :runner "Yes")
+      (is (empty? (:prompt (get-corp))) "No prompt if Corp has no credits")
+      (is (last-log-contains? state "exposes PAD Campaign") "Installed card was exposed")))
+  (testing "Verify expose can be blocked"
+    (do-game
+      (new-game
+        (make-deck "Weyland Consortium: Builder of Nations" [(qty "Underway Grid" 1) (qty "Pup" 1)])
+        (make-deck "419: Amoral Scammer" []))
+      (play-from-hand state :corp "Underway Grid" "New remote")
+      (prompt-choice :runner "No")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Pup" "Server 1")
+      (prompt-choice :runner "Yes")
+      (let [ug (get-in @state [:corp :servers :remote1 :content 0])]
+        (core/rez state :corp ug)
+        (prompt-choice :corp "No")
+        (is (last-log-contains? state "uses Underway Grid to prevent 1 card from being exposed") "Exposure was prevented"))))
+  (testing "Ixodidae shouldn't trigger off 419's ability"
+    (do-game
+      (new-game (default-corp [(qty "PAD Campaign" 1)])
+                (make-deck "419: Amoral Scammer" [(qty "Ixodidae" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ixodidae")
+      (take-credits state :runner)
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (let [corp-credits (:credit (get-corp))
+            runner-credits (:credit (get-runner))]
+        (prompt-choice :runner "Yes")
+        (prompt-choice :corp "Yes")
+        (is (= 1 (- corp-credits (:credit (get-corp)))) "Should lose 1 credit from 419 ability")
+        (is (= 0 (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae")))))
 
 (deftest adam-directives
   ;; Adam - Allow runner to choose directives
@@ -230,6 +243,23 @@
         (play-from-hand state :corp "Neural EMP")
         (is (empty? (:prompt (get-corp))) "No choice after declining on first damage")
         (is (= 3 (count (:discard (get-runner)))))))))
+
+(deftest chronos-protocol-obokata-protocol
+  ;; Pay 4 net damage to steal.  Only 3 damage left after Chronos.  No trigger of damage prevent.
+  (do-game
+    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Obokata Protocol" 5)])
+              (default-runner [(qty "Sure Gamble" 3) (qty "Inti" 1) (qty "Feedback Filter" 1)]))
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :corp "Obokata Protocol" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "Yes")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp (find-card "Inti" (:hand (get-runner))))
+    (is (empty? (:prompt (get-runner)))
+        "Feedback Filter net damage prevention opportunity not given")
+    (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")))
 
 (deftest chronos-protocol-employee-strike
   ;; Chronos Protocol - Issue #1958 also affects Chronos Protocol
@@ -541,6 +571,37 @@
         (prompt-select :corp (get-in (get-corp) [:scored 0]))
         (prompt-select :corp iwall)
         (is (= 4 (:advance-counter (refresh iwall))) "Jemison placed 4 advancements")))))
+
+(deftest jemison-24-intimidation
+  ;; Test Jemison - 24/7 - Armed Intimidation combination
+  ;; Expected result: 24/7 causes Forfeit, Jemison places counters, AI triggers
+  (do-game
+    (new-game
+      (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success."
+                 [(qty "Armed Intimidation" 1) (qty "Hostile Takeover" 1)
+                  (qty "24/7 News Cycle" 1) (qty "Ice Wall" 1)])
+      (default-runner))
+    (play-and-score state "Hostile Takeover")
+    (is (= 1 (:agenda-point (get-corp))) "Corp has 1 agenda points from Hostile Takeover")
+    (is (= 12 (:credit (get-corp))) "Corp has 12 credits after scoring Hostile Takeover with play-score")
+    (play-and-score state "Armed Intimidation")
+    (prompt-choice :runner "Take 2 tags")
+    (is (= 3 (:agenda-point (get-corp))) "Corp has 3 agenda points from HT + Armed Intimidation")
+    (is (= 2 (:tag (get-runner))) "Runner took 2 tags from AI")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (take-credits state :runner)
+
+    (play-from-hand state :corp "24/7 News Cycle")
+    (prompt-select :corp (get-scored state :corp 0))        ; select HT to forfeit
+
+    (let [ice-wall (get-ice state :hq 0)]
+      (prompt-select :corp ice-wall)                        ; The Jemison forfeit triggers
+      (is (= 2 (:advance-counter (refresh ice-wall))) "Ice Wall has 2 advancement counters from HT forfeit"))
+
+    (prompt-select :corp (get-scored state :corp 0))        ; select AI to trigger
+    (prompt-choice :runner "Take 2 tags")                   ; First runner has prompt
+    (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the delayed-completion")))
 
 (deftest jesminder-sareen-ability
   ;; Jesminder Sareen - avoid tags only during a run
@@ -859,6 +920,18 @@
     (is (last-log-contains? state "Wyldside, Wyldside")
         "Maxx did log trashed card names")))
 
+(deftest maxx-dummy-box
+  ; Check that mills don't trigger trash prevention #3246
+  (do-game
+    (new-game (default-corp)
+              (make-deck "MaxX: Maximum Punk Rock" [(qty "Dummy Box" 30)]))
+    (take-credits state :corp)
+    (is (= 2 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
+    (play-from-hand state :runner "Dummy Box")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (empty? (:prompt (get-runner))) "Dummy Box not fired from mill")))
+
 (deftest maxx-wyldside-start-of-turn
   ;; MaxX and Wyldside - using Wyldside during Step 1.2 should lose 1 click
   (do-game
@@ -983,6 +1056,23 @@
     (prompt-select :corp (find-card "Paywall Implementation" (:hand (get-corp))))
     (is (not (:run @state)) "Run ended")
     (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall back in play")))
+
+(deftest next-design
+  ;; Next Design.  Install up to 3 ICE before game starts, one per server max, and re-draw to 5
+  (do-game
+    (new-game
+      (make-deck "NEXT Design: Guarding the Net" [(qty "Snowflake" 10)])
+      (default-runner)
+      {:dont-start-turn true})
+    (prompt-select :corp (find-card "Snowflake" (:hand (get-corp))))
+    (prompt-choice :corp "HQ")
+    (prompt-select :corp (find-card "Snowflake" (:hand (get-corp))))
+    (prompt-choice :corp "R&D")
+    (prompt-select :corp (find-card "Snowflake" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand")
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (is (= 5 (count (:hand (get-corp)))) "Corp should start with 5 cards in hand")))
 
 (deftest nisei-division
   ;; Nisei Division - Gain 1 credit from every psi game

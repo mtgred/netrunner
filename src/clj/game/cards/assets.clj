@@ -7,8 +7,8 @@
   "Effect for triggering ambush on access.
   Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
   ([cost ability]
-   (let [ab (if (> cost 0) (assoc ability :cost [:credit cost]) ability)
-         prompt (if (> cost 0)
+   (let [ab (if (pos? cost) (assoc ability :cost [:credit cost]) ability)
+         prompt (if (pos? cost)
                   (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
                   (req (str "Use " (:title card) " ability?")))]
      (installed-access-trigger cost ab prompt)))
@@ -201,7 +201,8 @@
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
    "Breached Dome"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (req (let [c (first (get-in @state [:runner :deck]))]
                             (system-msg state :corp (str "uses Breached Dome to do one meat damage and to trash " (:title c)
                                                          " from the top of the Runner's Stack"))
@@ -631,7 +632,8 @@
                  :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
 
    "Honeyfarm"
-   {:access {:msg "force the Runner to lose 1 [Credits]"
+   {:flags {:rd-reveal (req true)}
+    :access {:msg "force the Runner to lose 1 [Credits]"
              :effect (effect (lose :runner :credit 1))}}
 
    "Hostile Infrastructure"
@@ -639,8 +641,12 @@
                             :req (req (some #(card-is? % :side :corp) targets))
                             :msg (msg (str "do " (count (filter #(card-is? % :side :corp) targets))
                                            " net damage"))
-                            :effect (effect (damage eid :net (count (filter #(card-is? % :side :corp) targets))
-                                                    {:card card}))}}
+                            :effect (req (letfn [(do-damage [t]
+                                                   (if-not (empty? t)
+                                                     (when-completed (damage state side :net 1 {:card card})
+                                                                     (do-damage (rest t)))
+                                                     (effect-completed state side eid card)))]
+                                           (do-damage (filter #(card-is? % :side :corp) targets))))}}
     :abilities [{:msg "do 1 net damage"
                  :delayed-completion true
                  :effect (effect (damage eid :net 1 {:card card}))}]}
@@ -836,6 +842,22 @@
     :events {:corp-turn-begins {:effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}}}
 
+   "Malia Z0L0K4"
+   (let [re-enable-target (req (when-let [malia-target (:malia-target card)]
+                                 (system-msg state side (str "uses "  (:title card) " to unblank "
+                                                             (card-str state malia-target)))
+                                 (enable-card state :runner (get-card state malia-target))
+                                 (when-let [reactivate-effect (:reactivate (card-def malia-target))]
+                                   (resolve-ability state :runner reactivate-effect (get-card state malia-target) nil))))]
+     {:effect (effect (update! (assoc card :malia-target target))
+                      (disable-card :runner target))
+      :msg (msg (str "blank the text box of " (card-str state target)))
+
+      :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
+                           (not (has-subtype? % "Virtual")))}
+      :leave-play re-enable-target
+      :move-zone re-enable-target})
+
    "Marilyn Campaign"
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]
@@ -1020,7 +1042,8 @@
     :effect (effect (set-prop card :rec-counter (:link runner)))}
 
    "News Team"
-   {:access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
+   {:flags {:rd-reveal (req true)}
+    :access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
              :delayed-completion true
              :effect (effect (continue-ability
                                {:player :runner
@@ -1048,7 +1071,8 @@
                   (builder 2 8)]})
 
    "Open Forum"
-   {:events {:corp-mandatory-draw {:msg (msg (let [deck (:deck corp)]
+   {:events {:corp-mandatory-draw {:interactive (req true)
+                                   :msg (msg (let [deck (:deck corp)]
                                                (if (pos? (count deck))
                                                (str "reveal and draw " (:title (first deck)) " from R&D")
                                                "reveal & draw from R&D but it is empty")))
@@ -1164,7 +1188,8 @@
                  :counter-cost [:credit 2]
                  :msg "gain 2 [Credits]"
                  :effect (req (gain state :corp :credit 2)
-                              (when (= (get-in card [:counter :credit]) 0) (trash state :corp card)))}]}
+                              (when (= (get-in card [:counter :credit]) 0)
+                                (trash state :corp card)))}]}
 
    "Project Junebug"
    (advance-ambush 1 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
@@ -1230,10 +1255,26 @@
                                                                         newarch (apply conj (subvec arch 0 archndx) swappedcard (subvec arch archndx))]
                                                                      (swap! state assoc-in [:corp :discard] newarch)
                                                                      (swap! state update-in [:corp :hand]
-                                                                            (fn [coll] (remove-once #(not= (:cid %) (:cid hqcard)) coll)))
+                                                                            (fn [coll] (remove-once #(= (:cid %) (:cid hqcard)) coll)))
                                                                      (move state side target :hand)))}
                                                    card nil)))}
                                  card nil)))}]}
+
+   "Rashida Jaheem"
+   {:events {:corp-turn-begins {:delayed-completion true
+                                :effect (effect (show-wait-prompt :runner "Corp to use Rashida Jaheem")
+                                                (continue-ability
+                                                  {:optional
+                                                   {:prompt "Trash Rashida Jaheem to gain 3[Credits] and draw 3 cards?"
+                                                    :yes-ability {:msg "gain 3[Credits] and draw 3 cards"
+                                                                  :effect (effect (gain :credit 3)
+                                                                                  (draw 3)
+                                                                                  (trash card)
+                                                                                  (clear-wait-prompt :runner)
+                                                                                  (effect-completed eid))}
+                                                    :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                                                 (effect-completed eid))}}}
+                                                  card nil))}}}
 
    "Reality Threedee"
    (let [ability {:effect (req (gain state side :credit (if tagged 2 1)))
@@ -1433,12 +1474,14 @@
                       card targets))}}
 
    "Shock!"
-   {:access {:msg "do 1 net damage"
+   {:flags {:rd-reveal (req true)}
+    :access {:msg "do 1 net damage"
              :delayed-completion true
              :effect (effect (damage eid :net 1 {:card card}))}}
 
    "Snare!"
-   {:access {:req (req (not= (first (:zone card)) :discard))
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
              :delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Snare!")
                              (continue-ability
@@ -1453,7 +1496,8 @@
                                card nil))}}
 
    "Space Camp"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Space Camp")
                              (continue-ability
                                {:optional
@@ -1584,7 +1628,7 @@
                                        (resolve-ability state side
                                          {:effect (req (swap! state assoc-in (cons :corp (:zone card)) newcont)
                                                        (swap! state update-in [:corp :hand]
-                                                         (fn [coll] (remove-once #(not= (:cid %) (:cid newcard)) coll)))
+                                                         (fn [coll] (remove-once #(= (:cid %) (:cid newcard)) coll)))
                                                        (trigger-event state side :corp-install newcard)
                                                        (move state side card :hand))} card nil)
                                        (resolve-prompt state :runner {:choice "No"})

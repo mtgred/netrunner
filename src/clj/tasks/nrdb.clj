@@ -14,7 +14,8 @@
 (declare faction-map)
 
 (def ^:const base-url "http://www.netrunnerdb.com/api/2.0/public/")
-(def ^:const base-image-url "http://www.netrunnerdb.com/card_image/")
+(def ^:const cgdb-image-url "https://www.cardgamedb.com/forums/uploads/an/")
+(def ^:const nrdb-image-url "https://netrunnerdb.com/card_image/")
 
 (defmacro rename
   "Rename a card field"
@@ -38,6 +39,7 @@
    :size (fn [[k v]] [:bigbox (> (or v -1) 20)])
    :code identity
    :position identity
+   :ffg_id identity
    })
 
 (def mwl-fields
@@ -118,15 +120,36 @@
     :data
     (map (partial translate-fields fields))))
 
-(defn- read-nrdb-data
+(defn download-nrdb-data
   "Translate data from NRDB"
   [path fields]
   (println "Downloading" path)
   (let [{:keys [status body error] :as resp} @(http/get (str base-url path))]
     (cond
-      error (throw (Exception. (str "Failed to download file" error)))
+      error (throw (Exception. (str "Failed to download file " error)))
       (= 200 status) (parse-response body fields)
-      :else (throw (Exception. (str "Failed to download file, status" status))))))
+      :else (throw (Exception. (str "Failed to download file, status " status))))))
+
+(defn read-local-data
+  "Translate data read from local files"
+  [base-path filename fields]
+  (let [filepath (str base-path "/" filename ".json")
+        _ (println "Reading" filepath)
+        content (slurp filepath)
+        wrapped (str "{\"data\": " content "}")]
+    (parse-response wrapped fields)))
+
+(defn read-card-dir
+  [base-path _ fields]
+  (let [dirpath (str base-path "/pack")
+        _ (println "Reading card directory" dirpath)
+        files (mapv str (filter #(.isFile %) (file-seq (clojure.java.io/file dirpath))))
+        json-files (filter #(string/ends-with? % ".json") files)
+        contents (map slurp json-files)
+        parsed (map #(json/parse-string % true) contents)
+        combined (flatten parsed)
+        wrapped (json/generate-string {:data combined})]
+    (parse-response wrapped fields)))
 
 (defn replace-collection
   "Remove existing collection and insert new data"
@@ -151,8 +174,9 @@
 (defn deaccent
   "Remove diacritical marks from a string, from http://www.matt-reid.co.uk/blog_post.php?id=69"
   [s]
-  (let [normalized (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)]
-    (string/replace normalized #"\p{InCombiningDiacriticalMarks}+" "")))
+  (if (nil? s) ""
+    (let [normalized (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)]
+      (string/replace normalized #"\p{InCombiningDiacriticalMarks}+" ""))))
 
 (defn- prune-null-fields
   "Remove specified fields if the value is nil"
@@ -163,12 +187,19 @@
               acc))
           c fields))
 
+(defn- make-image-url
+  "Create a URI to the card in CardGameDB"
+  [card set]
+  (if (:ffg_id set)
+    (str cgdb-image-url "med_ADN" (:ffg_id set) "_" (:number card) ".png")
+    (str nrdb-image-url (:code card) ".png")))
+
 (defn- get-uri
   "Figure out the card art image uri"
-  [card]
+  [card set]
   (if (contains? card :image_url)
     (:image_url card)
-    (str base-image-url (:code card) ".png")))
+    (make-image-url card set)))
 
 (defn- add-card-fields
   "Add additional fields to the card documents"
@@ -179,15 +210,15 @@
       (assoc :setname (:name s)
              :cycle_code (:cycle_code s)
              :rotated (:rotated s)
-             :image_url (get-uri c)
+             :image_url (get-uri c s)
              :normalizedtitle (string/lower-case (deaccent (:title c)))))))
 
 (defn fetch-data
   "Read NRDB json data. Modify function is mapped to all elements in the data collection."
-  ([m] (fetch-data m identity))
-  ([m modify-function] (fetch-data m modify-function replace-collection))
-  ([{:keys [path fields collection]} modify-function collection-function]
-  (let [data-list (->> (read-nrdb-data path fields)
+  ([download-fn m] (fetch-data download-fn m identity))
+  ([download-fn m modify-function] (fetch-data download-fn m modify-function replace-collection))
+  ([download-fn {:keys [path fields collection]} modify-function collection-function]
+  (let [data-list (->> (download-fn path fields)
                     (map modify-function))]
     (collection-function collection data-list)
     (make-map-by-code data-list))))
@@ -206,9 +237,15 @@
 
 (defn- download-card-image
   "Download a single card image from NRDB"
-  [acc card]
-  (println "Downloading: " (:title card))
-  (concat acc (list [card (http/get (:image_url card) {:as :byte-array :timeout 120000})])))
+  [card]
+  (println "Downloading: " (:title card) "\t\t(" (:image_url card) ")")
+  (http/get (:image_url card) {:as :byte-array :timeout 120000}
+            (fn [{:keys [status body error]}]
+              (case status
+                404 (println "No image for card" (:code card) (:title card))
+                200 (with-open [w (io/output-stream (.getPath (card-image-file card)))]
+                      (.write w body))
+                (println "Error downloading art for card" (:code card) error)))))
 
 (def download-card-image-throttled (throttle-fn download-card-image 5 :second))
 
@@ -224,21 +261,17 @@
            missing (count missing-cards)]
        (when (> missing 0)
          (println "Downloading art for" missing "cards...")
-         (let [futures (reduce download-card-image-throttled nil missing-cards)]
-           (doseq [[card resp] futures]
-             (let [status (:status @resp)]
-               (cond
-                 (= 404 status) (println "No image for card" (:code card) (:title card))
-                 (= 200 status) (with-open [w (io/output-stream (.getPath (card-image-file card)))]
-                                  (.write w (:body @resp))
-                                  (println "Downloaded art for card" (:code card) (:title card)))
-                 :else (println "Error downloading art for card" (:code card) (:error @resp)))))
-           (println "Finished downloading card art"))))))
+         (let [futures (doall (map download-card-image-throttled missing-cards))]
+           (doseq [resp futures]
+             ; wait for all the GETs to complete
+             (:status @resp)))
+         (println "Finished downloading card art")))))
   
 (defn fetch-cards
   "Find the NRDB card json files and import them."
-  [{:keys [collection path] :as card-table} sets download-images]
-  (let [cards (fetch-data card-table
+  [download-fn {:keys [collection path] :as card-table} sets download-images]
+  (let [cards (fetch-data download-fn
+                          card-table
                           (partial add-card-fields sets)
                           (fn [c d] true))
         cards-replaced (->> cards
@@ -265,45 +298,3 @@
              {$inc {:cards-version 1}
               $currentDate {:last-updated true}}
              {:upsert true}))
-
-(comment
-  (defn compare-collections
-    [c1 c2 k]
-    (if (not= (mc/count db c1) (mc/count db c2))
-      (do
-        (println "Different number of elements in collections")
-        false)
-      (let [c1-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c1))))
-            c2-data (sort-by k (map #(into (sorted-map) %) (map #(dissoc % :_id :image_url) (mc/find-maps db c2))))
-            zipped (filter (fn [[x y]] (not= x y)) (map vector c1-data c2-data))]
-        (if (not-empty zipped)
-          (do
-            (println "First mismatch:")
-            (pprint zipped)
-            false)
-          true))))
-
-  (defn test-import
-    []
-    (println "MWL")
-    (if (compare-collections "mwl" "clj_mwl" :name)
-      (println "\tOK")
-      (println "\tFailed"))
-    (println "Cycles")
-    (if (compare-collections "cycles" "clj_cycles" :name)
-      (println "\tOK")
-      (println "\tFailed"))
-    (println "Sets")
-    (if (compare-collections "sets" "clj_sets" :name)
-      (println "\tOK")
-      (println "\tFailed"))
-    (println "Cards")
-    (if (compare-collections "cards" "clj_cards" :code)
-      (println "\tOK")
-      (println "\tFailed"))
-    (println "AltArts")
-    (if (compare-collections "altarts" "clj_altarts" :name)
-      (println "\tOK")
-      (println "\tFailed"))
-    )
-  )

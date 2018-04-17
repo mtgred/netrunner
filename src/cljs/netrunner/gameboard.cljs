@@ -7,7 +7,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
-            [netrunner.deckbuilder :refer [influence-dot]]
+            [netrunner.utils :refer [toastr-options influence-dot]]
             [differ.core :as differ]
             [om.dom :as dom]
             [netrunner.ws :as ws]
@@ -38,30 +38,6 @@
                        (get art-options (keyword art) (:code card))
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
-
-(defn toastr-options
-  "Function that generates the correct toastr options for specified settings"
-  [options]
-  (js-obj "closeButton" (:close-button options false)
-          "debug" false
-          "newestOnTop" false
-          "progressBar" false
-          "positionClass" "toast-card"
-          ;; preventDuplicates - identical toasts don't stack when the property is set to true.
-          ;; Duplicates are matched to the previous toast based on their message content.
-          "preventDuplicates" (:prevent-duplicates options true)
-          "onclick" nil
-          "showDuration" 300
-          "hideDuration" 1000
-          ;; timeOut - how long the toast will display without user interaction
-          "timeOut" (:time-out options 3000)
-          ;; extendedTimeOut - how long the toast will display after a user hovers over it
-          "extendedTimeOut" (:time-out options 1000)
-          "showEasing" "swing"
-          "hideEasing" "linear"
-          "showMethod" "fadeIn"
-          "hideMethod" "fadeOut"
-          "tapToDismiss" (:tap-to-dismiss options true)))
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
@@ -283,10 +259,11 @@
     (> (.indexOf p value) -1)))
 
 (defn has-subtype?
-  "Checks if the specified subtype is present in the card.
-  Mostly sugar for the has? function."
+  "Checks if the specified subtype is present in the card."
   [card subtype]
-  (has? card :subtype subtype))
+  (or (has? card :subtype subtype)
+      (when-let [persistent-subs (-> card :persistent :subtype)]
+        (includes? persistent-subs subtype))))
 
 (defn playable? [{:keys [title side zone cost type uniqueness abilities] :as card}]
   (let [my-side (:side @game-state)
@@ -753,7 +730,7 @@
       (let [actions (action-list cursor)
             dynabi-count (count (filter :dynamic abilities))]
         (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
-                  (some #{"derez" "advance"} actions)
+                  (some #{"derez" "rez" "advance"} actions)
                   (= type "ICE"))
           [:div.panel.blue-shade.abilities {:ref "abilities"}
            (map (fn [action]

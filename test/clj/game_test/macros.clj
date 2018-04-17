@@ -6,6 +6,7 @@
   `(let [~'state ~s
          ~'get-corp (fn [] (:corp @~'state))
          ~'get-runner (fn [] (:runner @~'state))
+         ~'get-run (fn [] (:run @~'state))
          ~'get-hand-size (fn [~'side] (+ (:hand-size-base (~'side @~'state))
                                          (:hand-size-modification (~'side @~'state))))
          ~'refresh (fn [~'card] (core/get-card ~'state ~'card))

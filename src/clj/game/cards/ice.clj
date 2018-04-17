@@ -79,9 +79,9 @@
 
 (defn power-counter-ability
   "Does specified ability using a power counter."
-  [{:keys [label msg] :as ability}]
+  [{:keys [label message] :as ability}]
   (assoc ability :label (str "Hosted power counter: " label)
-                 :msg (str msg " using 1 power counter")
+                 :msg (str message " using 1 power counter")
                  :counter-cost [:power 1]))
 
 (defn do-psi
@@ -101,6 +101,14 @@
   (effect (gain-bad-publicity :corp 1)
           (system-msg (str "takes 1 bad publicity from " (:title card)))))
 
+(def runner-loses-click
+  "Runner loses a click effect"
+  (req (if (:runner-phase-12 @state)
+    ; this handles Jak Sinclair losing clicks before they are given
+    (do (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
+        (toast state :runner "Runner loses a click at start of turn" "warning")
+        (toast state :corp "Runner loses a click at start of turn" "warning"))
+    (lose state :runner :click 1))))
 
 ;;; For Advanceable ICE
 (def advance-counters
@@ -228,10 +236,12 @@
                                              :effect (effect (draw eid 1 nil))}}}
          runner-draw {:player :runner
                       :optional {:prompt "Pay 2[Credits] to draw 1 card?"
+                                 :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}
                                  :yes-ability {:delayed-completion true
-                                               :msg "pay 2[Credits] to draw 1 card"
-                                               :effect (effect (lose :credit 2)
-                                                               (draw eid 1 nil))}}}]
+                                               :effect (effect
+                                                         (system-msg :runner "pays 2[Credits] to draw 1 card")
+                                                         (lose :credit 2)
+                                                         (draw eid 1 nil))}}}]
      {:implementation "Encounter-ends effect is manually triggered."
       :subroutines [{:msg "rearrange the top 5 cards of R&D"
                      :delayed-completion true
@@ -251,7 +261,8 @@
       :abilities [(do-net-damage 3)]})
 
    "Archangel"
-   {:access
+   {:flags {:rd-reveal (req true)}
+    :access
     {:delayed-completion true
      :req (req (not= (first (:zone card)) :discard))
      :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
@@ -406,7 +417,7 @@
                                    newices (apply conj (subvec ices 0 bndx) newice (subvec ices bndx))]
                                (swap! state assoc-in (cons :corp (:zone card)) newices)
                                (swap! state update-in (cons :corp (:zone target))
-                                      (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                      (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
                                (card-init state side newice {:resolve-effect false
                                                              :init-data true})
                                (trigger-event state side :corp-install newice)))}]})
@@ -517,7 +528,8 @@
                   end-the-run]}
 
    "Chrysalis"
-   {:subroutines [(do-net-damage 2)]
+   {:flags {:rd-reveal (req true)}
+    :subroutines [(do-net-damage 2)]
     :access {:delayed-completion true
              :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Chrysalis subroutine")
@@ -588,7 +600,7 @@
                                        :msg "force the Runner to trash 1 program"
                                        :label "The Runner trashes 1 program")
                   {:msg "force the Runner to lose 1 [Click] if able"
-                   :effect (effect (lose :runner :click 1))}
+                   :effect runner-loses-click}
                   end-the-run]
     :strength-bonus (req (if (some #(has-subtype? % "AI") (all-active-installed state :runner)) 3 0))}
 
@@ -625,10 +637,13 @@
               :delayed-completion true
               :msg (msg "trash " (:title target))
               :effect (req (do (trash state side target {:unpreventable true})
-                               (continue-ability state side (reorder-choice
-                                                              :runner :runner (remove-once #(not= % target) cards)
-                                                              '() (count (remove-once #(not= % target) cards))
-                                                              (remove-once #(not= % target) cards)) card nil)))})]
+                               (continue-ability
+                                 state side
+                                 (reorder-choice
+                                   :runner :runner (remove-once #(= % target) cards)
+                                   '() (count (remove-once #(= % target) cards))
+                                   (remove-once #(= % target) cards))
+                                 card nil)))})]
      {:subroutines [(trace-ability 2 {:delayed-completion true
                                       :label "Look at the top of Stack"
                                       :msg "look at top X cards of Stack"
@@ -723,12 +738,6 @@
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
-   "Endless EULA"
-   {:implementation "Subroutine effect is manual. Runner choice is not implemented"
-    :subroutines [end-the-run]
-    :runner-abilities [(runner-break [:credit 1] 1)
-                       (runner-break [:credit 6] 6)]}
-
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
     :subroutines [trash-program
@@ -745,7 +754,7 @@
 
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
-                   :effect (effect (lose :runner :click 1))}
+                   :effect runner-loses-click}
                   end-the-run]}
 
    "Errand Boy"
@@ -927,7 +936,8 @@
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Herald"
-   {:subroutines [(gain-credits 2)
+   {:flags {:rd-reveal (req true)}
+    :subroutines [(gain-credits 2)
                   {:label "Pay 1 [Credits] to place 1 advancement token on a card that can be advanced"
                    :msg (msg "place 1 advancement token on " (card-str state target))
                    :choices {:req can-be-advanced?}
@@ -991,7 +1001,7 @@
 
    "Hourglass"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
-                   :effect (effect (lose :runner :click 1))}]}
+                   :effect runner-loses-click}]}
 
    "Howler"
    (let [ice-index (fn [state i] (first (keep-indexed #(when (= (:cid %2) (:cid i)) %1)
@@ -1012,7 +1022,7 @@
                                                             newices (apply conj (subvec ices 0 hndx) newice (subvec ices hndx))]
                                                         (swap! state assoc-in (cons :corp (:zone card)) newices)
                                                         (swap! state update-in (cons :corp (:zone target))
-                                                               (fn [coll] (remove-once #(not= (:cid %) (:cid target)) coll)))
+                                                               (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
                                                         (update! state side (assoc card :howler-target newice))
                                                         (card-init state side newice {:resolve-effect false
                                                                                       :init-data true})
@@ -1234,7 +1244,7 @@
                    (continue-ability
                      state side
                      {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                      (remove-once #(not= (:cid %) (:cid magnet)) (all-active-installed state corp))))
+                                      (remove-once #(= (:cid %) (:cid magnet)) (all-active-installed state corp))))
                       :prompt "Select a Program to host on Magnet"
                       :choices {:req #(and (card-is? % :type "Program")
                                            (ice? (:host %))
@@ -1589,6 +1599,80 @@
    "Rototurret"
    {:subroutines [trash-program end-the-run]}
 
+   "Sadaka"
+   (let [maybe-draw-effect
+         {:delayed-completion true
+          :effect (req (show-wait-prompt state :runner "Corp to decide on Sadaka card draw action")
+                       (continue-ability
+                         state side
+                         {:optional
+                          {:player :corp
+                           :prompt "Draw 1 card?"
+                           :delayed-completion true
+                           :yes-ability
+                           {:delayed-completion true
+                            :effect (effect (clear-wait-prompt :runner)
+                                            (draw eid 1 nil))
+                            :msg "draw 1 card"}
+                           :no-ability {:effect (effect (clear-wait-prompt :runner)
+                                                        (effect-completed eid))}}}
+                         card nil))}]
+     {:subroutines [{:label "Look at the top 3 cards of R&D"
+                     :req (req (not-empty (:deck corp)))
+                     :delayed-completion true
+                     :effect (req (let [top-cards (take 3 (:deck corp))
+                                        top-names (map :title top-cards)]
+                                    (show-wait-prompt state :runner "Corp to decide on Sadaka R&D card actions")
+                                    (continue-ability
+                                      state side
+                                      {:prompt (str "Top 3 cards of R&D: " (clojure.string/join ", " top-names))
+                                       :choices ["Arrange cards" "Shuffle R&D"]
+                                       :delayed-completion true
+                                       :effect
+                                       (req (if (= target "Arrange cards")
+                                              (when-completed
+                                                (resolve-ability state side (reorder-choice :corp top-cards) card nil)
+                                                (do
+                                                  (system-msg state :corp (str "rearranges the top "
+                                                                               (quantify (count top-cards) "card")
+                                                                               " of R&D"))
+                                                  (clear-wait-prompt state :runner)
+                                                  (continue-ability state side maybe-draw-effect card nil)))
+                                              (do
+                                                (shuffle! state :corp :deck)
+                                                (system-msg state :corp (str "shuffles R&D"))
+                                                (clear-wait-prompt state :runner)
+                                                (continue-ability state side maybe-draw-effect card nil))))}
+                                      card nil)))}
+
+                    {:label "Trash 1 card in HQ"
+                     :delayed-completion true
+                     :effect
+                     (req (show-wait-prompt state :runner "Corp to select cards to trash with Sadaka")
+                          (when-completed
+                            (resolve-ability
+                              state side
+                              {:prompt "Choose a card in HQ to trash"
+                               :choices (req (cancellable (:hand corp) :sorted))
+                               :delayed-completion true
+                               :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
+                                                      (effect-completed eid))
+                               :effect (req (when-completed
+                                              (trash state :corp (make-eid state) target nil)
+                                              (do
+                                                (system-msg state :corp "trashes a card from HQ")
+                                                (when-completed
+                                                  (resolve-ability state side trash-resource-sub card nil)
+                                                  (effect-completed state side eid)))))}
+                              card nil)
+                            (do
+                              (system-msg state :corp "trashes Sadaka")
+                              (clear-wait-prompt state :runner)
+                              (when current-ice
+                                (no-action state side nil)
+                                (continue state side nil))
+                              (trash state :corp eid card nil))))}]})
+
    "Sagittarius"
    (constellation-ice trash-program)
 
@@ -1623,7 +1707,8 @@
                                                      card nil))}]}
 
    "Sapper"
-   {:subroutines [trash-program]
+   {:flags {:rd-reveal (req true)}
+    :subroutines [trash-program]
     :access {:delayed-completion true
              :req (req (and (not= (first (:zone card)) :discard)
                             (some #(is-type? % "Program") (all-active-installed state :runner))))
@@ -1787,8 +1872,7 @@
    "Tapestry"
    {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
                    :msg "force the Runner to lose 1 [Click]"
-                   :req (req (pos? (:click runner)))
-                   :effect (effect (lose :runner :click 1))}
+                   :effect runner-loses-click}
                   {:msg "draw 1 card"
                    :effect (effect (draw))}
                   {:req (req (pos? (count (:hand corp))))
@@ -1946,7 +2030,7 @@
    "Viper"
    {:subroutines [(trace-ability 3 {:label "The Runner loses 1 [Click] if able"
                                     :msg "force the Runner to lose 1 [Click] if able"
-                                    :effect (effect (lose :runner :click 1))})
+                                    :effect runner-loses-click})
                   (trace-ability 3 end-the-run)]}
 
    "Virgo"
@@ -1984,9 +2068,8 @@
 
    "Weir"
    {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
-                   :req (req (pos? (:click runner)))
                    :msg "force the Runner to lose 1 [Click]"
-                   :effect (effect (lose :runner :click 1))}
+                   :effect runner-loses-click}
                   {:label "Runner trashes 1 card from their Grip"
                    :req (req (pos? (count (:hand runner))))
                    :prompt "Choose a card to trash from your Grip"

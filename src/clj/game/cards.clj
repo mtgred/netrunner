@@ -56,9 +56,14 @@
    :delayed-completion true
    :effect (req (let [chosen (cons target chosen)]
                   (if (< (count chosen) n)
-                    (continue-ability state side (reorder-choice reorder-side wait-side (remove-once #(not= target %) remaining)
-                                                                 chosen n original dest) card nil)
-                    (continue-ability state side (reorder-final reorder-side wait-side chosen original dest) card nil))))}))
+                    (continue-ability
+                      state side
+                      (reorder-choice reorder-side wait-side (remove-once #(= target %) remaining) chosen n original dest)
+                      card nil)
+                    (continue-ability
+                      state side
+                      (reorder-final reorder-side wait-side chosen original dest)
+                      card nil))))}))
 
 (defn- reorder-final
   "Generates a recursive prompt structure for cards that do reordering (Indexing, Making an Entrance, etc.)
@@ -101,14 +106,16 @@
     (swap! state update-in (cons :corp (:zone b)) #(assoc % b-index a-new))
     (doseq [newcard [a-new b-new]]
       (unregister-events state side newcard)
-      (register-events state side (:events (card-def newcard)) newcard)
+      (when (rezzed? newcard)
+        (register-events state side (:events (card-def newcard)) newcard))
       (doseq [h (:hosted newcard)]
         (let [newh (-> h
                        (assoc-in [:zone] '(:onhost))
                        (assoc-in [:host :zone] (:zone newcard)))]
           (update! state side newh)
           (unregister-events state side h)
-          (register-events state side (:events (card-def newh)) newh))))
+          (when (rezzed? h)
+            (register-events state side (:events (card-def newh)) newh)))))
     (update-ice-strength state side a-new)
     (update-ice-strength state side b-new)))
 

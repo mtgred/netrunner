@@ -31,7 +31,8 @@
    "419: Amoral Scammer"
    {:events {:corp-install
              {:delayed-completion true
-              :req (req (first-event? state :corp :corp-install))
+              :req (req (and (first-event? state :corp :corp-install)
+                             (not (rezzed? target))))
               :effect
               (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
                      (let [itarget target]
@@ -46,7 +47,7 @@
                             :effect (req (clear-wait-prompt state :corp)
                                          (if (not (can-pay? state :corp nil :credit 1))
                                            (do
-                                             (toast state :corp "Cannot afford to pay 1 [Credits] to block card exposure" "info")
+                                             (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
                                              (expose state side eid itarget))
                                            (do
                                              (show-wait-prompt state :runner "Corp decision")
@@ -60,7 +61,7 @@
                                                   :effect (req (expose state side eid itarget)
                                                                (clear-wait-prompt state :runner))}
                                                  :yes-ability
-                                                 {:effect (req (lose state :corp :credit 1)
+                                                 {:effect (req (pay state :corp card [:credit 1])
                                                                (system-msg state :corp (str "spends 1 [Credits] to prevent "
                                                                                             " card from being exposed"))
                                                                (clear-wait-prompt state :runner))}}}
@@ -289,7 +290,7 @@
                                                         (swap! state update-in [:damage] dissoc :damage-choose-corp)
                                                         (trash state side target {:cause :net :unpreventable true})
                                                         (let [more (dec (or (get-defer-damage state side :net nil) 0))]
-                                                          (damage-defer state side :net more)))}
+                                                          (damage-defer state side :net more {:part-resolved true})))}
                              :no-ability {:effect (req (clear-wait-prompt state :runner)
                                                        (swap! state update-in [:damage] dissoc :damage-choose-corp))}}}
                            card nil))))}}
@@ -858,8 +859,8 @@
    {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted.  Cannot use on in progress run event"
     :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
                  :delayed-completion true
-                 :effect (req (when-not (active-prompt? state side card)
-                                (show-wait-prompt state :runner "Corp to use Skorpios' ability")
+                 :effect (req (when-not (and (used-this-turn? (:cid card) state)) (active-prompt? state side card)
+                                (show-wait-prompt state :runner "Corp to use Skorpios' ability" {:card card})
                                 (continue-ability state side {:prompt "Choose a card in the Runner's Heap that was just trashed"
                                                               :once :per-turn
                                                               :choices (req (cancellable

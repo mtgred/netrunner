@@ -112,12 +112,13 @@
   (swap! all-games dissoc gameid)
   (swap! old-states dissoc gameid))
 
-
 (defn clear-inactive-lobbies
   "Called by a background thread to close lobbies that are inactive for some number of seconds."
   [time-inactive]
-  (doseq [{:keys [gameid last-update] :as game} (vals @all-games)]
+  (doseq [{:keys [gameid last-update started] :as game} (vals @all-games)]
     (when (and gameid (t/after? (t/now) (t/plus last-update (t/seconds time-inactive))))
+      (when started
+        (stats/game-finished game))
       (close-lobby game))))
 
 (defn remove-user
@@ -126,10 +127,10 @@
   [client-id gameid]
   (when-let [{:keys [players started state] :as game} (game-for-id gameid)]
     (cond (player? client-id gameid)
-          (swap! all-games update-in [gameid :players] #(remove-once (fn [p] (not= client-id (:ws-id p))) %))
+          (swap! all-games update-in [gameid :players] #(remove-once (fn [p] (= client-id (:ws-id p))) %))
 
           (spectator? client-id gameid)
-          (swap! all-games update-in [gameid :spectators] #(remove-once (fn [p] (not= client-id (:ws-id p))) %)))
+          (swap! all-games update-in [gameid :spectators] #(remove-once (fn [p] (= client-id (:ws-id p))) %)))
 
     ;; update ending-players when someone drops to credit a completion properly.  Not if game is over.
     ; TODO add other player back in if other player rejoins
@@ -143,7 +144,9 @@
       (swap! client-gameids dissoc client-id)
 
       (if (empty? players)
-        (close-lobby game)
+        (do
+          (stats/game-finished game)
+          (close-lobby game))
         (refresh-lobby :update gameid)))))
 
 (defn lobby-clients

@@ -232,7 +232,8 @@
                                                  (swap! state update-in [:runner :register :successful-run] #(next %)))}}})
 
    "Cyberdex Virus Suite"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Cyberdex Virus Suite")
                              (continue-ability
                                {:optional {:prompt "Purge virus counters with Cyberdex Virus Suite?"
@@ -279,7 +280,8 @@
                                (clear-wait-prompt state :runner)
                                (effect-completed state side eid))))
               :cancel-effect (final-effect (clear-wait-prompt :runner))})]
-     {:access {:delayed-completion true
+     {:flags {:rd-reveal (req true)}
+      :access {:delayed-completion true
                :effect (req (let [n (count (:hand corp))]
                               (show-wait-prompt state :runner "Corp to finish using Disposable HQ")
                               (continue-ability state side
@@ -318,9 +320,9 @@
     :abilities [ability]})
 
    "Forced Connection"
-   {:access {:req (req (not= (first (:zone card)) :discard))
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
              :interactive (req true)
-             :effect (effect (system-msg :runner (str "accesses Forced Connection")))
              :trace {:base 3
                      :msg "give the Runner 2 tags"
                      :delayed-completion true
@@ -395,7 +397,7 @@
 
    "Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]
-             (let [remaining (remove-once #(not= (:cid %) (:cid ice)) ices)]
+             (let [remaining (remove-once #(= (:cid %) (:cid ice)) ices)]
              {:delayed-completion true
               :effect (req (if (= "None" server)
                              (continue-ability state side (choose-ice remaining grids) card nil)
@@ -516,7 +518,7 @@
                                            newices (apply conj (subvec ices 0 cndx) newice (subvec ices cndx))]
                                        (swap! state assoc-in (cons :corp (:zone c)) newices)
                                        (swap! state update-in [:corp :hand]
-                                              (fn [coll] (remove-once #(not= (:cid %) (:cid hqice)) coll)))
+                                              (fn [coll] (remove-once #(= (:cid %) (:cid hqice)) coll)))
                                        (trigger-event state side :corp-install newice)
                                        (move state side c :hand)))} card nil)))}]}
 
@@ -597,7 +599,7 @@
                                                                  newdeck (seq (apply conj (subvec deck 0 rdcndx) target (subvec deck rdcndx)))]
                                                              (swap! state assoc-in [:corp :deck] newdeck)
                                                              (swap! state update-in [:corp :hand]
-                                                                    (fn [coll] (remove-once #(not= (:cid %) (:cid hqc)) coll)))
+                                                                    (fn [coll] (remove-once #(= (:cid %) (:cid hqc)) coll)))
                                                              (move state side rdc :hand)
                                                              (clear-wait-prompt state :runner)
                                                              (effect-completed state side eid)))}
@@ -681,7 +683,8 @@
                                card nil))}}
 
    "Product Placement"
-   {:access {:req (req (not= (first (:zone card)) :discard))
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
              :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
 
    "Red Herrings"
@@ -815,6 +818,39 @@
                                              :effect (effect (rez-cost-bonus -2)
                                                              (rez target))}}}
                             card nil))}}}
+
+   "Tempus"
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
+             :interactive (req true)
+             :effect (req (when (= (first (:zone card)) :deck)
+                            (system-msg state :runner (str "accesses Tempus"))))
+             :trace {:base 3
+                     :msg "make the Runner choose between losing [Click][Click] or suffering 1 brain damage"
+                     :delayed-completion true
+                     :effect (req (let [tempus card]
+                                    (if (< (:click runner) 2)
+                                      (do
+                                        (system-msg state side "suffers 1 brain damage")
+                                        (damage state side eid :brain 1 {:card tempus}))
+                                      (do
+                                        (show-wait-prompt state :corp "Runner to resolve Tempus")
+                                        (continue-ability
+                                          state :runner
+                                          {:prompt "Lose [Click][Click] or take 1 brain damage?"
+                                           :player :runner
+                                           :choices ["Lose [Click][Click]" "Take 1 brain damage"]
+                                           :delayed-completion true
+                                           :effect (req (clear-wait-prompt state :corp)
+                                                        (if (.startsWith target "Take")
+                                                          (do
+                                                            (system-msg state side (str "chooses to take 1 brain damage"))
+                                                            (damage state side eid :brain 1 {:card tempus}))
+                                                          (do
+                                                            (system-msg state side "chooses to lose [Click][Click]")
+                                                            (lose state :runner :click 2)
+                                                            (effect-completed state side eid))))}
+                                          card nil)))))}}}
 
    "The Twins"
    {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"

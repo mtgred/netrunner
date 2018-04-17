@@ -6,7 +6,7 @@
             :url "https://opensource.org/licenses/MIT"}
 
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/clojurescript "1.9.229"]
+                 [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
                  [org.omcljs/om "0.9.0"]
@@ -27,7 +27,7 @@
                  [digest "1.4.6"]
                  [http-kit "2.2.0"]
                  [org.slf4j/slf4j-nop "1.7.12"]
-                 [me.bsima/trello "0.3.0"]
+                 [jwarwick/trello "0.3.3"]
                  [clj-time "0.14.2"]
                  [com.draines/postal "2.0.2"]
                  [throttler "1.0.0"]
