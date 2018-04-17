@@ -296,9 +296,13 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (req (update-breaker-strength state side (host state side card target))
-                              (update! state side (assoc (get-card state card) :dino-breaker (:cid target)))
-                              (gain state side :memory (:memoryunits target)))}]
+                 :effect (req (gain state side :memory (:memoryunits target))
+                              (update-breaker-strength state side target)
+                              (->> target
+                                (get-card state)
+                                (host state side card)
+                                (update-breaker-strength state side))
+                              (update! state side (assoc (get-card state card) :dino-breaker (:cid target))))}]
     :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (:dino-breaker (get-card state card))))
