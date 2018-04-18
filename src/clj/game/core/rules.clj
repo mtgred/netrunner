@@ -467,7 +467,7 @@
                                  (trashrec trashlist)))))]
      (preventrec cards))))
 
-(defn- resolve-trash-no-cost
+(defn resolve-trash-no-cost
   [state side card & {:keys [seen unpreventable]
                       :or {seen true}}]
   (trash state side (assoc card :seen seen) {:unpreventable unpreventable})

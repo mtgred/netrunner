@@ -56,6 +56,14 @@
   (tests))
 (use-fixtures :once load-all-cards)
 
+(defn reload-cards
+  "Add to use-fixtures list if you want slow hot-reloading of card definitions"
+  [tests]
+  (with-redefs [core/cards (do (core/reload-all-cards)
+                               (core/get-card-defs))]
+    (tests)))
+
+
 ;;; Card related functions
 (defn find-card
   "Return a card with given title from given sequence"

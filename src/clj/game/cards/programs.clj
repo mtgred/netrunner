@@ -1,8 +1,19 @@
-(in-ns 'game.core)
+(ns game.cards.programs
+  (:require [game.core :refer :all]
+            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
+                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
+                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
+                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
+                                is-remote? is-central? get-server-type other-side same-card? same-side?
+                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
+                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
-(declare can-host?)
-
-(def cards-programs
+(def card-definitions
   {"Analog Dreamers"
    {:abilities [{:cost [:click 1]
                  :msg "make a run on R&D"
@@ -152,7 +163,7 @@
                                                    :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
                                                              :default (req (count (filter #(card-is? % :side :corp) trashed)))}
                                                    :msg (msg "places " (quantify target "virus counter") " on Consume")
-                                                   :effect (effect (add-counter :runner card :virus target))}] 
+                                                   :effect (effect (add-counter :runner card :virus target))}]
                                            (resolve-ability state side eid ab card targets)))}}
     :abilities [{:cost [:click 1]
                  :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))

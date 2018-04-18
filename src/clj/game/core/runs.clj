@@ -59,7 +59,7 @@
          c)
        (effect-completed state side eid nil)))))
 
-(defn- resolve-steal-events
+(defn resolve-steal-events
   "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
   ([state side card] (resolve-steal-events state side (make-eid state) card))
   ([state side eid card]

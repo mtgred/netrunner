@@ -1,6 +1,17 @@
-(in-ns 'game.core)
-
-(declare close-access-prompt)
+(ns game.cards.resources
+  (:require [game.core :refer :all]
+            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
+                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
+                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
+                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
+                                is-remote? is-central? get-server-type other-side same-card? same-side?
+                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
+                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
@@ -29,7 +40,7 @@
                                          (handle-end-run state side)))))})))
 
 ;;; Card definitions
-(def cards-resources
+(def card-definitions
   {"Aaron Marrón"
    (let [am {:effect (effect (add-counter card :power 2)
                              (system-msg :runner (str "places 2 power counters on Aaron Marrón")))}]

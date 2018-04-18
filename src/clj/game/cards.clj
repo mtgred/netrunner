@@ -143,17 +143,29 @@
           (register-events state side (:events (card-def newh)) newh))))))
 
 ;; Load all card definitions into the current namespace.
-(load "cards/agendas")
-(load "cards/assets")
-(load "cards/events")
-(load "cards/hardware")
-(load "cards/ice")
-(load "cards/icebreakers")
-(load "cards/identities")
-(load "cards/operations")
-(load "cards/programs")
-(load "cards/resources")
-(load "cards/upgrades")
+(defn load-all-cards []
+  (doseq [file (->> (io/file (io/file "src/clj/game/cards"))
+                    (file-seq)
+                    (filter #(.isFile %)))]
+    (load-file (str file))))
 
-(def cards (merge cards-agendas cards-assets cards-events cards-hardware cards-ice cards-icebreakers cards-identities
-                  cards-operations cards-programs cards-resources cards-upgrades))
+(defn unload-all-cards []
+  (->> (all-ns)
+       (filter #(starts-with? % "game.cards"))
+       (map #(symbol (str %)))
+       (map remove-ns)))
+
+(defn reload-all-cards []
+  (unload-all-cards)
+  (load-all-cards))
+
+(defn get-card-defs []
+  (->> (all-ns)
+       (filter #(starts-with? % "game.cards"))
+       (map #(ns-resolve % 'card-definitions))
+       (map var-get)
+       (apply merge)))
+
+(def cards
+  (do (reload-all-cards)
+      (get-card-defs)))
