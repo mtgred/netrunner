@@ -108,9 +108,6 @@
                 "[Trash]" "trash"
                 "[t]" "trash"})
 
-(defn send [msg]
-  (ws/ws-send! [:netrunner/action msg]))
-
 (defn not-spectator? [game-state app-state]
   (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state)))
 
@@ -120,7 +117,7 @@
    (when (or (not @lock) no-lock)
      (try (js/ga "send" "event" "game" command) (catch js/Error e))
      (when-not no-lock (reset! lock true))
-     (ws/ws-send! [:netrunner/action {:command command :args args}]))))
+     (ws/ws-send! [:netrunner/action {:gameid-str (:gameid @game-state) :command command :args args}]))))
 
 (defn send-msg [event owner]
   (.preventDefault event)
@@ -128,7 +125,7 @@
         text (.-value input)
         $div (js/$ ".gameboard .messages")]
     (when-not (empty? text)
-      (ws/ws-send! [:netrunner/say text])
+      (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state) :msg text}])
       (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
@@ -139,9 +136,9 @@
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
     (if (empty? text)
-      (ws/ws-send! [:netrunner/typing false])
+      (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state) :typing false}])
       (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
-        (ws/ws-send! [:netrunner/typing true])))))
+        (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state) :typing true}])))))
 
 (defn mute-spectators [mute-state]
   (ws/ws-send! [:netrunner/mute-spectators mute-state]))
