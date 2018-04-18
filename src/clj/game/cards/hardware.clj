@@ -288,7 +288,7 @@
                                       (in-hand? %))}
                  :effect (effect (gain :memory (:memoryunits target))
                                  (runner-install target {:host-card card})
-                                 (update! (assoc (get-card state card) :dino-breaker (:cid target))))}
+                                 (update! (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
                  :prompt "Select an installed non-AI icebreaker to host on Dinosaurus"
@@ -301,11 +301,11 @@
                                 (get-card state)
                                 (host state side card)
                                 (update-breaker-strength state side))
-                              (update! state side (assoc (get-card state card) :dino-breaker (:cid target))))}]
+                              (update! state side (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}]
     :events {:pre-breaker-strength {:req (req (= (:cid target) (:cid (first (:hosted card)))))
                                     :effect (effect (breaker-strength-bonus 2))}
-             :card-moved {:req (req (= (:cid target) (:dino-breaker (get-card state card))))
-                          :effect (effect (update! (dissoc card :dino-breaker))
+             :card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
+                          :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
                                           (lose :memory (:memoryunits target)))}}}
 
    "Doppelgänger"
