@@ -7,7 +7,7 @@
                                 combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
                                 pluralize quantify type->rig-zone safe-zero?]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes?]]
+            [clojure.string :refer [split-lines split join lower-case includes?] :as string]
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -27,20 +27,9 @@
 (load "core/flags")     ; various miscellaneous manipulations of specific effects
 (load "core/io")        ; routines for parsing input or printing to the log
 (load "core/misc")      ; misc stuff
+(load "load-cards")     ; card definitions
 
-;; Taken from Stack Overflow: https://stackoverflow.com/a/20708175/3023252
-(defn load-files [path]
-  (let [files (->> path java.io.File. file-seq sort)]
-    (doseq [x (filter #(.isDirectory %) files)]
-      (doseq [y (file-seq x)]
-        (when (.isFile y)
-          (load-file (.getCanonicalPath y)))))))
-
-;; Load all card definitions into the current namespace.
-(load "cards/utils")
-(load-files "src/clj/game/cards")
-
-(def cards (->> (filter #(clojure.string/starts-with? % "card-definitions-")
+(def cards (->> (filter #(string/starts-with? % "card-definitions-")
                         (map name (keys (ns-map 'game.core))))
                 (map symbol)
                 (map resolve)

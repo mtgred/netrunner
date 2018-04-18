@@ -65,7 +65,7 @@
                       (reorder-final reorder-side wait-side chosen original dest)
                       card nil))))}))
 
-(defn- reorder-final
+(defn reorder-final
   "Generates a recursive prompt structure for cards that do reordering (Indexing, Making an Entrance, etc.)
   This is part 2 - the player is asked for final confirmation of the reorder and is provided an opportunity to start over."
 
@@ -209,7 +209,7 @@
   (gain-agenda-point state side n)))
 
 ;; Event-specific helper functions
-(defn- run-event
+(defn run-event
   ([] (run-event nil))
   ([run-ability] (run-event nil run-ability))
   ([cdef run-ability] (run-event cdef run-ability nil))
@@ -419,7 +419,7 @@
   {:subroutines [(trace-ability 2 (assoc ability :kicker (assoc ability :min 5)))]})
 
 ;;; Helper function for adding implementation notes to ICE defined with functions
-(defn- implementation-note
+(defn implementation-note
   "Adds an implementation note to the ice-definition"
   [note ice-def]
   (assoc ice-def :implementation note))
@@ -486,7 +486,7 @@
               :install-cost-bonus (req (when (> (get-in @state [:runner :link]) 1)
                                          [:memory (* -1 (:memoryunits card))]))))
 
-(defn- strength-pump
+(defn strength-pump
   "Creates a strength pump ability.
   Cost can be a credit amount or a list of costs e.g. [:credit 2]."
   ([cost strength] (strength-pump cost strength nil))
@@ -496,7 +496,7 @@
     :effect (effect (pump card strength (or all-run :encounter)))
     :pump strength}))
 
-(defn- break-sub
+(defn break-sub
   "Creates a break subroutine ability.
   If n = 0 then any number of subs are broken."
   ([cost n] (break-sub cost n nil))
@@ -511,7 +511,7 @@
     :effect effect}))
 
 ;;; Breaker sets
-(defn- cerberus
+(defn cerberus
   "Breaker from the dog set"
   [type]
   (auto-icebreaker [type]
@@ -520,7 +520,7 @@
                                  :msg (str "break up to 2 " (lower-case type) " subroutines")}
                                 (strength-pump 1 1)]}))
 
-(defn- break-and-enter
+(defn break-and-enter
   "Breakers from the Break and Entry set"
   [type]
   (cloud-icebreaker {:abilities [{:label (str "[Trash]: Break up to 3 " (lower-case type) "subroutines")
@@ -533,13 +533,13 @@
                       :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
                                                           (all-active-installed state :runner))))}))
 
-(defn- global-sec-breaker
+(defn global-sec-breaker
   "GlobalSec breakers for Sunny"
   [type]
   (cloud-icebreaker (auto-icebreaker [type] {:abilities [(break-sub 2 0 (lower-case type))
                                                          (strength-pump 2 3)]})))
 
-(defn- deva
+(defn deva
   "Deva breakers"
   [name]
   (auto-icebreaker ["All"]
@@ -565,7 +565,7 @@
                                                                                  :init-data true})))
                                               (move state side card :hand))}]}))
 
-(defn- conspiracy
+(defn conspiracy
   "Install-from-heap breakers"
   [title type abilities]
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
@@ -594,7 +594,7 @@
               :run nil}
      :abilities abilities}))
 
-(defn- central-breaker
+(defn central-breaker
   "'Cannot be used on a remote server' breakers"
   [type break pump]
   (let [central-req (req (or (not (:central-breaker card)) (#{:hq :rd :archives} (first (:server run)))))]
@@ -610,7 +610,7 @@
   (req (swap! state assoc-in [:runner :agenda-point-req] 6)
        (swap! state assoc-in [:corp :agenda-point-req] 6)))
 
-(defn- has-most-faction?
+(defn has-most-faction?
   "Checks if the faction has a plurality of rezzed / installed cards"
   [state side fc]
   (let [card-list (all-active-installed state side)
@@ -630,14 +630,14 @@
     (= fc best-faction)))
 
 ;; Resource-specific helper functions
-(defn- genetics-trigger?
+(defn genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
   [state side event]
   (or (first-event? state side event)
       (and (has-flag? state side :persistent :genetics-trigger-twice)
            (second-event? state side event))))
 
-(defn- shard-constructor
+(defn shard-constructor
   "Function for constructing a Shard card"
   ([target-server message effect-fn] (shard-constructor target-server message nil effect-fn))
   ([target-server message ability-options effect-fn]
