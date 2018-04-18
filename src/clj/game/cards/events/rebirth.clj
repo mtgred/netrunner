@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-rebirth
+(def card-definitions-events-rebirth
   {"Rebirth"
    {:msg "change identities"
     :prompt "Choose an identity to become"

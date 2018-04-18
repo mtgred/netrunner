@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-modded
+(def card-definitions-events-modded
   {"Modded"
    {:prompt "Select a program or piece of hardware to install from your Grip"
     :choices {:req #(and (or (is-type? % "Hardware")

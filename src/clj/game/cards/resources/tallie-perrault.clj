@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-tallie-perrault
+(def card-definitions-resources-tallie-perrault
   {"Tallie Perrault"
    {:abilities [{:label "Draw 1 card for each Corp bad publicity"
                  :effect (effect (trash card {:cause :ability-cost})

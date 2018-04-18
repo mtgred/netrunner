@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-temple-of-the-liberated-mind
+(def card-definitions-resources-temple-of-the-liberated-mind
   {"Temple of the Liberated Mind"
    {:abilities [{:cost [:click 1]
                  :label "Place 1 power counter"

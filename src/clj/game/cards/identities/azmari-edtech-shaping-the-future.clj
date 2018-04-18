@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-azmari-edtech-shaping-the-future
+(def card-definitions-identities-azmari-edtech-shaping-the-future
   {"Azmari EdTech: Shaping the Future"
    (let [choose-type {:prompt "Name a Runner card type"
                       :choices ["Event" "Resource" "Program" "Hardware"]

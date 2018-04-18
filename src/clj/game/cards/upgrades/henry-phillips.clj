@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-henry-phillips
+(def card-definitions-upgrades-henry-phillips
   {"Henry Phillips"
    {:implementation "Manually triggered by Corp"
     :abilities [{:req (req (and this-server tagged))

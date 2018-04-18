@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-credit-kiting
+(def card-definitions-events-credit-kiting
   {"Credit Kiting"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :prompt "Select a card to install from your Grip"

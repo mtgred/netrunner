@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-director-haas
+(def card-definitions-assets-director-haas
   {"Director Haas"
    {:in-play [:click 1 :click-per-turn 1]
     :trash-effect {:when-inactive true

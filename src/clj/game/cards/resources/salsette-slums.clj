@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-salsette-slums
+(def card-definitions-resources-salsette-slums
   {"Salsette Slums"
    {:flags {:slow-trash (req true)}
     :implementation "Will not trigger Maw when used on card already trashed (2nd ability)"

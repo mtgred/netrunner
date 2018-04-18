@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-minelayer
+(def card-definitions-ice-minelayer
   {"Minelayer"
    {:subroutines [{:msg "install an ICE from HQ"
                    :choices {:req #(and (ice? %)

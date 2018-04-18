@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-aimor
+(def card-definitions-ice-aimor
   {"Aimor"
    {:subroutines [{:label "Trash the top 3 cards of the Stack. Trash Aimor."
                    :effect (req (when (not-empty (:deck runner))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-character-assassination
+(def card-definitions-agendas-character-assassination
   {"Character Assassination"
    {:prompt "Select a resource to trash"
     :choices {:req #(and (installed? %)

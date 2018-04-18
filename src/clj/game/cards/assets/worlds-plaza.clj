@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-worlds-plaza
+(def card-definitions-assets-worlds-plaza
   {"Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"
                  :req (req (< (count (:hosted card)) 3))

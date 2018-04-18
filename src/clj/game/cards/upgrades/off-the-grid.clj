@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-off-the-grid
+(def card-definitions-upgrades-off-the-grid
   {"Off the Grid"
    {:implementation "Installation restriction not enforced"
     :effect (req (prevent-run-on-server state card (second (:zone card))))

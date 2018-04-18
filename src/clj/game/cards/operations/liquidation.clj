@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-liquidation
+(def card-definitions-operations-liquidation
   {"Liquidation"
    {:delayed-completion true
     :effect (req (let [n (count (filter #(not (is-type? % "Agenda")) (all-active-installed state :corp)))]

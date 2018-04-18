@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-dean-lister
+(def card-definitions-resources-dean-lister
   {"Dean Lister"
    {:abilities [{:req (req (:run @state))
                  :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")

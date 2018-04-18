@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-violet-level-clearance
+(def card-definitions-operations-violet-level-clearance
   {"Violet Level Clearance"
    {:msg "gain 8 [Credits] and draw 4 cards"
     :delayed-completion true

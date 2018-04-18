@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-hunter
+(def card-definitions-ice-hunter
   {"Hunter"
    {:subroutines [(tag-trace 3)]}})

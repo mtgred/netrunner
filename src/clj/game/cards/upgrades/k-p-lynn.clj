@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-k-p-lynn
+(def card-definitions-upgrades-k-p-lynn
   {"K. P. Lynn"
    (let [abi {:prompt "Choose one"
               :player :runner

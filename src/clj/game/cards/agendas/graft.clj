@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-graft
+(def card-definitions-agendas-graft
   {"Graft"
    (letfn [(graft [n] {:prompt "Choose a card to add to HQ with Graft"
                        :delayed-completion true

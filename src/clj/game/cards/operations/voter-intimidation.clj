@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-voter-intimidation
+(def card-definitions-operations-voter-intimidation
   {"Voter Intimidation"
    {:req (req (seq (:scored runner)))
     :psi {:not-equal {:player :corp

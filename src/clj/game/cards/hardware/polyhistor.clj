@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-polyhistor
+(def card-definitions-hardware-polyhistor
   {"Polyhistor"
    (let [abi {:optional
               {:prompt "Draw 1 card to force the Corp to draw 1 card?"

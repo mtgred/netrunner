@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-project-beale
+(def card-definitions-agendas-project-beale
   {"Project Beale"
    {:interactive (req true)
     :agendapoints-runner (req 2)

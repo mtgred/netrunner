@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-death-and-taxes
+(def card-definitions-operations-death-and-taxes
   {"Death and Taxes"
    (let [gain-cred-effect {:msg "gain 1 [Credits]"
                            :effect (effect (gain :corp :credit 1))}]

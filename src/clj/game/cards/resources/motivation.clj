@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-motivation
+(def card-definitions-resources-motivation
   {"Motivation"
    (let [ability {:msg "look at the top card of their Stack"
                   :label "Look at the top card of Stack (start of turn)"

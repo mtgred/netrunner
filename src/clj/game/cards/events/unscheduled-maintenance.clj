@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-unscheduled-maintenance
+(def card-definitions-events-unscheduled-maintenance
   {"Unscheduled Maintenance"
    {:events {:corp-install {:req (req (ice? target))
                             :effect (effect (register-turn-flag!

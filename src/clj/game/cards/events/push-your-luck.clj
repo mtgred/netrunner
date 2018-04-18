@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-push-your-luck
+(def card-definitions-events-push-your-luck
   {"Push Your Luck"
    {:effect (effect (show-wait-prompt :runner "Corp to guess Odd or Even")
                     (resolve-ability

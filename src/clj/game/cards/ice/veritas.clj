@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-veritas
+(def card-definitions-ice-veritas
   {"Veritas"
    {:subroutines [{:label "Corp gains 2 [Credits]"
                    :msg "gain 2 [Credits]"

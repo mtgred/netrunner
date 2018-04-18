@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-code-replicator
+(def card-definitions-upgrades-code-replicator
   {"Code Replicator"
    {:abilities [{:label "[Trash]: Force the runner to approach the passed piece of ice again"
                  :req (req (and this-server

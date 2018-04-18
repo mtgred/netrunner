@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-victoria-jenkins
+(def card-definitions-assets-victoria-jenkins
   {"Victoria Jenkins"
    {:effect (req (lose state :runner :click-per-turn 1)
                  (when (= (:active-player @state) :runner)

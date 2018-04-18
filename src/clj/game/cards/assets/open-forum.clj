@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-open-forum
+(def card-definitions-assets-open-forum
   {"Open Forum"
    {:events {:corp-mandatory-draw {:interactive (req true)
                                    :msg (msg (let [deck (:deck corp)]

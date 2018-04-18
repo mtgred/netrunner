@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-ssl-endorsement
+(def card-definitions-agendas-ssl-endorsement
   {"SSL Endorsement"
    (let [add-credits (effect (add-counter card :credit 9))
          remove-credits {:optional {:req (req (pos? (get-in card [:counter :credit] -1)))

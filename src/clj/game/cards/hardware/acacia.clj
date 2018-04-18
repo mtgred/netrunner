@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-acacia
+(def card-definitions-hardware-acacia
   {"Acacia"
    {:events {:pre-purge {:effect (req (let [counters (number-of-virus-counters state)]
                                         (update! state side (assoc-in (get-card state card) [:special :numpurged] counters))))}

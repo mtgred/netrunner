@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-holmegaard
+(def card-definitions-ice-holmegaard
   {"Holmegaard"
    {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
                                     :msg "stop the Runner from accessing any cards this run"

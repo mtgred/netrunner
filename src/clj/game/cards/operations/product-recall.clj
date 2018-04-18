@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-product-recall
+(def card-definitions-operations-product-recall
   {"Product Recall"
    {:prompt "Select a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-brute-force-hack
+(def card-definitions-events-brute-force-hack
   {"Brute-Force-Hack"
    {:implementation "Runner must calculate the right number of credits including other game effects for the planned target ICE"
     :prompt "How many [Credits]?" :choices :credit

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-levy-university
+(def card-definitions-assets-levy-university
   {"Levy University"
    {:abilities [{:prompt "Choose an ICE"
                  :msg (msg "adds " (:title target) " to HQ")

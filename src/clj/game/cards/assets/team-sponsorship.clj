@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-team-sponsorship
+(def card-definitions-assets-team-sponsorship
   {"Team Sponsorship"
    {:events {:agenda-scored {:label "Install a card from Archives or HQ"
                              :prompt "Select a card from Archives or HQ to install"

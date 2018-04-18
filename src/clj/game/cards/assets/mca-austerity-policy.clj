@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-mca-austerity-policy
+(def card-definitions-assets-mca-austerity-policy
   {"MCA Austerity Policy"
    {:abilities [{:cost [:click 1]
                  :once :per-turn

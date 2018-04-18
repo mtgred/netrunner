@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-hyperdriver
+(def card-definitions-programs-hyperdriver
   {"Hyperdriver"
    {:flags {:runner-phase-12 (req true)}
     :abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"

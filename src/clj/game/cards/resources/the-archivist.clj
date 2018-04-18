@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-the-archivist
+(def card-definitions-resources-the-archivist
   {"The Archivist"
    {:in-play [:link 1]
     :events {:agenda-scored {:req (req (or (has-subtype? target "Initiative")

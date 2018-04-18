@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-oberth-protocol
+(def card-definitions-upgrades-oberth-protocol
   {"Oberth Protocol"
    {:additional-cost [:forfeit]
     :events {:advance {:req (req (and (same-server? card target)

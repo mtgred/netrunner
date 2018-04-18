@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-mr-li
+(def card-definitions-resources-mr-li
   {"Mr. Li"
    {:abilities [{:cost [:click 1]
                  :msg (msg "draw 2 cards")

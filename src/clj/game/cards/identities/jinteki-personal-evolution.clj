@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-jinteki-personal-evolution
+(def card-definitions-identities-jinteki-personal-evolution
   {"Jinteki: Personal Evolution"
    {:events {:agenda-scored {:interactive (req true)
                              :delayed-completion true

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-high-risk-investment
+(def card-definitions-agendas-high-risk-investment
   {"High-Risk Investment"
    {:effect (effect (add-counter card :agenda 1))
     :silent (req true)

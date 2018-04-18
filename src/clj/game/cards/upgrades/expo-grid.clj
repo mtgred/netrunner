@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-expo-grid
+(def card-definitions-upgrades-expo-grid
   {"Expo Grid"
    (let [ability {:req (req (some #(and (is-type? % "Asset")
                                         (rezzed? %))

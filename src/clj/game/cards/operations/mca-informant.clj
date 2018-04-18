@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-mca-informant
+(def card-definitions-operations-mca-informant
   {"MCA Informant"
    {:implementation "Runner must deduct 1 click and 2 credits, then trash host manually"
     :req (req (not-empty (filter #(has-subtype? % "Connection") (all-active-installed state :runner))))

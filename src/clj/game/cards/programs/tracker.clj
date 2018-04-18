@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-tracker
+(def card-definitions-programs-tracker
   {"Tracker"
    (let [ability {:prompt "Choose a server for Tracker" :choices (req servers)
                   :msg (msg "target " target)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-cyberdex-virus-suite
+(def card-definitions-upgrades-cyberdex-virus-suite
   {"Cyberdex Virus Suite"
    {:flags {:rd-reveal (req true)}
     :access {:delayed-completion true

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-tyrant
+(def card-definitions-ice-tyrant
   {"Tyrant"
    {:advanceable :while-rezzed
     :abilities [{:label "Gain subroutines"

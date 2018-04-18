@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-ichi-10
+(def card-definitions-ice-ichi-10
   {"Ichi 1.0"
    {:subroutines [trash-program
                   (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"

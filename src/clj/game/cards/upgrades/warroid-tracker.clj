@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-warroid-tracker
+(def card-definitions-upgrades-warroid-tracker
   {"Warroid Tracker"
    (letfn [(wt [card n t]
              {:prompt "Choose an installed card to trash due to Warroid Tracker"

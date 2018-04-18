@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-ashigaru
+(def card-definitions-ice-ashigaru
   {"Ashigaru"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (:hand corp)) " subroutines")}]

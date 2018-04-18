@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-executive-search-firm
+(def card-definitions-assets-executive-search-firm
   {"Executive Search Firm"
    {:abilities [{:prompt "Choose an Executive, Sysop, or Character to add to HQ"
                  :msg (msg "add " (:title target) " to HQ and shuffle R&D")

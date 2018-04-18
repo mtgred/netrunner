@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-yusuf
+(def card-definitions-icebreakers-yusuf
   {"Yusuf"
    {:events {:successful-run {:silent (req true)
                               :effect (effect (system-msg "adds 1 virus counter to Yusuf")

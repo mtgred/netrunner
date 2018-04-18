@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-rielle-kit-peddler-transhuman
+(def card-definitions-identities-rielle-kit-peddler-transhuman
   {"Rielle \"Kit\" Peddler: Transhuman"
    {:abilities [{:req (req (and (:run @state)
                                 (:rezzed (get-card state current-ice))))

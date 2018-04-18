@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-project-kusanagi
+(def card-definitions-agendas-project-kusanagi
   {"Project Kusanagi"
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (:advance-counter card) 2)))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-uninstall
+(def card-definitions-events-uninstall
   {"Uninstall"
    {:choices {:req #(and (installed? %)
                          (not (facedown? %))

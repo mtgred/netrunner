@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-self-destruct
+(def card-definitions-upgrades-self-destruct
   {"Self-destruct"
    {:abilities [{:req (req this-server)
                  :label "[Trash]: Trace X - Do 3 net damage"

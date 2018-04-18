@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-spy-camera
+(def card-definitions-hardware-spy-camera
   {"Spy Camera"
    {:abilities [{:cost [:click 1]
                  :delayed-completion true

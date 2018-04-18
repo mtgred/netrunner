@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-watchtower
+(def card-definitions-ice-watchtower
   {"Watchtower"
    {:subroutines [{:label "Search R&D and add 1 card to HQ"
                    :prompt "Choose a card to add to HQ"

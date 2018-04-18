@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-lancelot
+(def card-definitions-ice-lancelot
   {"Lancelot"
    (grail-ice trash-program)})

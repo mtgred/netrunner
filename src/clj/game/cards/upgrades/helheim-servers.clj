@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-helheim-servers
+(def card-definitions-upgrades-helheim-servers
   {"Helheim Servers"
    {:abilities [{:label "Trash 1 card from HQ: All ice protecting this server has +2 strength until the end of the run"
                  :req (req (and this-server (pos? (count run-ices)) (pos? (count (:hand corp)))))

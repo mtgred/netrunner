@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-geothermal-fracking
+(def card-definitions-agendas-geothermal-fracking
   {"Geothermal Fracking"
    {:effect (effect (add-counter card :agenda 2))
     :silent (req true)

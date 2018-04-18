@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-safety-first
+(def card-definitions-resources-safety-first
   {"Safety First"
    {:in-play [:hand-size-modification -2]
     :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))

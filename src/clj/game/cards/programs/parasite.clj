@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-parasite
+(def card-definitions-programs-parasite
   {"Parasite"
    {:hosting {:req #(and (ice? %) (can-host? %) (rezzed? %))}
     :effect (req (when-let [h (:host card)]

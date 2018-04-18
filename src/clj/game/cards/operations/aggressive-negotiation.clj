@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-aggressive-negotiation
+(def card-definitions-operations-aggressive-negotiation
   {"Aggressive Negotiation"
    {:req (req (:scored-agenda corp-reg)) :prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))

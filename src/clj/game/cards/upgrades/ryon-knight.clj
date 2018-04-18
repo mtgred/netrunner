@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-ryon-knight
+(def card-definitions-upgrades-ryon-knight
   {"Ryon Knight"
    {:abilities [{:label "[Trash]: Do 1 brain damage"
                  :msg "do 1 brain damage" :req (req (and this-server (zero? (:click runner))))

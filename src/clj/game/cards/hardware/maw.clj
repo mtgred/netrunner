@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-maw
+(def card-definitions-hardware-maw
   {"Maw"
    (let [ability {:label "Trash a card from HQ"
                   :req (req (and (first-event? state side :no-trash)

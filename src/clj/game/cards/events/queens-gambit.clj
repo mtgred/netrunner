@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-queens-gambit
+(def card-definitions-events-queens-gambit
   {"Queens Gambit"
    {:choices ["0", "1", "2", "3"] :prompt "How many advancement tokens?"
     :effect (req (let [c (str->int target)]

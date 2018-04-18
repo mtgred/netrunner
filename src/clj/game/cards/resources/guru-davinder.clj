@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-guru-davinder
+(def card-definitions-resources-guru-davinder
   {"Guru Davinder"
    {:flags {:cannot-pay-net-damage true}
     :events {:pre-damage

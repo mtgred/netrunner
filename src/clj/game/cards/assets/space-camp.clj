@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-space-camp
+(def card-definitions-assets-space-camp
   {"Space Camp"
    {:flags {:rd-reveal (req true)}
     :access {:delayed-completion true

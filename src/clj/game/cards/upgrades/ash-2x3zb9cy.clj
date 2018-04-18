@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-ash-2x3zb9cy
+(def card-definitions-upgrades-ash-2x3zb9cy
   {"Ash 2X3ZB9CY"
    {:events {:successful-run {:interactive (req true)
                               :req (req this-server)

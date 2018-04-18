@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-sync-everything-everywhere
+(def card-definitions-identities-sync-everything-everywhere
   {"SYNC: Everything, Everywhere"
    {:effect (req (when (> (:turn @state) 1)
                    (if (:sync-front card)

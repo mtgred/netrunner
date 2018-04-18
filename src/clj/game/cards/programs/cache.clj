@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-cache
+(def card-definitions-programs-cache
   {"Cache"
    {:abilities [{:counter-cost [:virus 1]
                  :effect (effect (gain :credit 1))

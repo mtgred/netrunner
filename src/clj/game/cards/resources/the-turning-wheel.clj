@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-the-turning-wheel
+(def card-definitions-resources-the-turning-wheel
   {"The Turning Wheel"
    {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
                              :silent (req true)}

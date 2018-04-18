@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-targeted-marketing
+(def card-definitions-operations-targeted-marketing
   {"Targeted Marketing"
    (let [gaincr {:req (req (= (:title target) (:marketing-target card)))
                  :effect (effect (gain :corp :credit 10))

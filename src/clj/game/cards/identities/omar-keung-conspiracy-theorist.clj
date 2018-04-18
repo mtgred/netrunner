@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-omar-keung-conspiracy-theorist
+(def card-definitions-identities-omar-keung-conspiracy-theorist
   {"Omar Keung: Conspiracy Theorist"
    {:abilities [{:cost [:click 1]
                  :msg "make a run on Archives"

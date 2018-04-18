@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-legwork
+(def card-definitions-events-legwork
   {"Legwork"
    {:req (req hq-runnable)
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))

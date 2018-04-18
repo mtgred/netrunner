@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-four-one-nine-amoral-scammer
+(def card-definitions-identities-four-one-nine-amoral-scammer
   {"419: Amoral Scammer"
    {:events {:corp-install
              {:delayed-completion true

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-janus-10
+(def card-definitions-ice-janus-10
   {"Janus 1.0"
    {:subroutines [(do-brain-damage 1)]
     :runner-abilities [(runner-break [:click 1] 1)]}})

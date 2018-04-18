@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-checkpoint
+(def card-definitions-ice-checkpoint
   {"Checkpoint"
    {:effect take-bad-pub
     :subroutines [(trace-ability 5 {:label "Do 3 meat damage when this run is successful"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-mobius
+(def card-definitions-events-mobius
   {"Möbius"
    {:req (req rd-runnable)
     :delayed-completion true

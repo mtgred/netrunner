@@ -1,5 +1,5 @@
 (in-ns 'game.core)
 
-(def card-hardware-silencer
+(def card-definitions-hardware-silencer
   {"Silencer"
    {:recurring 1}})

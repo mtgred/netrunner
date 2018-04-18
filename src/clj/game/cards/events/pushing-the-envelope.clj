@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-pushing-the-envelope
+(def card-definitions-events-pushing-the-envelope
   {"Pushing the Envelope"
    (letfn [(hsize [s] (count (get-in s [:runner :hand])))]
    {:msg (msg (if (<= (hsize @state) 2)

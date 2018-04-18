@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-hemorrhage
+(def card-definitions-programs-hemorrhage
   {"Hemorrhage"
    {:events {:successful-run {:silent (req true)
                               :effect (effect (add-counter card :virus 1))}}

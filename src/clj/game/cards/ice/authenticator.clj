@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-authenticator
+(def card-definitions-ice-authenticator
   {"Authenticator"
    {:implementation "Encounter effect is manual"
     :abilities [give-tag]

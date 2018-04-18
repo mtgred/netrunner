@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-crisis-management
+(def card-definitions-agendas-crisis-management
   {"Crisis Management"
    (let [ability {:req (req tagged)
                   :delayed-completion true

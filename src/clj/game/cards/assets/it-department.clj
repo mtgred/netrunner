@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-it-department
+(def card-definitions-assets-it-department
   {"IT Department"
    {:abilities [{:counter-cost [:power 1]
                  :label "Add strength to a rezzed ICE"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-private-security-force
+(def card-definitions-agendas-private-security-force
   {"Private Security Force"
    {:abilities [{:req (req tagged)
                  :cost [:click 1]

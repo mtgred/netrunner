@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-running-interference
+(def card-definitions-events-running-interference
   {"Running Interference"
    (run-event
     {:events {:pre-rez nil

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-threat-level-alpha
+(def card-definitions-operations-threat-level-alpha
   {"Threat Level Alpha"
    {:trace {:base 1
             :label "Give the Runner X tags"

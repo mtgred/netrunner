@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-vulcan-coverup
+(def card-definitions-agendas-vulcan-coverup
   {"Vulcan Coverup"
    {:interactive (req true)
     :msg "do 2 meat damage"

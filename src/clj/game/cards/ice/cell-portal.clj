@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-cell-portal
+(def card-definitions-ice-cell-portal
   {"Cell Portal"
    {:subroutines [{:msg "make the Runner approach the outermost ICE"
                    :effect (req (let [srv (first (:server run))

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-doppelganger
+(def card-definitions-hardware-doppelganger
   {"Doppelgänger"
    {:in-play [:memory 1]
     :events {:runner-install

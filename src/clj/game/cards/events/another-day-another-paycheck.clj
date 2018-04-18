@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-another-day-another-paycheck
+(def card-definitions-events-another-day-another-paycheck
   {"Another Day, Another Paycheck"
    {:events {:agenda-stolen
              {:trace {:base 0

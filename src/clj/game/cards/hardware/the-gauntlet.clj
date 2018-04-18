@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-the-gauntlet
+(def card-definitions-hardware-the-gauntlet
   {"The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
     :in-play [:memory 2]

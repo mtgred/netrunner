@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-priority-construction
+(def card-definitions-operations-priority-construction
   {"Priority Construction"
    (letfn [(install-card [chosen]
             {:prompt "Select a remote server"

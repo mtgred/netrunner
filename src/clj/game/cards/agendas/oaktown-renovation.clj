@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-oaktown-renovation
+(def card-definitions-agendas-oaktown-renovation
   {"Oaktown Renovation"
    {:install-state :face-up
     :events {:advance {:req (req (= (:cid card) (:cid target)))

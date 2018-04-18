@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-independent-thinking
+(def card-definitions-events-independent-thinking
   {"Independent Thinking"
    (letfn [(cards-to-draw [targets]
              (* (count targets)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-shell-corporation
+(def card-definitions-upgrades-shell-corporation
   {"Shell Corporation"
    {:abilities
     [{:cost [:click 1]

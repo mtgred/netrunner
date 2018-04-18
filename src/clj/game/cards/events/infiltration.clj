@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-infiltration
+(def card-definitions-events-infiltration
   {"Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
     :effect (effect (continue-ability (if (= target "Expose a card")

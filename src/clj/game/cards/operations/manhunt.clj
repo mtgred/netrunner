@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-manhunt
+(def card-definitions-operations-manhunt
   {"Manhunt"
    {:events {:successful-run {:interactive (req true)
                               :req (req (first-event? state side :successful-run))

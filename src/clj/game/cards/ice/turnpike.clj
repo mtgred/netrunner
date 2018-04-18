@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-turnpike
+(def card-definitions-ice-turnpike
   {"Turnpike"
    {:implementation "Encounter effect is manual"
     :abilities [{:msg "force the Runner to lose 1 [Credits]"

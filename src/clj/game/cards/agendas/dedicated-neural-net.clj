@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-dedicated-neural-net
+(def card-definitions-agendas-dedicated-neural-net
   {"Dedicated Neural Net"
     (let [psi-effect
            {:delayed-completion true

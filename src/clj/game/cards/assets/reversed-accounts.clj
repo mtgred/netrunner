@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-reversed-accounts
+(def card-definitions-assets-reversed-accounts
   {"Reversed Accounts"
    {:advanceable :always
     :abilities [{:cost [:click 1]

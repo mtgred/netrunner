@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-forked
+(def card-definitions-events-forked
   {"Forked"
    {:implementation "Ice trash is manual"
     :prompt "Choose a server"

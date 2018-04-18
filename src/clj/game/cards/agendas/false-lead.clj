@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-false-lead
+(def card-definitions-agendas-false-lead
   {"False Lead"
    {:abilities [{:req (req (>= (:click runner) 2))
                  :msg "force the Runner to lose [Click][Click]"

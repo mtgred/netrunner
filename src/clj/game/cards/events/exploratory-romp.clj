@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-exploratory-romp
+(def card-definitions-events-exploratory-romp
   {"Exploratory Romp"
    (run-event
      {:replace-access {:prompt "Advancements to remove from a card in or protecting this server?"

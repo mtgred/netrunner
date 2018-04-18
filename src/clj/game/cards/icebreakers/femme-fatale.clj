@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-femme-fatale
+(def card-definitions-icebreakers-femme-fatale
   {"Femme Fatale"
    (auto-icebreaker ["Sentry"]
                     {:prompt "Select a piece of ICE to target for bypassing"

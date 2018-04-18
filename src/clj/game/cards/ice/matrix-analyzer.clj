@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-matrix-analyzer
+(def card-definitions-ice-matrix-analyzer
   {"Matrix Analyzer"
    {:implementation "Encounter effect is manual"
     :abilities [{:label "Place 1 advancement token on a card that can be advanced"

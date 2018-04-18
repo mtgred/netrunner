@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-self-growth-program
+(def card-definitions-operations-self-growth-program
   {"Self-Growth Program"
    {:req (req tagged)
     :prompt "Select two installed Runner cards"

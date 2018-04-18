@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-next-sapphire
+(def card-definitions-ice-next-sapphire
   {"NEXT Sapphire"
    {:subroutines [{:label "Draw up to X cards"
                    :prompt "Draw how many cards?"

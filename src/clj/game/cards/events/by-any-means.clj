@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-by-any-means
+(def card-definitions-events-by-any-means
   {"By Any Means"
    {:effect (effect (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))

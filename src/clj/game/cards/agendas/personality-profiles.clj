@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-personality-profiles
+(def card-definitions-agendas-personality-profiles
   {"Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
              :effect (effect (trash (first (shuffle (:hand runner)))))

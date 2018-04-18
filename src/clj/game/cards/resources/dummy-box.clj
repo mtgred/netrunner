@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-dummy-box
+(def card-definitions-resources-dummy-box
   {"Dummy Box"
    (letfn [(dummy-prevent [type] {:msg (str "prevent a " type " from being trashed")
                                   :delayed-completion true

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-subliminal-messaging
+(def card-definitions-operations-subliminal-messaging
   {"Subliminal Messaging"
    (letfn [(subliminal []
              {:corp-phase-12

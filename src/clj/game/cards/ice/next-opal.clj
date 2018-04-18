@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-next-opal
+(def card-definitions-ice-next-opal
   {"NEXT Opal"
    {:subroutines [{:label "Install a card from HQ, paying all costs"
                    :prompt "Choose a card in HQ to install"

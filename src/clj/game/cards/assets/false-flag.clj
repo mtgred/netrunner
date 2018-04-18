@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-false-flag
+(def card-definitions-assets-false-flag
   {"False Flag"
    (letfn [(tag-count [false-flag]
              (int (Math/floor (/ (:advance-counter false-flag 0)

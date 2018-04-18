@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-award-bait
+(def card-definitions-agendas-award-bait
   {"Award Bait"
    {:flags {:rd-reveal (req true)}
     :access {:delayed-completion true

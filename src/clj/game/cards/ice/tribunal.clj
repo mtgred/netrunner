@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-tribunal
+(def card-definitions-ice-tribunal
   {"Tribunal"
    {:subroutines [{:msg "force the Runner to trash 1 installed card"
                    :effect (effect (resolve-ability :runner trash-installed card nil))}]}})

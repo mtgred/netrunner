@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-private-contracts
+(def card-definitions-assets-private-contracts
   {"Private Contracts"
    {:effect (effect (add-counter card :credit 14))
     :abilities [{:cost [:click 1]

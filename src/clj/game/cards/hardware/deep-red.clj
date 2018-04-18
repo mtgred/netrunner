@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-deep-red
+(def card-definitions-hardware-deep-red
   {"Deep Red"
    {:implementation "MU use restriction not enforced"
     :in-play [:memory 3]

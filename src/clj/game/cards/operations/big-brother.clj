@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-big-brother
+(def card-definitions-operations-big-brother
   {"Big Brother"
    {:req (req tagged)
     :msg "give the Runner 2 tags"

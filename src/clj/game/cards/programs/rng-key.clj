@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-rng-key
+(def card-definitions-programs-rng-key
   {"RNG Key"
    {:events {:pre-access-card {:req (req (get-in card [:special :rng-guess]))
                                :delayed-completion true

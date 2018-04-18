@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-panchatantra
+(def card-definitions-programs-panchatantra
   {"Panchatantra"
    {:abilities [{:msg "add a custom subtype to currently encountered ICE"
                  :once :per-turn}]}})

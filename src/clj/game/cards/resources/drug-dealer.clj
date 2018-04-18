@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-drug-dealer
+(def card-definitions-resources-drug-dealer
   {"Drug Dealer"
    {:flags {:runner-phase-12 (req (some #(card-flag? % :drip-economy true) (all-active-installed state :runner)))}
     :abilities [{:label "Lose 1 [Credits] (start of turn)"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-strategic-innovations-future-forward
+(def card-definitions-identities-strategic-innovations-future-forward
   {"Strategic Innovations: Future Forward"
    {:events {:pre-start-game {:effect draft-points-target}
              :runner-turn-ends

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-progenitor
+(def card-definitions-programs-progenitor
   {"Progenitor"
    {:abilities [{:label "Install a virus program on Progenitor"
                  :req (req (empty? (:hosted card)))

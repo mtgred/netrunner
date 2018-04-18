@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-najja-10
+(def card-definitions-ice-najja-10
   {"Najja 1.0"
    {:subroutines [end-the-run]
     :runner-abilities [(runner-break [:click 1] 1)]}})

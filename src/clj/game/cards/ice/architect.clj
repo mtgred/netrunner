@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-architect
+(def card-definitions-ice-architect
   {"Architect"
    {:flags {:untrashable-while-rezzed true}
     :subroutines [{:label "Look at the top 5 cards of R&D"

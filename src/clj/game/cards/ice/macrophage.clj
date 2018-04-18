@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-macrophage
+(def card-definitions-ice-macrophage
   {"Macrophage"
    {:subroutines [(trace-ability 4 {:label "Purge virus counters"
                                     :msg "purge virus counters"

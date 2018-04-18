@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-audacity
+(def card-definitions-operations-audacity
   {"Audacity"
    (let [audacity (fn au [n] {:prompt "Choose a card on which to place an advancement"
                               :delayed-completion true

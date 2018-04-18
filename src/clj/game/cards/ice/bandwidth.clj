@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-bandwidth
+(def card-definitions-ice-bandwidth
   {"Bandwidth"
    {:subroutines [{:msg "give the Runner 1 tag"
                    :delayed-completion true

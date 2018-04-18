@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-gyri-labyrinth
+(def card-definitions-ice-gyri-labyrinth
   {"Gyri Labyrinth"
    {:implementation "Hand size is not restored if trashed or derezzed after firing"
     :subroutines [{:req (req (:run @state))

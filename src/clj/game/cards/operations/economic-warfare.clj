@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-economic-warfare
+(def card-definitions-operations-economic-warfare
   {"Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
                    (can-pay? state :runner nil :credit 4)))

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-best-defense
+(def card-definitions-operations-best-defense
   {"Best Defense"
    {:delayed-completion true
     :req (req (not-empty (all-installed state :runner)))

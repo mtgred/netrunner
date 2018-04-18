@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-mining-accident
+(def card-definitions-events-mining-accident
   {"Mining Accident"
    (letfn [(mining [] {:player :corp
                        :delayed-completion true

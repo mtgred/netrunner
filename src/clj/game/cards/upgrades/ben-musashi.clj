@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-ben-musashi
+(def card-definitions-upgrades-ben-musashi
   {"Ben Musashi"
    (let [bm {:req (req (or (in-same-server? card target)
                            (from-same-server? card target)))

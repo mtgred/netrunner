@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-emergency-shutdown
+(def card-definitions-events-emergency-shutdown
   {"Emergency Shutdown"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
     :msg (msg "derez " (:title target))

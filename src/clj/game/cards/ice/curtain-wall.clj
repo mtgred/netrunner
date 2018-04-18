@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-curtain-wall
+(def card-definitions-ice-curtain-wall
   {"Curtain Wall"
    {:subroutines [end-the-run]
     :strength-bonus (req (let [ices (:ices (card->server state card))]

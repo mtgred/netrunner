@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-asa-group-security-through-vigilance
+(def card-definitions-identities-asa-group-security-through-vigilance
   {"Asa Group: Security Through Vigilance"
    {:events {:corp-install
              {:delayed-completion true

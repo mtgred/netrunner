@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-escher
+(def card-definitions-events-escher
   {"Escher"
    (letfn [(es [] {:prompt "Select two pieces of ICE to swap positions"
                    :choices {:req #(and (installed? %) (ice? %)) :max 2}

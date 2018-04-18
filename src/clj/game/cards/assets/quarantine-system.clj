@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-quarantine-system
+(def card-definitions-assets-quarantine-system
   {"Quarantine System"
    (letfn [(rez-ice [cnt] {:prompt "Select an ICE to rez"
                            :delayed-completion true

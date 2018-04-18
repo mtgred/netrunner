@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-armored-servers
+(def card-definitions-agendas-armored-servers
   {"Armored Servers"
    {:implementation "Runner must trash cards manually when required"
     :effect (effect (add-counter card :agenda 1))

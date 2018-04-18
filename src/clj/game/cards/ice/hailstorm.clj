@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-hailstorm
+(def card-definitions-ice-hailstorm
   {"Hailstorm"
    {:subroutines [{:label "Remove a card in the Heap from the game"
                    :prompt "Choose a card in the Runner's Heap"

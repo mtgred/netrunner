@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-fairchild-20
+(def card-definitions-ice-fairchild-20
   {"Fairchild 2.0"
    {:subroutines [{:label "Force the Runner to pay 2 [Credits] or trash an installed card"
                    :msg "force the Runner to pay 2 [Credits] or trash an installed card"

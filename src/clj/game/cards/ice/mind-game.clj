@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-mind-game
+(def card-definitions-ice-mind-game
   {"Mind Game"
    {:subroutines [(do-psi {:label "Redirect the run to another server"
                            :player :corp

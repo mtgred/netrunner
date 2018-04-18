@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-london-library
+(def card-definitions-resources-london-library
   {"London Library"
    {:abilities [{:label "Install a non-virus program on London Library"
                  :cost [:click 1]

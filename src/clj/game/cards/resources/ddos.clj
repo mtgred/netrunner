@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-ddos
+(def card-definitions-resources-ddos
   {"DDoS"
    {:abilities [{:msg "prevent the corp from rezzing the outermost piece of ice during a run on any server this turn"
                  :effect (effect

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-rework
+(def card-definitions-operations-rework
   {"Rework"
    {:prompt "Select a card from HQ to shuffle into R&D"
     :choices {:req #(and (= (:side %) "Corp")

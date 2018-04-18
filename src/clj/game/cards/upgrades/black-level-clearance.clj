@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-black-level-clearance
+(def card-definitions-upgrades-black-level-clearance
   {"Black Level Clearance"
    {:events {:successful-run
              {:interactive (req true)

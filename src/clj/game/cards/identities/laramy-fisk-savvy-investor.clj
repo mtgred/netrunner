@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-laramy-fisk-savvy-investor
+(def card-definitions-identities-laramy-fisk-savvy-investor
   {"Laramy Fisk: Savvy Investor"
    {:events
     {:successful-run

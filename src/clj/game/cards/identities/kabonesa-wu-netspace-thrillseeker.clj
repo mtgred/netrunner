@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-kabonesa-wu-netspace-thrillseeker
+(def card-definitions-identities-kabonesa-wu-netspace-thrillseeker
   {"Kabonesa Wu: Netspace Thrillseeker"
    {:abilities [{:label "[:click] Install a non-virus program from your stack, lowering the cost by 1 [Credit]"
                  :cost [:click 1]

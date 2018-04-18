@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-rumor-mill
+(def card-definitions-events-rumor-mill
   {"Rumor Mill"
    (letfn [(eligible? [card] (and (:uniqueness card)
                                   (or (card-is? card :type "Asset")

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-shipment-from-sansan
+(def card-definitions-operations-shipment-from-sansan
   {"Shipment from SanSan"
    {:choices ["0", "1", "2"]
     :prompt "How many advancement tokens?"

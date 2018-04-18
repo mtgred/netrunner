@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-ubax
+(def card-definitions-hardware-ubax
   {"Ubax"
    (let [ability {:req (req (:runner-phase-12 @state))
                   :msg "draw 1 card"

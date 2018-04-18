@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-corporate-troubleshooter
+(def card-definitions-upgrades-corporate-troubleshooter
   {"Corporate Troubleshooter"
    {:abilities [{:label "[Trash]: Add strength to a rezzed ICE protecting this server" :choices :credit
                  :prompt "How many credits?"

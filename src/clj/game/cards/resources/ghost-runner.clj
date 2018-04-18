@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-ghost-runner
+(def card-definitions-resources-ghost-runner
   {"Ghost Runner"
    {:data {:counter {:credit 3}}
     :abilities [{:counter-cost [:credit 1]

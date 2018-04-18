@@ -1,7 +1,5 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-sahasrara
+(def card-definitions-programs-sahasrara
   {"Sahasrara"
    {:recurring 2}})

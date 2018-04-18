@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-chatterjee-university
+(def card-definitions-resources-chatterjee-university
   {"Chatterjee University"
    {:abilities [{:cost [:click 1]
                  :label "Place 1 power counter"

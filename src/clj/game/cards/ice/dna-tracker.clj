@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-dna-tracker
+(def card-definitions-ice-dna-tracker
   {"DNA Tracker"
    {:subroutines [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
                    :effect (req (when-completed (damage state side :net 1 {:card card})

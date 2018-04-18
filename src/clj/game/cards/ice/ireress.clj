@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-ireress
+(def card-definitions-ice-ireress
   {"Ireress"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (:bad-publicity corp 0) " subroutines")}]

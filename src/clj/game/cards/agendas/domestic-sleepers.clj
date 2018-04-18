@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-domestic-sleepers
+(def card-definitions-agendas-domestic-sleepers
   {"Domestic Sleepers"
    {:agendapoints-runner (req 0)
     :abilities [{:cost [:click 3] :msg "place 1 agenda counter on Domestic Sleepers"

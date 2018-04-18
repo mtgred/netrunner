@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-traffic-accident
+(def card-definitions-operations-traffic-accident
   {"Traffic Accident"
    {:req (req (>= (:tag runner) 2))
     :msg "do 2 meat damage"

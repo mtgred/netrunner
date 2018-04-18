@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-advanced-assembly-lines
+(def card-definitions-assets-advanced-assembly-lines
   {"Advanced Assembly Lines"
    {:effect (effect (gain :credit 3))
     :msg (msg "gain 3 [Credits]")

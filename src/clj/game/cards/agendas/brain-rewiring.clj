@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-brain-rewiring
+(def card-definitions-agendas-brain-rewiring
   {"Brain Rewiring"
    {:effect (effect (show-wait-prompt :runner "Corp to use Brain Rewiring")
                     (resolve-ability

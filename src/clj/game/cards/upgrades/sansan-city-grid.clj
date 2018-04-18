@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-sansan-city-grid
+(def card-definitions-upgrades-sansan-city-grid
   {"SanSan City Grid"
    {:effect (req (when-let [agenda (some #(when (is-type? % "Agenda") %)
                                          (:content (card->server state card)))]

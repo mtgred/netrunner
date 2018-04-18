@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-mandatory-seed-replacement
+(def card-definitions-agendas-mandatory-seed-replacement
   {"Mandatory Seed Replacement"
    (letfn [(msr [] {:prompt "Select two pieces of ICE to swap positions"
                     :choices {:req #(and (installed? %)

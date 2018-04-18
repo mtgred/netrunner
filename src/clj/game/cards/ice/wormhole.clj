@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-wormhole
+(def card-definitions-ice-wormhole
   {"Wormhole"
    ;; TODO: create an ability for wormhole
    (implementation-note "Wormhole subroutine is not implemented"

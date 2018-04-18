@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-adjusted-chronotype
+(def card-definitions-resources-adjusted-chronotype
   {"Adjusted Chronotype"
    {:events {:runner-loss {:req (req (and (some #{:click} target)
                                           (let [click-losses (filter #(= :click %) (mapcat first (turn-events state side :runner-loss)))]

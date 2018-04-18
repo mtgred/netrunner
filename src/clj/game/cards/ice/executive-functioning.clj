@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-executive-functioning
+(def card-definitions-ice-executive-functioning
   {"Executive Functioning"
    {:subroutines [(trace-ability 4 (do-brain-damage 1))]}})

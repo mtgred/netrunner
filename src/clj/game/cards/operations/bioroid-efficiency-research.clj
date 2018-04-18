@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-bioroid-efficiency-research
+(def card-definitions-operations-bioroid-efficiency-research
   {"Bioroid Efficiency Research"
    {:implementation "Derez is manual"
     :choices {:req #(and (ice? %)

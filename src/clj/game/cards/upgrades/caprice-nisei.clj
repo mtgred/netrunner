@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-caprice-nisei
+(def card-definitions-upgrades-caprice-nisei
   {"Caprice Nisei"
    {:events {:pass-ice {:req (req (and this-server
                                        (= (:position run) 1))) ; trigger when last ice passed

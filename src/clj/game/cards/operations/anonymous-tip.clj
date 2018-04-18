@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-anonymous-tip
+(def card-definitions-operations-anonymous-tip
   {"Anonymous Tip"
    {:msg "draw 3 cards"
     :delayed-completion true

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-always-be-running
+(def card-definitions-resources-always-be-running
   {"Always Be Running"
    {:implementation "Run requirement not enforced"
     :events {:runner-turn-begins {:effect (req (toast state :runner

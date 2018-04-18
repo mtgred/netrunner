@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-market-research
+(def card-definitions-agendas-market-research
   {"Market Research"
    {:interactive (req true)
     :req (req tagged)

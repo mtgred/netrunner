@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-kill-switch
+(def card-definitions-operations-kill-switch
   {"Kill Switch"
    (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
                                  :trace {:base 3

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-reverse-infection
+(def card-definitions-operations-reverse-infection
   {"Reverse Infection"
    {:prompt "Choose One:"
     :choices ["Purge virus counters."

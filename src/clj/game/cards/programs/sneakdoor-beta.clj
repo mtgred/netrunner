@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-sneakdoor-beta
+(def card-definitions-programs-sneakdoor-beta
   {"Sneakdoor Beta"
    {:abilities [{:cost [:click 1]
                  :msg "make a run on Archives"

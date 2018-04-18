@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-troll
+(def card-definitions-ice-troll
   {"Troll"
    {:implementation "Encounter effect is manual"
     :abilities [(trace-ability 2 {:label "Force the Runner to lose [Click] or end the run"

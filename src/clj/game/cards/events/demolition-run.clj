@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-demolition-run
+(def card-definitions-events-demolition-run
   {"Demolition Run"
    {:req (req (or rd-runnable hq-runnable))
     :prompt "Choose a server"

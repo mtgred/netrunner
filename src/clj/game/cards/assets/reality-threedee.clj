@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-reality-threedee
+(def card-definitions-assets-reality-threedee
   {"Reality Threedee"
    (let [ability {:effect (req (gain state side :credit (if tagged 2 1)))
                   :label "Gain credits (start of turn)"

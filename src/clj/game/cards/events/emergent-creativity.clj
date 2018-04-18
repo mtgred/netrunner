@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-emergent-creativity
+(def card-definitions-events-emergent-creativity
   {"Emergent Creativity"
    (letfn [(ec [trash-cost to-trash]
              {:delayed-completion true

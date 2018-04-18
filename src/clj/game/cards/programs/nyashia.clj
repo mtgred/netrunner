@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-nyashia
+(def card-definitions-programs-nyashia
   {"Nyashia"
    {:data {:counter {:power 3}}
     :events {:pre-access {:delayed-completion true

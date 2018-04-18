@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-meteor-mining
+(def card-definitions-agendas-meteor-mining
   {"Meteor Mining"
    {:interactive (req true)
     :delayed-completion true

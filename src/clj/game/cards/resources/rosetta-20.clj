@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-rosetta-20
+(def card-definitions-resources-rosetta-20
   {"Rosetta 2.0"
    {:abilities [{:req (req (and (not (install-locked? state side))
                                 (some #(is-type? % "Program") (all-active-installed state :runner))))

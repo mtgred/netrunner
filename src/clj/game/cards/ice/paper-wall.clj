@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-paper-wall
+(def card-definitions-ice-paper-wall
   {"Paper Wall"
    {:implementation "Trash on break is manual"
     :subroutines [end-the-run]}})

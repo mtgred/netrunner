@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-harbinger
+(def card-definitions-programs-harbinger
   {"Harbinger"
    {:trash-effect
      {:req (req (not (some #{:facedown :hand} (:previous-zone card))))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-adam-compulsive-hacker
+(def card-definitions-identities-adam-compulsive-hacker
   {"Adam: Compulsive Hacker"
    {:events {:pre-start-game
              {:req (req (= side :runner))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-kala-ghoda-real-tv
+(def card-definitions-assets-kala-ghoda-real-tv
   {"Kala Ghoda Real TV"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :flags {:corp-phase-12 (req true)}

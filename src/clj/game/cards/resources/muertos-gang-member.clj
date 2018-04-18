@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-muertos-gang-member
+(def card-definitions-resources-muertos-gang-member
   {"Muertos Gang Member"
    {:effect (req (resolve-ability
                    state :corp

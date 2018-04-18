@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-experiential-data
+(def card-definitions-upgrades-experiential-data
   {"Experiential Data"
    {:effect (req (update-ice-in-server state side (card->server state card)))
     :events {:pre-ice-strength {:req (req (protecting-same-server? card target))

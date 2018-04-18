@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-high-stakes-job
+(def card-definitions-events-high-stakes-job
   {"High-Stakes Job"
    (run-event
     {:choices (req (let [unrezzed-ice #(seq (filter (complement rezzed?) (:ices (second %))))

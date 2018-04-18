@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-friday-chip
+(def card-definitions-hardware-friday-chip
   {"Friday Chip"
    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
                   :req (req (and (pos? (get-in card [:counter :virus] 0))

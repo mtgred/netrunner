@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-executive-retreat
+(def card-definitions-agendas-executive-retreat
   {"Executive Retreat"
    {:effect (effect (add-counter card :agenda 1)
                     (shuffle-into-deck :hand))

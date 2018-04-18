@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-harishchandra-ent-where-youre-the-star
+(def card-definitions-identities-harishchandra-ent-where-youre-the-star
   {"Harishchandra Ent.: Where Youre the Star"
    {:effect (req (when tagged
                    (reveal-hand state :runner))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-genetics-pavilion
+(def card-definitions-assets-genetics-pavilion
   {"Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
     :effect (req (max-draw state :runner 2)

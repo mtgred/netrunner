@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-wetwork-refit
+(def card-definitions-operations-wetwork-refit
   {"Wetwork Refit"
    {:choices {:req #(and (ice? %)
                          (has-subtype? % "Bioroid")

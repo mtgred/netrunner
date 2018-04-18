@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-mumbad-virtual-tour
+(def card-definitions-upgrades-mumbad-virtual-tour
   {"Mumbad Virtual Tour"
    {:implementation "Only forces trash if runner has no Imps and enough credits in the credit pool"
     :flags {:must-trash true}

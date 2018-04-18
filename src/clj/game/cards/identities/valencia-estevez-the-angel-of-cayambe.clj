@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-valencia-estevez-the-angel-of-cayambe
+(def card-definitions-identities-valencia-estevez-the-angel-of-cayambe
   {"Valencia Estevez: The Angel of Cayambe"
    {:events {:pre-start-game
              {:req (req (and (= side :runner)

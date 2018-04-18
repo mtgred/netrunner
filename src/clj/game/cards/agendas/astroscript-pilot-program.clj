@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-astroscript-pilot-program
+(def card-definitions-agendas-astroscript-pilot-program
   {"AstroScript Pilot Program"
    {:effect (effect (add-counter card :agenda 1))
     :silent (req true)

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-rubicon-switch
+(def card-definitions-hardware-rubicon-switch
   {"Rubicon Switch"
    {:abilities [{:cost [:click 1]
                  :once :per-turn

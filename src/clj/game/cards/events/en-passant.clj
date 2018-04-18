@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-en-passant
+(def card-definitions-events-en-passant
   {"En Passant"
    {:req (req (:successful-run runner-reg))
     :effect (req (let [runtgt (first (flatten (turn-events state side :run)))

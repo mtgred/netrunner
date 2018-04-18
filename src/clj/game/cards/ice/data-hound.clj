@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-data-hound
+(def card-definitions-ice-data-hound
   {"Data Hound"
    (letfn [(dh-trash [cards]
              {:prompt "Choose a card to trash"

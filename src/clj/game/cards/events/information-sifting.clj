@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-information-sifting
+(def card-definitions-events-information-sifting
   {"Information Sifting"
    (letfn [(access-pile [cards pile pile-size]
              {:prompt "Choose a card to access. You must access all cards."

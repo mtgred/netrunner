@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-aumakua
+(def card-definitions-icebreakers-aumakua
   {"Aumakua"
    {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
     ; We would need a :once :per-access key to make this work for Gang Sign etc.

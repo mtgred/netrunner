@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-bacterial-programming
+(def card-definitions-agendas-bacterial-programming
   {"Bacterial Programming"
    (letfn [(hq-step [remaining to-trash to-hq]
              {:delayed-completion true

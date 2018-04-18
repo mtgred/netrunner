@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-hellion-alpha-test
+(def card-definitions-operations-hellion-alpha-test
   {"Hellion Alpha Test"
    {:req (req (last-turn? state :runner :installed-resource))
     :trace {:base 2

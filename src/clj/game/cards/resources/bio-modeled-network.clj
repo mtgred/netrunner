@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-bio-modeled-network
+(def card-definitions-resources-bio-modeled-network
   {"Bio-Modeled Network"
    {:prevent {:damage [:net]}
     :events {:pre-damage {:req (req (= target :net))

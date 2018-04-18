@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-chimera
+(def card-definitions-ice-chimera
   {"Chimera"
    (let [turn-end-ability {:effect (effect (derez :corp card)
                                            (update! (assoc (get-card state card) :subtype "Mythic")))}]

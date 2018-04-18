@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-neotokyo-grid
+(def card-definitions-upgrades-neotokyo-grid
   {"NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
              :once :per-turn

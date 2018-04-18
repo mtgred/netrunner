@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-injection-attack
+(def card-definitions-events-injection-attack
   {"Injection Attack"
    (run-event
     {:delayed-completion true}

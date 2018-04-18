@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-hard-at-work
+(def card-definitions-resources-hard-at-work
   {"Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"
                   :once :per-turn

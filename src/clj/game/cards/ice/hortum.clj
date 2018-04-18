@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-hortum
+(def card-definitions-ice-hortum
   {"Hortum"
    (letfn [(hort [n] {:prompt "Choose a card to add to HQ with Hortum"
                       :delayed-completion true

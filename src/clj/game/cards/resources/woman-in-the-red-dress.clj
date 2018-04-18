@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-woman-in-the-red-dress
+(def card-definitions-resources-woman-in-the-red-dress
   {"Woman in the Red Dress"
    (let [ability {:msg (msg "reveal " (:title (first (:deck corp))) " on the top of R&D")
                   :label "Reveal the top card of R&D (start of turn)"

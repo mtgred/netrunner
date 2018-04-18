@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-hostile-infrastructure
+(def card-definitions-assets-hostile-infrastructure
   {"Hostile Infrastructure"
    {:events {:runner-trash {:delayed-completion true
                             :req (req (some #(card-is? % :side :corp) targets))

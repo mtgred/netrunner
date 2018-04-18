@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-crypsis
+(def card-definitions-icebreakers-crypsis
   {"Crypsis"
    (auto-icebreaker ["All"]
                     {:abilities [(break-sub 1 1 "ICE" (effect (update! (assoc card :crypsis-broke true))))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-hayley-kaplan-universal-scholar
+(def card-definitions-identities-hayley-kaplan-universal-scholar
   {"Hayley Kaplan: Universal Scholar"
    {:events {:runner-install
              {:silent (req (not (and (first-event? state side :runner-install)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-the-twins
+(def card-definitions-upgrades-the-twins
   {"The Twins"
    {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"
                  :req (req (and this-server

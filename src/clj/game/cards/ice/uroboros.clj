@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-uroboros
+(def card-definitions-ice-uroboros
   {"Uroboros"
    {:subroutines [(trace-ability 4 {:label "Prevent the Runner from making another run"
                                     :msg "prevent the Runner from making another run"

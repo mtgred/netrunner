@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-wasteland
+(def card-definitions-resources-wasteland
   {"Wasteland"
    {:events {:runner-trash {:req (req (and (first-installed-trash-own? state :runner)
                                            (installed? target)

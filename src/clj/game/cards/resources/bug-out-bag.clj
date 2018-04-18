@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-bug-out-bag
+(def card-definitions-resources-bug-out-bag
   {"Bug Out Bag"
    {:prompt "How many power counters?"
     :choices :credit

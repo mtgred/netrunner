@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-severnius-stim-implant
+(def card-definitions-hardware-severnius-stim-implant
   {"Severnius Stim Implant"
    {:abilities [{:cost [:click 1]
                  :prompt "Choose a server to run with Severnius Stim Implant" :choices ["HQ" "R&D"]

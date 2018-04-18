@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-peace-in-our-time
+(def card-definitions-events-peace-in-our-time
   {"Peace in Our Time"
    {:req (req (not (:scored-agenda corp-reg)))
     :msg "gain 10 [Credits]. The Corp gains 5 [Credits]"

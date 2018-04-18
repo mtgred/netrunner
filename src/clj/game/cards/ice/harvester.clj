@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-harvester
+(def card-definitions-ice-harvester
   {"Harvester"
    {:subroutines [{:label "Runner draws 3 cards and discards down to maximum hand size"
                    :msg "make the Runner draw 3 cards and discard down to their maximum hand size"

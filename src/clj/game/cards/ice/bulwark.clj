@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-bulwark
+(def card-definitions-ice-bulwark
   {"Bulwark"
    {:effect take-bad-pub
     :abilities [{:msg "gain 2 [Credits] if there is an installed AI"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-ken-express-tenma-disappeared-clone
+(def card-definitions-identities-ken-express-tenma-disappeared-clone
   {"Ken \"Express\" Tenma: Disappeared Clone"
    {:events {:play-event {:req (req (and (has-subtype? target "Run")
                                          (empty? (filter #(has-subtype? % "Run")

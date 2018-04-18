@@ -1,5 +1,5 @@
 (in-ns 'game.core)
 
-(def card-hardware-hq-interface
+(def card-definitions-hardware-hq-interface
   {"HQ Interface"
    {:in-play [:hq-access 1]}})

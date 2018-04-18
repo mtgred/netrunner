@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-an-offer-you-cant-refuse
+(def card-definitions-operations-an-offer-you-cant-refuse
   {"An Offer You Cant Refuse"
    {:delayed-completion false
     :prompt "Choose a server" :choices ["Archives" "R&D" "HQ"]

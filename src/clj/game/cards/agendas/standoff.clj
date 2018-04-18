@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-standoff
+(def card-definitions-agendas-standoff
   {"Standoff"
    (letfn [(stand [side]
              {:delayed-completion true

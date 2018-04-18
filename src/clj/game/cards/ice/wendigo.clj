@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-wendigo
+(def card-definitions-ice-wendigo
   {"Wendigo"
    (implementation-note
      "Program prevention is not implemented"

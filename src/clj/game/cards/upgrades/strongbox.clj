@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-strongbox
+(def card-definitions-upgrades-strongbox
   {"Strongbox"
    (let [ab {:req (req (or (in-same-server? card target)
                            (from-same-server? card target)))

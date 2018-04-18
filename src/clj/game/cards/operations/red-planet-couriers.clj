@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-red-planet-couriers
+(def card-definitions-operations-red-planet-couriers
   {"Red Planet Couriers"
    {:delayed-completion true
     :req (req (some #(can-be-advanced? %) (all-installed state :corp)))

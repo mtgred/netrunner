@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-raman-rai
+(def card-definitions-assets-raman-rai
   {"Raman Rai"
    {:abilities [{:once :per-turn
                  :label "Lose [Click] and swap a card in HQ you just drew for a card in Archives"

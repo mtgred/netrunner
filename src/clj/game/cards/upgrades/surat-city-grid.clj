@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-surat-city-grid
+(def card-definitions-upgrades-surat-city-grid
   {"Surat City Grid"
    {:events
     {:rez {:req (req (and (same-server? card target)

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-election-day
+(def card-definitions-operations-election-day
   {"Election Day"
    {:req (req (->> (get-in @state [:corp :hand])
                    (filter #(not (= (:cid %) (:cid card))))

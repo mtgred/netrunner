@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-paige-piper
+(def card-definitions-resources-paige-piper
   {"Paige Piper"
    (let [pphelper (fn [title cards]
                     (let [num (count cards)]

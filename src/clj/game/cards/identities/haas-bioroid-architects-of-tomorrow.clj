@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-haas-bioroid-architects-of-tomorrow
+(def card-definitions-identities-haas-bioroid-architects-of-tomorrow
   {"Haas-Bioroid: Architects of Tomorrow"
    {:events {:pass-ice
              {:delayed-completion true

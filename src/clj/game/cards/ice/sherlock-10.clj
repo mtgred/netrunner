@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-sherlock-10
+(def card-definitions-ice-sherlock-10
   {"Sherlock 1.0"
    {:subroutines [{:label "Trace 4 - Add an installed program to the top of the Runner's Stack"
                    :trace {:base 4

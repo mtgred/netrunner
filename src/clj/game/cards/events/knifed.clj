@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-knifed
+(def card-definitions-events-knifed
   {"Knifed"
    {:implementation "Ice trash is manual"
     :prompt "Choose a server"

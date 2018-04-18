@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-reeducation
+(def card-definitions-agendas-reeducation
   {"Reeducation"
    (letfn [(corp-final [chosen original]
              {:prompt (str "The bottom cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")

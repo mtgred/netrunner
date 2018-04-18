@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-stim-dealer
+(def card-definitions-resources-stim-dealer
   {"Stim Dealer"
    {:events {:runner-turn-begins
              {:effect (req (if (>= (get-in card [:counter :power] 0) 2)

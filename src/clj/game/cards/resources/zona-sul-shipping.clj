@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-zona-sul-shipping
+(def card-definitions-resources-zona-sul-shipping
   {"Zona Sul Shipping"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :credit 1))}}
     :abilities [{:cost [:click 1]

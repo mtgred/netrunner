@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-free-lunch
+(def card-definitions-ice-free-lunch
   {"Free Lunch"
    {:abilities [(power-counter-ability {:label "Runner loses 1 [Credits]"
                                         :msg "make the Runner lose 1 [Credits]"

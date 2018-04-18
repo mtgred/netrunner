@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-vamp
+(def card-definitions-events-vamp
   {"Vamp"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))

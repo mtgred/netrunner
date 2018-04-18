@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-housekeeping
+(def card-definitions-operations-housekeeping
   {"Housekeeping"
    {:events {:runner-install {:player :runner
                               :prompt "Select a card from your Grip to trash for Housekeeping" :once :per-turn

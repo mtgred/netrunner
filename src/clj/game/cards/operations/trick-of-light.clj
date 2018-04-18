@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-trick-of-light
+(def card-definitions-operations-trick-of-light
   {"Trick of Light"
    {:choices {:req #(and (contains? % :advance-counter) (> (:advance-counter %) 0))}
     :delayed-completion true

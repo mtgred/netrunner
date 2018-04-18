@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-helium-3-deposit
+(def card-definitions-agendas-helium-3-deposit
   {"Helium-3 Deposit"
    {:interactive (req true)
     :prompt "How many power counters?"

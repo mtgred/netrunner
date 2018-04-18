@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-komainu
+(def card-definitions-ice-komainu
   {"Komainu"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (:hand runner)) " subroutines")}]

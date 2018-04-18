@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-making-an-entrance
+(def card-definitions-events-making-an-entrance
   {"Making an Entrance"
    (letfn [(entrance-trash [cards]
              {:prompt "Choose a card to trash"

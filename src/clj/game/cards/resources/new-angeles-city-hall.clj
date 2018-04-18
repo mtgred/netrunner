@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-new-angeles-city-hall
+(def card-definitions-resources-new-angeles-city-hall
   {"New Angeles City Hall"
    {:prevent {:tag [:all]}
     :events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-sea-source
+(def card-definitions-operations-sea-source
   {"SEA Source"
    {:req (req (last-turn? state :runner :successful-run))
     :trace {:base 3

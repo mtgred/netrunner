@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-the-future-perfect
+(def card-definitions-agendas-the-future-perfect
   {"The Future Perfect"
    {:flags {:rd-reveal (req true)}
     :access

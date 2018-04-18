@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-subcontract
+(def card-definitions-operations-subcontract
   {"Subcontract"
    (letfn [(sc [i sccard]
              {:prompt "Select an operation in HQ to play"

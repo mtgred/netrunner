@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-back-channels
+(def card-definitions-operations-back-channels
   {"Back Channels"
    {:prompt "Select an installed card in a server to trash"
     :choices {:req #(and (= (last (:zone %)) :content)

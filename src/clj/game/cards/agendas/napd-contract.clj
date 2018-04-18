@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-napd-contract
+(def card-definitions-agendas-napd-contract
   {"NAPD Contract"
    {:steal-cost-bonus (req [:credit 4])
     :advancement-cost-bonus (req (+ (:bad-publicity corp)

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-miraju
+(def card-definitions-ice-miraju
   {"Mirāju"
    {:abilities [{:label "Runner broke subroutine: Redirect run to Archives"
                  :msg "make the Runner continue the run on Archives. Mirāju is derezzed"

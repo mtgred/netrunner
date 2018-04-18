@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-hourglass
+(def card-definitions-ice-hourglass
   {"Hourglass"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
                    :effect runner-loses-click}]}})

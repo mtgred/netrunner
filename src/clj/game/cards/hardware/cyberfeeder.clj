@@ -1,5 +1,5 @@
 (in-ns 'game.core)
 
-(def card-hardware-cyberfeeder
+(def card-definitions-hardware-cyberfeeder
   {"Cyberfeeder"
    {:recurring 1}})

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-fetal-ai
+(def card-definitions-agendas-fetal-ai
   {"Fetal AI"
    {:flags {:rd-reveal (req true)}
     :access {:delayed-completion true

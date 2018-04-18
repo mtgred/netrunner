@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-news-team
+(def card-definitions-assets-news-team
   {"News Team"
    {:flags {:rd-reveal (req true)}
     :access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-builder
+(def card-definitions-ice-builder
   {"Builder"
    {:abilities [{:label "Move Builder to the outermost position of any server"
                  :cost [:click 1] :prompt "Choose a server" :choices (req servers)

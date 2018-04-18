@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-news-hound
+(def card-definitions-ice-news-hound
   {"News Hound"
    {:subroutines [(tag-trace 3)
                   {:label "End the run if a Current is active"

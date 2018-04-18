@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-fear-the-masses
+(def card-definitions-events-fear-the-masses
   {"Fear the Masses"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))

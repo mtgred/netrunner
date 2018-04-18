@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-forged-activation-orders
+(def card-definitions-events-forged-activation-orders
   {"Forged Activation Orders"
    {:choices {:req #(and (ice? %)
                          (not (rezzed? %)))}

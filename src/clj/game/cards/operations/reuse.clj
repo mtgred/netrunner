@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-reuse
+(def card-definitions-operations-reuse
   {"Reuse"
    {:delayed-completion true
     :effect (req (let [n (count (:hand corp))]

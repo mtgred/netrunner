@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-anansi
+(def card-definitions-ice-anansi
   {"Anansi"
    (let [corp-draw {:optional {:prompt "Draw 1 card?"
                                :yes-ability {:delayed-completion true

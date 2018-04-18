@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-bloo-moose
+(def card-definitions-resources-bloo-moose
   {"Bloo Moose"
    {:flags {:runner-phase-12 (req true)}
     :abilities [{:req (req (and (:runner-phase-12 @state)

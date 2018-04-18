@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-hivemind
+(def card-definitions-programs-hivemind
   {"Hivemind"
    {:data {:counter {:virus 1}}
     :abilities [{:req (req (> (get-in card [:counter :virus]) 0))

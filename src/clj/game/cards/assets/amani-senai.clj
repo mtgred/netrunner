@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-amani-senai
+(def card-definitions-assets-amani-senai
   {"Amani Senai"
    (let [get-last-stolen-pts (fn [state] (advancement-cost state :corp (last (get-in @state [:runner :scored]))))
          get-last-scored-pts (fn [state] (advancement-cost state :corp (last (get-in @state [:corp :scored]))))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-malia-z0l0k4
+(def card-definitions-assets-malia-z0l0k4
   {"Malia Z0L0K4"
    (let [re-enable-target (req (when-let [malia-target (:malia-target card)]
                                  (system-msg state side (str "uses "  (:title card) " to unblank "

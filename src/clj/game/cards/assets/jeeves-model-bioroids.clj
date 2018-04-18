@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-jeeves-model-bioroids
+(def card-definitions-assets-jeeves-model-bioroids
   {"Jeeves Model Bioroids"
    (let [jeeves (effect (gain :click 1))
          ability {:label "Gain [Click]"

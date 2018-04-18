@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-new-angeles-sol-your-news
+(def card-definitions-identities-new-angeles-sol-your-news
   {"New Angeles Sol: Your News"
    (let [nasol {:optional
                 {:prompt "Play a Current?" :player :corp

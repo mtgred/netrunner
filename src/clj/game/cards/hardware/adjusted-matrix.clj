@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-adjusted-matrix
+(def card-definitions-hardware-adjusted-matrix
   {"Adjusted Matrix"
    {:implementation "Click Adjusted Matrix to use ability."
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))

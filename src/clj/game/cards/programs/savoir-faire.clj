@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-savoir-faire
+(def card-definitions-programs-savoir-faire
   {"Savoir-faire"
    {:abilities [{:cost [:credit 2]
                  :once :per-turn

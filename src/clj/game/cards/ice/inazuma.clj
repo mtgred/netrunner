@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-inazuma
+(def card-definitions-ice-inazuma
   {"Inazuma"
    {:abilities [{:msg "prevent the Runner from breaking subroutines on the next piece of ICE they encounter this run"}
                 {:msg "prevent the Runner from jacking out until after the next piece of ICE"

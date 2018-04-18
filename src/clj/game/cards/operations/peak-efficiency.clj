@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-peak-efficiency
+(def card-definitions-operations-peak-efficiency
   {"Peak Efficiency"
    {:msg (msg "gain " (reduce (fn [c server]
                                 (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))

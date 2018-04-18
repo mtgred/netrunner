@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-hasty-relocation
+(def card-definitions-operations-hasty-relocation
   {"Hasty Relocation"
    (letfn [(hr-final [chosen original]
              {:prompt (str "The top cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")

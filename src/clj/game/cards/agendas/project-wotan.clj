@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-project-wotan
+(def card-definitions-agendas-project-wotan
   {"Project Wotan"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))

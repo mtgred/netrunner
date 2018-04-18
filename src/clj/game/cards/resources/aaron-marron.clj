@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-aaron-marron
+(def card-definitions-resources-aaron-marron
   {"Aaron Marrón"
    (let [am {:effect (effect (add-counter card :power 2)
                              (system-msg :runner (str "places 2 power counters on Aaron Marrón")))}]

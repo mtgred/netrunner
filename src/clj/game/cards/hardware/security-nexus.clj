@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-security-nexus
+(def card-definitions-hardware-security-nexus
   {"Security Nexus"
    {:in-play [:memory 1 :link 1]
     :abilities [{:req (req (:run @state))

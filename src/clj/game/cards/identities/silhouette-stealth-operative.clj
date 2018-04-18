@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-silhouette-stealth-operative
+(def card-definitions-identities-silhouette-stealth-operative
   {"Silhouette: Stealth Operative"
    {:events {:successful-run
              {:interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))

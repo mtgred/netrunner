@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-mark-yale
+(def card-definitions-assets-mark-yale
   {"Mark Yale"
    {:events {:agenda-counter-spent {:effect (effect (gain :credit 1))
                                     :msg "gain 1 [Credits]"}}

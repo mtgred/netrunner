@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-observe-and-destroy
+(def card-definitions-operations-observe-and-destroy
   {"Observe and Destroy"
    {:additional-cost [:tag 1]
     :req (req (and (pos? (:tag runner))

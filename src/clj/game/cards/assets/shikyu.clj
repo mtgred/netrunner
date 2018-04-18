@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-shikyu
+(def card-definitions-assets-shikyu
   {"Shi.Kyū"
    {:access
     {:delayed-completion true

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-transparency-initiative
+(def card-definitions-operations-transparency-initiative
   {"Transparency Initiative"
    {:choices {:req #(and (is-type? % "Agenda")
                          (installed? %)

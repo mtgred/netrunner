@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-lockdown
+(def card-definitions-ice-lockdown
   {"Lockdown"
    {:subroutines [{:label "The Runner cannot draw cards for the remainder of this turn"
                    :msg "prevent the Runner from drawing cards" :effect (effect (prevent-draw))}]}})

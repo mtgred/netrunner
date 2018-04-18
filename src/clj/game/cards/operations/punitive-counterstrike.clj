@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-punitive-counterstrike
+(def card-definitions-operations-punitive-counterstrike
   {"Punitive Counterstrike"
    {:trace {:base 5
             :delayed-completion true

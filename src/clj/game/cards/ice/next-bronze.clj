@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-next-bronze
+(def card-definitions-ice-next-bronze
   {"NEXT Bronze"
    {:subroutines [end-the-run]
     :strength-bonus (req (next-ice-count corp))

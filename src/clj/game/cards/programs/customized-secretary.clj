@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-customized-secretary
+(def card-definitions-programs-customized-secretary
   {"Customized Secretary"
    (letfn [(custsec-host [cards]
              {:prompt "Choose a program to host on Customized Secretary"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-red-herrings
+(def card-definitions-upgrades-red-herrings
   {"Red Herrings"
    (let [ab {:req (req (or (in-same-server? card target)
                            (from-same-server? card target)))

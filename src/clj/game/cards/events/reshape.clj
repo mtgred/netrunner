@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-reshape
+(def card-definitions-events-reshape
   {"Reshape"
    {:prompt "Select two non-rezzed ICE to swap positions"
     :choices {:req #(and (installed? %) (not (rezzed? %)) (ice? %)) :max 2}

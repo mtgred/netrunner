@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-enforcer-10
+(def card-definitions-ice-enforcer-10
   {"Enforcer 1.0"
    {:additional-cost [:forfeit]
     :subroutines [trash-program

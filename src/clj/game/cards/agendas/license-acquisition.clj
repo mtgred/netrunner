@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-license-acquisition
+(def card-definitions-agendas-license-acquisition
   {"License Acquisition"
    {:interactive (req true)
     :prompt "Select an asset or upgrade to install from Archives or HQ"

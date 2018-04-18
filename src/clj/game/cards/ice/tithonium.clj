@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-tithonium
+(def card-definitions-ice-tithonium
   {"Tithonium"
    {:alternative-cost [:forfeit]
     :implementation "Does not handle UFAQ for Pawn or Blackguard interaction"

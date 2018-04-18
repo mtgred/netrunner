@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-scavenge
+(def card-definitions-events-scavenge
   {"Scavenge"
    {:prompt "Select an installed program to trash"
     :choices {:req #(and (is-type? % "Program")

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-titanium-ribs
+(def card-definitions-hardware-titanium-ribs
   {"Titanium Ribs"
    {:events
     {:pre-resolve-damage

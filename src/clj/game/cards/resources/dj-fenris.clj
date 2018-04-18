@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-dj-fenris
+(def card-definitions-resources-dj-fenris
   {"DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
          can-host? (fn [runner c] (and (is-type? c "Identity")

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-market-forces
+(def card-definitions-operations-market-forces
   {"Market Forces"
    (letfn [(credit-diff [runner]
              (min (* 3 (:tag runner))

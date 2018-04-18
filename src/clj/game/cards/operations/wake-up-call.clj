@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-wake-up-call
+(def card-definitions-operations-wake-up-call
   {"Wake Up Call"
    {:req (req (last-turn? state :runner :trashed-card))
     :prompt "Select a piece of hardware or non-virtual resource"

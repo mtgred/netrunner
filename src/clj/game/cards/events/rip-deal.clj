@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-rip-deal
+(def card-definitions-events-rip-deal
   {"Rip Deal"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-service-outage
+(def card-definitions-operations-service-outage
   {"Service Outage"
    (letfn [(so-activated [state]
              (get-in @state [:corp :register :so-activated] false))

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-eli-20
+(def card-definitions-ice-eli-20
   {"Eli 2.0"
    {:subroutines [{:msg "draw 1 card" :effect (effect (draw))}
                   end-the-run]

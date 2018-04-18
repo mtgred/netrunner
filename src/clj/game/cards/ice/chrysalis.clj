@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-chrysalis
+(def card-definitions-ice-chrysalis
   {"Chrysalis"
    {:flags {:rd-reveal (req true)}
     :subroutines [(do-net-damage 2)]

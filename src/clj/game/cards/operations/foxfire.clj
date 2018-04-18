@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-foxfire
+(def card-definitions-operations-foxfire
   {"Foxfire"
    {:trace {:base 7
             :prompt "Select 1 card to trash"

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-spinal-modem
+(def card-definitions-hardware-spinal-modem
   {"Spinal Modem"
    {:in-play [:memory 1]
     :recurring 2

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-officer-frank
+(def card-definitions-resources-officer-frank
   {"Officer Frank"
    {:abilities [{:cost [:credit 1]
                  :req (req (some #(= :meat %) (map first (turn-events state :runner :damage))))

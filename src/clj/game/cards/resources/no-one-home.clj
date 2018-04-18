@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-no-one-home
+(def card-definitions-resources-no-one-home
   {"No One Home"
    (letfn [(start-trace [type]
              (let [message (str "avoid any " (if (= type :net) "amount of net damage" "number of tags"))]

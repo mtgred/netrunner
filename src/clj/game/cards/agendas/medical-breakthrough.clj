@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-medical-breakthrough
+(def card-definitions-agendas-medical-breakthrough
   {"Medical Breakthrough"
    {:silent (req true)
     :effect (effect (update-all-advancement-costs))

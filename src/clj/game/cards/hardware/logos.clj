@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-logos
+(def card-definitions-hardware-logos
   {"Logos"
    {:in-play [:memory 1 :hand-size-modification 1]
     :events {:agenda-scored

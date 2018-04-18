@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-wari
+(def card-definitions-programs-wari
   {"Wari"
    (letfn [(prompt-for-subtype []
              {:prompt "Choose a subtype"

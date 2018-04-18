@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-recon-drone
+(def card-definitions-hardware-recon-drone
   {"Recon Drone"
    ; eventmap uses reverse so we get the most recent event of each kind into map
    (let [eventmap (fn [s] (into {} (reverse (get s :turn-events))))]

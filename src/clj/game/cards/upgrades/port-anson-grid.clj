@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-port-anson-grid
+(def card-definitions-upgrades-port-anson-grid
   {"Port Anson Grid"
    {:msg "prevent the Runner from jacking out unless they trash an installed program"
     :effect (req (when this-server

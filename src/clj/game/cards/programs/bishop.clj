@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-bishop
+(def card-definitions-programs-bishop
   {"Bishop"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [b (get-card state card)

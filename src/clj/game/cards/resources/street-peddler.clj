@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-street-peddler
+(def card-definitions-resources-street-peddler
   {"Street Peddler"
    {:interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
     :effect (req (doseq [c (take 3 (:deck runner))]

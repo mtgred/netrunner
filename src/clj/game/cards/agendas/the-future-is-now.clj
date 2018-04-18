@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-the-future-is-now
+(def card-definitions-agendas-the-future-is-now
   {"The Future is Now"
    {:interactive (req true)
     :prompt "Choose a card to add to HQ"

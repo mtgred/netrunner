@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-loki
+(def card-definitions-ice-loki
   {"Loki"
    {:implementation "Encounter effects not implemented"
     :subroutines [{:label "End the run unless the Runner shuffles their Grip into the Stack"

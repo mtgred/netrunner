@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-jua
+(def card-definitions-ice-jua
   {"Jua"
    {:implementation "Encounter effect is manual"
     :abilities [{:msg "prevent the Runner from installing cards for the rest of the turn"

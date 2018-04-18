@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-bad-times
+(def card-definitions-operations-bad-times
   {"Bad Times"
    {:implementation "Any required program trashing is manual"
     :req (req tagged)

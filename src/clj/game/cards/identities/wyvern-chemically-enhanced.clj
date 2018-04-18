@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-wyvern-chemically-enhanced
+(def card-definitions-identities-wyvern-chemically-enhanced
   {"Wyvern: Chemically Enhanced"
    {:events {:pre-start-game {:effect draft-points-target}
              :runner-trash {:req (req (and (has-most-faction? state :runner "Anarch")

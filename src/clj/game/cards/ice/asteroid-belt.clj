@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-asteroid-belt
+(def card-definitions-ice-asteroid-belt
   {"Asteroid Belt"
    (space-ice end-the-run)})

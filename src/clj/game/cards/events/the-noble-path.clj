@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-the-noble-path
+(def card-definitions-events-the-noble-path
   {"The Noble Path"
    {:effect (req (doseq [c (:hand runner)]
                    (trash state side c))

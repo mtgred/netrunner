@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-nightdancer
+(def card-definitions-ice-nightdancer
   {"Nightdancer"
    {:subroutines [{:label "The Runner loses [Click], if able. You have an additional [Click] to spend during your next turn."
                    :msg "force the runner to lose a [Click], if able. Corp gains an additional [Click] to spend during their next turn"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-signal-jamming
+(def card-definitions-upgrades-signal-jamming
   {"Signal Jamming"
    {:abilities [{:label "[Trash]: Cards cannot be installed until the end of the run"
                  :msg (msg "prevent cards being installed until the end of the run")

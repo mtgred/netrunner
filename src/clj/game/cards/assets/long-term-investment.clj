@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-long-term-investment
+(def card-definitions-assets-long-term-investment
   {"Long-Term Investment"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :abilities [{:label "Move any number of [Credits] to your credit pool"

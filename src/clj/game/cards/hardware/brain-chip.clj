@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-brain-chip
+(def card-definitions-hardware-brain-chip
   {"Brain Chip"
    (let [runner-points (fn [s] (max (get-in s [:runner :agenda-point] 0) 0))]
      {:effect (req (gain state :runner

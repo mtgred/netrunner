@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-clyde-van-rite
+(def card-definitions-assets-clyde-van-rite
   {"Clyde Van Rite"
    (let [ability {:prompt "Pay 1 [Credits] or trash the top card of the Stack"
                   :once :per-turn

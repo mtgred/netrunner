@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-ar-enhanced-security
+(def card-definitions-agendas-ar-enhanced-security
   {"AR-Enhanced Security"
    {:events {:runner-trash {:once :per-turn
                             :delayed-completion true

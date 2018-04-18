@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-errand-boy
+(def card-definitions-ice-errand-boy
   {"Errand Boy"
    {:subroutines [(gain-credits 1)
                   {:msg "draw 1 card" :effect (effect (draw))}]}})

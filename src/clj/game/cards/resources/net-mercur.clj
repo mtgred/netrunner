@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-net-mercur
+(def card-definitions-resources-net-mercur
   {"Net Mercur"
    {:abilities [{:counter-cost [:credit 1]
                  :msg "gain 1 [Credits]"

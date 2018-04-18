@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-the-all-seeing-i
+(def card-definitions-operations-the-all-seeing-i
   {"The All-Seeing I"
    (let [trash-all-resources {:player :runner
                               :effect (req (trash-cards state side (get-in runner  [:rig :resource])))

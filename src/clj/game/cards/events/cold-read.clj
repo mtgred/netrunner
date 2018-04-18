@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-cold-read
+(def card-definitions-events-cold-read
   {"Cold Read"
    (let [end-effect {:prompt "Choose a program that was used during the run to trash "
                      :choices {:req #(card-is? % :type "Program")}

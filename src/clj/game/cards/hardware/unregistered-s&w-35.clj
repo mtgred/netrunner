@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-unregistered-s&w-35
+(def card-definitions-hardware-unregistered-s&w-35
   {"Unregistered S&W 35"
    {:abilities
     [{:cost [:click 2]

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-marilyn-campaign
+(def card-definitions-assets-marilyn-campaign
   {"Marilyn Campaign"
    (let [ability {:msg "gain 2 [Credits]"
                   :counter-cost [:credit 2]

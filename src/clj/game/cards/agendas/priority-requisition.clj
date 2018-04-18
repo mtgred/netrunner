@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-priority-requisition
+(def card-definitions-agendas-priority-requisition
   {"Priority Requisition"
    {:interactive (req true)
     :choices {:req #(and (ice? %)

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-enforcing-loyalty
+(def card-definitions-operations-enforcing-loyalty
   {"Enforcing Loyalty"
    {:trace {:base 3
             :label "Trash a card not matching the faction of the Runner's identity"

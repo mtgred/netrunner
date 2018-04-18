@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-genetic-resequencing
+(def card-definitions-agendas-genetic-resequencing
   {"Genetic Resequencing"
    {:choices {:req #(= (last (:zone %)) :scored)}
     :msg (msg "add 1 agenda counter on " (:title target))

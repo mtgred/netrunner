@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-net-ready-eyes
+(def card-definitions-hardware-net-ready-eyes
   {"Net-Ready Eyes"
    {:effect (effect (damage eid :meat 2 {:unboostable true :card card})) :msg "suffer 2 meat damage"
     :events {:run {:choices {:req #(and (installed? %)

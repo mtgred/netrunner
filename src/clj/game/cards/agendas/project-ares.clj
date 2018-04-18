@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-project-ares
+(def card-definitions-agendas-project-ares
   {"Project Ares"
    (letfn [(trash-count-str [card]
              (quantify (- (:advance-counter card) 4) "installed card"))]

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-high-profile-target
+(def card-definitions-operations-high-profile-target
   {"High-Profile Target"
    (letfn [(dmg-count [runner]
              (* 2 (:tag runner)))]

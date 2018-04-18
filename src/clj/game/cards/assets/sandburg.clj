@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-sandburg
+(def card-definitions-assets-sandburg
   {"Sandburg"
    {:effect (req (add-watch state :sandburg
                             (fn [k ref old new]

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-o2-shortage
+(def card-definitions-operations-o2-shortage
   {"O₂ Shortage"
    {:delayed-completion true
     :effect (req (if (empty? (:hand runner))

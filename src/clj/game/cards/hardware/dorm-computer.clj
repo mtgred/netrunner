@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-dorm-computer
+(def card-definitions-hardware-dorm-computer
   {"Dorm Computer"
    {:data {:counter {:power 4}}
     :abilities [{:counter-cost [:power 1]

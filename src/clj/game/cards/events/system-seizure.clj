@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-system-seizure
+(def card-definitions-events-system-seizure
   {"System Seizure"
    (let [ss {:effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]
      {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))

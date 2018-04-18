@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-maxx-maximum-punk-rock
+(def card-definitions-identities-maxx-maximum-punk-rock
   {"MaxX: Maximum Punk Rock"
    (let [ability {:msg (msg (let [deck (:deck runner)]
                               (if (pos? (count deck))

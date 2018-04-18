@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-employee-strike
+(def card-definitions-events-employee-strike
   {"Employee Strike"
    {:msg "disable the Corp's identity"
     :disable-id true

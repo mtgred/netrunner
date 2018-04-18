@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-leave-no-trace
+(def card-definitions-events-leave-no-trace
   {"Leave No Trace"
    (letfn [(get-rezzed-cids [ice]
              (map :cid (filter #(and (rezzed? %) (is-type? % "ICE")) ice)))]

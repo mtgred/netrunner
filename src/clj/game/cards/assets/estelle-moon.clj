@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-estelle-moon
+(def card-definitions-assets-estelle-moon
   {"Estelle Moon"
    {:events {:corp-install {:req (req (and (#{"Asset" "Agenda" "Upgrade"} (:type target))
                                            (is-remote? (second (:zone target)))))

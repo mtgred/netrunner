@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-oduduwa
+(def card-definitions-ice-oduduwa
   {"Oduduwa"
    {:implementation "Encounter effect is manual"
     :abilities [{:label "Place 1 advancement counter on Oduduwa"

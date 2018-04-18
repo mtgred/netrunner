@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-exchange-of-information
+(def card-definitions-operations-exchange-of-information
   {"Exchange of Information"
    {:req (req (and tagged
                    (seq (:scored runner))

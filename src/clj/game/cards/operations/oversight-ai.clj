@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-oversight-ai
+(def card-definitions-operations-oversight-ai
   {"Oversight AI"
    {:implementation "Trashing ICE is manual"
     :choices {:req #(and (ice? %) (not (rezzed? %)) (= (last (:zone %)) :ices))}

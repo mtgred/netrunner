@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-tapwrm
+(def card-definitions-programs-tapwrm
   {"Tapwrm"
    (let [ability {:label "Gain [Credits] (start of turn)"
                   :msg (msg "gain " (quot (:credit corp) 5) " [Credits]")

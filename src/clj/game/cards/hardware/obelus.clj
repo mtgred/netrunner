@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-obelus
+(def card-definitions-hardware-obelus
   {"Obelus"
    {:in-play [:memory 1]
     :effect (req (gain state :runner :hand-size-modification (:tag runner))

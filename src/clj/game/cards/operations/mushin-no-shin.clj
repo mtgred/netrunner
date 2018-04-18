@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-mushin-no-shin
+(def card-definitions-operations-mushin-no-shin
   {"Mushin No Shin"
    {:prompt "Select a card to install from HQ"
     :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))

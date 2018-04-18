@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-cobra
+(def card-definitions-ice-cobra
   {"Cobra"
    {:subroutines [trash-program (do-net-damage 2)]}})

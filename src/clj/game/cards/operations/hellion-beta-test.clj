@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-hellion-beta-test
+(def card-definitions-operations-hellion-beta-test
   {"Hellion Beta Test"
    {:req (req (last-turn? state :runner :trashed-card))
     :trace {:base 2

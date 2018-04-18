@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-next-wave-2
+(def card-definitions-agendas-next-wave-2
   {"NEXT Wave 2"
    {:delayed-completion true
     :not-when-scored true

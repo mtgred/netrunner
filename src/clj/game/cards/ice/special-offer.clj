@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-special-offer
+(def card-definitions-ice-special-offer
   {"Special Offer"
    {:subroutines [{:label "Gain 5 [Credits] and trash Special Offer"
                    :effect (req (gain state :corp :credit 5)

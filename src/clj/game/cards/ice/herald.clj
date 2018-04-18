@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-herald
+(def card-definitions-ice-herald
   {"Herald"
    {:flags {:rd-reveal (req true)}
     :subroutines [(gain-credits 2)

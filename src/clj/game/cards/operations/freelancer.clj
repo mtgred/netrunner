@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-freelancer
+(def card-definitions-operations-freelancer
   {"Freelancer"
    {:req (req tagged)
     :msg (msg "trash " (join ", " (map :title (sort-by :title targets))))

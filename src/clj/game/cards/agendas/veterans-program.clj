@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-veterans-program
+(def card-definitions-agendas-veterans-program
   {"Veterans Program"
    {:interactive (req true)
     :msg "lose 2 bad publicity"

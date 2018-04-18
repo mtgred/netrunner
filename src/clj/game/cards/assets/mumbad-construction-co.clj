@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-mumbad-construction-co
+(def card-definitions-assets-mumbad-construction-co
   {"Mumbad Construction Co."
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}}

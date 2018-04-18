@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-dedicated-processor
+(def card-definitions-hardware-dedicated-processor
   {"Dedicated Processor"
    {:implementation "Click Dedicated Processor to use ability"
     :req (req (not-empty (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))))

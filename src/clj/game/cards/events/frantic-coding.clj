@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-frantic-coding
+(def card-definitions-events-frantic-coding
   {"Frantic Coding"
    {:delayed-completion true
     :events {:runner-shuffle-deck nil}

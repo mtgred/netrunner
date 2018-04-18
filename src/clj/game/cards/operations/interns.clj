@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-interns
+(def card-definitions-operations-interns
   {"Interns"
    {:prompt "Select a card to install from Archives or HQ"
     :show-discard true

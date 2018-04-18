@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-restructured-datapool
+(def card-definitions-agendas-restructured-datapool
   {"Restructured Datapool"
    {:abilities [{:cost [:click 1]
                  :trace {:base 2

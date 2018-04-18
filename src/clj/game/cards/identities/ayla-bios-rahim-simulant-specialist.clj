@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-ayla-bios-rahim-simulant-specialist
+(def card-definitions-identities-ayla-bios-rahim-simulant-specialist
   {"Ayla \"Bios\" Rahim: Simulant Specialist"
    {:abilities [{:label "[:click] Add 1 card from NVRAM to your grip"
                  :cost [:click 1]

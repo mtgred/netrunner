@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-sso-industries-fueling-innovation
+(def card-definitions-identities-sso-industries-fueling-innovation
   {"SSO Industries: Fueling Innovation"
    (letfn [(installed-faceup-agendas [state]
              (->> (all-installed state :corp)

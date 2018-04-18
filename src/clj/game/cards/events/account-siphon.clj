@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-account-siphon
+(def card-definitions-events-account-siphon
   {"Account Siphon"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))

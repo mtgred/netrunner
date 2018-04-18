@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-maya
+(def card-definitions-hardware-maya
   {"Maya"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-marker
+(def card-definitions-ice-marker
   {"Marker"
    {:subroutines [{:label "Give the next ICE encountered \"End the run\" for the remainder of the run"
                    :msg (msg "give the next ICE encountered \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run")}]}})

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-successful-field-test
+(def card-definitions-agendas-successful-field-test
   {"Successful Field Test"
    (letfn [(sft [n max] {:prompt "Select a card in HQ to install with Successful Field Test"
                          :priority -1

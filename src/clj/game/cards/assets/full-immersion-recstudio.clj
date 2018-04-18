@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-full-immersion-recstudio
+(def card-definitions-assets-full-immersion-recstudio
   {"Full Immersion RecStudio"
    {:can-host (req (and (or (is-type? target "Asset") (is-type? target "Agenda"))
                         (> 2 (count (:hosted card)))))

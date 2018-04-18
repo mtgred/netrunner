@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-political-operative
+(def card-definitions-resources-political-operative
   {"Political Operative"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
     :abilities [{:prompt "Select a rezzed card with a trash cost"

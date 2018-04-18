@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-tennin-institute-the-secrets-within
+(def card-definitions-identities-tennin-institute-the-secrets-within
   {"Tennin Institute: The Secrets Within"
    {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                      (not-last-turn? state :runner :successful-run)))}

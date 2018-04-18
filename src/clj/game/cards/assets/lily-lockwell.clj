@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-lily-lockwell
+(def card-definitions-assets-lily-lockwell
   {"Lily Lockwell"
    {:delayed-completion true
     :effect (effect (draw eid 3 nil))

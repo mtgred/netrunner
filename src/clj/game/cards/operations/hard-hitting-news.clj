@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-hard-hitting-news
+(def card-definitions-operations-hard-hitting-news
   {"Hard-Hitting News"
    {:req (req (last-turn? state :runner :made-run))
     :trace {:base 4

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-diwan
+(def card-definitions-programs-diwan
   {"Diwan"
    {:prompt "Choose the server that this copy of Diwan is targeting:"
     :choices (req servers)

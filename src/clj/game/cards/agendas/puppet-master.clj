@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-puppet-master
+(def card-definitions-agendas-puppet-master
   {"Puppet Master"
    {:events {:successful-run
              {:interactive (req true)

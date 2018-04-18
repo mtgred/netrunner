@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-dedication-ceremony
+(def card-definitions-operations-dedication-ceremony
   {"Dedication Ceremony"
    {:prompt "Select a faceup card"
     :choices {:req #(or (and (card-is? % :side :corp)

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-ice-wall
+(def card-definitions-ice-ice-wall
   {"Ice Wall"
    {:advanceable :always
     :subroutines [end-the-run]

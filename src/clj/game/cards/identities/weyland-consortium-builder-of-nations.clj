@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-weyland-consortium-builder-of-nations
+(def card-definitions-identities-weyland-consortium-builder-of-nations
   {"Weyland Consortium: Builder of Nations"
    {:implementation "Damage triggered manually"
     :abilities [{:label "Do 1 meat damage"

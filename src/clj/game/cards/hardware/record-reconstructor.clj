@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-record-reconstructor
+(def card-definitions-hardware-record-reconstructor
   {"Record Reconstructor"
    {:events
     {:successful-run

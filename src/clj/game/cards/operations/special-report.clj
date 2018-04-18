@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-special-report
+(def card-definitions-operations-special-report
   {"Special Report"
    {:prompt "Select any number of cards in HQ to shuffle into R&D"
     :choices {:max (req (count (:hand corp)))

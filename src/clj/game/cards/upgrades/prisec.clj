@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-prisec
+(def card-definitions-upgrades-prisec
   {"Prisec"
    {:access {:req (req (installed? card))
              :delayed-completion true

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-syn-attack
+(def card-definitions-events-syn-attack
   {"SYN Attack"
    {:effect (req (if (< (count (:hand corp)) 2)
                    (draw state :corp 4)

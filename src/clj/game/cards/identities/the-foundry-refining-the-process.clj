@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-the-foundry-refining-the-process
+(def card-definitions-identities-the-foundry-refining-the-process
   {"The Foundry: Refining the Process"
    {:events
     {:rez {:req (req (and (ice? target) ;; Did you rez and ice just now

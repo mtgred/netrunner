@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-metamorph
+(def card-definitions-ice-metamorph
   {"Metamorph"
    {:subroutines [{:label "Swap two ICE or swap two installed non-ICE"
                    :msg "swap two ICE or swap two installed non-ICE"

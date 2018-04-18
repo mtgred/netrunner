@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-keros-mcintyre
+(def card-definitions-resources-keros-mcintyre
   {"Keros Mcintyre"
    {:events
     {:derez

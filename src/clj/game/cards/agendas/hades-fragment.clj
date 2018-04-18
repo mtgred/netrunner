@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-hades-fragment
+(def card-definitions-agendas-hades-fragment
   {"Hades Fragment"
    {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard]))
                                      (is-scored? state :corp card)))}

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-efficiency-committee
+(def card-definitions-agendas-efficiency-committee
   {"Efficiency Committee"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))

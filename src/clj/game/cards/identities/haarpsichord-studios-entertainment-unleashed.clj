@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-haarpsichord-studios-entertainment-unleashed
+(def card-definitions-identities-haarpsichord-studios-entertainment-unleashed
   {"Haarpsichord Studios: Entertainment Unleashed"
    (let [haarp (fn [state side card]
                  (if (is-type? card "Agenda")

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-globalsec-security-clearance
+(def card-definitions-resources-globalsec-security-clearance
   {"Globalsec Security Clearance"
    {:req (req (> (:link runner) 1))
     :flags {:runner-phase-12 (req true)}

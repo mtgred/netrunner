@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-kitsune
+(def card-definitions-ice-kitsune
   {"Kitsune"
    {:subroutines [{:prompt "Select a card in HQ to force access"
                    :choices {:req in-hand?}

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-ultraviolet-clearance
+(def card-definitions-operations-ultraviolet-clearance
   {"Ultraviolet Clearance"
    {:delayed-completion true
     :effect (req (gain state side :credit 10)

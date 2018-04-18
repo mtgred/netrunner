@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-satellite-grid
+(def card-definitions-upgrades-satellite-grid
   {"Satellite Grid"
    {:effect (req (doseq [c (:ices (card->server state card))]
                    (set-prop state side c :extra-advance-counter 1))

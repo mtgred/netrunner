@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-lab-dog
+(def card-definitions-ice-lab-dog
   {"Lab Dog"
    {:subroutines [(assoc trash-hardware :label "Force the Runner to trash an installed piece of hardware"
                                         :player :runner

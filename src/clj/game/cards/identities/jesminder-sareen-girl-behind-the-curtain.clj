@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-jesminder-sareen-girl-behind-the-curtain
+(def card-definitions-identities-jesminder-sareen-girl-behind-the-curtain
   {"Jesminder Sareen: Girl Behind the Curtain"
    {:events {:pre-tag {:once :per-run
                        :req (req (:run @state))

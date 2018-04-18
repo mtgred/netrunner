@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-the-personal-touch
+(def card-definitions-hardware-the-personal-touch
   {"The Personal Touch"
    {:hosting {:req #(and (has-subtype? % "Icebreaker")
                          (installed? %))}

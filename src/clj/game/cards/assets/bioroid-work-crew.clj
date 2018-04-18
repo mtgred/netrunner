@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-bioroid-work-crew
+(def card-definitions-assets-bioroid-work-crew
   {"Bioroid Work Crew"
    {:implementation "Timing restriction of ability use not enforced"
     :abilities [{:label "[Trash]: Install 1 card, paying all costs"

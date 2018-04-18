@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-blackmail
+(def card-definitions-events-blackmail
   {"Blackmail"
    (run-event
     {:req (req has-bad-pub)

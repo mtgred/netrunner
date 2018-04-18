@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-comet
+(def card-definitions-hardware-comet
   {"Comet"
    {:in-play [:memory 1]
     :events {:play-event {:req (req (first-event? state side :play-event))

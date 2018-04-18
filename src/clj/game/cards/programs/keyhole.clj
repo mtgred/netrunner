@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-keyhole
+(def card-definitions-programs-keyhole
   {"Keyhole"
    {:abilities [{:cost [:click 1]
                  :msg "make a run on R&D"

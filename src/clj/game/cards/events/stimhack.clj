@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-stimhack
+(def card-definitions-events-stimhack
   {"Stimhack"
    (run-event
     nil

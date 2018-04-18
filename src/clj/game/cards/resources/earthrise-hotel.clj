@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-earthrise-hotel
+(def card-definitions-resources-earthrise-hotel
   {"Earthrise Hotel"
    (let [ability {:msg "draw 2 cards"
                   :once :per-turn

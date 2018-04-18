@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-temujin-contract
+(def card-definitions-resources-temujin-contract
   {"Temüjin Contract"
    {:data {:counter {:credit 20}}
     :prompt "Choose a server for Temüjin Contract" :choices (req servers)

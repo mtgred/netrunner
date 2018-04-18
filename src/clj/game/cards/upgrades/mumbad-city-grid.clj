@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-mumbad-city-grid
+(def card-definitions-upgrades-mumbad-city-grid
   {"Mumbad City Grid"
    {:abilities [{:req (req this-server)
                  :label "Swap the ICE just passed with another piece of ICE protecting this server"

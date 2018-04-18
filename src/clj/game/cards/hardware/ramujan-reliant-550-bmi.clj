@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-ramujan-reliant-550-bmi
+(def card-definitions-hardware-ramujan-reliant-550-bmi
   {"Ramujan-reliant 550 BMI"
    {:prevent {:damage [:net :brain]}
     :abilities [{:req (req (not-empty (:deck runner)))

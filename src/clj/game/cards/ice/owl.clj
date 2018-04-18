@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-owl
+(def card-definitions-ice-owl
   {"Owl"
    {:subroutines [{:choices {:req #(and (installed? %)
                                         (is-type? % "Program"))}

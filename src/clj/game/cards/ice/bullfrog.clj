@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-bullfrog
+(def card-definitions-ice-bullfrog
   {"Bullfrog"
    {:subroutines [(do-psi {:label "Move Bullfrog to another server"
                            :player :corp

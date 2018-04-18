@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-spooned
+(def card-definitions-events-spooned
   {"Spooned"
    {:implementation "Ice trash is manual"
     :prompt "Choose a server"

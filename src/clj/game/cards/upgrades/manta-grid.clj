@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-manta-grid
+(def card-definitions-upgrades-manta-grid
   {"Manta Grid"
    {:events {:successful-run-ends
              {:msg "gain a [Click] next turn"

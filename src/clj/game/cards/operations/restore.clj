@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-restore
+(def card-definitions-operations-restore
   {"Restore"
    {:delayed-completion true
     :effect (effect (continue-ability {:prompt "Select a card in Archives to install & rez with Restore"

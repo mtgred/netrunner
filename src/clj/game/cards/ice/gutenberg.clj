@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-gutenberg
+(def card-definitions-ice-gutenberg
   {"Gutenberg"
    {:subroutines [(tag-trace 7)]
     :strength-bonus (req (if (= (second (:zone card)) :rd) 3 0))}})

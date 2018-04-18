@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-indexing
+(def card-definitions-events-indexing
   {"Indexing"
    {:req (req rd-runnable)
     :delayed-completion true

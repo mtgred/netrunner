@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-shattered-remains
+(def card-definitions-assets-shattered-remains
   {"Shattered Remains"
    (advance-ambush 1 {:delayed-completion true
                       :effect (req (let [shat (get-card state card)]

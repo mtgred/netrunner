@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-heritage-committee
+(def card-definitions-operations-heritage-committee
   {"Heritage Committee"
    {:delayed-completion true
     :effect (req (when-completed (draw state side 3 nil)

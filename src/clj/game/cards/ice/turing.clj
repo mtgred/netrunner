@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-turing
+(def card-definitions-ice-turing
   {"Turing"
    {:implementation "AI restriction not implemented"
     :subroutines [end-the-run]

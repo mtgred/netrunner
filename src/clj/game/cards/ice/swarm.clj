@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-swarm
+(def card-definitions-ice-swarm
   {"Swarm"
    {:effect take-bad-pub
     :advanceable :always

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-elective-upgrade
+(def card-definitions-agendas-elective-upgrade
   {"Elective Upgrade"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 2))

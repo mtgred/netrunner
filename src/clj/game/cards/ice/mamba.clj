@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-mamba
+(def card-definitions-ice-mamba
   {"Mamba"
    {:abilities [(power-counter-ability (do-net-damage 1))]
     :subroutines [(do-net-damage 1)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-dadiana-chacon
+(def card-definitions-resources-dadiana-chacon
   {"Dadiana Chacon"
    (let [trashme {:effect (effect (system-msg "trashes Dadiana Chacon and suffers 3 meat damage")
                                   (register-events {:play {:req (req (= "Runner" (:side target)))

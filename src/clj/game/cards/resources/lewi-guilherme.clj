@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-lewi-guilherme
+(def card-definitions-resources-lewi-guilherme
   {"Lewi Guilherme"
    (let [ability {:once :per-turn
                   :delayed-completion true

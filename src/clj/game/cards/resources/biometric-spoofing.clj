@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-biometric-spoofing
+(def card-definitions-resources-biometric-spoofing
   {"Biometric Spoofing"
    {:prevent {:damage [:net :meat :brain]}
     :abilities [{:label "[Trash]: Prevent 2 damage"

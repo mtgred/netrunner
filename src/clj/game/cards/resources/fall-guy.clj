@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-fall-guy
+(def card-definitions-resources-fall-guy
   {"Fall Guy"
    {:prevent {:trash [:resource]}
     :abilities [{:label "[Trash]: Prevent another installed resource from being trashed"

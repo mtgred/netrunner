@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-water-monopoly
+(def card-definitions-agendas-water-monopoly
   {"Water Monopoly"
    {:events {:pre-install {:req (req (and (is-type? target "Resource")
                                           (not (has-subtype? target "Virtual"))

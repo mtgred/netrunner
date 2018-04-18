@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-rototurret
+(def card-definitions-ice-rototurret
   {"Rototurret"
    {:subroutines [trash-program end-the-run]}})

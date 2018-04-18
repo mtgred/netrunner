@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-pop-up-window
+(def card-definitions-ice-pop-up-window
   {"Pop-up Window"
    {:implementation "Encounter effect is manual. Runner choice is not implemented"
     :abilities [(gain-credits 1)]

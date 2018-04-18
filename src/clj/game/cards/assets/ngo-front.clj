@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-ngo-front
+(def card-definitions-assets-ngo-front
   {"NGO Front"
    (letfn [(builder [cost cred]
              {:advance-counter-cost cost

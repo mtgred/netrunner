@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-nerve-agent
+(def card-definitions-programs-nerve-agent
   {"Nerve Agent"
    {:events
     {:successful-run {:req (req (= target :hq))

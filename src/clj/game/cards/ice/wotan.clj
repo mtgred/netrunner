@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-wotan
+(def card-definitions-ice-wotan
   {"Wotan"
    {:subroutines [end-the-run
                   (do-brain-damage 1)]

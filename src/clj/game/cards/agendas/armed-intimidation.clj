@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-armed-intimidation
+(def card-definitions-agendas-armed-intimidation
   {"Armed Intimidation"
    {:delayed-completion true
     :effect (effect (show-wait-prompt :corp "Runner to suffer 5 meat damage or take 2 tags")

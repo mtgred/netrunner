@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-citadel-sanctuary
+(def card-definitions-resources-citadel-sanctuary
   {"Citadel Sanctuary"
    {:prevent {:damage [:meat]}
     :abilities [{:label "[Trash] and trash all cards in Grip to prevent all meat damage"

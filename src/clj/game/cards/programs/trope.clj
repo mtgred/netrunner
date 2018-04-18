@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-trope
+(def card-definitions-programs-trope
   {"Trope"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :power 1))}}
     :abilities [{:cost [:click 1]

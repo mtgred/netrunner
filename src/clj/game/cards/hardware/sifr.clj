@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-sifr
+(def card-definitions-hardware-sifr
   {"Şifr"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn

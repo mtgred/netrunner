@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-anson-rose
+(def card-definitions-assets-anson-rose
   {"Anson Rose"
    (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
                   :once :per-turn

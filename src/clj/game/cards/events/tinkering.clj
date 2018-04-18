@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-tinkering
+(def card-definitions-events-tinkering
   {"Tinkering"
    {:prompt "Select a piece of ICE"
     :choices {:req #(and (= (last (:zone %)) :ices) (ice? %))}

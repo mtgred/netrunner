@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-leverage
+(def card-definitions-events-leverage
   {"Leverage"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
     :player :corp

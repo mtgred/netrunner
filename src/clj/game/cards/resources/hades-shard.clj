@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-hades-shard
+(def card-definitions-resources-hades-shard
   {"Hades Shard"
    (shard-constructor :archives "access all cards in Archives" {:delayed-completion true}
                       (req (trash state side card {:cause :ability-cost})

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-load-testing
+(def card-definitions-operations-load-testing
   {"Load Testing"
    {:msg "make the Runner lose [Click] when their next turn begins"
     :effect (effect (register-events (:events (card-def card))

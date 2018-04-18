@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-fringe-applications-tomorrow-today
+(def card-definitions-identities-fringe-applications-tomorrow-today
   {"Fringe Applications: Tomorrow, Today"
    {:events
     {:pre-start-game {:effect draft-points-target}

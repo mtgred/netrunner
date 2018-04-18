@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-chiyashi
+(def card-definitions-ice-chiyashi
   {"Chiyashi"
    {:implementation "Trash effect when using an AI to break is activated manually"
     :abilities [{:label "Trash the top 2 cards of the Runner's Stack"

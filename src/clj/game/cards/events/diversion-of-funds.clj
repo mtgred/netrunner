@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-diversion-of-funds
+(def card-definitions-events-diversion-of-funds
   {"Diversion of Funds"
    {:req (req hq-runnable)
     :effect (effect (run :hq

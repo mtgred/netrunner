@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-cyberdelia
+(def card-definitions-hardware-cyberdelia
   {"Cyberdelia"
    {:implementation "Credit gain is manually triggered."
     :in-play [:memory 1]

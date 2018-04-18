@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-paintbrush
+(def card-definitions-programs-paintbrush
   {"Paintbrush"
    {:abilities [{:cost [:click 1]
                  :choices {:req #(and (installed? %) (ice? %) (rezzed? %))}

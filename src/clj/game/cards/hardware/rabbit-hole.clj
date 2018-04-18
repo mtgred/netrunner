@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-rabbit-hole
+(def card-definitions-hardware-rabbit-hole
   {"Rabbit Hole"
    {:in-play [:link 1]
     :effect

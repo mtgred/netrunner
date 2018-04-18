@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-commercialization
+(def card-definitions-operations-commercialization
   {"Commercialization"
    {:msg (msg "gain " (:advance-counter target 0) " [Credits]")
     :choices {:req ice?}

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-valley-grid
+(def card-definitions-upgrades-valley-grid
   {"Valley Grid"
    {:implementation "Activation is manual"
     :abilities [{:req (req this-server)

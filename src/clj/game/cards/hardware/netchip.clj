@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-netchip
+(def card-definitions-hardware-netchip
   {"NetChip"
    {:abilities [{:label "Install a program on NetChip"
                  :req (req (empty? (:hosted card)))

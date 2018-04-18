@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-davinci
+(def card-definitions-programs-davinci
   {"DaVinci"
    {:events {:successful-run {:silent (req true)
                               :effect (effect (add-counter card :power 1))}}

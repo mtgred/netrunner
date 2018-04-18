@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-bookmark
+(def card-definitions-hardware-bookmark
   {"Bookmark"
    {:abilities [{:label "Host up to 3 cards from your Grip facedown"
                  :cost [:click 1] :msg "host up to 3 cards from their Grip facedown"

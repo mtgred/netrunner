@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-marathon
+(def card-definitions-events-marathon
   {"Marathon"
    (run-event
      {:choices (req (filter #(can-run-server? state %) remotes))}

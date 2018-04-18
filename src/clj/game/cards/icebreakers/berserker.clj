@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-berserker
+(def card-definitions-icebreakers-berserker
   {"Berserker"
    {:abilities [(break-sub 2 2 "Barrier")]
     :implementation "Number of subroutines on encountered ICE has to be entered by runner when Corp chooses 'No More Action'"

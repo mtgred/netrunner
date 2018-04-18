@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-feint
+(def card-definitions-events-feint
   {"Feint"
    {:req (req hq-runnable)
     :implementation "Bypass is manual"

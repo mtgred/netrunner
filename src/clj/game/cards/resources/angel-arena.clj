@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-angel-arena
+(def card-definitions-resources-angel-arena
   {"Angel Arena"
    {:prompt "How many power counters?"
     :choices :credit

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-patch
+(def card-definitions-operations-patch
   {"Patch"
    {:choices {:req #(and (ice? %) (rezzed? %))}
     :msg (msg "give +2 strength to " (card-str state target))

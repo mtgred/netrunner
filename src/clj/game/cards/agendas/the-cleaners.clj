@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-the-cleaners
+(def card-definitions-agendas-the-cleaners
   {"The Cleaners"
    {:events {:pre-damage {:req (req (and (= target :meat)
                                          (= side :corp)))

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-distract-the-masses
+(def card-definitions-operations-distract-the-masses
   {"Distract the Masses"
    (let [shuffle-two {:delayed-completion true
                       :effect (effect (rfg-and-shuffle-rd-effect (find-cid (:cid card) (:discard corp)) 2))}

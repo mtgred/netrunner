@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-power-to-the-people
+(def card-definitions-events-power-to-the-people
   {"Power to the People"
    {:effect (effect (register-events {:pre-steal-cost
                                       {:once :per-turn :effect (effect (gain :credit 7))

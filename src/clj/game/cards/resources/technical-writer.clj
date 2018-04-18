@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-technical-writer
+(def card-definitions-resources-technical-writer
   {"Technical Writer"
    {:events {:runner-install {:silent (req true)
                               :req (req (some #(= % (:type target)) '("Hardware" "Program")))

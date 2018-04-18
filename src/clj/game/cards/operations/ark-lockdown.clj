@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-ark-lockdown
+(def card-definitions-operations-ark-lockdown
   {"Ark Lockdown"
    {:delayed-completion true
     :req (req (not-empty (:discard runner)))

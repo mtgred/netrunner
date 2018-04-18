@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-sync-bre
+(def card-definitions-ice-sync-bre
   {"SYNC BRE"
    {:subroutines [(trace-ability 4 give-tag)
                   (trace-ability 2 {:label "Runner reduces cards accessed by 1 for this run"

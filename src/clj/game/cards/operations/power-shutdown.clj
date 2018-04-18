@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-power-shutdown
+(def card-definitions-operations-power-shutdown
   {"Power Shutdown"
    {:req (req (last-turn? state :runner :made-run))
     :prompt "Trash how many cards from the top R&D?"

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-vikram-10
+(def card-definitions-ice-vikram-10
   {"Vikram 1.0"
    {:implementation "Program prevention is not implemented"
     :subroutines [{:msg "prevent the Runner from using programs for the remainder of this run"}

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-trojan-horse
+(def card-definitions-operations-trojan-horse
   {"Trojan Horse"
    {:req (req (:accessed-cards runner-reg))
     :trace {:base 4

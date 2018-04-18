@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-crash-space
+(def card-definitions-resources-crash-space
   {"Crash Space"
    {:prevent {:damage [:meat]}
     :recurring 2

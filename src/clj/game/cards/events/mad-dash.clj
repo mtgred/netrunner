@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-mad-dash
+(def card-definitions-events-mad-dash
   {"Mad Dash"
    {:prompt "Choose a server"
     :choices (req runnable-servers)

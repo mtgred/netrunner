@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-crescentus
+(def card-definitions-programs-crescentus
   {"Crescentus"
    {:implementation "Does not check that all subroutines were broken"
     :abilities [{:req (req (rezzed? current-ice))

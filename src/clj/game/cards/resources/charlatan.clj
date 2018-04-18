@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-charlatan
+(def card-definitions-resources-charlatan
   {"Charlatan"
    {:abilities [{:cost [:click 2]
                  :label "Make a run"

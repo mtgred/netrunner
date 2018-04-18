@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-capstone
+(def card-definitions-hardware-capstone
   {"Capstone"
    {:abilities [{:req (req (> (count (:hand runner)) 0))
                  :cost [:click 1]

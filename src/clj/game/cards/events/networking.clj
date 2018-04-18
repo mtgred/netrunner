@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-networking
+(def card-definitions-events-networking
   {"Networking"
    {:msg "remove 1 tag"
     :effect (effect (lose :tag 1))

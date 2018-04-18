@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-elizabeth-mills
+(def card-definitions-assets-elizabeth-mills
   {"Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
     :abilities [{:cost [:click 1] :label "Trash a location"

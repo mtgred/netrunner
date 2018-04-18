@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-the-shadow-net
+(def card-definitions-resources-the-shadow-net
   {"The Shadow Net"
    (letfn [(events [runner] (filter #(and (is-type? % "Event") (not (has-subtype? % "Priority"))) (:discard runner)))]
      {:abilities [{:cost [:click 1 :forfeit]

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-illegal-arms-factory
+(def card-definitions-assets-illegal-arms-factory
   {"Illegal Arms Factory"
    (let [ability {:msg "gain 1 [Credits] and draw 1 card"
                   :label "Gain 1 [Credits] and draw 1 card (start of turn)"

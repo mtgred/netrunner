@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-celebrity-gift
+(def card-definitions-operations-celebrity-gift
   {"Celebrity Gift"
    {:choices {:max 5
               :req #(and (= (:side %) "Corp")

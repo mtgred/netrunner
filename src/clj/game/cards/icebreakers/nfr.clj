@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-nfr
+(def card-definitions-icebreakers-nfr
   {"Nfr"
    {:implementation "Adding power counter is manual"
     :abilities [{:label "Place 1 power counter on Nfr"

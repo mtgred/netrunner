@@ -1,5 +1,5 @@
 (in-ns 'game.core)
 
-(def card-hardware-cybsoft-macrodrive
+(def card-definitions-hardware-cybsoft-macrodrive
   {"Cybsoft MacroDrive"
    {:recurring 1}})

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-bloodletter
+(def card-definitions-ice-bloodletter
   {"Bloodletter"
    {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
                    :effect (req (if (empty? (filter #(is-type? % "Program") (all-active-installed state :runner)))

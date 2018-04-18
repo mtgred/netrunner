@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-cerebral-static
+(def card-definitions-operations-cerebral-static
   {"Cerebral Static"
    {:msg "disable the Runner's identity"
     :effect (effect (disable-identity :runner))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-explode-a-palooza
+(def card-definitions-agendas-explode-a-palooza
   {"Explode-a-palooza"
    {:flags {:rd-reveal (req true)}
     :access {:delayed-completion true

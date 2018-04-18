@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-sacrifice
+(def card-definitions-operations-sacrifice
   {"Sacrifice"
    {:req (req (pos? (:bad-publicity corp)))
     :delayed-completion true

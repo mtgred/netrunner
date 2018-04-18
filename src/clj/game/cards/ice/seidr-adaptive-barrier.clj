@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-seidr-adaptive-barrier
+(def card-definitions-ice-seidr-adaptive-barrier
   {"Seidr Adaptive Barrier"
    {:effect (req (let [srv (second (:zone card))]
                    (add-watch state (keyword (str "sab" (:cid card)))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-scrubbed
+(def card-definitions-events-scrubbed
   {"Scrubbed"
    {:events (let [sc {:effect (req (update! state side (dissoc card :scrubbed-target)))}]
                  {:encounter-ice {:once :per-turn

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-shipment-from-tennin
+(def card-definitions-operations-shipment-from-tennin
   {"Shipment from Tennin"
    {:delayed-completion true
     :req (req (not-last-turn? state :runner :successful-run))

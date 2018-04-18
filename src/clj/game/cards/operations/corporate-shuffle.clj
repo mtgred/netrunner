@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-corporate-shuffle
+(def card-definitions-operations-corporate-shuffle
   {"Corporate Shuffle"
    {:msg "shuffle all cards in HQ into R&D and draw 5 cards"
     :delayed-completion true

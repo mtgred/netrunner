@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-run-amok
+(def card-definitions-events-run-amok
   {"Run Amok"
    {:implementation "Ice trash is manual"
     :prompt "Choose a server" :choices (req runnable-servers)

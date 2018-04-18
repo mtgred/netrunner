@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-rigged-results
+(def card-definitions-events-rigged-results
   {"Rigged Results"
    (letfn [(choose-ice []
              {:prompt "Select a piece of ICE to bypass"

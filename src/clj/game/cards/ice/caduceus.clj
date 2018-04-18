@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-caduceus
+(def card-definitions-ice-caduceus
   {"Caduceus"
    {:subroutines [(trace-ability 3 (gain-credits 3))
                   (trace-ability 2 end-the-run)]}})

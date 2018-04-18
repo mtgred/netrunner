@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-respirocytes
+(def card-definitions-hardware-respirocytes
   {"Respirocytes"
    (let [ability {:once :per-turn
                   :msg "draw 1 card and add a power counter to itself"

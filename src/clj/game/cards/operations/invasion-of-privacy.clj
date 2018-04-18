@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-invasion-of-privacy
+(def card-definitions-operations-invasion-of-privacy
   {"Invasion of Privacy"
    (letfn [(iop [x]
              {:delayed-completion true

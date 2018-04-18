@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-consulting-visit
+(def card-definitions-operations-consulting-visit
   {"Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
     :choices (req (cancellable

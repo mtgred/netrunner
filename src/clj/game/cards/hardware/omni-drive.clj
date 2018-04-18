@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-omni-drive
+(def card-definitions-hardware-omni-drive
   {"Omni-drive"
    {:recurring 1
     :abilities [{:label "Install and host a program of 1[Memory Unit] or less on Omni-drive"

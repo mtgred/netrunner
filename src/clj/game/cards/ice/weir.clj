@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-weir
+(def card-definitions-ice-weir
   {"Weir"
    {:subroutines [{:label "force the Runner to lose 1 [Click], if able"
                    :msg "force the Runner to lose 1 [Click]"

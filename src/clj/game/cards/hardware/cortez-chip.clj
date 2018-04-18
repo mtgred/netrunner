@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-cortez-chip
+(def card-definitions-hardware-cortez-chip
   {"Cortez Chip"
    {:abilities [{:prompt "Select a piece of ICE"
                  :choices {:req ice?}

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-order-of-sol
+(def card-definitions-resources-order-of-sol
   {"Order of Sol"
    {:effect (req (add-watch state :order-of-sol
                             (fn [k ref old new]

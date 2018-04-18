@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-underway-grid
+(def card-definitions-upgrades-underway-grid
   {"Underway Grid"
    {:implementation "Bypass prevention is not implemented"
     :events {:pre-expose {:req (req (same-server? card target))

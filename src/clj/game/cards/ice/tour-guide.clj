@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-tour-guide
+(def card-definitions-ice-tour-guide
   {"Tour Guide"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (filter #(is-type? % "Asset")

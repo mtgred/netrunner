@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-paper-trail
+(def card-definitions-agendas-paper-trail
   {"Paper Trail"
    {:trace {:base 6
             :msg "trash all connection and job resources"

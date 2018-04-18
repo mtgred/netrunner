@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-precognition
+(def card-definitions-operations-precognition
   {"Precognition"
    {:delayed-completion true
     :msg "rearrange the top 5 cards of R&D"

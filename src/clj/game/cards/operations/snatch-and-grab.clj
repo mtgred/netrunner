@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-snatch-and-grab
+(def card-definitions-operations-snatch-and-grab
   {"Snatch and Grab"
    {:trace {:msg "trash a connection"
             :base 3

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-data-breach
+(def card-definitions-events-data-breach
   {"Data Breach"
    {:req (req rd-runnable)
     :delayed-completion true

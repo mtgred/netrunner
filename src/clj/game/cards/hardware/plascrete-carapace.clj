@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-plascrete-carapace
+(def card-definitions-hardware-plascrete-carapace
   {"Plascrete Carapace"
    {:data [:counter {:power 4}]
     :prevent {:damage [:meat]}

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-ip-block
+(def card-definitions-ice-ip-block
   {"IP Block"
    {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-active-installed state :runner))))
                                 :label "Give the Runner 1 tag if there is an installed AI")]

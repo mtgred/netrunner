@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-wanton-destruction
+(def card-definitions-events-wanton-destruction
   {"Wanton Destruction"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))

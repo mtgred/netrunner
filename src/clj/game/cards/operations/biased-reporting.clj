@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-biased-reporting
+(def card-definitions-operations-biased-reporting
   {"Biased Reporting"
    {:delayed-completion true
     :req (req (not-empty (all-active-installed state :runner)))

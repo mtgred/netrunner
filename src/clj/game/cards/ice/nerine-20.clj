@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-nerine-20
+(def card-definitions-ice-nerine-20
   {"Nerine 2.0"
    {:subroutines [{:label "Do 1 brain damage and Corp may draw 1 card"
                    :delayed-completion true

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-ruhr-valley
+(def card-definitions-upgrades-ruhr-valley
   {"Ruhr Valley"
    {:events {:run {:req (req this-server)
                    :effect (effect (lose :runner :click 1))

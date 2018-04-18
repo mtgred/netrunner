@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-human-first
+(def card-definitions-resources-human-first
   {"Human First"
    {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :corp target) " [Credits]")
                              :effect (effect (gain :runner :credit (get-agenda-points state :corp target)))}

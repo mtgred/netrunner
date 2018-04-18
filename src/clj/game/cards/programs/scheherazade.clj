@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-scheherazade
+(def card-definitions-programs-scheherazade
   {"Scheherazade"
    {:abilities [{:label "Install and host a program from Grip"
                  :effect (effect (resolve-ability

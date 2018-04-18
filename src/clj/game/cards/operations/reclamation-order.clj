@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-reclamation-order
+(def card-definitions-operations-reclamation-order
   {"Reclamation Order"
    {:prompt "Select a card from Archives"
     :show-discard true

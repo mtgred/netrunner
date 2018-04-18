@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-fenris
+(def card-definitions-ice-fenris
   {"Fenris"
    {:effect take-bad-pub
     :subroutines [(do-brain-damage 1)

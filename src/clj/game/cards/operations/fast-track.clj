@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-fast-track
+(def card-definitions-operations-fast-track
   {"Fast Track"
    {:prompt "Choose an Agenda"
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))

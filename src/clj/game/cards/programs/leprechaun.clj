@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-leprechaun
+(def card-definitions-programs-leprechaun
   {"Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
                  :req (req (< (count (:hosted card)) 2))

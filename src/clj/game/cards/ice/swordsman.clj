@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-swordsman
+(def card-definitions-ice-swordsman
   {"Swordsman"
    {:implementation "AI restriction not implemented"
     :subroutines [(do-net-damage 1)

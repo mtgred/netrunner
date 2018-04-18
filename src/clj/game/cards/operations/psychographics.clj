@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-psychographics
+(def card-definitions-operations-psychographics
   {"Psychographics"
    {:req (req tagged)
     :choices :credit

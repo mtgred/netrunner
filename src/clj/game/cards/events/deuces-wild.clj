@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-deuces-wild
+(def card-definitions-events-deuces-wild
   {"Deuces Wild"
    (let [all [{:effect (effect (gain :credit 3))
                :msg "gain 3 [Credits]"}

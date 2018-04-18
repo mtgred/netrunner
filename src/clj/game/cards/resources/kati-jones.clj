@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-kati-jones
+(def card-definitions-resources-kati-jones
   {"Kati Jones"
    {:abilities [{:cost [:click 1]
                  :msg "store 3 [Credits]"

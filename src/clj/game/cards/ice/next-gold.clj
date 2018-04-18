@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-next-gold
+(def card-definitions-ice-next-gold
   {"NEXT Gold"
    {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
                    :msg (msg "do " (next-ice-count corp) " net damage")

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-kraken
+(def card-definitions-events-kraken
   {"Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
     :msg (msg "force the Corp to trash an ICE protecting " target)

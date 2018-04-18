@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-lotus-field
+(def card-definitions-ice-lotus-field
   {"Lotus Field"
    {:subroutines [end-the-run]
     :flags {:cannot-lower-strength true}}})

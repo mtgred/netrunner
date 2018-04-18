@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-retrieval-run
+(def card-definitions-events-retrieval-run
   {"Retrieval Run"
    {:req (req archives-runnable)
     :effect (effect (run :archives

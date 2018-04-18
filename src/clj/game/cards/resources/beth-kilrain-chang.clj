@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-beth-kilrain-chang
+(def card-definitions-resources-beth-kilrain-chang
   {"Beth Kilrain-Chang"
    (let [ability {:once :per-turn
                   :label "Gain 1 [Credits], draw 1 card, or gain [Click] (start of turn)"

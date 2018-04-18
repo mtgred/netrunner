@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-friends-in-high-places
+(def card-definitions-operations-friends-in-high-places
   {"Friends in High Places"
    (let [fhelper (fn fhp [n] {:prompt "Select a card in Archives to install with Friends in High Places"
                               :priority -1

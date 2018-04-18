@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-docklands-crackdown
+(def card-definitions-assets-docklands-crackdown
   {"Docklands Crackdown"
    {:abilities [{:cost [:click 2]
                  :msg "add 1 power counter"

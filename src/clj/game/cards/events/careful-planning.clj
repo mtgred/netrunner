@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-careful-planning
+(def card-definitions-events-careful-planning
   {"Careful Planning"
    {:prompt  "Choose a card in or protecting a remote server"
     :choices {:req #(is-remote? (second (:zone %)))}

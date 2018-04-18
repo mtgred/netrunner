@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-shipment-from-mirrormorph
+(def card-definitions-operations-shipment-from-mirrormorph
   {"Shipment from MirrorMorph"
    (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph"
                              :priority -1

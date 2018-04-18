@@ -1,7 +1,5 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-paricia
+(def card-definitions-programs-paricia
   {"Paricia"
    {:recurring 2}})

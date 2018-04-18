@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-enigma
+(def card-definitions-ice-enigma
   {"Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
                    :effect runner-loses-click}

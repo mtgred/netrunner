@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-recruiting-trip
+(def card-definitions-operations-recruiting-trip
   {"Recruiting Trip"
    (let [rthelp (fn rt [total left selected]
                   (if (pos? left)

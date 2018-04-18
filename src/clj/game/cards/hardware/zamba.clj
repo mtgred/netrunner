@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-zamba
+(def card-definitions-hardware-zamba
   {"Zamba"
    {:implementation "Credit gain is automatic"
     :in-play [:memory 2]

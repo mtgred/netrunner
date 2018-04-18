@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-knobkierie
+(def card-definitions-hardware-knobkierie
   {"Knobkierie"
    {:implementation "MU usage restriction not enforced"
     :in-play [:memory 3]

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-philotic-entanglement
+(def card-definitions-agendas-philotic-entanglement
   {"Philotic Entanglement"
    {:interactive (req true)
     :req (req (> (count (:scored runner)) 0))

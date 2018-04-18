@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-cerebral-imaging-infinite-frontiers
+(def card-definitions-identities-cerebral-imaging-infinite-frontiers
   {"Cerebral Imaging: Infinite Frontiers"
    {:effect (req (when (> (:turn @state) 1)
                    (swap! state assoc-in [:corp :hand-size-base] (:credit corp)))

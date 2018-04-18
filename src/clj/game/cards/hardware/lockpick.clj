@@ -1,5 +1,5 @@
 (in-ns 'game.core)
 
-(def card-hardware-lockpick
+(def card-definitions-hardware-lockpick
   {"Lockpick"
    {:recurring 1}})

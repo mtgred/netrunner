@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-waiver
+(def card-definitions-ice-waiver
   {"Waiver"
    {:subroutines [(trace-ability 5 {:label "Reveal the Runner's Grip and trash cards"
                                     :msg (msg "reveal all cards in the Runner's Grip: " (join ", " (map :title (:hand runner)))

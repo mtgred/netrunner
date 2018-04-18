@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-algo-trading
+(def card-definitions-resources-algo-trading
   {"Algo Trading"
    {:flags {:runner-phase-12 (req (> (:credit runner) 0))}
     :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"

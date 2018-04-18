@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-apocalypse
+(def card-definitions-events-apocalypse
   {"Apocalypse"
    (let [corp-trash {:delayed-completion true
                      :effect (req (let [ai (all-installed state :corp)

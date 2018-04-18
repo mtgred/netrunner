@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-marcus-batty
+(def card-definitions-upgrades-marcus-batty
   {"Marcus Batty"
    {:abilities [{:req (req this-server)
                  :label "[Trash]: Start a Psi game"

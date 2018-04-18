@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-reconstruction-contract
+(def card-definitions-assets-reconstruction-contract
   {"Reconstruction Contract"
    {:events {:damage {:req (req (and (pos? (nth targets 2)) (= :meat target)))
                       :effect (effect (add-counter card :advancement 1)

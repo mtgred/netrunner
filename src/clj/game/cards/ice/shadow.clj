@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-shadow
+(def card-definitions-ice-shadow
   {"Shadow"
    {:advanceable :always
     :subroutines [(gain-credits 2)

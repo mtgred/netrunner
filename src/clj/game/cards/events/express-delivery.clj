@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-express-delivery
+(def card-definitions-events-express-delivery
   {"Express Delivery"
    {:prompt "Choose a card to add to your Grip" :choices (req (take 4 (:deck runner)))
     :msg "look at the top 4 cards of their Stack and add 1 of them to their Grip"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-amazon-industrial-zone
+(def card-definitions-upgrades-amazon-industrial-zone
   {"Amazon Industrial Zone"
    {:events
      {:corp-install  {:optional {:req (req (and (ice? target)

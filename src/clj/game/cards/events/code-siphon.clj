@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-code-siphon
+(def card-definitions-events-code-siphon
   {"Code Siphon"
    {:req (req rd-runnable)
     :effect (effect (run :rd

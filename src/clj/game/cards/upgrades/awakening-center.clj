@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-awakening-center
+(def card-definitions-upgrades-awakening-center
   {"Awakening Center"
    {:can-host (req (is-type? target "ICE"))
     :abilities [{:label "Host a piece of Bioroid ICE"

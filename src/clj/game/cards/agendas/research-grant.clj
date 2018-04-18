@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-research-grant
+(def card-definitions-agendas-research-grant
   {"Research Grant"
    {:interactive (req true)
     :silent (req (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp))))

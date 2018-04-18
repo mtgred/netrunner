@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-faust
+(def card-definitions-icebreakers-faust
   {"Faust"
    {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
                  :prompt "Select a card from your grip to trash for Faust"

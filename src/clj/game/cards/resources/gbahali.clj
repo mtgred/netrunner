@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-gbahali
+(def card-definitions-resources-gbahali
   {"Gbahali"
    {:abilities [{:label "[Trash]: Break the last subroutine on the encountered piece of ice"
                  :req (req (and (:run @state) (rezzed? current-ice)))

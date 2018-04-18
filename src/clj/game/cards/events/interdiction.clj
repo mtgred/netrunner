@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-interdiction
+(def card-definitions-events-interdiction
   {"Interdiction"
    (let [ab (effect (register-turn-flag!
                      card :can-rez

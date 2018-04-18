@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-cyber-threat
+(def card-definitions-events-cyber-threat
   {"Cyber Threat"
    {:prompt "Choose a server"
     :choices (req runnable-servers)

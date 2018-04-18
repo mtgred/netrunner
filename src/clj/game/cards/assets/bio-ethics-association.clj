@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-bio-ethics-association
+(def card-definitions-assets-bio-ethics-association
   {"Bio-Ethics Association"
    (let [ability {:req (req unprotected)
                   :delayed-completion true

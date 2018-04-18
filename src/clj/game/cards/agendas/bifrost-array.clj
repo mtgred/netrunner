@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-bifrost-array
+(def card-definitions-agendas-bifrost-array
   {"Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %)
                                           "Bifrost Array")

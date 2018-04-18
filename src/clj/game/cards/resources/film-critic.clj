@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-film-critic
+(def card-definitions-resources-film-critic
   {"Film Critic"
    (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
      {:implementation "Use hosting ability when presented with Access prompt for an agenda"

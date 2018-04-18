@@ -1,7 +1,5 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-recon
+(def card-definitions-events-recon
   {"Recon"
    (run-event)})

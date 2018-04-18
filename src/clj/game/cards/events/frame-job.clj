@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-frame-job
+(def card-definitions-events-frame-job
   {"Frame Job"
    {:prompt "Choose an agenda to forfeit"
     :choices (req (:scored runner))

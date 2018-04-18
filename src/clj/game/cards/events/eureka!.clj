@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-eureka!
+(def card-definitions-events-eureka!
   {"Eureka!"
    {:effect (req (let [topcard (first (:deck runner))
                        caninst (or (is-type? topcard "Hardware")

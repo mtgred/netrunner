@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-lean-and-mean
+(def card-definitions-events-lean-and-mean
   {"Lean and Mean"
    {:prompt "Choose a server"
     :choices (req runnable-servers)

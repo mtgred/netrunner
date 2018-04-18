@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-blue-sun-powering-the-future
+(def card-definitions-identities-blue-sun-powering-the-future
   {"Blue Sun: Powering the Future"
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
                                      (some #(rezzed? %) (all-installed state :corp))))}

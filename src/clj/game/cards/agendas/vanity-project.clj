@@ -1,7 +1,5 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-vanity-project
+(def card-definitions-agendas-vanity-project
   {"Vanity Project"
    {}})

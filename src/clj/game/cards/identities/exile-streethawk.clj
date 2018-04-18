@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-exile-streethawk
+(def card-definitions-identities-exile-streethawk
   {"Exile: Streethawk"
    {:flags {:runner-install-draw true}
     :events {:runner-install {:silent (req (not (and (is-type? target "Program")

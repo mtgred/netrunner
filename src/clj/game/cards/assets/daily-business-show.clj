@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-daily-business-show
+(def card-definitions-assets-daily-business-show
   {"Daily Business Show"
    {:events {:pre-corp-draw
              {:msg "draw additional cards"

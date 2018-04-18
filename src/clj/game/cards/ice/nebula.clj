@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-nebula
+(def card-definitions-ice-nebula
   {"Nebula"
    (space-ice trash-program)})

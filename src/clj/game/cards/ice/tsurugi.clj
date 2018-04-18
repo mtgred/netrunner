@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-tsurugi
+(def card-definitions-ice-tsurugi
   {"Tsurugi"
    {:subroutines [end-the-run
                   (do-net-damage 1)]}})

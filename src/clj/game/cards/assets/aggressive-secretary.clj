@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-aggressive-secretary
+(def card-definitions-assets-aggressive-secretary
   {"Aggressive Secretary"
    (advance-ambush 2 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
                       :delayed-completion true

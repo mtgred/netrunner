@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-pup
+(def card-definitions-ice-pup
   {"Pup"
    {:subroutines [(do-net-damage 1)]
     :runner-abilities [(runner-break [:credit 1] 1)]}})

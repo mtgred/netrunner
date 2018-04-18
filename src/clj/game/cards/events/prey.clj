@@ -1,7 +1,5 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-prey
+(def card-definitions-events-prey
   {"Prey"
    (run-event)})

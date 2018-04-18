@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-chakana
+(def card-definitions-programs-chakana
   {"Chakana"
    {:leave-play (effect (update-all-advancement-costs))
     :events {:successful-run {:silent (req true)

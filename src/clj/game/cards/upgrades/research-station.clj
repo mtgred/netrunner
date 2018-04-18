@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-research-station
+(def card-definitions-upgrades-research-station
   {"Research Station"
    {:init {:root "HQ"}
     :in-play [:hand-size-modification 2]}})

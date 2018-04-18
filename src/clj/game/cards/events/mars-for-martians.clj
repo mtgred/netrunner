@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-mars-for-martians
+(def card-definitions-events-mars-for-martians
   {"Mars for Martians"
    {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
                                      (all-active-installed state :runner)))

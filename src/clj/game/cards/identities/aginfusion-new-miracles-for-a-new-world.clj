@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-aginfusion-new-miracles-for-a-new-world
+(def card-definitions-identities-aginfusion-new-miracles-for-a-new-world
   {"AgInfusion: New Miracles for a New World"
    {:abilities [{:once :per-turn
                  :req (req (and (:run @state) (not (rezzed? current-ice)) (can-rez? state side current-ice {:ignore-unique true})))

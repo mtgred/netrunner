@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-casting-call
+(def card-definitions-operations-casting-call
   {"Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
                          (in-hand? %))}

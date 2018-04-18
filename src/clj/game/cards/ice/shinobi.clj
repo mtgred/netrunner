@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-shinobi
+(def card-definitions-ice-shinobi
   {"Shinobi"
    {:effect take-bad-pub
     :subroutines [(trace-ability 1 (do-net-damage 1))

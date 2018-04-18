@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-localized-product-line
+(def card-definitions-operations-localized-product-line
   {"Localized Product Line"
    {:prompt "Choose a card"
     :choices (req (cancellable (:deck corp) :sorted))

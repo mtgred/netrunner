@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-will-o-the-wisp
+(def card-definitions-upgrades-will-o-the-wisp
   {"Will-o-the-Wisp"
    {:events
     {:successful-run

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-meru-mati
+(def card-definitions-ice-meru-mati
   {"Meru Mati"
    {:subroutines [end-the-run]
     :strength-bonus (req (if (= (second (:zone card)) :hq) 3 0))}})

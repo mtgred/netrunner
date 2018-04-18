@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-security-chip
+(def card-definitions-hardware-security-chip
   {"Security Chip"
    {:abilities [{:label "[Trash]: Add [Link] strength to a non-Cloud icebreaker until the end of the run"
                  :msg (msg "add " (:link runner) " strength to " (:title target) " until the end of the run")

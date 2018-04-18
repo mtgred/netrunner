@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-rex-campaign
+(def card-definitions-assets-rex-campaign
   {"Rex Campaign"
    (let [ability {:once :per-turn
                   :label "Remove 1 counter (start of turn)"

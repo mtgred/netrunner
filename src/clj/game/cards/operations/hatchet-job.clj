@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-hatchet-job
+(def card-definitions-operations-hatchet-job
   {"Hatchet Job"
    {:trace {:base 5
             :choices {:req #(and (installed? %)

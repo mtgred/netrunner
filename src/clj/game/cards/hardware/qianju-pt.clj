@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-qianju-pt
+(def card-definitions-hardware-qianju-pt
   {"Qianju PT"
    {:flags {:runner-phase-12 (req true)}
     :abilities [{:label "Lose [Click], avoid 1 tag (start of turn)"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-sensor-net-activation
+(def card-definitions-agendas-sensor-net-activation
   {"Sensor Net Activation"
    {:effect (effect (add-counter card :agenda 1))
     :silent (req true)

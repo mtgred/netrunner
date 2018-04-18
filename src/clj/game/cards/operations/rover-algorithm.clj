@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-rover-algorithm
+(def card-definitions-operations-rover-algorithm
   {"Rover Algorithm"
    {:choices {:req #(and (ice? %) (rezzed? %))}
     :msg (msg "host it as a condition counter on " (card-str state target))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-freelance-coding-contract
+(def card-definitions-events-freelance-coding-contract
   {"Freelance Coding Contract"
    {:choices {:max 5
               :req #(and (is-type? % "Program")

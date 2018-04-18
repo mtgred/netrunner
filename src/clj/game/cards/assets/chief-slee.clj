@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-chief-slee
+(def card-definitions-assets-chief-slee
   {"Chief Slee"
    {:abilities [{:label "Add 1 power counter"
                  :effect (effect (add-counter card :power 1)

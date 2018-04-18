@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-rook
+(def card-definitions-programs-rook
   {"Rook"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [r (get-card state card)

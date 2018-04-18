@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-ad-blitz
+(def card-definitions-operations-ad-blitz
   {"Ad Blitz"
    (let [abhelp (fn ab [n total]
                   {:prompt "Select an Advertisement to install and rez" :show-discard true

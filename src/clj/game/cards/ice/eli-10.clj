@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-eli-10
+(def card-definitions-ice-eli-10
   {"Eli 1.0"
    {:subroutines [end-the-run]
     :runner-abilities [(runner-break [:click 1] 1)]}})

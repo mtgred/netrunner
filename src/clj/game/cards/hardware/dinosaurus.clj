@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-dinosaurus
+(def card-definitions-hardware-dinosaurus
   {"Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card))) :cost [:click 1]

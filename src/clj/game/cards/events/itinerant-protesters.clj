@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-itinerant-protesters
+(def card-definitions-events-itinerant-protesters
   {"Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
     :effect (req (lose state :corp :hand-size-modification (:bad-publicity corp))

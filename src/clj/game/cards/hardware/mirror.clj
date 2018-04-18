@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-mirror
+(def card-definitions-hardware-mirror
   {"Mirror"
    {:in-play [:memory 2]
     :events {:successful-run

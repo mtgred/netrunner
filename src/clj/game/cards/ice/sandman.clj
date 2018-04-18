@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-sandman
+(def card-definitions-ice-sandman
   {"Sandman"
    {:subroutines [{:label "Add an installed Runner card to the grip"
                    :req (req (not-empty (all-installed state :runner)))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-starlight-crusade-funding
+(def card-definitions-resources-starlight-crusade-funding
   {"Starlight Crusade Funding"
    {:msg "ignore additional costs on Double events"
     :effect (req (swap! state assoc-in [:runner :register :double-ignore-additional] true))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-dianas-hunt
+(def card-definitions-events-dianas-hunt
   {"Dianas Hunt"
    {:implementation "One program per encounter not enforced"
     :prompt "Choose a server"

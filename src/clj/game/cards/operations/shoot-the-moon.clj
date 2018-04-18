@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-shoot-the-moon
+(def card-definitions-operations-shoot-the-moon
   {"Shoot the Moon"
    {:choices {:req #(and (ice? %) (not (rezzed? %)))
               :max (req (min (:tag runner)

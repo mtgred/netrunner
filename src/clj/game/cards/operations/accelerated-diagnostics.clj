@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-accelerated-diagnostics
+(def card-definitions-operations-accelerated-diagnostics
   {"Accelerated Diagnostics"
    (letfn [(ad [i n adcard]
              {:prompt "Select an operation to play"

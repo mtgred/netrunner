@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-house-of-knives
+(def card-definitions-agendas-house-of-knives
   {"House of Knives"
    {:effect (effect (add-counter card :agenda 3))
     :silent (req true)

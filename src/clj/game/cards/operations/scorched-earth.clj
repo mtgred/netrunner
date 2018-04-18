@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-scorched-earth
+(def card-definitions-operations-scorched-earth
   {"Scorched Earth"
    {:req (req tagged)
     :delayed-completion true

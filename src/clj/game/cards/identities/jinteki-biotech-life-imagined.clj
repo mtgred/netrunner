@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-jinteki-biotech-life-imagined
+(def card-definitions-identities-jinteki-biotech-life-imagined
   {"Jinteki Biotech: Life Imagined"
    {:events {:pre-first-turn {:req (req (= side :corp))
                               :prompt "Choose a copy of Jinteki Biotech to use this game"

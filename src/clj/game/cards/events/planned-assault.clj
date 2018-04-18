@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-planned-assault
+(def card-definitions-events-planned-assault
   {"Planned Assault"
    {:msg (msg "play " (:title target))
     :choices (req (cancellable (filter #(and (has-subtype? % "Run")

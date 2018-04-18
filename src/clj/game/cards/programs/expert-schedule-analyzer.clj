@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-expert-schedule-analyzer
+(def card-definitions-programs-expert-schedule-analyzer
   {"Expert Schedule Analyzer"
    {:abilities [{:cost [:click 1]
                  :msg "make a run on HQ"

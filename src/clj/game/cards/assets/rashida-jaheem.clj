@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-rashida-jaheem
+(def card-definitions-assets-rashida-jaheem
   {"Rashida Jaheem"
    {:events {:corp-turn-begins {:delayed-completion true
                                 :effect (effect (show-wait-prompt :runner "Corp to use Rashida Jaheem")

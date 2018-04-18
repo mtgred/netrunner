@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-q-coherence-chip
+(def card-definitions-hardware-q-coherence-chip
   {"Q-Coherence Chip"
    {:in-play [:memory 1]
     :events (let [e {:req (req (= (last (:zone target)) :program))

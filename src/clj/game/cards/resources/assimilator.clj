@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-assimilator
+(def card-definitions-resources-assimilator
   {"Assimilator"
    {:abilities [{:label "Turn a facedown card faceup"
                  :cost [:click 2]

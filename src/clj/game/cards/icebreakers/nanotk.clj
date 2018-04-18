@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-nanotk
+(def card-definitions-icebreakers-nanotk
   {"NaNotK"
    (auto-icebreaker ["Sentry"]
                     {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))

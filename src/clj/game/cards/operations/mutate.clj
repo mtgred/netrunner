@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-mutate
+(def card-definitions-operations-mutate
   {"Mutate"
    {:additional-cost [:ice 1]
     :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-vigil
+(def card-definitions-hardware-vigil
   {"Vigil"
    (let [ability {:req (req (and (:runner-phase-12 @state) (= (count (:hand corp)) (hand-size state :corp))))
                   :msg "draw 1 card"

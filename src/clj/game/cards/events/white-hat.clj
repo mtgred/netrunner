@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-white-hat
+(def card-definitions-events-white-hat
   {"White Hat"
    (letfn [(finish-choice [choices]
              (let [choices (filter #(not= "None" %) choices)]

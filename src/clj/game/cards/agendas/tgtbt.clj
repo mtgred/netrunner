@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-tgtbt
+(def card-definitions-agendas-tgtbt
   {"TGTBT"
    {:flags {:rd-reveal (req true)}
     :access {:msg "give the Runner 1 tag"

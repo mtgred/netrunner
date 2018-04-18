@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-jemison-astronautics-sacrifice-audacity-success
+(def card-definitions-identities-jemison-astronautics-sacrifice-audacity-success
   {"Jemison Astronautics: Sacrifice. Audacity. Success."
    {:events {:corp-forfeit-agenda
              {:delayed-completion true

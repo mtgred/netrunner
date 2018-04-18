@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-wall-of-thorns
+(def card-definitions-ice-wall-of-thorns
   {"Wall of Thorns"
    {:subroutines [end-the-run
                   (do-net-damage 2)]}})

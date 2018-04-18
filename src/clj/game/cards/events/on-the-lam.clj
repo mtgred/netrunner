@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-on-the-lam
+(def card-definitions-events-on-the-lam
   {"On the Lam"
    {:req (req (some #(is-type? % "Resource") (all-active-installed state :runner)))
     :prompt "Choose a resource to host On the Lam"

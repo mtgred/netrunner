@@ -1,7 +1,5 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-multithreader
+(def card-definitions-programs-multithreader
   {"Multithreader"
    {:recurring 2}})

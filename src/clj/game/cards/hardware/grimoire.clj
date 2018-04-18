@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-grimoire
+(def card-definitions-hardware-grimoire
   {"Grimoire"
    {:in-play [:memory 2]
     :events {:runner-install {:silent (req true)

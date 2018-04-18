@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-accelerated-beta-test
+(def card-definitions-agendas-accelerated-beta-test
   {"Accelerated Beta Test"
    (letfn [(abt [n i]
              (if (pos? i)

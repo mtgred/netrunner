@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-little-engine
+(def card-definitions-ice-little-engine
   {"Little Engine"
    {:subroutines [end-the-run
                   {:msg "make the Runner gain 5 [Credits]" :effect (effect (gain :runner :credit 5))}]}})

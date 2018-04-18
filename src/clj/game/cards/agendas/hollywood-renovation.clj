@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-hollywood-renovation
+(def card-definitions-agendas-hollywood-renovation
   {"Hollywood Renovation"
    {:install-state :face-up
     :events {:advance

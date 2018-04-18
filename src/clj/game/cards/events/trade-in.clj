@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-trade-in
+(def card-definitions-events-trade-in
   {"Trade-In"
    {:additional-cost [:hardware 1]
     :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))

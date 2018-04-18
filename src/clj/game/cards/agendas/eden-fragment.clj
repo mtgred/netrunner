@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-eden-fragment
+(def card-definitions-agendas-eden-fragment
   {"Eden Fragment"
    {:events {:pre-corp-install
                {:req (req (and (is-type? target "ICE")

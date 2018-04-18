@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-muresh-bodysuit
+(def card-definitions-hardware-muresh-bodysuit
   {"Muresh Bodysuit"
    {:events {:pre-damage {:once :per-turn :once-key :muresh-bodysuit
                           :req (req (= target :meat))

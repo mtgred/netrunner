@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-viktor-20
+(def card-definitions-ice-viktor-20
   {"Viktor 2.0"
    {:abilities [(power-counter-ability (do-brain-damage 1))]
     :subroutines [(trace-ability 2 add-power-counter)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-edge-of-world
+(def card-definitions-assets-edge-of-world
   {"Edge of World"
    (letfn [(ice-count [state]
              (count (get-in (:corp @state) [:servers (last (:server (:run @state))) :ices])))]

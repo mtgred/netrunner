@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-wall-of-static
+(def card-definitions-ice-wall-of-static
   {"Wall of Static"
    {:subroutines [end-the-run]}})

@@ -1,7 +1,5 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-government-investigations
+(def card-definitions-events-government-investigations
   {"Government Investigations"
    {:flags {:psi-prevent-spend (req 2)}}})

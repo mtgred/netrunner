@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-counter-surveillance
+(def card-definitions-resources-counter-surveillance
   {"Counter Surveillance"
    {:implementation "Does not prevent access of cards installed in the root of a server"
     :abilities [{:cost [:click 1]

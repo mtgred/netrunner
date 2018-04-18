@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-nihongai-grid
+(def card-definitions-upgrades-nihongai-grid
   {"Nihongai Grid"
    {:events
     {:successful-run

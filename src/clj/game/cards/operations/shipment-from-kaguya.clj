@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-shipment-from-kaguya
+(def card-definitions-operations-shipment-from-kaguya
   {"Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
     :msg (msg "place 1 advancement token on " (count targets) " cards")

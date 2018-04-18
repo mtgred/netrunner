@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-apex-invasive-predator
+(def card-definitions-identities-apex-invasive-predator
   {"Apex: Invasive Predator"
    (let [ability {:prompt "Select a card to install facedown"
                   :label "Install a card facedown (start of turn)"

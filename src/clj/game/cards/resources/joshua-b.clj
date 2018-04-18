@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-joshua-b
+(def card-definitions-resources-joshua-b
   {"Joshua B."
    (let [ability {:msg "gain [Click]"
                   :once :per-turn

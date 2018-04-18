@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-breaking-news
+(def card-definitions-agendas-breaking-news
   {"Breaking News"
    {:delayed-completion true
     :effect (effect (tag-runner :runner eid 2))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-self-modifying-code
+(def card-definitions-programs-self-modifying-code
   {"Self-modifying Code"
    {:abilities [{:req (req (not (install-locked? state side)))
                  :effect (req (when-completed (trash state side card {:cause :ability-cost})

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-bamboo-dome
+(def card-definitions-upgrades-bamboo-dome
   {"Bamboo Dome"
    (letfn [(dome [dcard]
              {:prompt "Select a card to add to HQ"

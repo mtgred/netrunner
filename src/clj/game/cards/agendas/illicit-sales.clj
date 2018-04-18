@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-illicit-sales
+(def card-definitions-agendas-illicit-sales
   {"Illicit Sales"
    {:delayed-completion true
     :effect (req (when-completed

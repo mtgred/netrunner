@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-ice-analyzer
+(def card-definitions-resources-ice-analyzer
   {"Ice Analyzer"
    {:implementation "Credit use restriction is not enforced"
     :events {:rez {:req (req (ice? target))

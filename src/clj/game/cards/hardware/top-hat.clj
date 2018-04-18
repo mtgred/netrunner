@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-top-hat
+(def card-definitions-hardware-top-hat
   {"Top Hat"
    (letfn [(ability [n]
              {:delayed-completion true

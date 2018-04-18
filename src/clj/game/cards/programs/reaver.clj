@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-reaver
+(def card-definitions-programs-reaver
   {"Reaver"
    {:events {:runner-trash {:req (req (and (first-installed-trash? state side)
                                            (installed? target)))

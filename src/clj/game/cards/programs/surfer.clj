@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-surfer
+(def card-definitions-programs-surfer
   {"Surfer"
    (letfn [(surf [state cice]
              {:prompt (msg "Choose an ICE before or after " (:title cice))

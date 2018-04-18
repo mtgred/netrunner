@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-wraparound
+(def card-definitions-ice-wraparound
   {"Wraparound"
    {:subroutines [end-the-run]
     :strength-bonus (req (if (some #(has-subtype? % "Fracter") (all-active-installed state :runner))

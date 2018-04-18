@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-tollbooth
+(def card-definitions-ice-tollbooth
   {"Tollbooth"
    {:implementation "Encounter effect is manual"
     :abilities [{:msg "make the Runner pay 3 [Credits], if able"

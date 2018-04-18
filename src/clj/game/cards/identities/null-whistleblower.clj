@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-null-whistleblower
+(def card-definitions-identities-null-whistleblower
   {"Null: Whistleblower"
    {:abilities [{:once :per-turn
                  :req (req (and (:run @state) (rezzed? current-ice)))

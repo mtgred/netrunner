@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-rachel-beckman
+(def card-definitions-resources-rachel-beckman
   {"Rachel Beckman"
    {:in-play [:click 1 :click-per-turn 1]
     :events {:runner-gain-tag {:effect (effect (trash card {:unpreventable true}))

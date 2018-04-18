@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-drone-screen
+(def card-definitions-upgrades-drone-screen
   {"Drone Screen"
    {:events {:run {:req (req (and this-server tagged))
                    :delayed-completion true

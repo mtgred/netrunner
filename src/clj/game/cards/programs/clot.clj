@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-clot
+(def card-definitions-programs-clot
   {"Clot"
    {:effect (req (let [agendas (map first (filter #(is-type? (first %) "Agenda")
                                                   (turn-events state :corp :corp-install)))]

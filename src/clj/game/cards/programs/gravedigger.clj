@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-gravedigger
+(def card-definitions-programs-gravedigger
   {"Gravedigger"
    {:events (let [e {:req (req (and (installed? target) (= (:side target) "Corp")))
                      :effect (effect (add-counter :runner card :virus 1))}]

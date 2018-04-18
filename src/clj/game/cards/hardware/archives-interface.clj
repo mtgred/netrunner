@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-archives-interface
+(def card-definitions-hardware-archives-interface
   {"Archives Interface"
    {:events
     {:pre-access

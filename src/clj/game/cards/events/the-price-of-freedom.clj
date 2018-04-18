@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-the-price-of-freedom
+(def card-definitions-events-the-price-of-freedom
   {"The Price of Freedom"
    {:additional-cost [:connection 1]
     :msg "prevent the Corp from advancing cards during their next turn"

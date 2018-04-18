@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-archangel
+(def card-definitions-ice-archangel
   {"Archangel"
    {:flags {:rd-reveal (req true)}
     :access

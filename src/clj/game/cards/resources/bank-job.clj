@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-bank-job
+(def card-definitions-resources-bank-job
   {"Bank Job"
    {:data {:counter {:credit 8}}
     :events {:successful-run

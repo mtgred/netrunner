@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-origami
+(def card-definitions-programs-origami
   {"Origami"
    {:effect (effect (gain :hand-size-modification
                           (dec (* 2 (count (filter #(= (:title %) "Origami")

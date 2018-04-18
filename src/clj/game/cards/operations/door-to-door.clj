@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-door-to-door
+(def card-definitions-operations-door-to-door
   {"Door to Door"
    {:events {:runner-turn-begins
              {:trace {:base 1 :msg (msg (if tagged "do 1 meat damage" "give the Runner 1 tag"))

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-ekomind
+(def card-definitions-hardware-ekomind
   {"Ekomind"
    {:effect (req (swap! state assoc-in [:runner :memory] (count (get-in @state [:runner :hand])))
                  (add-watch state :ekomind (fn [k ref old new]

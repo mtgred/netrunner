@@ -28,4 +28,21 @@
 (load "core/io")        ; routines for parsing input or printing to the log
 (load "core/misc")      ; misc stuff
 
-(load "cards/cards")    ; card definitions
+;; Taken from Stack Overflow: https://stackoverflow.com/a/20708175/3023252
+(defn load-files [path]
+  (let [files (->> path java.io.File. file-seq sort)]
+    (doseq [x (filter #(.isDirectory %) files)]
+      (doseq [y (file-seq x)]
+        (when (.isFile y)
+          (load-file (.getCanonicalPath y)))))))
+
+;; Load all card definitions into the current namespace.
+(load "cards/utils")
+(load-files "src/clj/game/cards")
+
+(def cards (->> (filter #(clojure.string/starts-with? % "card-definitions-")
+                        (map name (keys (ns-map 'game.core))))
+                (map symbol)
+                (map resolve)
+                (map var-get)
+                (apply merge)))

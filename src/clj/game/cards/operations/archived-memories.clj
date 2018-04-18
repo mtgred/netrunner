@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-archived-memories
+(def card-definitions-operations-archived-memories
   {"Archived Memories"
    {:effect (req (let [cid (:cid card)]
                    (resolve-ability state side

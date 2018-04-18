@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-breached-dome
+(def card-definitions-assets-breached-dome
   {"Breached Dome"
    {:flags {:rd-reveal (req true)}
     :access {:delayed-completion true

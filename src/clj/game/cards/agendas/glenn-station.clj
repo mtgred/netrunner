@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-glenn-station
+(def card-definitions-agendas-glenn-station
   {"Glenn Station"
    {:implementation "Doesn't prohibit hosting multiple cards"
     :abilities [{:label "Host a card from HQ on Glenn Station"

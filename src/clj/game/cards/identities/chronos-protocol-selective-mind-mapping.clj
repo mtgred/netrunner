@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-chronos-protocol-selective-mind-mapping
+(def card-definitions-identities-chronos-protocol-selective-mind-mapping
   {"Chronos Protocol: Selective Mind-mapping"
    {:events
     {:corp-phase-12 {:effect (effect (enable-corp-damage-choice))}

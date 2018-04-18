@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-autoscripter
+(def card-definitions-hardware-autoscripter
   {"Autoscripter"
    {:events {:runner-install {:silent (req true)
                               :req (req (and (is-type? target "Program")

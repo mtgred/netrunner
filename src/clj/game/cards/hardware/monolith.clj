@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-monolith
+(def card-definitions-hardware-monolith
   {"Monolith"
    (let [mhelper (fn mh [n] {:prompt "Select a program to install"
                              :choices {:req #(and (is-type? % "Program")

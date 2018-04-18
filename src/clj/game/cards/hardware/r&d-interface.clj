@@ -1,5 +1,5 @@
 (in-ns 'game.core)
 
-(def card-hardware-r&d-interface
+(def card-definitions-hardware-r&d-interface
   {"R&D Interface"
    {:in-play [:rd-access 1]}})

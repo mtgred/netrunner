@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-server-diagnostics
+(def card-definitions-assets-server-diagnostics
   {"Server Diagnostics"
    (let [ability {:effect (effect (gain :credit 2))
                   :once :per-turn

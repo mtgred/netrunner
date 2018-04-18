@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-kakugo
+(def card-definitions-ice-kakugo
   {"Kakugo"
    {:events {:pass-ice {:delayed-completion true
                         :req (req (= target card))

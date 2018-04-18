@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-yagura
+(def card-definitions-ice-yagura
   {"Yagura"
    {:subroutines [(do-net-damage 1)
                   {:msg "look at the top card of R&D"

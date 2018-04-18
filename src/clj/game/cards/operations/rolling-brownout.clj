@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-rolling-brownout
+(def card-definitions-operations-rolling-brownout
   {"Rolling Brownout"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
     :events {:play-event {:once :per-turn

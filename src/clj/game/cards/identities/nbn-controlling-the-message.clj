@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-nbn-controlling-the-message
+(def card-definitions-identities-nbn-controlling-the-message
   {"NBN: Controlling the Message"
    (let [cleanup (effect (update! :corp (dissoc card :saw-trash)))]
    {:events {:corp-turn-ends {:effect cleanup}

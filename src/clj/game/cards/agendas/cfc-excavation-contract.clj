@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-cfc-excavation-contract
+(def card-definitions-agendas-cfc-excavation-contract
   {"CFC Excavation Contract"
    {:effect (req (let [bios (count (filter #(has-subtype? % "Bioroid") (all-active-installed state :corp)))
                        bucks (* bios 2)]

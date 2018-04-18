@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-improved-tracers
+(def card-definitions-agendas-improved-tracers
   {"Improved Tracers"
    {:silent (req true)
     :effect (req (update-all-ice state side))

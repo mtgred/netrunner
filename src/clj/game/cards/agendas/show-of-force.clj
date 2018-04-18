@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-show-of-force
+(def card-definitions-agendas-show-of-force
   {"Show of Force"
    {:delayed-completion true
     :msg "do 2 meat damage"

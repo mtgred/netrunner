@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-new-construction
+(def card-definitions-agendas-new-construction
   {"New Construction"
    {:install-state :face-up
     :events {:advance

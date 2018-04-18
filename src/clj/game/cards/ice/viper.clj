@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-viper
+(def card-definitions-ice-viper
   {"Viper"
    {:subroutines [(trace-ability 3 {:label "The Runner loses 1 [Click] if able"
                                     :msg "force the Runner to lose 1 [Click] if able"

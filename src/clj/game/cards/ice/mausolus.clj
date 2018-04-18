@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-mausolus
+(def card-definitions-ice-mausolus
   {"Mausolus"
    {:advanceable :always
     :subroutines [{:label "Gain 1 [Credits] (Gain 3 [Credits])"

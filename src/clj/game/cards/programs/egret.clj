@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-egret
+(def card-definitions-programs-egret
   {"Egret"
    {:implementation "Added subtypes don't get removed when Egret is moved/trashed"
     :hosting {:req #(and (ice? %) (can-host? %) (rezzed? %))}

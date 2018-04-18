@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-galahad
+(def card-definitions-ice-galahad
   {"Galahad"
    (grail-ice end-the-run)})

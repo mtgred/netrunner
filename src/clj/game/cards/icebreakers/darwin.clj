@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-darwin
+(def card-definitions-icebreakers-darwin
   {"Darwin"
    {:flags {:runner-phase-12 (req true)}
     :events {:purge {:effect (effect (update-breaker-strength card))}}

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-khan-savvy-skiptracer
+(def card-definitions-identities-khan-savvy-skiptracer
   {"Khan: Savvy Skiptracer"
    {:events {:pass-ice
              {:req (req (first-event? state :corp :pass-ice))

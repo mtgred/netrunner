@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-daily-casts
+(def card-definitions-resources-daily-casts
   {"Daily Casts"
    (let [ability {:once :per-turn
                   :label "Take 2 [Credits] (start of turn)"

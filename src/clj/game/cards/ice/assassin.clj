@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-assassin
+(def card-definitions-ice-assassin
   {"Assassin"
    {:subroutines [(trace-ability 5 (do-net-damage 3))
                   (trace-ability 4 trash-program)]}})

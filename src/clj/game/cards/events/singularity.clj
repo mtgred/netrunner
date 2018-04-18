@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-singularity
+(def card-definitions-events-singularity
   {"Singularity"
    (run-event
     {:choices (req (filter #(can-run-server? state %) remotes))}

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-jinteki-potential-unleashed
+(def card-definitions-identities-jinteki-potential-unleashed
   {"Jinteki: Potential Unleashed"
    {:events {:pre-resolve-damage
              {:req (req (and (-> @state :corp :disable-id not) (= target :net) (pos? (last targets))))

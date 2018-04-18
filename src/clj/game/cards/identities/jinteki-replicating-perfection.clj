@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-jinteki-replicating-perfection
+(def card-definitions-identities-jinteki-replicating-perfection
   {"Jinteki: Replicating Perfection"
    {:events
     {:runner-phase-12 {:effect (req (apply prevent-run-on-server

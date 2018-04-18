@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-threat-assessment
+(def card-definitions-operations-threat-assessment
   {"Threat Assessment"
    {:req (req (last-turn? state :runner :trashed-card))
     :prompt "Select an installed Runner card"

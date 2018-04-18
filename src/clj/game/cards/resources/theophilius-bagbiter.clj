@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-theophilius-bagbiter
+(def card-definitions-resources-theophilius-bagbiter
   {"Theophilius Bagbiter"
    {:effect (req (lose state :runner :credit :all :run-credit :all)
                  (add-watch state :theophilius-bagbiter

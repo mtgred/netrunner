@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-blackguard
+(def card-definitions-hardware-blackguard
   {"Blackguard"
    {:in-play [:memory 2]
     :events {:expose

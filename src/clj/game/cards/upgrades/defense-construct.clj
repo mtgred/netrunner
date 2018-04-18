@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-defense-construct
+(def card-definitions-upgrades-defense-construct
   {"Defense Construct"
    {:advanceable :always
     :abilities [{:label "[Trash]: Add 1 facedown card from Archives to HQ for each advancement token"

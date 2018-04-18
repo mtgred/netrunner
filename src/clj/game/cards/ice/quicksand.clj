@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-quicksand
+(def card-definitions-ice-quicksand
   {"Quicksand"
    {:implementation "Encounter effect is manual"
     :abilities [{:req (req (and this-server (= (dec (:position run)) (ice-index state card))))

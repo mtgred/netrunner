@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-deep-thought
+(def card-definitions-programs-deep-thought
   {"Deep Thought"
    {:events {:successful-run {:silent (req true)
                               :effect (effect (add-counter card :virus 1))

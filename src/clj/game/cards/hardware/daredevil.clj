@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-daredevil
+(def card-definitions-hardware-daredevil
   {"Daredevil"
    {:in-play [:memory 2]
     :events {:run-big {:once :per-turn

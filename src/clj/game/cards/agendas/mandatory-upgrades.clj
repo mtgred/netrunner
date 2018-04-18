@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-mandatory-upgrades
+(def card-definitions-agendas-mandatory-upgrades
   {"Mandatory Upgrades"
    {:msg "gain an additional [Click] per turn"
     :silent (req true)

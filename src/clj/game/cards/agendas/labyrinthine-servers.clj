@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-labyrinthine-servers
+(def card-definitions-agendas-labyrinthine-servers
   {"Labyrinthine Servers"
    {:prevent {:jack-out [:all]}
     :silent (req true)

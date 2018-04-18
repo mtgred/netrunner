@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-cbi-raid
+(def card-definitions-events-cbi-raid
   {"CBI Raid"
    (letfn [(cbi-final [chosen original]
              {:prompt (str "The top cards of R&D will be " (clojure.string/join  ", " (map :title chosen)) ".")

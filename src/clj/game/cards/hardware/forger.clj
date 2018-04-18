@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-forger
+(def card-definitions-hardware-forger
   {"Forger"
    {:prevent {:tag [:all]}
     :in-play [:link 1]

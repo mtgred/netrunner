@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-fractal-threat-matrix
+(def card-definitions-upgrades-fractal-threat-matrix
   {"Fractal Threat Matrix"
    {:implementation "Manual trigger each time all subs are broken"
     :abilities [{:label "Trash the top 2 cards from the Stack"

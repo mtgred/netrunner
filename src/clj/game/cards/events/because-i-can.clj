@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-because-i-can
+(def card-definitions-events-because-i-can
   {"Because I Can"
    (run-event
     {:choices (req (filter #(can-run-server? state %) remotes))}

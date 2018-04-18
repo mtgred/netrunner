@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-upayoga
+(def card-definitions-ice-upayoga
   {"Upayoga"
    {:implementation "\"Resolve a subroutine...\" subroutine is not implemented"
     :subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"

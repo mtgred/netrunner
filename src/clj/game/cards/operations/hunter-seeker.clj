@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-hunter-seeker
+(def card-definitions-operations-hunter-seeker
   {"Hunter Seeker"
    {:req (req (last-turn? state :runner :stole-agenda))
     :delayed-completion true

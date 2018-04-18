@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-replanting
+(def card-definitions-operations-replanting
   {"Replanting"
    (letfn [(replant [n]
              {:prompt "Select a card to install with Replanting"

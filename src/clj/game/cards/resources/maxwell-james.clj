@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-maxwell-james
+(def card-definitions-resources-maxwell-james
   {"Maxwell James"
    {:in-play [:link 1]
     :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))

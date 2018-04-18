@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-heartbeat
+(def card-definitions-hardware-heartbeat
   {"Heartbeat"
    {:in-play [:memory 1]
     :prevent {:damage [:meat :net :brain]}

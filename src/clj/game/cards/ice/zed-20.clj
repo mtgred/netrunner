@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-zed-20
+(def card-definitions-ice-zed-20
   {"Zed 2.0"
    {:implementation "Restriction on having spent [click] is not implemented"
     :subroutines [trash-hardware

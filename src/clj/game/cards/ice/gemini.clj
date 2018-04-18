@@ -6,6 +6,6 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-gemini
+(def card-definitions-ice-gemini
   {"Gemini"
    (constellation-ice (do-net-damage 1))})

@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-tmi
+(def card-definitions-ice-tmi
   {"TMI"
    {:trace {:base 2
             :msg "keep TMI rezzed"

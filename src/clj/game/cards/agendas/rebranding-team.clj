@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-rebranding-team
+(def card-definitions-agendas-rebranding-team
   {"Rebranding Team"
    (letfn [(get-assets [state corp]
              (filter #(is-type? % "Asset") (concat (all-installed state :corp)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-dr-lovegood
+(def card-definitions-resources-dr-lovegood
   {"Dr. Lovegood"
    {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}
     :abilities [{:req (req (:runner-phase-12 @state))

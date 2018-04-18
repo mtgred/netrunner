@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-alice-merchant-clan-agitator
+(def card-definitions-identities-alice-merchant-clan-agitator
   {"Alice Merchant: Clan Agitator"
    {:events {:successful-run
              {:delayed-completion true

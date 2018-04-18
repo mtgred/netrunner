@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare add-icon remove-icon can-host? breaker-auto-pump auto-icebreaker cloud-icebreaker strength-pump break-sub cerberus break-and-enter global-sec-breaker deva conspiracy central-breaker)
-
-(def card-icebreakers-knight
+(def card-definitions-icebreakers-knight
   {"Knight"
    {:abilities [{:label "Host Knight on a piece of ICE"
                  :effect (req (let [k (get-card state card)

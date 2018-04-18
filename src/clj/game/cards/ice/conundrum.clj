@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-conundrum
+(def card-definitions-ice-conundrum
   {"Conundrum"
    {:subroutines [(assoc trash-program :player :runner
                                        :msg "force the Runner to trash 1 program"

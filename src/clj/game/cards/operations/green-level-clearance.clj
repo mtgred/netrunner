@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-green-level-clearance
+(def card-definitions-operations-green-level-clearance
   {"Green Level Clearance"
    {:msg "gain 3 [Credits] and draw 1 card"
     :delayed-completion true

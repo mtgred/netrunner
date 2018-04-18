@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-firmware-updates
+(def card-definitions-agendas-firmware-updates
   {"Firmware Updates"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))

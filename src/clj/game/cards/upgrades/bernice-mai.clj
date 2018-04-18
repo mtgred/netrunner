@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-bernice-mai
+(def card-definitions-upgrades-bernice-mai
   {"Bernice Mai"
    {:events {:successful-run {:interactive (req true)
                               :req (req this-server)

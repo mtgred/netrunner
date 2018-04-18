@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-sunset
+(def card-definitions-operations-sunset
   {"Sunset"
    (letfn [(sun [serv]
              {:prompt "Select two pieces of ICE to swap positions"

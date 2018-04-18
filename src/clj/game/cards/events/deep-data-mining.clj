@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-deep-data-mining
+(def card-definitions-events-deep-data-mining
   {"Deep Data Mining"
    {:req (req rd-runnable)
     :effect (effect (run :rd nil card)

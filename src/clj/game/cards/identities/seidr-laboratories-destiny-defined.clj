@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-seidr-laboratories-destiny-defined
+(def card-definitions-identities-seidr-laboratories-destiny-defined
   {"Seidr Laboratories: Destiny Defined"
    {:implementation "Manually triggered"
     :abilities [{:req (req (:run @state))

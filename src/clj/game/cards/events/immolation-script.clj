@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-immolation-script
+(def card-definitions-events-immolation-script
   {"Immolation Script"
    {:req (req archives-runnable)
     :effect (effect (run :archives nil card)

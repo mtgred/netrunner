@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-georgia-emelyov
+(def card-definitions-upgrades-georgia-emelyov
   {"Georgia Emelyov"
    {:events {:unsuccessful-run {:req (req (= (first (:server target)) (second (:zone card))))
                                 :delayed-completion true

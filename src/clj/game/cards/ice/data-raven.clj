@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-data-raven
+(def card-definitions-ice-data-raven
   {"Data Raven"
    {:implementation "Encounter effect is manual"
     :abilities [give-tag

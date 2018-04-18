@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-whirlpool
+(def card-definitions-ice-whirlpool
   {"Whirlpool"
    {:subroutines [{:msg "prevent the Runner from jacking out"
                    :effect (req (when (and (is-remote? (second (:zone card)))

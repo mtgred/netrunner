@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-quantum-predictive-model
+(def card-definitions-agendas-quantum-predictive-model
   {"Quantum Predictive Model"
    {:flags {:rd-reveal (req true)}
     :steal-req (req (not tagged))

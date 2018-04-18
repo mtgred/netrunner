@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-gorman-drip-v1
+(def card-definitions-programs-gorman-drip-v1
   {"Gorman Drip v1"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit (get-virus-counters state side card))
                                                   (trash card {:cause :ability-cost}))

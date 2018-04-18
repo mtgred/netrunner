@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-power-grid-overload
+(def card-definitions-operations-power-grid-overload
   {"Power Grid Overload"
    {:req (req (last-turn? state :runner :made-run))
     :trace {:base 2

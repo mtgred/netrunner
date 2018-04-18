@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-commercial-bankers-group
+(def card-definitions-assets-commercial-bankers-group
   {"Commercial Bankers Group"
    (let [ability {:req (req unprotected)
                   :label "Gain 3 [Credits] (start of turn)"

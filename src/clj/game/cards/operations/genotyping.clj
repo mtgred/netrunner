@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-genotyping
+(def card-definitions-operations-genotyping
   {"Genotyping"
    {:delayed-completion true
     :effect (effect (mill :corp 2)

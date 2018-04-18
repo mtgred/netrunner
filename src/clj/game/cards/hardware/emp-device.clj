@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-emp-device
+(def card-definitions-hardware-emp-device
   {"EMP Device"
    {:abilities [{:req (req (:run @state))
                  :msg "prevent the Corp from rezzing more than 1 piece of ICE for the remainder of the run"

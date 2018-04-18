@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-satellite-uplink
+(def card-definitions-events-satellite-uplink
   {"Satellite Uplink"
    {:choices {:max 2 :req installed?}
     :delayed-completion true

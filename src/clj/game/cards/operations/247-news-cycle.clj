@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-247-news-cycle
+(def card-definitions-operations-247-news-cycle
   {"24/7 News Cycle"
    {:req (req (pos? (count (:scored corp))))
     :delayed-completion true

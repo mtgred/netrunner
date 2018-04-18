@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-out-of-the-ashes
+(def card-definitions-events-out-of-the-ashes
   {"Out of the Ashes"
    (let [ashes-run {:prompt "Choose a server"
                     :choices (req runnable-servers)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-advanced-concept-hopper
+(def card-definitions-agendas-advanced-concept-hopper
   {"Advanced Concept Hopper"
    {:events
     {:run

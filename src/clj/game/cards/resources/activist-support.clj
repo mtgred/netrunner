@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-activist-support
+(def card-definitions-resources-activist-support
   {"Activist Support"
    {:events
     {:corp-turn-begins {:req (req (= 0 (:tag runner)))

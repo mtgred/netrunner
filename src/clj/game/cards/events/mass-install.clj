@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-mass-install
+(def card-definitions-events-mass-install
   {"Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
                              :choices {:req #(and (is-type? % "Program")

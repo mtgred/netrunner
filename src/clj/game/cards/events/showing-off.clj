@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-showing-off
+(def card-definitions-events-showing-off
   {"Showing Off"
    {:req (req rd-runnable)
     :effect (effect (run :rd

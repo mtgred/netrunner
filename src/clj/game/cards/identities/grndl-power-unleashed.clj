@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-grndl-power-unleashed
+(def card-definitions-identities-grndl-power-unleashed
   {"GRNDL: Power Unleashed"
    {:events {:pre-start-game {:req (req (= :corp side))
                               :effect (req (gain state :corp :credit 5)

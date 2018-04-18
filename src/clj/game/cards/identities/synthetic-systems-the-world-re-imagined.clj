@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-synthetic-systems-the-world-re-imagined
+(def card-definitions-identities-synthetic-systems-the-world-re-imagined
   {"Synthetic Systems: The World Re-imagined"
    {:events {:pre-start-game {:effect draft-points-target}}
     :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))

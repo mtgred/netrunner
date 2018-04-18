@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-tenma-line
+(def card-definitions-assets-tenma-line
   {"Tenma Line"
    {:abilities [{:label "Swap 2 pieces of installed ICE"
                  :cost [:click 1]

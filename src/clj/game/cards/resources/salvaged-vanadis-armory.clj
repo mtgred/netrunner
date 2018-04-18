@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-salvaged-vanadis-armory
+(def card-definitions-resources-salvaged-vanadis-armory
   {"Salvaged Vanadis Armory"
    {:events {:damage
              {:effect (req (show-wait-prompt state :corp "Runner to use Salvaged Vanadis Armory")

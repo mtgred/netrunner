@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-success
+(def card-definitions-operations-success
   {"Success"
    {:additional-cost [:forfeit]
     :effect (req (resolve-ability state side

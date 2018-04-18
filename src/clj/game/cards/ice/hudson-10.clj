@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-hudson-10
+(def card-definitions-ice-hudson-10
   {"Hudson 1.0"
    {:subroutines [{:msg "prevent the Runner from accessing more than 1 card during this run"
                    :effect (effect (max-access 1))}]

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-inject
+(def card-definitions-events-inject
   {"Inject"
    {:effect (req (doseq [c (take 4 (get-in @state [:runner :deck]))]
                    (if (is-type? c "Program")

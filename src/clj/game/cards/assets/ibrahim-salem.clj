@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-ibrahim-salem
+(def card-definitions-assets-ibrahim-salem
   {"Ibrahim Salem"
    (let [trash-ability (fn [type] {:req (req (seq (filter #(is-type? % type) (:hand runner))))
                                    :prompt (str "Choose a " type " to trash")

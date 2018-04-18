@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-jinja-city-grid
+(def card-definitions-upgrades-jinja-city-grid
   {"Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]
              (let [remaining (remove-once #(= (:cid %) (:cid ice)) ices)]

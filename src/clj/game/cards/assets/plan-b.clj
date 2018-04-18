@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-plan-b
+(def card-definitions-assets-plan-b
   {"Plan B"
    (advance-ambush
     0

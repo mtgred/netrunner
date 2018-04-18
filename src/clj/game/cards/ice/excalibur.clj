@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-excalibur
+(def card-definitions-ice-excalibur
   {"Excalibur"
    {:subroutines [{:label "The Runner cannot make another run this turn"
                    :msg "prevent the Runner from making another run"

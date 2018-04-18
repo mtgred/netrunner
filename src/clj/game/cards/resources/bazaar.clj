@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-bazaar
+(def card-definitions-resources-bazaar
   {"Bazaar"
    (letfn [(hardware-and-in-hand? [target runner]
              (and (is-type? target "Hardware")

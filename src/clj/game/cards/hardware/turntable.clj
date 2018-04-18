@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-turntable
+(def card-definitions-hardware-turntable
   {"Turntable"
    {:in-play [:memory 1]
     :events {:agenda-stolen

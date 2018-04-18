@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-windfall
+(def card-definitions-events-windfall
   {"Windfall"
    {:effect (effect (shuffle! :deck)
                     (resolve-ability

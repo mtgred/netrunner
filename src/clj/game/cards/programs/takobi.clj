@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-takobi
+(def card-definitions-programs-takobi
   {"Takobi"
    {:implementation "Adding power counter is manual"
     :abilities [{:label "Add 1 power counter"

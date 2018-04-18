@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-replicator
+(def card-definitions-hardware-replicator
   {"Replicator"
    (letfn [(hardware-and-in-deck? [target runner]
              (and (is-type? target "Hardware")

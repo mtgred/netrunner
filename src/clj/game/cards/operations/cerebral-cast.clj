@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-cerebral-cast
+(def card-definitions-operations-cerebral-cast
   {"Cerebral Cast"
    {:req (req (last-turn? state :runner :successful-run))
     :psi {:not-equal {:player :runner :prompt "Take 1 tag or 1 brain damage?"

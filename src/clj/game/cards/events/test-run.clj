@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-test-run
+(def card-definitions-events-test-run
   {"Test Run"
    {:prompt "Install a program from your Stack or Heap?"
     :choices (cancellable ["Stack" "Heap"])

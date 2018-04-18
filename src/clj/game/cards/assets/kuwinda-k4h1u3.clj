@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-kuwinda-k4h1u3
+(def card-definitions-assets-kuwinda-k4h1u3
   {"Kuwinda K4H1U3"
    (let [ability {:trace {:base (req (get-in card [:counter :power] 0))
                           :delayed-completion true

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-sub-boost
+(def card-definitions-operations-sub-boost
   {"Sub Boost"
    {:choices {:req #(and (ice? %) (rezzed? %))}
     :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")

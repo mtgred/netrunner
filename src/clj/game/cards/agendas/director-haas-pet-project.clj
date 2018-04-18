@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-director-haas-pet-project
+(def card-definitions-agendas-director-haas-pet-project
   {"Director Haas Pet Project"
    (letfn [(install-ability [server-name n]
              {:prompt "Select a card to install"

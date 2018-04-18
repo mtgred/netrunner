@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-raymond-flint
+(def card-definitions-resources-raymond-flint
   {"Raymond Flint"
    {:effect (req (add-watch state :raymond-flint
                             (fn [k ref old new]

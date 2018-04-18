@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-edward-kim-humanitys-hammer
+(def card-definitions-identities-edward-kim-humanitys-hammer
   {"Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
                       :req (req (and (is-type? target "Operation")

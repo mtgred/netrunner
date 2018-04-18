@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-himitsu-bako
+(def card-definitions-ice-himitsu-bako
   {"Himitsu-Bako"
    {:abilities [{:msg "add it to HQ"
                 :cost [:credit 1]

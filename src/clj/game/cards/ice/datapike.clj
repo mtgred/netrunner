@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-datapike
+(def card-definitions-ice-datapike
   {"Datapike"
    {:subroutines [{:msg "force the Runner to pay 2 [Credits] if able"
                    :effect (effect (pay :runner card :credit 2))}

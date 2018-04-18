@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-kate-mac-mccaffrey-digital-tinker
+(def card-definitions-identities-kate-mac-mccaffrey-digital-tinker
   {"Kate \"Mac\" McCaffrey: Digital Tinker"
    {:events {:pre-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                           (not (get-in @state [:per-turn (:cid card)]))))

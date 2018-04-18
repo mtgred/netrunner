@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-financial-collapse
+(def card-definitions-operations-financial-collapse
   {"Financial Collapse"
    {:delayed-completion true
     :req (req (and (>= (:credit runner) 6) (seq (filter #(is-type? % "Resource") (all-active-installed state :runner)))))

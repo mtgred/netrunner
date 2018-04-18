@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-clan-vengeance
+(def card-definitions-resources-clan-vengeance
   {"Clan Vengeance"
    {:events {:pre-resolve-damage {:req (req (pos? (last targets)))
                                   :effect (effect (add-counter card :power 1)

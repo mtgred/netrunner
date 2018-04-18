@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-nasir-meidan-cyber-explorer
+(def card-definitions-identities-nasir-meidan-cyber-explorer
   {"Nasir Meidan: Cyber Explorer"
    {:events {:rez {:req (req (and (:run @state)
                                   ;; check that the rezzed item is the encountered ice

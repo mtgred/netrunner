@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-old-hollywood-grid
+(def card-definitions-upgrades-old-hollywood-grid
   {"Old Hollywood Grid"
    (let [ohg {:req (req (or (in-same-server? card target)
                             (from-same-server? card target)))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-corporate-sales-team
+(def card-definitions-agendas-corporate-sales-team
   {"Corporate Sales Team"
    (let [e {:effect (req (when (pos? (get-in card [:counter :credit] 0))
                            (gain state :corp :credit 1)

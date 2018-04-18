@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-data-ward
+(def card-definitions-ice-data-ward
   {"Data Ward"
    {:runner-abilities [{:label "Pay 3 [Credits]"
                         :effect (req (pay state :runner card :credit 3)

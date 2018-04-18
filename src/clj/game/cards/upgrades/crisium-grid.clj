@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-crisium-grid
+(def card-definitions-upgrades-crisium-grid
   {"Crisium Grid"
    (let [suppress-event {:req (req (and this-server (not= (:cid target) (:cid card))))}]
      {:suppress {:pre-successful-run suppress-event

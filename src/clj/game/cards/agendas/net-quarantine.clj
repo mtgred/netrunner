@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-net-quarantine
+(def card-definitions-agendas-net-quarantine
   {"Net Quarantine"
    (let [nq {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
                             (when (pos? extra)

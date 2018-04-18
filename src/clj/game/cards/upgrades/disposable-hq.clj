@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-disposable-hq
+(def card-definitions-upgrades-disposable-hq
   {"Disposable HQ"
    (letfn [(dhq [n i]
              {:req (req (pos? i))

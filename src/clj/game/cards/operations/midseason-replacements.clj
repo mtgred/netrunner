@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-midseason-replacements
+(def card-definitions-operations-midseason-replacements
   {"Midseason Replacements"
    {:req (req (last-turn? state :runner :stole-agenda))
     :trace {:base 6

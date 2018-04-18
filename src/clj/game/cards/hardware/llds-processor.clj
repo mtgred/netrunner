@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-llds-processor
+(def card-definitions-hardware-llds-processor
   {"LLDS Processor"
    {:events
      (let [llds {:effect (req (let [cards (:llds-target card)]

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-bribery
+(def card-definitions-events-bribery
   {"Bribery"
    {:prompt "How many credits?"
     :choices :credit

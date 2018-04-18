@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-magnet
+(def card-definitions-ice-magnet
   {"Magnet"
    {:delayed-completion true
     :effect (req (let [magnet card]

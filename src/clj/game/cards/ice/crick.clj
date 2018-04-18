@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-crick
+(def card-definitions-ice-crick
   {"Crick"
    {:subroutines [{:label "install a card from Archives"
                    :prompt "Select a card to install from Archives"

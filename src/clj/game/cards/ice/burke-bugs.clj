@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-burke-bugs
+(def card-definitions-ice-burke-bugs
   {"Burke Bugs"
    {:subroutines [(trace-ability 0 (assoc trash-program :not-distinct true
                                                         :player :runner

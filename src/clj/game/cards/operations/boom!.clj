@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-boom!
+(def card-definitions-operations-boom!
   {"BOOM!"
    {:req (req (> (:tag runner) 1))
     :delayed-completion true

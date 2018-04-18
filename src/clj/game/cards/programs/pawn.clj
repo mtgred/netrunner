@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-pawn
+(def card-definitions-programs-pawn
   {"Pawn"
    {:implementation "All abilities are manual"
     :abilities [{:label "Host Pawn on the outermost ICE of a central server"

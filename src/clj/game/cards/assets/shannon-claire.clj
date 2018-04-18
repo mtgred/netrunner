@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-shannon-claire
+(def card-definitions-assets-shannon-claire
   {"Shannon Claire"
    {:abilities [{:cost [:click 1]
                  :msg "draw 1 card from the bottom of R&D"

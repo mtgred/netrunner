@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-false-echo
+(def card-definitions-programs-false-echo
   {"False Echo"
    {:abilities [{:req (req (and run
                                 (< (:position run) (count run-ices))

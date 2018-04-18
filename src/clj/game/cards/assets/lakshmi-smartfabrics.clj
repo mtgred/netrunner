@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-lakshmi-smartfabrics
+(def card-definitions-assets-lakshmi-smartfabrics
   {"Lakshmi Smartfabrics"
    {:events {:rez {:effect (effect (add-counter card :power 1))}}
     :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")

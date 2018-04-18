@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-populist-rally
+(def card-definitions-events-populist-rally
   {"Populist Rally"
    {:req (req (seq (filter #(has-subtype? % "Seedy") (all-active-installed state :runner))))
     :msg "give the Corp 1 fewer [Click] to spend on their next turn"

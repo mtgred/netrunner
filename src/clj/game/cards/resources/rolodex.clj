@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-rolodex
+(def card-definitions-resources-rolodex
   {"Rolodex"
    {:delayed-completion true
     :msg "look at the top 5 cards of their Stack"

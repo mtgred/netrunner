@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-oracle-may
+(def card-definitions-resources-oracle-may
   {"Oracle May"
    {:abilities [{:cost [:click 1]
                  :once :per-turn

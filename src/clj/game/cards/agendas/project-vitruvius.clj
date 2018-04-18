@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-project-vitruvius
+(def card-definitions-agendas-project-vitruvius
   {"Project Vitruvius"
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (:advance-counter card) 3)))

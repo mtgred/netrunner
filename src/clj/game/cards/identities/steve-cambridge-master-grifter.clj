@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare draft-points-target has-most-faction?)
-
-(def card-identities-steve-cambridge-master-grifter
+(def card-definitions-identities-steve-cambridge-master-grifter
   {"Steve Cambridge: Master Grifter"
    {:events {:successful-run
              {:req (req (and (= target :hq)

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-dirty-laundry
+(def card-definitions-events-dirty-laundry
   {"Dirty Laundry"
    (run-event
     {:end-run {:req (req (:successful run))

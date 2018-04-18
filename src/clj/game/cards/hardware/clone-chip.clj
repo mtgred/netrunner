@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-clone-chip
+(def card-definitions-hardware-clone-chip
   {"Clone Chip"
    {:abilities [{:prompt "Select a program to install from your Heap"
                  :priority true :show-discard true

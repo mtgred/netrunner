@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-bryan-stinson
+(def card-definitions-upgrades-bryan-stinson
   {"Bryan Stinson"
    {:abilities [{:cost [:click 1]
                  :req (req (and (< (:credit runner) 6)

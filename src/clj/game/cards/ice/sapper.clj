@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-sapper
+(def card-definitions-ice-sapper
   {"Sapper"
    {:flags {:rd-reveal (req true)}
     :subroutines [trash-program]

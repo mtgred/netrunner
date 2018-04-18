@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-grim
+(def card-definitions-ice-grim
   {"Grim"
    {:effect take-bad-pub
     :subroutines [trash-program]}})

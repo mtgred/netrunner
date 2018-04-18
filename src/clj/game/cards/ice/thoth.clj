@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-thoth
+(def card-definitions-ice-thoth
   {"Thoth"
    {:implementation "Encounter effect is manual"
     :runner-abilities [{:label "Take 1 tag"

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-personal-workshop
+(def card-definitions-resources-personal-workshop
   {"Personal Workshop"
    (let [remove-counter
          {:req (req (not (empty? (:hosted card))))

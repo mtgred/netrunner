@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-calibration-testing
+(def card-definitions-upgrades-calibration-testing
   {"Calibration Testing"
    {:abilities [{:label "[Trash]: Place 1 advancement token on a card in this server"
                  :delayed-completion true

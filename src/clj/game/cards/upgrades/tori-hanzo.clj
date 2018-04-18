@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-tori-hanzo
+(def card-definitions-upgrades-tori-hanzo
   {"Tori Hanzō"
    {:events
     {:pre-resolve-damage

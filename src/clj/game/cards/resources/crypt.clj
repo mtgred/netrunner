@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-crypt
+(def card-definitions-resources-crypt
   {"Crypt"
    {:events {:successful-run
              {:silent (req true)

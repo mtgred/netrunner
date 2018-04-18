@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-enhanced-login-protocol
+(def card-definitions-operations-enhanced-login-protocol
   {"Enhanced Login Protocol"
    (letfn [(elp-activated [state]
              (get-in @state [:corp :register :elp-activated] false))

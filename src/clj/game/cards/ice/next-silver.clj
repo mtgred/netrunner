@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-next-silver
+(def card-definitions-ice-next-silver
   {"NEXT Silver"
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (count (filter #(and (is-type? % "ICE")

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-plague
+(def card-definitions-programs-plague
   {"Plague"
    {:prompt "Choose a server for Plague" :choices (req servers)
     :msg (msg "target " target)

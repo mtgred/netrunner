@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-chilo-city-grid
+(def card-definitions-upgrades-chilo-city-grid
   {"ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
                                 :delayed-completion true

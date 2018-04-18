@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-copycat
+(def card-definitions-programs-copycat
   {"Copycat"
    {:abilities [{:req (req (and (:run @state)
                                 (:rezzed current-ice)))

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-whampoa-reclamation
+(def card-definitions-assets-whampoa-reclamation
   {"Whampoa Reclamation"
    {:abilities [{:label "Trash 1 card from HQ: Add 1 card from Archives to the bottom of R&D"
                  :once :per-turn

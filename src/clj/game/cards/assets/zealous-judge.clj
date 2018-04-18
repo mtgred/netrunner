@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent in-server? installed-access-trigger advance-ambush campaign as-trashed-agenda)
-
-(def card-assets-zealous-judge
+(def card-definitions-assets-zealous-judge
   {"Zealous Judge"
    {:rez-req (req tagged)
     :abilities [{:delayed-completion true

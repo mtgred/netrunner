@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-host?)
-
-(def card-programs-dhegdheer
+(def card-definitions-programs-dhegdheer
   {"Dhegdheer"
    {:abilities [{:label "Install a program on Dhegdheer"
                  :req (req (empty? (:hosted card)))

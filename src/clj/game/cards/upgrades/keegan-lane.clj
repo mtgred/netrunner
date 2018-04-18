@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-keegan-lane
+(def card-definitions-upgrades-keegan-lane
   {"Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
                  :req (req (and this-server

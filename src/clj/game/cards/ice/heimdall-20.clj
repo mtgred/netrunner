@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-heimdall-20
+(def card-definitions-ice-heimdall-20
   {"Heimdall 2.0"
    {:subroutines [(do-brain-damage 1)
                   {:msg "do 1 brain damage and end the run" :effect (effect (damage eid :brain 1 {:card card}) (end-run))}

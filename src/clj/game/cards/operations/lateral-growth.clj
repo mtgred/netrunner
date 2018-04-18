@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-operations-lateral-growth
+(def card-definitions-operations-lateral-growth
   {"Lateral Growth"
    {:delayed-completion true
     :msg "gain 4 [Credits]"

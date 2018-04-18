@@ -6,7 +6,7 @@
          grail-in-hand reveal-grail resolve-grail grail-ice next-ice-count morph morph-effect morph-ice
          constellation-ice implementation-note)
 
-(def card-ice-self-adapting-code-wall
+(def card-definitions-ice-self-adapting-code-wall
   {"Self-Adapting Code Wall"
    {:subroutines [end-the-run]
     :flags {:cannot-lower-strength true}}})

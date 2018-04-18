@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt genetics-trigger? shard-constructor)
-
-(def card-resources-gang-sign
+(def card-definitions-resources-gang-sign
   {"Gang Sign"
    {:events {:agenda-scored
              {:delayed-completion true

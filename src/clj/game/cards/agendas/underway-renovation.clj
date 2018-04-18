@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-underway-renovation
+(def card-definitions-agendas-underway-renovation
   {"Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (:advance-counter (get-card s c)) 4) 2 1))]
      {:install-state :face-up

@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare is-scored? ice-boost-agenda)
-
-(def card-agendas-voting-machine-initiative
+(def card-definitions-agendas-voting-machine-initiative
   {"Voting Machine Initiative"
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))

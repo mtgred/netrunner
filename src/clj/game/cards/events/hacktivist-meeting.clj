@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare run-event)
-
-(def card-events-hacktivist-meeting
+(def card-definitions-events-hacktivist-meeting
   {"Hacktivist Meeting"
    {:implementation "Does not prevent rez if HQ is empty"
     :events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))

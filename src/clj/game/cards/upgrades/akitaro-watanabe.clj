@@ -1,8 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
-
-(def card-upgrades-akitaro-watanabe
+(def card-definitions-upgrades-akitaro-watanabe
   {"Akitaro Watanabe"
    {:events {:pre-rez-cost {:req (req (and (ice? target)
                                            (= (card->server state card) (card->server state target))))

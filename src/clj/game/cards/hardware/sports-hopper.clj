@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(def card-hardware-sports-hopper
+(def card-definitions-hardware-sports-hopper
   {"Sports Hopper"
    {:in-play [:link 1]
     :abilities [{:label "Draw 3 cards"
