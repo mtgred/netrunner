@@ -31,13 +31,15 @@
                  [clj-time "0.14.2"]
                  [com.draines/postal "2.0.2"]
                  [throttler "1.0.0"]
-                 [clj-http "3.7.0"]]
+                 [clj-http "3.7.0"]
+                 [garden "1.3.5"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.11"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
-            [lein-exec "0.3.7"]]
+            [lein-exec "0.3.7"]
+            [lein-garden "0.3.0"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
                                   [com.cemerick/piggieback "0.2.1"]]
@@ -59,6 +61,20 @@
   :omit-source true
   :main web.core
 
+  ;; Garden CSS - need to add optimised version for prod
+  :garden {:builds [{:id "dev"
+                     :source-paths ["src/clj"]
+                     ;; Stylesheet location:
+                     :stylesheet styles.chat/chat
+                     ;; Compiler flags passed to `garden.core/css`:
+                     :compiler {;; Where to save the file:
+                                :output-to "resources/public/css/chat2.css"
+                                ;; generate all vendor prefixes
+                                :vendors ["webkit" "moz" "o"]
+                                ;; Compress the output
+                                :pretty-print? true}}]}
+  ;; Should auto compile CSS when lein is run
+  :prep-tasks [["garden" "once"]]
 
   ;; Misc
   :test-paths ["test/clj"]
