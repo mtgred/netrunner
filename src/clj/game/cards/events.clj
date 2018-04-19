@@ -581,9 +581,10 @@
                                                               (= (first (:server run)) (second (:zone %))))}
                                          :msg (msg "remove " (quantify c "advancement token")
                                                    " from " (card-str state target))
-                                         :effect (req (add-prop state :corp target :advance-counter (- c))
-                                                      (clear-wait-prompt state :corp)
-                                                      (effect-completed state side eid))}
+                                         :effect (req (let [to-remove (min c (:advance-counter target 0))]
+                                                        (add-prop state :corp target :advance-counter (- to-remove))
+                                                        (clear-wait-prompt state :corp)
+                                                        (effect-completed state side eid)))}
                                         card nil)))}})
 
    "Express Delivery"

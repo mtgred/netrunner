@@ -871,6 +871,24 @@
       (is (= 0 (:tag (get-runner))) "No tags, didn't access TGTBT")
       (is (= 0 (:advance-counter (refresh tg))) "Advancements removed"))))
 
+(deftest exploratory-romp-negative
+  ;; Exploratory Romp - Don't remove more than the existing number of advancement tokens
+  (do-game
+    (new-game (default-corp [(qty "TGTBT" 1)])
+              (default-runner [(qty "Exploratory Romp" 1)]))
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (let [tg (get-content state :remote1 0)]
+      (advance state tg 2)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Exploratory Romp")
+      (prompt-choice :runner "Server 1")
+      (run-successful state)
+      (prompt-choice :runner "Run ability")
+      (prompt-choice :runner "3")
+      (prompt-select :runner (refresh tg))
+      (is (= 0 (:tag (get-runner))) "No tags, didn't access TGTBT")
+      (is (= 0 (:advance-counter (refresh tg))) "Advancements removed"))))
+
 (deftest falsified-credentials
   ;; Falsified Credentials - Expose card in remote
   ;; server and correctly guess its type to gain 5 creds
