@@ -14,12 +14,30 @@
     (play-from-hand state :corp "Adonis Campaign" "New remote")
     (let [ac (get-content state :remote1 0)]
       (core/rez state :corp ac)
-      (is (= 1 (get-in @state [:corp :credit])))
+      (is (= 1 (:credit (get-corp))))
       (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-      (take-credits state :corp 2)
-      (take-credits state :runner)
-      (is (= 6 (get-in @state [:corp :credit])) "Gain 3 from Adonis")
-      (is (= 9 (get-counters (refresh ac) :credit))) "9 counter remaining on Adonis")))
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))
+            counters (get-counters (refresh ac) :credit)]
+        (take-credits state :runner)
+        (is (= (:credit (get-corp)) (+ credits 3)) "Gain 3 from Adonis")
+        (is (= (get-counters (refresh ac) :credit) (- counters 3)) "9 counter remaining on Adonis")))))
+
+(deftest advanced-assembly-lines
+  (do-game
+    (new-game (default-corp [(qty "Advanced Assembly Lines" 1)
+                             (qty "PAD Campaign" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Advanced Assembly Lines" "New remote")
+    (let [aal (get-content state :remote1 0)
+          credits (:credit (get-corp))
+          hq (count (:hand (get-corp)))]
+      (core/rez state :corp aal)
+      (is (= (+ credits 2) (:credit (get-corp))) "Spend 1 gain 3")
+      (card-ability state :corp aal 0)
+      (prompt-select :corp (find-card "PAD Campaign" (:hand (get-corp))))
+      (prompt-choice :corp "New remote")
+      (is (= (- hq 1) (count (:hand (get-corp)))) "Installed 1 card, hq is empty"))))
 
 (deftest aggressive-secretary
   (do-game
@@ -37,11 +55,11 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes")
-      (is (= 3 (get-in @state [:corp :credit])))
+      (is (= 3 (:credit (get-corp))))
       ;; Corp can trash one program
       (prompt-select :corp (get-in @state [:runner :rig :program 1]))
       ;; There should be two Caches left
-      (is (= 3 (get-in @state [:corp :credit])))
+      (is (= 3 (:credit (get-corp))))
       (is (= 2 (count (get-in @state [:runner :rig :program])))))))
 
 (deftest alexa-belsky
@@ -75,9 +93,9 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 2 (get-counters (refresh alix) :power)) "Two counters on Alix")
-      (is (= 4 (get-in @state [:corp :credit])))
+      (is (= 4 (:credit (get-corp))))
       (card-ability state :corp alix 0)
-      (is (= 8 (get-in @state [:corp :credit])) "Gain 4 credits from Alix"))))
+      (is (= 8 (:credit (get-corp))) "Gain 4 credits from Alix"))))
 
 (deftest amani-senai
   ;; Amani Senai - trace on score/steal to bounce, with base strength = advancement req of the agenda
@@ -550,11 +568,11 @@
     (play-from-hand state :corp "Eve Campaign" "New remote")
     (let [eve (get-content state :remote1 0)]
       (core/rez state :corp eve)
-      (is (= 0 (get-in @state [:corp :credit])))
+      (is (= 0 (:credit (get-corp))))
       (is (= 16 (get-counters (refresh eve) :credit)))
       (take-credits state :corp 2)
       (take-credits state :runner)
-      (is (= 4 (get-in @state [:corp :credit])))
+      (is (= 4 (:credit (get-corp))))
       (is (= 14 (get-counters (refresh eve) :credit))))))
 
 (deftest executive-boot-camp-suppress-start-of-turn
@@ -1197,11 +1215,11 @@
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (let [launch (get-content state :remote1 0)]
       (core/rez state :corp launch)
-      (is (= 4 (get-in @state [:corp :credit])))
+      (is (= 4 (:credit (get-corp))))
       (is (= 6 (get-counters (refresh launch) :credit)))
       (take-credits state :corp 2)
       (take-credits state :runner)
-      (is (= 8 (get-in @state [:corp :credit])))
+      (is (= 8 (:credit (get-corp))))
       (is (= 4 (get-counters (refresh launch) :credit))))))
 
 (deftest malia

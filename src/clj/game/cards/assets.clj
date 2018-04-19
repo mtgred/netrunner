@@ -65,7 +65,8 @@
    {:effect (effect (gain :credit 3))
     :msg (msg "gain 3 [Credits]")
     :abilities [{:label "[Trash]: Install a non-agenda card from HQ"
-                 :effect (effect (trash card) (corp-install target nil))
+                 :effect (effect (trash card)
+                                 (corp-install target nil))
                  :msg (msg (corp-install-msg target))
                  :prompt "Select a non-agenda card to install from HQ"
                  :priority true
