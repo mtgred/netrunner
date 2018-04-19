@@ -1,0 +1,177 @@
+@font-face {
+  font-family: 'Titillium Web';
+  font-style: normal;
+  font-weight: 200;
+  src: url(".. / fonts/TitilliumWeb-ExtraLight.woff") format('woff'), url(".. / fonts/TitilliumWeb-ExtraLight.ttf") format('truetype');
+}
+
+@font-face {
+  font-family: 'Titillium Web';
+  font-style: normal;
+  font-weight: 300;
+  src: url(".. / fonts/TitilliumWeb-Light.woff") format('woff'), url(".. / fonts/TitilliumWeb-Light.ttf") format('truetype');
+}
+
+@font-face {
+  font-family: 'Titillium Web';
+  font-style: normal;
+  font-weight: 400;
+  src: url(".. / fonts/TitilliumWeb-Regular.woff") format('woff'), url(".. / fonts/TitilliumWeb-Regular.ttf") format('truetype');
+}
+
+@font-face {
+  font-family: 'Titillium Web';
+  font-style: normal;
+  font-weight: 700;
+  src: url(".. / fonts/TitilliumWeb-Bold.woff") format('woff'), url(".. / fonts/TitilliumWeb-Bold.ttf") format('truetype');
+}
+
+@font-face {
+  font-family: 'anr-icon';
+  font-style: normal;
+  font-weight: normal;
+  src: url("../fonts/netrunner.eot") format('eot')), url("../fonts/netrunner.eot?#iefix") format('embedded-opentype'), url("../fonts/netrunner.woff") format('woff'), url("../fonts/netrunner.ttf") format('truetype'), url("../fonts/netrunner.svg") format('svg') active;;
+}
+
+@font-face {
+  font-family: 'fontello';
+  font-style: normal;
+  font-weight: normal;
+  src: url("../fonts/fontello.eot"), url("../fonts/fontello.eot#iefix") format('embedded-opentype'), url("../fonts/fontello.woff") format('woff'), url("../fonts/fontello.ttf") format('truetype'), url("../fonts/netrunner.svg") format('svg') active;;
+}
+
+.typing {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  bottom: 0;
+  left: 1px;
+}
+
+.typing span {
+  animation-name: blink;
+  animation-duration: 1.5s;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.typing span:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.typing span:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.typing span:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+.typing span:nth-child(6) {
+  animation-delay: 0.6s;
+}
+
+.typing span:nth-child(7) {
+  animation-delay: 0.7s;
+}
+
+.typing span:nth-child(8) {
+  animation-delay: 0.8s;
+}
+
+.typing span:nth-child(9) {
+  animation-delay: 0.9s;
+}
+
+.typing span:nth-child(10) {
+  animation-delay: 1.0s;
+}
+
+@keyframes blink {
+
+0% {
+    opacity: 0.2;
+  }
+  
+20% {
+    opacity: 1;
+  }
+  
+100% {
+    opacity: 0.2;
+  }
+
+}
+
+@-webkit-keyframes blink {
+
+0% {
+    opacity: 0.2;
+  }
+  
+20% {
+    opacity: 1;
+  }
+  
+100% {
+    opacity: 0.2;
+  }
+
+}
+
+@-moz-keyframes blink {
+
+0% {
+    opacity: 0.2;
+  }
+  
+20% {
+    opacity: 1;
+  }
+  
+100% {
+    opacity: 0.2;
+  }
+
+}
+
+@-o-keyframes blink {
+
+0% {
+    opacity: 0.2;
+  }
+  
+20% {
+    opacity: 1;
+  }
+  
+100% {
+    opacity: 0.2;
+  }
+
+}
+
+.toast-hand {
+  bottom: 100px;
+  left: 16px;
+}
+
+.toast-left-center {
+  bottom: 320px;
+  left: 5px;
+  width: 60px;
+}
+
+.toast-card {
+  top: 36px;
+  right: 5px;
+}

@@ -65,16 +65,18 @@
   :garden {:builds [{:id "dev"
                      :source-paths ["src/clj"]
                      ;; Stylesheet location:
-                     :stylesheet styles.chat/chat
+                     :stylesheet styles.netrunner/netrunner
                      ;; Compiler flags passed to `garden.core/css`:
                      :compiler {;; Where to save the file:
-                                :output-to "resources/public/css/chat2.css"
+                                ;:output-to "resources/public/css/netrunner2.css"
+                                :output-to "src/clj/styles/netrunner.css"
                                 ;; generate all vendor prefixes
                                 :vendors ["webkit" "moz" "o"]
                                 ;; Compress the output
                                 :pretty-print? true}}]}
   ;; Should auto compile CSS when lein is run
-  :prep-tasks [["garden" "once"]]
+  ;; disable for Cursive due to cursive defect with prep-tasks
+  ;:prep-tasks [["garden" "once"]]
 
   ;; Misc
   :test-paths ["test/clj"]

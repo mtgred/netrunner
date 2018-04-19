@@ -1,6 +1,6 @@
 (ns styles.chat
   (:require [garden.def :refer [defstyles defkeyframes]]
-            [garden.selectors :as gs :refer [& nth-child]]
+            [garden.selectors :refer [& nth-child]]
             [garden.units :refer [px]]))
 
 (defn get-delay
