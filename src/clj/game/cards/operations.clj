@@ -8,7 +8,6 @@
                                 combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
                                 pluralize quantify type->rig-zone safe-zero?]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
-            [game.cards.ice :refer [do-brain-damage]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]

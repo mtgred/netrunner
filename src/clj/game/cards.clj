@@ -142,6 +142,22 @@
           (unregister-events state side h)
           (register-events state side (:events (card-def newh)) newh))))))
 
+(defn do-net-damage
+  "Do specified amount of net-damage."
+  [dmg]
+  {:label (str "Do " dmg " net damage")
+   :delayed-completion true
+   :msg (str "do " dmg " net damage")
+   :effect (effect (damage eid :net dmg {:card card}))})
+
+(defn do-brain-damage
+  "Do specified amount of brain damage."
+  [dmg]
+  {:label (str "Do " dmg " brain damage")
+   :delayed-completion true
+   :msg (str "do " dmg " brain damage")
+   :effect (effect (damage eid :brain dmg {:card card}))})
+
 (defn load-all-cards []
   "Load all card definitions into their own namespaces"
   (doall (pmap load-file
@@ -170,11 +186,11 @@
 
 (def cards nil)
 
-(defn init-once []
+(defn reset-card-defs []
   "Performs any once only initialization that should be performed on startup"
   (let [cards-var #'game.core/cards]
-    (when (nil? (var-get cards-var))
-      (alter-var-root cards-var
-                      (constantly
-                       (do (load-all-cards)
-                           (get-card-defs)))))))
+    ; (when (nil? (var-get cards-var))
+    (alter-var-root cards-var
+                    (constantly
+                     (do (load-all-cards)
+                         (get-card-defs))))))
