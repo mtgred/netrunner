@@ -928,8 +928,8 @@
                   (default-runner))
         (starting-hand state :corp ["Graft"])
         (play-and-score state "Graft")
-          (dotimes [current-pick number-of-picks]
-            (prompt-choice :corp (find-card (nth cards current-pick) (:deck (get-corp)))))
+        (dotimes [current-pick number-of-picks]
+          (prompt-choice :corp (find-card (nth cards current-pick) (:deck (get-corp)))))
         (is (= number-of-picks (count (:hand (get-corp)))))
         (is (= deck-size (count (:deck (get-corp))))))))]
     (doall (map graft-test
