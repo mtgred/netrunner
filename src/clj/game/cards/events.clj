@@ -214,6 +214,13 @@
                                                                (continue-ability end-effect card nil))}}
                                     c)))})
 
+   "Contaminate"
+   {:msg (msg "place 3 virus tokens on " (:title target))
+    :choices {:req #(and (installed? %)
+                         (= (:side %) "Runner")
+                         (= 0 (get-in % [:counter :virus] 0)))}
+    :effect (req (add-counter state :runner target :virus 3))}
+
   "Corporate \"Grant\""
   {:events {:runner-install {:silent (req true) ;; there are no current interactions where we'd want Grant to not be last, and this fixes a bug with Hayley
                              :req (req (first-event? state side :runner-install))
