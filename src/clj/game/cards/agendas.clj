@@ -1196,7 +1196,7 @@
    "Viral Weaponization"
    {:effect (effect (register-events
                       {:corp-turn-ends
-                       {:msg "to do 1 net damage for each card in the grip"
+                       {:msg "do 1 net damage for each card in the grip"
                         :effect (req (let [cnt (count (:hand runner))]
                                        (unregister-events state side card)
                                        (damage state side eid :net cnt {:card card})))}}
