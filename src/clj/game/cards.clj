@@ -178,7 +178,9 @@
         (map var-get)
         (apply merge))))
 
-(def cards {})
+(def cards
+  (do (load-all-cards)
+      (get-card-defs)))
 
 (defn reset-card-defs
   "Performs any once only initialization that should be performed on startup"
