@@ -51,6 +51,7 @@
 
 
 (defn load-all-cards [tests]
+  (core/init-once)
   (when (empty? @all-cards)
     (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
   (tests))

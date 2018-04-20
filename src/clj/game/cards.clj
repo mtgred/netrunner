@@ -142,12 +142,14 @@
           (unregister-events state side h)
           (register-events state side (:events (card-def newh)) newh))))))
 
-;; Load all card definitions into the current namespace.
 (defn load-all-cards []
-  (doseq [file (->> (io/file (io/file "src/clj/game/cards"))
+  "Load all card definitions into their own namespaces"
+  (doall (pmap load-file
+               (->> (io/file "src/clj/game/cards")
                     (file-seq)
-                    (filter #(.isFile %)))]
-    (load-file (str file))))
+                    (filter #(.isFile %))
+                    (map str)))))
+
 
 (defn unload-all-cards []
   (->> (all-ns)
@@ -166,6 +168,13 @@
        (map var-get)
        (apply merge)))
 
-(def cards
-  (do (reload-all-cards)
-      (get-card-defs)))
+(def cards nil)
+
+(defn init-once []
+  "Performs any once only initialization that should be performed on startup"
+  (let [cards-var #'game.core/cards]
+    (when (nil? (var-get cards-var))
+      (alter-var-root cards-var
+                      (constantly
+                       (do (load-all-cards)
+                           (get-card-defs)))))))
