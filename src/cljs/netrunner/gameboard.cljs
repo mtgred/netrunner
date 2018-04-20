@@ -18,10 +18,6 @@
 (defonce last-state (atom {}))
 (defonce lock (atom false))
 
-
-(defn parse-state [state]
-  (js->clj (.parse js/JSON state) :keywordize-keys true))
-
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
                 (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)]))
@@ -39,22 +35,23 @@
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
-(defn init-game [game side]
-  (.setItem js/localStorage "gameid" (:gameid @app-state))
-  (swap! game-state merge game)
-  (swap! game-state assoc :side side)
-  (reset! last-state @game-state))
+(defn get-side [state]
+  (let [user-id (:_id (:user @app-state))]
+    (cond
+      (= (get-in state [:runner :user :_id]) user-id) :runner
+      (= (get-in state [:corp :user :_id]) user-id) :corp
+      :else :spectator)))
 
-
-(defn launch-game [game]
-  (let [user (:user @app-state)
-        side (if (= (get-in game [:runner :user :_id]) (:_id user))
-               :runner
-               (if (= (get-in game [:corp :user :_id]) (:_id user))
-                 :corp
-                 :spectator))]
+(defn init-game [state]
+  (let [side (get-side state)]
     (swap! app-state assoc :side side)
-    (init-game game side))
+    (.setItem js/localStorage "gameid" (:gameid state))
+    (reset! game-state state)
+    (swap! game-state assoc :side side)
+    (reset! last-state @game-state)))
+
+(defn launch-game [{:keys [state]}]
+  (init-game state)
   (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
@@ -68,25 +65,33 @@
   (toast text severity nil))
 
 (def zoom-channel (chan))
-;(def socket (.connect js/io (str js/iourl "/lobby")))
 
-
-(defn handle-state [state]
-  (swap! game-state #(assoc state :side (:side @game-state)))
-  (reset! last-state @game-state)
+(defn handle-state [{:keys [state]}]
+  (println "STATE" state)
+  (println "Old side:" (:side @game-state))
+  (init-game state)
+  ;; (swap! game-state #(assoc state :side side))
+  ;; (reset! game-state (assoc state :side side))
+  (println "New side:" (:side @game-state))
+  ;; (println "GAME STATE" game-state)
+  (println "CORP:" (:corp @game-state))
+  ;; (reset! last-state @game-state)
   (reset! lock false))
 
-(defn handle-diff [diff]
+(defn handle-diff [{:keys [gameid diff]}]
+  (println "DIFF" gameid ":" diff)
+  (when (= gameid (:gameid @game-state))
+    (swap! game-state #(differ/patch @last-state diff))
+    (reset! last-state @game-state)
+    (reset! lock false)))
 
-  (swap! game-state #(differ/patch @last-state diff))
-  (swap! last-state #(identity @game-state))
-  (reset! lock false))
-
+(defn parse-state [state]
+  (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (ws/register-ws-handler! :netrunner/state #(handle-state (parse-state %)))
 (ws/register-ws-handler! :netrunner/start #(launch-game (parse-state %)))
 (ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
-(ws/register-ws-handler! :netrunner/rejoin #(handle-state (parse-state %)))
+;; (ws/register-ws-handler! :netrunner/rejoin #(handle-state (parse-state %)))
 
 (def anr-icons {"[Credits]" "credit"
                 "[$]" "credit"
@@ -1313,8 +1318,10 @@
 
     om/IRenderState
     (render-state [this state]
+      (when (= :spectator side)
+        (println "CURSOR" cursor))
       (sab/html
-       (when side
+       (when (and side corp runner)
          (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
