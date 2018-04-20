@@ -1261,12 +1261,13 @@
                                  card nil)))}]}
 
    "Rashida Jaheem"
-   {:events {:corp-turn-begins {:delayed-completion true
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :events {:corp-turn-begins {:delayed-completion true
                                 :effect (effect (show-wait-prompt :runner "Corp to use Rashida Jaheem")
                                                 (continue-ability
                                                   {:optional
-                                                   {:prompt "Trash Rashida Jaheem to gain 3[Credits] and draw 3 cards?"
-                                                    :yes-ability {:msg "gain 3[Credits] and draw 3 cards"
+                                                   {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
+                                                    :yes-ability {:msg "gain 3 [Credits] and draw 3 cards"
                                                                   :effect (effect (gain :credit 3)
                                                                                   (draw 3)
                                                                                   (trash card)
