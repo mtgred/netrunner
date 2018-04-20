@@ -375,9 +375,10 @@
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})
         card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
 
-    (when-let [trash-effect (and (or (:rezzed card) (not (:facedown card))) (:trash-effect cdef))]
+    (when-let [trash-effect (:trash-effect cdef)]
       (when (and (not disabled) (or (and (= (:side card) "Runner")
-                                         (:installed card))
+                                         (:installed card)
+                                         (not (:facedown card)))
                                     (and (:rezzed card) (not host-trashed))
                                     (and (:when-inactive trash-effect) (not host-trashed))))
         (resolve-ability state side trash-effect moved-card (list cause))))
