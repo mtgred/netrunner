@@ -158,38 +158,35 @@
    :msg (str "do " dmg " brain damage")
    :effect (effect (damage eid :brain dmg {:card card}))})
 
-(defn load-all-cards []
+;; Load all card definitions into the current namespace.
+(defn load-all-cards
   "Load all card definitions into their own namespaces"
-  (doall (pmap load-file
-               (->> (io/file "src/clj/game/cards")
-                    (file-seq)
-                    (filter #(.isFile %))
-                    (map str)))))
+  ([] (load-all-cards nil))
+  ([path]
+   (doall (pmap load-file
+                (->> (io/file (str "src/clj/game/cards" (when path (str "/" path))))
+                     (file-seq)
+                     (filter #(.isFile %))
+                     (map str))))))
 
+(defn get-card-defs
+  ([] (get-card-defs nil))
+  ([path]
+   (->> (all-ns)
+        (filter #(starts-with? % (str "game.cards" (when path (str "." path)))))
+        (map #(ns-resolve % 'card-definitions))
+        (map var-get)
+        (apply merge))))
 
-(defn unload-all-cards []
-  (->> (all-ns)
-       (filter #(starts-with? % "game.cards"))
-       (map #(symbol (str %)))
-       (map remove-ns)))
+(def cards {})
 
-(defn reload-all-cards []
-  (unload-all-cards)
-  (load-all-cards))
-
-(defn get-card-defs []
-  (->> (all-ns)
-       (filter #(starts-with? % "game.cards"))
-       (map #(ns-resolve % 'card-definitions))
-       (map var-get)
-       (apply merge)))
-
-(def cards nil)
-
-(defn reset-card-defs []
+(defn reset-card-defs
   "Performs any once only initialization that should be performed on startup"
-  (let [cards-var #'game.core/cards]
-    (alter-var-root cards-var
-                    (constantly
-                     (do (load-all-cards)
-                         (get-card-defs))))))
+  ([] (reset-card-defs nil))
+  ([path]
+   (let [cards-var #'game.core/cards]
+     (alter-var-root cards-var
+                     (constantly
+                       (merge cards
+                              (do (load-all-cards path)
+                                  (get-card-defs path))))))))

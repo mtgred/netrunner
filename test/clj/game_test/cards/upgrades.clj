@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs "upgrades"))
 
 (deftest amazon-industrial-zone
   ;; Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount

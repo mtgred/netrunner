@@ -49,20 +49,16 @@
         (when (= start-as :runner) (take-credits state :corp)))
       state)))
 
-
 (defn load-all-cards [tests]
-  (core/reset-card-defs)
   (when (empty? @all-cards)
+    (core/reset-card-defs)
     (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
   (tests))
 (use-fixtures :once load-all-cards)
 
-(defn reload-cards
-  "Add to use-fixtures list if you want slow hot-reloading of card definitions"
-  [tests]
-  (with-redefs [core/cards (do (core/reload-all-cards)
-                               (core/get-card-defs))]
-    (tests)))
+(defn reset-card-defs [card-type tests]
+  (core/reset-card-defs card-type)
+  (tests))
 
 
 ;;; Card related functions
@@ -167,7 +163,7 @@
      (is (get-in @state [:run :run-effect]) "There is a run-effect")
      (core/no-action state :corp nil)
      (core/successful-run state :runner nil)
-     (if show-prompt 
+     (if show-prompt
        (is (get-in @state [:runner :prompt]) "A prompt is shown")
        (is (not (get-in @state [:runner :prompt])) "A prompt is not shown"))
      (is (get-in @state [:run :successful]) "Run is marked successful"))))
