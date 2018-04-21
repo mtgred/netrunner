@@ -721,6 +721,40 @@
       (is (= 1 (count (:discard (get-corp)))) "Agenda trashed")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
+(deftest find-the-truth
+  ;; On successful run see the top card from R&D before access
+  (do-game
+    (new-game
+      (default-corp [(qty "Restructure" 10)])
+      (default-runner [(qty "Find the Truth" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Find the Truth")
+    (run-on state "HQ")
+    (run-successful state)
+    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+    (prompt-choice :runner "Yes")
+    (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card on R&D")
+    (prompt-choice :runner "Yes")))
+
+(deftest find-the-truth-equivocation
+  ;; Equivocation & FTT - should get order of choice.
+  (do-game
+    (new-game
+      (default-corp [(qty "Restructure" 10)])
+      (default-runner [(qty "Equivocation" 1) (qty "Find the Truth" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Equivocation")
+    (play-from-hand state :runner "Find the Truth")
+    (run-empty-server state :rd)
+    (prompt-choice :runner "Find the Truth")
+    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+    (prompt-choice :runner "Yes")
+    (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card")
+    (prompt-choice :runner "Yes") ; Equivocation prompt
+    (is (= "Reveal the top card of R&D?" (-> @state :runner :prompt first :msg)) "Equivocation Prompt")
+    (prompt-choice :runner "Yes")))
+
 (deftest gang-sign
   ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
   (do-game
