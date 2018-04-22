@@ -755,6 +755,31 @@
     (is (= "Reveal the top card of R&D?" (-> @state :runner :prompt first :msg)) "Equivocation Prompt")
     (prompt-choice :runner "Yes")))
 
+(deftest find-the-truth-marilyn-campaign-neutralize-all-threats
+  ;; Find The Truth should completed before Marilyn trash is forced
+  (do-game
+    (new-game
+      (default-corp [(qty "Marilyn Campaign" 1) (qty "Vanilla" 10)])
+      (default-runner [(qty "Find the Truth" 1) (qty "Neutralize All Threats" 1)]))
+    (starting-hand state :corp ["Marilyn Campaign"])
+    (play-from-hand state :corp "Marilyn Campaign" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (is (= 3 (:credit (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Find the Truth")
+    (play-from-hand state :runner "Neutralize All Threats")
+    (run-on state :remote1)
+    (run-successful state)
+    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+    (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
+    (prompt-choice :runner "Yes")
+    (is (= "The top card of R&D is Vanilla" (-> @state :runner :prompt first :msg)) "FTT shows card")
+    (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
+    (prompt-choice :runner "OK")
+    (is (= "Waiting for Corp to use Marilyn Campaign" (-> @state :runner :prompt first :msg)) "Now Corp gets shuffle choice")
+    (is (= "Shuffle Marilyn Campaign into R&D?" (-> @state :corp :prompt first :msg)) "Now Corp gets shuffle choice")
+    (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn))
+
 (deftest gang-sign
   ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
   (do-game
