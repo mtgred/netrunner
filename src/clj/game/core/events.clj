@@ -73,9 +73,13 @@
   choose the order of resolution.
 
   :silent abilities are not shown in the list of handlers, and are resolved last in an arbitrary order."
-  [state side eid event handlers event-targets]
-  (if (pos? (count handlers))
-    (letfn [(choose-handler [handlers]
+  [state side eid event handlers cancel-fn event-targets]
+  (if (not-empty handlers)
+    (letfn [;; Allow resolution as long as there is no cancel-fn, or if the cancel-fn returns false.
+            (should-continue [state handlers] (and (< 1 (count handlers))
+                                                   (not (and cancel-fn (cancel-fn state)))))
+
+            (choose-handler [handlers]
               (let [non-silent (filter #(not (and (:silent (:ability %))
                                                   (let [ans ((:silent (:ability %)) state side (make-eid state) (:card %) event-targets)]
                                                     ans)))
@@ -96,12 +100,12 @@
                       {:delayed-completion true
                        :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
                                                                      the-card event-targets)
-                                                    (if (< 1 (count handlers))
+                                                    (if (should-continue state handlers)
                                                       (continue-ability state side
                                                                         (choose-handler others) nil event-targets)
                                                       (effect-completed state side eid nil))))}
                       {:delayed-completion true
-                       :effect (req (if (< 1 (count handlers))
+                       :effect (req (if (should-continue state handlers)
                                       (continue-ability state side (choose-handler (next handlers)) nil event-targets)
                                       (effect-completed state side eid nil)))}))
                   {:prompt "Choose a trigger to resolve"
@@ -111,7 +115,7 @@
                                       the-card (get-card state (:card to-resolve))]
                                   (when-completed
                                     (resolve-ability state side (:ability to-resolve) the-card event-targets)
-                                    (if (< 1 (count handlers))
+                                    (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
                                                           (remove-once #(= target (:title (:card %))) handlers))
@@ -152,8 +156,11 @@
   card-ability:  a card's ability that triggers at the same time as the event trigger, but is coded as a card ability
                  and not an event handler. (For example, :stolen on agendas happens in the same window as :agenda-stolen
   after-active-player: an ability to resolve after the active player's triggers resolve, before the opponent's get to act
+  cancel-fn:     a function that takes one argument (the state) and returns true if we should stop the event resolution
+                 process, likely because an event handler caused a change to the game state that cancels future handlers.
+                 (Film Critic)
   targets:       a varargs list of targets to the event, as usual"
-  ([state side eid event {:keys [first-ability card-ability after-active-player] :as options} & targets]
+  ([state side eid event {:keys [first-ability card-ability after-active-player cancel-fn] :as options} & targets]
    (let [get-side #(-> % :card :side game.utils/to-keyword)
          get-ability-side #(-> % :ability :side)
          active-player (:active-player @state)
@@ -181,14 +188,14 @@
        (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
                              {:priority -1})
            (when-completed
-             (trigger-event-simult-player state side event active-player-events targets)
+             (trigger-event-simult-player state side event active-player-events cancel-fn targets)
              (do (when after-active-player
                    (resolve-ability state side after-active-player nil nil))
                  (clear-wait-prompt state opponent)
                  (show-wait-prompt state active-player
                                    (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                    {:priority -1})
-                 (when-completed (trigger-event-simult-player state opponent event opponent-events targets)
+                 (when-completed (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
                                  (do (swap! state update-in [:turn-events] #(cons [event targets] %))
                                      (clear-wait-prompt state active-player)
                                      (effect-completed state side eid nil))))))))))
