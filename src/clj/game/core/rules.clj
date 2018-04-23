@@ -377,7 +377,8 @@
 
     (when-let [trash-effect (:trash-effect cdef)]
       (when (and (not disabled) (or (and (= (:side card) "Runner")
-                                         (:installed card))
+                                         (:installed card)
+                                         (not (:facedown card)))
                                     (and (:rezzed card) (not host-trashed))
                                     (and (:when-inactive trash-effect) (not host-trashed))))
         (resolve-ability state side trash-effect moved-card (list cause))))
