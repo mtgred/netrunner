@@ -735,16 +735,6 @@
    {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
     :effect (effect (draw (- (hand-size state :runner) (count (:hand runner)))))}
 
-   "Government Investigations"
-   {:flags {:psi-prevent-spend (req 2)}}
-
-   "Hacktivist Meeting"
-   {:implementation "Does not prevent rez if HQ is empty"
-    :events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
-                   ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
-                   :msg "force the Corp to trash 1 card from HQ at random"
-                   :effect (effect (trash (first (shuffle (:hand corp)))))}}}
-
   "Glut Cipher"
   (let [corp-choose {:show-discard true
                      :delayed-completion true
@@ -789,6 +779,16 @@
                           {:req (req (= target :archives))
                            :replace-access access-effect}
                           card))})
+
+   "Government Investigations"
+   {:flags {:psi-prevent-spend (req 2)}}
+
+   "Hacktivist Meeting"
+   {:implementation "Does not prevent rez if HQ is empty"
+    :events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
+                   ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
+                   :msg "force the Corp to trash 1 card from HQ at random"
+                   :effect (effect (trash (first (shuffle (:hand corp)))))}}}
 
    "High-Stakes Job"
    (run-event

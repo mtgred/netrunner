@@ -257,7 +257,7 @@
           [:input {:ref "msg-input" :placeholder "Say something" :accessKey "l"}]
           [:button "Send"]]]]))))
 
-(defn game-view [{:keys [title password started players gameid current-game password-game original-players] :as game} owner]
+(defn game-view [{:keys [title password started players gameid current-game password-game original-players editing] :as game} owner]
   (reify
     om/IRenderState
     (render-state [this state]
@@ -270,11 +270,11 @@
                     (do (swap! app-state assoc :password-gameid gameid) (om/set-state! owner :prompt action))))))]
        (sab/html
         [:div.gameline {:class (when (= current-game gameid) "active")}
-         (when (and (:allowspectator game) (not (or password-game current-game)))
-           [:button {:on-click #(join "watch")} "Watch"])
-         (when-not (or current-game (= (count players) 2) started password-game)
+         (when (and (:allowspectator game) (not (or password-game current-game editing)))
+           [:button {:on-click #(join "watch")} "Watch" editing])
+         (when-not (or current-game editing (= (count players) 2) started password-game)
            [:button {:on-click #(join "join")} "Join"])
-         (when (and (not current-game) started (not password-game)
+         (when (and (not current-game) (not editing) started (not password-game)
                     (some #(= % (get-in @app-state [:user :_id]))
                           (map #(get-in % [:user :_id]) original-players)))
            [:button {:on-click #(join "rejoin")} "Rejoin"])
@@ -325,14 +325,14 @@
         blocked-users (get-in user [:options :blocked-users] [])]
     (filter #(blocking-from-game blocked-users %) blocked-games)))
 
-(defn game-list [{:keys [user games gameid password-game] :as cursor} owner]
+(defn game-list [{:keys [user games gameid password-game editing] :as cursor} owner]
   (let [roomgames (filter #(= (:room %) (om/get-state owner :current-room)) games)
         filtered-games (filter-blocked-games user roomgames)]
     [:div.game-list
      (if (empty? filtered-games)
        [:h4 "No games"]
        (for [game filtered-games]
-        (om/build game-view (assoc game :current-game gameid :password-game password-game))))]))
+        (om/build game-view (assoc game :current-game gameid :password-game password-game :editing editing))))]))
 
 (def open-games-symbol "○")
 (def closed-games-symbol "●")
@@ -366,14 +366,14 @@
          [:div.lobby.panel.blue-shade
           [:div.games
            [:div.button-bar
-            (if gameid
+            (if (or gameid (:editing state))
               [:button.float-left {:class "disabled"} "New game"]
               [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
             [:div.rooms
              (room-tab cursor owner games "competitive" "Competitive")
              (room-tab cursor owner games "casual" "Casual")]]
            (let [password-game (some #(when (= password-gameid (:gameid %)) %) games)]
-             (game-list (assoc cursor :password-game password-game) owner))]
+             (game-list (assoc cursor :password-game password-game :editing (:editing state)) owner))]
 
           [:div.game-panel
            (if (:editing state)

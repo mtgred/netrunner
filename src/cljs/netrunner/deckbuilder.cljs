@@ -9,6 +9,7 @@
             [netrunner.cardbrowser :refer [cards-channel image-url card-view show-alt-art? filter-title expand-alts] :as cb]
             [netrunner.account :refer [load-alt-arts]]
             [netrunner.ajax :refer [POST GET DELETE PUT]]
+            [netrunner.utils :refer [banned-span restricted-span rotated-span influence-dot influence-dots alliance-dots dots-html make-dots]]
             [goog.string :as gstring]
             [goog.string.format]
             [jinteki.utils :refer [str->int INFINITY] :as utils]
@@ -29,9 +30,6 @@
 (defn identical-cards? [cards]
   (let [name (:title (first cards))]
     (every? #(= (:title %) name) cards)))
-
-
-
 
 (defn noinfcost? [identity card]
   (or (= (:faction card) (:faction identity))
@@ -168,8 +166,6 @@
   (let [raw-deck-list (deck-string->list deck-string)]
     (lookup-deck side raw-deck-list)))
 
-
-
 (defn load-decks [decks]
   (swap! app-state assoc :decks decks)
   (put! select-channel (first (sort-by :date > decks)))
@@ -201,7 +197,6 @@
       (assoc card :display-name (str (:title card) " (" (:setname card) ")"))
       (assoc card :display-name (:title card)))))
 
-
 (defn side-identities [side]
   (let [cards
         (->> @all-cards
@@ -231,19 +226,6 @@
   (let [cards (om/get-state owner [:deck :cards])
         str (reduce #(str %1 (:qty %2) " " (get-in %2 [:card :title]) (insert-params %2) "\n") "" cards)]
     (om/set-state! owner :deck-edit str)))
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (defn edit-deck [owner]
   (let [deck (om/get-state owner :deck)]
@@ -296,9 +278,11 @@
          (end-delete owner))))))
 
 (defn new-deck [side owner]
-  (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
-  (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
-  (edit-deck owner))
+  (let [old-deck (om/get-state owner :deck)]
+    (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
+    (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
+    (edit-deck owner)
+    (om/set-state! owner :old-deck old-deck)))
 
 (defn save-deck [cursor owner]
   (authenticated
@@ -345,45 +329,6 @@
 (defn html-escape [st]
   (escape st {\< "&lt;" \> "&gt;" \& "&amp;" \" "#034;"}))
 
-;; Dot definitions
-(def zws "\u200B")                                          ; zero-width space for wrapping dots
-(def influence-dot (str "●" zws))                           ; normal influence dot
-(def banned-dot (str "✘" zws))                              ; on the banned list
-(def restricted-dot (str "🦄" zws))                         ; on the restricted list
-(def alliance-dot (str "○" zws))                            ; alliance free-inf dot
-(def rotated-dot (str "↻" zws))                             ; on the rotation list
-
-(def banned-span
-  [:span.invalid {:title "Removed"} " " banned-dot])
-
-(def restricted-span
-  [:span {:title "Restricted"} " " restricted-dot])
-
-(def rotated-span
-  [:span.casual {:title "Rotated"} " " rotated-dot])
-
-(defn- make-dots
-  "Returns string of specified dots and number. Uses number for n > 20"
-  [dot n]
-  (if (<= 20 n)
-    (str n dot)
-    (join (conj (repeat n dot) ""))))
-
-(defn influence-dots
-  "Returns a string with UTF-8 full circles representing influence."
-  [num]
-  (make-dots influence-dot num))
-
-(defn alliance-dots
-  [num]
-  (make-dots alliance-dot num))
-
-(defn- dots-html
-  "Make a hiccup-ready vector for the specified dot and cost-map (influence or mwl)"
-  [dot cost-map]
-  (for [factionkey (sort (keys cost-map))]
-    [:span.influence {:class (name factionkey)} (make-dots dot (factionkey cost-map))]))
-
 (defn card-influence-html
   "Returns hiccup-ready vector with dots for influence as well as restricted / rotated / banned symbols"
   [card qty in-faction allied?]
@@ -408,7 +353,13 @@
   [deck]
   (dots-html influence-dot (decks/influence-map deck)))
 
-(defn- build-deck-status-label [valid mwl rotation cache-refresh onesies onesies-details?]
+(defn build-format-status
+  "Builds div for alternative format status"
+  [format violation-details? message]
+  [:div {:class (if (:legal format) "legal" "invalid") :title (when violation-details? (:reason format))}
+   [:span.tick (if (:legal format) "✔" "✘")] message " compliant"])
+
+(defn- build-deck-status-label [valid mwl rotation cache-refresh onesies modded violation-details?]
   (let [status (decks/deck-status mwl valid rotation)
         message (case status
                   "legal" "Tournament legal"
@@ -422,10 +373,9 @@
       [:span.tick (if mwl "✔" "✘")] (:name @cards/mwl)]
      [:div {:class (if rotation "legal" "invalid")}
       [:span.tick (if rotation "✔" "✘")] "Only released cards"]
-     [:div {:class (if (:legal cache-refresh) "legal" "invalid") :title (if onesies-details? (:reason cache-refresh)) }
-      [:span.tick (if (:legal cache-refresh) "✔" "✘")] "Cache Refresh compliant"]
-     [:div {:class (if (:legal onesies) "legal" "invalid") :title (if onesies-details? (:reason onesies))}
-      [:span.tick (if (:legal onesies) "✔" "✘") ] "1.1.1.1 format compliant"]]))
+     (build-format-status cache-refresh violation-details? "Cache Refresh")
+     (build-format-status onesies violation-details? "1.1.1.1 format")
+     (build-format-status modded violation-details? "Modded format")]))
 
 (defn- deck-status-details
   [deck use-trusted-info]
@@ -434,8 +384,8 @@
     (decks/calculate-deck-status deck)))
 
 (defn format-deck-status-span
-  [deck-status tooltip? onesies-details?]
-  (let [{:keys [valid mwl rotation cache-refresh onesies status]} deck-status
+  [deck-status tooltip? violation-details?]
+  (let [{:keys [valid mwl rotation cache-refresh onesies modded status]} deck-status
         message (case status
                   "legal" "Tournament legal"
                   "casual" "Casual play only"
@@ -443,18 +393,18 @@
                   "")]
     [:span.deck-status.shift-tooltip {:class status} message
      (when tooltip?
-       (build-deck-status-label valid mwl rotation cache-refresh onesies onesies-details?))]))
+       (build-deck-status-label valid mwl rotation cache-refresh onesies modded violation-details?))]))
 
-(defn deck-status-span-impl [sets deck tooltip? onesies-details? use-trusted-info]
-  (format-deck-status-span (deck-status-details deck use-trusted-info) tooltip? onesies-details?))
+(defn deck-status-span-impl [sets deck tooltip? violation-details? use-trusted-info]
+  (format-deck-status-span (deck-status-details deck use-trusted-info) tooltip? violation-details?))
 
 (def deck-status-span-memoize (memoize deck-status-span-impl))
 
 (defn deck-status-span
   "Returns a [:span] with standardized message and colors depending on the deck validity."
   ([sets deck] (deck-status-span sets deck false false true))
-  ([sets deck tooltip? onesies-details? use-trusted-info]
-   (deck-status-span-memoize sets deck tooltip? onesies-details? use-trusted-info)))
+  ([sets deck tooltip? violation-details? use-trusted-info]
+   (deck-status-span-memoize sets deck tooltip? violation-details? use-trusted-info)))
 
 (defn match [identity query]
   (->> @all-cards
@@ -664,7 +614,9 @@
                   (om/set-state! owner [:deck :cards] new-cards))
                 (deck->str owner)))))
       (go (while true
-            (om/set-state! owner :deck (<! select-channel)))))
+            (let [deck (<! select-channel)]
+              (end-delete owner)
+              (om/set-state! owner :deck deck)))))
 
     om/IRenderState
     (render-state [this state]

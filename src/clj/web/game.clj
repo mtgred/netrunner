@@ -2,6 +2,7 @@
   (:require [web.ws :as ws]
             [web.lobby :refer [all-games old-states] :as lobby]
             [web.utils :refer [response]]
+            [web.stats :as stats]
             [game.main :as main]
             [game.core :as core]
             [jinteki.utils :refer [side-from-str]]
@@ -73,6 +74,7 @@
                        (update-in g [:players] #(mapv strip-deck %)))]
         (swap! all-games assoc gameid game)
         (swap! old-states assoc gameid @(:state game))
+        (stats/game-started game)
         (lobby/refresh-lobby :update gameid)
         (send-state! :netrunner/start game (main/public-states (:state game)))))))
 
@@ -161,9 +163,9 @@
             ; TODO: this would be better if a full state was only sent to the new spectator, and diffs sent to the existing players.
             (lobby/spectate-game user client-id gameid)
             (main/handle-notification state (str username " joined the game as a spectator."))
-            (swap-and-send-state! (lobby/game-for-id gameid))
             (ws/send! client-id [:lobby/select {:gameid gameid
                                                 :started started}])
+            (swap-and-send-state! (lobby/game-for-id gameid))
             (when reply-fn (reply-fn 200))
             true)
           (when reply-fn

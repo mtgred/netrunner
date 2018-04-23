@@ -22,9 +22,14 @@
                          "to their numbers in the panel on the left."])}
             {:id "undo"
              :title "How do I undo an action?"
-             :content [:p "There is no \"general purpose undo button\". Surplus/missing credits, clicks can be manipulated with "
-                       "the panel on the left. Trashed/played cards can be dragged back to hand and reinstalled if needed. If there
-                       are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."]}
+             :content (list
+                        [:p "There are two undo functions - undo to turn start, and undo the last click. "
+                         "To undo the start of the current turn both players must use the /undo-turn command. "
+                         "To undo to the start of the click the active player must use the /undo-click command. "]
+                        [:p "There are some non-click based interactions such as using clone-chip and rezzing ICE or assets which are "
+                         "not supported via the undo-click function and players will need to handle manually. "
+                         " Trashed/played cards can be dragged back to hand and reinstalled if needed. If there"
+                          " are lingering/hard to dismiss prompts, try using " [:code "/close-prompt"] " command as a last resort."])}
             {:id "breakice"
              :title "How do I break ICE and fire ICE subroutines?"
              :content (list
@@ -235,6 +240,26 @@
              :title "Whenever I connect to the site, I see there are 0 games in the lobby."
              :content [:p "This is most likely a websocket issue. Check if your network filters let through traffic from ws.jinteki.net. "
                        "Whitelisting *.jinteki.net should solve the problem."]}
+            )}
+    {:id "alternativeformats"
+     :title "Alternative Formats"
+     :sub (list
+            {:id "modded"
+             :title "What is the Modded format?"
+             :content [:p "This is a format designed to make it easy for new players with a limited card pool. "
+                       "Deck building rules are up to 3 Revised Core Sets and data packs from the newest cycle only. "
+                       "There is no use of the MWL/Most Wanted List. The name originated from Modern but sounds more Netrunner. "
+                       "Refer to " [:a {:href "https://forum.stimhack.com/t/modded-format-online-league-starts-april-14/9791"} "Modded"]]}
+            {:id "onesies"
+             :title "What is Onesies or 1.1.1.1 format?"
+             :content [:p "This is a community designed format designed to vary the card choice options. "
+                       "Deck building rules are that cards must be taken from 1 Revised Core Set, 1 Deluxe expansion, 1 data pack, and 1 other card from anywhere. "
+                       "There is no use of the MWL/Most Wanted List. Refer to " [:a {:href "https://www.reddit.com/r/Netrunner/comments/5238a4/1111_onesies/"} "Onesies"]]}
+            {:id "cache"
+             :title "What is the Cache Refresh format?"
+             :content [:p "This is a format created in 2017 by Fantasy Flight Games. "
+                       "Deck building rules are that cards must be taken from 1 Revised Core Set, Terminal Directive, and the latest two cycles of data packs. "
+                       "Refer to " [:a {:href "http://www.cache-refresh.info/"} "Cache Refresh"]]}
             )}
     {:id "getinvolved"
      :title "Getting Involved"

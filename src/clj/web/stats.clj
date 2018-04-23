@@ -2,8 +2,11 @@
   (:require [web.db :refer [db object-id]]
             [monger.collection :as mc]
             [monger.result :refer [acknowledged?]]
+            [monger.operators :refer :all]
             [web.ws :as ws]
-            [web.utils :refer [response]])
+            [web.utils :refer [response]]
+            [clj-time.core :as t])
+
   (:import org.bson.types.ObjectId))
 
 (defn clear-userstats-handler
@@ -130,3 +133,26 @@
         (ws/send! (:ws-id p) [:stats/update {:userstats userstats
                                              :deck-id   (str deck-id)
                                              :deckstats deckstats}])))))
+
+(defn game-started [{:keys [gameid date title room players]}]
+  (let [corp (some #(when (= "Corp" (:side %)) %) players)
+        runner (some #(when (= "Runner" (:side %)) %) players)]
+    (mc/insert db "gamestats" {:gameid         (str gameid)
+                               :startDate      date
+                               :title          title
+                               :room           room
+                               :corp           (get-in corp [:user :username] "")
+                               :runner         (get-in runner [:user :username] "")
+                               :corpIdentity   (get-in corp [:deck :identity :title])
+                               :runnerIdentity (get-in runner [:deck :identity :title])})))
+
+(defn game-finished [{:keys [state gameid]}]
+  (when state
+    (mc/update db "gamestats"
+               {:gameid (str gameid)}
+               {"$set" {:winner       (:winner @state)
+                        :reason       (:reason @state)
+                        :endDate      (java.util.Date.)
+                        :turn         (:turn @state)
+                        :corpAgenda   (get-in @state [:corp :agenda-point])
+                        :runnerAgenda (get-in @state [:runner :agenda-point])}})))

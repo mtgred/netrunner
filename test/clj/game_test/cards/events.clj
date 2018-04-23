@@ -234,7 +234,10 @@
     (let [tmc (get-in @state [:runner :rig :facedown 0])]
       (is (:facedown (refresh tmc)) "Tri-maf Contact is facedown")
       (is (= 3 (count (:hand (get-runner))))
-          "No meat damage dealt by Tri-maf's leave play effect"))))
+          "No meat damage dealt by Tri-maf's leave play effect")
+      (core/trash state :runner tmc)
+      (is (= 3 (count (:hand (get-runner))))
+          "No meat damage dealt by trashing facedown Tri-maf"))))
 
 (deftest because-i-can
   ;; make a successful run on a remote to shuffle its contents into R&D
