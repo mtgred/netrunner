@@ -677,20 +677,25 @@
                      :effect (effect (pay :corp card :credit 2))}}}
 
    "Film Critic"
-   (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
-     {:implementation "Use hosting ability when presented with Access prompt for an agenda"
-      :abilities [{:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
-                                  (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
-                   :label "Host an agenda being accessed"
-                   :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
-                                  (host state side card (move state side agenda :play-area))
-                                  (trigger-event state side :no-steal agenda)
-                                  (close-access-prompt state side)
-                                  (effect-completed state side eid nil)
-                                  (when-not (:run @state)
-                                    (swap! state dissoc :access))))
-                   :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
-                  {:cost [:click 2] :label "Add hosted agenda to your score area"
+   (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))
+           (host-agenda? [agenda]
+             {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
+                        :yes-ability {:effect (req (host state side card (move state side agenda :play-area))
+
+
+                                                   ;;TODO: is this necessary?
+                                                   (trigger-event state side :no-steal agenda)
+
+                                                   ;;(close-access-prompt state side)
+                                                   (when-not (:run @state)
+                                                     (swap! state dissoc :access)))
+                                      :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
+     {;:implementation "Use hosting ability when presented with Access prompt for an agenda"
+      :events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
+                                       (is-type? target "Agenda")))
+                        :delayed-completion true
+                        :effect (effect (continue-ability (host-agenda? target) card nil))}}
+      :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
                    :req (req (not (empty? (:hosted card))))
                    :effect (req (let [c (move state :runner (get-agenda card) :scored)]
                                   (gain-agenda-point state :runner (get-agenda-points state :runner c))))
