@@ -247,7 +247,7 @@
     (new-game (default-corp [(qty "Blacklist" 1)])
               (default-runner [(qty "Harbinger" 1)]))
     (play-from-hand state :corp "Blacklist" "New remote")
-    (core/rez state :corp (get-content state :remote1 0) )
+    (core/rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
     (play-from-hand state :runner "Harbinger")
     (core/trash state :runner (-> (get-runner) :rig :program first))
