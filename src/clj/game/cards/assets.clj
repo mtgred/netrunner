@@ -137,7 +137,8 @@
                                      :yes-ability {:trace {:base (req (trace-base-func state))
                                                            :choices {:req #(and (installed? %)
                                                                                 (card-is? % :side :runner))}
-                                                           :msg "add an installed Runner card to the grip"
+                                                           :label "add an installed card to the Grip"
+                                                           :msg (msg "add " (:title target) " to the Runner's Grip")
                                                            :effect (effect (move :runner target :hand true))}}}})]
      {:events {:agenda-scored (senai-ability get-last-scored-pts)
                :agenda-stolen (senai-ability get-last-stolen-pts)}})
