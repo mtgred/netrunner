@@ -41,7 +41,7 @@
 
 (defn init-game [game side]
   (.setItem js/localStorage "gameid" (:gameid @app-state))
-  (swap! game-state merge game)
+  (reset! game-state game)
   (swap! game-state assoc :side side)
   (reset! last-state @game-state))
 
