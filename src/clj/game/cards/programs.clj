@@ -457,21 +457,21 @@
    "Imp"
    {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))}
     :data {:counter {:virus 2}}
-    :events {:access {:delayed-completion true
-                      :req (req (and (pos? (get-in card [:counter :virus] 0))
-                                     (not (get-in @state [:per-turn (:cid card)]))))
-                      :effect (req (show-wait-prompt state :corp "Runner to use Imp")
-                                   (continue-ability state side
-                                     {:optional
-                                      {:prompt (str "Use Imp to trash " (:title (first targets)) " at no cost?")
-                                       :once :per-turn
-                                       :yes-ability {:msg (msg "trash " (:title target) " at no cost")
-                                                     :effect (req (resolve-trash-no-cost state side target)
-                                                                  (add-counter state side card :virus -1)
-                                                                  (swap! state assoc-in [:per-turn (:cid card)] true)
-                                                                  (clear-wait-prompt state :corp))}
-                                       :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
-                                     card targets))}}}
+    :events {:access-card {:delayed-completion true
+                           :req (req (and (pos? (get-in card [:counter :virus] 0))
+                                          (not (get-in @state [:per-turn (:cid card)]))))
+                           :effect (req (show-wait-prompt state :corp "Runner to use Imp")
+                                        (continue-ability state side
+                                          {:optional
+                                           {:prompt (str "Use Imp to trash " (:title (first targets)) " at no cost?")
+                                            :once :per-turn
+                                            :yes-ability {:msg (msg "trash " (:title target) " at no cost")
+                                                          :effect (req (resolve-trash-no-cost state side target)
+                                                                       (add-counter state side card :virus -1)
+                                                                       (swap! state assoc-in [:per-turn (:cid card)] true)
+                                                                       (clear-wait-prompt state :corp))}
+                                            :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                          card targets))}}}
 
    "Incubator"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}
