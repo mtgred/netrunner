@@ -11,7 +11,7 @@
                  [cheshire "5.6.3"]
                  [org.omcljs/om "0.9.0"]
                  [sablono "0.3.4"]
-                 [com.novemberain/monger "3.1.0"]
+                 [danhut/monger "3.1.0"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.3.1"]
                  [com.taoensso/sente "1.11.0"]
