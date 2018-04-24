@@ -651,7 +651,7 @@
                                                  :run-ends {:effect (effect (unregister-events card))}}
                                                 (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ohg
-               :post-access-card {:effect (effect (clear-persistent-flag! target :can-steal))}}})
+               :access {:effect (effect (clear-persistent-flag! target :can-steal))}}})
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))

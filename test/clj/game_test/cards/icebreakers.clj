@@ -247,7 +247,6 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Deus X")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Access")
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")

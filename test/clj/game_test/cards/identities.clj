@@ -1400,7 +1400,6 @@
       (is (= 1 (count (:hand (get-runner)))) "Prevented 1 net damage")
       (is (empty? (:discard (get-runner))) "No cards discarded")
       (is (:run @state) "On run access phase")
-      (prompt-choice :runner "Access")
       (prompt-choice :runner "Done")
       (is (empty? (:hand (get-runner))) "Suffered 1 net damage due to accessing Fetal AI")
       (is (= 1 (count (:discard (get-runner)))) "Discarded 1 card due to net damage")

@@ -942,9 +942,12 @@
 
    "Quantum Predictive Model"
    {:flags {:rd-reveal (req true)}
-    :steal-req (req (not tagged))
     :access {:req (req tagged)
-             :effect (effect (as-agenda card 1))
+             :delayed-completion true
+             :effect (effect (as-agenda card 1)
+                             (continue-ability :runner {:prompt "Quantum Predictive Model was added to the corp's score area"
+                                                        :choices ["OK"]}
+                                               card nil))
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
