@@ -707,8 +707,7 @@
                                          :prompt "Use Find the Truth to look at the top card of R&D?"
                                          :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                                        :msg "look at the top card of R&D"
-                                                       :choices ["OK"]
-                                                       :effect (effect (effect-completed eid))}}}}}
+                                                       :choices ["OK"]}}}}}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
