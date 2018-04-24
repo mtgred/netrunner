@@ -254,6 +254,7 @@
       (is (= 3 (count (get-in @state [:corp :servers :remote1 :content])))
           "3 cards in server 1 before successful run")
       (run-successful state)
+      (prompt-choice :runner "Run ability")
       (is (= (+ n 3) (count (get-in @state [:corp :deck]))) "3 cards were shuffled into R&D")
       (is (= 0 (count (get-in @state [:corp :servers :remote1 :content]))) "No cards left in server 1"))
     (take-credits state :runner)
@@ -271,6 +272,7 @@
       (is (= :remote3 (first (get-in @state [:run :server]))))
       (is (= 1 (count (get-in @state [:corp :servers :remote3 :content]))) "1 cards in server 3 before successful run")
       (run-successful state)
+      (prompt-choice :runner "Run ability")
       (is (= (+ n 1) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
       (is (= 0 (count (get-in @state [:corp :servers :remote3 :content]))) "No cards left in server 3"))))
 
