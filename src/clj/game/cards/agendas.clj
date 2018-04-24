@@ -1197,6 +1197,7 @@
    {:effect (effect (register-events
                       {:corp-turn-ends
                        {:msg "do 1 net damage for each card in the grip"
+                        :delayed-completion true
                         :effect (req (let [cnt (count (:hand runner))]
                                        (unregister-events state side card)
                                        (damage state side eid :net cnt {:card card})))}}
