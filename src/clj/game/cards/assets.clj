@@ -770,7 +770,6 @@
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins
                {:optional {:prompt "Initiate trace with Kuwinda K4H1U3?"
-                           :delayed-completion true
                            :yes-ability ability}}}
       :abilities [(assoc ability :label "Trace X - do 1 brain damage (start of turn)")]})
 
@@ -1501,8 +1500,7 @@
              :effect (effect (show-wait-prompt :runner "Corp to use Space Camp")
                              (continue-ability
                                {:optional
-                                {:delayed-completion true
-                                 :prompt "Place 1 advancement token with Space Camp?"
+                                {:prompt "Place 1 advancement token with Space Camp?"
                                  :cancel-effect (req (clear-wait-prompt state :runner)
                                                      (effect-completed state side eid))
                                  :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))

@@ -943,7 +943,6 @@
 
    "Lewi Guilherme"
    (let [ability {:once :per-turn
-                  :delayed-completion true
                   :optional {:once :per-turn
                              :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
                              :yes-ability {:effect (req (if (pos? (:credit runner))

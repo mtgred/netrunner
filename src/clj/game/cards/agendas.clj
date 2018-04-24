@@ -609,8 +609,7 @@
                      {:optional
                       {:prompt "Take 1 bad publicity from Illicit Sales?"
                        :yes-ability {:msg "take 1 bad publicity"
-                                     :effect (effect (gain-bad-publicity :corp 1))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}}
+                                     :effect (effect (gain-bad-publicity :corp 1))}}}
                      card nil)
                    (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
                          (gain state side :credit n)
@@ -767,18 +766,13 @@
    "NEXT Wave 2"
    {:delayed-completion true
     :not-when-scored true
-    :effect (req (if (some #(and (rezzed? %)
-                                 (ice? %)
-                                 (has-subtype? % "NEXT"))
-                           (all-installed state :corp))
-                   (continue-ability state side
-                     {:optional
-                      {:prompt "Do 1 brain damage with NEXT Wave 2?"
-                       :yes-ability {:msg "do 1 brain damage"
-                                     :effect (effect (damage eid :brain 1 {:card card}))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}}
-                    card nil)
-                   (effect-completed state side eid)))}
+    :req (req (some #(and (rezzed? %)
+                          (ice? %)
+                          (has-subtype? % "NEXT"))
+                    (all-installed state :corp)))
+    :optional {:prompt "Do 1 brain damage with NEXT Wave 2?"
+               :yes-ability {:msg "do 1 brain damage"
+                             :effect (effect (damage eid :brain 1 {:card card}))}}}
 
    "Nisei MK II"
    {:silent (req true)

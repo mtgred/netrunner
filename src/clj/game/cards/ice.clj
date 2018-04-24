@@ -1373,11 +1373,9 @@
     :subroutines [{:label "Draw 1 card, then shuffle 1 card from HQ into R&D"
                    :effect (req (when-completed (resolve-ability state side
                                                   {:optional
-                                                   {:delayed-completion true
-                                                    :prompt "Draw 1 card?"
+                                                   {:prompt "Draw 1 card?"
                                                     :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}
-                                                    :no-ability {:effect (req (effect-completed state side eid))}}}
+                                                                  :effect (effect (draw))}}}
                                                  card nil)
                                                 (resolve-ability state side
                                                   {:prompt "Choose 1 card in HQ to shuffle into R&D"
@@ -1430,8 +1428,7 @@
                                                   {:optional
                                                    {:prompt "Draw 1 card?"
                                                     :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}
-                                                    :no-ability {:effect (req (effect-completed state side eid))}}}
+                                                                  :effect (effect (draw))}}}
                                                  card nil)))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
@@ -1608,7 +1605,6 @@
                          {:optional
                           {:player :corp
                            :prompt "Draw 1 card?"
-                           :delayed-completion true
                            :yes-ability
                            {:delayed-completion true
                             :effect (effect (clear-wait-prompt :runner)
