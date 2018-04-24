@@ -95,6 +95,28 @@
       (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
       (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker"))))
 
+(deftest dhegdheer-adept
+  ;; Dheghdheer - hosting a breaker with strength based on unused MU should calculate correctly
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Adept" 1)
+                               (qty "Dhegdheer" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Dhegdheer")
+    (play-from-hand state :runner "Adept")
+    (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
+    (is (= 2 (:memory (get-runner))) "2 MU used")
+    (let [dheg (get-program state 0)
+          adpt (get-program state 1)]
+      (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
+      (card-ability state :runner dheg 1)
+      (prompt-select :runner (refresh adpt))
+      (let [hosted-adpt (first (:hosted (refresh dheg)))]
+        (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
+        (is (= 4 (:memory (get-runner))) "0 MU used")
+        (is (= 6 (:current-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
+
 (deftest diwan
   ;; Diwan - Full test
   (do-game
@@ -390,6 +412,26 @@
       (take-credits state :runner)
       (core/purge state :corp)
       (is (empty? (get-in @state [:runner :rig :program])) "Lamprey trashed by purge"))))
+
+(deftest leprechaun-adept
+  ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Adept" 1)
+                               (qty "Leprechaun" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Leprechaun")
+    (play-from-hand state :runner "Adept")
+    (is (= 1 (:memory (get-runner))) "3 MU used")
+    (let [lep (get-program state 0)
+          adpt (get-program state 1)]
+      (is (= 3 (:current-strength (refresh adpt))) "Adept at 3 strength individually")
+      (card-ability state :runner lep 1)
+      (prompt-select :runner (refresh adpt))
+      (let [hosted-adpt (first (:hosted (refresh lep)))]
+        (is (= 3 (:memory (get-runner))) "1 MU used")
+        (is (= 5 (:current-strength (refresh hosted-adpt))) "Adept at 5 strength hosted")))))
 
 (deftest leprechaun-mu-savings
   ;; Leprechaun - Keep MU the same when hosting or trashing hosted programs
