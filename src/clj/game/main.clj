@@ -52,7 +52,10 @@
    "close-deck" core/close-deck})
 
 (defn strip [state]
-  (dissoc state :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state))
+  (-> state
+    (dissoc :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
+    (update-in [:corp :register] dissoc :most-recent-drawn)
+    (update-in [:runner :register] dissoc :most-recent-drawn)))
 
 (defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"
