@@ -702,15 +702,13 @@
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
              :successful-run {:interactive (req true)
-                              :optional {:delayed-completion true
-                                         :req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
+                              :optional {:req (req (and (first-event? state side :successful-run)
+                                                        (-> @state :corp :deck count pos?)))
                                          :prompt "Use Find the Truth to look at the top card of R&D?"
-                                         :yes-ability {:delayed-completion true
-                                                       :prompt (req (str "The top card of R&D is " (:title (first (:deck corp)))))
+                                         :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                                        :msg "look at the top card of R&D"
                                                        :choices ["OK"]
-                                                       :effect (effect (effect-completed eid))}
-                                         :no-ability {:effect (effect (effect-completed eid))}}}}}
+                                                       :effect (effect (effect-completed eid))}}}}}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
