@@ -446,6 +446,8 @@
       (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
       (run-continue state)
       (run-successful state)
+      ;; Prompt for "you cannot access any card this run"
+      (prompt-choice :runner "OK")
       (is (not (accessing state "Hostile Takeover"))))))
 
 (deftest iq
