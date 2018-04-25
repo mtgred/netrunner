@@ -658,7 +658,7 @@
                          ;; Make `:did-access` true when reaching the access step (no replacement)
                          (when (:run @state) (swap! state assoc-in [:run :did-access] true))
                          (if (or (zero? n)
-                                 (zero? (get-in @state [:run :max-access] 0)))
+                                 (safe-zero? (get-in @state [:run :max-access])))
                            (system-msg state side "accessed no cards during the run")
                            (do (swap! state assoc-in [:runner :register :accessed-cards] true)
                                (when-completed (resolve-ability state side (choose-access cards server) nil nil)
