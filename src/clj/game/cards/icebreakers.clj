@@ -762,7 +762,6 @@
                      :abilities [(break-sub 2 1 "Sentry")
                                  (strength-pump 1 1)]
                      :events {:pass-ice {:req (req (and (has-subtype? target "Sentry") (rezzed? target)) (pos? (count (:deck runner))))
-                                         :delayed-completion true
                                          :optional {:prompt (msg "Use Persephone's ability??")
                                                     :yes-ability {:prompt "How many subroutines resolved on the passed ICE?"
                                                                   :delayed-completion true
