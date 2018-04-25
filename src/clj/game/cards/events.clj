@@ -220,7 +220,7 @@
                    {:msg (msg "place 3 virus tokens on " (:title target))
                     :choices {:req #(and (installed? %)
                                          (= (:side %) "Runner")
-                                         (= 0 (get-virus-counters state side %)))}
+                                         (zero? (get-virus-counters state side %)))}
                     :effect (req (add-counter state :runner target :virus 3))}
                    card nil))}
 
