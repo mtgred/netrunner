@@ -399,8 +399,7 @@
    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
                   :req (req (and (pos? (get-in card [:counter :virus] 0))
                                  (pos? (count-virus-programs state))))
-                  :choices {:req #(and (has-subtype? % "Virus")
-                                       (is-type? % "Program"))}
+                  :choices {:req #(is-virus-program? %)}
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
      {:events {:runner-turn-begins ability
