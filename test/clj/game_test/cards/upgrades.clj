@@ -813,7 +813,7 @@
       (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
 
 (deftest off-the-grid
-  ;; Off the Grid run ability - and interaction with RP
+  ;; Off the Grid ru restriction - and interaction with RP
   (do-game
    (new-game
     (make-deck "Jinteki: Replicating Perfection" [(qty "Off the Grid" 3)

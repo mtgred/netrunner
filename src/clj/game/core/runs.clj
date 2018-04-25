@@ -724,9 +724,9 @@
                           (replace-access state side replace-effect card)
                           (swap! state update-in [side :prompt]
                                  (fn [p]
-                                   (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
-                                                  :choices ["Run ability" "Access"]
-                                                  :effect #(if (= % "Run ability")
+                                   (conj (vec p) {:msg "Use Replacement effect instead of accessing cards?"
+                                                  :choices ["Replacement effect" "Access"]
+                                                  :effect #(if (= % "Replacement effect")
                                                              (replace-access state side replace-effect card)
                                                              (when-completed (do-access state side server)
                                                                              (handle-end-run state side)))}))))
