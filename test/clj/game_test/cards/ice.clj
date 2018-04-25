@@ -446,7 +446,7 @@
       (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
       (run-continue state)
       (run-successful state)
-      (is (= 0 (:agenda-point (get-runner))) "Didn't access and steal agenda"))))
+      (is (not (accessing state "Hostile Takeover"))))))
 
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
