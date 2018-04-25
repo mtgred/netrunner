@@ -348,6 +348,11 @@
    (when-completed (trigger-event-sync state side :pre-access-card card)
                    (access-pay state side eid card title))))
 
+(defn prevent-access
+  "Prevents the runner from accessing cards this run. This will cancel any run effects and not trigger access routines."
+  [state _]
+  (swap! state assoc-in [:run :prevent-access] true))
+
 (defn max-access
   "Put an upper limit on the number of cards that can be accessed in this run. For Eater."
   [state side n]

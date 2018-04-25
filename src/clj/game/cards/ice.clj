@@ -960,8 +960,7 @@
    "Holmegaard"
    {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
                                     :msg "stop the Runner from accessing any cards this run"
-                                    :effect (req (max-access state side 0)
-                                                 (swap! state update-in [:run :run-effect] dissoc :replace-access))})
+                                    :effect (effect (prevent-access))})
                   {:label "Trash an icebreaker"
                    :prompt "Choose an icebreaker to trash"
                    :msg (msg "trash " (:title target))
