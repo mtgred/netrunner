@@ -329,6 +329,7 @@
     (run-empty-server state "HQ")
     (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
     (run-empty-server state "HQ")
+    (prompt-choice :runner "OK")
     (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw")))
 
 

@@ -337,7 +337,7 @@
   "Apply game rules for accessing the given card."
   ([state side card] (access-card state side (make-eid state) card nil))
   ([state side eid card] (access-card state side eid card (:title card)))
-  ([state side eid c title]
+  ([state side eid card title]
     ;; Indicate that we are in the access step.
    (swap! state assoc :access true)
     ;; Reset counters for increasing costs of trash, steal, and access.
@@ -345,8 +345,8 @@
    (swap! state update-in [:bonus] dissoc :steal-cost)
    (swap! state update-in [:bonus] dissoc :access-cost)
     ;; First trigger pre-access-card, then move to determining if we can trash or steal.
-   (when-completed (trigger-event-sync state side :pre-access-card c)
-                   (access-pay state side eid c title))))
+   (when-completed (trigger-event-sync state side :pre-access-card card)
+                   (access-pay state side eid card title))))
 
 (defn max-access
   "Put an upper limit on the number of cards that can be accessed in this run. For Eater."
