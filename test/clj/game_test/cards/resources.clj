@@ -2181,6 +2181,26 @@
       (is (= 2 (get-counters (refresh vbg) :virus))
           "Virus Breeding Ground gains 1 counter per turn"))))
 
+(deftest virus-breeding-hivemind
+  ;; Virus Breeding Ground - Can move to programs pumped by Hivemind
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Virus Breeding Ground" 1) (qty "Hivemind" 1) (qty "Aumakua" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virus Breeding Ground")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hivemind")
+    (play-from-hand state :runner "Aumakua")
+    (let [aum (get-in @state [:runner :rig :program 1])
+          vbg (get-in @state [:runner :rig :resource 0])]
+      (is (zero? (get-counters aum :virus)) "Aumakua starts with 0 counters (excluding Hivemind)")
+      (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground gains 1 counter per turn")
+      (card-ability state :runner vbg 0)
+      (prompt-select :runner aum)
+      (is (= 1 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
+      (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
+
 (deftest virus-breeding-ground-move
   ;; Virus Breeding Ground - Move counters
   (do-game
@@ -2199,7 +2219,36 @@
       (card-ability state :runner vbg 0)
       (prompt-select :runner hive)
       (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind gained 1 counter")
-      (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
+      (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
+
+(deftest virus-breeding-ground-resource
+  ;; Virus Breeding Ground - Move counters to a non-virus resource
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Virus Breeding Ground" 1) (qty "Crypt" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virus Breeding Ground")
+    (play-from-hand state :runner "Crypt")
+    (let [vbg (get-in @state [:runner :rig :resource 0])
+          crypt (get-in @state [:runner :rig :resource 1])]
+      (is (zero? (get-counters crypt :virus)) "Crypt starts with 0 counters")
+      (is (zero? (get-counters vbg :virus)) "Virus Breeding Ground starts with 0 counters")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground gains 1 counter per turn")
+      (card-ability state :runner (refresh vbg) 0)
+      (prompt-select :runner (refresh crypt))
+      (prompt-choice :runner "Done")
+      (is (zero? (get-counters (refresh crypt) :virus)) "Crypt doesn't gain a counter")
+      (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground doesn't lose a counter")
+      (run-on state "Archives")
+      (run-successful state)
+      (prompt-choice :runner "Yes")
+      (is (= 1 (get-counters (refresh crypt) :virus)) "Crypt gained a counter")
+      (card-ability state :runner (refresh vbg) 0)
+      (prompt-select :runner (refresh crypt))
+      (is (= 2 (get-counters (refresh crypt) :virus)) "Crypt gained 1 counter")
+      (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
 
 (deftest wasteland
   ;; Wasteland - Gain 1c the first time you trash an installed card of yours each turn
