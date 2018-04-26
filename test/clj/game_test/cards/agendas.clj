@@ -119,7 +119,7 @@
     (testing "don't take a tag from trashing normally"
       (run-on state :remote1)
       (run-successful state)
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "1 [Credit]")
       (is (= 1 (count (:discard (get-corp)))) "trashed")
       (is (= 0 (:tag (get-runner))) "Runner took 0 tags")
       (take-credits state :runner)
@@ -128,13 +128,13 @@
     (testing "gain a tag from first trash"
       (run-on state :remote2)
       (run-successful state)
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "1 [Credit]")
       (is (= 2 (count (:discard (get-corp)))) "trashed")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))
     (testing "don't gain a tag from second trash"
       (run-on state :remote3)
       (run-successful state)
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "1 [Credit]")
       (is (= 3 (count (:discard (get-corp)))) "trashed")
       (is (= 1 (:tag (get-runner))) "Runner took 0 tags"))))
 
@@ -253,7 +253,6 @@
                 {:start-as :runner})
       (starting-hand state :corp [])
       (run-empty-server state :rd)
-      (prompt-choice :runner "Access")
       (prompt-choice :runner "Steal")
       (prompt-choice :corp "Yes")
       ;; Move all 7 cards to trash
@@ -394,7 +393,7 @@
     (take-credits state :corp)
     (run-on state "Server 3")
     (run-successful state)
-    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "Steal")
     (is (= 1 (:bad-publicity (get-corp))))))
 
 (deftest corporate-sales-team
@@ -482,7 +481,7 @@
     (is (= 0 (count (:deck (get-runner)))) "Runner starts with empty deck")
     (run-on state "Server 1")
     (run-successful state)
-    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "OK")
     (is (= 0 (:agenda-point (get-runner))) "Runner stole Degree Mill with no installed cards")
     (play-from-hand state :runner "Ice Analyzer")
     (play-from-hand state :runner "All-nighter")
@@ -490,7 +489,7 @@
           an (get-resource state 1)]
       (run-on state "Server 1")
       (run-successful state)
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Pay")
       (prompt-select :runner ia)
       (prompt-select :runner an)
       (is (= 3 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill")
@@ -504,7 +503,7 @@
     (let [hg (get-resource state 0)]
       (run-on state "Server 2")
       (run-successful state)
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "OK")
       (is (= 3 (:agenda-point (get-runner))) "Runner stole Degree Mill with single card")
       (card-ability state :runner hg 1)
       (is (= 2 (count (get-in (get-runner) [:rig :facedown]))) "Hunting Ground did not install cards facedown")
@@ -513,7 +512,7 @@
             fd2 (get-runner-facedown state 1)]
         (run-on state "Server 2")
         (run-successful state)
-        (prompt-choice :runner "Yes")
+        (prompt-choice :runner "Pay")
         (prompt-select :runner fd1)
         (prompt-select :runner fd2)
         (is (= 6 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill with facedown cards")
@@ -755,21 +754,21 @@
       (take-credits state :corp 2)
       (run-empty-server state "Server 1")
       (prompt-choice :runner "Access")
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Pay")
       (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
       (is (= 3 (:credit (get-runner))) "Runner paid 2cr to steal Fetal AI")
       (is (= 1 (count (:scored (get-runner)))) "Runner stole Fetal AI"))
-  (testing "can't afford to steal"
-    (do-game
-      (new-game (default-corp [(qty "Fetal AI" 3)])
-                (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]))
-      (play-from-hand state :corp "Fetal AI" "New remote")
-      (take-credits state :corp 2)
-      (core/lose state :runner :credit 5)
-      (run-empty-server state "Server 1")
-      (prompt-choice :runner "Yes")
-      (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
-      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
+    (testing "can't afford to steal"
+      (do-game
+        (new-game (default-corp [(qty "Fetal AI" 3)])
+                  (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]))
+        (play-from-hand state :corp "Fetal AI" "New remote")
+        (take-credits state :corp 2)
+        (core/lose state :runner :credit 5)
+        (run-empty-server state "Server 1")
+        (prompt-choice :runner "Yes")
+        (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
+        (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
 
 (deftest firmware-updates
   ;; Firmware Updates
@@ -1548,7 +1547,7 @@
     (take-credits state :corp)
     (core/gain state :runner :agenda-point 6)
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "Pay")
     (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")
     (is (= :runner (:winner @state)) "Runner wins")
     (is (= "Agenda" (:reason @state)) "Win condition reports agenda points")
@@ -1905,14 +1904,14 @@
       (run-on state :remote2)
       (run-successful state)
       (prompt-choice :runner "Access")
-      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "OK") ;; this is now a prompt that QPM was added to Corp score area
       (is (= 2 (:agenda-point (get-runner))) "Runner should not steal")
       (is (= 1 (:agenda-point (get-corp))) "Corp should score"))
     (testing "Access R&D with tag"
       (run-on state :rd)
       (run-successful state)
       (prompt-choice :runner "Access")
-      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "OK")
       (is (= 2 (:agenda-point (get-runner))) "Runner should not steal")
       (is (= 2 (:agenda-point (get-corp))) "Corp should score"))
     (is (= 0 (count (:deck (get-corp)))))))
@@ -2261,6 +2260,7 @@
       ;; Accesses TGTBT but can't steal
       (prompt-choice :runner "Access")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag from accessing without stealing")
+      (prompt-choice :runner "OK")
       (prompt-select :runner ohg))
     (prompt-choice :runner "Yes") ;; Trashes OHG
     (run-empty-server state "Server 2")
@@ -2388,7 +2388,7 @@
     (take-credits state :corp)
     (run-on state :remote2)
     (run-successful state)
-    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "Pay")
     (is (= 1 (:agenda-point (get-runner))))
     (is (= 3 (:credit (get-runner))))))
 

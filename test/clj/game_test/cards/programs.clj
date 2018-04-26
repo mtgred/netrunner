@@ -294,35 +294,72 @@
         (is (= 7 (:click (get-runner))) "Used Hyperdriver")
         (is (= 4 (:memory (get-runner))) "Still 0 MU used")))))
 
-; (deftest imp
-;   ;; Trashing TFP with Imp should not trigger psi-game -- Issue #1844
-;   (do-game
-;     (new-game (default-corp [(qty "The Future Perfect" 1)])
-;               (default-runner [(qty "Imp" 1)]))
-;     (take-credits state :corp)
-;     (play-from-hand state :runner "Imp")
-;     (testing "Trash before access click"
-;       (run-empty-server state "HQ")
-;       ;; Should access TFP at this point
-;       (prompt-choice :runner "Yes")
-;       (prompt-choice :runner "Yes")
-;       (is (empty? (get-in @state [:runner :prompt])) "Should be no psi-game prompt for TFP")
-;       (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
-;       (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")
-;       (core/move state :corp (find-card "The Future Perfect" (:discard (get-corp))) :hand))
-;     (take-credits state :runner)
-;     (take-credits state :corp)
-;     (testing "Trashing after lose psi game"
-;       (run-empty-server state "HQ")
-;       ;; Access prompt for TFP
-;       (prompt-choice :runner "Access")
-;       (prompt-choice :corp "0 [Credit]")
-;       (prompt-choice :runner "1 [Credit]")
-;       ;; Fail psi game
-;       (prompt-choice :runner "Yes")
-;       (is (empty? (get-in @state [:runner :prompt])) "Should be no steal prompt for TFP")
-;       (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
-;       (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))))
+(deftest imp
+  ;; Imp
+  (testing "Full test"
+    (letfn [(imp-test [card]
+              (do-game
+                (new-game (default-corp [(qty card 1)])
+                          (default-runner [(qty "Imp" 1)]))
+                (take-credits state :corp)
+                (play-from-hand state :runner "Imp")
+                (run-empty-server state "HQ")
+                (prompt-choice :runner "Imp ability")
+                (is (= 1 (count (:discard (get-corp)))))))]
+      (doall (map imp-test
+                  ["Hostile Takeover"
+                   "Dedicated Response Team"
+                   "Beanstalk Royalties"
+                   "Ice Wall"
+                   "Oberth Protocol"]))))
+  (testing "vs an ambush"
+    (do-game
+      (new-game (default-corp [(qty "Prisec" 1)])
+                (default-runner [(qty "Imp" 1) (qty "Sure Gamble" 3)]))
+      (play-from-hand state :corp "Prisec" "New remote")
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))
+            tags (:tag (get-runner))
+            grip (count (:hand (get-runner)))
+            archives (count (:discard (get-corp)))]
+        (play-from-hand state :runner "Imp")
+        (run-empty-server state :remote1)
+        (prompt-choice :corp "Yes")
+        (prompt-choice :runner "Imp ability")
+        (is (= 2 (- credits (:credit (get-corp)))) "Corp paid 2 for Prisec")
+        (is (= 1 (- (:tag (get-runner)) tags)) "Runner has 1 tag")
+        (is (= 2 (- grip (count (:hand (get-runner))))) "Runner took 1 meat damage")
+        (is (= 1 (- (count (:discard (get-corp))) archives)) "Used Imp to trash Prisec"))))
+  (testing "vs The Future Perfect"
+    ;; Psi-game happens on access [5.5.1], Imp is a trash ability [5.5.2]
+    (do-game
+      (new-game (default-corp [(qty "The Future Perfect" 1)])
+                (default-runner [(qty "Imp" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (testing "Access, corp wins psi-game"
+        (run-empty-server state "HQ")
+        ;; Should access TFP at this point
+        (prompt-choice :runner "Access")
+        (prompt-choice :corp "1 [Credit]")
+        (prompt-choice :runner "0 [Credit]")
+        (prompt-choice :runner "Imp ability")
+        (take-credits state :runner)
+        (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
+        (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")
+        (core/move state :corp (find-card "The Future Perfect" (:discard (get-corp))) :hand))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (testing "Access, runner wins psi-game"
+        (run-empty-server state "HQ")
+        (prompt-choice :runner "Access")
+        ;; Access prompt for TFP
+        (prompt-choice :corp "0 [Credit]")
+        (prompt-choice :runner "0 [Credit]")
+        ;; Fail psi game
+        (prompt-choice :runner "Imp ability")
+        (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
+        (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")))))
 
 (deftest incubator-transfer-virus-counters
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program
@@ -683,7 +720,7 @@
     (play-from-hand state :runner "Reaver")
     (is (= 1 (count (:hand (get-runner)))) "One card in hand")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes") ; Trash PAD campaign
+    (prompt-choice :runner "Pay") ; Trash PAD campaign
     (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")

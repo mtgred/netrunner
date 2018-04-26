@@ -376,11 +376,14 @@
         card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
 
     (when-let [trash-effect (:trash-effect cdef)]
-      (when (and (not disabled) (or (and (= (:side card) "Runner")
-                                         (:installed card)
-                                         (not (:facedown card)))
-                                    (and (:rezzed card) (not host-trashed))
-                                    (and (:when-inactive trash-effect) (not host-trashed))))
+      (when (and (not disabled)
+                 (or (and (= (:side card) "Runner")
+                          (:installed card)
+                          (not (:facedown card)))
+                     (and (:rezzed card)
+                          (not host-trashed))
+                     (and (:when-inactive trash-effect)
+                          (not host-trashed))))
         (resolve-ability state side trash-effect moved-card (list cause))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
     (swap! state update-in [:trash :trash-list] dissoc oid)

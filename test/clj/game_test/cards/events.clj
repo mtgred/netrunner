@@ -319,46 +319,53 @@
       (run-on state "Archives"))))
 
 (deftest by-any-means
-  ;; By Any Means - Full test
-  (do-game
-   (new-game (default-corp [(qty "Hedge Fund" 1) (qty "Ice Wall" 1) (qty "Paper Trail" 1) (qty "PAD Campaign" 1)])
-             (default-runner [(qty "By Any Means" 1), (qty "Sure Gamble" 4)]))
-   (take-credits state :corp)
-   (run-empty-server state "Archives")
-   (play-from-hand state :runner "By Any Means")
-   (is (= 3 (:click (get-runner))) "Card not played, priority restriction")
-   (take-credits state :runner)
-   (starting-hand state :corp ["Paper Trail", "Hedge Fund", "PAD Campaign"])
-   (play-from-hand state :corp "Paper Trail", "New remote")
-   (play-from-hand state :corp "PAD Campaign", "New remote")
-   (take-credits state :corp)
-   (core/gain state :runner :click 1)
-   (play-from-hand state :runner "By Any Means")
-   (run-empty-server state "HQ")
-   (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
-   (is (= 3 (count (:hand (get-runner)))) "Took 1 meat damage")
-   (run-empty-server state "R&D")
-   (is (= 2 (count (:discard (get-corp)))) "ICE was trashed")
-   (is (= 2 (count (:hand (get-runner)))) "Took 1 meat damage")
-   (run-empty-server state "Server 1")
-   (is (= 3 (count (:discard (get-corp)))) "Agenda was trashed")
-   (is (= 1 (count (:hand (get-runner)))) "Took 1 meat damage")
-   (run-empty-server state "Server 2")
-   (is (= 4 (count (:discard (get-corp)))) "Trashable was trashed")
-   (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
-
-(deftest by-any-means-ctm-crash
-  (do-game
-    (new-game (make-deck "NBN: Controlling the Message" [(qty "Paper Trail" 1)])
-              (default-runner [(qty "By Any Means" 2)]))
-    (play-from-hand state :corp "Paper Trail" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "By Any Means")
-    (run-empty-server state "Server 1")
-    (prompt-choice :corp "No") ;; Don't trigger CTM trace
-    (is (empty? (:prompt (get-runner))) "No prompt to steal since agenda was trashed")
-    (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
-    (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+  ;; By Any Means
+  (testing "Full test"
+    (do-game
+     (new-game (default-corp [(qty "Hedge Fund" 1) (qty "Ice Wall" 1) (qty "Paper Trail" 1) (qty "PAD Campaign" 1)
+                              (qty "Project Junebug" 1)])
+               (default-runner [(qty "By Any Means" 1) (qty "Sure Gamble" 5)]))
+     (take-credits state :corp)
+     (run-empty-server state "Archives")
+     (play-from-hand state :runner "By Any Means")
+     (is (= 3 (:click (get-runner))) "Card not played, priority restriction")
+     (take-credits state :runner)
+     (starting-hand state :corp ["Paper Trail" "Hedge Fund" "PAD Campaign" "Project Junebug"])
+     (play-from-hand state :corp "Paper Trail" "New remote")
+     (play-from-hand state :corp "PAD Campaign" "New remote")
+     (play-from-hand state :corp "Project Junebug" "New remote")
+     (core/add-counter state :corp (get-content state :remote3 0) :advance-counter 2)
+     (take-credits state :corp)
+     (core/gain state :runner :click 2)
+     (core/draw state :runner)
+     (play-from-hand state :runner "By Any Means")
+     (run-empty-server state "HQ")
+     (is (= 1 (count (:discard (get-corp)))) "Operation was trashed")
+     (is (= 4 (count (:hand (get-runner)))) "Took 1 meat damage")
+     (run-empty-server state "R&D")
+     (is (= 2 (count (:discard (get-corp)))) "ICE was trashed")
+     (is (= 3 (count (:hand (get-runner)))) "Took 1 meat damage")
+     (run-empty-server state "Server 1")
+     (is (= 3 (count (:discard (get-corp)))) "Agenda was trashed")
+     (is (= 2 (count (:hand (get-runner)))) "Took 1 meat damage")
+     (run-empty-server state "Server 2")
+     (is (= 4 (count (:discard (get-corp)))) "Trashable was trashed")
+     (is (= 1 (count (:hand (get-runner)))) "Took 1 meat damage")
+     (run-empty-server state "Server 3")
+     (is (= 5 (count (:discard (get-corp)))) "Ambush was trashed")
+     (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+  (testing "vs Controlling the Message"
+    (do-game
+      (new-game (make-deck "NBN: Controlling the Message" [(qty "Paper Trail" 1)])
+                (default-runner [(qty "By Any Means" 2)]))
+      (play-from-hand state :corp "Paper Trail" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (run-empty-server state "Server 1")
+      (prompt-choice :corp "No") ;; Don't trigger CTM trace
+      (is (empty? (:prompt (get-runner))) "No prompt to steal since agenda was trashed")
+      (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
+      (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage"))))
 
 (deftest careful-planning
   ;; Careful Planning - Prevent card in/protecting remote server from being rezzed this turn
@@ -437,8 +444,7 @@
       (prompt-choice :runner "HQ")
       (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
       (run-successful state)
-      (prompt-choice :runner "Yes")
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Imp ability")
       (prompt-select :runner (get-program state 0))
       (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
       ; Cold Read works when Blacklist rezzed - #2378
@@ -629,7 +635,6 @@
     (prompt-choice :runner "Draw 2 cards")
     (is (= 3 (count (:hand (get-runner)))) "Drew 2 cards")
     (is (empty? (:prompt (get-runner))) "Deuces Wild not showing a third choice option")
-
     (play-from-hand state :runner "Deuces Wild")
     (prompt-choice :runner "Expose 1 ice and make a run")
     (prompt-select :runner (get-ice state :remote1 0))
@@ -1178,7 +1183,6 @@
                           (qty "Braintrust" 1) (qty "Hedge Fund" 1) (qty "Power Shutdown" 1)])
               (default-runner [(qty "Information Sifting" 2) (qty "Deus X" 2) (qty "Sure Gamble" 1)]))
     (play-from-hand state :corp "Hostile Infrastructure" "New remote")
-
     (core/gain state :corp :credit 10)
     (core/rez state :corp (get-content state :remote1 0))
     (core/gain state :runner :credit 10)
@@ -1198,17 +1202,17 @@
               (card-ability state :runner (get-program state 0) 1)
               (prompt-choice :runner "Done")
               (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
-              (prompt-choice :runner "Yes")
+              (prompt-choice :runner "Pay")
               (prompt-choice :runner "Done") ; don't prevent Hostile dmg
               ;; chronos prompt
               (prompt-choice :corp "Yes")
               (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
               (is (= (+ 2 existing-dmg) (count (:discard (get-runner)))) "Damage from Hostile Inf not prevented"))
             (allow-pad [existing-dmg]
-              (prompt-choice :runner "Yes")
+              (prompt-choice :runner "Pay")
               (card-ability state :runner (get-program state 0) 1)
-              (prompt-choice :runner "Done")
-              (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf"))]
+              (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf")
+              (prompt-choice :runner "Done"))]
       (if (= :waiting (-> (get-runner) :prompt first :prompt-type)) ; hit the snare
         ;; prevent the damage
         (do (prevent-snare (count (:discard (get-runner))))
@@ -1639,7 +1643,7 @@
       (is (= 3 (:credit (get-runner))) "Can't afford to steal NAPD")
       (run-empty-server state "Server 1")
       (is (= 10 (:credit (get-runner))) "Gained 7c on access, can steal NAPD")
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Pay")
       (is (= 2 (:agenda-point (get-runner))) "Stole agenda")
       (is (= 6 (:credit (get-runner))))
       (run-empty-server state "HQ")
@@ -1726,7 +1730,7 @@
           runner-creds (:credit (get-runner))]
       (run-empty-server state "Server 1")
       (is (core/can-access? state :runner (refresh pad)) "Can access PAD Campgain next turn")
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Pay")
       (is (= (- runner-creds 4) (:credit (get-runner))) "Paid 4 credits to trash PAD Campaign"))))
 
 ;; Rebirth
@@ -2058,7 +2062,7 @@
     (run-successful state)
     (is (= 14 (:credit (get-runner))))
     (is (= 9 (:run-credit (get-runner))) "Gained 9 credits for use during the run")
-    (prompt-choice :runner "Yes") ; choose to trash Eve
+    (prompt-choice :runner "Pay") ; choose to trash Eve
     (is (and (= 0 (count (:hand (get-corp))))
              (= 1 (count (:discard (get-corp)))))
         "Corp hand empty and Eve in Archives")
@@ -2227,13 +2231,13 @@
     (is (= :rd (get-in @state [:run :server 0])))
     (run-successful state)
     (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "1st quandary")
+    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
     (prompt-choice :runner "OK")
     (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "2nd quandary")
+    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "2nd quandary")
     (prompt-choice :runner "OK")
     (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "3rd quandary")
+    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "3rd quandary")
     (prompt-choice :runner "OK")
     (is (not (:run @state)))))
 
