@@ -32,6 +32,7 @@
    {:events {:corp-install
              {:delayed-completion true
               :req (req (and (first-event? state :corp :corp-install)
+                             (pos? (:turn @state))
                              (not (rezzed? target))))
               :effect
               (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
@@ -755,8 +756,9 @@
                                                 (update! (assoc card :fill-hq true)))}}
       :abilities [{:req (req (:fill-hq card))
                    :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
-                   :effect (effect (draw (- 5 (count (:hand corp))))
-                                   (update! (dissoc card :fill-hq)))}]})
+                   :effect (req (draw state side (- 5 (count (:hand corp))))
+                                (update! state side (dissoc card :fill-hq))
+                                (swap! state dissoc :turn-events))}]})
 
    "Nisei Division: The Next Generation"
    {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
