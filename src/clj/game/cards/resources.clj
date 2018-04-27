@@ -921,17 +921,17 @@
                               (add-counter state side card :credit (- (get-in card [:counter :credit] 0))))}]}
 
  "Kasi String"
-   {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
-     ;We would need a :once :per-access key to make this work for Gang Sign etc.
-    :events {:run-ends {:req (req (and (not (get-in @state [:run :did-steal]))
-                                                  (get-in @state [:run :did-access])
-                                                  (is-remote? (:server run))))
-                                   :once :per-turn
-                                   :effect (effect (add-counter card :power 1))
-                                   :msg "add a power counter to itself"}}
-    :counter-added {:req (req (>= (get-in (get-card state card) [:counter :power]) 4))
-                    :effect (effect (as-agenda :runner card 1))
-                    :msg "add it to their score area as an agenda worth 1 agenda point"}}
+ {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
+   ;We would need a :once :per-access key to make this work for Gang Sign etc.
+  :events {:run-ends {:once :per-turn
+                      :req (req (and (not (get-in @state [:run :did-steal]))
+                                     (get-in @state [:run :did-access])
+                                     (is-remote? (:server run))))
+                      :effect (effect (add-counter card :power 1))
+                      :msg "add a power counter to itself"}
+           :counter-added {:req (req (>= (get-in (get-card state card) [:counter :power]) 4))
+                           :effect (effect (as-agenda :runner card 1))
+                           :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                     
    "Keros Mcintyre"
    {:events
