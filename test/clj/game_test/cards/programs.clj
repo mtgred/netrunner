@@ -288,7 +288,7 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (is (:runner-phase-12 @state) "Runner in Step 1.2")
-      (let [hyp (first (:hosted (refresh dheg)))]        
+      (let [hyp (first (:hosted (refresh dheg)))]
         (card-ability state :runner hyp 0)
         (core/end-phase-12 state :runner nil)
         (is (= 7 (:click (get-runner))) "Used Hyperdriver")

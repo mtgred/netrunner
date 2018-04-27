@@ -121,8 +121,7 @@
         ;; If card has already been trashed this access don't show option to pay to trash (eg. Ed Kim)
         (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
           (let [trash-ab-cards (->> (all-active state :runner)
-                                    (filter #(card-flag? % :trash-ability))
-                                    (filter #(some? (card-flag-fn? state side % :trash-ability))))
+                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % card)))
                 card-titles (map :title trash-ab-cards)
                 ability-strs (map #(str % " ability") card-titles)
                 trash-cost-str (when trash-cost ["Pay"])
@@ -168,12 +167,12 @@
 
                               (.contains target "ability")
                               (let [idx (.indexOf ability-strs target)
-                                    trash-ab-card (nth trash-ab-cards idx)]
-                                (play-ability state side
-                                              {:card (get-card state trash-ab-card)
-                                               :ability idx
-                                               :targets [card]})
-                                (effect-completed state side eid))))}
+                                    trash-ab-card (nth trash-ab-cards idx)
+                                    cdef (-> (card-def trash-ab-card)
+                                             :interactions
+                                             :trash-ability
+                                             (assoc :eid eid))]
+                                (resolve-ability state side cdef trash-ab-card [card]))))}
               card nil)))))
     (effect-completed state side eid)))
 
@@ -221,8 +220,7 @@
         ;; any trash abilities
         can-steal-this? (can-steal? state side c)
         trash-ab-cards (->> (all-active state :runner)
-                            (filter #(card-flag? % :trash-ability))
-                            (filter #(some? (card-flag-fn? state side % :trash-ability))))
+                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % c)))
         card-titles (map :title trash-ab-cards)
         ability-strs (map #(str % " ability") card-titles)
         ;; strs
@@ -276,18 +274,19 @@
 
                                         ;; Don't pay single additional cost to steal
                                         (.contains target "Don't")
-                                        (do (trigger-event state side :no-steal card)
+                                        (do (trigger-event state side :no-steal c)
                                             (effect-completed state side eid))
 
                                         ;; Use trash ability
                                         (.contains target "ability")
                                         (let [idx (.indexOf ability-strs target)
-                                              trash-ab-card (nth trash-ab-cards idx)]
-                                          (play-ability state side
-                                                        {:card (get-card state trash-ab-card)
-                                                         :ability idx
-                                                         :targets [card]})
-                                          (trigger-event state side :no-steal card)
+                                              trash-ab-card (nth trash-ab-cards idx)
+                                              cdef (-> (card-def trash-ab-card)
+                                                       :interactions
+                                                       :trash-ability
+                                                       (assoc :eid eid))]
+                                          (resolve-ability state side cdef trash-ab-card [c])
+                                          (trigger-event state side :no-steal c)
                                           (effect-completed state side eid))))})
                       c nil)))
 
