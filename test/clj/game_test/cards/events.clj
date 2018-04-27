@@ -327,7 +327,7 @@
                (default-runner [(qty "By Any Means" 1) (qty "Sure Gamble" 5)]))
      (take-credits state :corp)
      (run-empty-server state "Archives")
-     (core/click-credit state :runner nil)
+     (is (empty? (:prompt (get-runner))))
      (is (thrown? Exception (play-from-hand state :runner "By Any Means"))
          "Sending a play command for a card you can't play is a no-no.")
      (is (= 3 (:click (get-runner))) "Card not played, priority restriction")
