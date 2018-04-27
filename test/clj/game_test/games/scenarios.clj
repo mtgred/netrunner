@@ -36,7 +36,7 @@
           (is (= 5 (:credit (get-runner))) "Runner paid 1c to survive Neural EMP")
           (prompt-choice :runner "Done")
           (play-from-hand state :corp "SEA Source")
-          (prompt-choice :corp 3)                             ; boost trace to 6
+          (prompt-choice :corp 3) ; boost trace to 6
           (prompt-choice :runner 0)
           (is (= 1 (:tag (get-runner))) "Runner took tag from SEA Source")
           (is (= 7 (:credit (get-corp))))
@@ -93,7 +93,7 @@
         (prompt-choice :runner 0)
         (is (and (= 2 (:credit (get-runner))) (= 7 (:credit (get-corp))))
             "Desperado paid 1 to Runner, Lamprey took 1 from Corp")
-        (prompt-choice :runner "No") ; can't afford to trash Ash
+        (prompt-choice :runner "No action") ; can't afford to trash Ash
         (take-credits state :runner)
         (play-from-hand state :corp "Caprice Nisei" "Server 1")
         (is (= 11 (:credit (get-corp))) "Gained 3 from Adonis and 1 from HB:EtF")
@@ -104,7 +104,7 @@
         (run-empty-server state "HQ")
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (prompt-choice :runner "Yes") ; trash Ash
+        (prompt-choice :runner "Pay") ; trash Ash
         (is (and (= 1 (:credit (get-runner))) (= 11 (:credit (get-corp)))))
         (core/gain state :runner :credit 1)
         (play-from-hand state :runner "Dirty Laundry")

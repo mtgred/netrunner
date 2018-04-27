@@ -48,32 +48,31 @@
 
 (deftest aumakua
   ;; Aumakua - Gain credit on no-trash
-  (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 3)])
-              (default-runner [(qty "Aumakua" 1)]))
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Aumakua")
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "No")
-    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
-    (core/gain state :runner :credit 5)
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
-    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
-
-(deftest aumakua-neutralize-all-threats
-  ;; Aumakua - Neutralize All Threats interaction
-  (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 3)])
-              (default-runner [(qty "Aumakua" 1) (qty "Neutralize All Threats" 1)]))
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Aumakua")
-    (play-from-hand state :runner "Neutralize All Threats")
-    (core/gain state :runner :credit 5)
-    (run-empty-server state "Server 1")
-    (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash")))
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "PAD Campaign" 3)])
+                (default-runner [(qty "Aumakua" 1)]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "No action")
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
+      (core/gain state :runner :credit 5)
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Pay")
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
+  (testing "Neutralize All Threats interaction"
+    (do-game
+      (new-game (default-corp [(qty "PAD Campaign" 3)])
+                (default-runner [(qty "Aumakua" 1) (qty "Neutralize All Threats" 1)]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aumakua")
+      (play-from-hand state :runner "Neutralize All Threats")
+      (core/gain state :runner :credit 5)
+      (run-empty-server state "Server 1")
+      (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash"))))
 
 (deftest baba-yaga
   (do-game
@@ -230,7 +229,7 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Deus X")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "Pay")
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
@@ -251,7 +250,7 @@
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
-      (prompt-choice :runner "Yes")
+      (prompt-choice :runner "Pay")
       (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
       (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
 

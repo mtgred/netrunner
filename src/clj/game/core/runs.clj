@@ -127,8 +127,9 @@
                 ability-strs (map #(str % " ability") card-titles)
                 trash-cost-str (when trash-cost ["Pay"])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
-                forced-to-trash? (and (get-in @state [:runner :register :force-trash])
-                                      (can-pay? state :runner card-name :credit trash-cost))
+                forced-to-trash? (or (and (get-in @state [:runner :register :force-trash])
+                                          (can-pay? state :runner card-name :credit trash-cost))
+                                     (card-flag? card :must-trash true))
                 trash-msg (when trash-cost (str trash-cost " [Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
                 pay-str (when trash-cost (str (if forced-to-trash? "is forced to pay " "pays ") trash-msg))
                 prompt-str (str "You accessed " card-name "."

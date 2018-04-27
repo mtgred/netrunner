@@ -656,7 +656,7 @@
     (core/rez state :corp (get-ice state :hq 0))
     (core/rez state :corp (get-ice state :rd 0))
     (is (= 4 (:current-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
-	(is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
+    (is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
 
 (deftest mind-game
   ;; Mind game - PSI redirect to different server

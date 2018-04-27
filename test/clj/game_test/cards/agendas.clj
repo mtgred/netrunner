@@ -119,7 +119,7 @@
     (testing "don't take a tag from trashing normally"
       (run-on state :remote1)
       (run-successful state)
-      (prompt-choice :runner "1 [Credit]")
+      (prompt-choice :runner "Pay")
       (is (= 1 (count (:discard (get-corp)))) "trashed")
       (is (= 0 (:tag (get-runner))) "Runner took 0 tags")
       (take-credits state :runner)
@@ -128,13 +128,13 @@
     (testing "gain a tag from first trash"
       (run-on state :remote2)
       (run-successful state)
-      (prompt-choice :runner "1 [Credit]")
+      (prompt-choice :runner "Pay")
       (is (= 2 (count (:discard (get-corp)))) "trashed")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))
     (testing "don't gain a tag from second trash"
       (run-on state :remote3)
       (run-successful state)
-      (prompt-choice :runner "1 [Credit]")
+      (prompt-choice :runner "Pay")
       (is (= 3 (count (:discard (get-corp)))) "trashed")
       (is (= 1 (:tag (get-runner))) "Runner took 0 tags"))))
 

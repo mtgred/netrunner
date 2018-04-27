@@ -75,62 +75,58 @@
         (is (= 1 (- corp-credits (:credit (get-corp)))) "Should lose 1 credit from 419 ability")
         (is (= 0 (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae")))))
 
-(deftest adam-directives
-  ;; Adam - Allow runner to choose directives
-  (do-game
-    (new-game
-      (default-corp)
-      (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
-      {:dont-start-game true})
-    (is (= 4 (count (get-in @state [:runner :play-area]))) "All directives are in the runner's play area")
-    (is (= 0 (count (get-in @state [:runner :hand]))))
-    (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
-    (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
-    (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
-    (is (= 3 (count (get-in @state [:runner :rig :resource]))) "3 directives were installed")
-    (is (= 0 (count (get-in @state [:runner :play-area]))) "The play area is empty")
-    (let [nat (find-card "Neutralize All Threats" (get-in @state [:runner :rig :resource]))
-          sf (find-card "Safety First" (get-in @state [:runner :rig :resource]))
-          abr (find-card "Always Be Running" (get-in @state [:runner :rig :resource]))]
-      (is (and nat sf abr) "The chosen directives were installed"))))
-
-(deftest adam-palana
-  ;; Adam - Directives should not grant Pālanā credits.
-  (do-game
-    (new-game
-      (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
-      (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
-      {:dont-start-game true})
-    (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
-    (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
-    (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
-    (prompt-choice :corp "Keep")
-    (prompt-choice :runner "Keep")
-    (core/start-turn state :corp nil)
-    (is (= 5 (:credit (get-corp))) "Pālanā does not gain credit from Adam's starting Directives")))
-
-(deftest adam-advanceable-traps
-  ;; Adam - Neutralize All Threats interaction with advanceable traps.
-  (do-game
-    (new-game
-      (default-corp [(qty "Cerebral Overwriter" 3)])
-      (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
-      {:dont-start-game true})
-    (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
-    (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
-    (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
-    (prompt-choice :corp "Keep")
-    (prompt-choice :runner "Keep")
-    (core/start-turn state :corp nil)
-
-    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
-    (advance state (get-content state :remote1 0) 2)
-    (take-credits state :corp)
-    (run-empty-server state :remote1)
-    (prompt-choice :runner "No") ; Dismiss prompt from non-exiled Find the Truth directive
-    (prompt-choice :corp "Yes")
-    (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
-    (is (= 1 (count (:discard (get-corp)))) "1 card in archives")))
+(deftest adam
+  ;; Adam
+  (testing "Allow runner to choose directives"
+    (do-game
+      (new-game
+        (default-corp)
+        (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
+        {:dont-start-game true})
+      (is (= 4 (count (get-in @state [:runner :play-area]))) "All directives are in the runner's play area")
+      (is (= 0 (count (get-in @state [:runner :hand]))))
+      (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
+      (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
+      (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
+      (is (= 3 (count (get-in @state [:runner :rig :resource]))) "3 directives were installed")
+      (is (= 0 (count (get-in @state [:runner :play-area]))) "The play area is empty")
+      (let [nat (find-card "Neutralize All Threats" (get-in @state [:runner :rig :resource]))
+            sf (find-card "Safety First" (get-in @state [:runner :rig :resource]))
+            abr (find-card "Always Be Running" (get-in @state [:runner :rig :resource]))]
+        (is (and nat sf abr) "The chosen directives were installed"))))
+  (testing "Directives should not grant Pālanā credits"
+    (do-game
+      (new-game
+        (make-deck "Pālanā Foods: Sustainable Growth" [(qty "Hedge Fund" 3)])
+        (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
+        {:dont-start-game true})
+      (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
+      (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
+      (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
+      (prompt-choice :corp "Keep")
+      (prompt-choice :runner "Keep")
+      (core/start-turn state :corp nil)
+      (is (= 5 (:credit (get-corp))) "Pālanā does not gain credit from Adam's starting Directives")))
+  (testing "Neutralize All Threats interaction with advanceable traps"
+    (do-game
+      (new-game
+        (default-corp [(qty "Cerebral Overwriter" 3)])
+        (make-deck "Adam: Compulsive Hacker" [(qty "Sure Gamble" 3)])
+        {:dont-start-game true})
+      (prompt-select :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
+      (prompt-select :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
+      (prompt-select :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
+      (prompt-choice :corp "Keep")
+      (prompt-choice :runner "Keep")
+      (core/start-turn state :corp nil)
+      (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+      (advance state (get-content state :remote1 0) 2)
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (prompt-choice :corp "Yes")
+      (prompt-choice :runner "Pay")
+      (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
+      (is (= 1 (count (:discard (get-corp)))) "1 card in archives"))))
 
 (deftest andromeda
   ;; Andromeda - 9 card starting hand, 1 link
@@ -254,11 +250,10 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Feedback Filter")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "Pay")
     (prompt-choice :corp "Yes")
     (prompt-choice :corp (find-card "Inti" (:hand (get-runner))))
-    (is (empty? (:prompt (get-runner)))
-        "Feedback Filter net damage prevention opportunity not given")
+    (is (empty? (:prompt (get-runner))) "Feedback Filter net damage prevention opportunity not given")
     (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")))
 
 (deftest chronos-protocol-employee-strike
@@ -286,69 +281,69 @@
       (is (not (empty? (:prompt (get-corp)))) "Employee Strike out of play - Ability turned on correctly"))))
 
 (deftest edward-kim
-  ;; Edward Kim - Trash first operation accessed each turn, but not if first one was in Archives
-  (do-game
-    (new-game
-      (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2) (qty "PAD Campaign" 1)])
-      (make-deck "Edward Kim: Humanity's Hammer" [(qty "Eater" 1) (qty "Sure Gamble" 2)]))
-    (play-from-hand state :corp "Hedge Fund")
-    (trash-from-hand state :corp "PAD Campaign")
-    (take-credits state :corp)
-    (run-empty-server state "Archives")
-    (run-empty-server state "HQ")
-    (is (= 2 (count (:discard (get-corp)))) "No operation trashed from HQ; accessed one in Archives first")
-    (take-credits state :runner)
-    (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :hand)
-    (is (= 1 (count (:discard (get-corp)))))
-    (take-credits state :corp)
-    (run-empty-server state "Archives")
-    (run-empty-server state "HQ")
-    (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
-    (take-credits state :runner)
-    (play-from-hand state :corp "Hedge Fund")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Eater")
-    (let [eater (get-in @state [:runner :rig :program 0])]
-      (run-on state "Archives")
-      (card-ability state :runner eater 0) ; pretend to break a sub so no cards in Archives will be accessed
-      (run-successful state)
-      (is (= 3 (count (:discard (get-corp)))))
+  ;; Edward Kim
+  (testing "Trash first operation accessed each turn, but not if first one was in Archives"
+    (do-game
+      (new-game
+        (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2) (qty "PAD Campaign" 1)])
+        (make-deck "Edward Kim: Humanity's Hammer" [(qty "Eater" 1) (qty "Sure Gamble" 2)]))
+      (play-from-hand state :corp "Hedge Fund")
+      (trash-from-hand state :corp "PAD Campaign")
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
       (run-empty-server state "HQ")
-      (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
+      (is (= 2 (count (:discard (get-corp)))) "No operation trashed from HQ; accessed one in Archives first")
+      (take-credits state :runner)
+      (core/move state :corp (find-card "Hedge Fund" (:discard (get-corp))) :hand)
+      (is (= 1 (count (:discard (get-corp)))))
+      (take-credits state :corp)
+      (run-empty-server state "Archives")
+      (run-empty-server state "HQ")
+      (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Hedge Fund")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Eater")
+      (let [eater (get-in @state [:runner :rig :program 0])]
+        (run-on state "Archives")
+        (card-ability state :runner eater 0) ; pretend to break a sub so no cards in Archives will be accessed
+        (run-successful state)
+        (is (= 3 (count (:discard (get-corp)))))
+        (run-empty-server state "HQ")
+        (is (= 4 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
+  (testing "Do not trigger maw on first Operation access (due to trash)"
+    (do-game
+      (new-game
+        (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2)])
+        (make-deck "Edward Kim: Humanity's Hammer" [(qty "Maw" 1) (qty "Sure Gamble" 2)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "Maw")
+      (is (= 0 (count (:discard (get-corp)))) "No cards in Archives")
+      (run-empty-server state "HQ")
+      (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "OK")
+      (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw"))))
 
-(deftest edward-kim-maw
-  ;; Edward Kim - Do not trigger maw on first Operation access (due to trash)
-  (do-game
-    (new-game
-      (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2)])
-      (make-deck "Edward Kim: Humanity's Hammer" [(qty "Maw" 1) (qty "Sure Gamble" 2)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Sure Gamble")
-    (play-from-hand state :runner "Maw")
-    (is (= 0 (count (:discard (get-corp)))) "No cards in Archives")
-    (run-empty-server state "HQ")
-    (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
-    (run-empty-server state "HQ")
-    (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw")))
-
-
-(deftest exile-customized-secretary
-  ;; Exile - simultaneous-resolution prompt shown for interaction with Customized Secretary
-  (do-game
-    (new-game
-      (default-corp)
-      (make-deck "Exile: Streethawk" [(qty "Customized Secretary" 3) (qty "Clone Chip" 3)
-                                      (qty "Sure Gamble" 3)]))
-    (take-credits state :corp)
-    (starting-hand state :runner ["Customized Secretary" "Clone Chip"])
-    (trash-from-hand state :runner "Customized Secretary")
-    (play-from-hand state :runner "Clone Chip")
-    (card-ability state :runner (get-hardware state 0) 0)
-    (prompt-select :runner (find-card "Customized Secretary" (:discard (get-runner))))
-    ;; Make sure the simultaneous-resolution prompt is showing with 2 choices
-    (is (= 2 (-> (get-runner) :prompt first :choices count)) "Simultaneous-resolution prompt is showing")
-    (prompt-choice :runner "Exile: Streethawk")
-    (is (= 1 (count (:hand (get-runner)))) "Exile drew a card")))
+(deftest exile
+  ;; Exile
+  (testing "Simultaneous-resolution prompt shown for interaction with Customized Secretary"
+    (do-game
+      (new-game
+        (default-corp)
+        (make-deck "Exile: Streethawk" [(qty "Customized Secretary" 3) (qty "Clone Chip" 3)
+                                        (qty "Sure Gamble" 3)]))
+      (take-credits state :corp)
+      (starting-hand state :runner ["Customized Secretary" "Clone Chip"])
+      (trash-from-hand state :runner "Customized Secretary")
+      (play-from-hand state :runner "Clone Chip")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (prompt-select :runner (find-card "Customized Secretary" (:discard (get-runner))))
+      ;; Make sure the simultaneous-resolution prompt is showing with 2 choices
+      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Simultaneous-resolution prompt is showing")
+      (prompt-choice :runner "Exile: Streethawk")
+      (is (= 1 (count (:hand (get-runner)))) "Exile drew a card"))))
 
 (deftest gabriel-santiago
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
@@ -407,45 +402,44 @@
     (is (= 1 (:bad-publicity (get-corp))) "GRNDL starts with 1 bad publicity")))
 
 (deftest haarpsichord-studios
-  ;; Haarpsichord Studios - Prevent stealing more than 1 agenda per turn
-  (do-game
-    (new-game
-      (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
-      (default-runner [(qty "Gang Sign" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Gang Sign")
-    (run-empty-server state "HQ")
-    (prompt-choice :runner "Steal")
-    (is (= 1 (:agenda-point (get-runner))))
-    (run-empty-server state "HQ")
-    (prompt-choice :runner "Steal")
-    (is (= 1 (:agenda-point (get-runner))) "Second steal of turn prevented")
-    (take-credits state :runner)
-    (play-from-hand state :corp "15 Minutes" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (prompt-choice :runner "Card from hand")
-    (prompt-choice :runner "Steal")
-    (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn")))
-
-(deftest haarpsichord-studios-employee-strike
-  ;; Haarpsichord Studios - Interactions with Employee Strike. Issue #1313.
-  (do-game
-    (new-game
-      (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
-      (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :click 5)
-    (run-empty-server state "HQ")
-    (prompt-choice :runner "Steal")
-    (is (= 1 (:agenda-point (get-runner))))
-    (play-from-hand state :runner "Employee Strike")
-    (run-empty-server state "HQ")
-    (prompt-choice :runner "Steal")
-    (is (= 2 (:agenda-point (get-runner))) "Second steal not prevented")
-    (play-from-hand state :runner "Scrubbed")
-    (run-empty-server state "HQ")
-    (prompt-choice :runner "Steal")
-    (is (= 2 (:agenda-point (get-runner))) "Third steal prevented")))
+  ;; Haarpsichord Studios
+  (testing "Prevent stealing more than 1 agenda per turn"
+    (do-game
+      (new-game
+        (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
+        (default-runner [(qty "Gang Sign" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gang Sign")
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))))
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "OK")
+      (is (= 1 (:agenda-point (get-runner))) "Second steal of turn prevented")
+      (take-credits state :runner)
+      (play-from-hand state :corp "15 Minutes" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (prompt-choice :runner "Card from hand")
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:agenda-point (get-runner))) "Steal prevention didn't carry over to Corp turn")))
+  (testing "Interactions with Employee Strike. Issue #1313"
+    (do-game
+      (new-game
+        (make-deck "Haarpsichord Studios: Entertainment Unleashed" [(qty "15 Minutes" 3)])
+        (default-runner [(qty "Employee Strike" 1) (qty "Scrubbed" 1)]))
+      (take-credits state :corp)
+      (core/gain state :runner :click 5)
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))))
+      (play-from-hand state :runner "Employee Strike")
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:agenda-point (get-runner))) "Second steal not prevented")
+      (play-from-hand state :runner "Scrubbed")
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "OK")
+      (is (= 2 (:agenda-point (get-runner))) "Third steal prevented"))))
 
 (deftest haas-bioroid-architects-of-tomorrow
   ;; Architects of Tomorrow - prompt to rez after passing bioroid
@@ -997,46 +991,45 @@
       (is (= 2 (:credit (get-runner))) "Gain 1 more credit due to Xanadu"))))
 
 (deftest nbn-controlling-the-message
-  ;; NBN: Controlling the Message - Trace to tag Runner when first installed Corp card is trashed
-  (do-game
-    (new-game
-      (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 3)])
-      (default-runner [(qty "Forger" 1)]))
-    (play-from-hand state :corp "Launch Campaign" "New remote")
-    (play-from-hand state :corp "Launch Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Forger")
-    ; trash from HQ first - #2321
-    (run-empty-server state "HQ")
-    (prompt-choice :runner "Yes")
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
-    (prompt-choice :corp "Yes")
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 0)
-    (is (empty? (:prompt (get-runner))) "Forger can't avoid the tag")
-    (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
-    (run-empty-server state "Server 2")
-    (prompt-choice :runner "Yes")
-    (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))
-
-(deftest nbn-controlling-the-message-drt
-  ;; NBN: Controlling the Message - Interaction with Dedicated Response Team
-  (do-game
-    (new-game
-      (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 1) (qty "Dedicated Response Team" 1)])
-      (default-runner))
-    (play-from-hand state :corp "Launch Campaign" "New remote")
-    (play-from-hand state :corp "Dedicated Response Team" "New remote")
-    (core/rez state :corp (get-content state :remote2 0))
-    (take-credits state :corp)
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
-    (prompt-choice :corp "Yes")
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 0)
-    (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
-    (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT")))
+  ;; NBN: Controlling the Message
+  (testing "Trace to tag Runner when first installed Corp card is trashed"
+    (do-game
+      (new-game
+        (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 3)])
+        (default-runner [(qty "Forger" 1)]))
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Forger")
+      ; trash from HQ first - #2321
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Pay")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Pay")
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (empty? (:prompt (get-runner))) "Forger can't avoid the tag")
+      (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
+      (run-empty-server state "Server 2")
+      (prompt-choice :runner "Pay")
+      (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))
+  (testing "Interaction with Dedicated Response Team"
+    (do-game
+      (new-game
+        (make-deck "NBN: Controlling the Message" [(qty "Launch Campaign" 1) (qty "Dedicated Response Team" 1)])
+        (default-runner))
+      (play-from-hand state :corp "Launch Campaign" "New remote")
+      (play-from-hand state :corp "Dedicated Response Team" "New remote")
+      (core/rez state :corp (get-content state :remote2 0))
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Pay")
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT"))))
 
 (deftest new-angeles-sol-on-steal
   ;; New Angeles Sol - interaction with runner stealing agendas
@@ -1190,100 +1183,93 @@
       (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Null")
       (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Null"))))
 
-(deftest omar-ability
-  ;; Omar Keung - Make a successful run on the chosen server once per turn
-  (do-game
-    (new-game
-      (default-corp)
-      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
-    (take-credits state :corp)
-    (let [omar (get-in @state [:runner :identity])]
-      (card-ability state :runner omar 0)
-      (run-successful state)
-      (prompt-choice :runner "HQ")
-      (is (= [:hq] (-> (get-runner) :register :successful-run)))
-      (is (= "You accessed Hedge Fund" (-> (get-runner) :prompt first :msg)))
-      (prompt-choice :runner "OK")
-      (is (= 3 (:click (get-runner))))
-      (card-ability state :runner omar 0)
-      (is (= 3 (:click (get-runner))))
-      (take-credits state :runner)
+(deftest omar
+  ;; Omar Keung
+  (testing "Make a successful run on the chosen server once per turn"
+    (do-game
+      (new-game
+        (default-corp)
+        (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
       (take-credits state :corp)
-      (run-empty-server state :rd)
-      (is (= [:rd] (-> (get-runner) :register :successful-run)))
-      (card-ability state :runner omar 0)
-      (run-successful state)
-      (prompt-choice :runner "HQ")
-      (is (= [:hq :rd] (-> (get-runner) :register :successful-run))))))
+      (let [omar (get-in @state [:runner :identity])]
+        (card-ability state :runner omar 0)
+        (run-successful state)
+        (prompt-choice :runner "HQ")
+        (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (is (= "You accessed Hedge Fund." (-> (get-runner) :prompt first :msg)))
+        (prompt-choice :runner "OK")
+        (is (= 3 (:click (get-runner))))
+        (card-ability state :runner omar 0)
+        (is (= 3 (:click (get-runner))))
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-empty-server state :rd)
+        (is (= [:rd] (get-in @state [:runner :register :successful-run])))
+        (card-ability state :runner omar 0)
+        (run-successful state)
+        (prompt-choice :runner "HQ")
+        (is (= [:hq :rd] (get-in @state [:runner :register :successful-run]))))))
+  (testing "Ash prevents access, but not successful run"
+    (do-game
+      (new-game
+        (default-corp [(qty "Ash 2X3ZB9CY" 1)])
+        (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
+      (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+      (take-credits state :corp)
+      (let [omar (get-in @state [:runner :identity])
+            ash (get-content state :hq 0)]
+        (core/rez state :corp ash)
+        (card-ability state :runner omar 0)
+        (run-successful state)
+        (prompt-choice :runner "HQ")
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (= (:cid ash) (-> (get-runner) :prompt first :card :cid)))
+        (is (= :hq (-> (get-runner) :register :successful-run first))))))
+  (testing "Crisium Grid prevents prompt"
+    (do-game
+      (new-game
+        (default-corp [(qty "Crisium Grid" 1)])
+        (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
+      (play-from-hand state :corp "Crisium Grid" "Archives")
+      (take-credits state :corp)
+      (let [omar (get-in @state [:runner :identity])
+            cr (get-content state :archives 0)]
+        (core/rez state :corp cr)
+        (card-ability state :runner omar 0)
+        (run-successful state)
+        (is (= (:cid cr) (-> (get-runner) :prompt first :card :cid)))
+        (is (empty? (-> (get-runner) :register :successful-run)))
+        (is (= :archives (get-in @state [:run :server 0]))))))
+  (testing "When selecting R&D, ability adds counters to Medium"
+    (do-game
+      (new-game
+        (default-corp)
+        (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Medium" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Medium")
+      (let [omar (get-in @state [:runner :identity])
+            medium (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner omar 0)
+        (run-successful state)
+        (prompt-choice :runner "R&D")
+        (is (= 1 (get-counters (refresh medium) :virus))))))
+  (testing "When selecting HQ, ability adds counters to Nerve Agent"
+    (do-game
+      (new-game
+        (default-corp)
+        (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Nerve Agent" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Nerve Agent")
+      (let [omar (get-in @state [:runner :identity])
+            nerve (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner omar 0)
+        (run-successful state)
+        (prompt-choice :runner "HQ")
+        (is (= 1 (get-counters (refresh nerve) :virus)))))))
 
-(deftest omar-ash
-  ;; Omar Keung - Ash prevents access, but not successful run
-  (do-game
-    (new-game
-      (default-corp [(qty "Ash 2X3ZB9CY" 1)])
-      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
-    (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
-    (take-credits state :corp)
-    (let [omar (get-in @state [:runner :identity])
-          ash (get-content state :hq 0)]
-      (core/rez state :corp ash)
-      (card-ability state :runner omar 0)
-      (run-successful state)
-      (prompt-choice :runner "HQ")
-      (prompt-choice :corp 0)
-      (prompt-choice :runner 0)
-      (is (= (:cid ash) (-> (get-runner) :prompt first :card :cid)))
-      (is (= :hq (-> (get-runner) :register :successful-run first))))))
-
-(deftest omar-crisium-grid
-  ;; Omar Keung - Crisium Grid prevents prompt
-  (do-game
-    (new-game
-      (default-corp [(qty "Crisium Grid" 1)])
-      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Sure Gamble" 3)]))
-    (play-from-hand state :corp "Crisium Grid" "Archives")
-    (take-credits state :corp)
-    (let [omar (get-in @state [:runner :identity])
-          cr (get-content state :archives 0)]
-      (core/rez state :corp cr)
-      (card-ability state :runner omar 0)
-      (run-successful state)
-      (is (= (:cid cr) (-> (get-runner) :prompt first :card :cid)))
-      (is (empty? (-> (get-runner) :register :successful-run)))
-      (is (= :archives (get-in @state [:run :server 0]))))))
-
-(deftest omar-medium
-  ;; Omar Keung - When selecting R&D, ability adds counters to Medium
-  (do-game
-    (new-game
-      (default-corp)
-      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Medium" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Medium")
-    (let [omar (get-in @state [:runner :identity])
-          medium (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner omar 0)
-      (run-successful state)
-      (prompt-choice :runner "R&D")
-      (is (= 1 (get-counters (refresh medium) :virus))))))
-
-(deftest omar-nerve-agent
-  ;; Omar Keung - When selecting HQ, ability adds counters to Nerve Agent
-  (do-game
-    (new-game
-      (default-corp)
-      (make-deck "Omar Keung: Conspiracy Theorist" [(qty "Nerve Agent" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Nerve Agent")
-    (let [omar (get-in @state [:runner :identity])
-          nerve (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner omar 0)
-      (run-successful state)
-      (prompt-choice :runner "HQ")
-      (is (= 1 (get-counters (refresh nerve) :virus))))))
-
-(deftest quetzal-ability
-  ;; Quetzal ability- once per turn
+(deftest quetzal
+  ;; Quetzal
   (do-game
     (new-game
       (default-corp [(qty "Ice Wall" 3)])
@@ -1293,28 +1279,26 @@
     (run-on state "HQ")
     (let [q (get-in @state [:runner :identity])
           iwall (get-ice state :hq 0)
-          qdef (core/card-def (get-in @state [:runner :identity]))]
+          qdef (core/card-def (get-in @state [:runner :identity]))
+          qmsg (get-in qdef [:abilities 0 :msg])]
       (core/rez state :corp iwall)
       (card-ability state :runner q 0)
-      (is (last-log-contains? state (get-in qdef [:abilities 0 :msg]))
-          "Quetzal ability did trigger")
+      (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (run-jack-out state)
       (core/click-credit state :runner nil)
       (run-on state "HQ")
       (card-ability state :runner (refresh q) 0)
-      (is (not (last-log-contains? state (get-in qdef [:abilities 0 :msg])))
-          "Quetzal ability did not trigger")
+      (is (not (last-log-contains? state qmsg)) "Quetzal ability did not trigger")
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
       (core/click-credit state :runner nil)
       (run-on state "HQ")
       (card-ability state :runner (refresh q) 0)
-      (is (last-log-contains? state (get-in qdef [:abilities 0 :msg]))
-          "Quetzal ability did trigger")
+      (is (last-log-contains? state qmsg) "Quetzal ability did trigger")
       (core/jack-out state :runner nil))))
 
-(deftest reina-rez-cost-increase
+(deftest reina-rez
   ;; Reina Roja - Increase cost of first rezzed ICE
   (do-game
     (new-game
@@ -1328,7 +1312,7 @@
       (core/rez state :corp quan)
       (is (= 5 (:credit (get-corp))) "Rez cost increased by 1"))))
 
-(deftest rielle-kit-peddler-ability
+(deftest rielle-kit-peddler
   ;; Rielle "Kit" Peddler - Give ICE Code Gate
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 2)])
@@ -1360,13 +1344,13 @@
     (prompt-choice :corp "Cancel")
     (run-successful state)
     (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "1st quandary")
+    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "1st quandary")
     (prompt-choice :runner "OK")
     (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "2nd quandary")
+    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "2nd quandary")
     (prompt-choice :runner "OK")
     (prompt-choice :runner "Card from deck")
-    (is (= "You accessed Quandary" (-> (get-runner) :prompt first :msg)) "3rd quandary")
+    (is (= "You accessed Quandary." (-> (get-runner) :prompt first :msg)) "3rd quandary")
     (prompt-choice :runner "OK")
     (is (not (:run @state)))
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
@@ -1375,68 +1359,66 @@
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (is (empty? (:prompt (get-corp))) "Cannot use Skorpios twice")))
 
-(deftest silhouette-expose-trigger-before-access
-  ;; Silhouette - Expose trigger ability resolves completely before access. Issue #2173.
-  (do-game
-    (new-game
-      (default-corp [(qty "Psychic Field" 1) (qty "Fetal AI" 10)])
-      (make-deck "Silhouette: Stealth Operative" [(qty "Feedback Filter" 1) (qty "Inside Job" 1)]))
-    (starting-hand state :corp ["Psychic Field" "Fetal AI"])
-    (play-from-hand state :corp "Psychic Field" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Feedback Filter")
-    (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
-    (let [psychic (get-content state :remote1 0)
-          ff (get-hardware state 0)]
+(deftest silhouette
+  ;; Silhouette
+  (testing "Expose trigger ability resolves completely before access. Issue #2173"
+    (do-game
+      (new-game
+        (default-corp [(qty "Psychic Field" 1) (qty "Fetal AI" 10)])
+        (make-deck "Silhouette: Stealth Operative" [(qty "Feedback Filter" 1) (qty "Inside Job" 1)]))
+      (starting-hand state :corp ["Psychic Field" "Fetal AI"])
+      (play-from-hand state :corp "Psychic Field" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Feedback Filter")
+      (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
+      (let [psychic (get-content state :remote1 0)
+            ff (get-hardware state 0)]
+        (run-empty-server state :hq)
+        (is (:run @state) "On successful run trigger effects")
+        (prompt-select :runner psychic)
+        (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+        (prompt-choice :corp "2 [Credits]")
+        (prompt-choice :runner "0 [Credits]")
+        (card-ability state :runner ff 0)
+        (prompt-choice :runner "Done")
+        (is (= 0 (:credit (get-runner))) "Runner has no more credits left")
+        (is (= 1 (count (:hand (get-runner)))) "Prevented 1 net damage")
+        (is (empty? (:discard (get-runner))) "No cards discarded")
+        (is (:run @state) "On run access phase")
+        (prompt-choice :runner "Access")
+        (prompt-choice :runner "Done")
+        (is (empty? (:hand (get-runner))) "Suffered 1 net damage due to accessing Fetal AI")
+        (is (= 1 (count (:discard (get-runner)))) "Discarded 1 card due to net damage")
+        (is (:run @state) "Resolving access triggers")
+        (prompt-choice :runner "OK")
+        (is (= 0 (count (:scored (get-runner)))) "Runner has no credits to be able to steal Fetal AI")
+        (is (not (:run @state)) "Run has now ended")
+        (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+  (testing "with Temüjin; broken interaction with other successful-run triggers. Issue #1968"
+    (do-game
+      (new-game
+        (default-corp [(qty "PAD Campaign" 1) (qty "Hedge Fund" 3) (qty "Restructure" 3) (qty "Beanstalk Royalties" 3)])
+        (make-deck "Silhouette: Stealth Operative" [(qty "Temüjin Contract" 1) (qty "Desperado" 1)]))
+      (starting-hand state :corp ["Hedge Fund" "PAD Campaign"])
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Temüjin Contract")
+      (prompt-choice :runner "HQ")
+      (take-credits state :runner)
+      (take-credits state :corp)
       (run-empty-server state :hq)
-      (is (:run @state) "On successful run trigger effects")
-      (prompt-select :runner psychic)
-      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
-      (prompt-choice :corp "2 [Credits]")
-      (prompt-choice :runner "0 [Credits]")
-      (card-ability state :runner ff 0)
-      (prompt-choice :runner "Done")
-      (is (= 0 (:credit (get-runner))) "Runner has no more credits left")
-      (is (= 1 (count (:hand (get-runner)))) "Prevented 1 net damage")
-      (is (empty? (:discard (get-runner))) "No cards discarded")
-      (is (:run @state) "On run access phase")
-      (prompt-choice :runner "Access")
-      (prompt-choice :runner "Done")
-      (is (empty? (:hand (get-runner))) "Suffered 1 net damage due to accessing Fetal AI")
-      (is (= 1 (count (:discard (get-runner)))) "Discarded 1 card due to net damage")
-      (is (:run @state) "Resolving access triggers")
-      (prompt-choice :runner "Yes")
-      (is (= 0 (count (:scored (get-runner)))) "Runner has no credits to be able to steal Fetal AI")
-      (is (not (:run @state)) "Run has now ended")
-      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
-
-(deftest silhouette-temujin-weirdness
-  ;; Silhouette - broken interaction with other successful-run triggers. Issue #1968.
-  (do-game
-    (new-game
-      (default-corp [(qty "PAD Campaign" 1) (qty "Hedge Fund" 3) (qty "Restructure" 3) (qty "Beanstalk Royalties" 3)])
-      (make-deck "Silhouette: Stealth Operative" [(qty "Temüjin Contract" 1) (qty "Desperado" 1)]))
-    (starting-hand state :corp ["Hedge Fund" "PAD Campaign"])
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Temüjin Contract")
-    (prompt-choice :runner "HQ")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (prompt-choice :runner "Temüjin Contract")
-    (prompt-select :runner (get-content state :remote1 0))
-    (prompt-choice :runner "OK")
-    (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
-    (is (= 16 (get-counters (get-resource state 0) :credit)) "16 cr on Temujin")
-    (is (= 8 (:credit (get-runner))) "Gained 4cr")
-
-    ;; second run
-    (run-empty-server state :hq)
-    (prompt-choice :runner "OK")
-    (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
-    (is (= 12 (:credit (get-runner))) "Gained 4cr")
-    (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin")))
+      (prompt-choice :runner "Temüjin Contract")
+      (prompt-select :runner (get-content state :remote1 0))
+      (prompt-choice :runner "OK")
+      (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
+      (is (= 16 (get-counters (get-resource state 0) :credit)) "16 cr on Temujin")
+      (is (= 8 (:credit (get-runner))) "Gained 4cr")
+      ;; second run
+      (run-empty-server state :hq)
+      (prompt-choice :runner "OK")
+      (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
+      (is (= 12 (:credit (get-runner))) "Gained 4cr")
+      (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin"))))
 
 (deftest spark-advertisements
   ;; Spark Agency - Rezzing advertisements
@@ -1473,12 +1455,10 @@
     (take-credits state :corp)
     (is (empty? (:prompt (get-corp))) "Not prompted when no faceup agenda available")
     (take-credits state :runner)
-
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (take-credits state :corp)
     (is (empty? (:prompt (get-corp))) "Not prompted when no ice available")
     (take-credits state :runner)
-
     (play-from-hand state :corp "Hortum" "HQ")
     (play-from-hand state :corp "Hortum" "R&D")
     (let [h0 (get-ice state :hq 0)
@@ -1491,7 +1471,6 @@
       (is (= 2 (:advance-counter (refresh h0))) "Gains 2 tokens")
       (is (= nil (:advance-counter (refresh h1))) "Stays at 0 tokens")
       (take-credits state :runner)
-
       (play-from-hand state :corp "Oaktown Renovation" "New remote")
       (take-credits state :corp)
       (prompt-choice :corp "Yes")
@@ -1499,18 +1478,15 @@
       (is (= 2 (:advance-counter (refresh h0))) "Stays at 2 tokens")
       (is (= 4 (:advance-counter (refresh h1))) "Gains 4 tokens")
       (take-credits state :runner)
-
       (take-credits state :corp)
-      (is (empty? (:prompt (get-corp))) "Not prompted when all ice advanced")
-      )))
+      (is (empty? (:prompt (get-corp))) "Not prompted when all ice advanced"))))
 
 (deftest strategic-innovations-future-forward
   ;; Strategic Innovations: Future Forward - Ability
   (do-game
     (new-game
-      (make-deck "Strategic Innovations: Future Forward" [(qty "Hedge Fund" 2)
-                                                          (qty "Eli 1.0" 2)
-                                                          (qty "Crick" 2)])
+      (make-deck "Strategic Innovations: Future Forward"
+                 [(qty "Hedge Fund" 2) (qty "Eli 1.0" 2) (qty "Crick" 2)])
       (default-runner))
     (play-from-hand state :corp "Eli 1.0" "New remote")
     (play-from-hand state :corp "Hedge Fund")
@@ -1531,113 +1507,111 @@
       (is (= 0 (count (:prompt (get-corp))))
           "Corp not prompted to trigger Strategic Innovations"))))
 
-(deftest the-foundry-abt
-  ;; The Foundry - interaction with Accelerated Beta Test
-  (do-game
-    (new-game
-      (make-deck "The Foundry: Refining the Process" [(qty "Accelerated Beta Test" 2) (qty "Eli 1.0" 3)])
-      (default-runner))
-    (starting-hand state :corp ["Accelerated Beta Test"])
-    (play-from-hand state :corp "Accelerated Beta Test" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (prompt-choice :corp "Yes")
-    (prompt-select :corp (find-card "Eli 1.0" (:play-area (get-corp))))
-    (prompt-choice :corp "Archives")
-    (prompt-choice :corp "Yes")
-    (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D")))
+(deftest the-foundry
+  ;; The Foundry
+  (testing "interaction with Accelerated Beta Test"
+    (do-game
+      (new-game
+        (make-deck "The Foundry: Refining the Process" [(qty "Accelerated Beta Test" 2) (qty "Eli 1.0" 3)])
+        (default-runner))
+      (starting-hand state :corp ["Accelerated Beta Test"])
+      (play-from-hand state :corp "Accelerated Beta Test" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (find-card "Eli 1.0" (:play-area (get-corp))))
+      (prompt-choice :corp "Archives")
+      (prompt-choice :corp "Yes")
+      (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D"))))
 
 (deftest the-outfit
   ;; The Outfit - Gain 3 whenever you take at least 1 bad publicity
-  (do-game
-    (new-game
-      (make-deck "The Outfit: Family Owned and Operated" [(qty "Hostile Takeover" 1) (qty "Profiteering" 1)])
-      (default-runner))
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity")
-    (is (= 15 (:credit (get-corp))) "Corp should gain 10 credits: (= 15 (+ 5 7 3))")
-    (play-from-hand state :corp "Profiteering" "New remote")
-    (score-agenda state :corp (get-content state :remote2 0))
-    (prompt-choice :corp "3")  ;; Take 3 bad publicity from Profiteering, gain 15 (if bad publicity actually taken)
-    (is (= 4 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity")
-    (is (= 33 (:credit (get-corp))) "Corp should gain 18 credits: (= 33 (+ 15 15 3))")))
+  (testing "basic test"
+    (do-game
+      (new-game
+        (make-deck "The Outfit: Family Owned and Operated" [(qty "Hostile Takeover" 1) (qty "Profiteering" 1)])
+        (default-runner))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 1 (:bad-publicity (get-corp))) "Take 1 bad publicity")
+      (is (= 15 (:credit (get-corp))) "Corp should gain 10 credits")
+      (play-from-hand state :corp "Profiteering" "New remote")
+      (score-agenda state :corp (get-content state :remote2 0))
+      (prompt-choice :corp "3")  ;; Take 3 bad publicity from Profiteering, gain 15
+      (is (= 4 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity")
+      (is (= 33 (:credit (get-corp))) "Corp should gain 18 credits")))
+  (testing "with Profiteering - Only gain 3 credits when taking more than 1 bad publicity in a single effect"
+    (do-game
+      (new-game
+        (make-deck "The Outfit: Family Owned and Operated" [(qty "Profiteering" 1)])
+        (default-runner))
+      (play-from-hand state :corp "Profiteering" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (prompt-choice :corp "3")
+      (is (= 3 (:bad-publicity (get-corp))) "Take 3 bad publicity")
+      (is (= 23 (:credit (get-corp))) "Gain 15 from Profiteering + 3 from The Outfit")))
+  (testing "vs Valencia - 1 bad pub at start means 8 credits to start with"
+    (do-game
+      (new-game
+        (make-deck "The Outfit: Family Owned and Operated" [(qty "Hostile Takeover" 1)])
+        (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
+      (is (= 1 (:bad-publicity (get-corp))) "The Outfit starts with 1 bad publicity")
+      (is (= 8 (:credit (get-corp))) "The Outfit starts with 8 credits")
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 2 (:bad-publicity (get-corp))) "Take 1 bad publicity")
+      (is (= 18 (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit"))))
 
-(deftest the-outfit-profiteering
-  ;; The Outfit & Profiteering - Only gain 3 credits when taking more than 1 bad publicity in a single effect
-  (do-game
-    (new-game
-      (make-deck "The Outfit: Family Owned and Operated" [(qty "Profiteering" 1)])
-      (default-runner))
-    (play-from-hand state :corp "Profiteering" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (prompt-choice :corp "3")
-    (is (= 3 (:bad-publicity (get-corp))) "Take 3 bad publicity")
-    (is (= 23 (:credit (get-corp))) "Gain 15 from Profiteering + 3 from The Outfit")))
+(deftest titan-transnational
+  ;; Titan Transnational
+  (testing "Add a counter to a scored agenda"
+    (do-game
+      (new-game
+        (make-deck "Titan Transnational: Investing In Your Future" [(qty "Project Atlas" 1)])
+        (default-runner))
+      (play-from-hand state :corp "Project Atlas" "New remote")
+      (let [atl (get-content state :remote1 0)]
+        (core/gain state :corp :click 1)
+        (core/advance state :corp {:card (refresh atl)})
+        (core/advance state :corp {:card (refresh atl)})
+        (core/advance state :corp {:card (refresh atl)})
+        (core/score state :corp {:card (refresh atl)})
+        (let [scored (get-in @state [:corp :scored 0])]
+          (is (= 1 (get-counters scored :agenda)) "1 counter added by Titan")))))
+  (testing "only use one counter of Corporate Sales Team"
+    (do-game
+      (new-game
+        (make-deck "Titan Transnational: Investing In Your Future" [(qty "Corporate Sales Team" 1) (qty "Mark Yale" 1)])
+        (default-runner))
+      (play-from-hand state :corp "Corporate Sales Team" "New remote")
+      (play-from-hand state :corp "Mark Yale" "New remote")
+      (let [cst (get-content state :remote1 0)
+            my (get-content state :remote2 0)]
+        (core/gain state :corp :click 3)
+        (core/advance state :corp {:card (refresh cst)})
+        (core/advance state :corp {:card (refresh cst)})
+        (core/advance state :corp {:card (refresh cst)})
+        (core/advance state :corp {:card (refresh cst)})
+        (core/score state :corp {:card (refresh cst)})
+        (let [scored (get-in @state [:corp :scored 0])]
+          (is (= 1 (get-counters (refresh scored) :agenda)) "1 counter added by Titan")
+          (is (= 10 (get-counters (refresh scored) :credit)) "10 credits from Titan")
+          (core/rez state :corp my)
+          (card-ability state :corp my 1)
+          (prompt-select :corp (refresh scored))
+          (is (= 0 (get-counters (refresh scored) :agenda)) "Agenda counter used by Mark Yale")
+          (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")
+          (card-ability state :corp my 1)
+          (prompt-select :corp (refresh scored))
+          (is (= 0 (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
+          (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale"))))))
 
-(deftest the-outfit-valencia
-  ;; The Outfit vs Valencia - 1 bad pub at start means 8 credits to start with
-  (do-game
-    (new-game
-      (make-deck "The Outfit: Family Owned and Operated" [(qty "Hostile Takeover" 1)])
-      (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
-    (is (= 1 (:bad-publicity (get-corp))) "The Outfit starts with 1 bad publicity")
-    (is (= 8 (:credit (get-corp))) "The Outfit starts with 8 credits")
-    (play-from-hand state :corp "Hostile Takeover" "New remote")
-    (score-agenda state :corp (get-content state :remote1 0))
-    (is (= 2 (:bad-publicity (get-corp))) "Take 1 bad publicity")
-    (is (= 18 (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit")))
-
-(deftest titan-agenda-counter
-  ;; Titan Transnational - Add a counter to a scored agenda
-  (do-game
-    (new-game
-      (make-deck "Titan Transnational: Investing In Your Future" [(qty "Project Atlas" 1)])
-      (default-runner))
-    (play-from-hand state :corp "Project Atlas" "New remote")
-    (let [atl (get-content state :remote1 0)]
-      (core/gain state :corp :click 1)
-      (core/advance state :corp {:card (refresh atl)})
-      (core/advance state :corp {:card (refresh atl)})
-      (core/advance state :corp {:card (refresh atl)})
-      (core/score state :corp {:card (refresh atl)})
-      (let [scored (get-in @state [:corp :scored 0])]
-        (is (= 1 (get-counters scored :agenda)) "1 counter added by Titan")))))
-
-(deftest titan-corporate-sales-team
-  ;; Titan, only use one counter of Corporate Sales Team
-  (do-game
-    (new-game
-      (make-deck "Titan Transnational: Investing In Your Future" [(qty "Corporate Sales Team" 1) (qty "Mark Yale" 1)])
-      (default-runner))
-    (play-from-hand state :corp "Corporate Sales Team" "New remote")
-    (play-from-hand state :corp "Mark Yale" "New remote")
-    (let [cst (get-content state :remote1 0)
-          my (get-content state :remote2 0)]
-      (core/gain state :corp :click 3)
-      (core/advance state :corp {:card (refresh cst)})
-      (core/advance state :corp {:card (refresh cst)})
-      (core/advance state :corp {:card (refresh cst)})
-      (core/advance state :corp {:card (refresh cst)})
-      (core/score state :corp {:card (refresh cst)})
-      (let [scored (get-in @state [:corp :scored 0])]
-        (is (= 1 (get-counters (refresh scored) :agenda)) "1 counter added by Titan")
-        (is (= 10 (get-counters (refresh scored) :credit)) "10 credits from Titan")
-        (core/rez state :corp my)
-        (card-ability state :corp my 1)
-        (prompt-select :corp (refresh scored))
-        (is (= 0 (get-counters (refresh scored) :agenda)) "Agenda counter used by Mark Yale")
-        (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")
-        (card-ability state :corp my 1)
-        (prompt-select :corp (refresh scored))
-        (is (= 0 (get-counters (refresh scored) :agenda)) "No agenda counter used by Mark Yale")
-        (is (= 10 (get-counters (refresh scored) :credit)) "Credits not used by Mark Yale")))))
-
-(deftest weyland-builder
-  ;; Builder of Nations - 1 meat damage per turn at most
-  (do-game
-    (new-game
-      (make-deck "Weyland Consortium: Builder of Nations" [(qty "Hedge Fund" 3)])
-      (default-runner))
+(deftest weyland-builder-of-nations
+  ;; Builder of Nations
+  (testing "1 meat damage per turn at most"
+    (do-game
+      (new-game
+        (make-deck "Weyland Consortium: Builder of Nations" [(qty "Hedge Fund" 3)])
+        (default-runner))
       (let [bon (get-in @state [:corp :identity])]
         (card-ability state :corp bon 0)
         (prompt-choice :corp "Cancel")
@@ -1648,20 +1622,18 @@
         (card-ability state :corp bon 0)
         (is (= 1 (count (:discard (get-runner)))) "Runner took only 1 meat damage from BoN total")
         (is (= 0 (count (:prompt (get-corp))))))))
-
-(deftest weyland-builder-cleaners
-  ;; Builder of Nations - 2 meat damage from ID ability when The Cleaners is scored
-  (do-game
-    (new-game
-      (make-deck "Weyland Consortium: Builder of Nations" [(qty "The Cleaners" 3) (qty "Ice Wall" 3)])
-      (default-runner [(qty "Sure Gamble" 2)]))
-    (play-from-hand state :corp "The Cleaners" "New remote")
-    (let [clean (get-content state :remote1 0)]
-      (score-agenda state :corp clean)
-    (let [bon (get-in @state [:corp :identity])]
-      (card-ability state :corp bon 0)
-      (prompt-choice :corp "Yes")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo")))))
+  (testing "2 meat damage from ID ability when The Cleaners is scored"
+    (do-game
+      (new-game
+        (make-deck "Weyland Consortium: Builder of Nations" [(qty "The Cleaners" 3) (qty "Ice Wall" 3)])
+        (default-runner [(qty "Sure Gamble" 2)]))
+      (play-from-hand state :corp "The Cleaners" "New remote")
+      (let [clean (get-content state :remote1 0)]
+        (score-agenda state :corp clean)
+        (let [bon (get-in @state [:corp :identity])]
+          (card-ability state :corp bon 0)
+          (prompt-choice :corp "Yes")
+          (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from BoN/Cleaners combo"))))))
 
 (deftest whizzard
   ;; Whizzard - Recurring credits
@@ -1682,10 +1654,9 @@
   ;; Wyvern: Chemically Enhanced - Ability
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 3)])
-              (make-deck "Wyvern: Chemically Enhanced" [(qty "Sure Gamble" 2)
-                                                        (qty "Corroder" 1)
-                                                        (qty "Clone Chip" 1)
-                                                        (qty "Easy Mark" 1)]))
+              (make-deck "Wyvern: Chemically Enhanced"
+                         [(qty "Sure Gamble" 2) (qty "Corroder" 1)
+                          (qty "Clone Chip" 1) (qty "Easy Mark" 1)]))
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (take-credits state :corp)
@@ -1694,8 +1665,7 @@
     (play-from-hand state :runner "Easy Mark")
     (play-from-hand state :runner "Corroder")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
-    ;; trash Launch Campaign, should trigger wyvern
+    (prompt-choice :runner "Pay")  ;; trash Launch Campaign, should trigger wyvern
     (is (= "Sure Gamble" (:title (last (:discard (get-runner)))))
         "Sure Gamble still in Wyvern's discard")
     (is (some #(= "Easy Mark" (:title %)) (:deck (get-runner))) "Easy Mark moved to deck")
@@ -1703,6 +1673,5 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Clone Chip")
     (run-empty-server state "Server 2")
-    (prompt-choice :runner "Yes")
-    (is (= "Sure Gamble" (:title (last (:discard (get-runner)))))
-        "Sure Gamble still in Wyvern's discard")))
+    (prompt-choice :runner "Pay")
+    (is (= "Sure Gamble" (:title (last (:discard (get-runner))))) "Sure Gamble still in Wyvern's discard")))

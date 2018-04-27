@@ -456,7 +456,8 @@
 
    "Imp"
    {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))
-            :trash-ability (req (when (pos? (get-in card [:counter :virus] 0))
+            :trash-ability (req (when (and (not (get-in @state [:per-turn (:cid card)]))
+                                           (pos? (get-in card [:counter :virus] 0)))
                                   0))}
     :data {:counter {:virus 2}}
     :abilities [{:counter-cost [:virus 1]

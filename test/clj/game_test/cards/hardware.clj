@@ -339,7 +339,7 @@
       (is (zero? (get-counters aum :virus)) "Auakua starts with 0 counters")
       (run-on state "Server 1")
       (run-successful state)
-      (prompt-choice :runner "Yes") ; trash Adonis Campaing
+      (prompt-choice :runner "Pay") ; trash Adonis Campaing
       (prompt-choice :runner "Yes") ; gain virus counter
       (is (= 1 (get-counters (refresh fc) :virus)) "Friday Chip gains a counter on trash")
       (is (zero? (get-counters (refresh aum) :virus)) "Aumakua doesn't gain a counter")
@@ -448,55 +448,52 @@
       (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
 
 (deftest maw
-  ;; Once per turn, first time runner declines to steal or trash, trash a HQ card at random
-  (do-game
-    (new-game (default-corp [(qty "BOOM!" 5)])
-              (default-runner [(qty "Maw" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :credit 20)
-    (run-empty-server state :hq)
-    (prompt-choice :runner "No")
-    (is (= 0 (count (:discard (get-corp)))) "No HQ card in discard before Maw installed")
-    (play-from-hand state :runner "Maw")
-    (run-empty-server state :hq)
-    (prompt-choice :runner "No")
-    (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw as first decline already happened")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (run-empty-server state :hq)
-    (prompt-choice :runner "No")
-    (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw")
-    (run-empty-server state :hq)
-    (prompt-choice :runner "No")
-    (is (= 1 (count (:discard (get-corp)))) "2nd HQ card on same turn not trashed by Maw")))
-
-(deftest maw-card-seen
-  ;; Check trashed card is trashed face-up if it's the card that is accessed, issue #2695
-  ;; Also checks Maw auto-trashes on Operation with no trash cost
-  (do-game
-    (new-game (default-corp [(qty "Hedge Fund" 1)])
-              (default-runner [(qty "Maw" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :credit 20)
-    (play-from-hand state :runner "Maw")
-    (run-empty-server state :hq)
-    ;; (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
-    (prompt-choice :runner "OK")
-    (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw now")
-    (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
-
-(deftest maw-hiro
-  ;; Maw with Hiro in hand - Hiro not moved to runner scored area on trash decline #2638
-  (do-game
-    (new-game (default-corp [(qty "Chairman Hiro" 1)])
-              (default-runner [(qty "Maw" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :credit 20)
-    (play-from-hand state :runner "Maw")
-    (run-empty-server state :hq)
-    (prompt-choice :runner "No")
-    (is (= 0 (count (:scored (get-corp)))) "Hiro not scored")
-    (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw")))
+  ;; Maw - Once per turn, first time runner declines to steal or trash, trash a HQ card at random
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "BOOM!" 5)])
+                (default-runner [(qty "Maw" 1)]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (run-empty-server state :hq)
+      (prompt-choice :runner "No action")
+      (is (= 0 (count (:discard (get-corp)))) "No HQ card in discard before Maw installed")
+      (play-from-hand state :runner "Maw")
+      (run-empty-server state :hq)
+      (prompt-choice :runner "No action")
+      (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw as first decline already happened")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state :hq)
+      (prompt-choice :runner "No action")
+      (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw")
+      (run-empty-server state :hq)
+      (prompt-choice :runner "No action")
+      (is (= 1 (count (:discard (get-corp)))) "2nd HQ card on same turn not trashed by Maw")))
+  (testing "Check trashed card is trashed face-up if it's the card that is accessed, issue #2695"
+    ;; Also checks Maw auto-trashes on Operation with no trash cost
+    (do-game
+      (new-game (default-corp [(qty "Hedge Fund" 1)])
+                (default-runner [(qty "Maw" 1)]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Maw")
+      (run-empty-server state :hq)
+      ;; (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
+      (prompt-choice :runner "OK")
+      (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw now")
+      (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
+  (testing "with Hiro in hand - Hiro not moved to runner scored area on trash decline #2638"
+    (do-game
+      (new-game (default-corp [(qty "Chairman Hiro" 1)])
+                (default-runner [(qty "Maw" 1)]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Maw")
+      (run-empty-server state :hq)
+      (prompt-choice :runner "No action")
+      (is (= 0 (count (:scored (get-corp)))) "Hiro not scored")
+      (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
@@ -735,7 +732,7 @@
     (play-from-hand state :corp "Prisec" "New remote")
     (play-from-hand state :corp "Cerebral Overwriter" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
-    (core/advance state :corp (get-content state :remote4 0))
+    (advance state (get-content state :remote4 0))
     (take-credits state :corp)
     (core/gain state :runner :click 100)
     (core/gain state :runner :credit 100)
@@ -753,17 +750,16 @@
           rd4 (get-in @state [:runner :rig :hardware 3])
           hok (get-in @state [:corp :scored 0])]
       (run-empty-server state "Server 2")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
-        "Runner has prompt to wait for Snare!")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Snare!")
       (prompt-choice :corp "Yes")
       (card-ability state :runner rd1 0)
       (prompt-choice :runner 3)
       (prompt-choice :runner "Done")
+      (prompt-choice :runner "No action")
       (is (= 5 (count (:hand (get-runner)))) "Runner took no net damage")
       ; fire HOK while accessing Snare!
       (run-empty-server state "Server 2")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
-          "Runner has prompt to wait for Snare!")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Snare!")
       (card-ability state :corp hok 0)
       ; Recon Drone ability won't fire as we are not accessing HOK
       (card-ability state :runner rd2 0)
@@ -771,31 +767,31 @@
       (prompt-choice :runner "Done")
       (is (= 4 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
       (prompt-choice :corp "No")
+      (prompt-choice :runner "No action")
       (core/lose state :runner :credit 100)
       ; can only stop 1 damage due to credits
       (core/gain state :runner :credit 1)
       (run-empty-server state "Server 2")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
-          "Runner has prompt to wait for Snare!")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Snare!")
       (prompt-choice :corp "Yes")
       (card-ability state :runner rd2 0)
       (is (= 1 (:number (:choices (first (:prompt (get-runner)))))) "Recon Drone choice limited to runner credits")
       (prompt-choice :runner 1)
       (prompt-choice :runner "Done")
+      (prompt-choice :runner "Pay")
       (is (= 2 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
       (core/gain state :runner :credit 100)
       (run-empty-server state "Server 3")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
-          "Runner has prompt to wait for Prisec")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Prisec")
       (prompt-choice :corp "Yes")
       (card-ability state :runner rd3 0)
       (is (= 1 (:number (:choices (first (:prompt (get-runner)))))) "Recon Drone choice limited to 1 meat")
       (prompt-choice :runner 1)
       (prompt-choice :runner "Done")
+      (prompt-choice :runner "Pay")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no meat damage")
       (run-empty-server state "Server 4")
-      (is (= :waiting (-> @state :runner :prompt first :prompt-type))
-          "Runner has prompt to wait for Cerebral Overwriter")
+      (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Cerebral Overwriter")
       (prompt-choice :corp "Yes")
       (card-ability state :runner rd4 0)
       (prompt-choice :runner 1)
