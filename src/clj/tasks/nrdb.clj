@@ -71,7 +71,7 @@
    :side_code  (fn [[k v]] [:side (string/capitalize v)])
    :uniqueness  identity
    :memory_cost (rename :memoryunits)
-   :strength  identity
+   :strength  (fn [[k v]] [:strength (if (nil? v) 0 v)])
    :trash_cost (rename :trash)
    :deck_limit (rename :limited)
    :quantity (rename :packquantity)

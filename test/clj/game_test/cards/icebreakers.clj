@@ -213,6 +213,22 @@
       (is (= "Crypsis" (:title (first (:discard (get-runner)))))
           "Crypsis was trashed"))))
 
+(deftest darwin
+  ;; Darwin - starts at 0 strength
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Darwin" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Darwin")
+    (let [darwin (get-program state 0)]
+      (is (zero? (get-counters (refresh darwin) :virus)) "Darwin starts with 0 virus counters")
+      (is (= 0 (:current-strength (refresh darwin ))) "Darwin starts at 0 strength")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (refresh darwin) 1) ; add counter
+      (is (= 1 (get-counters (refresh darwin) :virus)) "Darwin gains 1 virus counter")
+      (is (= 1 (:current-strength (refresh darwin ))) "Darwin is at 1 strength"))))
+
 (deftest deus-x-multiple-hostile-infrastructure
   ;; Multiple Hostile Infrastructure vs. Deus X
   (do-game
