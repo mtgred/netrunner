@@ -142,8 +142,8 @@
   the server to install into with a string."
   ([state side title] (play-from-hand state side title nil))
   ([state side title server]
-    (core/play state side {:card (find-card title (get-in @state [side :hand]))
-                           :server server})))
+   (core/play state side {:card (find-card title (get-in @state [side :hand]))
+                          :server server})))
 
 
 ;;; Run functions
