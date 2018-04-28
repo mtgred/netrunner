@@ -1784,9 +1784,9 @@
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
                                 (when (not= (get-in old [:runner :credit]) credit)
-                                  (swap! ref assoc-in [:runner :hand-size-base] credit))))))
+                                  (swap! ref assoc-in [:runner :hand-size :base] credit))))))
     :leave-play (req (remove-watch state :theophilius-bagbiter)
-                     (swap! state assoc-in [:runner :hand-size-base] 5))}
+                     (swap! state assoc-in [:runner :hand-size :base] 5))}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
