@@ -15,6 +15,11 @@
   [n]
   ((fnil zero? 1) n))
 
+(defn safe-inc-n
+  "Helper function to safely update a value by n. Returns a function to use with `update` / `update-in`"
+  [n]
+  #(+ (or % 0) n))
+
 (defn clean-forfeit
   "Takes a flat :forfeit in costs and adds a cost of 1.
   Ignores cost vectors with an even count as these have forfeit value included"
