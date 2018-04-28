@@ -414,6 +414,15 @@
                                {:effect (effect (add-counter :runner card :virus 1)
                                                 (system-msg :runner (str "places 1 virus counter on Friday Chip")))}}}}})
 
+   "Gebrselassie"
+   {:abilities [{:label "Host Gebrselassie on an installed non-AI icebreaker"
+                 :cost [:click 1] 
+                 :choices {:req #(and (installed? %) (has-subtype? % "Icebreaker") (not (has-subtype? % "AI")))}
+                 :effect (effect (host target card))}]
+    :events {:pump-breaker {:silent (req true)
+                            :req (req (= (:cid (second target)) (:cid (:host card))))
+                            :effect (effect (update! (update-in (second targets) [:pump :all-turn] (fnil #(+ % (first targets) 0)))))}}}
+
    "GPI Net Tap"
    {:implementation "Trash and jack out effect is manual"
     :abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
