@@ -1818,13 +1818,14 @@
    "Virus Breeding Ground"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}
     :abilities [{:cost [:click 1]
-                 :msg (msg "move 1 virus counter to " (:title target))
                  :req (req (pos? (get-in card [:counter :virus] 0)))
-                 :choices {:req #(and (has-subtype? % "Virus")
-                                      (pos? (get-in % [:counter :virus] 0)))}
-                 :effect (req (when (pos? (get-virus-counters state side target))
-                                (add-counter state side card :virus -1)
-                                (add-counter state side target :virus 1)))}]}
+                 :effect (req (resolve-ability
+                                state side
+                                {:msg (msg "move 1 virus counter to " (:title target))
+                                 :choices {:req #(pos? (get-virus-counters state side %))}
+                                 :effect (req (add-counter state side card :virus -1)
+                                              (add-counter state side target :virus 1))}
+                                card nil))}]}
 
    "Wasteland"
    {:events {:runner-trash {:req (req (and (first-installed-trash-own? state :runner)
