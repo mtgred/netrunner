@@ -118,10 +118,10 @@
                               (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Box-E"
-   {:in-play [:memory 2 :hand-size-modification 2]}
+   {:in-play [:memory 2 :hand-size {:mod 2}]}
 
    "Brain Cage"
-   {:in-play [:hand-size-modification 3]
+   {:in-play [:hand-size {:mod 3}]
     :effect (effect (damage eid :brain 1 {:card card}))}
 
    "Brain Chip"
