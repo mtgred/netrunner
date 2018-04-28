@@ -128,18 +128,18 @@
    (let [runner-points (fn [s] (max (get-in s [:runner :agenda-point] 0) 0))]
      {:effect (req (gain state :runner
                          :memory (runner-points @state)
-                         :hand-size-modification (runner-points @state))
+                         :hand-size {:mod (runner-points @state)})
                    (add-watch state (keyword (str "brainchip" (:cid card)))
                           (fn [k ref old new]
                             (let [bonus (- (runner-points new) (runner-points old))]
                               (when (not= 0 bonus)
                                (gain state :runner
                                      :memory bonus
-                                     :hand-size-modification bonus))))))
+                                     :hand-size {:mod bonus}))))))
       :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
                        (lose state :runner
                              :memory (runner-points @state)
-                             :hand-size-modification (runner-points @state)))})
+                             :hand-size {:mod (runner-points @state)}))})
 
    "Capstone"
    {:abilities [{:req (req (> (count (:hand runner)) 0))
@@ -465,7 +465,7 @@
                  :msg "expose 1 card"}]}
 
    "LLDS Memory Diamond"
-   {:in-play [:link 1 :memory 1 :hand-size-modification 1]}
+   {:in-play [:link 1 :memory 1 :hand-size {:mod 1}]}
 
    "LLDS Processor"
    {:events
@@ -486,7 +486,7 @@
    {:recurring 1}
 
    "Logos"
-   {:in-play [:memory 1 :hand-size-modification 1]
+   {:in-play [:memory 1 :hand-size {:mod 1}]
     :events {:agenda-scored
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
               :choices (req (cancellable (:deck runner)))
@@ -636,17 +636,17 @@
 
    "Obelus"
    {:in-play [:memory 1]
-    :effect (req (gain state :runner :hand-size-modification (:tag runner))
+    :effect (req (gain state :runner :hand-size {:mod (:tag runner)})
                  (add-watch state :obelus
                    (fn [k ref old new]
                      (let [tagnew (get-in new [:runner :tag])
                            tagold (get-in old [:runner :tag])]
                        (when (> tagnew tagold)
-                         (gain state :runner :hand-size-modification (- tagnew tagold)))
+                         (gain state :runner :hand-size {:mod (- tagnew tagold)}))
                        (when (< tagnew tagold)
-                         (lose state :runner :hand-size-modification (- tagold tagnew)))))))
+                         (lose state :runner :hand-size {:mod (- tagold tagnew)}))))))
     :leave-play (req (remove-watch state :obelus)
-                     (lose state :runner :hand-size-modification (:tag runner)))
+                     (lose state :runner :hand-size {:mode (:tag runner)}))
     :events {:successful-run-ends {:once :per-turn
                                    :req (req (let [successes (rest (turn-events state side :successful-run))]
                                                (and (#{[:rd] [:hq]} (:server target))
@@ -914,11 +914,11 @@
     :abilities [{:once :per-turn
                  :req (req (rezzed? current-ice))
                  :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
-                 :effect (effect (lose :runner :hand-size-modification 1)
+                 :effect (effect (lose :runner :hand-size {:mod 1})
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
     :events {:runner-turn-begins {:req (req (:sifr-used card))
-                                  :effect (effect (gain :runner :hand-size-modification 1)
+                                  :effect (effect (gain :runner :hand-size {:mod 1})
                                                   (update! (dissoc card :sifr-used)))}
              :pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
                                 :effect (req (let [ice-str (:current-strength target)]
@@ -1004,7 +1004,7 @@
                        (flatline state))
                      (when (= dtype :brain)
                        (swap! state update-in [:runner :brain-damage] #(+ % dmg))
-                       (swap! state update-in [:runner :hand-size-modification] #(- % dmg)))
+                       (swap! state update-in [:runner :hand-size :mod] #(- % dmg)))
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
                      (when-completed (resolve-ability state side
                                        {:delayed-completion true

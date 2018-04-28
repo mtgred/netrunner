@@ -208,7 +208,7 @@
                                   cards-trashed (take n (shuffle hand))]
                               (when (= type :brain)
                                 (swap! state update-in [:runner :brain-damage] #(+ % n))
-                                (swap! state update-in [:runner :hand-size-modification] #(- % n)))
+                                (swap! state update-in [:runner :hand-size :mod] #(- % n)))
                               (when-let [trashed-msg (join ", " (map :title cards-trashed))]
                                 (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
                               (if (< (count hand) n)
@@ -402,7 +402,7 @@
     {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
    (if (and card (not (some #{:discard} zone)))
      (cond
-       
+
        (untrashable-while-rezzed? card)
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))

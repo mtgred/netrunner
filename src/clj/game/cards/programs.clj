@@ -620,12 +620,12 @@
                                             card nil))}}}
 
    "Origami"
-   {:effect (effect (gain :hand-size-modification
-                          (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                   (all-active-installed state :runner)))))))
-    :leave-play (effect (lose :hand-size-modification
-                              (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                       (all-active-installed state :runner)))))))}
+   {:effect (effect (gain :hand-size
+                          {:mod (dec (* 2 (count (filter #(= (:title %) "Origami")
+                                                         (all-active-installed state :runner)))))}))
+    :leave-play (effect (lose :hand-size
+                              {:mod (dec (* 2 (count (filter #(= (:title %) "Origami")
+                                                             (all-active-installed state :runner)))))}))}
 
    "Paintbrush"
    {:abilities [{:cost [:click 1]
