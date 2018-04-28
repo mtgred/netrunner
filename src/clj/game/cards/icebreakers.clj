@@ -246,7 +246,7 @@
     :abilities [(break-sub 1 1)
                 {:label "Add a virus counter"
                  :effect (effect (system-msg "manually adds a virus counter to Aumakua")
-                           (add-counter card :virus 1))}]
+                                 (add-counter card :virus 1))}]
     :strength-bonus (req (get-virus-counters state side card))
     :events {:run-ends {:req (req (and (not (or (get-in @state [:run :did-trash])
                                                 (get-in @state [:run :did-steal])))
