@@ -68,12 +68,14 @@
   Cost can be a credit amount or a list of costs e.g. [:credit 2]."
   ([cost strength] (strength-pump cost strength :encounter))
   ([cost strength duration]
-   {:msg (str "add " strength " strength" (when all-run " for the remainder of the run"))
+   {:msg (str "add " strength " strength" (cond
+                                            (= duration :all-run)
+                                            " for the remainder of the run"
+                                            (= duration :all-turn)
+                                            " for the remainder of the turn"))
     :cost [:credit cost]
-    :effect (effect (pump card strength (or all-run :encounter)))
-    :pump strength
-    :duration 
-    }))
+    :effect (effect (pump card strength duration))
+    :pump strength}))
 
 (defn- break-sub
   "Creates a break subroutine ability.
