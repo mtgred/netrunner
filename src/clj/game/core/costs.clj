@@ -192,8 +192,15 @@
       (effect-completed state side (make-result eid nil)))))
 
 (defn gain [state side & args]
-  (doseq [r (partition 2 args)]
-    (swap! state update-in [side (first r)] #(+ (or % 0) (last r)))))
+  (doseq [[type amount] (partition 2 args)]
+    (cond
+      ;; amount is a map, merge-update map
+      (map? amount)
+      (doseq [[subtype amount] amount]
+        (swap! state update-in [side type subtype] (safe-inc-n amount)))
+      ;; Else assume amount is a number and try to increment type by it.
+      :else
+      (swap! state update-in [side type] (safe-inc-n amount)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
