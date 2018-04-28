@@ -66,12 +66,14 @@
 (defn- strength-pump
   "Creates a strength pump ability.
   Cost can be a credit amount or a list of costs e.g. [:credit 2]."
-  ([cost strength] (strength-pump cost strength nil))
-  ([cost strength all-run]
+  ([cost strength] (strength-pump cost strength :encounter))
+  ([cost strength duration]
    {:msg (str "add " strength " strength" (when all-run " for the remainder of the run"))
     :cost [:credit cost]
     :effect (effect (pump card strength (or all-run :encounter)))
-    :pump strength}))
+    :pump strength
+    :duration 
+    }))
 
 (defn- break-sub
   "Creates a break subroutine ability.
