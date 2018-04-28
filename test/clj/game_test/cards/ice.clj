@@ -300,6 +300,23 @@
       (card-subroutine state :corp enig 0)
       (is (= 2 (:click (get-runner))) "Runner lost 1 click"))))
 
+(deftest envelope
+  ;; Envelope - do 1 net damage, end the run
+  (do-game
+    (new-game (default-corp [(qty "Envelope" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Envelope" "HQ")
+    (take-credits state :corp)
+    (let [envl (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp envl)
+      (is (= 0 (count (:discard (get-runner)))) "No discarded cards")
+      (card-subroutine state :corp envl 0)
+      (is (= 1 (count (:discard (get-runner)))) "1 card in discard pile")
+      (is (:run @state) "Run still ongoing")
+      (card-subroutine state :corp envl 1)
+      (is (not (:run @state)) "Run ended"))))
+
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game

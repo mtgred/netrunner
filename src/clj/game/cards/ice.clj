@@ -752,6 +752,10 @@
                                   (trash state side c)))}]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
+   "Envelope"
+   {:subroutines [(do-net-damage 1)
+                  end-the-run]}
+
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
                    :effect runner-loses-click}
