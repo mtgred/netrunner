@@ -737,6 +737,11 @@
    {:subroutines [{:msg "draw 1 card" :effect (effect (draw))}
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
+   
+   "Endless EULA"
+   {:subroutines [end-the-run]
+    :runner-abilities [(runner-break [:credit 1] 1)
+                       (runner-break [:credit 6] 6)]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -760,12 +765,7 @@
    "Errand Boy"
    {:subroutines [(gain-credits 1)
                   {:msg "draw 1 card" :effect (effect (draw))}]}
-   
-   "Endless EULA"
-   {:subroutines [end-the-run]
-    :runner-abilities [(runner-break [:credit 1] 1)
-                       (runner-break [:credit 6] 6)]}
-                       
+
    "Excalibur"
    {:subroutines [{:label "The Runner cannot make another run this turn"
                    :msg "prevent the Runner from making another run"
