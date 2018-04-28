@@ -460,6 +460,29 @@
    "Easy Mark"
    {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
 
+   "Embezzle"
+   (letfn [(name-string [cards] (clojure.string/join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
+    {:req (req hq-runnable)
+     :effect (effect
+              (run :hq {:req (req (= target :hq))
+                        :replace-access
+                        {:mandatory true
+                         :msg (msg "reveal 2 cards from HQ and trash all " target "s") ;should maybe lower-case target
+                         :prompt "Choose a card type"
+                         ; Identity is included here because it's technically allowed and relevant with e.g. Hostile Infrasructure
+                         :choices ["Agenda" "Asset" "Upgrade" "Operation" "ICE" "Identity"] 
+                         :effect (req (let [chosen-type target
+                                            cards-to-reveal (take 2 (shuffle (:hand corp)))
+                                            cards-to-trash (filter #(is-type? % chosen-type) cards-to-reveal)]
+                                        (system-msg state side (str " reveals " (name-string cards-to-reveal) " from HQ"))
+                                        (when-not (empty? cards-to-trash)
+                                          (system-msg state side (str " trashes " (name-string cards-to-trash)
+                                                                      " from HQ and gain " (* 4 (count cards-to-trash)) "[Credits]"))
+                                          (doseq [c cards-to-trash]
+                                            (trash state :runner (assoc c :seen true)))
+                                          (gain state :runner :credit (* 4 (count cards-to-trash))))))}}
+                card))})
+
    "Emergency Shutdown"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
     :msg (msg "derez " (:title target))
