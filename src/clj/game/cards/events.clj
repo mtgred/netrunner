@@ -896,7 +896,7 @@
               :choices [(str "Card from pile " pile)]
               :delayed-completion true
               :effect (req (when-completed
-                             (handle-access state side [(first cards)])
+                             (access-card state side (first cards))
                              (if (< 1 (count cards))
                                (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
                                (do (swap! state assoc-in [:run :cards-accessed] pile-size)
@@ -1408,7 +1408,7 @@
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
     :choices {:req installed?} :msg (msg "access " (:title target))
-    :effect (effect (handle-access targets))}
+    :effect (effect (access-card target))}
 
    "Rebirth"
    {:msg "change identities"

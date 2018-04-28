@@ -138,7 +138,6 @@
       (run-empty-server state "Server 1")
       ;; runner now chooses which to access.
       (prompt-select :runner fai)
-      (prompt-choice :runner "Access")
       ;; prompt should be asking for the net damage costs
       (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
           "Prompt to pay steal costs")

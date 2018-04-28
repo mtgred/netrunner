@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
-         in-corp-scored? prevent-draw resolve-steal-events make-result show-prompt system-say system-msg trash-cards
+         in-corp-scored? prevent-draw steal-trigger-events make-result show-prompt system-say system-msg trash-cards
          untrashable-while-rezzed? update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?
          remove-old-current)
 
@@ -483,7 +483,7 @@
     (when card
       ;; trashing before the :access events actually fire; fire them manually
       (if (is-type? card "Agenda")
-        (when-completed (resolve-steal-events state side card)
+        (when-completed (steal-trigger-events state side card)
                         (resolve-trash-no-cost state side card))
         (resolve-trash-no-cost state side card))
       (close-access-prompt state side))))

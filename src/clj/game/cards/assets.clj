@@ -1637,7 +1637,7 @@
                                          {:optional
                                           {:prompt "Access the newly installed card?" :player :runner
                                            :priority true
-                                           :yes-ability {:effect (effect (handle-access [newcard]))}}} card nil)))}
+                                           :yes-ability {:effect (effect (access-card newcard))}}} card nil)))}
                       card nil))}
     "Swap Toshiyuki Sakai with an agenda or asset from HQ?")
 

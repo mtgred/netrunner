@@ -336,7 +336,6 @@
     (testing "Trashing after lose psi game"
       (run-empty-server state "HQ")
       ;; Access prompt for TFP
-      (prompt-choice :runner "Access")
       (prompt-choice :corp "0 [Credit]")
       (prompt-choice :runner "1 [Credit]")
       ;; Fail psi game

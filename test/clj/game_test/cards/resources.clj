@@ -673,7 +673,7 @@
     (play-from-hand state :runner "Film Critic")
     (let [fc (first (get-in @state [:runner :rig :resource]))]
       (run-empty-server state "Server 1")
-      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
       (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
       (take-credits state :runner)
       (trash-from-hand state :corp "Director Haas")
@@ -692,10 +692,10 @@
       (run-empty-server state "HQ")
       ;; should not have taken damage yet
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt yet")
-      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt")
       (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
-      (card-ability state :runner fc 1)
+      (card-ability state :runner fc 0)
       (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner scored")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
@@ -711,7 +711,7 @@
     (play-from-hand state :runner "Film Critic")
     (let [fc (first (get-in @state [:runner :rig :resource]))]
       (run-empty-server state :remote2)
-      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
       (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
       (take-credits state :runner)
       (core/gain state :corp :credit 10)

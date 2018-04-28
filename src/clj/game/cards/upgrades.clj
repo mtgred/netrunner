@@ -24,7 +24,7 @@
                                                        (swap! state update-in [:run :run-effect]
                                                               #(assoc % :replace-access
                                                                         {:mandatory true
-                                                                         :effect (effect (handle-access [ash])) :card ash})))))
+                                                                         :effect (effect (access-card ash)) :card ash})))))
                                       :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
 
    "Awakening Center"
@@ -651,7 +651,7 @@
                                                  :run-ends {:effect (effect (unregister-events card))}}
                                                 (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ohg
-               :post-access-card {:effect (effect (clear-persistent-flag! target :can-steal))}}})
+               :access {:effect (effect (clear-persistent-flag! target :can-steal))}}})
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))

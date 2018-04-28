@@ -527,7 +527,7 @@
                  :msg "move the card just accessed to the bottom of R&D"
                  :effect (req (let [c (:card (first (get-in @state [:runner :prompt])))]
                                 (when (is-type? c "Agenda") ; trashing before the :access events actually fire; fire them manually
-                                  (resolve-steal-events state side c))
+                                  (steal-trigger-events state side c))
                                 (move state :corp c :deck)
                                 (when-completed (tag-runner state :runner (make-eid state) 1)
                                                 (close-access-prompt state side))))}
@@ -771,7 +771,7 @@
    ; eventmap uses reverse so we get the most recent event of each kind into map
    (let [eventmap (fn [s] (into {} (reverse (get s :turn-events))))]
      {:abilities [{:req (req (and (true? (:access @state)) (= (:cid (second (:pre-damage (eventmap @state))))
-                                                              (:cid (first (:post-access-card (eventmap @state)))))))
+                                                              (:cid (first (:pre-access-card (eventmap @state)))))))
                 :effect (effect (resolve-ability
                                   {:prompt "Choose how much damage to prevent"
                                    :priority 50
@@ -1035,7 +1035,7 @@
               :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
               :choices (take n ["1" "2" "3" "4" "5"])
               :effect (effect (system-msg (str "accesses the card at position " (str->int target) " of R&D"))
-                              (handle-access eid [(nth (:deck corp) (dec (str->int target)))] "an unseen card"))})]
+                              (access-card eid (nth (:deck corp) (dec (str->int target))) "an unseen card"))})]
      {:events {:successful-run
                {:req (req (= target :rd))
                 :interactive (req true)
