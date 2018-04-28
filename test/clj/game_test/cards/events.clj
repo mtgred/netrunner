@@ -254,7 +254,7 @@
       (is (= 3 (count (get-in @state [:corp :servers :remote1 :content])))
           "3 cards in server 1 before successful run")
       (run-successful state)
-      (prompt-choice :runner "Run ability")
+      (prompt-choice :runner "Replacement effect")
       (is (= (+ n 3) (count (get-in @state [:corp :deck]))) "3 cards were shuffled into R&D")
       (is (= 0 (count (get-in @state [:corp :servers :remote1 :content]))) "No cards left in server 1"))
     (take-credits state :runner)
@@ -272,7 +272,7 @@
       (is (= :remote3 (first (get-in @state [:run :server]))))
       (is (= 1 (count (get-in @state [:corp :servers :remote3 :content]))) "1 cards in server 3 before successful run")
       (run-successful state)
-      (prompt-choice :runner "Run ability")
+      (prompt-choice :runner "Replacement effect")
       (is (= (+ n 1) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
       (is (= 0 (count (get-in @state [:corp :servers :remote3 :content]))) "No cards left in server 3"))))
 
@@ -1072,7 +1072,7 @@
                               ])
               (default-runner [(qty "Glut Cipher" 3)]))
     (take-credits state :corp)
-    (trash-from-hand state :corp "Ice Wall") 
+    (trash-from-hand state :corp "Ice Wall")
     (trash-from-hand state :corp "Ice Wall")
     (trash-from-hand state :corp "Hedge Fund")
     (is (= 3 (count (:discard (get-corp)))) "There are 3 cards in Archives")
@@ -1100,7 +1100,7 @@
     (prompt-select :corp (get-discarded state :corp 4))
     (prompt-select :corp (get-discarded state :corp 5))
     (is (nil? (-> (get-corp) :prompt first)) "Selecting 5 cards closed prompt")
-    (let [discard (:discard (get-corp))] 
+    (let [discard (:discard (get-corp))]
       (is (find-card "Hedge Fund" discard) "Hedge Fund is still in Archives")
       (is (= 6 (count discard)) "There are 6 cards in Archives")
       (is (= 1 (count (filter :seen discard))) "There is 1 seen card in Archives"))

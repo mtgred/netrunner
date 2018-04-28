@@ -708,15 +708,13 @@
                         replace-effect (:replace-access run-effect)]
                     (if (:prevent-access the-run)
                       (do (system-msg state :runner "is prevented from accessing any cards this run")
-                          ;; TODO: Add in delayed effect when Neal merges access update
-                          (resolve-ability state :runner  ;; eid
+                          (resolve-ability state :runner
                                            {:prompt "You are prevented from accessing any cards this run."
                                             :choices ["OK"]
-                                            ;; :delayed-completion true
-                                            ;; :effect (effect (access-end eid c))
-                                            }
-                                           nil nil)
-                          (handle-end-run state side))
+                                            :delayed-completion true
+                                            :effect (effect (handle-end-run)
+                                                            (effect-completed eid))}
+                                           nil nil))
                       (if (and replace-effect
                                (or (not run-req)
                                    (run-req state side (make-eid state) card [(first server)])))
@@ -724,8 +722,8 @@
                           (replace-access state side replace-effect card)
                           (swap! state update-in [side :prompt]
                                  (fn [p]
-                                   (conj (vec p) {:msg "Use Replacement effect instead of accessing cards?"
-                                                  :choices ["Replacement effect" "Access"]
+                                   (conj (vec p) {:msg "Use replacement effect instead of accessing cards?"
+                                                  :choices ["Replacement effect" "Access cards"]
                                                   :effect #(if (= % "Replacement effect")
                                                              (replace-access state side replace-effect card)
                                                              (when-completed (do-access state side server)
