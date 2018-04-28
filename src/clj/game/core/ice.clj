@@ -78,7 +78,7 @@
   ([state side card n duration]
    (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
    (update-breaker-strength state side (get-card state card))
-   (trigger-event state side :pump-breaker n card)))
+   (trigger-event state side :pump-breaker n card duration)))
 
 ;;; Others
 (defn ice-index
