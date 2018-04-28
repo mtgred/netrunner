@@ -5,14 +5,24 @@
 (defn deduct
   "Deduct the value from the player's attribute."
   [state side [attr value]]
-  (swap! state update-in [side attr] (if (or (= attr :memory)
-                                             (= attr :agenda-point)
-                                             (= attr :hand-size-modification))
-                                       ;; Memory, agenda points or hand size mod may be negative
-                                       #(- % value)
-                                       #(max 0 (- % value))))
-  (when (and (= attr :credit) (= side :runner) (get-in @state [:runner :run-credit]))
-    (swap! state update-in [:runner :run-credit] #(max 0 (- % value))))
+  (cond
+    ;; value is a map, should be :base, :mod, etc.
+    (map? value)
+    (doseq [[subattr value] value]
+      (swap! state update-in [side attr subattr] (if (= subattr :mod)
+                                                   ;; Modifications may be negative
+                                                   #(- % value)
+                                                   (sub->0 value))))
+    :else
+    (do (swap! state update-in [side attr] (if (or (= attr :memory)
+                                                   (= attr :agenda-point))
+                                             ;; Memory or agenda points may be negative
+                                             #(- % value)
+                                             (sub->0 value)))
+        (when (and (= attr :credit)
+                   (= side :runner)
+                   (get-in @state [:runner :run-credit]))
+          (swap! state update-in [:runner :run-credit] (sub->0 value)))))
   (when-let [cost-name (cost-names value attr)]
     cost-name))
 

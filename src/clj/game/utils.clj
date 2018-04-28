@@ -20,6 +20,11 @@
   [n]
   #(+ (or % 0) n))
 
+(defn sub->0
+  "Helper function for use in `update` or `update-in` to subtract for a value, to a minimum of 0."
+  [n]
+  #(max 0 (- % n)))
+
 (defn clean-forfeit
   "Takes a flat :forfeit in costs and adds a cost of 1.
   Ignores cost vectors with an even count as these have forfeit value included"
@@ -161,10 +166,11 @@
 (defn cost-names
   "Converts a cost (value attribute pair) to a string for printing"
   [value attr]
-  (when (pos? value)
+  (when (and (number? value)
+             (pos? value))
     (case attr
       :credit (str value " [$]")
-      :click  (->> "[Click]" repeat (take value) (apply str))
+      :click (->> "[Click]" repeat (take value) (apply str))
       :forfeit (str value " Agenda" (when (> value 1) "s"))
       nil)))
 
