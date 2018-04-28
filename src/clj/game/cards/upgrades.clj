@@ -395,6 +395,31 @@
                               :delayed-completion true
                               :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Intake"
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
+             :interactive (req true)
+             :trace {:base 4
+                     :label "add an installed program or virtual resource to the Grip"
+                     :delayed-completion true
+                     :effect (req (show-wait-prompt state :runner "Corp to resolve Intake")
+                                  (continue-ability
+                                    state :corp
+                                    {:prompt "Select a program or virtual resource"
+                                     :player :corp
+                                     :choices {:req #(and (installed? %)
+                                                          (or (program? %)
+                                                              (and (resource? %)
+                                                                   (has-subtype? % "Virtual"))))}
+                                     :delayed-completion true
+                                     :msg (msg "move " (:title target) " to the Grip")
+                                     :cancel-effect (effect (clear-wait-prompt :runner)
+                                                            (effect-completed eid))
+                                     :effect (req (move state :runner target :hand)
+                                                  (clear-wait-prompt state :runner)
+                                                  (effect-completed state side eid))}
+                                    card nil))}}}
+
    "Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]
              (let [remaining (remove-once #(= (:cid %) (:cid ice)) ices)]
