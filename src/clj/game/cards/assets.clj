@@ -1261,20 +1261,21 @@
                                  card nil)))}]}
 
    "Rashida Jaheem"
-   {:events {:corp-turn-begins {:delayed-completion true
-                                :effect (effect (show-wait-prompt :runner "Corp to use Rashida Jaheem")
-                                                (continue-ability
-                                                  {:optional
-                                                   {:prompt "Trash Rashida Jaheem to gain 3[Credits] and draw 3 cards?"
-                                                    :yes-ability {:msg "gain 3[Credits] and draw 3 cards"
-                                                                  :effect (effect (gain :credit 3)
-                                                                                  (draw 3)
-                                                                                  (trash card)
-                                                                                  (clear-wait-prompt :runner)
-                                                                                  (effect-completed eid))}
-                                                    :no-ability {:effect (effect (clear-wait-prompt :runner)
-                                                                                 (effect-completed eid))}}}
-                                                  card nil))}}}
+   (let [ability {:once :per-turn
+                  :label "Gain 3 [Credits] and draw 3 cards (start of turn)"
+                  :effect (effect (resolve-ability
+                                    {:optional
+                                     {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
+                                      :yes-ability {:delayed-completion true
+                                                    :msg "gain 3 [Credits] and draw 3 cards"
+                                                    :effect (req (when-completed (trash state side card nil)
+                                                                                 (do (gain state side :credit 3)
+                                                                                     (draw state side eid 3 nil))))}}}
+                                    card nil))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :flags {:corp-phase-12 (req true)}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Reality Threedee"
    (let [ability {:effect (req (gain state side :credit (if tagged 2 1)))
