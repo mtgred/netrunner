@@ -461,7 +461,7 @@
    {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
 
    "Embezzle"
-   (letfn [(name-string [cards] (clojure.string/join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
+   (letfn [(name-string [cards] (join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
     {:req (req hq-runnable)
      :effect (effect
               (run :hq {:req (req (= target :hq))
@@ -469,8 +469,7 @@
                         {:mandatory true
                          :msg (msg "reveal 2 cards from HQ and trash all " target "s") ;should maybe lower-case target
                          :prompt "Choose a card type"
-                         ; Identity is included here because it's technically allowed and relevant with e.g. Hostile Infrasructure
-                         :choices ["Agenda" "Asset" "Upgrade" "Operation" "ICE" "Identity"] 
+                         :choices ["Asset" "Upgrade" "Operation" "ICE"]
                          :effect (req (let [chosen-type target
                                             cards-to-reveal (take 2 (shuffle (:hand corp)))
                                             cards-to-trash (filter #(is-type? % chosen-type) cards-to-reveal)]
