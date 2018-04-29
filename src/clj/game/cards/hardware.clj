@@ -421,12 +421,7 @@
                  :effect (effect (host target card))}]
     :events {:pump-breaker {:silent (req true)
                             :req (req (= (:cid (second target)) (:cid (:host card))))
-                            :effect (req (let [n (first targets)
-                                               d (nth targets 2)
-                                               c (get-card state (second targets))
-                                               c (update-in c [:pump :all-turn] (fnil #(+ % n) 0))
-                                               c (update-in c [:pump d] (fnil #(- % n) 0))]
-                                           (update! state side c)))}}}
+                            :effect (effect (update! (update-in (second targets) [:pump :all-turn] (fnil #(+ % (first targets) 0)))))}}}
 
    "GPI Net Tap"
    {:implementation "Trash and jack out effect is manual"
