@@ -31,10 +31,10 @@
   "Handles prevent effects on the card"
   [state card]
   (when-let [prevent (:prevent (card-def card))]
-     (doseq [[ptype pvec] prevent]
-       (doseq [psub pvec]
-         (swap! state update-in [:prevent ptype psub]
-                (fn [pv] (remove #(= (:cid %) (:cid card)) pv)))))))
+    (doseq [[ptype subtypes] prevent
+            [stype _] subtypes]
+      (swap! state update-in [:prevent ptype stype]
+             (fn [pv] (remove #(= (:cid %) (:cid card)) pv))))))
 
 (defn deactivate
   "Deactivates a card, unregistering its events, removing certain attribute keys, and triggering
@@ -100,9 +100,9 @@
                           {(if (= side :corp) :corp-phase-12 :runner-phase-12)
                            {:effect r}} c)))
      (when-let [prevent (:prevent cdef)]
-       (doseq [[ptype pvec] prevent]
-         (doseq [psub pvec]
-           (swap! state update-in [:prevent ptype psub] #(conj % card)))))
+       (doseq [[ptype subtypes] prevent
+               [stype _] subtypes]
+         (swap! state update-in [:prevent ptype stype] #(conj % card))))
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))

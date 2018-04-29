@@ -1287,6 +1287,37 @@
       (is (= 10 (:credit (get-runner))) "10 credits siphoned")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
+(deftest no-one-home
+  ;; Prevent first tag or net damage of the turn if you beat trace0, then trash
+  (do-game
+    (new-game (default-corp [(qty "Data Mine" 1)
+                             (qty "SEA Source" 1)])
+              (default-runner [(qty "No One Home" 2) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Data Mine" "Server 1")
+    (let [dm (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
+      (play-from-hand state :runner "No One Home")
+      (let [noh (get-in @state [:runner :rig :resource 0])]
+        (run-on state "Server 1")
+        (core/rez state :corp dm)
+        (card-subroutine state :corp dm 0)
+        (card-ability state :runner noh 0)
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        ;(prompt-choice :runner "Done")
+        (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
+        (run-successful state)
+        (play-from-hand state :runner "No One Home")
+        (take-credits state :runner)
+        (play-from-hand state :corp "SEA Source")
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (= 1 (count (:prompt (get-runner)))) "Runner prompted to avoid tag")
+        (card-ability state :runner (get-resource state 0) 0)
+        (is (= 3 (count (:discard (get-runner)))) "Two NOH trashed, 1 gamble played")
+        (is (= 0 (:tag (get-runner))) "Tags avoided")))))
+
 (deftest off-campus-apartment-simultaneous
   ;; Off-Campus Apartment - ability shows a simultaneous resolution prompt when appropriate
   (do-game

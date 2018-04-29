@@ -426,3 +426,32 @@
              (or (is-type? card "Operation") (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))
+
+(defn should-prevent?
+  "Checks if the specified ability definition should prevent.
+  Checks for a :req in the :prevent map of the card-def.
+  Defaults to false if req check not met"
+  ([state side card effect type]
+   (should-prevent? state side (make-eid state) card effect type))
+  ([state side eid card effect type]
+   (let [req (-> card card-def :prevent effect type :req)]
+     (cond
+       req (req state side eid card nil)
+       :else false))))
+
+(defn can-prevent?
+  "Checks if prevent can trigger. Checks that once-per-turn is not violated."
+  [state side {:keys [once once-key] :as ability} {:keys [cid] :as card} effect type]
+  (and (not (get-in @state [once (or once-key cid)]))
+       (should-prevent? state side card effect type)))
+
+(defn can-prevent-any?
+  "Checks if any of the card abilities can be triggered"
+  [state side card effect type]
+  (map #(can-prevent? state side %1 card effect type)
+       (-> card card-def :abilities)))
+
+(defn cards-can-prevent?
+  "Checks if any cards in a list can prevent"
+  [state side cards effect type]
+  (some #(-> % false? not) (flatten (map #(can-prevent-any? state side % effect type) cards))))

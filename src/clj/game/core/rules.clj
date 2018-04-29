@@ -1,9 +1,9 @@
 (in-ns 'game.core)
 
-(declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
-         in-corp-scored? prevent-draw resolve-steal-events make-result show-prompt system-say system-msg trash-cards
-         untrashable-while-rezzed? update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?
-         remove-old-current)
+(declare can-run? cards-can-prevent? card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points
+         installed? is-type? in-corp-scored? make-result play-sfx prevent-draw remove-old-current resolve-steal-events
+         show-prompt system-say system-msg trash-cards untrashable-while-rezzed? untrashable-while-resources? update-all-ice
+         win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -228,33 +228,31 @@
   ([state side type n] (damage state side (make-eid state) type n nil))
   ([state side type n args] (damage state side (make-eid state) type n args))
   ([state side eid type n {:keys [unpreventable unboostable card] :as args}]
-   (swap! state update-in [:damage :damage-bonus] dissoc type)
-   (swap! state update-in [:damage :damage-prevent] dissoc type)
-   ;; alert listeners that damage is about to be calculated.
+   (swap! state update-in [:damage :damage-bonus] dissoc type)   ; cleans up any bonus from previous damage
+   (swap! state update-in [:damage :damage-prevent] dissoc type) ; cleans up any prevention from previous damage
+    ;; alert listeners that damage is about to be calculated.
    (trigger-event state side :pre-damage type card n)
-   (let [n (damage-count state side type n args)]
-     (let [prevent (get-in @state [:prevent :damage type])]
-       (if (and (not unpreventable) prevent (pos? (count prevent)))
-         ;; runner can prevent the damage.
-         (do (system-msg state :runner "has the option to avoid damage")
-             (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
-             (swap! state assoc-in [:prevent :current] type)
-             (show-prompt
-               state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
-               (fn [_]
-                 (let [prevent (get-in @state [:damage :damage-prevent type])]
-                   (when prevent
-                     (trigger-event state side :prevented-damage type prevent))
-                   (system-msg state :runner
-                               (if prevent
-                                 (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                      " " (name type) " damage")
-                                 "will not prevent damage"))
-                   (clear-wait-prompt state :corp)
-                   (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
-               {:priority 10}))
-         (resolve-damage state side eid type n args))))))
-
+   (let [n (damage-count state side type n args)
+         prevent (get-in @state [:prevent :damage type])]
+     (if (and (not unpreventable) (cards-can-prevent? state side prevent :damage type))
+       ;; runner can prevent the damage.
+       (do (system-msg state :runner "has the option to avoid damage")
+           (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
+           (swap! state assoc-in [:prevent :current] type)
+           (show-prompt state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
+                        (fn [_]
+             (let [prevent (get-in @state [:damage :damage-prevent type])]
+               (when prevent
+                 (trigger-event state side :prevented-damage type prevent))
+               (system-msg state :runner
+                           (if prevent
+                             (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                  " " (name type) " damage")
+                             "will not prevent damage"))
+               (clear-wait-prompt state :corp)
+               (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
+           {:priority 10}))
+       (resolve-damage state side eid type n args)))))
 
 ;;; Tagging
 (defn tag-count
@@ -291,7 +289,7 @@
    (trigger-event state side :pre-tag card)
    (let [n (tag-count state side n args)]
      (let [prevent (get-in @state [:prevent :tag :all])]
-       (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
+       (if (and (pos? n) (not unpreventable)  (cards-can-prevent? state side prevent :tag :all))
          (do (system-msg state :runner "has the option to avoid tags")
              (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
              (swap! state assoc-in [:prevent :current] :tag)

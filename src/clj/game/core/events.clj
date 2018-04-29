@@ -245,6 +245,11 @@
   [state side ev]
   (= (count (turn-events state side ev)) 1))
 
+(defn event-count
+  "Returns the number of an event this turn."
+  [state side ev]
+  (count (turn-events state side ev)))
+
 (defn first-successful-run-on-server?
   "Returns true if the active run is the first succesful run on the given server"
   [state server]
