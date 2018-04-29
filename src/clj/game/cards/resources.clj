@@ -861,6 +861,7 @@
    "Jackpot!"
    (let [jackpot {:interactive (req true)
                   :delayed-completion true
+                  :req (req (= :runner (:as-agenda-side target)))
                   :effect (req (show-wait-prompt state :corp "Runner to use Jackpot!")
                                (continue-ability
                                  state side
@@ -879,7 +880,8 @@
                                  card nil))}]
      {:events
       {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 2))}
-       :agenda-stolen jackpot}})
+       :agenda-stolen (dissoc jackpot :req)
+       :as-agenda jackpot}})
 
    "Jak Sinclair"
    (let [ability {:label "Make a run (start of turn)"

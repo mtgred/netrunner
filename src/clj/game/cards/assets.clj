@@ -48,11 +48,12 @@
 
 (defn as-trashed-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points after resolving the trash prompt."
-  ([state side card n] (as-trashed-agenda state side card n nil))
-  ([state side card n options]
+  ([state side eid card n] (as-trashed-agenda state side eid card n nil))
+  ([state side eid card n options]
   (or (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored options) ; if the runner did not trash the card on access, then this will work
       (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options)) ; allow force option in case of Blacklist/News Team
-  (gain-agenda-point state side n)))
+   (when-completed (trigger-event-sync state side eid :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+                   (gain-agenda-point state side n))))
 
 ;;; Card definitions
 (declare in-server?)
@@ -1053,9 +1054,8 @@
                                 :choices ["Take 2 tags" "Add News Team to score area"]
                                 :effect (req (if (= target "Add News Team to score area")
                                                (do (system-msg state :runner (str "adds News Team to their score area as an agenda worth -1 agenda point"))
-                                                   (as-trashed-agenda state :runner card -1 {:force true})
                                                    (trigger-event state side :no-trash card)
-                                                   (effect-completed state side eid))
+                                                   (as-trashed-agenda state :runner eid card -1 {:force true}))
                                                (do (system-msg state :runner (str "takes 2 tags from News Team"))
                                                    (tag-runner state :runner eid 2)
                                                    (trigger-event state side :no-trash card))))}
@@ -1464,10 +1464,9 @@
                                                           :delayed-completion true
                                                           :effect (let [dmg target]
                                                                     (req (if (= target "Add Shi.Kyū to score area")
-                                                                           (do (as-trashed-agenda state :runner card -1)
-                                                                               (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
+                                                                           (do (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
                                                                                (trigger-event state side :no-trash card)
-                                                                               (effect-completed state side eid))
+                                                                               (as-trashed-agenda state :runner eid card -1))
                                                                            (do (damage state :corp eid :net dmg {:card card})
                                                                                (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))
                                                                                (trigger-event state side :no-trash card)))))}
