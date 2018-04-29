@@ -646,7 +646,7 @@
                        (when (< tagnew tagold)
                          (lose state :runner :hand-size {:mod (- tagold tagnew)}))))))
     :leave-play (req (remove-watch state :obelus)
-                     (lose state :runner :hand-size {:mode (:tag runner)}))
+                     (lose state :runner :hand-size {:mod (:tag runner)}))
     :events {:successful-run-ends {:once :per-turn
                                    :req (req (let [successes (rest (turn-events state side :successful-run))]
                                                (and (#{[:rd] [:hq]} (:server target))
