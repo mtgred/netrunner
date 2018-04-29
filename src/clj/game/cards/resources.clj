@@ -859,29 +859,27 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Jackpot!"
-   {:events
-    {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 2))}
-     :card-moved {:req (req (let [dest-card (second targets)]
-                              (and (= :runner (:move-to-side dest-card))
-                                   (= :scored (first (:zone dest-card))))))
+   (let [jackpot {:interactive (req true)
                   :delayed-completion true
                   :effect (req (show-wait-prompt state :corp "Runner to use Jackpot!")
                                (continue-ability
                                  state side
-                                 {:prompt "Trash Jackpot!?"
-                                  :side :runner
-                                  :delayed-completion true
-                                  :no-ability (effect (clear-wait-prompt :corp)
-                                                      (effect-completed eid card))
-                                  :yes-ability
-                                  {:prompt "Choose how many [Credit] to take"
-                                   :choices {:number (req (get-in card [:counter :credit] 0))}
-                                   :delayed-completion true
-                                   :effect (req (gain state :runner :credit target)
-                                                (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
-                                                (clear-wait-prompt state :corp)
-                                                (trash state :runner card eid {:cause :ability-cost}))}}
-                                 card nil))}}}
+                                 {:optional
+                                  {:prompt "Trash Jackpot!?"
+                                   :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                (effect-completed eid))}
+                                   :yes-ability
+                                   {:prompt "Choose how many [Credit] to take"
+                                    :choices {:number (req (get-in card [:counter :credit] 0))}
+                                    :delayed-completion true
+                                    :effect (req (gain state :runner :credit target)
+                                                 (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
+                                                 (clear-wait-prompt state :corp)
+                                                 (trash state :runner eid card {:cause :ability-cost}))}}}
+                                 card nil))}]
+     {:events
+      {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 2))}
+       :agenda-stolen jackpot}})
 
    "Jak Sinclair"
    (let [ability {:label "Make a run (start of turn)"
