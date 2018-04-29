@@ -614,6 +614,31 @@
                  :req (req (ice? (get-nested-host card)))
                  :msg "break 1 subroutine on the host ICE"}]}
 
+   "Laamb"
+   (auto-icebreaker ["Barrier"]
+                    (let [subtype "Barrier"]
+                      {:abilities [(break-sub 2 0 subtype)
+                                   (strength-pump 3 6)
+                                   {:once :per-turn
+                                    :cost [:credit 2]
+                                    :label (str "Turn currently encountered ice into " subtype)
+                                    :msg (msg "to turn currently encountered ice into " subtype)
+                                    :req (req (and current-ice (rezzed? current-ice) (not (has-subtype? current-ice subtype))))
+                                    :effect (req (let [ice current-ice
+                                                       stargets (:subtype-target ice)
+                                                       stypes (:subtype ice)]
+                                                   (update! state side (assoc ice 
+                                                                              :subtype-target (combine-subtypes true stargets subtype)
+                                                                              :subtype (combine-subtypes true stypes subtype)))
+                                                   (update-ice-strength state side (get-card state ice))
+                                                   (register-events state side (let [remove-subtype {:effect (effect (update! (assoc ice 
+                                                                                                                                     :subtype-target stargets
+                                                                                                                                     :subtype stypes))
+                                                                                                                     (unregister-events card)
+                                                                                                                     (register-events (:events (card-def card)) card))}]
+                                                                                 {:pass-ice remove-subtype
+                                                                                  :run-ends remove-subtype}) card)))}]}))
+
    "Leviathan"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 3 3 "Code Gate")
