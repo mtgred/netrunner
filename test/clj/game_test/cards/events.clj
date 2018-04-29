@@ -449,6 +449,37 @@
       (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
       (run-successful state))))
 
+
+(deftest compile-test
+  ;; Compile - Make a run, and install a program for free which is shuffled back into stack
+  ;; test name is weird because clojure.core/compile exists - can't see it being
+  ;; a problem, but I got a warning
+  (do-game
+   (new-game (default-corp)
+              (default-runner [(qty "Compile" 1)
+                               (qty "Clone Chip" 1)
+                               (qty "Self-modifying Code" 3)]))
+    (starting-hand state :runner ["Compile" "Clone Chip"] )
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Clone Chip")
+    (play-from-hand state :runner "Compile")
+    (prompt-choice :runner "Archives")
+    (prompt-choice :runner "OK")        ; notification that Compile must be clicked to install
+    (let [compile-card (first (get-in @state [:runner :play-area]))
+          clone-chip (first (get-in @state [:runner :rig :hardware]))]
+      (card-ability state :runner compile-card 0)
+      (prompt-choice :runner "Stack")
+      (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner))))
+      (let [smc (first (get-in @state [:runner :rig :program]))]
+        (card-ability state :runner smc 0)
+        (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner)))))
+      (card-ability state :runner clone-chip 0)
+      (prompt-select :runner (find-card "Self-modifying code" (:discard (get-runner)))))
+    (let [num-in-deck (count (:deck (get-runner)))]
+      (run-jack-out state)
+      (is (= num-in-deck (count (:deck (get-runner)))) "No card was shuffled back into the stack"))))
+
 (deftest corporate-grant
   ;; Corporate "Grant" - First time runner installs a card, the corp loses 1 credit
   (do-game
