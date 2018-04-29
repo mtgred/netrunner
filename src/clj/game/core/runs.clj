@@ -711,9 +711,7 @@
                           (resolve-ability state :runner
                                            {:prompt "You are prevented from accessing any cards this run."
                                             :choices ["OK"]
-                                            :delayed-completion true
-                                            :effect (effect (handle-end-run)
-                                                            (effect-completed eid))}
+                                            :effect (effect (handle-end-run))}
                                            nil nil))
                       (if (and replace-effect
                                (or (not run-req)
