@@ -865,16 +865,18 @@
      :card-moved {:req (req (let [dest-card (second targets)]
                               (and (= :runner (:move-to-side dest-card))
                                    (= :scored (first (:zone dest-card))))))
+                  :delayed-completion true
                   :effect (req (show-wait-prompt state :corp "Runner to use Jackpot!")
                                (continue-ability
-                                 state :runner
+                                 state side
                                  {:prompt "Trash Jackpot!?"
                                   :side :runner
+                                  :delayed-completion true
                                   :no-ability (effect (clear-wait-prompt :corp)
                                                       (effect-completed eid card))
                                   :yes-ability
                                   {:prompt "Choose how many [Credit] to take"
-                                   :choices {:number (req (get-in card [:counter :power] 0))}
+                                   :choices {:number (req (get-in card [:counter :credit] 0))}
                                    :delayed-completion true
                                    :effect (req (gain state :runner :credit target)
                                                 (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
