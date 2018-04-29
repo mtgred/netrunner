@@ -858,8 +858,7 @@
                  :effect (effect (gain-bad-publicity :corp 1)
                                  (trash card {:cause :ability-cost}))}]}
 
-   ;; "Jackpot!"
-   "Jak Sinclair"
+   "Jackpot!"
    {:events
     {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 2))}
      :card-moved {:req (req (let [dest-card (second targets)]
@@ -884,23 +883,23 @@
                                                 (trash state :runner card eid {:cause :ability-cost}))}}
                                  card nil))}}}
 
-   ;; "Jak Sinclair"
-   ;; (let [ability {:label "Make a run (start of turn)"
-   ;;                :prompt "Choose a server to run with Jak Sinclair"
-   ;;                :once :per-turn
-   ;;                :req (req (:runner-phase-12 @state))
-   ;;                :choices (req runnable-servers)
-   ;;                :msg (msg "make a run on " target " during which no programs can be used")
-   ;;                :makes-run true
-   ;;                :effect (effect (run target))}]
-   ;; {:implementation "Doesn't prevent program use"
-   ;;  :flags {:runner-phase-12 (req true)}
-   ;;  :install-cost-bonus (req [:credit (* -1 (:link runner))])
-   ;;  :events {:runner-turn-begins
-   ;;            {:optional {:req (req (not (get-in @state [:per-turn (:cid card)])))
-   ;;                        :prompt "Use Jak Sinclair to make a run?"
-   ;;                        :yes-ability ability}}}
-   ;;  :abilities [ability]})
+   "Jak Sinclair"
+   (let [ability {:label "Make a run (start of turn)"
+                  :prompt "Choose a server to run with Jak Sinclair"
+                  :once :per-turn
+                  :req (req (:runner-phase-12 @state))
+                  :choices (req runnable-servers)
+                  :msg (msg "make a run on " target " during which no programs can be used")
+                  :makes-run true
+                  :effect (effect (run target))}]
+   {:implementation "Doesn't prevent program use"
+    :flags {:runner-phase-12 (req true)}
+    :install-cost-bonus (req [:credit (* -1 (:link runner))])
+    :events {:runner-turn-begins
+              {:optional {:req (req (not (get-in @state [:per-turn (:cid card)])))
+                          :prompt "Use Jak Sinclair to make a run?"
+                          :yes-ability ability}}}
+    :abilities [ability]})
 
    "Jarogniew Mercs"
    {:effect (effect (tag-runner :runner eid 1)
