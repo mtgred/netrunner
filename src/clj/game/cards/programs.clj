@@ -992,20 +992,24 @@
 
    "Trypano"
    (let [trash-if-5 (req (when-let [h (get-card state (:host card))]
-                           (when (and (>= (get-virus-counters state side card) 5)
+                           (if (and (>= (get-virus-counters state side card) 5)
                                       (not (and (card-flag? h :untrashable-while-rezzed true)
                                                 (rezzed? h))))
-                             (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
-                             (trash state :runner h))))]
+                             (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
+                                 (trash state :runner eid h nil))
+                             (effect-completed state side eid))))]
        {:hosting {:req #(and (ice? %) (can-host? %))}
         :effect trash-if-5
         :events {:runner-turn-begins
                  {:optional {:prompt (msg "Place a virus counter on Trypano?")
                              :yes-ability {:msg (msg "place a virus counter on Trypano")
                                            :effect (req (add-counter state side card :virus 1))}}}
-                 :counter-added {:effect trash-if-5}
-                 :card-moved {:effect trash-if-5}
-                 :runner-install {:effect trash-if-5}}})
+                 :counter-added {:effect trash-if-5
+                                 :delayed-completion true}
+                 :card-moved {:effect trash-if-5
+                              :delayed-completion true}
+                 :runner-install {:effect trash-if-5
+                                  :delayed-completion true}}})
 
    "Upya"
    {:implementation "Power counters added automatically"
