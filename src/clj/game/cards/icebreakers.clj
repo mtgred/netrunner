@@ -622,7 +622,7 @@
                   {:once :per-turn
                    :cost [:credit 2]
                    :label (str "Turn currently encountered ice into Barrier")
-                   :msg (msg "turn " current-ice " into Barrier")
+                   :msg (msg "turn " (:title current-ice) " into Barrier")
                    :req (req (and current-ice (rezzed? current-ice) (not (has-subtype? current-ice "Barrier"))))
                    :effect (req (let [ice current-ice
                                       stargets (:subtype-target ice)
