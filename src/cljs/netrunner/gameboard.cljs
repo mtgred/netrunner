@@ -1310,8 +1310,6 @@
 
     om/IRenderState
     (render-state [this state]
-      (when (= :spectator side)
-        (println "CURSOR" cursor))
       (sab/html
        (when (and side corp runner)
          (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
