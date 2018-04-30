@@ -1303,7 +1303,7 @@
                                   {:prompt "Move how many tokens?"
                                    :choices {:number (req (:advance-counter recon 0))
                                              :default (req (:advance-counter recon 0))}
-                                   :effect (effect (add-counter move-to :advancement target)
+                                   :effect (effect (add-counter move-to :advancement target {:placed true})
                                                    (system-msg (str "trashes Reconstruction Contract to move " target
                                                                     (pluralize " advancement token" target) " to "
                                                                     (card-str state move-to)))

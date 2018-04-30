@@ -644,8 +644,8 @@
     :implementation "Bypass is manual"
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
-    :events {:successful-run {:msg "access 0 cards"
-                              :effect (effect (max-access 0))}
+    ;; Don't need a msg since game will print that card access is prevented
+    :events {:successful-run {:effect (req (prevent-access))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"
