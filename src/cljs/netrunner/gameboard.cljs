@@ -44,8 +44,7 @@
 
 (defn init-game [state]
   (let [side (get-side state)]
-    (swap! app-state assoc :side side)
-    (.setItem js/localStorage "gameid" (:gameid state))
+    (.setItem js/localStorage "gameid" (:gameid @app-state))
     (reset! game-state state)
     (swap! game-state assoc :side side)
     (reset! last-state @game-state)))
@@ -67,19 +66,10 @@
 (def zoom-channel (chan))
 
 (defn handle-state [{:keys [state]}]
-  (println "STATE" state)
-  (println "Old side:" (:side @game-state))
   (init-game state)
-  ;; (swap! game-state #(assoc state :side side))
-  ;; (reset! game-state (assoc state :side side))
-  (println "New side:" (:side @game-state))
-  ;; (println "GAME STATE" game-state)
-  (println "CORP:" (:corp @game-state))
-  ;; (reset! last-state @game-state)
   (reset! lock false))
 
 (defn handle-diff [{:keys [gameid diff]}]
-  (println "DIFF" gameid ":" diff)
   (when (= gameid (:gameid @game-state))
     (swap! game-state #(differ/patch @last-state diff))
     (reset! last-state @game-state)
@@ -91,7 +81,6 @@
 (ws/register-ws-handler! :netrunner/state #(handle-state (parse-state %)))
 (ws/register-ws-handler! :netrunner/start #(launch-game (parse-state %)))
 (ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
-;; (ws/register-ws-handler! :netrunner/rejoin #(handle-state (parse-state %)))
 
 (def anr-icons {"[Credits]" "credit"
                 "[$]" "credit"
@@ -970,17 +959,19 @@
                     scored)
        (om/build label scored {:opts {:name "Scored Area"}})]))))
 
-(defn controls [key]
-  (sab/html
-   [:div.controls
-    [:button.small {:on-click #(send-command "change" {:key key :delta -1}) :type "button"} "-"]
-    [:button.small {:on-click #(send-command "change" {:key key :delta 1}) :type "button"} "+"]]))
+(defn controls
+  "Create the control buttons for the side displays."
+  ([key] (controls key 1 -1))
+  ([key increment decrement]
+   (sab/html
+     [:div.controls
+      [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
+      [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]])))
 
 (defmulti stats-view #(get-in % [:identity :side]))
 
 (defmethod stats-view "Runner" [{:keys [user click credit run-credit memory link tag
-                                        brain-damage agenda-point tagged hand-size-base
-                                        hand-size-modification active]} owner]
+                                        brain-damage agenda-point tagged hand-size active]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :runner)]
@@ -998,11 +989,11 @@
        [:div (str tag " Tag" (if (not= tag 1) "s" "")) (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
        [:div (str brain-damage " Brain Damage")
         (when me? (controls :brain-damage))]
-       [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
-        (when me? (controls :hand-size-modification))]]))))
+       (let [{:keys [base mod]} hand-size]
+         [:div (str (+ base mod) " Max hand size")
+          (when me? (controls :hand-size {:mod -1} {:mod +1}))])]))))
 
-(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub
-                                      hand-size-base hand-size-modification active]} owner]
+(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub hand-size active]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :corp)]
@@ -1014,8 +1005,9 @@
         (when me? (controls :agenda-point))]
        [:div (str (+ bad-publicity has-bad-pub) " Bad Publicity")
         (when me? (controls :bad-publicity))]
-       [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
-        (when me? (controls :hand-size-modification))]]))))
+       (let [{:keys [base mod]} hand-size]
+         [:div (str (+ base mod) " Max hand size")
+          (when me? (controls :hand-size {:mod -1} {:mod +1}))])]))))
 
 (defn server-view [{:keys [server central-view run] :as cursor} owner opts]
   (om/component
@@ -1104,7 +1096,7 @@
 
 (defn handle-end-turn []
   (let [me ((:side @game-state) @game-state)
-        max-size (max (+ (:hand-size-base me) (:hand-size-modification me)) 0)]
+        max-size (max (+ (get-in me [:hand-size :base]) (get-in me [:hand-size :mod])) 0)]
     (if (> (count (:hand me)) max-size)
       (toast (str "Discard to " max-size " card" (when (not= 1 max-size) "s")) "warning" nil)
       (send-command "end-turn"))))

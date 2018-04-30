@@ -127,7 +127,7 @@
     (run-empty-server state "Server 1")
     (prompt-choice :corp 2) ; Manhunt trace active
     (prompt-choice :runner 0)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (is (= "Bank Job" (:title (:card (first (get-in @state [:runner :prompt])))))
         "Bank Job prompt active")
     (prompt-choice :runner 8)
@@ -143,14 +143,14 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Bank Job")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (prompt-choice :runner 4)
     (play-from-hand state :runner "Bank Job")
     (let [bj1 (get-resource state 0)
           bj2 (get-resource state 1)]
       (is (= 4 (get-counters (refresh bj1) :credit)) "4 credits remaining on 1st copy")
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Run ability")
+      (prompt-choice :runner "Replacement effect")
       (prompt-select :runner bj2)
       (prompt-choice :runner 6)
       (is (= 13 (:credit (get-runner))))
@@ -673,7 +673,7 @@
     (play-from-hand state :runner "Film Critic")
     (let [fc (first (get-in @state [:runner :rig :resource]))]
       (run-empty-server state "Server 1")
-      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
       (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
       (take-credits state :runner)
       (trash-from-hand state :corp "Director Haas")
@@ -692,10 +692,10 @@
       (run-empty-server state "HQ")
       ;; should not have taken damage yet
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt yet")
-      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt")
       (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
-      (card-ability state :runner fc 1)
+      (card-ability state :runner fc 0)
       (is (= 1 (count (:scored (get-runner)))) "Agenda added to runner scored")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
@@ -711,7 +711,7 @@
     (play-from-hand state :runner "Film Critic")
     (let [fc (first (get-in @state [:runner :rig :resource]))]
       (run-empty-server state :remote2)
-      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
       (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
       (take-credits state :runner)
       (core/gain state :corp :credit 10)
@@ -720,6 +720,65 @@
       (is (= 1 (count (:discard (get-runner)))) "FC trashed")
       (is (= 1 (count (:discard (get-corp)))) "Agenda trashed")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
+
+(deftest find-the-truth
+  ;; On successful run see the top card from R&D before access
+  (do-game
+    (new-game
+      (default-corp [(qty "Restructure" 10)])
+      (default-runner [(qty "Find the Truth" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Find the Truth")
+    (run-on state "HQ")
+    (run-successful state)
+    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+    (prompt-choice :runner "Yes")
+    (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card on R&D")
+    (prompt-choice :runner "Yes")))
+
+(deftest find-the-truth-equivocation
+  ;; Equivocation & FTT - should get order of choice.
+  (do-game
+    (new-game
+      (default-corp [(qty "Restructure" 10)])
+      (default-runner [(qty "Equivocation" 1) (qty "Find the Truth" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Equivocation")
+    (play-from-hand state :runner "Find the Truth")
+    (run-empty-server state :rd)
+    (prompt-choice :runner "Find the Truth")
+    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+    (prompt-choice :runner "Yes")
+    (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card")
+    (prompt-choice :runner "Yes") ; Equivocation prompt
+    (is (= "Reveal the top card of R&D?" (-> @state :runner :prompt first :msg)) "Equivocation Prompt")
+    (prompt-choice :runner "Yes")))
+
+(deftest find-the-truth-marilyn-campaign-neutralize-all-threats
+  ;; Find The Truth should completed before Marilyn trash is forced
+  (do-game
+    (new-game
+      (default-corp [(qty "Marilyn Campaign" 1) (qty "Vanilla" 10)])
+      (default-runner [(qty "Find the Truth" 1) (qty "Neutralize All Threats" 1)]))
+    (starting-hand state :corp ["Marilyn Campaign"])
+    (play-from-hand state :corp "Marilyn Campaign" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (is (= 3 (:credit (get-corp))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Find the Truth")
+    (play-from-hand state :runner "Neutralize All Threats")
+    (run-on state :remote1)
+    (run-successful state)
+    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+    (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
+    (prompt-choice :runner "Yes")
+    (is (= "The top card of R&D is Vanilla" (-> @state :runner :prompt first :msg)) "FTT shows card")
+    (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
+    (prompt-choice :runner "OK")
+    (is (= "Waiting for Corp to use Marilyn Campaign" (-> @state :runner :prompt first :msg)) "Now Corp gets shuffle choice")
+    (is (= "Shuffle Marilyn Campaign into R&D?" (-> @state :corp :prompt first :msg)) "Now Corp gets shuffle choice")
+    (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn))
 
 (deftest gang-sign
   ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
@@ -990,7 +1049,7 @@
               (default-runner [(qty "Lewi Guilherme" 2)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Lewi Guilherme")
-    (is (= -1 (:hand-size-modification (get-corp))) "Corp hand size reduced by 1")
+    (is (= -1 (get-in (get-corp) [:hand-size :mod])) "Corp hand size reduced by 1")
     (take-credits state :runner)
     (core/lose state :runner :credit 6)
     (is (= 2 (:credit (get-runner))) "Credits are 2")
@@ -1001,7 +1060,7 @@
     (take-credits state :corp)
     (prompt-choice :runner "No")
     (is (= 1 (count (:discard (get-runner)))) "First Lewi trashed")
-    (is (= 0 (:hand-size-modification (get-corp))) "Corp hand size normal again")
+    (is (= 0 (get-in (get-corp) [:hand-size :mod])) "Corp hand size normal again")
     (play-from-hand state :runner "Lewi Guilherme")
     (take-credits state :runner)
     (core/lose state :runner :credit 8)
@@ -1218,7 +1277,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "New Angeles City Hall")
     (play-run-event state (first (:hand (get-runner))) :hq)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (let [nach (get-in @state [:runner :rig :resource 0])]
       (is (= 4 (:credit (get-runner))) "Have not gained Account Siphon credits until tag avoidance window closes")
       (card-ability state :runner nach 0)
@@ -2122,6 +2181,26 @@
       (is (= 2 (get-counters (refresh vbg) :virus))
           "Virus Breeding Ground gains 1 counter per turn"))))
 
+(deftest virus-breeding-hivemind
+  ;; Virus Breeding Ground - Can move to programs pumped by Hivemind
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Virus Breeding Ground" 1) (qty "Hivemind" 1) (qty "Aumakua" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virus Breeding Ground")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hivemind")
+    (play-from-hand state :runner "Aumakua")
+    (let [aum (get-in @state [:runner :rig :program 1])
+          vbg (get-in @state [:runner :rig :resource 0])]
+      (is (zero? (get-counters aum :virus)) "Aumakua starts with 0 counters (excluding Hivemind)")
+      (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground gains 1 counter per turn")
+      (card-ability state :runner vbg 0)
+      (prompt-select :runner aum)
+      (is (= 1 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
+      (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
+
 (deftest virus-breeding-ground-move
   ;; Virus Breeding Ground - Move counters
   (do-game
@@ -2140,7 +2219,36 @@
       (card-ability state :runner vbg 0)
       (prompt-select :runner hive)
       (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind gained 1 counter")
-      (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
+      (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
+
+(deftest virus-breeding-ground-resource
+  ;; Virus Breeding Ground - Move counters to a non-virus resource
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Virus Breeding Ground" 1) (qty "Crypt" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virus Breeding Ground")
+    (play-from-hand state :runner "Crypt")
+    (let [vbg (get-in @state [:runner :rig :resource 0])
+          crypt (get-in @state [:runner :rig :resource 1])]
+      (is (zero? (get-counters crypt :virus)) "Crypt starts with 0 counters")
+      (is (zero? (get-counters vbg :virus)) "Virus Breeding Ground starts with 0 counters")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground gains 1 counter per turn")
+      (card-ability state :runner (refresh vbg) 0)
+      (prompt-select :runner (refresh crypt))
+      (prompt-choice :runner "Done")
+      (is (zero? (get-counters (refresh crypt) :virus)) "Crypt doesn't gain a counter")
+      (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground doesn't lose a counter")
+      (run-on state "Archives")
+      (run-successful state)
+      (prompt-choice :runner "Yes")
+      (is (= 1 (get-counters (refresh crypt) :virus)) "Crypt gained a counter")
+      (card-ability state :runner (refresh vbg) 0)
+      (prompt-select :runner (refresh crypt))
+      (is (= 2 (get-counters (refresh crypt) :virus)) "Crypt gained 1 counter")
+      (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
 
 (deftest wasteland
   ;; Wasteland - Gain 1c the first time you trash an installed card of yours each turn

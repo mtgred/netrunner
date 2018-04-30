@@ -329,6 +329,7 @@
     (run-empty-server state "HQ")
     (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
     (run-empty-server state "HQ")
+    (prompt-choice :runner "OK")
     (is (= 2 (count (:discard (get-corp)))) "One more card trashed from HQ, by Maw")))
 
 
@@ -786,7 +787,7 @@
     (take-credits state :corp)
     (play-run-event state (first (:hand (get-runner))) :hq)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit for first Run event")
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (play-run-event state (first (:hand (get-runner))) :hq)
     (is (= 16 (:credit (get-runner))) "No credit gained for second Run event")))
 
@@ -1400,7 +1401,6 @@
       (is (= 1 (count (:hand (get-runner)))) "Prevented 1 net damage")
       (is (empty? (:discard (get-runner))) "No cards discarded")
       (is (:run @state) "On run access phase")
-      (prompt-choice :runner "Access")
       (prompt-choice :runner "Done")
       (is (empty? (:hand (get-runner))) "Suffered 1 net damage due to accessing Fetal AI")
       (is (= 1 (count (:discard (get-runner)))) "Discarded 1 card due to net damage")

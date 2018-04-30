@@ -737,6 +737,11 @@
    {:subroutines [{:msg "draw 1 card" :effect (effect (draw))}
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
+   
+   "Endless EULA"
+   {:subroutines [end-the-run]
+    :runner-abilities [(runner-break [:credit 1] 1)
+                       (runner-break [:credit 6] 6)]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -875,10 +880,10 @@
     :subroutines [{:req (req (:run @state))
                    :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
                    :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
-                   :effect (effect (lose :runner :hand-size-modification 2)
+                   :effect (effect (lose :runner :hand-size {:mod 2})
                                    (register-events {:corp-turn-begins
                                                      {:msg "increase the Runner's maximum hand size by 2"
-                                                      :effect (effect (gain :runner :hand-size-modification 2)
+                                                      :effect (effect (gain :runner :hand-size {:mod 2})
                                                                       (unregister-events card))}} card))}]
     :events {:corp-turn-begins nil}}
 
@@ -960,8 +965,7 @@
    "Holmegaard"
    {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
                                     :msg "stop the Runner from accessing any cards this run"
-                                    :effect (req (max-access state side 0)
-                                                 (swap! state update-in [:run :run-effect] dissoc :replace-access))})
+                                    :effect (effect (prevent-access))})
                   {:label "Trash an icebreaker"
                    :prompt "Choose an icebreaker to trash"
                    :msg (msg "trash " (:title target))
@@ -1153,7 +1157,7 @@
                    :label "Force the Runner to access a card in HQ"
                    :msg (msg "force the Runner to access " (:title target))
                    :effect (req (trash state side card)
-                                (when-completed (handle-access state side targets)
+                                (when-completed (access-card state side target)
                                   (when-completed (trigger-event-sync state side :pre-access :hq)
                                     (let [from-hq (dec (access-count state side :hq-access))]
                                       (continue-ability
@@ -1804,7 +1808,7 @@
                   {:label "Force the Runner to access the top card of R&D"
                    :effect (req (doseq [c (take (get-in @state [:runner :rd-access]) (:deck corp))]
                                   (system-msg state :runner (str "accesses " (:title c)))
-                                  (handle-access state side [c])))}]}
+                                  (access-card state side c)))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"

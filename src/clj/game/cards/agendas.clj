@@ -942,9 +942,12 @@
 
    "Quantum Predictive Model"
    {:flags {:rd-reveal (req true)}
-    :steal-req (req (not tagged))
     :access {:req (req tagged)
-             :effect (effect (as-agenda card 1))
+             :delayed-completion true
+             :effect (effect (as-agenda card 1)
+                             (continue-ability :runner {:prompt "Quantum Predictive Model was added to the corp's score area"
+                                                        :choices ["OK"]}
+                                               card nil))
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
@@ -1011,10 +1014,10 @@
    "Remote Data Farm"
    {:silent (req true)
     :msg "increase their maximum hand size by 2"
-    :effect (effect (gain :hand-size-modification 2))
+    :effect (effect (gain :hand-size {:mod 2}))
     :swapped {:msg "increase their maximum hand size by 2"
-              :effect (effect (gain :hand-size-modification 2))}
-    :leave-play (effect (lose :hand-size-modification 2))}
+              :effect (effect (gain :hand-size {:mod 2}))}
+    :leave-play (effect (lose :hand-size {:mod 2}))}
 
    "Research Grant"
    {:interactive (req true)
@@ -1040,10 +1043,10 @@
    "Self-Destruct Chips"
    {:silent (req true)
     :msg "decrease the Runner's maximum hand size by 1"
-    :effect (effect (lose :runner :hand-size-modification 1))
+    :effect (effect (lose :runner :hand-size {:mod 1}))
     :swapped {:msg "decrease the Runner's maximum hand size by 1"
-              :effect (effect (lose :runner :hand-size-modification 1))}
-    :leave-play (effect (gain :runner :hand-size-modification 1))}
+              :effect (effect (lose :runner :hand-size {:mod 1}))}
+    :leave-play (effect (gain :runner :hand-size {:mod 1}))}
 
    "Sensor Net Activation"
    {:effect (effect (add-counter card :agenda 1))

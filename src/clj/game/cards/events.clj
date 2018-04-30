@@ -73,8 +73,7 @@
    (run-event
     {:choices (req (filter #(can-run-server? state %) remotes))}
     {:req (req (is-remote? target))
-     :replace-access {:mandatory true
-                      :msg "shuffle all cards in the server into R&D"
+     :replace-access {:msg "shuffle all cards in the server into R&D"
                       :effect (req (doseq [c (:content run-server)]
                                      (move state :corp c :deck))
                                    (shuffle! state :corp :deck))}})
@@ -581,9 +580,10 @@
                                                               (= (first (:server run)) (second (:zone %))))}
                                          :msg (msg "remove " (quantify c "advancement token")
                                                    " from " (card-str state target))
-                                         :effect (req (add-prop state :corp target :advance-counter (- c))
-                                                      (clear-wait-prompt state :corp)
-                                                      (effect-completed state side eid))}
+                                         :effect (req (let [to-remove (min c (:advance-counter target 0))]
+                                                        (add-prop state :corp target :advance-counter (- to-remove))
+                                                        (clear-wait-prompt state :corp)
+                                                        (effect-completed state side eid)))}
                                         card nil)))}})
 
    "Express Delivery"
@@ -644,8 +644,8 @@
     :implementation "Bypass is manual"
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
-    :events {:successful-run {:msg "access 0 cards"
-                              :effect (effect (max-access 0))}
+    ;; Don't need a msg since game will print that card access is prevented
+    :events {:successful-run {:effect (req (prevent-access))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"
@@ -895,7 +895,7 @@
               :choices [(str "Card from pile " pile)]
               :delayed-completion true
               :effect (req (when-completed
-                             (handle-access state side [(first cards)])
+                             (access-card state side (first cards))
                              (if (< 1 (count cards))
                                (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
                                (do (swap! state assoc-in [:run :cards-accessed] pile-size)
@@ -977,17 +977,17 @@
 
    "Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
-    :effect (req (lose state :corp :hand-size-modification (:bad-publicity corp))
+    :effect (req (lose state :corp :hand-size {:mod  (:bad-publicity corp)})
                  (add-watch state :itin
                    (fn [k ref old new]
                      (let [bpnew (get-in new [:corp :bad-publicity])
                            bpold (get-in old [:corp :bad-publicity])]
                        (when (> bpnew bpold)
-                         (lose state :corp :hand-size-modification (- bpnew bpold)))
+                         (lose state :corp :hand-size {:mod (- bpnew bpold)}))
                        (when (< bpnew bpold)
-                         (gain state :corp :hand-size-modification (- bpold bpnew)))))))
+                         (gain state :corp :hand-size {:mod (- bpold bpnew)}))))))
     :leave-play (req (remove-watch state :itin)
-                     (gain state :corp :hand-size-modification (:bad-publicity corp)))}
+                     (gain state :corp :hand-size {:mod (:bad-publicity corp)}))}
 
    "Knifed"
    {:implementation "Ice trash is manual"
@@ -1407,7 +1407,7 @@
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
     :choices {:req installed?} :msg (msg "access " (:title target))
-    :effect (effect (handle-access targets))}
+    :effect (effect (access-card target))}
 
    "Rebirth"
    {:msg "change identities"
