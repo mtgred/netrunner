@@ -48,15 +48,10 @@
                    (continue-ability state side
                      {:optional
                       {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
-                       :yes-ability
-                               {:delayed-completion true
-                                :effect (effect (continue-ability
-                                                  {:prompt "Choose a card in Archives to remove from the game instead of accessing"
-                                                   :choices (req (:discard corp))
-                                                   :msg (msg "remove " (:title target) " from the game")
-                                                   :effect (effect (move :corp target :rfg))} card nil))}}}
-                                     card nil))}}}
-
+                       :yes-ability {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                                     :choices (req (:discard corp))
+                                     :msg (msg "remove " (:title target) " from the game")
+                                     :effect (effect (move :corp target :rfg))}}} card nil))}}}
    "Astrolabe"
    {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
