@@ -437,14 +437,12 @@
                              (pos? (count-virus-programs state))))
               :optional
                    {:prompt "Place a virus counter?"
-                    :yes-ability {:effect (effect (continue-ability
-                                                    {:prompt "Select an installed virus program"
-                                                     :choices {:req #(and (installed? %)
-                                                                          (has-subtype? % "Virus")
-                                                                          (is-type? % "Program"))}
-                                                     :msg (msg "place 1 virus counter on " (:title target))
-                                                     :effect (effect (add-counter target :virus 1))}
-                                                    card nil))}}}}}
+                    :yes-ability {:prompt "Select an installed virus program"
+                                  :choices {:req #(and (installed? %)
+                                                       (has-subtype? % "Virus")
+                                                       (is-type? % "Program"))}
+                                  :msg (msg "place 1 virus counter on " (:title target))
+                                  :effect (effect (add-counter target :virus 1))}}}}}
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
