@@ -241,8 +241,7 @@
                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent the trash")
                                    (continue-ability state :corp
                                      {:optional
-                                      {:delayed-completion true
-                                       :prompt (msg "Spend " cost " [Credits] to prevent the trash of " title "?")
+                                      {:prompt (msg "Spend " cost " [Credits] to prevent the trash of " title "?")
                                        :player :corp
                                        :yes-ability {:effect (req (lose state :corp :credit cost)
                                                                   (system-msg state :corp (str "spends " cost " [Credits] to prevent "
@@ -302,9 +301,9 @@
                                      (update! state side (dissoc card :run-again))))))
     :events {:successful-run-ends
              {:optional {:req (req (= [:rd] (:server target)))
-                                              :prompt "Make another run on R&D?"
-                                              :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                            (update! (assoc card :run-again true)))}}}}}
+                         :prompt "Make another run on R&D?"
+                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
+                                                       (update! (assoc card :run-again true)))}}}}}
 
    "Day Job"
    {:additional-cost [:click 3]
@@ -1199,8 +1198,7 @@
                                                         (assoc card :zone '(:discard))))
                                      (update! state side (dissoc card :run-again))))))
     :events {:successful-run nil
-             :successful-run-ends {
-                                   :interactive (req true)
+             :successful-run-ends {:interactive (req true)
                                    :optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (clear-wait-prompt :corp)

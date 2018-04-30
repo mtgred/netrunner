@@ -47,17 +47,11 @@
       :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                    (continue-ability state side
                      {:optional
-                      {:delayed-completion true
-                       :prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
-                       :yes-ability
-                       {:delayed-completion true
-                        :effect (effect (continue-ability
-                                          {:prompt "Choose a card in Archives to remove from the game instead of accessing"
-                                           :choices (req (:discard corp))
-                                           :msg (msg "remove " (:title target) " from the game")
-                                           :effect (effect (move :corp target :rfg))} card nil))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}} card nil))}}}
-
+                      {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
+                       :yes-ability {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                                     :choices (req (:discard corp))
+                                     :msg (msg "remove " (:title target) " from the game")
+                                     :effect (effect (move :corp target :rfg))}}} card nil))}}}
    "Astrolabe"
    {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
@@ -257,8 +251,7 @@
     :in-play [:memory 3]
     :events {:runner-install
              {:optional
-              {:delayed-completion true
-               :req (req (has-subtype? target "Caïssa"))
+              {:req (req (has-subtype? target "Caïssa"))
                :prompt "Use Deep Red?" :priority 1
                :yes-ability {:delayed-completion true
                              :effect (req (let [cid (:cid target)]
@@ -271,8 +264,7 @@
                                                :effect (req (gain state :runner :click 1)
                                                             (play-ability state side {:card target :ability 0})
                                                             (effect-completed state side eid))}
-                                             card nil)))}
-               :no-ability {:effect (req (effect-completed state side eid))}}}}}
+                                             card nil)))}}}}}
 
    "Desperado"
    {:in-play [:memory 1]
@@ -447,17 +439,13 @@
              {:req (req (and (first-event? state :runner :successful-run)
                              (pos? (count-virus-programs state))))
               :optional
-              {:prompt "Place a virus counter?"
-               :yes-ability
-               {:delayed-completion true
-                :effect (effect (continue-ability
-                                  {:prompt "Select an installed virus program"
-                                   :choices {:req #(and (installed? %)
-                                                        (has-subtype? % "Virus")
-                                                        (is-type? % "Program"))}
-                                   :msg (msg "place 1 virus counter on " (:title target))
-                                   :effect (effect (add-counter target :virus 1))}
-                                  card nil))}}}}}
+                   {:prompt "Place a virus counter?"
+                    :yes-ability {:prompt "Select an installed virus program"
+                                  :choices {:req #(and (installed? %)
+                                                       (has-subtype? % "Virus")
+                                                       (is-type? % "Program"))}
+                                  :msg (msg "place 1 virus counter on " (:title target))
+                                  :effect (effect (add-counter target :virus 1))}}}}}
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
