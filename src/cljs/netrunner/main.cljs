@@ -46,17 +46,17 @@
       (let [c (count (gamelobby/filter-blocked-games (:user cursor) (:games cursor)))]
         (str c " Game" (when (not= c 1) "s")))]
      (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
-       (let [user_id (-> @app-state :user :_id)
-             is_player (some #(= user_id (-> % :user :_id)) (:players game))]
+       (let [user-id (-> @app-state :user :_id)
+             is-player (some #(= user-id (-> % :user :_id)) (:players game))]
          (when (:started game)
            [:div.float-right
-            (when is_player
+            (when is-player
               [:a.concede-button {:on-click gamelobby/concede} "Concede"])
             [:a.leave-button {:on-click gamelobby/leave-game} "Leave game"]
-            (when is_player
+            (when is-player
               [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mute-spectators game)))}
                (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])])
-         (when (not is_player)
+         (when (not is-player)
            [:div.float-right [:a {:on-click gamelobby/leave-game} "Leave game"]])))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
