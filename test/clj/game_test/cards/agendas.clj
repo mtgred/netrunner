@@ -2416,6 +2416,28 @@
       (play-and-score state "Veterans Program")
       (is (= 0 (:bad-publicity (get-corp))) "Should lose 1 bad publicity"))))
 
+(deftest viral-weaponization
+  ;; Viral Weaponization - at the end of turn scored, do 1 net damage for each card in grip
+  (do-game
+    (new-game (default-corp [(qty "Viral Weaponization" 2)])
+              (default-runner [(qty "Sure Gamble" 3)]))
+    (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
+    (play-and-score state "Viral Weaponization")
+    (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
+    (take-credits state :corp)
+    (is (= 0 (count (:hand (get-runner)))) "Runner takes damage at end of turn")
+    (core/click-draw state :runner 1)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (= 1 (count (:hand (get-runner)))) "Runner doesn't take damage in future turns")
+    (play-from-hand state :runner "Sure Gamble")
+    (take-credits state :runner)
+    (is (= 0 (count (:hand (get-runner)))) "Runner's hand is empty")
+    (play-and-score state "Viral Weaponization")
+    (take-credits state :corp)
+    (is (= 0 (count (:hand (get-runner)))) "Runner's hand is empty")))
+
+
 (deftest voting-machine-initiative
   ;; Voting Machine Initiative
   (testing "Voting Machine Initiative"
