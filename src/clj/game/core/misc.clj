@@ -127,11 +127,10 @@
   (installed-byname state (to-keyword (:side card)) (:title card)))
 
 (defn hand-size
-  "Returns the current maximum handsize of the specified side."
+  "Returns the current maximum hand-size of the specified side."
   [state side]
-  (let [side' (get @state side)
-        base (get side' :hand-size-base 0)
-        mod (get side' :hand-size-modification 0)]
+  (let [base (get-in @state [side :hand-size :base] 0)
+        mod (get-in @state [side :hand-size :mod] 0)]
     (+ base mod)))
 
 (defn swap-agendas

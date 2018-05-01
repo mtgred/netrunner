@@ -609,8 +609,7 @@
                      {:optional
                       {:prompt "Take 1 bad publicity from Illicit Sales?"
                        :yes-ability {:msg "take 1 bad publicity"
-                                     :effect (effect (gain-bad-publicity :corp 1))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}}
+                                     :effect (effect (gain-bad-publicity :corp 1))}}}
                      card nil)
                    (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
                          (gain state side :credit n)
@@ -765,20 +764,14 @@
              :unsuccessful-trace nq}})
 
    "NEXT Wave 2"
-   {:delayed-completion true
-    :not-when-scored true
-    :effect (req (if (some #(and (rezzed? %)
-                                 (ice? %)
-                                 (has-subtype? % "NEXT"))
-                           (all-installed state :corp))
-                   (continue-ability state side
-                     {:optional
-                      {:prompt "Do 1 brain damage with NEXT Wave 2?"
-                       :yes-ability {:msg "do 1 brain damage"
-                                     :effect (effect (damage eid :brain 1 {:card card}))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}}
-                    card nil)
-                   (effect-completed state side eid)))}
+   {:not-when-scored true
+    :req (req (some #(and (rezzed? %)
+                          (ice? %)
+                          (has-subtype? % "NEXT"))
+                    (all-installed state :corp)))
+    :optional {:prompt "Do 1 brain damage with NEXT Wave 2?"
+               :yes-ability {:msg "do 1 brain damage"
+                             :effect (effect (damage eid :brain 1 {:card card}))}}}
 
    "Nisei MK II"
    {:silent (req true)
@@ -1014,10 +1007,10 @@
    "Remote Data Farm"
    {:silent (req true)
     :msg "increase their maximum hand size by 2"
-    :effect (effect (gain :hand-size-modification 2))
+    :effect (effect (gain :hand-size {:mod 2}))
     :swapped {:msg "increase their maximum hand size by 2"
-              :effect (effect (gain :hand-size-modification 2))}
-    :leave-play (effect (lose :hand-size-modification 2))}
+              :effect (effect (gain :hand-size {:mod 2}))}
+    :leave-play (effect (lose :hand-size {:mod 2}))}
 
    "Research Grant"
    {:interactive (req true)
@@ -1043,10 +1036,10 @@
    "Self-Destruct Chips"
    {:silent (req true)
     :msg "decrease the Runner's maximum hand size by 1"
-    :effect (effect (lose :runner :hand-size-modification 1))
+    :effect (effect (lose :runner :hand-size {:mod 1}))
     :swapped {:msg "decrease the Runner's maximum hand size by 1"
-              :effect (effect (lose :runner :hand-size-modification 1))}
-    :leave-play (effect (gain :runner :hand-size-modification 1))}
+              :effect (effect (lose :runner :hand-size {:mod 1}))}
+    :leave-play (effect (gain :runner :hand-size {:mod 1}))}
 
    "Sensor Net Activation"
    {:effect (effect (add-counter card :agenda 1))

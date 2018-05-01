@@ -241,8 +241,7 @@
                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent the trash")
                                    (continue-ability state :corp
                                      {:optional
-                                      {:delayed-completion true
-                                       :prompt (msg "Spend " cost " [Credits] to prevent the trash of " title "?")
+                                      {:prompt (msg "Spend " cost " [Credits] to prevent the trash of " title "?")
                                        :player :corp
                                        :yes-ability {:effect (req (lose state :corp :credit cost)
                                                                   (system-msg state :corp (str "spends " cost " [Credits] to prevent "
@@ -302,9 +301,9 @@
                                      (update! state side (dissoc card :run-again))))))
     :events {:successful-run-ends
              {:optional {:req (req (= [:rd] (:server target)))
-                                              :prompt "Make another run on R&D?"
-                                              :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                            (update! (assoc card :run-again true)))}}}}}
+                         :prompt "Make another run on R&D?"
+                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
+                                                       (update! (assoc card :run-again true)))}}}}}
 
    "Day Job"
    {:additional-cost [:click 3]
@@ -644,8 +643,8 @@
     :implementation "Bypass is manual"
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
-    :events {:successful-run {:msg "access 0 cards"
-                              :effect (effect (max-access 0))}
+    ;; Don't need a msg since game will print that card access is prevented
+    :events {:successful-run {:effect (req (prevent-access))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"
@@ -977,17 +976,17 @@
 
    "Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
-    :effect (req (lose state :corp :hand-size-modification (:bad-publicity corp))
+    :effect (req (lose state :corp :hand-size {:mod  (:bad-publicity corp)})
                  (add-watch state :itin
                    (fn [k ref old new]
                      (let [bpnew (get-in new [:corp :bad-publicity])
                            bpold (get-in old [:corp :bad-publicity])]
                        (when (> bpnew bpold)
-                         (lose state :corp :hand-size-modification (- bpnew bpold)))
+                         (lose state :corp :hand-size {:mod (- bpnew bpold)}))
                        (when (< bpnew bpold)
-                         (gain state :corp :hand-size-modification (- bpold bpnew)))))))
+                         (gain state :corp :hand-size {:mod (- bpold bpnew)}))))))
     :leave-play (req (remove-watch state :itin)
-                     (gain state :corp :hand-size-modification (:bad-publicity corp)))}
+                     (gain state :corp :hand-size {:mod (:bad-publicity corp)}))}
 
    "Knifed"
    {:implementation "Ice trash is manual"
@@ -1199,8 +1198,7 @@
                                                         (assoc card :zone '(:discard))))
                                      (update! state side (dissoc card :run-again))))))
     :events {:successful-run nil
-             :successful-run-ends {
-                                   :interactive (req true)
+             :successful-run-ends {:interactive (req true)
                                    :optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (clear-wait-prompt :corp)

@@ -737,6 +737,11 @@
    {:subroutines [{:msg "draw 1 card" :effect (effect (draw))}
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
+   
+   "Endless EULA"
+   {:subroutines [end-the-run]
+    :runner-abilities [(runner-break [:credit 1] 1)
+                       (runner-break [:credit 6] 6)]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -875,10 +880,10 @@
     :subroutines [{:req (req (:run @state))
                    :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
                    :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
-                   :effect (effect (lose :runner :hand-size-modification 2)
+                   :effect (effect (lose :runner :hand-size {:mod 2})
                                    (register-events {:corp-turn-begins
                                                      {:msg "increase the Runner's maximum hand size by 2"
-                                                      :effect (effect (gain :runner :hand-size-modification 2)
+                                                      :effect (effect (gain :runner :hand-size {:mod 2})
                                                                       (unregister-events card))}} card))}]
     :events {:corp-turn-begins nil}}
 
@@ -960,8 +965,7 @@
    "Holmegaard"
    {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
                                     :msg "stop the Runner from accessing any cards this run"
-                                    :effect (req (max-access state side 0)
-                                                 (swap! state update-in [:run :run-effect] dissoc :replace-access))})
+                                    :effect (effect (prevent-access))})
                   {:label "Trash an icebreaker"
                    :prompt "Choose an icebreaker to trash"
                    :msg (msg "trash " (:title target))
@@ -1373,11 +1377,9 @@
     :subroutines [{:label "Draw 1 card, then shuffle 1 card from HQ into R&D"
                    :effect (req (when-completed (resolve-ability state side
                                                   {:optional
-                                                   {:delayed-completion true
-                                                    :prompt "Draw 1 card?"
+                                                   {:prompt "Draw 1 card?"
                                                     :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}
-                                                    :no-ability {:effect (req (effect-completed state side eid))}}}
+                                                                  :effect (effect (draw))}}}
                                                  card nil)
                                                 (resolve-ability state side
                                                   {:prompt "Choose 1 card in HQ to shuffle into R&D"
@@ -1430,8 +1432,7 @@
                                                   {:optional
                                                    {:prompt "Draw 1 card?"
                                                     :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}
-                                                    :no-ability {:effect (req (effect-completed state side eid))}}}
+                                                                  :effect (effect (draw))}}}
                                                  card nil)))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
@@ -1608,7 +1609,6 @@
                          {:optional
                           {:player :corp
                            :prompt "Draw 1 card?"
-                           :delayed-completion true
                            :yes-ability
                            {:delayed-completion true
                             :effect (effect (clear-wait-prompt :runner)

@@ -702,7 +702,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
-    :in-play [:hand-size-modification 2]}
+    :in-play [:hand-size {:mod 2}]}
 
    "Ruhr Valley"
    {:events {:run {:req (req this-server)
@@ -923,21 +923,20 @@
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
                  :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
-                              (lose state :runner :hand-size-modification 1))}]
+                              (lose state :runner :hand-size {:mod 1}))}]
     :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events state side
                                                    {:corp-turn-begins
                                                     {:msg (msg "increase the Runner's maximum hand size by " n)
-                                                     :effect (effect (gain :runner :hand-size-modification n)
+                                                     :effect (effect (gain :runner :hand-size {:mod n})
                                                                      (unregister-events card)
                                                                      (update! (dissoc card :times-used)))}}
                                                    (assoc card :zone '(:discard)))))}
     :events {:corp-turn-begins {:req (req (:times-used card))
                                 :msg (msg "increase the Runner's maximum hand size by "
                                           (:times-used card))
-                                :effect (effect (gain :runner :hand-size-modification
-                                                      (:times-used card))
+                                :effect (effect (gain :runner :hand-size {:mod (:times-used card)})
                                                 (update! (dissoc card :times-used)))}}}
 
    "Warroid Tracker"

@@ -53,7 +53,7 @@
   (let [kw key
         key (name key)]
     (if (neg? delta)
-      (deduce state side [kw (- delta)])
+      (deduct state side [kw (- delta)])
       (swap! state update-in [side kw] (partial + delta)))
     (system-msg state side
                 (str "sets " (.replace key "-" " ") " to " (get-in @state [side kw])
@@ -192,7 +192,7 @@
         abilities (:abilities cdef)
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
-             {:msg "take 1 [Recurring Credits]" 
+             {:msg "take 1 [Recurring Credits]"
               :req (req (pos? (:rec-counter card 0)))
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)

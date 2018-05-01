@@ -446,7 +446,9 @@
       (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
       (run-continue state)
       (run-successful state)
-      (is (= 0 (:agenda-point (get-runner))) "Didn't access and steal agenda"))))
+      ;; Prompt for "you cannot access any card this run"
+      (prompt-choice :runner "OK")
+      (is (not (accessing state "Hostile Takeover"))))))
 
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
@@ -867,7 +869,6 @@
     (let [sadaka (get-ice state :archives 0)
           sadakaHQ (get-ice state :hq 0)]
       (take-credits state :corp)
-
       (play-from-hand state :runner "Bank Job")
       (run-on state "archives")
       (core/rez state :corp sadaka)
@@ -880,7 +881,6 @@
       (prompt-choice :corp "Done")
       (is (= 2 (count (:discard (get-corp)))) "Sadaka trashed")
       (run-jack-out state)
-
       (run-on state "archives")
       (core/rez state :corp sadakaHQ)
       (is (= 2 (count (:hand (get-corp)))) "Corp starts with 2 cards in hand")
@@ -893,8 +893,8 @@
       (prompt-select :corp (get-resource state 0))
       (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
       (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed"))))
-(deftest sandman
 
+(deftest sandman
   ;; Sandman - add an installed runner card to the grip
   (do-game
     (new-game (default-corp [(qty "Sandman" 1)])

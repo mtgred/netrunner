@@ -46,24 +46,26 @@
       (let [c (count (gamelobby/filter-blocked-games (:user cursor) (:games cursor)))]
         (str c " Game" (when (not= c 1) "s")))]
      (if-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
-       (when (:started game)
-         [:div.float-right
-          (when (not= (:side @app-state) :spectator)
-            [:a.concede-button {:on-click gamelobby/concede} "Concede"])
-          [:a.leave-button {:on-click gamelobby/leave-game} "Leave game"]
-          (when (not= (:side @app-state) :spectator)
-            [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mute-spectators game)))}
-             (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])])
-       (when (= (:side @app-state) :spectator)
-         [:div.float-right [:a {:on-click gamelobby/leave-game} "Leave game"]]))
+       (let [user-id (-> @app-state :user :_id)
+             is-player (some #(= user-id (-> % :user :_id)) (:players game))]
+         (when (:started game)
+           [:div.float-right
+            (when is-player
+              [:a.concede-button {:on-click gamelobby/concede} "Concede"])
+            [:a.leave-button {:on-click gamelobby/leave-game} "Leave game"]
+            (when is-player
+              [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mute-spectators game)))}
+               (if (:mute-spectators game) "Unmute spectators" "Mute spectators")])])
+         (when (not is-player)
+           [:div.float-right [:a {:on-click gamelobby/leave-game} "Leave game"]])))
      (when-let [game (some #(when (= (:gameid cursor) (:gameid %)) %) (:games cursor))]
        (when (:started game)
          (let [c (count (:spectators game))]
-            (when (pos? c)
-              [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
-               [:div.blue-shade.spectators (om/build-all gamelobby/player-view
-                                                         (map (fn [%] {:player % :game game})
-                                                              (:spectators game)))]]))))])))
+           (when (pos? c)
+             [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
+              [:div.blue-shade.spectators (om/build-all gamelobby/player-view
+                                                        (map (fn [%] {:player % :game game})
+                                                             (:spectators game)))]]))))])))
 
 (om/root navbar app-state {:target (. js/document (getElementById "left-menu"))})
 (om/root status app-state {:target (. js/document (getElementById "status"))})
