@@ -901,6 +901,76 @@
     (prompt-choice :runner "OK")
     (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")))
 
+(deftest overseer-matrix
+  ;; Overseer Matrix - corp takes a tag when trashing a card in this server
+  (testing "Basic functionality"
+           (do-game
+             (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 1)])
+                       (default-runner))
+             (play-from-hand state :corp "Overseer Matrix" "New remote")
+             (play-from-hand state :corp "Red Herrings" "Server 1")
+             (take-credits state :corp)
+             (let [om (get-content state :remote1 0)
+                   rh (get-content state :remote1 1)]
+               (run-on state "Server 1")
+               (core/rez state :corp om)
+               (run-successful state)
+               (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+               (prompt-select :runner rh)
+               (prompt-choice :runner "Yes")
+               (prompt-choice :corp "Yes")
+               (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+               (prompt-select :runner om)
+               (prompt-choice :runner "Yes")
+               (prompt-choice :corp "Yes")
+               (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
+  (testing "Effect persists after trash"
+           (do-game
+             (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 3)])
+                       (default-runner))
+             (play-from-hand state :corp "Overseer Matrix" "New remote")
+             (play-from-hand state :corp "Red Herrings" "Server 1")
+             (take-credits state :corp)
+             (let [om (get-content state :remote1 0)
+                   rh (get-content state :remote1 1)]
+               (run-on state "Server 1")
+               (core/rez state :corp om)
+               (run-successful state)
+               (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+               (prompt-select :runner om)
+               (prompt-choice :runner "Yes")
+               (prompt-choice :corp "Yes")
+               (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+               (prompt-select :runner rh)
+               (prompt-choice :runner "Yes")
+               (prompt-choice :corp "Yes")
+               (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
+  (testing "Effect ends after current run"
+           (do-game
+             (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 3)])
+                       (default-runner))
+             (play-from-hand state :corp "Overseer Matrix" "New remote")
+             (play-from-hand state :corp "Red Herrings" "Server 1")
+             (take-credits state :corp)
+             (let [om (get-content state :remote1 0)
+                   rh (get-content state :remote1 1)]
+               (run-on state "Server 1")
+               (core/rez state :corp om)
+               (run-successful state)
+               (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+               (prompt-select :runner om)
+               (prompt-choice :runner "Yes")
+               (prompt-choice :corp "Yes")
+               (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+               (prompt-select :runner rh)
+               (prompt-choice :runner "No")
+               (is (= 1 (:tag (get-runner))) "Runner doesn't take a tag")
+               (run-on state "Server 1")
+               (run-successful state)
+               (prompt-choice :runner "Yes")
+               (is (empty? (:prompt (get-corp))) "No prompt for Overseer Matrix")
+               (is (= 1 (:tag (get-runner))) "Runner doesn't take a tag")))))
+
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game
