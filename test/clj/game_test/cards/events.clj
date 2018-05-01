@@ -798,6 +798,19 @@
     (prompt-choice :runner "Archives")
     (is (= 4 (:click (get-runner))) "Early Bird gains click")))
 
+(deftest embezzle
+  ;; Check that trashed cards are trashed face-up
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Embezzle" 1)]))
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))))
+    (play-run-event state (first (:hand (get-runner))) :hq)
+    (prompt-choice :runner "Ice Wall")
+    (is (= 1 (count (:discard (get-corp)))) "HQ card trashed")
+    (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen")
+    (is (= 9 (:credit (get-runner))))))
+
 (deftest emergent-creativity
   ;; Emergent Creativty - Double, discard programs/hardware from grip, install from heap
   (do-game
