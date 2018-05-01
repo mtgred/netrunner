@@ -1999,58 +1999,53 @@
 (deftest remote-enforcement
   ;; Remote Enforcement - Search R&D for a piece of ice and install it on a remote at no rez cost
   (do-game
-   (new-game (default-corp [(qty "Research Grant" 2)
+   (new-game (default-corp [(qty "Remote Enforcement" 2)
                             (qty "Archer" 1)
                             (qty "Chiyashi" 1)])
-             ;; (make-deck "Reina Roja: Freedom Fighter" [])
-             (default-runner)
-             )
-   (starting-hand state :corp ["Research Grant" "Research Grant"])
+             (make-deck "Reina Roja: Freedom Fighter" []))
+   (starting-hand state :corp ["Remote Enforcement" "Remote Enforcement"])
    (is (= 2 (count (:deck (get-corp)))))
-   (play-and-score state "Research Grant")
+   (play-and-score state "Remote Enforcement")
    (let [N (:credit (get-corp))]
      (prompt-choice :corp "Yes")
      (prompt-choice :corp (find-card "Chiyashi" (:deck (get-corp))))
      (prompt-choice :corp "New remote")
-     ;; (println (first (get-in @state [:corp :servers]))) ; nothing anywhere
-     (is (core/rezzed? (get-ice state :server2 0)) "Chiyashi was installed rezzed")
+     (is (core/rezzed? (get-ice state :remote2 0)) "Chiyashi was installed rezzed")
      (is (= N (:credit (get-corp))) "Rezzing Chiyashi was free"))
-   (play-and-score state "Research Grant")
+   (play-and-score state "Remote Enforcement")
    (let [N (:credit (get-corp))]
      (prompt-choice :corp "Yes")
-     (prompt-choice :corp (find-card "Archer" (:deck (get-corp))))
+     (prompt-card :corp (find-card "Archer" (:deck (get-corp))))
      (prompt-choice :corp "Server 2")
      (is (= (dec N) (:credit (get-corp))) "Installing Archer cost a credit")
      (is (not-empty (:prompt (get-corp))) "Corp prompted to forfeit an agenda for Archer")
-     (is (= (dec N) (:credit (get-corp))) "Rezzing Archer didn't cost any credits"))
-   ;; (println (first (get-in @state [:corp :servers]))) ;nothing anywhere
-   ))
+     (is (= (dec N) (:credit (get-corp))) "Rezzing Archer didn't cost any credits"))))
 
-;; (deftest research-grant
-;;   ;; Research Grant
-;;   (testing "Basic test"
-;;     (do-game
-;;       (new-game (default-corp [(qty "Research Grant" 2)])
-;;                 (default-runner))
-;;       (play-from-hand state :corp "Research Grant" "New remote")
-;;       (play-and-score state "Research Grant")
-;;       (prompt-select :corp (get-content state :remote1 0))
-;;       (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")))
-;;   (testing "vs Leela"
-;;     ;; Issue #3069
-;;     (do-game
-;;       (new-game (default-corp [(qty "Research Grant" 2) (qty "Ice Wall" 2)])
-;;                 (make-deck "Leela Patel: Trained Pragmatist" [(qty "Sure Gamble" 1)]))
-;;       (core/gain state :corp :click 1)
-;;       (play-from-hand state :corp "Ice Wall" "HQ")
-;;       (play-from-hand state :corp "Ice Wall" "R&D")
-;;       (play-from-hand state :corp "Research Grant" "New remote")
-;;       (play-and-score state "Research Grant")
-;;       (prompt-select :corp (get-content state :remote1 0))
-;;       (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")
-;;       (prompt-select :runner (get-ice state :hq 0))
-;;       (prompt-select :runner (get-ice state :rd 0))
-;;       (is (empty? (:effect-completed @state)) "All score and Leela effects resolved"))))
+(deftest research-grant
+  ;; Research Grant
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Research Grant" 2)])
+                (default-runner))
+      (play-from-hand state :corp "Research Grant" "New remote")
+      (play-and-score state "Research Grant")
+      (prompt-select :corp (get-content state :remote1 0))
+      (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")))
+  (testing "vs Leela"
+    ;; Issue #3069
+    (do-game
+      (new-game (default-corp [(qty "Research Grant" 2) (qty "Ice Wall" 2)])
+                (make-deck "Leela Patel: Trained Pragmatist" [(qty "Sure Gamble" 1)]))
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Research Grant" "New remote")
+      (play-and-score state "Research Grant")
+      (prompt-select :corp (get-content state :remote1 0))
+      (is (= 2 (count (:scored (get-corp)))) "2 copies of Research Grant scored")
+      (prompt-select :runner (get-ice state :hq 0))
+      (prompt-select :runner (get-ice state :rd 0))
+      (is (empty? (:effect-completed @state)) "All score and Leela effects resolved"))))
 
 (deftest restructured-datapool
   ;; Restructured Datapool
