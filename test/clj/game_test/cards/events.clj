@@ -2264,6 +2264,50 @@
     (core/click-draw state :corp 1)
     (is (= 7 (:credit (get-corp))) "2nd card drawn cost 1cr - System Outage active")))
 
+(deftest system-seizure
+  ;; System Seizure - First icebreaker boosted keeps strength for remainder of that run.
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 1)])
+              (default-runner [(qty "Corroder" 2) (qty "System Seizure" 1)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 3)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "System Seizure")
+    (let [c1 (get-program state 0)
+          c2  (get-program state 1)]
+      (run-empty-server state "R&D") ;; Check that System Seizure triggers even if another run has been made
+
+      (run-on state "HQ") ;; Check that System Seizure only keeps strength on one of the breakers
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (card-ability state :runner c1 1)
+      (card-ability state :runner c2 1)
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 3 strength")
+      (run-continue state)
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (run-successful state)
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      
+      (run-on state "HQ") ;; Check that System Seizure does not keep strength on 2nd run
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (card-ability state :runner c1 1)
+      (card-ability state :runner c2 1)
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 3 strength")
+      (run-continue state)
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (run-successful state)
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength"))))
+
 (deftest test-run
   ;; Test Run - Programs hosted after install get returned to Stack. Issue #1081
   (do-game
