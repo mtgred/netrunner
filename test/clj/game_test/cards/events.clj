@@ -449,6 +449,80 @@
       (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
       (run-successful state))))
 
+(deftest compile-test
+  ;; Compile - Make a run, and install a program for free which is shuffled back into stack
+  ;; test name is weird because clojure.core/compile exists - can't see it being
+  ;; a problem, but I got a warning
+  (do-game
+   (new-game (default-corp)
+              (default-runner [(qty "Compile" 1)
+                               (qty "Clone Chip" 1)
+                               (qty "Self-modifying Code" 3)]))
+    (starting-hand state :runner ["Compile" "Clone Chip"] )
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Clone Chip")
+    (play-from-hand state :runner "Compile")
+    (prompt-choice :runner "Archives")
+    (prompt-choice :runner "OK")        ; notification that Compile must be clicked to install
+    (let [compile-card (first (get-in @state [:runner :play-area]))
+          clone-chip (first (get-in @state [:runner :rig :hardware]))]
+      (card-ability state :runner compile-card 0)
+      (prompt-choice :runner "Stack")
+      (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner))))
+      (let [smc (first (get-in @state [:runner :rig :program]))]
+        (card-ability state :runner smc 0)
+        (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner)))))
+      (card-ability state :runner clone-chip 0)
+      (prompt-select :runner (find-card "Self-modifying code" (:discard (get-runner)))))
+    (let [num-in-deck (count (:deck (get-runner)))]
+      (run-jack-out state)
+      (is (= num-in-deck (count (:deck (get-runner)))) "No card was shuffled back into the stack"))))
+
+(deftest contaminate
+  ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Yusuf" 1) (qty "Chrome Parlor" 1) (qty "Contaminate" 3)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5 :click 2)
+    (play-from-hand state :runner "Yusuf")
+    (play-from-hand state :runner "Chrome Parlor")
+    (let [yus (get-program state 0)
+          cp (get-resource state 0)]
+      (is (= 0 (get-counters (refresh yus) :virus)) "Yusuf starts with 0 virus counters")
+      (is (= 0 (get-counters (refresh cp) :virus)) "Chrome Parlor starts with 0 virus counters")
+      (play-from-hand state :runner "Contaminate")
+      (prompt-select :runner (refresh yus))
+      (is (= 3 (get-counters (refresh yus) :virus)) "Yusuf has 3 counters after Contaminate")
+      (play-from-hand state :runner "Contaminate")
+      (prompt-select :runner (refresh cp))
+      (is (= 3 (get-counters (refresh cp) :virus)) "Chrome Parlor has 3 counters after Contaminate")
+      (play-from-hand state :runner "Contaminate")
+      (prompt-select :runner (refresh yus))
+      (prompt-choice :runner "Done")
+      (is (= 3 (get-counters (refresh cp) :virus)) "Yusuf isn't selectable by Contaminate"))))
+
+(deftest contaminate-hivemind
+  ;; Contaminate - Hivemind makes virus programs act like they have a virus counter
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Aumakua" 1) (qty "Friday Chip" 1) (qty "Hivemind" 1) (qty "Contaminate" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5 :click 2)
+    (play-from-hand state :runner "Aumakua")
+    (play-from-hand state :runner "Hivemind")
+    (play-from-hand state :runner "Friday Chip")
+    (let [aum (get-program state 0)
+          fc (get-hardware state 0)]
+      (is (= 0 (get-counters (refresh aum) :virus)) "Aumakua starts with 0 virus counters (not counting Hivemind)")
+      (is (= 0 (get-counters (refresh fc) :virus)) "Friday Chip starts with 0 virus counters")
+      (play-from-hand state :runner "Contaminate")
+      (prompt-select :runner (refresh aum))
+      (prompt-select :runner (refresh fc))
+      (is (= 3 (get-counters (refresh fc) :virus)) "Friday Chip has 3 counters after Contaminate")
+      (is (= 0 (get-counters (refresh aum) :virus)) "Aumakua ends with 0 virus counters (not counting Hivemind)"))))
+
 (deftest corporate-grant
   ;; Corporate "Grant" - First time runner installs a card, the corp loses 1 credit
   (do-game
@@ -752,6 +826,19 @@
     (play-from-hand state :runner "Early Bird")
     (prompt-choice :runner "Archives")
     (is (= 4 (:click (get-runner))) "Early Bird gains click")))
+
+(deftest embezzle
+  ;; Check that trashed cards are trashed face-up
+  (do-game
+    (new-game (default-corp [(qty "Ice Wall" 1)])
+              (default-runner [(qty "Embezzle" 1)]))
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))))
+    (play-run-event state (first (:hand (get-runner))) :hq)
+    (prompt-choice :runner "Ice Wall")
+    (is (= 1 (count (:discard (get-corp)))) "HQ card trashed")
+    (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen")
+    (is (= 9 (:credit (get-runner))))))
 
 (deftest emergent-creativity
   ;; Emergent Creativty - Double, discard programs/hardware from grip, install from heap
@@ -2176,6 +2263,50 @@
     (is (= 8 (:credit (get-corp))) "1st card drawn cost 1cr - System Outage active")
     (core/click-draw state :corp 1)
     (is (= 7 (:credit (get-corp))) "2nd card drawn cost 1cr - System Outage active")))
+
+(deftest system-seizure
+  ;; System Seizure - First icebreaker boosted keeps strength for remainder of that run.
+  (do-game
+    (new-game (default-corp [(qty "Wraparound" 1)])
+              (default-runner [(qty "Corroder" 2) (qty "System Seizure" 1)]))
+    (play-from-hand state :corp "Wraparound" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 3)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "System Seizure")
+    (let [c1 (get-program state 0)
+          c2  (get-program state 1)]
+      (run-empty-server state "R&D") ;; Check that System Seizure triggers even if another run has been made
+
+      (run-on state "HQ") ;; Check that System Seizure only keeps strength on one of the breakers
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (card-ability state :runner c1 1)
+      (card-ability state :runner c2 1)
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 3 strength")
+      (run-continue state)
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (run-successful state)
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      
+      (run-on state "HQ") ;; Check that System Seizure does not keep strength on 2nd run
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (card-ability state :runner c1 1)
+      (card-ability state :runner c2 1)
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 3 strength")
+      (is (= 3 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 3 strength")
+      (run-continue state)
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength")
+      (run-successful state)
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c1))) "Corroder 1 has 2 strength")
+      (is (= 2 (core/breaker-strength state :runner (core/get-card state c2))) "Corroder 2 has 2 strength"))))
 
 (deftest test-run
   ;; Test Run - Programs hosted after install get returned to Stack. Issue #1081

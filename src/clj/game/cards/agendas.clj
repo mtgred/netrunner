@@ -1012,6 +1012,23 @@
               :effect (effect (gain :hand-size {:mod 2}))}
     :leave-play (effect (lose :hand-size {:mod 2}))}
 
+   "Remote Enforcement"
+   {:interactive (req true)
+    :optional {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
+               :yes-ability {:delayed-completion true
+                             :prompt "Choose a piece of ice"
+                             :choices (req (filter ice? (:deck corp)))
+                             :effect (req (let [chosen-ice target]
+                                            (continue-ability state side
+                                                              {:delayed-completion true
+                                                               :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                                               :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
+                                                                                (corp-install-list state chosen-ice))
+                                                               :effect (effect
+                                                                        (shuffle! :deck)
+                                                                        (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
+                                                              card nil)))}}}
+
    "Research Grant"
    {:interactive (req true)
     :silent (req (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
@@ -1188,6 +1205,17 @@
    {:interactive (req true)
     :msg "lose 2 bad publicity"
     :effect (effect (lose :bad-publicity 2))}
+
+   "Viral Weaponization"
+   {:effect (effect (register-events
+                      {:corp-turn-ends
+                       {:msg "do 1 net damage for each card in the grip"
+                        :delayed-completion true
+                        :effect (req (let [cnt (count (:hand runner))]
+                                       (unregister-events state side card)
+                                       (damage state side eid :net cnt {:card card})))}}
+                      card))
+    :events {:corp-turn-ends nil}}
 
    "Voting Machine Initiative"
    {:silent (req true)

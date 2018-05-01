@@ -1996,6 +1996,31 @@
     (play-and-score state "Remote Data Farm")
     (is (= 7 (get-hand-size :corp)))))
 
+(deftest remote-enforcement
+  ;; Remote Enforcement - Search R&D for a piece of ice and install it on a remote at no rez cost
+  (do-game
+   (new-game (default-corp [(qty "Remote Enforcement" 2)
+                            (qty "Archer" 1)
+                            (qty "Chiyashi" 1)])
+             (make-deck "Reina Roja: Freedom Fighter" []))
+   (starting-hand state :corp ["Remote Enforcement" "Remote Enforcement"])
+   (is (= 2 (count (:deck (get-corp)))))
+   (play-and-score state "Remote Enforcement")
+   (let [N (:credit (get-corp))]
+     (prompt-choice :corp "Yes")
+     (prompt-choice :corp (find-card "Chiyashi" (:deck (get-corp))))
+     (prompt-choice :corp "New remote")
+     (is (core/rezzed? (get-ice state :remote2 0)) "Chiyashi was installed rezzed")
+     (is (= N (:credit (get-corp))) "Rezzing Chiyashi was free"))
+   (play-and-score state "Remote Enforcement")
+   (let [N (:credit (get-corp))]
+     (prompt-choice :corp "Yes")
+     (prompt-card :corp (find-card "Archer" (:deck (get-corp))))
+     (prompt-choice :corp "Server 2")
+     (is (= (dec N) (:credit (get-corp))) "Installing Archer cost a credit")
+     (is (not-empty (:prompt (get-corp))) "Corp prompted to forfeit an agenda for Archer")
+     (is (= (dec N) (:credit (get-corp))) "Rezzing Archer didn't cost any credits"))))
+
 (deftest research-grant
   ;; Research Grant
   (testing "Basic test"
@@ -2415,6 +2440,28 @@
       (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
       (play-and-score state "Veterans Program")
       (is (= 0 (:bad-publicity (get-corp))) "Should lose 1 bad publicity"))))
+
+(deftest viral-weaponization
+  ;; Viral Weaponization - at the end of turn scored, do 1 net damage for each card in grip
+  (do-game
+    (new-game (default-corp [(qty "Viral Weaponization" 2)])
+              (default-runner [(qty "Sure Gamble" 3)]))
+    (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
+    (play-and-score state "Viral Weaponization")
+    (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
+    (take-credits state :corp)
+    (is (= 0 (count (:hand (get-runner)))) "Runner takes damage at end of turn")
+    (core/click-draw state :runner 1)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (= 1 (count (:hand (get-runner)))) "Runner doesn't take damage in future turns")
+    (play-from-hand state :runner "Sure Gamble")
+    (take-credits state :runner)
+    (is (= 0 (count (:hand (get-runner)))) "Runner's hand is empty")
+    (play-and-score state "Viral Weaponization")
+    (take-credits state :corp)
+    (is (= 0 (count (:hand (get-runner)))) "Runner's hand is empty")))
+
 
 (deftest voting-machine-initiative
   ;; Voting Machine Initiative
