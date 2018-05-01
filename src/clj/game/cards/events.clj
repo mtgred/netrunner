@@ -213,6 +213,16 @@
                                                                (continue-ability end-effect card nil))}}
                                     c)))})
 
+   "Contaminate"
+   {:effect (req (resolve-ability
+                   state side
+                   {:msg (msg "place 3 virus tokens on " (:title target))
+                    :choices {:req #(and (installed? %)
+                                         (= (:side %) "Runner")
+                                         (zero? (get-virus-counters state side %)))}
+                    :effect (req (add-counter state :runner target :virus 3))}
+                   card nil))}
+
   "Corporate \"Grant\""
   {:events {:runner-install {:silent (req true) ;; there are no current interactions where we'd want Grant to not be last, and this fixes a bug with Hayley
                              :req (req (first-event? state side :runner-install))
@@ -241,8 +251,7 @@
                                (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent the trash")
                                    (continue-ability state :corp
                                      {:optional
-                                      {:delayed-completion true
-                                       :prompt (msg "Spend " cost " [Credits] to prevent the trash of " title "?")
+                                      {:prompt (msg "Spend " cost " [Credits] to prevent the trash of " title "?")
                                        :player :corp
                                        :yes-ability {:effect (req (lose state :corp :credit cost)
                                                                   (system-msg state :corp (str "spends " cost " [Credits] to prevent "
@@ -302,9 +311,9 @@
                                      (update! state side (dissoc card :run-again))))))
     :events {:successful-run-ends
              {:optional {:req (req (= [:rd] (:server target)))
-                                              :prompt "Make another run on R&D?"
-                                              :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                            (update! (assoc card :run-again true)))}}}}}
+                         :prompt "Make another run on R&D?"
+                         :yes-ability {:effect (effect (clear-wait-prompt :corp)
+                                                       (update! (assoc card :run-again true)))}}}}}
 
    "Day Job"
    {:additional-cost [:click 3]
@@ -496,6 +505,28 @@
    "Easy Mark"
    {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
 
+   "Embezzle"
+   (letfn [(name-string [cards] (join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
+    {:req (req hq-runnable)
+     :effect (effect
+              (run :hq {:req (req (= target :hq))
+                        :replace-access
+                        {:mandatory true
+                         :msg (msg "reveal 2 cards from HQ and trash all " target "s") ;should maybe lower-case target
+                         :prompt "Choose a card type"
+                         :choices ["Asset" "Upgrade" "Operation" "ICE"]
+                         :effect (req (let [chosen-type target
+                                            cards-to-reveal (take 2 (shuffle (:hand corp)))
+                                            cards-to-trash (filter #(is-type? % chosen-type) cards-to-reveal)]
+                                        (system-msg state side (str " reveals " (name-string cards-to-reveal) " from HQ"))
+                                        (when-not (empty? cards-to-trash)
+                                          (system-msg state side (str " trashes " (name-string cards-to-trash)
+                                                                      " from HQ and gain " (* 4 (count cards-to-trash)) "[Credits]"))
+                                          (doseq [c cards-to-trash]
+                                            (trash state :runner (assoc c :seen true)))
+                                          (gain state :runner :credit (* 4 (count cards-to-trash))))))}}
+                card))})
+
    "Emergency Shutdown"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
     :msg (msg "derez " (:title target))
@@ -680,8 +711,8 @@
     :implementation "Bypass is manual"
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
-    :events {:successful-run {:msg "access 0 cards"
-                              :effect (effect (max-access 0))}
+    ;; Don't need a msg since game will print that card access is prevented
+    :events {:successful-run {:effect (req (prevent-access))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"
@@ -1013,17 +1044,17 @@
 
    "Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
-    :effect (req (lose state :corp :hand-size-modification (:bad-publicity corp))
+    :effect (req (lose state :corp :hand-size {:mod  (:bad-publicity corp)})
                  (add-watch state :itin
                    (fn [k ref old new]
                      (let [bpnew (get-in new [:corp :bad-publicity])
                            bpold (get-in old [:corp :bad-publicity])]
                        (when (> bpnew bpold)
-                         (lose state :corp :hand-size-modification (- bpnew bpold)))
+                         (lose state :corp :hand-size {:mod (- bpnew bpold)}))
                        (when (< bpnew bpold)
-                         (gain state :corp :hand-size-modification (- bpold bpnew)))))))
+                         (gain state :corp :hand-size {:mod (- bpold bpnew)}))))))
     :leave-play (req (remove-watch state :itin)
-                     (gain state :corp :hand-size-modification (:bad-publicity corp)))}
+                     (gain state :corp :hand-size {:mod (:bad-publicity corp)}))}
 
    "Knifed"
    {:implementation "Ice trash is manual"
@@ -1235,8 +1266,7 @@
                                                         (assoc card :zone '(:discard))))
                                      (update! state side (dissoc card :run-again))))))
     :events {:successful-run nil
-             :successful-run-ends {
-                                   :interactive (req true)
+             :successful-run-ends {:interactive (req true)
                                    :optional {:req (req (= [:rd] (:server target)))
                                               :prompt "Make another run on R&D?"
                                               :yes-ability {:effect (effect (clear-wait-prompt :corp)

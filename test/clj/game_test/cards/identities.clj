@@ -787,7 +787,7 @@
     (take-credits state :corp)
     (play-run-event state (first (:hand (get-runner))) :hq)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit for first Run event")
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (play-run-event state (first (:hand (get-runner))) :hq)
     (is (= 16 (:credit (get-runner))) "No credit gained for second Run event")))
 

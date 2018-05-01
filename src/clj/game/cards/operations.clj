@@ -384,8 +384,8 @@
 
    "Enforced Curfew"
    {:msg "reduce the Runner's maximum hand size by 1"
-    :effect (effect (lose :runner :hand-size-modification 1))
-    :leave-play (effect (gain :runner :hand-size-modification 1))}
+    :effect (effect (lose :runner :hand-size {:mod 1}))
+    :leave-play (effect (gain :runner :hand-size {:mod 1}))}
 
    "Enforcing Loyalty"
    {:trace {:base 3
@@ -1355,6 +1355,16 @@
                    (move state side c :deck))
                  (shuffle! state side :deck)
                  (draw state side eid (count targets) nil))}
+
+   "Standard Procedure"
+   {:req (req (last-turn? state :runner :successful-run))
+    :prompt "Choose a card type"
+    :choices ["Event" "Hardware" "Program" "Resource"]
+    :effect (req (let [n (* 2 (count (filter #(is-type? % target) (:hand runner))))]
+                   (gain state :corp :credit n)
+                   (system-msg state side (str "uses Standard Procedure to name " target ", reveal "
+                                               (join ", " (map :title (:hand runner)))
+                                               " in the Runner's Grip, and gain " n " [Credits]"))))}
 
    "Stock Buy-Back"
    {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")

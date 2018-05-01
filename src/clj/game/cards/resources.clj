@@ -217,7 +217,7 @@
                                                                                   (runner-install state side eid c nil)))}}} card nil)))}}})
 
    "Beach Party"
-   {:in-play [:hand-size-modification 5]
+   {:in-play [:hand-size {:mod 5}]
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 
    "Beth Kilrain-Chang"
@@ -285,7 +285,7 @@
                                  (move target :rfg))}]}
 
    "Borrowed Satellite"
-   {:in-play [:hand-size-modification 1 :link 1]}
+   {:in-play [:hand-size {:mod 1} :link 1]}
 
    "Bug Out Bag"
    {:prompt "How many power counters?"
@@ -945,7 +945,6 @@
 
    "Lewi Guilherme"
    (let [ability {:once :per-turn
-                  :delayed-completion true
                   :optional {:once :per-turn
                              :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
                              :yes-ability {:effect (req (if (pos? (:credit runner))
@@ -960,8 +959,8 @@
                                                       (all-active-installed state :runner)))))}
 
     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
-    :effect (effect (lose :corp :hand-size-modification 1))
-    :leave-play (effect (gain :corp :hand-size-modification 1))
+    :effect (effect (lose :corp :hand-size {:mod 1}))
+    :leave-play (effect (gain :corp :hand-size {:mod 1}))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
     :events {:runner-turn-begins ability}})
 
@@ -1341,7 +1340,7 @@
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Public Sympathy"
-   {:in-play [:hand-size-modification 2]}
+   {:in-play [:hand-size {:mod 2}]}
 
    "Rachel Beckman"
    {:in-play [:click 1 :click-per-turn 1]
@@ -1442,7 +1441,7 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
-   {:in-play [:hand-size-modification -2]
+   {:in-play [:hand-size {:mod -2}]
     :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))
                                 :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
@@ -1784,9 +1783,9 @@
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
                                 (when (not= (get-in old [:runner :credit]) credit)
-                                  (swap! ref assoc-in [:runner :hand-size-base] credit))))))
+                                  (swap! ref assoc-in [:runner :hand-size :base] credit))))))
     :leave-play (req (remove-watch state :theophilius-bagbiter)
-                     (swap! state assoc-in [:runner :hand-size-base] 5))}
+                     (swap! state assoc-in [:runner :hand-size :base] 5))}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn

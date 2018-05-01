@@ -5,7 +5,7 @@
                                 zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
                                 is-remote? is-central? get-server-type other-side same-card? same-side?
                                 combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
-                                pluralize quantify type->rig-zone safe-zero?]]
+                                pluralize quantify type->rig-zone safe-zero? safe-inc-n sub->0]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes?]]
             [clojure.core.match :refer [match]]

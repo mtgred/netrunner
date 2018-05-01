@@ -300,6 +300,23 @@
       (card-subroutine state :corp enig 0)
       (is (= 2 (:click (get-runner))) "Runner lost 1 click"))))
 
+(deftest envelope
+  ;; Envelope - do 1 net damage, end the run
+  (do-game
+    (new-game (default-corp [(qty "Envelope" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Envelope" "HQ")
+    (take-credits state :corp)
+    (let [envl (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (core/rez state :corp envl)
+      (is (= 0 (count (:discard (get-runner)))) "No discarded cards")
+      (card-subroutine state :corp envl 0)
+      (is (= 1 (count (:discard (get-runner)))) "1 card in discard pile")
+      (is (:run @state) "Run still ongoing")
+      (card-subroutine state :corp envl 1)
+      (is (not (:run @state)) "Run ended"))))
+
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
@@ -446,7 +463,9 @@
       (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
       (run-continue state)
       (run-successful state)
-      (is (= 0 (:agenda-point (get-runner))) "Didn't access and steal agenda"))))
+      ;; Prompt for "you cannot access any card this run"
+      (prompt-choice :runner "OK")
+      (is (not (accessing state "Hostile Takeover"))))))
 
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
@@ -867,7 +886,6 @@
     (let [sadaka (get-ice state :archives 0)
           sadakaHQ (get-ice state :hq 0)]
       (take-credits state :corp)
-
       (play-from-hand state :runner "Bank Job")
       (run-on state "archives")
       (core/rez state :corp sadaka)
@@ -880,7 +898,6 @@
       (prompt-choice :corp "Done")
       (is (= 2 (count (:discard (get-corp)))) "Sadaka trashed")
       (run-jack-out state)
-
       (run-on state "archives")
       (core/rez state :corp sadakaHQ)
       (is (= 2 (count (:hand (get-corp)))) "Corp starts with 2 cards in hand")
@@ -893,8 +910,8 @@
       (prompt-select :corp (get-resource state 0))
       (is (= 1 (count (:discard (get-runner)))) "Runner resource trashed")
       (is (= 4 (count (:discard (get-corp)))) "sadakaHQ trashed"))))
-(deftest sandman
 
+(deftest sandman
   ;; Sandman - add an installed runner card to the grip
   (do-game
     (new-game (default-corp [(qty "Sandman" 1)])

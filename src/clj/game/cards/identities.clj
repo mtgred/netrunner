@@ -244,14 +244,14 @@
 
    "Cerebral Imaging: Infinite Frontiers"
    {:effect (req (when (> (:turn @state) 1)
-                   (swap! state assoc-in [:corp :hand-size-base] (:credit corp)))
+                   (swap! state assoc-in [:corp :hand-size :base] (:credit corp)))
                  (add-watch state :cerebral-imaging
                             (fn [k ref old new]
                               (let [credit (get-in new [:corp :credit])]
                                 (when (not= (get-in old [:corp :credit]) credit)
-                                  (swap! ref assoc-in [:corp :hand-size-base] credit))))))
+                                  (swap! ref assoc-in [:corp :hand-size :base] credit))))))
     :leave-play (req (remove-watch state :cerebral-imaging)
-                     (swap! state assoc-in [:corp :hand-size-base] 5))}
+                     (swap! state assoc-in [:corp :hand-size :base] 5))}
 
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))
@@ -300,10 +300,10 @@
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
-   {:effect (effect (lose :hand-size-modification 1)
-                    (lose :runner :hand-size-modification 1))
-    :leave-play (effect (gain :hand-size-modification 1)
-                        (gain :runner :hand-size-modification 1))}
+   {:effect (effect (lose :hand-size {:mod 1})
+                    (lose :runner :hand-size {:mod 1}))
+    :leave-play (effect (gain :hand-size {:mod 1})
+                        (gain :runner :hand-size {:mod 1}))}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
@@ -712,8 +712,8 @@
    {:recurring 2}
 
    "NBN: The World is Yours*"
-   {:effect (effect (gain :hand-size-modification 1))
-    :leave-play (effect (lose :hand-size-modification 1))}
+   {:effect (effect (gain :hand-size {:mod 1}))
+    :leave-play (effect (lose :hand-size {:mod 1}))}
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:req (req (first-event? state :corp :server-created))

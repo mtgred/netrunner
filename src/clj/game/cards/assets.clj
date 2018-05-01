@@ -231,8 +231,8 @@
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
-   {:effect (effect (lose :runner :hand-size-modification 2))
-    :leave-play (effect (gain :runner :hand-size-modification 2))
+   {:effect (effect (lose :runner :hand-size {:mod 2}))
+    :leave-play (effect (gain :runner :hand-size {:mod 2}))
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
@@ -384,7 +384,7 @@
                                    :effect (effect (gain :corp :credit 1))}}}
 
    "Cybernetics Court"
-   {:in-play [:hand-size-modification 4]}
+   {:in-play [:hand-size {:mod 4}]}
 
    "Daily Business Show"
    {:events {:pre-corp-draw
@@ -771,7 +771,6 @@
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins
                {:optional {:prompt "Initiate trace with Kuwinda K4H1U3?"
-                           :delayed-completion true
                            :yes-ability ability}}}
       :abilities [(assoc ability :label "Trace X - do 1 brain damage (start of turn)")]})
 
@@ -939,8 +938,8 @@
                   :label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
                   :effect (effect (gain :credit 1))}]
-     {:effect (effect (gain :runner :hand-size-modification 1))
-      :leave-play (effect (lose :runner :hand-size-modification 1))
+     {:effect (effect (gain :runner :hand-size {:mod 1}))
+      :leave-play (effect (lose :runner :hand-size {:mod 1}))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -1303,7 +1302,7 @@
                                   {:prompt "Move how many tokens?"
                                    :choices {:number (req (:advance-counter recon 0))
                                              :default (req (:advance-counter recon 0))}
-                                   :effect (effect (add-counter move-to :advancement target)
+                                   :effect (effect (add-counter move-to :advancement target {:placed true})
                                                    (system-msg (str "trashes Reconstruction Contract to move " target
                                                                     (pluralize " advancement token" target) " to "
                                                                     (card-str state move-to)))
@@ -1503,8 +1502,7 @@
              :effect (effect (show-wait-prompt :runner "Corp to use Space Camp")
                              (continue-ability
                                {:optional
-                                {:delayed-completion true
-                                 :prompt "Place 1 advancement token with Space Camp?"
+                                {:prompt "Place 1 advancement token with Space Camp?"
                                  :cancel-effect (req (clear-wait-prompt state :runner)
                                                      (effect-completed state side eid))
                                  :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
