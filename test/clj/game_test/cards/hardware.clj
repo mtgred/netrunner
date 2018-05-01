@@ -1187,7 +1187,8 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Zer0")
     (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
-    (let  [z (get-hardware state)]
+    (let  [z (get-hardware state 0)]
+      (print z)
       (card-ability state :runner z 0)
       (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
       (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards")
