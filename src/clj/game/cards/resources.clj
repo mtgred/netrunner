@@ -254,8 +254,8 @@
 
    "Bio-Modeled Network"
    {:prevent {:damage [:net]}
-    :events {:pre-damage {:req (req (= target :net))
-                          :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}}
+    :events {:pre-damage {:req (req (= (:type target) :net))
+                          :effect (effect (update! (assoc card :dmg-amount (:amount target))))}}
     :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
                  :effect (effect (damage-prevent :net (dec (:dmg-amount card)))
                                  (trash card {:cause :ability-cost}))}]}
@@ -332,8 +332,8 @@
 
    "Chrome Parlor"
    {:events
-    {:pre-damage {:req (req (has-subtype? (second targets) "Cybernetic"))
-                  :effect (effect (damage-prevent target Integer/MAX_VALUE))}}}
+    {:pre-damage {:req (req (has-subtype? (:card target) "Cybernetic"))
+                  :effect (effect (damage-prevent (:type target) Integer/MAX_VALUE))}}}
 
    "Citadel Sanctuary"
    {:prevent {:damage [:meat]}
@@ -351,7 +351,7 @@
                                              :msg "remove 1 tag"}}}}}
 
    "Clan Vengeance"
-   {:events {:pre-resolve-damage {:req (req (pos? (last targets)))
+   {:events {:pre-resolve-damage {:req (req (pos? (:amount target)))
                                   :effect (effect (add-counter card :power 1)
                                                   (system-msg :runner (str "places 1 power counter on Clan Vengeance")))}}
     :abilities [{:label "[Trash]: Trash 1 random card from HQ for each power counter"
@@ -716,7 +716,7 @@
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
-                 :req (req (some #(= (:side %) "Corp") (map second (turn-events state :runner :damage))))
+                 :req (req (some #(= (get-in % [:card :side]) "Corp") (map first (turn-events state :runner :damage))))
                  :msg "draw 1 card"
                  :effect (effect (draw))}]}
 
@@ -782,9 +782,9 @@
    "Guru Davinder"
    {:flags {:cannot-pay-net-damage true}
     :events {:pre-damage
-             {:req    (req (and (or (= target :meat) (= target :net))
-                                (pos? (last targets))))
-              :msg (msg "prevent all " (if (= target :meat) "meat" "net") " damage")
+             {:req    (req (and (or (= (:type target) :meat) (= (:type target) :net))
+                                (pos? (:amount target))))
+              :msg (msg "prevent all " (if (= (:type target) :meat) "meat" "net") " damage")
               :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
                            (damage-prevent state side :net Integer/MAX_VALUE)
                            (if (< (:credit runner) 4)
@@ -1185,7 +1185,7 @@
 
    "Officer Frank"
    {:abilities [{:cost [:credit 1]
-                 :req (req (some #(= :meat %) (map first (turn-events state :runner :damage))))
+                 :req (req (some #(= :meat (:type %)) (map first (turn-events state :runner :damage))))
                  :msg "force the Corp to trash 2 random cards from HQ"
                  :effect (effect (trash-cards :corp (take 2 (shuffle (:hand corp))))
                                  (trash card {:cause :ability-cost}))}]}
@@ -1270,7 +1270,7 @@
 
    "Paparazzi"
    {:effect (req (swap! state update-in [:runner :tagged] inc))
-    :events {:pre-damage {:req (req (= target :meat)) :msg "prevent all meat damage"
+    :events {:pre-damage {:req (req (= (:type target) :meat)) :msg "prevent all meat damage"
                           :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}}
     :leave-play (req (swap! state update-in [:runner :tagged] dec))}
 

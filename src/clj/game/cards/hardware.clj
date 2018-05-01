@@ -572,7 +572,7 @@
 
    "Muresh Bodysuit"
    {:events {:pre-damage {:once :per-turn :once-key :muresh-bodysuit
-                          :req (req (= target :meat))
+                          :req (req (= (:type target) :meat))
                           :msg "prevent the first meat damage this turn"
                           :effect (effect (damage-prevent :meat 1))}}}
 
@@ -758,15 +758,15 @@
    "Recon Drone"
    ; eventmap uses reverse so we get the most recent event of each kind into map
    (let [eventmap (fn [s] (into {} (reverse (get s :turn-events))))]
-     {:abilities [{:req (req (and (true? (:access @state)) (= (:cid (second (:pre-damage (eventmap @state))))
+     {:abilities [{:req (req (and (true? (:access @state)) (= (:cid (:card (first (:pre-damage (eventmap @state)))))
                                                               (:cid (first (:pre-access-card (eventmap @state)))))))
                 :effect (effect (resolve-ability
                                   {:prompt "Choose how much damage to prevent"
                                    :priority 50
-                                   :choices {:number (req (min (last (:pre-damage (eventmap @state)))
+                                   :choices {:number (req (min (:amount (first (:pre-damage (eventmap @state))))
                                                                (:credit runner)))}
                                    :msg (msg "prevent " target " damage")
-                                   :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) target)
+                                   :effect (effect (damage-prevent (:type (first (:pre-damage (eventmap @state)))) target)
                                                    (lose :credit target)
                                                    (trash card {:cause :ability-cost}))} card nil))}]
      :events    {:pre-access {:effect (req (doseq [dtype [:net :brain :meat]] (swap! state update-in [:prevent :damage dtype] #(conj % card))))}
@@ -982,12 +982,12 @@
    {:events
     {:pre-resolve-damage
      {:delayed-completion true
-      :req (req (and (pos? (last targets))
+      :req (req (and (pos? (:amount target))
                      (runner-can-choose-damage? state)
                      (not (get-in @state [:damage :damage-replace]))))
-      :effect (req (let [dtype target
-                         src (second targets)
-                         dmg (last targets)]
+      :effect (req (let [dtype (:type target)
+                         src (:card target)
+                         dmg (:amount target)]
                      (when (> dmg (count (:hand runner)))
                        (flatline state))
                      (when (= dtype :brain)
@@ -1007,7 +1007,7 @@
                                                      (damage-defer state side dtype 0)
                                                      (effect-completed state side eid))}
                                       card nil)
-                                     (do (trigger-event state side :damage dtype src dmg)
+                                     (do (trigger-event state side :damage {:type dtype :card src :amount dmg})
                                          (effect-completed state side eid)))))}
     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
     :delayed-completion true

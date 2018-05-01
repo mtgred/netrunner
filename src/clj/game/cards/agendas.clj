@@ -1059,7 +1059,7 @@
       :events {:corp-turn-ends nil :runner-turn-ends nil}}
 
    "Sentinel Defense Program"
-   {:events {:pre-resolve-damage {:req (req (and (= target :brain) (> (last targets) 0)))
+   {:events {:pre-resolve-damage {:req (req (and (= (:type target) :brain) (> (:amount target) 0)))
                                   :msg "do 1 net damage"
                                   :effect (effect (damage eid :net 1 {:card card}))}}}
 
@@ -1136,7 +1136,7 @@
              :effect (effect (tag-runner :runner eid 1))}}
 
    "The Cleaners"
-   {:events {:pre-damage {:req (req (and (= target :meat)
+   {:events {:pre-damage {:req (req (and (= (:type target) :meat)
                                          (= side :corp)))
                           :msg "do 1 additional meat damage"
                           :effect (effect (damage-bonus :meat 1))}}}

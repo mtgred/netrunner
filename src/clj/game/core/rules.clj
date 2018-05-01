@@ -199,7 +199,7 @@
   [state side eid type n {:keys [unpreventable unboostable card] :as args}]
   (swap! state update-in [:damage :defer-damage] dissoc type)
   (damage-choice-priority state)
-  (when-completed (trigger-event-sync state side :pre-resolve-damage type card n)
+  (when-completed (trigger-event-sync state side :pre-resolve-damage {:type type :card card :amount n})
                   (do (when-not (or (get-in @state [:damage :damage-replace])
                                     (runner-can-choose-damage? state))
                         (let [n (if-let [defer (get-defer-damage state side type args)] defer n)]
@@ -217,7 +217,7 @@
                                                  {:unpreventable true}))
                                 (do (trash-cards state side (make-eid state) cards-trashed
                                                  {:unpreventable true :cause type})
-                                    (trigger-event state side :damage type card n)))))))
+                                    (trigger-event state side :damage {:type type :card card :amount n})))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (swap! state update-in [:damage] dissoc :damage-replace)
                       (effect-completed state side eid card))))
@@ -231,7 +231,7 @@
    (swap! state update-in [:damage :damage-bonus] dissoc type)
    (swap! state update-in [:damage :damage-prevent] dissoc type)
    ;; alert listeners that damage is about to be calculated.
-   (trigger-event state side :pre-damage type card n)
+   (trigger-event state side :pre-damage {:type type :card card :amount n})
    (let [n (damage-count state side type n args)]
      (let [prevent (get-in @state [:prevent :damage type])]
        (if (and (not unpreventable) prevent (pos? (count prevent)))
@@ -244,7 +244,7 @@
                (fn [_]
                  (let [prevent (get-in @state [:damage :damage-prevent type])]
                    (when prevent
-                     (trigger-event state side :prevented-damage type prevent))
+                     (trigger-event state side :prevented-damage {:type type :amount prevent}))
                    (system-msg state :runner
                                (if prevent
                                  (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
@@ -275,11 +275,11 @@
   (swap! state update-in [:runner :tag-remove-bonus] (fnil #(+ % n) 0)))
 
 (defn resolve-tag [state side eid n args]
-  (trigger-event state side :pre-resolve-tag n)
+  (trigger-event state side :pre-resolve-tag {:amount n})
   (if (pos? n)
     (do (gain state :runner :tag n)
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
-        (trigger-event-sync state side eid :runner-gain-tag n))
+        (trigger-event-sync state side eid :runner-gain-tag {:amount n}))
     (effect-completed state side eid)))
 
 (defn tag-runner
@@ -288,7 +288,7 @@
   ([state side eid n] (tag-runner state side eid n nil))
   ([state side eid n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
-   (trigger-event state side :pre-tag card)
+   (trigger-event state side :pre-tag {:card card})
    (let [n (tag-count state side n args)]
      (let [prevent (get-in @state [:prevent :tag :all])]
        (if (and (pos? n) (not unpreventable) (pos? (count prevent)))

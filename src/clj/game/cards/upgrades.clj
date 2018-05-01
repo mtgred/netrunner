@@ -875,9 +875,9 @@
     {:pre-resolve-damage
      {:once :per-run
       :delayed-completion true
-      :req (req (and this-server (= target :net) (> (last targets) 0) (can-pay? state :corp nil [:credit 2])))
+      :req (req (and this-server (= (:type target) :net) (> (:amount target) 0) (can-pay? state :corp nil [:credit 2])))
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
-                   (damage-defer state side :net (last targets))
+                   (damage-defer state side :net (:amount target))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")
                    (continue-ability state side
                      {:optional {:prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?") :player :corp
@@ -893,7 +893,7 @@
                                               :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                                            (clear-wait-prompt state :runner)
                                                            (effect-completed state side eid))}}} card nil))}
-     :prevented-damage {:req (req (and this-server (= target :net) (> (last targets) 0)))
+     :prevented-damage {:req (req (and this-server (= (:type target) :net) (> (:amount target) 0)))
                         :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}}}
 
    "Traffic Analyzer"

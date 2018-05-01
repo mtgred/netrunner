@@ -331,7 +331,7 @@
                          true)))))}
 
    "Defective Brainchips"
-   {:events {:pre-damage {:req (req (= target :brain)) :msg "do 1 additional brain damage"
+   {:events {:pre-damage {:req (req (= (:type target) :brain)) :msg "do 1 additional brain damage"
                           :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
 
    "Distract the Masses"

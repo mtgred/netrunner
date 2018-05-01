@@ -263,11 +263,11 @@
      :runner-phase-12 {:effect (effect (enable-corp-damage-choice))}
      :pre-resolve-damage
      {:delayed-completion true
-      :req (req (and (= target :net)
+      :req (req (and (= (:type target) :net)
                      (corp-can-choose-damage? state)
-                     (> (last targets) 0)
+                     (> (:amount target) 0)
                      (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))))
-      :effect (req (damage-defer state side :net (last targets))
+      :effect (req (damage-defer state side :net (:amount target))
                    (if (= 0 (count (:hand runner)))
                      (do (swap! state update-in [:damage] dissoc :damage-choose-corp)
                          (damage state side eid :net (get-defer-damage state side :net nil)
@@ -512,7 +512,7 @@
 
    "Jinteki: Potential Unleashed"
    {:events {:pre-resolve-damage
-             {:req (req (and (-> @state :corp :disable-id not) (= target :net) (pos? (last targets))))
+             {:req (req (and (-> @state :corp :disable-id not) (= (:type target) :net) (pos? (:amount target))))
               :effect (req (let [c (first (get-in @state [:runner :deck]))]
                              (system-msg state :corp (str "uses Jinteki: Potential Unleashed to trash " (:title c)
                                                           " from the top of the Runner's Stack"))

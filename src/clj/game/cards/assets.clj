@@ -1289,7 +1289,7 @@
     :abilities [ability]})
 
    "Reconstruction Contract"
-   {:events {:damage {:req (req (and (pos? (nth targets 2)) (= :meat target)))
+   {:events {:damage {:req (req (and (pos? (:amount target)) (= :meat (:type target))))
                       :effect (effect (add-counter card :advancement 1)
                                       (system-msg "adds 1 advancement token to Reconstruction Contract"))}}
     :abilities [{:label "[Trash]: Move advancement tokens to another card"
