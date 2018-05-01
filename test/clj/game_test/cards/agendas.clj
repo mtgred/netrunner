@@ -1996,6 +1996,33 @@
     (play-and-score state "Remote Data Farm")
     (is (= 7 (get-hand-size :corp)))))
 
+(deftest remote-enforcement
+  ;; Remote Enforcement - Search R&D for a piece of ice and install it on a remote at no rez cost
+  (do-game
+   (new-game (default-corp [(qty "Research Grant" 2)
+                            (qty "Archer" 1)
+                            (qty "Chiyashi" 1)])
+             ;; (make-deck "Reina Roja: Freedom Fighter" [])
+             (default-runner)
+             )
+   (starting-hand state :corp ["Research Grant" "Research Grant"])
+   (is (= 2 (count (:deck (get-corp)))))
+   (play-and-score state "Research Grant")
+   (let [N (:credit (get-corp))]
+     (prompt-choice :corp "Yes")
+     (prompt-choice :corp "Chiyashi")
+     (prompt-choice :corp "New remote")
+     (is (core/rezzed? (get-ice state :server2 0)) "Chiyashi was installed rezzed")
+     (is (= N (:credit (get-corp))) "Rezzing Chiyashi was free"))
+   (play-and-score state "Research Grant")
+   (let [N (:credit (get-corp))]
+     (prompt-choice :corp "Yes")
+     (prompt-choice :corp "Archer")
+     (prompt-choice :corp "Server 2")
+     (is (= (dec N) (:credit (get-corp))) "Installing Archer cost a credit")
+     (is (not-empty (:prompt (get-corp))) "Corp prompted to forfeit an agenda for Archer")
+     (is (= N (:credit (get-corp))) "Rezzing Archer didn't cost any credits"))))
+
 (deftest research-grant
   ;; Research Grant
   (testing "Basic test"
