@@ -75,12 +75,17 @@
     (reset! last-state @game-state)
     (reset! lock false)))
 
+(defn handle-timeout [{:keys [gameid]}]
+  (when (= gameid (:gameid @game-state))
+    (toast "Game closed due to inactivity" "error" {:time-out 0 :close-button true})))
+
 (defn parse-state [state]
   (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (ws/register-ws-handler! :netrunner/state #(handle-state (parse-state %)))
 (ws/register-ws-handler! :netrunner/start #(launch-game (parse-state %)))
 (ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
+(ws/register-ws-handler! :netrunner/timeout #(handle-timeout (parse-state %)))
 
 (def anr-icons {"[Credits]" "credit"
                 "[$]" "credit"
