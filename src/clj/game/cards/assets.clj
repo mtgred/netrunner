@@ -237,7 +237,8 @@
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                   :effect (effect (as-agenda :runner card 2))}}
+                   :delayed-completion true
+                   :effect (req (as-agenda state :runner eid card 2))}}
 
    "Chief Slee"
    {:abilities [{:label "Add 1 power counter"
@@ -430,7 +431,8 @@
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                   :effect (effect (as-agenda :runner card 2))}}
+                   :delayed-completion true
+                   :effect (req (as-agenda state :runner eid card 2))}}
 
    "Docklands Crackdown"
    {:abilities [{:cost [:click 2]
@@ -459,7 +461,8 @@
    {:abilities [{:label "Add Echo Chamber to your score area as an agenda worth 1 agenda point"
                  :cost [:click 3]
                  :msg "add it to their score area as an agenda worth 1 agenda point"
-                 :effect (effect (as-agenda :corp card 1)) }]}
+                 :delayed-completion true
+                 :effect (req (as-agenda state :corp eid card 1)) }]}
 
    "Edge of World"
    (letfn [(ice-count [state]
@@ -560,12 +563,14 @@
                    :advance-counter-cost 7
                    :label "Add False Flag to your score area as an agenda worth 3 agenda points"
                    :msg "add it to their score area as an agenda worth 3 agenda points"
-                   :effect (effect (as-agenda :corp card 3))}]})
+                   :delayed-completion true
+                   :effect (req (as-agenda state :corp eid card 3))}]})
 
    "Franchise City"
    {:events {:access {:req (req (is-type? target "Agenda"))
                       :msg "add it to their score area as an agenda worth 1 agenda point"
-                      :effect (effect (as-agenda :corp card 1))}}}
+                      :delayed-completion true
+                      :effect (req (as-agenda state :corp eid card 1))}}}
 
    "Full Immersion RecStudio"
    {:can-host (req (and (or (is-type? target "Asset") (is-type? target "Agenda"))
@@ -606,7 +611,8 @@
                  :advance-counter-cost 3
                  :label "Add Gene Splicing to your score area as an agenda worth 1 agenda point"
                  :msg "add it to their score area as an agenda worth 1 agenda point"
-                 :effect (effect (as-agenda :corp card 1))}]}
+                 :delayed-completion true
+                 :effect (req (as-agenda state :corp eid card 1))}]}
 
    "Genetics Pavilion"
    {:msg "prevent the Runner from drawing more than 2 cards during their turn"
@@ -1209,10 +1215,12 @@
    {:effect (effect (add-counter card :power 3))
     :derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins
-             {:effect (req (add-counter state side card :power -1)
-                           (when (<= (get-in card [:counter :power]) 1)
-                             (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
-                             (as-agenda state :corp (dissoc card :counter) 1)))} }}
+             {:delayed-completion true
+              :effect (req (add-counter state side card :power -1)
+                           (if (<= (get-in card [:counter :power]) 1)
+                             (do (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
+                                 (as-agenda state :corp eid (dissoc card :counter) 1))
+                             (effect-completed state side eid)))} }}
 
    "Quarantine System"
    (letfn [(rez-ice [cnt] {:prompt "Select an ICE to rez"
@@ -1592,7 +1600,8 @@
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                   :effect (effect (as-agenda :runner card 2))}
+                   :delayed-completion true
+                   :effect (req (as-agenda state :runner eid card 2))}
     :events {:agenda-stolen {:effect (effect (lose :runner :agenda-point 1))}
              :card-moved {:req (req (or (some #{:scored} (:zone (first targets)))
                                         (some #{:scored} (:zone (second targets)))))
@@ -1666,7 +1675,8 @@
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                   :effect (effect (as-agenda :runner card 2))}}
+                   :delayed-completion true
+                   :effect (req (as-agenda state :runner eid card 2))}}
 
    "Watchdog"
    {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))

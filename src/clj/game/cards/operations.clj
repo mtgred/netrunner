@@ -78,8 +78,9 @@
                        :yes-ability {:msg (msg "let the Runner make a run on " serv)
                                      :effect (effect (clear-wait-prompt :corp)
                                                      (game.core/run eid serv nil card))}
-                       :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                    (as-agenda :corp (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
+                       :no-ability {:delayed-completion true
+                                    :effect (req (clear-wait-prompt state :corp)
+                                                    (as-agenda state :corp eid (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
                                     :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                     card nil)))}
 
@@ -269,7 +270,8 @@
 
    "\"Clones are not People\""
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 1 agenda point"
-                             :effect (effect (as-agenda :corp card 1))}}}
+                             :delayed-completion true
+                             :effect (req (as-agenda state :corp eid card 1))}}}
 
    "Closed Accounts"
    {:req (req tagged)
