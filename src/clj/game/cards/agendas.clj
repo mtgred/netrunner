@@ -1032,9 +1032,8 @@
                                                                :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
                                                                                 (corp-install-list state chosen-ice))
                                                                :effect (effect
-                                                                        (corp-install chosen-ice target {:install-state :rezzed-no-rez-cost})
                                                                         (shuffle! :deck)
-                                                                        (effect-completed eid))}
+                                                                        (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
                                                               card nil)))}}}
 
    "Research Grant"
