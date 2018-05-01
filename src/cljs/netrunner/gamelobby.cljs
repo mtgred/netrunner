@@ -10,7 +10,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
             [netrunner.gameboard :refer [init-game game-state toast launch-game parse-state]]
-            [netrunner.cardbrowser :refer [image-url] :as cb]
+            [netrunner.cardbrowser :refer [image-url non-game-toast] :as cb]
             [netrunner.stats :refer [notnum->zero]]
             [netrunner.deckbuilder :refer [format-deck-status-span deck-status-span process-decks load-decks num->percent]]))
 
@@ -53,6 +53,13 @@
     (swap! app-state update-in [:messages] #(conj % msg))
     (when notification
       (.play (.getElementById js/document notification)))))
+
+(ws/register-ws-handler!
+  :lobby/timeout
+  (fn [{:keys [gameid] :as msg}]
+    (when (= gameid (:gameid @app-state))
+      (non-game-toast "Game lobby closed due to inactivity" "error" {:time-out 0 :close-button true})
+      (swap! app-state assoc :gameid nil))))
 
 (go (while true
       (let [msg (<! socket-channel)]
