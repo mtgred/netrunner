@@ -1177,3 +1177,18 @@
    (prompt-choice :runner "Expose a card")
    (prompt-select :runner (get-ice state :archives 0))
    (is (= 3 (:credit (get-runner))) "Gained 1 more credit from exposing")))
+
+(deftest zer0
+  ;; Zer0 - Once per turn, deal 1 damage to self, to gain 1 credit and 2 cards.
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Zer0" 1) (qty "Sure Gamble" 2) (qty "Corroder" 1)]))
+    (starting-hand state :runner ["Zer0" "Corroder"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Zer0")
+    (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
+    (let  [z (get-hardware state)]
+      (card-ability state :runner z 0)
+      (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
+      (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards")
+      (is (find-card "Corroder" (:discard (get-runner))) "Corroder is in heap"))))
