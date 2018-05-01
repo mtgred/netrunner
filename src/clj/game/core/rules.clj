@@ -538,8 +538,9 @@
   ([state side card n] (as-agenda state side (make-eid state) card n))
   ([state side eid card n]
    (move state side (assoc (deactivate state side card) :agendapoints n) :scored)
-   (when-completed (trigger-event-sync state side eid :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-                   (gain-agenda-point state side n))))
+   (when-completed (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+                   (do (gain-agenda-point state side n)
+                       (effect-completed state side eid)))))
 
 (defn forfeit
   "Forfeits the given agenda to the :rfg zone."

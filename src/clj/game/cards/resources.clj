@@ -868,8 +868,7 @@
                                  state side
                                  {:optional
                                   {:prompt "Trash Jackpot!?"
-                                   :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                (effect-completed eid))}
+                                   :no-ability {:effect (effect (clear-wait-prompt :corp))}
                                    :yes-ability
                                    {:prompt "Choose how many [Credit] to take"
                                     :choices {:number (req (get-in card [:counter :credit] 0))}
@@ -877,10 +876,10 @@
                                     :effect (req (gain state :runner :credit target)
                                                  (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
                                                  (clear-wait-prompt state :corp)
-                                                 (trash state :runner eid card {:cause :ability-cost}))}}}
+                                                 (trash state :runner eid card nil))}}}
                                  card nil))}]
      {:events
-      {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 2))}
+      {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 1))}
        :agenda-stolen (dissoc jackpot :req)
        :as-agenda jackpot}})
 

@@ -52,8 +52,9 @@
   ([state side eid card n options]
   (or (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored options) ; if the runner did not trash the card on access, then this will work
       (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options)) ; allow force option in case of Blacklist/News Team
-   (when-completed (trigger-event-sync state side eid :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-                   (gain-agenda-point state side n))))
+   (when-completed (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+                   (do (gain-agenda-point state side n)
+                       (effect-completed state side eid)))))
 
 ;;; Card definitions
 (declare in-server?)

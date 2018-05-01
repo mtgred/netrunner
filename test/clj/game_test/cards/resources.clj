@@ -961,17 +961,17 @@
       (is (zero? (get-counters (refresh jak) :credit)) "Jackpot! starts with 0 credits")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= 2 (get-counters (refresh jak) :credit)) "Jackpot! gains 2 credits per turn")
+      (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= 4 (get-counters (refresh jak) :credit)) "Jackpot! gains 2 credits per turn (2nd turn)")
+      (is (= 2 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn (2nd turn)")
       (run-empty-server state "HQ")
       (prompt-choice :runner "Steal")
       (is (= 2 (:agenda-point (get-runner))) "Runner steals Braintrust")
       (prompt-choice :runner "Yes")
       (is (= 12 (:credit (get-runner))) "Runner starts with 12 credits")
-      (prompt-choice :runner 4)
-      (is (= 16 (:credit (get-runner))) "Runner gains 4 credits")
+      (prompt-choice :runner 2)
+      (is (= 14 (:credit (get-runner))) "Runner gains 2 credits")
       (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
 
 (deftest jackpot-hiro
@@ -985,12 +985,12 @@
     (let [jak (get-resource state 0)]
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= 2 (get-counters (refresh jak) :credit)) "Jackpot! gains 2 credits per turn")
+      (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
       (run-empty-server state "Server 1")
       (prompt-choice :runner "Yes") ;trash CH
       (prompt-choice :runner "Yes") ;trash Jackpot!
       (prompt-choice :runner 1)
-      (is (= 3 (:credit (get-runner))) "Runner gains 1 credits")
+      (is (= 3 (:credit (get-runner))) "Runner gains 1 credit")
       (is (= 1 (count (:scored (get-runner)))) "Chairman Hiro in score area")
       (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
 
