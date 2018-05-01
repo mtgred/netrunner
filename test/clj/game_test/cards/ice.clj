@@ -579,6 +579,42 @@
      (run-jack-out state)
      (is (= 1 (count (:hand (get-runner)))) "Runner took damage after swap"))))
 
+(deftest kamali
+  ;; Kamali 1.0
+  (do-game
+    (new-game (default-corp [(qty "Kamali 1.0" 1)])
+              (default-runner [(qty "Astrolabe" 1) (qty "Decoy" 1)
+                               (qty "Cache" 1) (qty "Hedge Fund" 1)]))
+    (play-from-hand state :corp "Kamali 1.0" "HQ")
+    (take-credits state :corp)
+
+    (play-from-hand state :runner "Astrolabe")
+    (play-from-hand state :runner "Decoy")
+    (play-from-hand state :runner "Cache")
+
+   (let [kamali (get-ice state :hq 0)]
+     (run-on state "HQ")
+     (core/rez state :corp kamali)
+
+     (card-subroutine state :corp kamali 0)
+     (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
+     (prompt-choice :runner "Take 1 brain damage")
+     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+
+     (card-subroutine state :corp kamali 1)
+     (is (empty? (:discard (get-runner))) "Runner starts with no discarded cards")
+     (prompt-choice :runner "Trash an installed piece of hardware")
+     (prompt-select :runner (get-hardware state 0))
+     (is (empty? (get-in @state [:runner :rig :hardware])) "Astrolabe trashed")
+     (is (= 1 (count (:discard (get-runner)))) "Runner trashed 1 card")
+
+     (card-subroutine state :corp kamali 2)
+     (is (= 1 (count (:discard (get-runner)))) "Runner starts with 1 discarded card")
+     (prompt-choice :runner "Trash an installed program")
+     (prompt-select :runner (get-program state 0))
+     (is (empty? (get-in @state [:runner :rig :program])) "Cache trashed")
+     (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
