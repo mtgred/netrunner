@@ -787,6 +787,48 @@
       (core/move state :runner (refresh imp) :discard)
       (is (not (core/any-flag-fn? state :runner :slow-trash true))))))
 
+(deftest mwanza-city-grid
+  ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
+  (do-game
+    (new-game (default-corp [(qty "Mwanza City Grid" 1) (qty "Hedge Fund" 5)])
+              (default-runner))
+    (play-from-hand state :corp "Mwanza City Grid" "HQ")
+    (take-credits state :corp)
+
+    (run-on state "HQ")
+    (let [mcg (get-content state :hq 0)]
+      (core/rez state :corp mcg)
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+      (run-successful state)
+      (prompt-choice :runner "Mwanza City Grid")
+      (prompt-choice :runner "No")
+      (dotimes [c 4]
+        (prompt-choice :runner "Card from hand")
+        (prompt-choice :runner "OK"))
+      (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
+      (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
+
+(deftest mwanza-city-grid-trash
+  ;; Mwanza City Grid - effect persists through current run after trash
+  (do-game
+    (new-game (default-corp [(qty "Mwanza City Grid" 1) (qty "Hedge Fund" 5)])
+              (default-runner))
+    (play-from-hand state :corp "Mwanza City Grid" "HQ")
+    (take-credits state :corp)
+
+    (run-on state "HQ")
+    (let [mcg (get-content state :hq 0)]
+      (core/rez state :corp mcg)
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+      (run-successful state)
+      (prompt-choice :runner "Mwanza City Grid")
+      (prompt-choice :runner "Yes")
+      (dotimes [c 4]
+        (prompt-choice :runner "Card from hand")
+        (prompt-choice :runner "OK"))
+      (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
+      (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
+
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement
   (do-game

@@ -561,6 +561,29 @@
     :trash-effect {:when-inactive true
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
+   "Mwanza City Grid"
+   (let [gain-creds {:req (req (and installed
+                                    this-server
+                                    (:successful run)
+                                    (pos? (:cards-accessed run))))
+                     :silent (req true)
+                     :effect (req (let [cnt (:cards-accessed run)
+                                        total (* 2 cnt)]
+                                    (gain state :corp :credit total)
+                                    (system-msg state :corp
+                                                (str "gains " total " [Credits] from Mwanza City Grid"))))}]
+     {:events {:pre-access {:req (req (and installed this-server))
+                            :msg "force the Runner to access 3 additional cards"
+                            :effect (effect (access-bonus 3))}
+               :run-ends gain-creds}
+      :trash-effect
+      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+       :effect (effect (register-events {:run-ends
+                                         (assoc gain-creds :req (req (= (first (:server run))
+                                                                        (second (:previous-zone card)))))
+                                         :successful-run-ends {:effect (effect (unregister-events card))}}
+                                        (assoc card :zone '(:discard))))}})
+
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
              :once :per-turn
