@@ -653,6 +653,58 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
 
+(deftest intake
+  ;; Intake - Trace4, add an installed program or virtual resource to the grip
+  (do-game
+    (new-game (default-corp [(qty "Intake" 3)])
+              (default-runner [(qty "Corroder" 1) (qty "Fester" 1) (qty "Daily Casts" 1)]))
+    (starting-hand state :corp ["Intake" "Intake"])
+    (play-from-hand state :corp "Intake" "New remote")
+    (take-credits state :corp)
+
+    (core/gain state :runner :click 5 :credit 10)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Fester")
+    (play-from-hand state :runner "Daily Casts")
+
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (is (empty? (:hand (get-runner))) "Runner starts with no cards in hand")
+    (prompt-select :corp (get-program state 0))
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (prompt-choice :runner "Yes") ; trash
+
+    (run-on state "Archives")
+    (run-successful state)
+    (is (empty? (:prompt (get-corp))) "No prompt from Archives access")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+
+    (run-on state "Server 1")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (prompt-select :corp (get-resource state 0))
+    (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+    (prompt-choice :runner "No") ; trash
+
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (prompt-choice :corp "Done")
+    (prompt-choice :runner "No") ; trash
+    (is (empty? (:prompt (get-corp))) "Prompt closes after done")
+    (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 5)
+    (is (empty? (:prompt (get-corp))) "Prompt closes after lost trace")))
+
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
   (do-game
