@@ -417,9 +417,9 @@
    "Gebrselassie"
    {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
                  :cost [:click 1] 
-                 :choices {:req #(and 
-                                   (installed? %) 
-                                   (has-subtype? % "Icebreaker") (not (has-subtype? % "AI")))}
+                 :choices {:req #(and (installed? %) 
+                                      (has-subtype? % "Icebreaker")
+                                      (not (has-subtype? % "AI")))}
                  :effect (req (when-let [host (get-card state (:host card))]
                                 (update! state side (dissoc-in host [:pump :all-turn]))
                                 (update-breaker-strength state side host))
