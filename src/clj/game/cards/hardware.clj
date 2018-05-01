@@ -1105,4 +1105,11 @@
    {:implementation "Credit gain is automatic"
     :in-play [:memory 2]
     :events {:expose {:effect (effect (gain :runner :credit 1))
-                      :msg "gain 1 [Credits]"}}}})
+                      :msg "gain 1 [Credits]"}}}
+
+   "Zer0"
+   {:abilities [{:cost [:click 1 :net-damage 1]
+                 :once :per-turn
+                 :label "Gain 1[Credit] and draw 2 cards. Use this ability only once per turn."
+                 :effect (effect (gain :credit 1)
+                                 (draw 2))}]}})
