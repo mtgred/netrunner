@@ -1012,6 +1012,23 @@
               :effect (effect (gain :hand-size {:mod 2}))}
     :leave-play (effect (lose :hand-size {:mod 2}))}
 
+   "Remote Enforcement"
+   {:interactive (req true)
+    :optional {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
+               :yes-ability {:delayed-completion true
+                             :prompt "Choose a piece of ice"
+                             :choices (req (filter ice? (:deck corp)))
+                             :effect (req (let [chosen-ice target]
+                                            (continue-ability state side
+                                                              {:delayed-completion true
+                                                               :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                                               :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
+                                                                                (corp-install-list state chosen-ice))
+                                                               :effect (effect
+                                                                        (shuffle! :deck)
+                                                                        (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
+                                                              card nil)))}}}
+
    "Research Grant"
    {:interactive (req true)
     :silent (req (empty? (filter #(= (:title %) "Research Grant") (all-installed state :corp))))
