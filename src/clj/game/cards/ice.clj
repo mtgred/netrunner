@@ -1344,7 +1344,7 @@
     :advanceable :always
     :abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (:advance-counter card 0) " subroutines")}]
-    :events {:rez {:effect (effect (add-prop card :advance-counter 1))}}
+    :effect (effect (add-prop card :advance-counter 1))
     :subroutines [end-the-run]}
 
    "Merlin"
