@@ -1092,11 +1092,47 @@
     (prompt-choice :runner "Yes")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
 
+(deftest logic-bomb
+  ;; Logic Bomb
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 2)])
+                (default-runner [(qty "Logic Bomb" 1)]))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Logic Bomb")
+      (run-on state :hq)
+      (is (= 2 (:click (get-runner))) "Should still have 2 clicks")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 0 (:click (get-runner))) "Should now have 0 clicks")
+      (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
+      (is (last-log-contains? state "uses Logic Bomb"))
+      (is (last-log-contains? state "\\[Click\\]\\[Click\\]") "Log should mention 2 clicks")))
+  (testing "if the runner has no clicks left"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 2)])
+                (default-runner [(qty "Logic Bomb" 1)]))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Logic Bomb")
+      (core/click-credit state :runner nil)
+      (core/click-credit state :runner nil)
+      (run-on state :hq)
+      (is (= 0 (:click (get-runner))) "Should have 0 clicks")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 0 (:click (get-runner))) "Should still have 0 clicks")
+      (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
+      (is (last-log-contains? state "uses Logic Bomb"))
+      (is (not (last-log-contains? state "\\[Click\\]")) "Log shouldn't mention any clicks"))))
+
 (deftest london-library
   ;; Install non-virus programs on London library. Includes #325/409
   (do-game
-    (new-game (default-corp) (default-runner [(qty "London Library" 1) (qty "Darwin" 1) (qty "Study Guide" 1)
-                                              (qty "Chameleon" 1) (qty "Femme Fatale" 1)]))
+    (new-game (default-corp)
+              (default-runner [(qty "London Library" 1) (qty "Darwin" 1) (qty "Study Guide" 1)
+                               (qty "Chameleon" 1) (qty "Femme Fatale" 1)]))
     (take-credits state :corp)
     (core/gain state :runner :click 2)
     (play-from-hand state :runner "London Library")
