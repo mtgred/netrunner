@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
-         in-corp-scored? prevent-draw resolve-steal-events make-result show-prompt system-say system-msg trash-cards
+         in-corp-scored? prevent-draw steal-trigger-events make-result show-prompt system-say system-msg trash-cards
          untrashable-while-rezzed? update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?
          remove-old-current)
 
@@ -208,7 +208,7 @@
                                   cards-trashed (take n (shuffle hand))]
                               (when (= type :brain)
                                 (swap! state update-in [:runner :brain-damage] #(+ % n))
-                                (swap! state update-in [:runner :hand-size-modification] #(- % n)))
+                                (swap! state update-in [:runner :hand-size :mod] #(- % n)))
                               (when-let [trashed-msg (join ", " (map :title cards-trashed))]
                                 (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
                               (if (< (count hand) n)
@@ -405,7 +405,7 @@
     {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
    (if (and card (not (some #{:discard} zone)))
      (cond
-       
+
        (untrashable-while-rezzed? card)
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))
@@ -474,8 +474,8 @@
 (defn- resolve-trash-no-cost
   [state side card & {:keys [seen unpreventable]
                       :or {seen true}}]
-  (trash state side (assoc card :seen seen) {:unpreventable unpreventable})
-  (swap! state assoc-in [side :register :trashed-card] true))
+  (swap! state assoc-in [side :register :trashed-card] true)
+  (trash state side (assoc card :seen seen) {:unpreventable unpreventable}))
 
 (defn trash-no-cost
   "Trashes a card at no cost while it is being accessed. (Imp.)"
@@ -486,7 +486,7 @@
     (when card
       ;; trashing before the :access events actually fire; fire them manually
       (if (is-type? card "Agenda")
-        (when-completed (resolve-steal-events state side card)
+        (when-completed (steal-trigger-events state side card)
                         (resolve-trash-no-cost state side card))
         (resolve-trash-no-cost state side card))
       (close-access-prompt state side))))

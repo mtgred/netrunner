@@ -147,7 +147,7 @@
       (is (= 1 (count (:discard (get-corp)))))
       (take-credits state :corp)
       (run-empty-server state :archives)
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
       (is (= 1 (count (:scored (get-runner))))))))
 
@@ -227,7 +227,7 @@
       (take-credits state :corp)
       (take-credits state :runner 3)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Pay") ; trash Hiro
+      (prompt-choice-partial :runner "Pay") ; trash Hiro
       (is (= 2 (:credit (get-runner))) "Runner paid 6 credits to trash")
       (is (= 5 (core/hand-size state :runner)) "Runner max hand size restored to 5")
       (is (= 1 (count (get-in @state [:runner :scored])))
@@ -538,7 +538,7 @@
       (run-empty-server state "Server 1")
       (is (= 4 (core/trash-cost state :runner (refresh ep1)))
           "Trash cost increased to 4 by two active Encryption Protocols")
-      (prompt-choice :runner "Pay") ; trash first EP
+      (prompt-choice-partial :runner "Pay") ; trash first EP
       (run-empty-server state "Server 2")
       (is (= 3 (core/trash-cost state :runner (refresh ep2)))
           "Trash cost increased to 3 by one active Encryption Protocol"))))
@@ -725,7 +725,7 @@
       (play-from-hand state :corp "Gene Splicer" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Don't pay")
+      (prompt-choice :runner "No action")
       (is (= 0 (count (:discard (get-runner)))) "Runner took no net damage")
       (is (= "Gene Splicer" (:title (get-content state :remote1 0))) "Gene Splicer was not trashed")
       (is (= 5 (:credit (get-runner))) "Runner spent no credits")))
@@ -738,7 +738,7 @@
       (play-from-hand state :corp "Gene Splicer" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 0 (count (:discard (get-runner)))) "Runner took no net damage")
       (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
       (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
@@ -753,7 +753,7 @@
       (core/add-counter state :corp (get-content state :remote1 0) :advancement 1)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Don't pay")
+      (prompt-choice :runner "No action")
       (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
       (is (= "Gene Splicer" (:title (get-content state :remote1 0))) "Gene Splicer was not trashed")
       (is (= 5 (:credit (get-runner))) "Runner spent no credits")))
@@ -767,7 +767,7 @@
       (core/add-counter state :corp (get-content state :remote1 0) :advancement 1)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")
       (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
       (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
@@ -796,7 +796,7 @@
       (core/add-counter state :corp (get-content state :remote1 0) :advancement 2)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
       (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
       (is (= (:title (last (:discard (get-corp)))) "Gene Splicer") "Gene Splicer trashed")
@@ -965,10 +965,10 @@
     (core/rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
     (run-empty-server state :hq)
-    (prompt-choice :runner "Pay")
+    (prompt-choice-partial :runner "Pay")
     (is (= 1 (count (:discard (get-runner)))) "Took 1 net damage")
     (run-empty-server state :remote1)
-    (prompt-choice :runner "Pay")
+    (prompt-choice-partial :runner "Pay")
     (is (= 2 (count (:discard (get-runner)))) "Took 1 net damage")))
 
 (deftest hyoubu-research-facility
@@ -1011,14 +1011,14 @@
       (core/rez state :corp iaf)
       (take-credits state :corp)
       (run-empty-server state :remote1)
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 0 (:bad-publicity (get-corp))) "Took no bad pub on unrezzed trash")
       (take-credits state :runner)
       (is (= 3 (count (:hand (get-corp)))) "Drew a card from IAF + mandatory")
       (is (= 4 (:credit (get-corp))) "Gained 1 credit from IAF")
       (take-credits state :corp)
       (run-empty-server state :remote2)
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash"))))
 
 (deftest it-department
@@ -1171,7 +1171,7 @@
       (is (last-log-contains? state "Elective Upgrade") "Revealed agenda")
       (is (= 0 (get-counters (refresh lak) :power)) "Spent 3 power counters")
       (run-empty-server state "HQ")
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (is (empty? (:scored (get-runner))) "Steal prevented by Smartfabrics")
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1627,7 +1627,7 @@
       (run-empty-server state :remote1)
       (prompt-choice :corp "0 [Credits]")
       (prompt-choice :runner "1 [Credits]")
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (not (get-content state :remote1)) "Psychic Field trashed by Neutralize All Threats")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
 
@@ -1656,7 +1656,7 @@
       (take-credits state :corp)
       ;; Runner turn 2, run and trash publics2
       (run-empty-server state "Server 2")
-      (prompt-choice :runner "Pay") ; pay to trash
+      (prompt-choice-partial :runner "Pay") ; pay to trash
       (is (= 5 (:credit (get-runner))))
       (take-credits state :runner)
       ;; Corp turn 3, check how publics1 is doing
@@ -1717,7 +1717,9 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (let [credits (:credit (get-corp))
-            cards (count (:hand (get-corp)))]
+            cards (count (:hand (get-corp)))
+            rj (get-content state :remote1 0)]
+        (card-ability state :corp rj 0)
         (prompt-choice :corp "Yes")
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 3 cards) (count (:hand (get-corp))))))))
@@ -1733,7 +1735,9 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (let [credits (:credit (get-corp))
-            cards (count (:hand (get-corp)))]
+            cards (count (:hand (get-corp)))
+            rj (get-content state :remote1 0)]
+        (card-ability state :corp rj 0)
         (prompt-choice :corp "Yes")
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 2 cards) (count (:hand (get-corp)))))
@@ -1810,10 +1814,10 @@
     (take-credits state :corp)
     (core/rez state :corp (get-content state :remote1 0))
     (run-empty-server state :remote2)
-    (prompt-choice :runner "Pay") ; trash MMC
+    (prompt-choice-partial :runner "Pay") ; trash MMC
     (is (= 2 (:click (get-runner))) "Lost 1 click")
     (run-empty-server state :remote1)
-    (prompt-choice :runner "Pay") ; trash Ronald Five
+    (prompt-choice-partial :runner "Pay") ; trash Ronald Five
     (is (= 0 (:click (get-runner))) "Lost 1 click")))
 
 (deftest ronin
@@ -1864,7 +1868,7 @@
       (is (= 4 (:current-strength (refresh iwall2))) "Strength boosted by 3")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 1 (:current-strength (refresh iwall1))) "Strength back to default")
       (is (= 1 (:current-strength (refresh iwall2))) "Strength back to default"))))
 
@@ -1966,7 +1970,7 @@
           "Runner has prompt to wait for Snare!")
       (prompt-choice :corp "Yes")
       (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
       (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")))
   (testing "with Dedicated Response Team"
@@ -1985,7 +1989,7 @@
             "Runner has prompt to wait for Snare!")
         (prompt-choice :corp "Yes")
         (is (= 1 (:tag (get-runner))) "Runner has 1 tag")
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= 5 (count (:discard (get-runner)))) "Runner took 5 damage")))))
 
 (deftest space-camp
@@ -2244,7 +2248,7 @@
     (is (= 2 (count (:scored (get-runner)))) "Fan Site removed from Runner score area")
     (is (= -2 (:agenda-point (get-runner))) "Runner has -2 agenda points")
     (run-empty-server state :remote1)
-    (prompt-choice :runner "Pay")
+    (prompt-choice-partial :runner "Pay")
     (is (= 3 (count (:scored (get-runner)))) "The Board added to Runner score area")
     (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")))
 

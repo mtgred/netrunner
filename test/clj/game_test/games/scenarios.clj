@@ -104,7 +104,7 @@
         (run-empty-server state "HQ")
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (prompt-choice :runner "Pay") ; trash Ash
+        (prompt-choice-partial :runner "Pay") ; trash Ash
         (is (and (= 1 (:credit (get-runner))) (= 11 (:credit (get-corp)))))
         (core/gain state :runner :credit 1)
         (play-from-hand state :runner "Dirty Laundry")

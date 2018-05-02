@@ -317,7 +317,7 @@
           prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
 
       (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
-      (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
       (is (= 6 (:credit (get-corp)))))))
 
 (deftest consulting-visit-mumbad
@@ -342,11 +342,11 @@
       (card-ability state :corp hall 0)
       (is (= (list "Consulting Visit" "Mumba Temple" nil) (prompt-names)))
 
-      (prompt-choice :corp (find-card "Consulting Visit" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Consulting Visit" (:deck (get-corp))))
       (is (= 3 (:credit (get-corp))))
       (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
 
-      (prompt-choice :corp (find-card "Green Level Clearance" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Green Level Clearance" (:deck (get-corp))))
       (is (= 5 (:credit (get-corp)))))))
 
 (deftest death-and-taxes
@@ -369,7 +369,7 @@
       (card-ability state :runner (get-resource state 0) 1)
       (is (= (+ 3 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed Fall Guy")
       (run-empty-server state :remote1)
-      (prompt-choice :runner "Pay")  ;; Runner trashes PAD Campaign
+      (prompt-choice-partial :runner "Pay")  ;; Runner trashes PAD Campaign
       (is (= (+ 4 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed PAD Campaign"))))
 
 (deftest defective-brainchips
@@ -602,7 +602,7 @@
     (take-credits state :corp)
     (run-on state :hq)
     (run-successful state)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (core/gain state :runner :credit 2)
     (play-from-hand state :runner "Hades Shard")
     (card-ability state :runner (get-resource state 0) 0)
@@ -855,8 +855,8 @@
     (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
           prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
       (is (= (list "Fall Guy" "Sure Gamble" nil) (prompt-names)))
-      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
-      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner)))))
+      (prompt-card :corp (find-card "Sure Gamble" (:hand (get-runner))))
+      (prompt-card :corp (find-card "Sure Gamble" (:hand (get-runner)))))
     (is (= 3 (count (:hand (get-runner)))))
     ;; able to trash 2 cards but only 1 available target in Runner's hand
     (play-from-hand state :corp "Invasion of Privacy")
@@ -866,7 +866,7 @@
     (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
           prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
       (is (= (list "Fall Guy" nil) (prompt-names)))
-      (prompt-choice :corp (find-card "Fall Guy" (:hand (get-runner))))
+      (prompt-card :corp (find-card "Fall Guy" (:hand (get-runner))))
       (is (empty? (get-in @state [:corp :prompt])) "No prompt for second card"))
     (is (= 2 (count (:hand (get-runner)))))
     ;; failed trace - take the bad publicity
@@ -925,11 +925,11 @@
     (prompt-choice :corp 0)
     (prompt-choice :runner 0)
     (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (not (:run @state)) "Run ended")
     (run-empty-server state "HQ")
     (is (empty? (:prompt (get-corp))) "No Manhunt trace on second run")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
 (deftest market-forces
@@ -1146,18 +1146,18 @@
               (default-runner))
     (starting-hand state :corp ["Precognition"])
     (play-from-hand state :corp "Precognition")
-    (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Adonis Campaign" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Global Food Initiative" (:deck (get-corp))))
     ;; try starting over
     (prompt-choice :corp "Start over")
-    (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Adonis Campaign" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
+    (prompt-card :corp (find-card "Global Food Initiative" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
     (prompt-choice :corp "Done")
     (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
     (is (= "Adonis Campaign" (:title (second (:deck (get-corp))))))
@@ -1204,21 +1204,21 @@
     (starting-hand state :corp ["Psychokinesis","Psychokinesis","Psychokinesis"])
     ;; Test installing an Upgrade
     (play-from-hand state :corp "Psychokinesis")
-    (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
     (prompt-choice :corp "New remote")
     (is (= "Caprice Nisei" (:title (get-content state :remote1 0)))
       "Caprice Nisei installed by Psychokinesis")
     ;; Test installing an Asset
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Psychokinesis")
-    (prompt-choice :corp (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Adonis Campaign" (:deck (get-corp))))
     (prompt-choice :corp "New remote")
     (is (= "Adonis Campaign" (:title (get-content state :remote2 0)))
       "Adonis Campaign installed by Psychokinesis")
     ;; Test installing an Agenda
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Psychokinesis")
-    (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Global Food Initiative" (:deck (get-corp))))
     (prompt-choice :corp "New remote")
     (is (= "Global Food Initiative" (:title (get-content state :remote3 0)))
       "Global Food Initiative installed by Psychokinesis")
@@ -1535,7 +1535,7 @@
 
     (run-on state :hq)
     (run-successful state)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
 
     (core/gain state :runner :credit 3)
     (play-from-hand state :runner "Hades Shard")
@@ -1944,7 +1944,7 @@
     (take-credits state :corp)
     (run-on state :remote1)
     (run-successful state)
-    (prompt-choice :runner "Pay") ;trash
+    (prompt-choice-partial :runner "Pay") ;trash
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Desperado")
     (play-from-hand state :runner "Corroder")
@@ -2033,7 +2033,7 @@
     (play-from-hand state :runner "Maya")
     (run-on state :hq)
     (run-successful state)
-    (prompt-choice :runner "Ok")
+    (prompt-choice :runner "No action")
     (is (= 0 (count (:discard (get-corp)))) "Corp starts with no discards")
     (play-from-hand state :runner "En Passant")
     (prompt-select :runner (get-ice state :hq 0))

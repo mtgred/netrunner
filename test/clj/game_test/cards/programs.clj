@@ -95,6 +95,28 @@
       (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
       (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker"))))
 
+(deftest dhegdheer-adept
+  ;; Dheghdheer - hosting a breaker with strength based on unused MU should calculate correctly
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Adept" 1)
+                               (qty "Dhegdheer" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Dhegdheer")
+    (play-from-hand state :runner "Adept")
+    (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
+    (is (= 2 (:memory (get-runner))) "2 MU used")
+    (let [dheg (get-program state 0)
+          adpt (get-program state 1)]
+      (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
+      (card-ability state :runner dheg 1)
+      (prompt-select :runner (refresh adpt))
+      (let [hosted-adpt (first (:hosted (refresh dheg)))]
+        (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
+        (is (= 4 (:memory (get-runner))) "0 MU used")
+        (is (= 6 (:current-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
+
 (deftest diwan
   ;; Diwan - Full test
   (do-game
@@ -191,7 +213,7 @@
     (prompt-choice :runner "Yes") ; force the draw
     (is (= 1 (:credit (get-runner))) "Runner gained 1cr from Desperado")
     (is (= 3 (count (:hand (get-corp)))) "Corp forced to draw by Equivocation")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
 (deftest false-echo
@@ -340,9 +362,8 @@
       (testing "Access, corp wins psi-game"
         (run-empty-server state "HQ")
         ;; Should access TFP at this point
-        (prompt-choice :runner "Access")
-        (prompt-choice :corp "1 [Credit]")
-        (prompt-choice :runner "0 [Credit]")
+        (prompt-choice :corp "1 [Credits]")
+        (prompt-choice :runner "0 [Credits]")
         (prompt-choice :runner "Imp ability")
         (take-credits state :runner)
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
@@ -352,10 +373,9 @@
       (take-credits state :corp)
       (testing "Access, runner wins psi-game"
         (run-empty-server state "HQ")
-        (prompt-choice :runner "Access")
         ;; Access prompt for TFP
-        (prompt-choice :corp "0 [Credit]")
-        (prompt-choice :runner "0 [Credit]")
+        (prompt-choice :corp "0 [Credits]")
+        (prompt-choice :runner "0 [Credits]")
         ;; Fail psi game
         (prompt-choice :runner "Imp ability")
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
@@ -428,6 +448,26 @@
       (take-credits state :runner)
       (core/purge state :corp)
       (is (empty? (get-in @state [:runner :rig :program])) "Lamprey trashed by purge"))))
+
+(deftest leprechaun-adept
+  ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Adept" 1)
+                               (qty "Leprechaun" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Leprechaun")
+    (play-from-hand state :runner "Adept")
+    (is (= 1 (:memory (get-runner))) "3 MU used")
+    (let [lep (get-program state 0)
+          adpt (get-program state 1)]
+      (is (= 3 (:current-strength (refresh adpt))) "Adept at 3 strength individually")
+      (card-ability state :runner lep 1)
+      (prompt-select :runner (refresh adpt))
+      (let [hosted-adpt (first (:hosted (refresh lep)))]
+        (is (= 3 (:memory (get-runner))) "1 MU used")
+        (is (= 5 (:current-strength (refresh hosted-adpt))) "Adept at 5 strength hosted")))))
 
 (deftest leprechaun-mu-savings
   ;; Leprechaun - Keep MU the same when hosting or trashing hosted programs
@@ -644,7 +684,7 @@
       (card-ability state :runner (refresh ph) 0)
       (run-on state "HQ")
       (run-successful state)
-      (prompt-choice :runner "Ok")
+      (prompt-choice :runner "No action")
       (is (= 1 (get-counters (refresh ph) :virus)) "Pheromones gained 1 counter")
       (card-ability state :runner (refresh ph) 0)))) ; this doesn't do anything, but shouldn't crash
 
@@ -720,7 +760,7 @@
     (play-from-hand state :runner "Reaver")
     (is (= 1 (count (:hand (get-runner)))) "One card in hand")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Pay") ; Trash PAD campaign
+    (prompt-choice-partial :runner "Pay") ; Trash PAD campaign
     (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
@@ -767,11 +807,11 @@
     (prompt-choice :runner 5)
     (prompt-choice :runner "Gain 3 [Credits]")
     (is (= 8 (:credit (get-runner))) "Gained 3 credits")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
 
     (run-on state "R&D")
     (run-successful state)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (take-credits state :runner)
     (take-credits state :corp)
 
@@ -780,9 +820,10 @@
     (run-on state "R&D")
     (run-successful state)
     (prompt-choice :runner "No")
+    (prompt-choice :runner "No action")
     (run-on state "HQ")
     (run-successful state)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (take-credits state :runner)
     (take-credits state :corp)
 
@@ -790,7 +831,7 @@
     (run-successful state)
     (prompt-choice :runner "Yes")
     (prompt-choice :runner 2)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
 
     (take-credits state :runner)
     (take-credits state :corp)
@@ -801,7 +842,7 @@
     (prompt-choice :runner "Yes")
     (prompt-choice :runner 3)
     (prompt-choice :runner "Draw 2 cards")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
     (is (= 0 (count (:deck (get-runner)))) "Cards came from deck")))
 

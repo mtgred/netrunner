@@ -41,14 +41,14 @@
         ;; prompt should be asking for the 2 net damage cost
         (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay 2 net damage")
-        (prompt-choice :runner "Don't pay")
+        (prompt-choice :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
         (prompt-select :runner bm)
         (prompt-choice :runner "No action")
         (run-empty-server state "Server 1")
         (prompt-select :runner hok)
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "on R&D access"
@@ -66,14 +66,14 @@
         ;; prompt should be asking for the 2 net damage cost
         (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay 2 net damage")
-        (prompt-choice :runner "Don't pay")
+        (prompt-choice :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
         (prompt-choice :runner "Ben Musashi")
         (prompt-choice :runner "No action")
         (run-empty-server state "R&D")
         (prompt-choice :runner "Card from deck")
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "pay even when trashed"
@@ -90,10 +90,10 @@
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (prompt-select :runner bm)
-        (prompt-choice :runner "Pay") ; pay to trash
+        (prompt-choice-partial :runner "Pay") ; pay to trash
         (prompt-select :runner hok)
         ;; should now have prompt to pay 2 net for HoK
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Check runner chooses order of payment"
@@ -131,7 +131,6 @@
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (prompt-select :runner fai)
-        (prompt-choice :runner "Access")
         ;; prompt should be asking for the net damage costs
         (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
@@ -157,7 +156,7 @@
       (run-empty-server state :remote1)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 1 (:tag (get-runner))))
       (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
       (core/rez state :corp (get-content state :remote2 0))
@@ -184,7 +183,7 @@
       (run-empty-server state :remote1)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 1 (:tag (get-runner))))
       (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 1 meat damage"))))
@@ -203,7 +202,7 @@
       (card-ability state :corp (refresh bv) 0)
       (is (:run @state) "Bio Vault doesn't fire if less than 2 advancements")
       (run-successful state)
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (take-credits state :runner)
 
       (advance state (refresh bv) 2)
@@ -247,7 +246,7 @@
     (let [bs (get-content state :remote1 0)]
       (core/rez state :corp (refresh bs))
       (card-ability state :corp (refresh bs) 0)
-      (prompt-choice :corp (find-card "Death and Taxes" (:discard (get-corp))))
+      (prompt-card :corp (find-card "Death and Taxes" (:discard (get-corp))))
       (is (find-card "Death and Taxes" (:current (get-corp))) "Death and Taxes is active Current")
       (take-credits state :corp)
       (play-from-hand state :runner "Interdiction")
@@ -259,7 +258,7 @@
       (core/lose state :runner :credit 3)
       (trash-from-hand state :corp "Paywall Implementation")
       (card-ability state :corp (refresh bs) 0)
-      (prompt-choice :corp (find-card "Paywall Implementation" (:discard (get-corp))))
+      (prompt-card :corp (find-card "Paywall Implementation" (:discard (get-corp))))
       (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall Implementation is active Current")
       (is (find-card "Interdiction" (:discard (get-runner))) "Interdiction is trashed")
       (trash-from-hand state :corp "IPO")
@@ -273,7 +272,7 @@
 
       (core/lose state :runner :credit 3)
       (card-ability state :corp (refresh bs) 0)
-      (prompt-choice :corp (find-card "IPO" (:discard (get-corp))))
+      (prompt-card :corp (find-card "IPO" (:discard (get-corp))))
       (is (find-card "IPO" (:rfg (get-corp))) "IPO is removed from game"))))
 
 (deftest calibration-testing
@@ -496,7 +495,7 @@
         ;; corp now has optional prompt to trigger virus purge
         (prompt-choice :corp "Yes")
         ;; runner has prompt to trash CVS
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         ;; purged counters
         (is (zero? (virus-counters cache))
             "Cache has no counters")
@@ -534,14 +533,14 @@
     (run-empty-server state :remote1)
     (prompt-choice :corp 0)
     (prompt-choice :runner 0)
-    (prompt-choice :runner "Pay") ; trash
+    (prompt-choice-partial :runner "Pay") ; trash
     (is (= 2 (:tag (get-runner))) "Runner took two tags")
     (run-empty-server state "Archives")
     (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when accessed from Archives")
     (run-empty-server state "HQ")
     (prompt-choice :corp 0)
     (prompt-choice :runner 3)
-    (prompt-choice :runner "Pay") ; trash
+    (prompt-choice-partial :runner "Pay") ; trash
     (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
 
 (deftest ghost-branch-dedicated-response-team
@@ -564,7 +563,7 @@
       (is (prompt-is-type? :runner :waiting) "Runner has prompt to wait for Ghost Branch")
       (prompt-choice :corp "Yes")
       (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
 
 (deftest georgia-emelyov
@@ -746,7 +745,7 @@
     (is (empty? (:discard (get-corp))) "MVT in HQ is not trashed")
     (run-empty-server state "Server 1")
     (is (= 1 (count (->> @state :runner :prompt first :choices))) "Should only have a single option")
-    (prompt-choice :runner "Pay")
+    (prompt-choice-partial :runner "Pay")
     (is (= 0 (:credit (get-runner))) "Runner forced to trash MVT")
     (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed"))
   (testing "interaction with Imp"
@@ -765,7 +764,7 @@
       (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Imp installed")
       (is (empty? (:discard (get-corp))) "MVT is not force-trashed when Imp installed")
       (let [imp (get-program state 0)]
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp")
         ;; Trash Imp to reset :slow-trash flag
         (core/move state :runner (refresh imp) :discard)
@@ -797,7 +796,7 @@
       (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
 
 (deftest off-the-grid
-  ;; Off the Grid run ability - and interaction with RP
+  ;; Off the Grid run restriction - and interaction with RP
   (do-game
    (new-game
     (make-deck "Jinteki: Replicating Perfection" [(qty "Off the Grid" 3)
@@ -834,7 +833,7 @@
         (run-successful state)
         ;; runner now chooses which to access.
         (prompt-select :runner hok)
-        (prompt-choice :runner "OK")
+        (prompt-choice :runner "No action")
         (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")
         (prompt-select :runner ohg)
         (prompt-choice :runner "No action")
@@ -855,10 +854,10 @@
         (run-successful state)
         ;; runner now chooses which to access.
         (prompt-choice :runner "Card from hand")
-        (prompt-choice :runner "OK")
+        (prompt-choice :runner "No action")
         (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")
         (prompt-choice :runner "Old Hollywood Grid")
-        (prompt-choice :runner "Pay") ;; trash OHG
+        (prompt-choice-partial :runner "Pay") ;; trash OHG
         (run-empty-server state "HQ")
         (prompt-choice :runner "Steal")
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
@@ -875,7 +874,7 @@
       (score-agenda state :corp (get-content state :remote1 0))
       ;; Gang sign fires
       (prompt-choice :runner "Card from hand")
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (is (= 0 (count (:scored (get-runner)))) "No stolen agendas"))))
 
 (deftest port-anson-grid
@@ -916,7 +915,7 @@
       (is (= 1 (:tag (get-runner))) "Give runner 1 tag")
       (is (= 1 (count (:discard (get-runner)))) "Prisec does 1 damage")
       ;; Runner trashes Prisec
-      (prompt-choice :runner "Pay")
+      (prompt-choice-partial :runner "Pay")
       (run-empty-server state "HQ")
       (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
   (testing "Multiple unrezzed upgrades in Archives interaction with DRT"
@@ -953,7 +952,7 @@
     (let [pp (get-content state :remote1 0)]
       (run-empty-server state "Server 1")
       (is (= 9 (:credit (get-corp))) "Gained 2 credits from Runner accessing Product Placement")
-      (prompt-choice :runner "Yes") ; Runner trashes PP
+      (prompt-choice-partial :runner "Pay") ; Runner trashes PP
       (run-empty-server state "Archives")
       (is (= 9 (:credit (get-corp)))
           "No credits gained when Product Placement accessed in Archives"))))
@@ -976,14 +975,14 @@
         ;; prompt should be asking for the 5cr cost
         (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay 5cr")
-        (prompt-choice :runner "Don't pay")
+        (prompt-choice :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner was not charged 5cr")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
         (prompt-select :runner rh)
         (prompt-choice :runner "No action")
         (run-empty-server state "Server 1")
         (prompt-select :runner hok)
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= 0 (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Cost increase even when trashed"
@@ -1000,10 +999,10 @@
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
         (prompt-select :runner rh)
-        (prompt-choice :runner "Pay") ; pay to trash
+        (prompt-choice-partial :runner "Pay") ; pay to trash
         (prompt-select :runner hok)
         ;; should now have prompt to pay 5cr for HoK
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= 0 (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Trashed from HQ"
@@ -1055,7 +1054,7 @@
         (is (= 7 (:credit (get-runner))))
         (run-on state :hq)
         (run-successful state)
-        (prompt-choice :runner "Pay") ; pay to trash / 7 cr - 4 cr
+        (prompt-choice-partial :runner "Pay") ; pay to trash / 7 cr - 4 cr
         (is (= 2 (:click (get-runner))))
         (is (= 3 (:credit (get-runner))))
         (run-on state :hq)
@@ -1075,7 +1074,7 @@
         (is (= 3 (:click (get-runner))))
         (run-on state :hq)
         (run-successful state)
-        (prompt-choice :runner "Pay") ; pay to trash / 6 cr - 4 cr
+        (prompt-choice-partial :runner "Pay") ; pay to trash / 6 cr - 4 cr
         (is (= 1 (:click (get-runner))))
         (run-on state :hq)))))
 
@@ -1163,14 +1162,14 @@
         (prompt-select :runner hok)
         (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay 5cr")
-        (prompt-choice :runner "Don't pay")
+        (prompt-choice :runner "No action")
         (is (= 3 (:click (get-runner))) "Runner was not charged 1click")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
         (prompt-select :runner sb)
         (prompt-choice :runner "No action")
         (run-empty-server state "Server 1")
         (prompt-select :runner hok)
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= 1 (:click (get-runner))) "Runner was charged 1click")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Click cost even when trashed"
@@ -1186,9 +1185,9 @@
         (core/rez state :corp sb)
         (run-empty-server state "Server 1")
         (prompt-select :runner sb)
-        (prompt-choice :runner "Pay") ; pay to trash
+        (prompt-choice-partial :runner "Pay") ; pay to trash
         (prompt-select :runner hok)
-        (prompt-choice :runner "Pay")
+        (prompt-choice-partial :runner "Pay")
         (is (= 2 (:click (get-runner))) "Runner was charged 1click")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda")))))
 
@@ -1241,14 +1240,14 @@
     (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
     (prompt-choice :runner "Lose [Click][Click]")
     (is (= 1 (:click (get-runner))) "Runner loses 2 clicks")
-    (prompt-choice :runner "Pay") ; trash
+    (prompt-choice-partial :runner "Pay") ; trash
     (run-on state "Server 1")
     (run-successful state)
     (prompt-choice :corp 0) ; trace
     (is (= 0 (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
     (prompt-choice :runner 0)
     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
-    (prompt-choice :runner "Pay") ; trash
+    (prompt-choice-partial :runner "Pay") ; trash
     (take-credits state :runner)
     (take-credits state :corp)
     (run-on state "Archives")
@@ -1267,7 +1266,7 @@
     (run-successful state)
     (prompt-choice :corp 0) ; trace
     (prompt-choice :runner 4)
-    (prompt-choice :runner "Pay")))
+    (prompt-choice-partial :runner "Pay")))
 
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
@@ -1385,6 +1384,6 @@
       (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
       (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
       (run-successful state)
-      (prompt-choice :runner "Yes") ; pay to trash
+      (prompt-choice-partial :runner "Pay") ; pay to trash
       (take-credits state :runner 3)
       (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))
