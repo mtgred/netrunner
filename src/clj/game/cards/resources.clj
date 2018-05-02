@@ -1057,7 +1057,7 @@
 
    "Logic Bomb"
    {:implementation "Bypass effect is manual"
-    :abilities [{:label "Bypass a piece of ice you are currently encountering. Lose any remaining clicks."
+    :abilities [{:label "Bypass the encountered ice"
                  :req (req (and (:run @state)
                                 (rezzed? current-ice)))
                  :msg (msg "bypass " (:title current-ice) (when (pos? (:click (:runner @state)))
