@@ -937,10 +937,10 @@
    {:flags {:rd-reveal (req true)}
     :access {:req (req tagged)
              :delayed-completion true
-             :effect (effect (as-agenda card 1)
-                             (continue-ability :runner {:prompt "Quantum Predictive Model was added to the corp's score area"
-                                                        :choices ["OK"]}
-                                               card nil))
+             :effect (req (when-completed (as-agenda state side card 1)
+                                          (continue-ability state :runner {:prompt "Quantum Predictive Model was added to the corp's score area"
+                                                                     :choices ["OK"]}
+                                                            card nil)))
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"

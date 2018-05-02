@@ -786,7 +786,8 @@
 
    "\"Freedom Through Equality\""
    {:events {:agenda-stolen {:msg "add it to their score area as an agenda worth 1 agenda point"
-                             :effect (effect (as-agenda :runner card 1))}}}
+                             :delayed-completion true
+                             :effect (req (as-agenda state :runner eid card 1))}}}
 
    "Freelance Coding Contract"
    {:choices {:max 5
@@ -1158,13 +1159,14 @@
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:agenda-stolen {:silent (req true)
                              :effect (effect (update! (assoc card :steal true)))}
-             :run-ends {:effect (req (if (:steal card)
-                                       (do (as-agenda state :runner (get-card state card) 1)
-                                           (system-msg state :runner
-                                                       (str "adds Mad Dash to their score area as an agenda worth 1 agenda point")))
+             :run-ends {:delayed-completion true
+                        :effect (req (if (:steal card)
+                                       (when-completed (as-agenda state :runner (get-card state card) 1)
+                                                       (system-msg state :runner
+                                                                   (str "adds Mad Dash to their score area as an agenda worth 1 agenda point")))
                                        (do (system-msg state :runner
                                                        (str "suffers 1 meat damage from Mad Dash"))
-                                                       (damage state side eid :meat 1 {:card card})))
+                                         (damage state side eid :meat 1 {:card card})))
                                      (unregister-events state side card))}}}
 
    "Making an Entrance"
@@ -1294,7 +1296,8 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
+    :delayed-completion true
+    :effect (req (as-agenda state :runner eid (first (:play-area runner)) 1))
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "On the Lam"

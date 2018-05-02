@@ -669,8 +669,9 @@
 
    "Fan Site"
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
+                             :delayed-completion true
                              :req (req (installed? card))
-                             :effect (effect (as-agenda :runner card 0))}}}
+                             :effect (req (as-agenda state :runner eid card 0))}}}
 
    "Fester"
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
@@ -858,6 +859,30 @@
                  :effect (effect (gain-bad-publicity :corp 1)
                                  (trash card {:cause :ability-cost}))}]}
 
+   "Jackpot!"
+   (let [jackpot {:interactive (req true)
+                  :delayed-completion true
+                  :req (req (= :runner (:as-agenda-side target)))
+                  :effect (req (show-wait-prompt state :corp "Runner to use Jackpot!")
+                               (continue-ability
+                                 state side
+                                 {:optional
+                                  {:prompt "Trash Jackpot!?"
+                                   :no-ability {:effect (effect (clear-wait-prompt :corp))}
+                                   :yes-ability
+                                   {:prompt "Choose how many [Credit] to take"
+                                    :choices {:number (req (get-in card [:counter :credit] 0))}
+                                    :delayed-completion true
+                                    :effect (req (gain state :runner :credit target)
+                                                 (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
+                                                 (clear-wait-prompt state :corp)
+                                                 (trash state :runner eid card nil))}}}
+                                 card nil))}]
+     {:events
+      {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 1))}
+       :agenda-stolen (dissoc jackpot :req)
+       :as-agenda jackpot}})
+
    "Jak Sinclair"
    (let [ability {:label "Make a run (start of turn)"
                   :prompt "Choose a server to run with Jak Sinclair"
@@ -997,6 +1022,7 @@
    "Liberated Chela"
    {:abilities [{:cost [:click 5 :forfeit]
                  :msg "add it to their score area"
+                 :delayed-completion true
                  :effect (req (if (not (empty? (:scored corp)))
                                 (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
                                     (resolve-ability
@@ -1011,13 +1037,15 @@
                                                                   :effect (effect (forfeit target)
                                                                                   (move :runner card :rfg)
                                                                                   (clear-wait-prompt :runner))}
-                                                                 {:effect (effect (as-agenda :runner card 2)
-                                                                                  (clear-wait-prompt :runner))
+                                                                 {:delayed-completion true
+                                                                  :effect (req (clear-wait-prompt state :runner)
+                                                                               (as-agenda state :runner eid card 2))
                                                                   :msg "add it to their score area as an agenda worth 2 points"})
                                                               card nil))} card nil))
                                 (resolve-ability
                                   state side
-                                  {:effect (effect (as-agenda :runner card 2))
+                                  {:delayed-completion true
+                                   :effect (req (as-agenda state :runner eid card 2))
                                    :msg "add it to their score area as an agenda worth 2 points"} card nil)))}]}
 
    "London Library"

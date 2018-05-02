@@ -929,6 +929,50 @@
     (is (= 1 (count (:discard (get-runner)))) "IJ is trashed")
     (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
 
+(deftest jackpot
+  ;; Jackpot! - whenever a card enters your score area, trash Jackpot to pull off credits
+  (do-game
+    (new-game (default-corp [(qty "Braintrust" 1)])
+              (default-runner [(qty "Jackpot!" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jackpot!")
+    (let [jak (get-resource state 0)]
+      (is (zero? (get-counters (refresh jak) :credit)) "Jackpot! starts with 0 credits")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 2 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn (2nd turn)")
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:agenda-point (get-runner))) "Runner steals Braintrust")
+      (prompt-choice :runner "Yes")
+      (is (= 12 (:credit (get-runner))) "Runner starts with 12 credits")
+      (prompt-choice :runner 2)
+      (is (= 14 (:credit (get-runner))) "Runner gains 2 credits")
+      (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
+
+(deftest jackpot-hiro
+  ;; Jackpot! - should fire when trashing Chairman Hiro
+  (do-game
+    (new-game (default-corp [(qty "Chairman Hiro" 1)])
+              (default-runner [(qty "Jackpot!" 1)]))
+    (play-from-hand state :corp "Chairman Hiro" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jackpot!")
+    (let [jak (get-resource state 0)]
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Yes") ;trash CH
+      (prompt-choice :runner "Yes") ;trash Jackpot!
+      (prompt-choice :runner 1)
+      (is (= 3 (:credit (get-runner))) "Runner gains 1 credit")
+      (is (= 1 (count (:scored (get-runner)))) "Chairman Hiro in score area")
+      (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
+
 (deftest jak-sinclair-enigma
   ;; Lost clicks carry through to when turn starts fully #1764
   (do-game
