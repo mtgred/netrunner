@@ -333,6 +333,16 @@
                               :msg (msg "draw a card")
                               :effect (req (draw state side eid 1 nil))}}}
 
+   "Freedom Khumalo: Crypto-Anarchist"
+   {:flags {:slow-trash (req true)}
+    :interactions
+    {:trash-ability
+     {:delayed-completion true
+      :req (req (not (get-in @state [:per-turn (:cid card)])))
+      :msg (msg "trash " (:title target) " at no cost")
+      :once :per-turn
+      :effect (req (resolve-trash-no-cost state side target))}}}
+
    "Fringe Applications: Tomorrow, Today"
    {:events
     {:pre-start-game {:effect draft-points-target}

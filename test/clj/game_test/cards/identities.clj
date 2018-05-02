@@ -345,6 +345,25 @@
       (prompt-choice :runner "Exile: Streethawk")
       (is (= 1 (count (:hand (get-runner)))) "Exile drew a card"))))
 
+(deftest freedom-khumalo
+  ;; Freedom Khumalo - Imp's tests adjusted where necessary
+  (testing "Full test"
+    (letfn [(fk-test [card]
+              (do-game
+                (new-game (default-corp [(qty card 1)])
+                          (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                                     [(qty "Cache" 1)]))
+                (take-credits state :corp)
+                (play-from-hand state :runner "Cache")
+                (run-empty-server state "HQ")
+                (prompt-choice-partial :runner "Freedom")
+                (is (= 1 (count (:discard (get-corp)))))))]
+      (doall (map fk-test
+                  ["Dedicated Response Team"
+                   "Consulting Visit"
+                   "Builder"
+                   "Research Station"])))))
+
 (deftest gabriel-santiago
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
   (do-game
