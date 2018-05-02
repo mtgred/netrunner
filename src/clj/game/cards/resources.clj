@@ -106,7 +106,9 @@
                  :msg (msg "break 1 subroutine")}]}
 
    "All-nighter"
-   {:abilities [{:cost [:click 1] :effect (effect (trash card {:cause :ability-cost}) (gain :click 2))
+   {:abilities [{:cost [:click 1]
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
    "Angel Arena"
@@ -218,7 +220,8 @@
 
    "Beach Party"
    {:in-play [:hand-size {:mod 5}]
-    :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
+    :events {:runner-turn-begins {:msg "lose [Click]"
+                                  :effect (effect (lose :click 1))}}}
 
    "Beth Kilrain-Chang"
    (let [ability {:once :per-turn
@@ -299,8 +302,12 @@
 
    "Caldera"
    {:prevent {:damage [:net :brain]}
-    :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
-                {:cost [:credit 3] :msg "prevent 1 brain damage" :effect (effect (damage-prevent :brain 1))}]}
+    :abilities [{:cost [:credit 3]
+                 :msg "prevent 1 net damage"
+                 :effect (effect (damage-prevent :net 1))}
+                {:cost [:credit 3]
+                 :msg "prevent 1 brain damage"
+                 :effect (effect (damage-prevent :brain 1))}]}
 
    "Charlatan"
    {:abilities [{:cost [:click 2]
@@ -1048,6 +1055,17 @@
                                    :effect (req (as-agenda state :runner eid card 2))
                                    :msg "add it to their score area as an agenda worth 2 points"} card nil)))}]}
 
+   "Logic Bomb"
+   {:implementation "Bypass effect is manual"
+    :abilities [{:label "Bypass a piece of ice you are currently encountering. Lose any remaining clicks."
+                 :req (req (and (:run @state)
+                                (rezzed? current-ice)))
+                 :msg (msg "bypass " (:title current-ice) (when (pos? (:click (:runner @state)))
+                                                             (str " and loses "
+                                                                  (apply str (repeat (:click (:runner @state)) "[Click]")))))
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (lose :click (:click (:runner @state))))}]}
+
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library"
                  :cost [:click 1]
@@ -1553,14 +1571,17 @@
    {:recurring 2}
 
    "Security Testing"
-   (let [ability {:prompt "Choose a server for Security Testing" :choices (req (conj servers "No server"))
+   (let [ability {:prompt "Choose a server for Security Testing"
+                  :choices (req (conj servers "No server"))
                   :msg (msg "target " target)
-                  :req (req (and (not (click-spent? :runner state)) (not (used-this-turn? (:cid card) state))))
+                  :req (req (and (not (click-spent? :runner state))
+                                 (not (used-this-turn? (:cid card) state))))
                   :effect (req (when (not= target "No server")
                                  (update! state side (assoc card :server-target target))))}]
      {:events {:runner-turn-begins ability
                :successful-run
-               {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+               {:req (req (= (zone->name (get-in @state [:run :server]))
+                             (:server-target (get-card state card))))
                 :once :per-turn
                 :effect (req (let [st card]
                                (swap! state assoc-in [:run :run-effect :replace-access]
@@ -1575,7 +1596,8 @@
 
    "Spoilers"
    {:events {:agenda-scored {:interactive (req true)
-                             :msg "trash the top card of R&D" :effect (effect (mill :corp))}}}
+                             :msg "trash the top card of R&D"
+                             :effect (effect (mill :corp))}}}
 
    "Starlight Crusade Funding"
    {:msg "ignore additional costs on Double events"
