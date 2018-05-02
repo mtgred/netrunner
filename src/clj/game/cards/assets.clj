@@ -1706,7 +1706,7 @@
         :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
                      :effect (req (lose state :runner :click 1))}
         :events {:rez {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
-                       :effect (req (add-one (:cid card) state target))}}}))
+                       :effect (req (add-one (:cid card) state (get-card state target)))}}}))
 
    "Watchdog"
    {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
