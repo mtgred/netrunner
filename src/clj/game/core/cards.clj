@@ -202,7 +202,10 @@
       (swap! state assoc-in [side p] []))))
 
 ;;; Misc card functions
-(defn is-virus-program? [card] (and (program? card) (has-subtype? card "Virus")))
+(defn is-virus-program?
+  [card]
+  (and (program? card)
+       (has-subtype? card "Virus")))
 
 (defn get-virus-counters
   "Calculate the number of virus counters on the given card, taking Hivemind into account."

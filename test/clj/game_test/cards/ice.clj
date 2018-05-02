@@ -55,7 +55,7 @@
     (prompt-choice :corp 0)
     (prompt-choice :runner 0)
     (prompt-select :corp (get-resource state 0))
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
 (deftest architect-untrashable
@@ -231,16 +231,16 @@
       (prompt-choice :corp 2)
       (prompt-choice :runner 0)
       ;; trash 1 card and rearrange the other 3
-      (prompt-choice :corp (find-card "Desperado" (:deck (get-runner))))
+      (prompt-card :corp (find-card "Desperado" (:deck (get-runner))))
       (is (= 1 (count (:discard (get-runner)))))
-      (prompt-choice :corp (find-card "Sure Gamble" (:deck (get-runner))))
-      (prompt-choice :corp (find-card "Corroder" (:deck (get-runner))))
-      (prompt-choice :corp (find-card "Patron" (:deck (get-runner))))
+      (prompt-card :corp (find-card "Sure Gamble" (:deck (get-runner))))
+      (prompt-card :corp (find-card "Corroder" (:deck (get-runner))))
+      (prompt-card :corp (find-card "Patron" (:deck (get-runner))))
       ;; try starting over
       (prompt-choice :corp "Start over")
-      (prompt-choice :corp (find-card "Patron" (:deck (get-runner))))
-      (prompt-choice :corp (find-card "Corroder" (:deck (get-runner))))
-      (prompt-choice :corp (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
+      (prompt-card :corp (find-card "Patron" (:deck (get-runner))))
+      (prompt-card :corp (find-card "Corroder" (:deck (get-runner))))
+      (prompt-card :corp (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
       (prompt-choice :corp "Done")
       (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
       (is (= "Corroder" (:title (second (:deck (get-runner))))))
@@ -437,7 +437,7 @@
       (prompt-choice :corp 3) ; boost to trace strength 5
       (prompt-choice :runner 0)
       (prompt-choice :corp "Yes")
-      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
+      (prompt-card :corp (find-card "Sure Gamble" (:hand (get-runner))))
       (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage"))))
 
 (deftest holmegaard
@@ -464,7 +464,7 @@
       (run-continue state)
       (run-successful state)
       ;; Prompt for "you cannot access any card this run"
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (is (not (accessing state "Hostile Takeover"))))))
 
 (deftest iq
@@ -711,7 +711,7 @@
     (core/rez state :corp (get-ice state :hq 0))
     (core/rez state :corp (get-ice state :rd 0))
     (is (= 4 (:current-strength (get-ice state :hq 0))) "HQ Meru Mati at 4 strength")
-	(is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
+    (is (= 1 (:current-strength (get-ice state :rd 0))) "R&D at 0 strength")))
 
 (deftest mind-game
   ;; Mind game - PSI redirect to different server
@@ -928,7 +928,7 @@
       (is (= 3 (count (:hand (get-corp)))) "Corp starts with 3 cards in hand")
       (is (= 0 (count (:discard (get-corp)))) "Corps starts with 0 cards in archives")
       (card-subroutine state :corp (refresh sadaka) 1)
-      (prompt-choice :corp (find-card "Enigma" (:hand (get-corp))))
+      (prompt-card :corp (find-card "Enigma" (:hand (get-corp))))
       (is (= 2 (count (:hand (get-corp)))) "Corp discards 1 card")
       (is (= 1 (count (:discard (get-corp)))) "1 card trashed")
       (prompt-choice :corp "Done")
@@ -940,7 +940,7 @@
       (is (= 2 (count (:discard (get-corp)))) "Corps starts with 2 cards in archives")
       (is (= 0 (count (:discard (get-runner)))) "Runner starts with 0 cards in discard")
       (card-subroutine state :corp (refresh sadakaHQ) 1)
-      (prompt-choice :corp (find-card "Enigma" (:hand (get-corp))))
+      (prompt-card :corp (find-card "Enigma" (:hand (get-corp))))
       (is (= 1 (count (:hand (get-corp)))) "Corp discards 1 card")
       (is (= 3 (count (:discard (get-corp)))) "1 card trashed")
       (prompt-select :corp (get-resource state 0))
@@ -1061,14 +1061,14 @@
       (run-on state :hq)
       (core/rez state :corp shiro)
       (card-subroutine state :corp shiro 0)
-      (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
-      (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
-      (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
       ;; try starting over
       (prompt-choice :corp "Start over")
-      (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
-      (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
-      (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
+      (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
       (prompt-choice :corp "Done")
       (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
       (is (= "Quandary" (:title (second (:deck (get-corp))))))

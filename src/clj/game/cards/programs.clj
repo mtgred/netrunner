@@ -153,7 +153,7 @@
                                                    :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
                                                              :default (req (count (filter #(card-is? % :side :corp) trashed)))}
                                                    :msg (msg "places " (quantify target "virus counter") " on Consume")
-                                                   :effect (effect (add-counter :runner card :virus target))}] 
+                                                   :effect (effect (add-counter :runner card :virus target))}]
                                            (resolve-ability state side eid ab card targets)))}}
     :abilities [{:cost [:click 1]
                  :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
@@ -465,15 +465,17 @@
     :abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
                  :req (req (:runner-phase-12 @state))
                  :effect (effect (move card :rfg) (gain :click 3))
-                 :msg "gain [Click] [Click] [Click]"}]}
+                 :msg "gain [Click][Click][Click]"}]}
 
    "Imp"
    {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))}
     :data {:counter {:virus 2}}
-    :abilities [{:counter-cost [:virus 1]
-                 :msg "trash at no cost"
-                 :once :per-turn
-                 :effect (effect (trash-no-cost))}]}
+    :interactions {:trash-ability {:req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                                                  (pos? (get-in card [:counter :virus] 0))))
+                                   :counter-cost [:virus 1]
+                                   :msg (msg "trash " (:title target) " at no cost")
+                                   :once :per-turn
+                                   :effect (req (resolve-trash-no-cost state side target))}}}
 
    "Incubator"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}

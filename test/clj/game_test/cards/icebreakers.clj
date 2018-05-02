@@ -47,6 +47,7 @@
       (is (= 2 (:current-strength atman)) "2 current strength"))))
 
 (deftest aumakua
+  ;; Aumakua - Gain credit on no-trash
   (testing "Gain counter on no trash"
     (do-game
       (new-game (default-corp [(qty "PAD Campaign" 3)])
@@ -55,13 +56,12 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "No")
+      (prompt-choice :runner "No action")
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
       (core/gain state :runner :credit 5)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Yes")
+      (prompt-choice-partial :runner "Pay")
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
-
   (testing "Gain counters on empty archives"
     (do-game
       (new-game (default-corp)
@@ -254,7 +254,7 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Deus X")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
@@ -274,7 +274,7 @@
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
-      (prompt-choice :runner "Yes")
+      (prompt-choice-partial :runner "Pay")
       (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
       (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
 

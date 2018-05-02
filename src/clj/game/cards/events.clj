@@ -47,7 +47,7 @@
                                                      (remove #(= '(:onhost) (:zone %)))
                                                      (sort-by #(vec (:zone %)))
                                                      (reverse))
-                                        allcorp (concat onhost unhosted)] 
+                                        allcorp (concat onhost unhosted)]
                                     (trash-cards state :runner eid allcorp)))}
          runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
                                              ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
@@ -820,29 +820,29 @@
                                              (quantify m "unseen card")))
                                       " into HQ, then trash 5 cards")))
                      :effect (req (when-completed
-                                    (resolve-ability state side 
+                                    (resolve-ability state side
                                                      {:effect (req (doseq [c targets]
                                                                      (move state side c :hand)))}
                                                      card targets)
-                                    (continue-ability state side 
+                                    (continue-ability state side
                                                       {:delayed-completion true
                                                        :effect (req (doseq [c (take 5 (shuffle (:hand corp)))]
                                                                       (trash state :corp c))
                                                                     (clear-wait-prompt state :runner)
                                                                     (effect-completed state :runner eid card))}
                                                       card nil)))}
-        access-effect {:mandatory true 
+        access-effect {:mandatory true
                        :delayed-completion true
                        :req (req (>= (count (:discard corp)) 5))
-                       :effect (req (show-wait-prompt 
-                                      state :runner 
+                       :effect (req (show-wait-prompt
+                                      state :runner
                                       "Corp to choose which cards to pick up from Archives") ;; For some reason it just shows successful-run-trigger-message, but this works!?
-                                    (continue-ability state side 
+                                    (continue-ability state side
                                                       corp-choose
                                                       card nil))}]
     {:req (req archives-runnable)
      :makes-run true
-     :effect (effect (run :archives 
+     :effect (effect (run :archives
                           {:req (req (= target :archives))
                            :replace-access access-effect}
                           card))})
@@ -1772,7 +1772,7 @@
    "System Seizure"
   {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
    :events {:pump-breaker {:silent (req true)
-                           :req (req (or 
+                           :req (req (or
                                        (and (has-flag? state side :current-run :system-seizure) (run-flag? state side (second targets) :system-seizure))
                                        (not (get-in @state [:per-turn (:cid card)]))))
                            :effect (req (update! state side (update-in (second targets) [:pump :all-run] (fnil #(+ % (first targets)) 0)))

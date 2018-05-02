@@ -317,7 +317,7 @@
           prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
 
       (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
-      (prompt-choice :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
       (is (= 6 (:credit (get-corp)))))))
 
 (deftest consulting-visit-mumbad
@@ -342,11 +342,11 @@
       (card-ability state :corp hall 0)
       (is (= (list "Consulting Visit" "Mumba Temple" nil) (prompt-names)))
 
-      (prompt-choice :corp (find-card "Consulting Visit" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Consulting Visit" (:deck (get-corp))))
       (is (= 3 (:credit (get-corp))))
       (is (= (list "Beanstalk Royalties" "Green Level Clearance" nil) (prompt-names)))
 
-      (prompt-choice :corp (find-card "Green Level Clearance" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Green Level Clearance" (:deck (get-corp))))
       (is (= 5 (:credit (get-corp)))))))
 
 (deftest death-and-taxes
@@ -369,7 +369,7 @@
       (card-ability state :runner (get-resource state 0) 1)
       (is (= (+ 3 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed Fall Guy")
       (run-empty-server state :remote1)
-      (prompt-choice :runner "Yes")                         ;; Runner trashes PAD Campaign
+      (prompt-choice-partial :runner "Pay")  ;; Runner trashes PAD Campaign
       (is (= (+ 4 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed PAD Campaign"))))
 
 (deftest defective-brainchips
@@ -490,126 +490,109 @@
     (is (= 1 (count (:discard (get-runner)))) "Caldera trashed")))
 
 (deftest enhanced-login-protocol
-  ;; Enhanced Login Protocol - First click run each turn costs an additional click
-  (do-game
-    (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
-              (default-runner [(qty "Employee Strike" 1)]))
-    (play-from-hand state :corp "Enhanced Login Protocol")
-    (take-credits state :corp)
-
-    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
-    (run-on state :archives)
-    (is (= 2 (:click (get-runner)))
-        "Runner spends 1 additional click to make the first run")
-    (run-successful state)
-
-    (run-on state :archives)
-    (is (= 1 (:click (get-runner)))
-        "Runner doesn't spend 1 additional click to make the second run")
-    (run-successful state)
-
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (take-credits state :runner 3)
-
-    (is (= 1 (:click (get-runner))) "Runner has 1 click")
-    (run-on state :archives)
-    (is (not (:run @state)) "No run was initiated")
-    (is (= 1 (:click (get-runner))) "Runner has 1 click")
-
-    (take-credits state :runner)
-    (take-credits state :corp)
-
-    (play-from-hand state :runner "Employee Strike")
-
-    (is (= 3 (:click (get-runner))) "Runner has 3 clicks")
-    (run-on state :archives)
-    (is (= 2 (:click (get-runner)))
-        "Runner doesn't spend 1 additional click to make a run")))
-
-(deftest enhanced-login-protocol-card-ability
-  ;; Enhanced Login Protocol - Card ability runs don't cost additional clicks
-  (do-game
-    (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
-              (default-runner [(qty "Sneakdoor Beta" 1)]))
-    (play-from-hand state :corp "Enhanced Login Protocol")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Sneakdoor Beta")
-    (take-credits state :runner)
-    (take-credits state :corp)
-
-    (is (= 4 (:click (get-runner))) "Runner has 2 clicks")
-    (let [sneakdoor (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner sneakdoor 0)
-      (is (= 3 (:click (get-runner)))
-          "Runner doesn't spend 1 additional click to run with a card ability")
-      (run-successful state)
-
-      (run-on state :archives)
-      (is (= 1 (:click (get-runner)))
-          "Runner spends 1 additional click to make a run")
-      (run-successful state)
-
-      (take-credits state :runner)
+  ;; Enhanced Login Protocol
+  (testing "First click run each turn costs an additional click"
+    (do-game
+      (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
+                (default-runner [(qty "Employee Strike" 1)]))
+      (play-from-hand state :corp "Enhanced Login Protocol")
       (take-credits state :corp)
-
       (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
       (run-on state :archives)
-      (is (= 2 (:click (get-runner)))
-          "Runner spends 1 additional click to make a run"))))
-
-(deftest enhanced-login-protocol-new-angeles-sol
-  ;; Enhanced Login Protocol trashed and reinstalled on steal doesn't double remove penalty
-  (do-game
-    (new-game
-      (make-deck "New Angeles Sol: Your News" [(qty "Enhanced Login Protocol" 1) (qty "Breaking News" 1)])
-      (default-runner))
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (play-from-hand state :corp "Enhanced Login Protocol")
-    (take-credits state :corp)
-
-    (run-on state :remote1)
-    (run-successful state)
-    (prompt-choice :runner "Steal")
-
-    (prompt-choice :corp "Yes")
-    (prompt-select :corp (find-card "Enhanced Login Protocol"
-                                    (:discard (get-corp))))
-
-    (run-on state :archives)
-    (is (= 1 (:click (get-runner))) "Runner has 1 click")))
-
-(deftest enhanced-login-protocol-run-events
-  ;; Enhanced Login Protocol - Run event don't cost additional clicks
-  (do-game
-    (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
-              (default-runner [(qty "Out of the Ashes" 1)]))
-    (play-from-hand state :corp "Enhanced Login Protocol")
-    (take-credits state :corp)
-
-    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
-    (play-from-hand state :runner "Out of the Ashes")
-    (prompt-choice :runner "Archives")
-    (is (= 3 (:click (get-runner)))
-        "Runner doesn't spend 1 additional click to run with a run event")
-    (run-successful state)
-
-    (run-on state :archives)
-    (is (= 1 (:click (get-runner)))
-        "Runner spends 1 additional click to make a run")
-    (run-successful state)
-
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (prompt-choice :runner "No") ; Out of the Ashes prompt
-
-    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
-    (run-on state :archives)
-    (is (= 2 (:click (get-runner)))
-        "Runner spends 1 additional click to make a run")))
-
-(deftest enhanced-login-protocol-runner-turn-first-run
-  ;; Enhanced Login Protocol - Works when played on the runner's turn
+      (is (= 2 (:click (get-runner))) "Runner spends 1 additional click to make the first run")
+      (run-successful state)
+      (run-on state :archives)
+      (is (= 1 (:click (get-runner))) "Runner doesn't spend 1 additional click to make the second run")
+      (run-successful state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (take-credits state :runner 3)
+      (is (= 1 (:click (get-runner))) "Runner has 1 click")
+      (run-on state :archives)
+      (is (not (:run @state)) "No run was initiated")
+      (is (= 1 (:click (get-runner))) "Runner has 1 click")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Employee Strike")
+      (is (= 3 (:click (get-runner))) "Runner has 3 clicks")
+      (run-on state :archives)
+      (is (= 2 (:click (get-runner))) "Runner doesn't spend 1 additional click to make a run")))
+  (testing "Card ability runs don't cost additional clicks"
+    (do-game
+      (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
+                (default-runner [(qty "Sneakdoor Beta" 1)]))
+      (play-from-hand state :corp "Enhanced Login Protocol")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Sneakdoor Beta")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 4 (:click (get-runner))) "Runner has 2 clicks")
+      (let [sneakdoor (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner sneakdoor 0)
+        (is (= 3 (:click (get-runner))) "Runner doesn't spend 1 additional click to run with a card ability")
+        (run-successful state)
+        (run-on state :archives)
+        (is (= 1 (:click (get-runner))) "Runner spends 1 additional click to make a run")
+        (run-successful state)
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+        (run-on state :archives)
+        (is (= 2 (:click (get-runner))) "Runner spends 1 additional click to make a run"))))
+  (testing "with New Angeles Sol, Enhanced Login Protocol trashed and reinstalled on steal doesn't double remove penalty"
+    (do-game
+      (new-game
+        (make-deck "New Angeles Sol: Your News" [(qty "Enhanced Login Protocol" 1) (qty "Breaking News" 1)])
+        (default-runner))
+      (play-from-hand state :corp "Breaking News" "New remote")
+      (play-from-hand state :corp "Enhanced Login Protocol")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (find-card "Enhanced Login Protocol" (:discard (get-corp))))
+      (run-on state :archives)
+      (is (= 1 (:click (get-runner))) "Runner has 1 click")))
+  (testing "Run event don't cost additional clicks"
+    (do-game
+      (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
+                (default-runner [(qty "Out of the Ashes" 1)]))
+      (play-from-hand state :corp "Enhanced Login Protocol")
+      (take-credits state :corp)
+      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+      (play-from-hand state :runner "Out of the Ashes")
+      (prompt-choice :runner "Archives")
+      (is (= 3 (:click (get-runner))) "Runner doesn't spend 1 additional click to run with a run event")
+      (run-successful state)
+      (run-on state :archives)
+      (is (= 1 (:click (get-runner))) "Runner spends 1 additional click to make a run")
+      (run-successful state)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (prompt-choice :runner "No") ; Out of the Ashes prompt
+      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+      (run-on state :archives)
+      (is (= 2 (:click (get-runner))) "Runner spends 1 additional click to make a run")))
+  (testing "Works when played on the runner's turn"
+    (do-game
+      (new-game (make-deck "New Angeles Sol: Your News"
+                           [(qty "Enhanced Login Protocol" 1)
+                            (qty "Breaking News" 1)])
+                (default-runner [(qty "Hades Shard" 1)]))
+      (trash-from-hand state :corp "Breaking News")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 2)
+      (play-from-hand state :runner "Hades Shard")
+      (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (find-card "Enhanced Login Protocol" (:hand (get-corp))))
+      (is (find-card "Enhanced Login Protocol" (:current (get-corp))) "Enhanced Login Protocol is in play")
+      (is (= 3 (:click (get-runner))) "Runner has 3 clicks")
+      (run-on state :archives)
+      (is (= 1 (:click (get-runner))) "Runner spends 1 additional click to make a run")))
+(testing "Doesn't fire if already run when played on the runner's turn"
   (do-game
     (new-game (make-deck "New Angeles Sol: Your News"
                          [(qty "Enhanced Login Protocol" 1)
@@ -617,50 +600,19 @@
               (default-runner [(qty "Hades Shard" 1)]))
     (trash-from-hand state :corp "Breaking News")
     (take-credits state :corp)
-
-    (core/gain state :runner :credit 2)
-    (play-from-hand state :runner "Hades Shard")
-    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
-    (prompt-choice :runner "Steal")
-    (prompt-choice :corp "Yes")
-    (prompt-select :corp (find-card "Enhanced Login Protocol"
-                                    (:hand (get-corp))))
-    (is (find-card "Enhanced Login Protocol" (:current (get-corp)))
-        "Enhanced Login Protocol is in play")
-
-    (is (= 3 (:click (get-runner))) "Runner has 3 clicks")
-    (run-on state :archives)
-    (is (= 1 (:click (get-runner)))
-        "Runner spends 1 additional click to make a run")))
-
-(deftest enhanced-login-protocol-runner-turn-second-run
-  ;; Enhanced Login Protocol - Doesn't fire if already run when played on the runner's turn
-  (do-game
-    (new-game (make-deck "New Angeles Sol: Your News"
-                         [(qty "Enhanced Login Protocol" 1)
-                          (qty "Breaking News" 1)])
-              (default-runner [(qty "Hades Shard" 1)]))
-    (trash-from-hand state :corp "Breaking News")
-    (take-credits state :corp)
-
     (run-on state :hq)
     (run-successful state)
-    (prompt-choice :runner "OK")
-
+    (prompt-choice :runner "No action")
     (core/gain state :runner :credit 2)
     (play-from-hand state :runner "Hades Shard")
-    (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
+    (card-ability state :runner (get-resource state 0) 0)
     (prompt-choice :runner "Steal")
     (prompt-choice :corp "Yes")
-    (prompt-select :corp (find-card "Enhanced Login Protocol"
-                                    (:hand (get-corp))))
-    (is (find-card "Enhanced Login Protocol" (:current (get-corp)))
-        "Enhanced Login Protocol is in play")
-
+    (prompt-select :corp (find-card "Enhanced Login Protocol" (:hand (get-corp))))
+    (is (find-card "Enhanced Login Protocol" (:current (get-corp))) "Enhanced Login Protocol is in play")
     (is (= 2 (:click (get-runner))) "Runner has 2 clicks")
     (run-on state :archives)
-    (is (= 1 (:click (get-runner)))
-        "Runner doesn't spend 1 additional click to make a run")))
+    (is (= 1 (:click (get-runner))) "Runner doesn't spend 1 additional click to make a run"))))
 
 (deftest exchange-of-information
   ;; Exchange of Information - Swapping agendas works correctly
@@ -903,8 +855,8 @@
     (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
           prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
       (is (= (list "Fall Guy" "Sure Gamble" nil) (prompt-names)))
-      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner))))
-      (prompt-choice :corp (find-card "Sure Gamble" (:hand (get-runner)))))
+      (prompt-card :corp (find-card "Sure Gamble" (:hand (get-runner))))
+      (prompt-card :corp (find-card "Sure Gamble" (:hand (get-runner)))))
     (is (= 3 (count (:hand (get-runner)))))
     ;; able to trash 2 cards but only 1 available target in Runner's hand
     (play-from-hand state :corp "Invasion of Privacy")
@@ -914,7 +866,7 @@
     (let [get-prompt (fn [] (first (#(get-in @state [:corp :prompt]))))
           prompt-names (fn [] (map #(:title %) (:choices (get-prompt))))]
       (is (= (list "Fall Guy" nil) (prompt-names)))
-      (prompt-choice :corp (find-card "Fall Guy" (:hand (get-runner))))
+      (prompt-card :corp (find-card "Fall Guy" (:hand (get-runner))))
       (is (empty? (get-in @state [:corp :prompt])) "No prompt for second card"))
     (is (= 2 (count (:hand (get-runner)))))
     ;; failed trace - take the bad publicity
@@ -973,11 +925,11 @@
     (prompt-choice :corp 0)
     (prompt-choice :runner 0)
     (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (not (:run @state)) "Run ended")
     (run-empty-server state "HQ")
     (is (empty? (:prompt (get-corp))) "No Manhunt trace on second run")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
 (deftest market-forces
@@ -1194,18 +1146,18 @@
               (default-runner))
     (starting-hand state :corp ["Precognition"])
     (play-from-hand state :corp "Precognition")
-    (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Adonis Campaign" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Global Food Initiative" (:deck (get-corp))))
     ;; try starting over
     (prompt-choice :corp "Start over")
-    (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Jackson Howard" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Quandary" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Adonis Campaign" (:deck (get-corp))))
-    (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
+    (prompt-card :corp (find-card "Global Food Initiative" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
     (prompt-choice :corp "Done")
     (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
     (is (= "Adonis Campaign" (:title (second (:deck (get-corp))))))
@@ -1252,21 +1204,21 @@
     (starting-hand state :corp ["Psychokinesis","Psychokinesis","Psychokinesis"])
     ;; Test installing an Upgrade
     (play-from-hand state :corp "Psychokinesis")
-    (prompt-choice :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
     (prompt-choice :corp "New remote")
     (is (= "Caprice Nisei" (:title (get-content state :remote1 0)))
       "Caprice Nisei installed by Psychokinesis")
     ;; Test installing an Asset
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Psychokinesis")
-    (prompt-choice :corp (find-card "Adonis Campaign" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Adonis Campaign" (:deck (get-corp))))
     (prompt-choice :corp "New remote")
     (is (= "Adonis Campaign" (:title (get-content state :remote2 0)))
       "Adonis Campaign installed by Psychokinesis")
     ;; Test installing an Agenda
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Psychokinesis")
-    (prompt-choice :corp (find-card "Global Food Initiative" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Global Food Initiative" (:deck (get-corp))))
     (prompt-choice :corp "New remote")
     (is (= "Global Food Initiative" (:title (get-content state :remote3 0)))
       "Global Food Initiative installed by Psychokinesis")
@@ -1583,7 +1535,7 @@
 
     (run-on state :hq)
     (run-successful state)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
 
     (core/gain state :runner :credit 3)
     (play-from-hand state :runner "Hades Shard")
@@ -1990,15 +1942,13 @@
               (default-runner [(qty "Desperado" 1) (qty "Corroder" 1)]))
     (play-from-hand state :corp "Adonis Campaign" "New remote")
     (take-credits state :corp)
-
     (run-on state :remote1)
     (run-successful state)
-    (prompt-choice :runner "Yes") ;trash
+    (prompt-choice-partial :runner "Pay") ;trash
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Desperado")
     (play-from-hand state :runner "Corroder")
     (take-credits state :runner)
-
     (is (= 0 (:tag (get-runner))) "Runner starts with 0 tags")
     (play-from-hand state :corp "Threat Assessment")
     (prompt-select :corp (find-card "Desperado" (-> (get-runner) :rig :hardware)))
@@ -2006,7 +1956,6 @@
     (is (= 2 (:tag (get-runner))) "Runner took 2 tags")
     (is (= 1 (count (-> (get-runner) :rig :hardware))) "Didn't trash Desperado")
     (is (= "Threat Assessment" (:title (first (:rfg (get-corp))))) "Threat Assessment removed from game")
-
     (play-from-hand state :corp "Threat Assessment")
     (prompt-select :corp (find-card "Corroder" (-> (get-runner) :rig :program)))
     (prompt-choice :runner "Move Corroder")
@@ -2014,10 +1963,8 @@
     (is (= "Corroder" (:title (first (:deck (get-runner))))) "Moved Corroder to the deck")
     (is (= 2 (count (:rfg (get-corp)))))
     (take-credits state :runner)
-
     (take-credits state :corp)
     (take-credits state :runner)
-
     (play-from-hand state :corp "Threat Assessment")
     (is (empty? (:prompt (get-corp))) "Threat Assessment triggered with no trash")))
 
@@ -2086,7 +2033,7 @@
     (play-from-hand state :runner "Maya")
     (run-on state :hq)
     (run-successful state)
-    (prompt-choice :runner "Ok")
+    (prompt-choice :runner "No action")
     (is (= 0 (count (:discard (get-corp)))) "Corp starts with no discards")
     (play-from-hand state :runner "En Passant")
     (prompt-select :runner (get-ice state :hq 0))

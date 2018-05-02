@@ -619,7 +619,7 @@
                  :msg "break 1 subroutine on the host ICE"}]}
 
    "Laamb"
-   (auto-icebreaker 
+   (auto-icebreaker
      ["Barrier"]
      {:abilities [(break-sub 2 0 "Barrier")
                   (strength-pump 3 6)
@@ -635,7 +635,7 @@
                                                                 (update! (assoc ice :subtype-target stargets :subtype stypes))
                                                                 (unregister-events card)
                                                                 (register-events (:events (card-def card)) card))}]
-                                  (update! state side (assoc ice 
+                                  (update! state side (assoc ice
                                                              :subtype-target (combine-subtypes true stargets "Barrier")
                                                              :subtype (combine-subtypes true stypes "Barrier")))
                                   (update-ice-strength state side (get-card state ice))
