@@ -147,13 +147,17 @@
                                   (runner-install state side target)))}]})
    "Consume"
    {:events {:runner-trash {:delayed-completion true
-                            :effect (req (let [trashed targets
-                                               ab {:req (req (some #(card-is? % :side :corp) trashed))
-                                                   :prompt "Place virus counters on Consume?"
-                                                   :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
-                                                             :default (req (count (filter #(card-is? % :side :corp) trashed)))}
-                                                   :msg (msg "places " (quantify target "virus counter") " on Consume")
-                                                   :effect (effect (add-counter :runner card :virus target))}]
+                            :req (req (some #(card-is? % :side :corp) targets))
+                            :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                                               sing-ab {:optional {:prompt "Place a virus counter on Consume?"
+                                                                   :yes-ability {:effect (effect (add-counter :runner card :virus 1))
+                                                                                 :msg "place 1 virus counter on Consume"}}}
+                                               mult-ab {:prompt "Place virus counters on Consume?"
+                                                        :choices {:number (req amt-trashed)
+                                                                  :default (req amt-trashed)}
+                                                        :msg (msg "place " (quantify target "virus counter") " on Consume")
+                                                        :effect (effect (add-counter :runner card :virus target))}
+                                               ab (if (> amt-trashed 1) mult-ab sing-ab)]
                                            (resolve-ability state side eid ab card targets)))}}
     :abilities [{:cost [:click 1]
                  :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))

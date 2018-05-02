@@ -399,14 +399,20 @@
                                (add-counter state :runner target :virus 1))}]
      {:events {:runner-turn-begins ability
                :runner-trash {:delayed-completion true
-                              :effect (req (let [trashed targets
-                                                 ab {:req (req (some #(card-is? % :side :corp) trashed))
-                                                     :prompt "Place virus counters on Friday Chip?"
-                                                     :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
-                                                               :default (req (count (filter #(card-is? % :side :corp) trashed)))}
-                                                     :msg (msg "places " (quantify target "virus counter") " on Friday Chip")
-                                                     :effect (effect (add-counter :runner card :virus target))}] 
-                                             (resolve-ability state side eid ab card targets)))}}})
+                              :req (req (some #(card-is? % :side :corp) targets))
+                              :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                                                 sing-ab {:optional {:prompt "Place a virus counter on Friday Chip?"
+                                                                     :yes-ability {:effect (effect (add-counter :runner card :virus 1))
+                                                                                   :msg "place 1 virus counter on Friday Chip"}}}
+                                                 mult-ab {:prompt "Place virus counters on Friday Chip?"
+                                                          :choices {:number (req amt-trashed)
+                                                                    :default (req amt-trashed)}
+                                                          :msg (msg "place " (quantify target "virus counter") " on Friday Chip")
+                                                          :effect (effect (add-counter :runner card :virus target))}
+                                                 ab (if (> amt-trashed 1) mult-ab sing-ab)]
+                                             (resolve-ability state side eid ab card targets)))}
+               
+               }})
 
    "Gebrselassie"
    {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
