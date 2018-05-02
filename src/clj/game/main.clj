@@ -142,8 +142,8 @@
   "Ensures the user is allowed to do command they are trying to do"
   [user command state side args]
   (if (not-spectator? state user)
-    (do (set-action-id state side)
-        ((commands command) state side args))
+    (do ((commands command) state side args)
+        (set-action-id state side))
     (when-let [cmd (spectator-commands command)]
       (cmd state side args))))
 
