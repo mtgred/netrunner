@@ -702,6 +702,20 @@
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
+(deftest masvingo
+  (do-game
+    (new-game (default-corp [(qty "Masvingo" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Masvingo" "HQ")
+    (let [mas (get-ice state :hq 0)]
+      (is (= 0 (:advance-counter (refresh mas) 0)) "Should install with 0 counter")
+      (core/rez state :corp (refresh mas))
+      (is (= 1 (:advance-counter (refresh mas))) "Should rez with 1 counter")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (card-subroutine state :corp mas 0)
+      (is (not (:run @state)) "Run is ended"))))
+
 (deftest meru-mati
   (do-game
     (new-game (default-corp [(qty "Meru Mati" 2)])
