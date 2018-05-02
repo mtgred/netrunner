@@ -1339,6 +1339,14 @@
                                 (when (<= 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0)))
                                   (end-run state side)))}]}
 
+   "Masvingo"
+   {:implementation "Number of subs is manual"
+    :advanceable :always
+    :abilities [{:label "Gain subroutines"
+                 :msg (msg "gain " (:advance-counter card 0) " subroutines")}]
+    :effect (effect (add-prop card :advance-counter 1))
+    :subroutines [end-the-run]}
+
    "Merlin"
    (grail-ice (do-net-damage 2))
 
