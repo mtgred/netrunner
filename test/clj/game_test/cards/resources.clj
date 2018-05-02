@@ -966,7 +966,7 @@
       (take-credits state :corp)
       (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Yes") ;trash CH
+      (prompt-choice-partial :runner "Pay") ;trash CH
       (prompt-choice :runner "Yes") ;trash Jackpot!
       (prompt-choice :runner 1)
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit")
