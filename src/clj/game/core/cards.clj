@@ -131,7 +131,7 @@
              (swap! state dissoc-in z)))
          (when-let [card-moved (:move-zone (card-def c))]
            (card-moved state side (make-eid state) moved-card card))
-         (trigger-event state side :card-moved card moved-card)
+         (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
          ; Default a card when moved to inactive zones (except :persistent key)
          (when (#{:discard :hand :deck :rfg} to)
            (reset-card state side moved-card)
@@ -202,16 +202,22 @@
       (swap! state assoc-in [side p] []))))
 
 ;;; Misc card functions
+(defn is-virus-program?
+  [card]
+  (and (program? card)
+       (has-subtype? card "Virus")))
+
 (defn get-virus-counters
   "Calculate the number of virus counters on the given card, taking Hivemind into account."
   [state side card]
-  (let [hiveminds (filter #(= (:title %) "Hivemind") (all-active-installed state :runner))]
+  (let [hiveminds (when (is-virus-program? card)
+                    (filter #(= (:title %) "Hivemind") (all-active-installed state :runner)))]
     (reduce + (map #(get-in % [:counter :virus] 0) (cons card hiveminds)))))
 
 (defn count-virus-programs
   "Calculate the number of virus programs in play"
   [state]
-  (count (filter #(has-subtype? % "Virus") (all-active-installed state :runner))))
+  (count (filter is-virus-program? (all-active-installed state :runner))))
 
 (defn card->server
   "Returns the server map that this card is installed in or protecting."

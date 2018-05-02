@@ -78,8 +78,9 @@
                        :yes-ability {:msg (msg "let the Runner make a run on " serv)
                                      :effect (effect (clear-wait-prompt :corp)
                                                      (game.core/run eid serv nil card))}
-                       :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                    (as-agenda :corp (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
+                       :no-ability {:delayed-completion true
+                                    :effect (req (clear-wait-prompt state :corp)
+                                                    (as-agenda state :corp eid (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
                                     :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                     card nil)))}
 
@@ -269,7 +270,8 @@
 
    "\"Clones are not People\""
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 1 agenda point"
-                             :effect (effect (as-agenda :corp card 1))}}}
+                             :delayed-completion true
+                             :effect (req (as-agenda state :corp eid card 1))}}}
 
    "Closed Accounts"
    {:req (req tagged)
@@ -1355,6 +1357,16 @@
                    (move state side c :deck))
                  (shuffle! state side :deck)
                  (draw state side eid (count targets) nil))}
+
+   "Standard Procedure"
+   {:req (req (last-turn? state :runner :successful-run))
+    :prompt "Choose a card type"
+    :choices ["Event" "Hardware" "Program" "Resource"]
+    :effect (req (let [n (* 2 (count (filter #(is-type? % target) (:hand runner))))]
+                   (gain state :corp :credit n)
+                   (system-msg state side (str "uses Standard Procedure to name " target ", reveal "
+                                               (join ", " (map :title (:hand runner)))
+                                               " in the Runner's Grip, and gain " n " [Credits]"))))}
 
    "Stock Buy-Back"
    {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")

@@ -395,6 +395,31 @@
                               :delayed-completion true
                               :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Intake"
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
+             :interactive (req true)
+             :trace {:base 4
+                     :label "add an installed program or virtual resource to the Grip"
+                     :delayed-completion true
+                     :effect (req (show-wait-prompt state :runner "Corp to resolve Intake")
+                                  (continue-ability
+                                    state :corp
+                                    {:prompt "Select a program or virtual resource"
+                                     :player :corp
+                                     :choices {:req #(and (installed? %)
+                                                          (or (program? %)
+                                                              (and (resource? %)
+                                                                   (has-subtype? % "Virtual"))))}
+                                     :delayed-completion true
+                                     :msg (msg "move " (:title target) " to the Grip")
+                                     :cancel-effect (effect (clear-wait-prompt :runner)
+                                                            (effect-completed eid))
+                                     :effect (req (move state :runner target :hand)
+                                                  (clear-wait-prompt state :runner)
+                                                  (effect-completed state side eid))}
+                                    card nil))}}}
+
    "Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]
              (let [remaining (remove-once #(= (:cid %) (:cid ice)) ices)]
@@ -546,7 +571,8 @@
 
    "Mumbad Virtual Tour"
    {:implementation "Only forces trash if runner has no Imps and enough credits in the credit pool"
-    :flags {:must-trash true}
+    :flags {:must-trash (req (when installed
+                               true))}
     :access {:req (req installed)
              :effect (req (let [trash-cost (trash-cost state side card)
                                 no-salsette (remove #(= (:title %) "Salsette Slums") (all-active state :runner))
@@ -560,6 +586,29 @@
                                           "(Whizzard, Imp, Ghost Runner, Net Celebrity...)")))))}
     :trash-effect {:when-inactive true
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
+
+   "Mwanza City Grid"
+   (let [gain-creds {:req (req (and installed
+                                    this-server
+                                    (:successful run)
+                                    (pos? (:cards-accessed run))))
+                     :silent (req true)
+                     :effect (req (let [cnt (:cards-accessed run)
+                                        total (* 2 cnt)]
+                                    (gain state :corp :credit total)
+                                    (system-msg state :corp
+                                                (str "gains " total " [Credits] from Mwanza City Grid"))))}]
+     {:events {:pre-access {:req (req (and installed this-server))
+                            :msg "force the Runner to access 3 additional cards"
+                            :effect (effect (access-bonus 3))}
+               :run-ends gain-creds}
+      :trash-effect
+      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+       :effect (effect (register-events {:run-ends
+                                         (assoc gain-creds :req (req (= (first (:server run))
+                                                                        (second (:previous-zone card)))))
+                                         :successful-run-ends {:effect (effect (unregister-events card))}}
+                                        (assoc card :zone '(:discard))))}})
 
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
@@ -652,6 +701,33 @@
                                                 (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ohg
                :access {:effect (effect (clear-persistent-flag! target :can-steal))}}})
+
+   "Overseer Matrix"
+   (let [om {:req (req (in-same-server? card target))
+             :delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
+                             (continue-ability
+                               {:optional
+                                {:prompt "Pay 1 [Credits] to use Overseer Matrix ability?"
+                                 :player :corp
+                                 :end-effect (effect (clear-wait-prompt :runner)
+                                                     (effect-completed eid))
+                                 :yes-ability {:cost [:credit 1]
+                                               :msg "give the Runner 1 tag"
+                                               :delayed-completion true
+                                               :effect (req (tag-runner state :runner eid 1))}}}
+                               card nil))}]
+     {:trash-effect
+      {:req (req (and (= :servers (first (:previous-zone card)))
+                      (:run @state)))
+       :effect (effect (register-events {:runner-trash (assoc om :req (req (or (= (:zone (get-nested-host target))
+                                                                                  (:previous-zone card))
+                                                                               (= (central->zone (:zone target))
+                                                                                  (butlast (:previous-zone card))))))
+                                         :run-ends {:effect (effect (unregister-events card))}}
+                                        (assoc card :zone '(:discard))))}
+      :events {:run-ends nil
+               :runner-trash om}})
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))

@@ -59,6 +59,7 @@
          strength)
        (get-in card [:pump :encounter] 0)
        (get-in card [:pump :all-run] 0)
+       (get-in card [:pump :all-turn] 0)
        (get-in @state [:bonus :breaker-strength] 0))))
 
 (defn update-breaker-strength
@@ -72,7 +73,7 @@
     (trigger-event state side :breaker-strength-changed (get-card state breaker) oldstren)))
 
 (defn pump
-  "Increase a breaker's strength by n for the given duration of :encounter or :all-run"
+  "Increase a breaker's strength by n for the given duration of :encounter, :all-run or :all-turn"
   ([state side card n] (pump state side card n :encounter))
   ([state side card n duration]
    (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))

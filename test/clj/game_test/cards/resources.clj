@@ -280,57 +280,56 @@
       (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
 
 (deftest counter-surveillance
-  ;; Trash to run, on successful run access cards equal to Tags and pay that amount in credits
-  (do-game
-    (new-game (default-corp [(qty "Hedge Fund" 3)])
-              (default-runner [(qty "Counter Surveillance" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :tag 2)
-    (play-from-hand state :runner "Counter Surveillance")
-    (-> @state :runner :credit (= 4) (is "Runner has 4 credits"))
-    (let [cs (get-in @state [:runner :rig :resource 0])]
-      (card-ability state :runner cs 0)
-      (prompt-choice :runner "HQ")
-      (run-successful state)
-      (-> (get-runner) :register :successful-run (= [:hq]) is)
-      (prompt-choice :runner "Card from hand")
-      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
-      (prompt-choice :runner "OK")
-      (prompt-choice :runner "Card from hand")
-      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
-      (prompt-choice :runner "OK")
-      (-> @state :runner :discard count (= 1) (is "Counter Surveillance trashed"))
-      (-> @state :runner :credit (= 2) (is "Runner has 2 credits")))))
-
-(deftest counter-surveillance-obelus
-  ;; Test Obelus does not trigger before Counter Surveillance accesses are done. Issues #2675
-  (do-game
-    (new-game (default-corp [(qty "Hedge Fund" 3)])
-              (default-runner [(qty "Counter Surveillance" 1) (qty "Obelus" 1) (qty "Sure Gamble" 3)]))
-    (starting-hand state :runner ["Counter Surveillance" "Obelus"])
-    (take-credits state :corp)
-    (core/gain state :runner :tag 2)
-    (core/gain state :runner :credit 2)
-    (-> (get-runner) :credit (= 7) (is "Runner has 7 credits"))
-    (play-from-hand state :runner "Counter Surveillance")
-    (play-from-hand state :runner "Obelus")
-    (-> (get-runner) :credit (= 2) (is "Runner has 2 credits")) ; Runner has enough credits to pay for CS
-    (let [cs (get-in @state [:runner :rig :resource 0])]
-      (card-ability state :runner cs 0)
-      (prompt-choice :runner "HQ")
-      (run-successful state)
-      (-> (get-runner) :register :successful-run (= [:hq]) is)
-      (-> (get-runner) :hand count zero? (is "Runner did not draw cards from Obelus yet"))
-      (prompt-choice :runner "Card from hand")
-      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
-      (-> (get-runner) :hand count zero? (is "Runner did not draw cards from Obelus yet"))
-      (prompt-choice :runner "OK")
-      (prompt-choice :runner "Card from hand")
-      (-> (get-runner) :prompt first :msg (= "You accessed Hedge Fund") is)
-      (prompt-choice :runner "OK")
-      (-> (get-runner) :hand count (= 2) (is "Runner did draw cards from Obelus after all accesses are done"))
-      (-> (get-runner) :discard count (= 1) (is "Counter Surveillance trashed"))
-      (-> (get-runner) :credit (= 0) (is "Runner has no credits")))))
+  ;; Counter-Surveillance
+  (testing "Trash to run, on successful run access cards equal to Tags and pay that amount in credits"
+    (do-game
+      (new-game (default-corp [(qty "Hedge Fund" 3)])
+                (default-runner [(qty "Counter Surveillance" 1)]))
+      (take-credits state :corp)
+      (core/gain state :runner :tag 2)
+      (play-from-hand state :runner "Counter Surveillance")
+      (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
+      (let [cs (get-in @state [:runner :rig :resource 0])]
+        (card-ability state :runner cs 0)
+        (prompt-choice :runner "HQ")
+        (run-successful state)
+        (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (prompt-choice :runner "Card from hand")
+        (is (= "You accessed Hedge Fund." (-> (get-runner) :prompt first :msg)))
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Card from hand")
+        (is (= "You accessed Hedge Fund." (-> (get-runner) :prompt first :msg)))
+        (prompt-choice :runner "No action")
+        (is (= 1 (count (:discard (get-runner)))) "Counter Surveillance trashed")
+        (is (= 2 (:credit (get-runner))) "Runner has 2 credits"))))
+  (testing "Test Obelus does not trigger before Counter Surveillance accesses are done. Issues #2675"
+    (do-game
+      (new-game (default-corp [(qty "Hedge Fund" 3)])
+                (default-runner [(qty "Counter Surveillance" 1) (qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+      (starting-hand state :runner ["Counter Surveillance" "Obelus"])
+      (take-credits state :corp)
+      (core/gain state :runner :tag 2)
+      (core/gain state :runner :credit 2)
+      (is (= 7 (:credit (get-runner))) "Runner has 7 credits")
+      (play-from-hand state :runner "Counter Surveillance")
+      (play-from-hand state :runner "Obelus")
+      (is (= 2 (:credit (get-runner))) "Runner has 2 credits") ; Runner has enough credits to pay for CS
+      (let [cs (get-in @state [:runner :rig :resource 0])]
+        (card-ability state :runner cs 0)
+        (prompt-choice :runner "HQ")
+        (run-successful state)
+        (is (= [:hq] (get-in @state [:runner :register :successful-run])))
+        (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
+        (prompt-choice :runner "Card from hand")
+        (is (= "You accessed Hedge Fund." (-> (get-runner) :prompt first :msg)))
+        (is (zero? (count (:hand (get-runner)))) "Runner did not draw cards from Obelus yet")
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Card from hand")
+        (is (= "You accessed Hedge Fund." (-> (get-runner) :prompt first :msg)))
+        (prompt-choice :runner "No action")
+        (is (= 2 (count (:hand (get-runner)))) "Runner did draw cards from Obelus after all accesses are done")
+        (is (= 1 (count (:discard (get-runner)))) "Counter Surveillance trashed")
+        (is (zero? (:credit (get-runner))) "Runner has no credits")))))
 
 (deftest-pending councilman-zone-change
   ;; Rezz no longer prevented when card changes zone (issues #1571)
@@ -444,10 +443,10 @@
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
     (is (= 0 (:tag (get-runner))) "Tag avoided")))
 
-(let [choose-runner (fn [name state prompt-map]
+(let [choose-runner
+      (fn [name state prompt-map]
                       (let [the-choice (some #(when (= name (:title %)) %) (:choices (prompt-map :runner)))]
                         (core/resolve-prompt state :runner {:card the-choice})))
-
       ;; Start id
       sunny "Sunny Lebeau: Security Specialist"
       ;; List of all G-Mod identities
@@ -475,36 +474,27 @@
                     [geist chaos reina maxx]))
         (is (not-any? #(some #{%} (prompt-titles :runner))
                       [professor whizzard jamie kate kit]))
-
         (choose-runner chaos state prompt-map)
-
         (is (= chaos (get-in (get-resource state 0) [:hosted 0 :title])) "Chaos Theory hosted on DJ Fenris")
-
-        (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
+        (is (= sunny (:title (:identity (get-runner)))) "Still Sunny, id not changed")
         (is (= 2 (:link (get-runner))) "2 link from Sunny")
         (is (= 5 (:memory (get-runner))) "+1 MU from Chaos Theory")
-
         ;; Trash DJ Fenris
         (trash-resource state "DJ Fenris")
         (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
         (is (= 1 (count (:discard (get-runner)))) "1 card in heap: DJ Fenris")
         (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")
-
         ;; Recover DJ Fenris
         (core/move state :runner (get-in (get-runner) [:discard 0]) :hand)
         (core/gain state :runner :credit 3)
-
         ;; Re-play DJ Fenris
         (play-from-hand state :runner "DJ Fenris")
-        ;(clojure.pprint/pprint (get-in @state [:runner :prompt]))
         (choose-runner chaos state prompt-map)
-
         ;; Try moving CT to hand
         (game.core/move state :runner (get-in (get-resource state 0) [:hosted 0]) :hand)
         (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
         (is (= 0 (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
         (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")))
-
     (testing "Hosting Geist"
       ;; Ensure Geist effect triggers
       (do-game
@@ -514,32 +504,23 @@
         (starting-hand state :runner ["DJ Fenris" "All-nighter" "All-nighter"])
         (play-from-hand state :runner "All-nighter")
         (play-from-hand state :runner "All-nighter")
-
         (play-from-hand state :runner "DJ Fenris")
-
         (is (= (first (prompt-titles :runner)) geist) "List is sorted")
         (is (every? #(some #{%} (prompt-titles :runner))
                     [geist chaos reina maxx]))
         (is (not-any? #(some #{%} (prompt-titles :runner))
                       [professor whizzard jamie kate kit]))
-
         (choose-runner geist state prompt-map)
-
         (is (= geist (get-in (get-resource state 2) [:hosted 0 :title])) "Geist hosted on DJ Fenris")
-
-        (is (= sunny (-> (get-runner) :identity :title)) "Still Sunny, id not changed")
-
+        (is (= sunny (:title (:identity (get-runner)))) "Still Sunny, id not changed")
         (is (= 2 (:link (get-runner))) "2 link from Sunny, no extra link from Geist")
-
         (let [hand-count (count (:hand (get-runner)))]
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter
           (is (= (+ 1 hand-count) (count (:hand (get-runner))))
               "Drew one card with Geist when using All-nighter trash ability")
-
           (trash-resource state "DJ Fenris")
           (is (= geist (get-in (get-runner) [:rfg 0 :title])) "Geist moved to RFG")
           (is (= 2 (count (:discard (get-runner)))) "2 cards in heap: All-nighter and DJ Fenris")
-
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter (again)
           (is (= (+ 1 hand-count) (count (:hand (get-runner))))
               "Did not draw another card - Geist ability removed when DJ Fenris was trashed"))))))
@@ -722,63 +703,61 @@
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
 (deftest find-the-truth
-  ;; On successful run see the top card from R&D before access
-  (do-game
-    (new-game
-      (default-corp [(qty "Restructure" 10)])
-      (default-runner [(qty "Find the Truth" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Find the Truth")
-    (run-on state "HQ")
-    (run-successful state)
-    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
-    (prompt-choice :runner "Yes")
-    (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card on R&D")
-    (prompt-choice :runner "Yes")))
-
-(deftest find-the-truth-equivocation
-  ;; Equivocation & FTT - should get order of choice.
-  (do-game
-    (new-game
-      (default-corp [(qty "Restructure" 10)])
-      (default-runner [(qty "Equivocation" 1) (qty "Find the Truth" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :credit 10)
-    (play-from-hand state :runner "Equivocation")
-    (play-from-hand state :runner "Find the Truth")
-    (run-empty-server state :rd)
-    (prompt-choice :runner "Find the Truth")
-    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
-    (prompt-choice :runner "Yes")
-    (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card")
-    (prompt-choice :runner "Yes") ; Equivocation prompt
-    (is (= "Reveal the top card of R&D?" (-> @state :runner :prompt first :msg)) "Equivocation Prompt")
-    (prompt-choice :runner "Yes")))
-
-(deftest find-the-truth-marilyn-campaign-neutralize-all-threats
-  ;; Find The Truth should completed before Marilyn trash is forced
-  (do-game
-    (new-game
-      (default-corp [(qty "Marilyn Campaign" 1) (qty "Vanilla" 10)])
-      (default-runner [(qty "Find the Truth" 1) (qty "Neutralize All Threats" 1)]))
-    (starting-hand state :corp ["Marilyn Campaign"])
-    (play-from-hand state :corp "Marilyn Campaign" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (is (= 3 (:credit (get-corp))))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Find the Truth")
-    (play-from-hand state :runner "Neutralize All Threats")
-    (run-on state :remote1)
-    (run-successful state)
-    (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
-    (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
-    (prompt-choice :runner "Yes")
-    (is (= "The top card of R&D is Vanilla" (-> @state :runner :prompt first :msg)) "FTT shows card")
-    (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
-    (prompt-choice :runner "OK")
-    (is (= "Waiting for Corp to use Marilyn Campaign" (-> @state :runner :prompt first :msg)) "Now Corp gets shuffle choice")
-    (is (= "Shuffle Marilyn Campaign into R&D?" (-> @state :corp :prompt first :msg)) "Now Corp gets shuffle choice")
-    (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn))
+  ;; Find the Truth
+  (testing "Basic test - On successful run see the top card from R&D before access"
+    (do-game
+      (new-game
+        (default-corp [(qty "Restructure" 10)])
+        (default-runner [(qty "Find the Truth" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Find the Truth")
+      (run-on state "HQ")
+      (run-successful state)
+      (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+      (prompt-choice :runner "Yes")
+      (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card on R&D")
+      (prompt-choice :runner "Yes")))
+  (testing "Equivocation & FTT - should get order of choice"
+    (do-game
+      (new-game
+        (default-corp [(qty "Restructure" 10)])
+        (default-runner [(qty "Equivocation" 1) (qty "Find the Truth" 1)]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Equivocation")
+      (play-from-hand state :runner "Find the Truth")
+      (run-empty-server state :rd)
+      (prompt-choice :runner "Find the Truth")
+      (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+      (prompt-choice :runner "Yes")
+      (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card")
+      (prompt-choice :runner "Yes") ; Equivocation prompt
+      (is (= "Reveal the top card of R&D?" (-> @state :runner :prompt first :msg)) "Equivocation Prompt")
+      (prompt-choice :runner "Yes")))
+  (testing "Find The Truth should completed before Marilyn trash is forced"
+    (do-game
+      (new-game
+        (default-corp [(qty "Marilyn Campaign" 1) (qty "Vanilla" 10)])
+        (default-runner [(qty "Find the Truth" 1) (qty "Neutralize All Threats" 1)]))
+      (starting-hand state :corp ["Marilyn Campaign"])
+      (play-from-hand state :corp "Marilyn Campaign" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 3 (:credit (get-corp))))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Find the Truth")
+      (play-from-hand state :runner "Neutralize All Threats")
+      (run-on state :remote1)
+      (run-successful state)
+      (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
+      (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
+      (prompt-choice :runner "Yes")
+      (is (= "The top card of R&D is Vanilla" (-> @state :runner :prompt first :msg)) "FTT shows card")
+      (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
+      (prompt-choice :runner "No action")
+      (prompt-choice-partial :runner "Pay")
+      (is (= "Waiting for Corp to use Marilyn Campaign" (-> @state :runner :prompt first :msg)) "Now Corp gets shuffle choice")
+      (is (= "Shuffle Marilyn Campaign into R&D?" (-> @state :corp :prompt first :msg)) "Now Corp gets shuffle choice")
+      (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn)))
 
 (deftest gang-sign
   ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
@@ -856,7 +835,7 @@
     (starting-hand state :corp ["Hedge Fund"]) ; Hedge Fund on top
     (take-credits state :corp)
     (is (:runner-phase-12 @state) "Runner in Step 1.2")
-    (let [gsec (-> (get-runner) :rig :resource first)]
+    (let [gsec (get-resource state 0)]
       (card-ability state :runner gsec 0)
       (is (pos? (.indexOf (-> (get-runner) :prompt first :msg) "Hedge Fund")) "GSec revealed Hedge Fund")
       (core/end-phase-12 state :runner nil)
@@ -902,7 +881,7 @@
     (core/gain state :runner :agenda-point 6)
     (play-from-hand state :runner "Guru Davinder")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice :runner "No action")
     (is (= 0 (count (:discard (get-runner)))) "Runner did not pay damage")
     (is (not= :runner (:winner @state)) "Runner has not won")))
 
@@ -950,6 +929,50 @@
     (is (= 1 (count (:discard (get-runner)))) "IJ is trashed")
     (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
 
+(deftest jackpot
+  ;; Jackpot! - whenever a card enters your score area, trash Jackpot to pull off credits
+  (do-game
+    (new-game (default-corp [(qty "Braintrust" 1)])
+              (default-runner [(qty "Jackpot!" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jackpot!")
+    (let [jak (get-resource state 0)]
+      (is (zero? (get-counters (refresh jak) :credit)) "Jackpot! starts with 0 credits")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 2 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn (2nd turn)")
+      (run-empty-server state "HQ")
+      (prompt-choice :runner "Steal")
+      (is (= 2 (:agenda-point (get-runner))) "Runner steals Braintrust")
+      (prompt-choice :runner "Yes")
+      (is (= 12 (:credit (get-runner))) "Runner starts with 12 credits")
+      (prompt-choice :runner 2)
+      (is (= 14 (:credit (get-runner))) "Runner gains 2 credits")
+      (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
+
+(deftest jackpot-hiro
+  ;; Jackpot! - should fire when trashing Chairman Hiro
+  (do-game
+    (new-game (default-corp [(qty "Chairman Hiro" 1)])
+              (default-runner [(qty "Jackpot!" 1)]))
+    (play-from-hand state :corp "Chairman Hiro" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jackpot!")
+    (let [jak (get-resource state 0)]
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay") ;trash CH
+      (prompt-choice :runner "Yes") ;trash Jackpot!
+      (prompt-choice :runner 1)
+      (is (= 3 (:credit (get-runner))) "Runner gains 1 credit")
+      (is (= 1 (count (:scored (get-runner)))) "Chairman Hiro in score area")
+      (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
+
 (deftest jak-sinclair-enigma
   ;; Lost clicks carry through to when turn starts fully #1764
   (do-game
@@ -985,7 +1008,7 @@
     (play-from-hand state :runner "John Masanori")
     (is (= 4 (count (:hand (get-runner)))))
     (run-empty-server state "HQ")
-    (prompt-choice :runner "Yes") ; trash crisium #2433
+    (prompt-choice-partial :runner "Pay") ; trash crisium #2433
     (run-empty-server state "Archives")
     (is (= 5 (count (:hand (get-runner)))) "1 card drawn from first successful run")
     (run-empty-server state "Archives")
@@ -1069,11 +1092,47 @@
     (prompt-choice :runner "Yes")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
 
+(deftest logic-bomb
+  ;; Logic Bomb
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 2)])
+                (default-runner [(qty "Logic Bomb" 1)]))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Logic Bomb")
+      (run-on state :hq)
+      (is (= 2 (:click (get-runner))) "Should still have 2 clicks")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 0 (:click (get-runner))) "Should now have 0 clicks")
+      (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
+      (is (last-log-contains? state "uses Logic Bomb"))
+      (is (last-log-contains? state "\\[Click\\]\\[Click\\]") "Log should mention 2 clicks")))
+  (testing "if the runner has no clicks left"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 2)])
+                (default-runner [(qty "Logic Bomb" 1)]))
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Logic Bomb")
+      (core/click-credit state :runner nil)
+      (core/click-credit state :runner nil)
+      (run-on state :hq)
+      (is (= 0 (:click (get-runner))) "Should have 0 clicks")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (= 0 (:click (get-runner))) "Should still have 0 clicks")
+      (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
+      (is (last-log-contains? state "uses Logic Bomb"))
+      (is (not (last-log-contains? state "\\[Click\\]")) "Log shouldn't mention any clicks"))))
+
 (deftest london-library
   ;; Install non-virus programs on London library. Includes #325/409
   (do-game
-    (new-game (default-corp) (default-runner [(qty "London Library" 1) (qty "Darwin" 1) (qty "Study Guide" 1)
-                                              (qty "Chameleon" 1) (qty "Femme Fatale" 1)]))
+    (new-game (default-corp)
+              (default-runner [(qty "London Library" 1) (qty "Darwin" 1) (qty "Study Guide" 1)
+                               (qty "Chameleon" 1) (qty "Femme Fatale" 1)]))
     (take-credits state :corp)
     (core/gain state :runner :click 2)
     (play-from-hand state :runner "London Library")
@@ -1220,7 +1279,7 @@
       (is (= 3 (:credit (get-corp))) "Corp has 3 credits after rez")
       (core/move state :corp (find-card "Architect" (:hand (get-corp))) :deck)
       (card-subroutine state :corp architect 0)
-      (prompt-choice :corp (find-card "Architect" (:deck (get-corp))))
+      (prompt-card :corp (find-card "Architect" (:deck (get-corp))))
       (prompt-choice :corp "HQ")
       (is (= 3 (:credit (get-corp))) "Corp has 7 credits"))))
 
@@ -1235,10 +1294,11 @@
     (play-from-hand state :runner "Neutralize All Threats")
     (run-empty-server state "HQ")
     (prompt-choice :runner "Card from hand")
-    (prompt-choice :runner "OK") ; access first Hedge Fund
+    (prompt-choice :runner "No action") ; access first Hedge Fund
     (prompt-choice :runner "Card from hand")
-    (prompt-choice :runner "OK") ; access second Hedge Fund
+    (prompt-choice :runner "No action") ; access second Hedge Fund
     (run-empty-server state "Server 1")
+    (prompt-choice-partial :runner "Pay")
     (is (= 3 (:credit (get-runner))) "Forced to pay 2c to trash BBG")
     (is (= 1 (count (:discard (get-corp)))) "Breaker Bay Grid trashed")
     (run-empty-server state "Server 2")
@@ -1372,7 +1432,7 @@
     (take-credits state :runner) ; now 8 credits
     (take-credits state :corp)
     (play-from-hand state :runner "Frantic Coding")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (prompt-card :runner (find-card "Gordian Blade" (:deck (get-runner))))
     (is (= 1 (count (get-program state))) "Installed Gordian Blade")
     (prompt-choice :runner "Yes")
@@ -1381,7 +1441,7 @@
     (is (= 5 (:credit (get-runner))) "No charge to install Gordian")
     ;; a second Frantic Coding will not trigger Paige (once per turn)
     (play-from-hand state :runner "Frantic Coding")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (prompt-card :runner (find-card "Ninja" (:deck (get-runner))))
     (is (= 2 (count (get-program state))) "Installed Ninja")
     (is (= 11 (count (:discard (get-runner)))) "11 cards in heap")
@@ -1464,18 +1524,18 @@
     (is (= 1 (count (:hand (get-runner)))))
     (take-credits state :corp)
     (play-from-hand state :runner "Rolodex")
-    (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner))))
-    (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
-    (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
-    (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
-    (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Sure Gamble" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Desperado" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Diesel" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Corroder" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Patron" (:deck (get-runner))))
     ;; try starting over
     (prompt-choice :runner "Start over")
-    (prompt-choice :runner (find-card "Patron" (:deck (get-runner))))
-    (prompt-choice :runner (find-card "Corroder" (:deck (get-runner))))
-    (prompt-choice :runner (find-card "Diesel" (:deck (get-runner))))
-    (prompt-choice :runner (find-card "Desperado" (:deck (get-runner))))
-    (prompt-choice :runner (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
+    (prompt-card :runner (find-card "Patron" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Corroder" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Diesel" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Desperado" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
     (prompt-choice :runner "Done")
     (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
     (is (= "Desperado" (:title (second (:deck (get-runner))))))
@@ -1571,10 +1631,10 @@
       (card-ability state :runner salsette2 0)
       (is (not (empty? (:prompt (get-runner)))) "Still prompting to trash")
       (is (:run @state) "Run is still occurring")
-      (prompt-choice :runner "No")
+      (prompt-choice :runner "No action")
       ;; Test the "oops I forgot" ability (runner feels bad that they forgot to use Slums when a Hostile is out)
       (run-empty-server state :remote3)
-      (prompt-choice :runner "Yes")
+      (prompt-choice-partial :runner "Pay")
       ;; Can only use that first Slums once
       (card-ability state :runner salsette1 1)
       (is (empty? (:prompt (get-runner))) "Not prompting the runner")
@@ -1586,7 +1646,7 @@
     ;; Set things up so we can trash the Hostile and then make sure we can't "oops I forgot on a later turn"
     (core/gain state :runner :credit 5)
     (run-empty-server state :remote2)
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (take-credits state :runner)
     (take-credits state :corp)
     (let [salsette1 (get-resource state 0)
@@ -1978,7 +2038,7 @@
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "The Source")
     (run-empty-server state :remote1)
-    (prompt-choice :runner "Yes") ; pay 3c extra to steal
+    (prompt-choice-partial :runner "Pay") ; pay 3c extra to steal
     (is (= 4 (:credit (get-runner))) "Paid 3c to steal")
     (is (= 2 (count (:discard (get-runner)))) "The Source is trashed")
     (play-from-hand state :runner "The Source")
@@ -2264,7 +2324,7 @@
     (play-from-hand state :runner "Wasteland")
     (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes") ; Trash PAD campaign
+    (prompt-choice-partial :runner "Pay") ; Trash PAD campaign
     (is (= 0 (:credit (get-runner))) "Gained nothing from Wasteland on corp trash")
     ; trash from hand first which should not trigger #2291
     (let [faust (get-in @state [:runner :rig :program 0])]

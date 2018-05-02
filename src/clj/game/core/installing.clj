@@ -255,6 +255,10 @@
                                        (= install-state :rezzed-no-cost)
                                        (rez state side eid moved-card {:ignore-cost :all-costs})
 
+                                       ;; ;; Ignore rez cost only. Pass eid to rez.
+                                       (= install-state :rezzed-no-rez-cost)
+                                       (rez state side eid moved-card {:ignore-cost :rez-costs})
+
                                        ;; Pay costs. Pass eid to rez.
                                        (= install-state :rezzed)
                                        (rez state side eid moved-card nil)

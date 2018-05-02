@@ -47,7 +47,7 @@
                                                      (remove #(= '(:onhost) (:zone %)))
                                                      (sort-by #(vec (:zone %)))
                                                      (reverse))
-                                        allcorp (concat onhost unhosted)] 
+                                        allcorp (concat onhost unhosted)]
                                     (trash-cards state :runner eid allcorp)))}
          runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
                                              ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
@@ -213,6 +213,16 @@
                                                                (continue-ability end-effect card nil))}}
                                     c)))})
 
+   "Contaminate"
+   {:effect (req (resolve-ability
+                   state side
+                   {:msg (msg "place 3 virus tokens on " (:title target))
+                    :choices {:req #(and (installed? %)
+                                         (= (:side %) "Runner")
+                                         (zero? (get-virus-counters state side %)))}
+                    :effect (req (add-counter state :runner target :virus 3))}
+                   card nil))}
+
   "Corporate \"Grant\""
   {:events {:runner-install {:silent (req true) ;; there are no current interactions where we'd want Grant to not be last, and this fixes a bug with Hayley
                              :req (req (first-event? state side :runner-install))
@@ -377,6 +387,42 @@
      {:delayed-completion true
       :effect (effect (continue-ability (choice all) card nil))})
 
+   "Compile"
+   {:implementation "Trigger only on first encounter not enforced"
+    :prompt "Choose a server"
+    :msg "make a run and install a program on encounter with the first piece of ICE"
+    :choices (req runnable-servers)
+    :delayed-completion true
+    :abilities [{:label "Install a program using Compile"
+                 :delayed-completion true
+                 :effect (effect (resolve-ability
+                                   {:prompt "Install a program from Stack or Heap?"
+                                    :choices ["Stack" "Heap"]
+                                    :msg (msg "install " (:title target))
+                                    :effect (effect (resolve-ability
+                                                      (let [chosen-source target]
+                                                        {:prompt (str "Choose a program in your " chosen-source " to install")
+                                                         :choices (req (cancellable (filter #(is-type? % "Program")
+                                                                                            ((if (= chosen-source "Heap") :discard :deck) runner))))
+                                                         :effect (req (runner-install state side (assoc-in target [:special :compile-installed] true) {:no-cost true})
+                                                                      (when (= chosen-source "Stack")
+                                                                        (shuffle! state :runner :deck)))})
+                                                      card nil))}
+                                   card nil))}]
+    :effect (effect (run target nil card)
+                    (prompt! card (str "Click Compile in the Temporary Zone to install a Program") ["OK"] {})
+                    (resolve-ability
+                      {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
+                                         (card-init state side c {:resolve-effect false})))}
+                      card nil))
+    :events {:run-ends {:effect (req
+                                 (let [compile-installed (first (filter #(get-in % [:special :compile-installed]) (game.core/all-installed state :runner)))]
+                                   (when (not (empty? compile-installed))
+                                     (system-msg state side (str "moved " (:title compile-installed) " to the bottom of the Stack at the end of the run from Compile"))
+                                     (move state side compile-installed :deck)))
+                                 (unregister-events state side card)
+                                 (trash state side card))}}}
+
    "Dianas Hunt"
    {:implementation "One program per encounter not enforced"
     :prompt "Choose a server"
@@ -458,6 +504,28 @@
 
    "Easy Mark"
    {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
+
+   "Embezzle"
+   (letfn [(name-string [cards] (join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
+    {:req (req hq-runnable)
+     :effect (effect
+              (run :hq {:req (req (= target :hq))
+                        :replace-access
+                        {:mandatory true
+                         :msg (msg "reveal 2 cards from HQ and trash all " target "s") ;should maybe lower-case target
+                         :prompt "Choose a card type"
+                         :choices ["Asset" "Upgrade" "Operation" "ICE"]
+                         :effect (req (let [chosen-type target
+                                            cards-to-reveal (take 2 (shuffle (:hand corp)))
+                                            cards-to-trash (filter #(is-type? % chosen-type) cards-to-reveal)]
+                                        (system-msg state side (str " reveals " (name-string cards-to-reveal) " from HQ"))
+                                        (when-not (empty? cards-to-trash)
+                                          (system-msg state side (str " trashes " (name-string cards-to-trash)
+                                                                      " from HQ and gain " (* 4 (count cards-to-trash)) "[Credits]"))
+                                          (doseq [c cards-to-trash]
+                                            (trash state :runner (assoc c :seen true)))
+                                          (gain state :runner :credit (* 4 (count cards-to-trash))))))}}
+                card))})
 
    "Emergency Shutdown"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
@@ -718,7 +786,8 @@
 
    "\"Freedom Through Equality\""
    {:events {:agenda-stolen {:msg "add it to their score area as an agenda worth 1 agenda point"
-                             :effect (effect (as-agenda :runner card 1))}}}
+                             :delayed-completion true
+                             :effect (req (as-agenda state :runner eid card 1))}}}
 
    "Freelance Coding Contract"
    {:choices {:max 5
@@ -752,29 +821,29 @@
                                              (quantify m "unseen card")))
                                       " into HQ, then trash 5 cards")))
                      :effect (req (when-completed
-                                    (resolve-ability state side 
+                                    (resolve-ability state side
                                                      {:effect (req (doseq [c targets]
                                                                      (move state side c :hand)))}
                                                      card targets)
-                                    (continue-ability state side 
+                                    (continue-ability state side
                                                       {:delayed-completion true
                                                        :effect (req (doseq [c (take 5 (shuffle (:hand corp)))]
                                                                       (trash state :corp c))
                                                                     (clear-wait-prompt state :runner)
                                                                     (effect-completed state :runner eid card))}
                                                       card nil)))}
-        access-effect {:mandatory true 
+        access-effect {:mandatory true
                        :delayed-completion true
                        :req (req (>= (count (:discard corp)) 5))
-                       :effect (req (show-wait-prompt 
-                                      state :runner 
+                       :effect (req (show-wait-prompt
+                                      state :runner
                                       "Corp to choose which cards to pick up from Archives") ;; For some reason it just shows successful-run-trigger-message, but this works!?
-                                    (continue-ability state side 
+                                    (continue-ability state side
                                                       corp-choose
                                                       card nil))}]
     {:req (req archives-runnable)
      :makes-run true
-     :effect (effect (run :archives 
+     :effect (effect (run :archives
                           {:req (req (= target :archives))
                            :replace-access access-effect}
                           card))})
@@ -1090,13 +1159,14 @@
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:agenda-stolen {:silent (req true)
                              :effect (effect (update! (assoc card :steal true)))}
-             :run-ends {:effect (req (if (:steal card)
-                                       (do (as-agenda state :runner (get-card state card) 1)
-                                           (system-msg state :runner
-                                                       (str "adds Mad Dash to their score area as an agenda worth 1 agenda point")))
+             :run-ends {:delayed-completion true
+                        :effect (req (if (:steal card)
+                                       (when-completed (as-agenda state :runner (get-card state card) 1)
+                                                       (system-msg state :runner
+                                                                   (str "adds Mad Dash to their score area as an agenda worth 1 agenda point")))
                                        (do (system-msg state :runner
                                                        (str "suffers 1 meat damage from Mad Dash"))
-                                                       (damage state side eid :meat 1 {:card card})))
+                                         (damage state side eid :meat 1 {:card card})))
                                      (unregister-events state side card))}}}
 
    "Making an Entrance"
@@ -1226,7 +1296,8 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
+    :delayed-completion true
+    :effect (req (as-agenda state :runner eid (first (:play-area runner)) 1))
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "On the Lam"
@@ -1702,15 +1773,17 @@
                          :effect (effect (lose :corp :credit 1))}}}
 
    "System Seizure"
-   (let [ss {:effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}]
-     {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-      :events {:pump-breaker {:silent (req true)
-                              :req (req (not (get-in @state [:per-turn (:cid card)])))
-                              :effect (effect (update! (update-in (second targets) [:pump :all-run] (fnil #(+ % (first targets)) 0)))
-                                              (update-breaker-strength (second targets)))}
-               :pass-ice ss :run-ends ss}
-      :move-zone (req (when (= [:discard] (:zone card))
-                        (unregister-events state side card)))})
+  {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
+   :events {:pump-breaker {:silent (req true)
+                           :req (req (or
+                                       (and (has-flag? state side :current-run :system-seizure) (run-flag? state side (second targets) :system-seizure))
+                                       (not (get-in @state [:per-turn (:cid card)]))))
+                           :effect (req (update! state side (update-in (second targets) [:pump :all-run] (fnil #(+ % (first targets)) 0)))
+                                        (register-run-flag! state side card :system-seizure (fn [_ _ c] (= (:cid c) (:cid (second targets)))))
+                                        (update-breaker-strength state side (second targets))
+                                        (swap! state assoc-in [:per-turn (:cid card)] targets))}}
+   :move-zone (req (when (= [:discard] (:zone card))
+                     (unregister-events state side card)))}
 
    "Test Run"
    {:prompt "Install a program from your Stack or Heap?"
