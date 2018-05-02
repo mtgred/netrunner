@@ -65,6 +65,14 @@
 
 (def zoom-channel (chan))
 
+(defn check-lock?
+  "Check if we can clear client lock based on action-id"
+  []
+  (let [aid [(:side @game-state) :aid]]
+    (when (not= (get-in @game-state aid)
+                (get-in @last-state aid))
+      (reset! lock false))))
+
 (defn handle-state [{:keys [state]}]
   (init-game state)
   (reset! lock false))
@@ -72,8 +80,8 @@
 (defn handle-diff [{:keys [gameid diff]}]
   (when (= gameid (:gameid @game-state))
     (swap! game-state #(differ/patch @last-state diff))
-    (reset! last-state @game-state)
-    (reset! lock false)))
+    (check-lock?)
+    (reset! last-state @game-state)))
 
 (defn handle-timeout [{:keys [gameid]}]
   (when (= gameid (:gameid @game-state))

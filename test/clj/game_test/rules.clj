@@ -454,8 +454,6 @@
       (take-credits state :runner))
     (testing "Turn 4 Corp"
       (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
-      ; (prn "publics2" (refresh publics2))
-      ; (is (= :scored (:zone (refresh publics2))))
       (is (= 12 (:credit (get-corp))))))))
 
 (deftest run-bad-publicity-credits

@@ -13,43 +13,41 @@
    "typingstop" core/typingstop})
 
 (def commands
-  {"typing" core/typing
-   "typingstop" core/typingstop
-   "concede" core/concede
-   "system-msg" #(core/system-msg %1 %2 (:msg %3))
+  {"ability" core/play-ability
+   "access" core/successful-run
+   "advance" core/advance
    "change" core/change
-   "move" core/move-card
-   "mulligan" core/mulligan
-   "keep" core/keep-hand
-   "start-turn" core/start-turn
+   "choice" core/resolve-prompt
+   "close-deck" core/close-deck
+   "concede" core/concede
+   "continue" core/continue
+   "corp-phase-43" core/corp-phase-43
+   "credit" core/click-credit
+   "derez" #(core/derez %1 %2 (:card %3))
+   "draw" core/click-draw
+   "dynamic-ability" core/play-dynamic-ability
    "end-phase-12" core/end-phase-12
    "end-turn" core/end-turn
-   "draw" core/click-draw
-   "credit" core/click-credit
+   "jack-out" core/jack-out
+   "keep" core/keep-hand
+   "move" core/move-card
+   "mulligan" core/mulligan
+   "no-action" core/no-action
+   "play" core/play
    "purge" core/do-purge
    "remove-tag" core/remove-tag
-   "play" core/play
    "rez" #(core/rez %1 %2 (:card %3) nil)
-   "derez" #(core/derez %1 %2 (:card %3))
    "run" core/click-run
-   "no-action" core/no-action
-   "corp-phase-43" core/corp-phase-43
-   "continue" core/continue
-   "access" core/successful-run
-   "jack-out" core/jack-out
-   "advance" core/advance
+   "runner-ability" core/play-runner-ability
    "score" #(core/score %1 %2 (game.core/get-card %1 (:card %3)))
-   "choice" core/resolve-prompt
    "select" core/select
    "shuffle" core/shuffle-deck
-   "ability" core/play-ability
-   "runner-ability" core/play-runner-ability
+   "start-turn" core/start-turn
    "subroutine" core/play-subroutine
-   "trash-resource" core/trash-resource
-   "dynamic-ability" core/play-dynamic-ability
+   "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" core/toast
-   "view-deck" core/view-deck
-   "close-deck" core/close-deck})
+   "trash-resource" core/trash-resource
+   "view-deck" core/view-deck})
 
 (defn strip [state]
   (-> state
@@ -135,12 +133,17 @@
      :corp-diff   corp-diff
      :spect-diff  spect-diff}))
 
+(defn set-action-id
+  "Creates a unique action id for each server response - used in client lock"
+  [state side]
+  (swap! state update-in [side :aid] (fnil inc 0)))
 
 (defn handle-action
   "Ensures the user is allowed to do command they are trying to do"
   [user command state side args]
   (if (not-spectator? state user)
-    ((commands command) state side args)
+    (do (set-action-id state side)
+        ((commands command) state side args))
     (when-let [cmd (spectator-commands command)]
       (cmd state side args))))
 
