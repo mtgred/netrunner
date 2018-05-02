@@ -399,12 +399,15 @@
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
      {:events {:runner-turn-begins ability
-               :runner-trash {:req (req (= (:side target) "Corp"))
-                              :optional
-                              {:prompt "Gain a virus counter on Friday Chip?"
-                               :yes-ability
-                               {:effect (effect (add-counter :runner card :virus 1)
-                                                (system-msg :runner (str "places 1 virus counter on Friday Chip")))}}}}})
+               :runner-trash {:delayed-completion true
+                              :effect (req (let [trashed targets
+                                                 ab {:req (req (some #(card-is? % :side :corp) trashed))
+                                                     :prompt "Place virus counters on Friday Chip?"
+                                                     :choices {:number (req (count (filter #(card-is? % :side :corp) trashed)))
+                                                               :default (req (count (filter #(card-is? % :side :corp) trashed)))}
+                                                     :msg (msg "places " (quantify target "virus counter") " on Friday Chip")
+                                                     :effect (effect (add-counter :runner card :virus target))}] 
+                                             (resolve-ability state side eid ab card targets)))}}})
 
    "GPI Net Tap"
    {:implementation "Trash and jack out effect is manual"
