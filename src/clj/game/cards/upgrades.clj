@@ -571,7 +571,8 @@
 
    "Mumbad Virtual Tour"
    {:implementation "Only forces trash if runner has no Imps and enough credits in the credit pool"
-    :flags {:must-trash true}
+    :flags {:must-trash (req (when installed
+                               true))}
     :access {:req (req installed)
              :effect (req (let [trash-cost (trash-cost state side card)
                                 no-salsette (remove #(= (:title %) "Salsette Slums") (all-active state :runner))
@@ -717,8 +718,10 @@
                                                :effect (req (tag-runner state :runner eid 1))}}}
                                card nil))}]
      {:trash-effect
-      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-       :effect (effect (register-events {:runner-trash (assoc om :req (req (or (= (:zone (get-nested-host target)) (:previous-zone card))
+      {:req (req (and (= :servers (first (:previous-zone card)))
+                      (:run @state)))
+       :effect (effect (register-events {:runner-trash (assoc om :req (req (or (= (:zone (get-nested-host target))
+                                                                                  (:previous-zone card))
                                                                                (= (central->zone (:zone target))
                                                                                   (butlast (:previous-zone card))))))
                                          :run-ends {:effect (effect (unregister-events card))}}

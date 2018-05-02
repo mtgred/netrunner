@@ -47,7 +47,7 @@
                                                      (remove #(= '(:onhost) (:zone %)))
                                                      (sort-by #(vec (:zone %)))
                                                      (reverse))
-                                        allcorp (concat onhost unhosted)] 
+                                        allcorp (concat onhost unhosted)]
                                     (trash-cards state :runner eid allcorp)))}
          runner-facedown {:effect (req (let [installedcards (all-active-installed state :runner)
                                              ishosted (fn [c] (or (= ["onhost"] (get c :zone)) (= '(:onhost) (get c :zone))))
@@ -786,7 +786,8 @@
 
    "\"Freedom Through Equality\""
    {:events {:agenda-stolen {:msg "add it to their score area as an agenda worth 1 agenda point"
-                             :effect (effect (as-agenda :runner card 1))}}}
+                             :delayed-completion true
+                             :effect (req (as-agenda state :runner eid card 1))}}}
 
    "Freelance Coding Contract"
    {:choices {:max 5
@@ -820,29 +821,29 @@
                                              (quantify m "unseen card")))
                                       " into HQ, then trash 5 cards")))
                      :effect (req (when-completed
-                                    (resolve-ability state side 
+                                    (resolve-ability state side
                                                      {:effect (req (doseq [c targets]
                                                                      (move state side c :hand)))}
                                                      card targets)
-                                    (continue-ability state side 
+                                    (continue-ability state side
                                                       {:delayed-completion true
                                                        :effect (req (doseq [c (take 5 (shuffle (:hand corp)))]
                                                                       (trash state :corp c))
                                                                     (clear-wait-prompt state :runner)
                                                                     (effect-completed state :runner eid card))}
                                                       card nil)))}
-        access-effect {:mandatory true 
+        access-effect {:mandatory true
                        :delayed-completion true
                        :req (req (>= (count (:discard corp)) 5))
-                       :effect (req (show-wait-prompt 
-                                      state :runner 
+                       :effect (req (show-wait-prompt
+                                      state :runner
                                       "Corp to choose which cards to pick up from Archives") ;; For some reason it just shows successful-run-trigger-message, but this works!?
-                                    (continue-ability state side 
+                                    (continue-ability state side
                                                       corp-choose
                                                       card nil))}]
     {:req (req archives-runnable)
      :makes-run true
-     :effect (effect (run :archives 
+     :effect (effect (run :archives
                           {:req (req (= target :archives))
                            :replace-access access-effect}
                           card))})
@@ -1158,13 +1159,14 @@
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:agenda-stolen {:silent (req true)
                              :effect (effect (update! (assoc card :steal true)))}
-             :run-ends {:effect (req (if (:steal card)
-                                       (do (as-agenda state :runner (get-card state card) 1)
-                                           (system-msg state :runner
-                                                       (str "adds Mad Dash to their score area as an agenda worth 1 agenda point")))
+             :run-ends {:delayed-completion true
+                        :effect (req (if (:steal card)
+                                       (when-completed (as-agenda state :runner (get-card state card) 1)
+                                                       (system-msg state :runner
+                                                                   (str "adds Mad Dash to their score area as an agenda worth 1 agenda point")))
                                        (do (system-msg state :runner
                                                        (str "suffers 1 meat damage from Mad Dash"))
-                                                       (damage state side eid :meat 1 {:card card})))
+                                         (damage state side eid :meat 1 {:card card})))
                                      (unregister-events state side card))}}}
 
    "Making an Entrance"
@@ -1294,7 +1296,8 @@
    {:req (req (and (some #{:hq} (:successful-run runner-reg))
                    (some #{:rd} (:successful-run runner-reg))
                    (some #{:archives} (:successful-run runner-reg))))
-    :effect (effect (as-agenda :runner (first (:play-area runner)) 1))
+    :delayed-completion true
+    :effect (req (as-agenda state :runner eid (first (:play-area runner)) 1))
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
    "On the Lam"
@@ -1772,7 +1775,7 @@
    "System Seizure"
   {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
    :events {:pump-breaker {:silent (req true)
-                           :req (req (or 
+                           :req (req (or
                                        (and (has-flag? state side :current-run :system-seizure) (run-flag? state side (second targets) :system-seizure))
                                        (not (get-in @state [:per-turn (:cid card)]))))
                            :effect (req (update! state side (update-in (second targets) [:pump :all-run] (fnil #(+ % (first targets)) 0)))

@@ -407,8 +407,8 @@
 
    "Gebrselassie"
    {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
-                 :cost [:click 1] 
-                 :choices {:req #(and (installed? %) 
+                 :cost [:click 1]
+                 :choices {:req #(and (installed? %)
                                       (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI")))}
                  :effect (req (when-let [host (get-card state (:host card))]

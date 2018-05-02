@@ -131,7 +131,7 @@
              (swap! state dissoc-in z)))
          (when-let [card-moved (:move-zone (card-def c))]
            (card-moved state side (make-eid state) moved-card card))
-         (trigger-event state side :card-moved card moved-card)
+         (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
          ; Default a card when moved to inactive zones (except :persistent key)
          (when (#{:discard :hand :deck :rfg} to)
            (reset-card state side moved-card)
@@ -202,7 +202,10 @@
       (swap! state assoc-in [side p] []))))
 
 ;;; Misc card functions
-(defn is-virus-program? [card] (and (program? card) (has-subtype? card "Virus")))
+(defn is-virus-program?
+  [card]
+  (and (program? card)
+       (has-subtype? card "Virus")))
 
 (defn get-virus-counters
   "Calculate the number of virus counters on the given card, taking Hivemind into account."
