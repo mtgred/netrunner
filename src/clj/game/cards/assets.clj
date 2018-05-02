@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
+(declare expose-prevent runner-loses-click)
 
 ;;; Asset-specific helpers
 (defn installed-access-trigger
@@ -1668,6 +1668,40 @@
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :effect (effect (as-agenda :runner card 2))}}
+
+   "Warden Fatuma"
+   (let [new-sub {:label "[Warden Fatuma] force the Runner to lose 1 [Click], if able"
+                  :msg "force the Runner to lose 1 [Click], if able"
+                  :effect runner-loses-click}]
+
+     (letfn [(all-rezzed-bios [state]
+               (filter #(and (ice? %)
+                             (has-subtype? % "Bioroid")
+                             (rezzed? %))
+                       (all-installed state :corp)))
+
+             (remove-one [state ice]
+               (println "Removing" (:title ice))
+               (update! state :corp (-> ice
+                                      (assoc :subroutines (rest (:subroutines ice)))
+                                      (dissoc-in [:special :extra-subs]))))
+
+             (add-one [state ice]
+               (println "Adding" (:title ice))
+               (update! state :corp (-> ice
+                                      (assoc :subroutines (cons new-sub (:subroutines ice)))
+                                      (assoc-in [:special :extra-subs] true))))
+
+             (update-all [state func] (doseq [i (all-rezzed-bios state)] (func state i)))
+             ]
+       {:effect (req (system-msg
+                       state :corp
+                       "uses Warden Fatuma to add \"[Subroutine] The Runner loses [Click], if able\" before all other subroutines")
+                  (update-all state add-one))
+        :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
+                      (update-all state remove-one))
+        :events {:rez {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
+                       :effect (req (add-one state target))}}}))
 
    "Watchdog"
    {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
