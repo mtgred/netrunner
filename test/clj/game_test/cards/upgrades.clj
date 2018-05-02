@@ -637,6 +637,52 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
 
+(deftest intake
+  ;; Intake - Trace4, add an installed program or virtual resource to the grip
+  (do-game
+    (new-game (default-corp [(qty "Intake" 3)])
+              (default-runner [(qty "Corroder" 1) (qty "Fester" 1) (qty "Daily Casts" 1)]))
+    (starting-hand state :corp ["Intake" "Intake"])
+    (play-from-hand state :corp "Intake" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :click 5 :credit 10)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Fester")
+    (play-from-hand state :runner "Daily Casts")
+    (run-on state "R&D")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (is (empty? (:hand (get-runner))) "Runner starts with no cards in hand")
+    (prompt-select :corp (get-program state 0))
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (prompt-choice-partial :runner "Pay") ; trash
+    (run-on state "Archives")
+    (run-successful state)
+    (is (empty? (:prompt (get-corp))) "No prompt from Archives access")
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (run-on state "Server 1")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (prompt-select :corp (get-resource state 0))
+    (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+    (prompt-choice :runner "No action") ; trash
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 0)
+    (prompt-choice :corp "Done")
+    (prompt-choice :runner "No action") ; trash
+    (is (empty? (:prompt (get-corp))) "Prompt closes after done")
+    (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
+    (run-on state "HQ")
+    (run-successful state)
+    (prompt-choice :corp 0) ; trace
+    (prompt-choice :runner 5)
+    (is (empty? (:prompt (get-corp))) "Prompt closes after lost trace")))
+
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
   (do-game
@@ -770,6 +816,45 @@
         (core/move state :runner (refresh imp) :discard)
         (is (not (core/any-flag-fn? state :runner :slow-trash true)))))))
 
+(deftest mwanza-city-grid
+  ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Mwanza City Grid" 1) (qty "Hedge Fund" 5)])
+                (default-runner))
+      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [mcg (get-content state :hq 0)]
+        (core/rez state :corp mcg)
+        (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+        (run-successful state)
+        (prompt-choice :runner "Mwanza City Grid")
+        (prompt-choice :runner "No action")
+        (dotimes [c 4]
+          (prompt-choice :runner "Card from hand")
+          (prompt-choice :runner "No action"))
+        (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
+        (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
+  (testing "effect persists through current run after trash"
+    (do-game
+      (new-game (default-corp [(qty "Mwanza City Grid" 1) (qty "Hedge Fund" 5)])
+                (default-runner))
+      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [mcg (get-content state :hq 0)]
+        (core/rez state :corp mcg)
+        (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+        (run-successful state)
+        (prompt-choice :runner "Mwanza City Grid")
+        (prompt-choice-partial :runner "Pay")
+        (dotimes [c 4]
+          (prompt-choice :runner "Card from hand")
+          (prompt-choice :runner "No action"))
+        (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
+        (is (= 17 (:credit (get-corp))) "Corp gains 10 credits")))))
+
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement
   (do-game
@@ -876,6 +961,76 @@
       (prompt-choice :runner "Card from hand")
       (prompt-choice :runner "No action")
       (is (= 0 (count (:scored (get-runner)))) "No stolen agendas"))))
+
+(deftest overseer-matrix
+  ;; Overseer Matrix - corp takes a tag when trashing a card in this server
+  (testing "Basic functionality"
+    (do-game
+      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 1)])
+                (default-runner))
+      (play-from-hand state :corp "Overseer Matrix" "New remote")
+      (play-from-hand state :corp "Red Herrings" "Server 1")
+      (take-credits state :corp)
+      (let [om (get-content state :remote1 0)
+            rh (get-content state :remote1 1)]
+        (run-on state "Server 1")
+        (core/rez state :corp om)
+        (run-successful state)
+        (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+        (prompt-select :runner rh)
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice :corp "Yes")
+        (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+        (prompt-select :runner om)
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice :corp "Yes")
+        (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
+  (testing "Effect persists after trash"
+    (do-game
+      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 3)])
+                (default-runner))
+      (play-from-hand state :corp "Overseer Matrix" "New remote")
+      (play-from-hand state :corp "Red Herrings" "Server 1")
+      (take-credits state :corp)
+      (let [om (get-content state :remote1 0)
+            rh (get-content state :remote1 1)]
+        (run-on state "Server 1")
+        (core/rez state :corp om)
+        (run-successful state)
+        (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+        (prompt-select :runner om)
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice :corp "Yes")
+        (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+        (prompt-select :runner rh)
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice :corp "Yes")
+        (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
+  (testing "Effect ends after current run"
+    (do-game
+      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 3)])
+                (default-runner))
+      (play-from-hand state :corp "Overseer Matrix" "New remote")
+      (play-from-hand state :corp "Red Herrings" "Server 1")
+      (take-credits state :corp)
+      (let [om (get-content state :remote1 0)
+            rh (get-content state :remote1 1)]
+        (run-on state "Server 1")
+        (core/rez state :corp om)
+        (run-successful state)
+        (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+        (prompt-select :runner om)
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice :corp "Yes")
+        (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+        (prompt-select :runner rh)
+        (prompt-choice :runner "No action")
+        (is (= 1 (:tag (get-runner))) "Runner doesn't take a tag")
+        (run-on state "Server 1")
+        (run-successful state)
+        (prompt-choice-partial :runner "Pay")
+        (is (empty? (:prompt (get-corp))) "No prompt for Overseer Matrix")
+        (is (= 1 (:tag (get-runner))) "Runner doesn't take a tag")))))
 
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program

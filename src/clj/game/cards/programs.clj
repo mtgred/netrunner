@@ -993,6 +993,27 @@
                                          (shuffle! state side :deck))}
                            card nil))}]}
 
+   "Trypano"
+   (let [trash-if-5 (req (when-let [h (get-card state (:host card))]
+                           (if (and (>= (get-virus-counters state side card) 5)
+                                      (not (and (card-flag? h :untrashable-while-rezzed true)
+                                                (rezzed? h))))
+                             (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
+                                 (trash state :runner eid h nil))
+                             (effect-completed state side eid))))]
+       {:hosting {:req #(and (ice? %) (can-host? %))}
+        :effect trash-if-5
+        :events {:runner-turn-begins
+                 {:optional {:prompt (msg "Place a virus counter on Trypano?")
+                             :yes-ability {:msg (msg "place a virus counter on Trypano")
+                                           :effect (req (add-counter state side card :virus 1))}}}
+                 :counter-added {:effect trash-if-5
+                                 :delayed-completion true}
+                 :card-moved {:effect trash-if-5
+                              :delayed-completion true}
+                 :runner-install {:effect trash-if-5
+                                  :delayed-completion true}}})
+
    "Upya"
    {:implementation "Power counters added automatically"
     :events {:successful-run {:silent (req true)

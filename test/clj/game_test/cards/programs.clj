@@ -1040,6 +1040,36 @@
       (run-continue state)
       (is (= 2 (:current-strength (refresh corr))) "Corroder returned to normal strength"))))
 
+(deftest trypano
+  (testing "Hivemind and Architect interactions"
+    (do-game
+      (new-game (default-corp [(qty "Architect" 2)])
+                (default-runner [(qty "Trypano" 2) (qty "Hivemind" 1)]))
+      (play-from-hand state :corp "Architect" "HQ")
+      (play-from-hand state :corp "Architect" "R&D")
+      (let [architect-rezzed (get-ice state :hq 0)
+            architect-unrezzed (get-ice state :rd 0)]
+        (core/rez state :corp architect-rezzed)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Trypano")
+        (prompt-select :runner (game.core/get-card state architect-rezzed))
+        (play-from-hand state :runner "Trypano")
+        (prompt-select :runner architect-unrezzed)
+        (is (= 2 (:memory (get-runner))) "Trypano consumes 1 MU"))
+      ;; wait 4 turns to make both Trypanos have 4 counters on them
+      (dotimes [n 4]
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner "Yes"))
+      (is (= 0 (count (:discard (get-runner)))) "Trypano not in discard yet")
+      (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect is not trashed")
+      (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect is not trashed")
+      (play-from-hand state :runner "Hivemind") ; now Hivemind makes both Trypanos have 5 counters
+      (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect was trashed")
+      (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect was not trashed")
+      (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard"))))
+
 (deftest upya
   (do-game
     (new-game (default-corp)
