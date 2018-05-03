@@ -470,7 +470,8 @@
    "Imp"
    {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))}
     :data {:counter {:virus 2}}
-    :interactions {:trash-ability {:req (req (and (not (get-in @state [:per-turn (:cid card)]))
+    :interactions {:trash-ability {:label "[Imp]: Trash card"
+                                   :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                                                   (pos? (get-in card [:counter :virus] 0))))
                                    :counter-cost [:virus 1]
                                    :msg (msg "trash " (:title target) " at no cost")

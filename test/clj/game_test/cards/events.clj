@@ -446,7 +446,7 @@
       (prompt-choice :runner "HQ")
       (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
       (run-successful state)
-      (prompt-choice :runner "Imp ability")
+      (prompt-choice-partial :runner "Imp")
       (prompt-select :runner (get-program state 0))
       (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
       ; Cold Read works when Blacklist rezzed - #2378

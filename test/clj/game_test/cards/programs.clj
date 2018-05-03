@@ -326,7 +326,7 @@
                 (take-credits state :corp)
                 (play-from-hand state :runner "Imp")
                 (run-empty-server state "HQ")
-                (prompt-choice :runner "Imp ability")
+                (prompt-choice-partial :runner "Imp")
                 (is (= 1 (count (:discard (get-corp)))))))]
       (doall (map imp-test
                   ["Hostile Takeover"
@@ -347,7 +347,7 @@
         (play-from-hand state :runner "Imp")
         (run-empty-server state :remote1)
         (prompt-choice :corp "Yes")
-        (prompt-choice :runner "Imp ability")
+        (prompt-choice-partial :runner "Imp")
         (is (= 2 (- credits (:credit (get-corp)))) "Corp paid 2 for Prisec")
         (is (= 1 (- (:tag (get-runner)) tags)) "Runner has 1 tag")
         (is (= 2 (- grip (count (:hand (get-runner))))) "Runner took 1 meat damage")
@@ -364,7 +364,7 @@
         ;; Should access TFP at this point
         (prompt-choice :corp "1 [Credits]")
         (prompt-choice :runner "0 [Credits]")
-        (prompt-choice :runner "Imp ability")
+        (prompt-choice-partial :runner "Imp")
         (take-credits state :runner)
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
         (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")
@@ -377,7 +377,7 @@
         (prompt-choice :corp "0 [Credits]")
         (prompt-choice :runner "0 [Credits]")
         ;; Fail psi game
-        (prompt-choice :runner "Imp ability")
+        (prompt-choice-partial :runner "Imp")
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
         (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")))))
 
