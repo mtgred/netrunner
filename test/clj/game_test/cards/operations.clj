@@ -2076,7 +2076,7 @@
           "Wetwork Refit is hosted on Eli 1.0")
       (is (= 2 (count (:subroutines (refresh eli))))
           "Eli 1.0 has 2 different subroutines")
-      (is (= "Do 1 brain damage" (:label (first (:subroutines (refresh eli)))))
+      (is (= "[Wetwork Refit] Do 1 brain damage" (:label (first (:subroutines (refresh eli)))))
           "Eli 1.0 has a brain damage subroutine as his first subroutine")
 
       (core/move state :corp (first (:hosted (refresh eli))) :hand)
