@@ -352,14 +352,16 @@
               (do-game
                 (new-game (default-corp [(qty card 1)])
                           (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                                     [(qty "Cache" 1)]))
+                                     [(qty "Cache" 2)]))
                 (take-credits state :corp)
+                (play-from-hand state :runner "Cache")
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
                 (prompt-choice-partial :runner "Freedom")
                 (prompt-select :runner (get-program state 0))
-                (prompt-select :runner (get-program state 0))
-                (is (= 1 (count (:discard (get-corp)))))))]
+                (prompt-select :runner (get-program state 1))
+                (is (= 1 (count (:discard (get-corp)))))
+                (prn (get (last (get @state :log)) :text))))]
       (doall (map fk-test
                   ["Dedicated Response Team"
                    "Consulting Visit"
