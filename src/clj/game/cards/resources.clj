@@ -1547,17 +1547,16 @@
 
    "Slipstream"
     {:abilities [{:req (req (:run @state))
-                  :effect (req (let [icepos (ice-index state current-ice)]
+                  :effect (req (let [passed-pos  (inc (get-in @state [:run :position]))]
                                  (resolve-ability state side
-                                   {:prompt (msg "Choose a piece of ICE protecting a central server at position " icepos )
+                                   {:prompt (msg "Choose a piece of ICE protecting a central server at position " passed-pos )
                                     :choices {:req #(and (is-central? (second (:zone %)))
                                                          (ice? %)
-                                                         (= icepos (ice-index state %)))}
+                                                         (= passed-pos (inc (ice-index state %))))}
                                     :msg (msg "approach " (card-str state target))
-                                    :effect (req (let [dest (second (:zone target))
-                                                       tgtndx (inc (ice-index state target))]
+                                    :effect (req (let [dest (second (:zone target))]
                                                    (swap! state update-in [:run]
-                                                          #(assoc % :position tgtndx :server [dest]))
+                                                          #(assoc % :position passed-pos :server [dest]))
                                                    (trash state side card)))}
                                 card nil)))}]}
 
