@@ -717,6 +717,7 @@
              :successful-run {:interactive (req true)
                               :optional {:req (req (and (first-event? state side :successful-run)
                                                         (-> @state :corp :deck count pos?)))
+                                         :once :per-turn
                                          :prompt "Use Find the Truth to look at the top card of R&D?"
                                          :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                                        :msg "look at the top card of R&D"
@@ -1287,6 +1288,7 @@
                                                                                    " of " title)))))}}}))]
      {:events {:runner-install {:req (req (first-event? state side :runner-install))
                                 :delayed-completion true
+                                :once :per-turn
                                 :effect (effect (continue-ability
                                                  (pphelper (:title target)
                                                            (->> (:deck runner)

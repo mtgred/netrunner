@@ -455,6 +455,7 @@
     :events {:successful-run
              {:req (req (and (first-event? state :runner :successful-run)
                              (pos? (count-virus-programs state))))
+              :once :per-turn
               :optional
                    {:prompt "Place a virus counter?"
                     :yes-ability {:prompt "Select an installed virus program"

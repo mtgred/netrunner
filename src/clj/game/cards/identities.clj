@@ -31,6 +31,7 @@
    "419: Amoral Scammer"
    {:events {:corp-install
              {:delayed-completion true
+              :once :per-turn
               :req (req (and (first-event? state :corp :corp-install)
                              (pos? (:turn @state))
                              (not (rezzed? target))))
@@ -161,6 +162,7 @@
    "Asa Group: Security Through Vigilance"
    {:events {:corp-install
              {:delayed-completion true
+              :once :per-turn
               :req (req (first-event? state :corp :corp-install))
               :effect (req (let [installed-card target
                                  z (butlast (:zone installed-card))]
@@ -398,6 +400,7 @@
 
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:req (req (first-event? state corp :corp-install))
+                            :once :per-turn
                             :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
 
@@ -610,6 +613,7 @@
    "Khan: Savvy Skiptracer"
    {:events {:pass-ice
              {:req (req (first-event? state :corp :pass-ice))
+              :once :per-turn
               :delayed-completion true
               :effect (req (if (some #(has-subtype? % "Icebreaker") (:hand runner))
                              (continue-ability state side
@@ -717,6 +721,7 @@
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:req (req (first-event? state :corp :server-created))
+                              :once :per-turn
                               :msg "draw 1 card"
                               :effect (effect (draw 1))}}}
 
@@ -809,6 +814,7 @@
    "Pālanā Foods: Sustainable Growth"
    {:events {:runner-draw {:req (req (and (first-event? state :corp :runner-draw)
                                           (pos? target)))
+                           :once :per-turn
                            :msg "gain 1 [Credits]"
                            :effect (effect (gain :corp :credit 1))}}}
 

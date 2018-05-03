@@ -77,11 +77,11 @@
    {:events
     {:run
      {:req (req (first-event? state side :run))
+      :once :per-turn
       :effect (effect (show-wait-prompt :runner "Corp to use Advanced Concept Hopper")
                       (continue-ability
                         {:player :corp
                          :prompt "Use Advanced Concept Hopper to draw 1 card or gain 1 [Credits]?"
-                         :once :per-turn
                          :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
                          :effect (req (case target
                                         "Gain 1 [Credits]"

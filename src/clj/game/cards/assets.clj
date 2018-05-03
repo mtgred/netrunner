@@ -383,6 +383,7 @@
 
    "CPC Generator"
    {:events {:runner-click-credit {:req (req (first-event? state side :runner-click-credit))
+                                   :once :per-turn
                                    :msg "gain 1 [Credits]"
                                    :effect (effect (gain :corp :credit 1))}}}
 
