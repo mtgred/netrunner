@@ -996,7 +996,7 @@
         (when me? (controls :brain-damage))]
        (let [{:keys [base mod]} hand-size]
          [:div (str (+ base mod) " Max hand size")
-          (when me? (controls :hand-size {:mod -1} {:mod +1}))])]))))
+          (when me? (controls :hand-size {:mod 1} {:mod -1}))])]))))
 
 (defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub hand-size active]} owner]
   (om/component
@@ -1012,7 +1012,7 @@
         (when me? (controls :bad-publicity))]
        (let [{:keys [base mod]} hand-size]
          [:div (str (+ base mod) " Max hand size")
-          (when me? (controls :hand-size {:mod -1} {:mod +1}))])]))))
+          (when me? (controls :hand-size {:mod 1} {:mod -1}))])]))))
 
 (defn server-view [{:keys [server central-view run] :as cursor} owner opts]
   (om/component
