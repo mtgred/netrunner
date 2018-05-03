@@ -349,19 +349,14 @@
                                    (resolve-trash-no-cost state side accessed-card)
                                    (add-counter state :runner card :virus (- counters))
                                    (system-msg state :runner
-                                               (str "trash "
-                                                    (:title accessed-card)
-                                                    " at no cost"
-                                                    (when (> play-or-rez 0)
-                                                      (str
-                                                        " spending "
-                                                        (clojure.string/join
-                                                          ", "
-                                                          (map #(str (quantify (get selected-cards (:cid %)) "virus counter")
-                                                                     " from "
-                                                                     (:title %))
-                                                               (map #(find-cid % (all-installed state :runner))
-                                                                    (keys selected-cards))))))))
+                                     (str "trash " (:title accessed-card) " at no cost"
+                                       (when (> play-or-rez 0)
+                                         (str " spending "
+                                           (clojure.string/join ", "
+                                             (map #(str (quantify (get selected-cards (:cid %)) "virus counter")
+                                                     " from " (:title %))
+                                                  (map #(find-cid % (all-installed state :runner))
+                                                       (keys selected-cards))))))))
                                    (clear-wait-prompt state :corp)
                                    (effect-completed state side eid))))))
               :cancel-effect (req (doseq [c (all-installed state :runner)]
