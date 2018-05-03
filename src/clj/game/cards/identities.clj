@@ -334,14 +334,33 @@
                               :effect (req (draw state side eid 1 nil))}}}
 
    "Freedom Khumalo: Crypto-Anarchist"
-   {:flags {:slow-trash (req true)}
-    :interactions
-    {:trash-ability
-     {:delayed-completion true
-      :req (req (not (get-in @state [:per-turn (:cid card)])))
-      :msg (msg "trash " (:title target) " at no cost")
-      :once :per-turn
-      :effect (req (resolve-trash-no-cost state side target))}}}
+   (letfn [(fkca [accessed-card play-or-rez]
+             {:delayed-completion true
+              :prompt "Select a card with at least 1 virus counter"
+              :choices {:req #(and (installed? %)
+                                   ; (not= (:cid %) (:cid card))
+                                   (> (get-in % [:counter :virus] 0) 0))}
+              :effect (req (add-counter state :runner card :virus 1)
+                           (add-counter state :runner target :virus -1)
+                           (let [card (get-card state card)]
+                             (if (< play-or-rez (get-in card [:counter :virus] 0))
+                               (continue-ability state side (fkca accessed-card play-or-rez) card nil)
+                               (do (resolve-trash-no-cost state side accessed-card)
+                                   (add-counter state :runner (- (get-in (get-card state card) [:counter :virus] 0)))
+                                   (system-msg state :corp (str "trash " (:title target) " at no cost"))
+                                   (clear-wait-prompt state :runner)
+                                   (effect-completed state side eid)))))
+              })]
+     {:flags {:slow-trash (req true)}
+      :interactions
+      {:trash-ability
+       {:req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                       (not (is-type? target "Agenda"))))
+        :once :per-turn
+        :effect (req (let [accessed-card target
+                           play-or-rez (:cost target)]
+                       (show-wait-prompt state :corp "Runner to use Freedom Khumalo's ability")
+                       (continue-ability state side (fkca accessed-card play-or-rez) card nil)))}}})
 
    "Fringe Applications: Tomorrow, Today"
    {:events

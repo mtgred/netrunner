@@ -357,12 +357,17 @@
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
                 (prompt-choice-partial :runner "Freedom")
+                (prompt-select :runner (get-resource state 0))
+                (prn (get-in @state [:runner :prompt]))
+                (prompt-select :runner (get-resource state 0))
+                (prn (get-in @state [:runner :prompt]))
                 (is (= 1 (count (:discard (get-corp)))))))]
       (doall (map fk-test
                   ["Dedicated Response Team"
-                   "Consulting Visit"
-                   "Builder"
-                   "Research Station"])))))
+                   ; "Consulting Visit"
+                   ; "Builder"
+                   ; "Research Station"
+                   ])))))
 
 (deftest gabriel-santiago
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
