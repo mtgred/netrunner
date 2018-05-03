@@ -338,23 +338,23 @@
              {:delayed-completion true
               :prompt "Select a card with at least 1 virus counter"
               :choices {:req #(and (installed? %)
-                                   ; (not= (:cid %) (:cid card))
                                    (> (get-in % [:counter :virus] 0) 0))}
               :effect (req (add-counter state :runner card :virus 1)
                            (add-counter state :runner target :virus -1)
                            (let [card (get-card state card)]
-                             (if (< play-or-rez (get-in card [:counter :virus] 0))
+                             (if (< (get-in card [:counter :virus] 0) play-or-rez)
                                (continue-ability state side (fkca accessed-card play-or-rez) card nil)
-                               (do (resolve-trash-no-cost state side accessed-card)
-                                   (add-counter state :runner (- (get-in (get-card state card) [:counter :virus] 0)))
-                                   (system-msg state :corp (str "trash " (:title target) " at no cost"))
-                                   (clear-wait-prompt state :runner)
-                                   (effect-completed state side eid)))))
-              })]
+                               (let [counters (get-in (get-card state card) [:counter :virus] 0)]
+                                 (resolve-trash-no-cost state side accessed-card)
+                                 (add-counter state :runner card :virus (- counters))
+                                 (system-msg state :runner (str "trash " (:title accessed-card) " at no cost"))
+                                 (clear-wait-prompt state :corp)
+                                 (effect-completed state side eid)))))})]
      {:flags {:slow-trash (req true)}
       :interactions
       {:trash-ability
-       {:req (req (and (not (get-in @state [:per-turn (:cid card)]))
+       {:interactive (req true)
+        :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                        (not (is-type? target "Agenda"))))
         :once :per-turn
         :effect (req (let [accessed-card target
