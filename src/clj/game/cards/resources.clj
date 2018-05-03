@@ -1546,24 +1546,20 @@
       :abilities [ability]})
 
    "Slipstream"
-    {:abilities [{:label "[Trash]: Choose a piece of ice protecting a central server in the same position as the passed ice and approach that ice."
-                     :req (req (and (:run @state)))
-                     :effect (effect (req (let [icepos (ice-index state current-ice)]
-                                            (resolve-ability state side
-                                             {:prompt (msg "Choose a piece of ICE protecting a central server at position " icepos)
-                                              :choices {:req #(and (is-central? (second (:zone %)))
-                                                                   (ice?)
-                                                                   (=(icepos (ice-index state %))))}
-                                              :msg (msg "move to " (card-str state target))
-                                              :effect (req (let [dest (second (:zone target))
-                                                                 tgtndx (ice-index state target)]
-                                                             (swap! state update-in [:run]
-                                                                    #(assoc % :position tgtndx :server [dest]))
-                                                             (trash state side card {:cause :ability-cost})
-                                                             (system-msg :runner
-                                                                         (str "used slipstream to move to a piece of ice protecting a central server in the same position as the passed ice"))))}
-                                            card nil))))}]}
-
+    {:abilities [{:req (req (:run @state))
+                  :effect (req (let [icepos (ice-index state current-ice)]
+                                 (resolve-ability state side
+                                   {:prompt (msg "Choose a piece of ICE protecting a central server at position " icepos )
+                                    :choices {:req #(and (is-central? (second (:zone %)))
+                                                         (ice? %)
+                                                         (= icepos (ice-index state %)))}
+                                    :msg (msg "approach " (card-str state target))
+                                    :effect (req (let [dest (second (:zone target))
+                                                       tgtndx (inc (ice-index state target))]
+                                                   (swap! state update-in [:run]
+                                                          #(assoc % :position tgtndx :server [dest]))
+                                                   (trash state side card)))}
+                                card nil)))}]}
 
    "Spoilers"
    {:events {:agenda-scored {:interactive (req true)
