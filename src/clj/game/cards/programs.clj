@@ -162,6 +162,7 @@
                                                ab (if (> amt-trashed 1) mult-ab sing-ab)
                                                ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
                                            (continue-ability state side ab card targets)))}}
+    :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Consume."))
     :abilities [{:req (req (pos? (get-virus-counters state side card)))
                  :cost [:click 1]
                  :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."

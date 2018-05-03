@@ -402,6 +402,7 @@
                                                (if (get-in card [:special :auto-accept]) "no longer " "") 
                                                "automatically add counters.") "info"))
                    :label "Toggle auomatically adding virus counters"}]
+      :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
       :events {:runner-turn-begins ability
                :runner-trash {:delayed-completion true
                               :req (req (some #(card-is? % :side :corp) targets))
