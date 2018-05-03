@@ -346,27 +346,40 @@
       (is (= 1 (count (:hand (get-runner)))) "Exile drew a card"))))
 
 (deftest freedom-khumalo
-  ;; Freedom Khumalo - Imp's tests adjusted where necessary
-  (testing "Full test"
+  ;; Freedom Khumalo - Can spend virus counters from other cards to trash accessed cards with play/rez costs
+  (testing "Only works with Assets, ICE, Operations, and Upgrades"
     (letfn [(fk-test [card]
               (do-game
                 (new-game (default-corp [(qty card 1)])
                           (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                                     [(qty "Cache" 1) (qty "Medium" 1)]))
+                                     [(qty "Cache" 1)]))
                 (take-credits state :corp)
                 (play-from-hand state :runner "Cache")
-                (play-from-hand state :runner "Medium")
-                (run-empty-server state "R&D")
                 (run-empty-server state "HQ")
                 (prompt-choice-partial :runner "Freedom")
                 (prompt-select :runner (get-program state 0))
-                (prompt-select :runner (get-program state 1))
+                (prompt-select :runner (get-program state 0))
                 (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))]
       (doall (map fk-test
                   ["Dedicated Response Team"
                    "Consulting Visit"
                    "Builder"
                    "Research Station"]))))
+  (testing "Can use multiple programs for virus counter payment"
+    (do-game
+      (new-game (default-corp [(qty "Dedicated Response Team" 1)])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                           [(qty "Cache" 1) (qty "Virus Breeding Ground" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Virus Breeding Ground")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (prompt-choice-partial :runner "Freedom")
+      (prompt-select :runner (get-program state 0))
+      (prompt-select :runner (get-resource state 0))
+      (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))
   (testing "Doesn't trigger when accessing an Agenda"
     (do-game
       (new-game (default-corp [(qty "Hostile Takeover" 1)])
@@ -377,6 +390,22 @@
       (run-empty-server state "HQ")
       (is (= 1 (->> @state :runner :prompt first :choices count)) "Should only have 1 option")
       (is (= "Steal" (->> @state :runner :prompt first :choices first)) "Only option should be 'Steal'")))
+  (testing "Doesn't trigger when there aren't enough available virus counters"
+    (letfn [(fk-test [card]
+              (do-game
+                (new-game (default-corp [(qty card 1)])
+                          (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                                     [(qty "Cache" 1)]))
+                (take-credits state :corp)
+                (play-from-hand state :runner "Cache")
+                (run-empty-server state "HQ")
+                (is (= 1 (->> @state :runner :prompt first :choices count)) "Should only have 1 option")
+                (is (= "No action" (->> @state :runner :prompt first :choices first)) "Only option should be 'No action'")))]
+      (doall (map fk-test
+                  ["Archer"
+                   "Fire Wall"
+                   "Colossus"
+                   "Tyrant"]))))
   (testing "Shows multiple prompts when playing Imp"
     (do-game
       (new-game (default-corp [(qty "Dedicated Response Team" 1)])
@@ -395,11 +424,11 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (run-empty-server state "HQ")
-      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should have normal 3 prompts: Freedom, Trash, No action")
+      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should have 3 prompts: Freedom, Trash, No action")
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (prompt-choice :runner "Done")
-      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should go back to normal access prompts")
+      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should go back to access prompts")
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (prompt-select :runner (get-program state 0))
