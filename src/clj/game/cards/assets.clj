@@ -1680,8 +1680,7 @@
                    :effect (req (as-agenda state :runner eid card 2))}}
 
    "Warden Fatuma"
-   (let [new-sub {:label "[Warden Fatuma] force the Runner to lose 1 [Click], if able"
-                  :msg "force the Runner to lose 1 [Click], if able" }]
+   (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose 1 [Click], if able"}]
 
      (letfn [(all-rezzed-bios [state]
                (filter #(and (ice? %)
