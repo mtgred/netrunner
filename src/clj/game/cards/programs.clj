@@ -470,13 +470,14 @@
    "Imp"
    {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))}
     :data {:counter {:virus 2}}
-    :interactions {:trash-ability {:req (req (and (not (get-in @state [:per-turn (:cid card)]))
+    :interactions {:trash-ability {:interactive (req true)
+                                   :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                                                   (pos? (get-in card [:counter :virus] 0))))
                                    :counter-cost [:virus 1]
                                    :msg (msg "trash " (:title target) " at no cost")
                                    :once :per-turn
                                    :delayed-completion true
-                                   :effect (req (trash-no-cost state side eid target))}}}
+                                   :effect (effect (trash-no-cost eid target))}}}
 
    "Incubator"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}

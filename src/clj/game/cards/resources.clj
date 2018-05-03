@@ -1060,11 +1060,13 @@
     :abilities [{:label "Bypass the encountered ice"
                  :req (req (and (:run @state)
                                 (rezzed? current-ice)))
-                 :msg (msg "bypass " (:title current-ice) (when (pos? (:click (:runner @state)))
-                                                             (str " and loses "
-                                                                  (apply str (repeat (:click (:runner @state)) "[Click]")))))
+                 :msg (msg "bypass "
+                           (:title current-ice)
+                           (when (pos? (:click runner))
+                             (str " and loses "
+                                  (apply str (repeat (:click runner) "[Click]")))))
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (lose :click (:click (:runner @state))))}]}
+                                 (lose :click (:click runner)))}]}
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library"

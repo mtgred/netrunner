@@ -128,7 +128,7 @@
         (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
           (let [trash-ab-cards (->> (concat (all-active state :runner)
                                             (get-in @state [:runner :play-area]))
-                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % card)))
+                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
                 card-titles (map :title trash-ab-cards)
                 ability-strs (map #(str % " ability") card-titles)
                 trash-cost-str (when trash-cost
@@ -227,7 +227,7 @@
         can-steal-this? (can-steal? state side c)
         trash-ab-cards (->> (concat (all-active state :runner)
                                     (get-in @state [:runner :play-area]))
-                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % c)))
+                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [c])))
         card-titles (map :title trash-ab-cards)
         ability-strs (map #(str % " ability") card-titles)
         ;; strs
@@ -236,7 +236,7 @@
                       [(str "Pay " cost-as-symbol " to steal")]
                       ["Steal"]))
         no-action-str (when (or (nil? steal-str)
-                                (not= steal-str "Steal"))
+                                (not= steal-str ["Steal"]))
                         ["No action"])
         prompt-str (str "You accessed " card-name ".")
         choices (into [] (concat ability-strs steal-str no-action-str))]
