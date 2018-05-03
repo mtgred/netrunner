@@ -2346,6 +2346,40 @@
       (is (= 1 (count (:discard (get-corp)))) "Urban Renewal got trashed")
       (is (= 4 (count (:discard (get-runner)))) "Urban Renewal did 4 meat damage"))))
 
+(deftest warden-fatuma
+  ;; Warden Fatuma - rezzed bioroid ice gains an additional sub
+  (do-game
+    (new-game (default-corp [(qty "Warden Fatuma" 1) (qty "Kakugo" 1)
+                             (qty "Eli 2.0" 1) (qty "Ichi 2.0" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 20 :click 5)
+    (play-from-hand state :corp "Kakugo" "Archives")
+    (play-from-hand state :corp "Eli 2.0" "HQ")
+    (play-from-hand state :corp "Ichi 2.0" "R&D")
+    (play-from-hand state :corp "Warden Fatuma" "New remote")
+    (let [wf (get-content state :remote1 0)
+          kak (get-ice state :archives 0)
+          eli (get-ice state :hq 0)
+          ichi (get-ice state :rd 0)]
+      (core/rez state :corp kak)
+      (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo starts with 1 sub")
+      (core/rez state :corp eli)
+      (is (= 2 (count (:subroutines (refresh eli)))) "Eli 2.0 starts with 2 subs")
+      (is (= 0 (count (:subroutines (refresh ichi)))) "Unrezzed Ichi 2.0 starts with 0 subs")
+      (core/rez state :corp wf)
+      (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
+      (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 gains 1 sub")
+      (is (= 0 (count (:subroutines (refresh ichi)))) "Unrezzed Ichi 2.0 stays at 0 subs")
+      (core/rez state :corp ichi)
+      (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
+      (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 stays at 1 sub")
+      (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 rezzes with 3 subs")
+      (core/derez state :corp (refresh wf))
+      (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
+      (is (= 2 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
+      (is (= 2 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts")
+    )))
+
 (deftest watchdog
   ;; Watchdog - Reduce rez cost of first ICE per turn by number of Runner tags
   (do-game

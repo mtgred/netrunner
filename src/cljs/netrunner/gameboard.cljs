@@ -688,6 +688,8 @@
        (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
       (when (and current-strength (not= strength current-strength))
         current-strength [:div.darkbg.strength current-strength])
+      (when (get-in cursor [:special :extra-subs])
+        [:div.darkbg.extra-subs \+])
       (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
       (when server-target [:div.darkbg.server-target server-target])
       (when subtype-target
