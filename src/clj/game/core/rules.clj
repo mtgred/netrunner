@@ -471,26 +471,11 @@
                                  (trashrec trashlist)))))]
      (preventrec cards))))
 
-(defn- resolve-trash-no-cost
-  [state side card & {:keys [seen unpreventable]
-                      :or {seen true}}]
+(defn- trash-no-cost
+  [state side eid card & {:keys [seen unpreventable]
+                          :or {seen true}}]
   (swap! state assoc-in [side :register :trashed-card] true)
-  (trash state side (assoc card :seen seen) {:unpreventable unpreventable}))
-
-(defn trash-no-cost
-  "Trashes a card at no cost while it is being accessed. (Imp.)"
-  [state side]
-  (let [prompt (-> @state side :prompt first)
-             card (:card prompt)
-             eid (:eid prompt)]
-    (when card
-      ;; trashing before the :access events actually fire; fire them manually
-      (if (is-type? card "Agenda")
-        (when-completed (steal-trigger-events state side card)
-                        (resolve-trash-no-cost state side card))
-        (resolve-trash-no-cost state side card))
-      (close-access-prompt state side))))
-
+  (trash state side eid (assoc card :seen seen) {:unpreventable unpreventable}))
 
 ;;; Agendas
 (defn get-agenda-points
@@ -591,7 +576,7 @@
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
-       (resolve-trash-no-cost state from-side card :seen false :unpreventable true)))))
+       (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
 
 ;; Exposing
 (defn expose-prevent
