@@ -128,7 +128,6 @@
         (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
           (let [trash-ab-cards (->> (all-active state :runner)
                                     (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % card)))
-                card-titles (map :title trash-ab-cards)
                 ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
                 trash-cost-str (when trash-cost
                                  [(str "Pay " (str trash-cost "[Credits] ") "to trash")])
@@ -169,7 +168,7 @@
                                   (when-completed (trash state side card nil)
                                                   (access-end state side eid c)))
 
-                              (some? (filter #(= % target) ability-strs))
+                              (some #(= % target) ability-strs)
                               (let [idx (.indexOf ability-strs target)
                                     trash-ab-card (nth trash-ab-cards idx)
                                     cdef (-> (card-def trash-ab-card)
@@ -226,7 +225,6 @@
         can-steal-this? (can-steal? state side c)
         trash-ab-cards (->> (all-active state :runner)
                             (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % c)))
-        card-titles (map :title trash-ab-cards)
         ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)
@@ -266,7 +264,7 @@
                                                             (steal-agenda state side eid c)))
 
                                         ;; Use trash ability
-                                        (some? (filter #(= % target) ability-strs))
+                                        (some #(= % target) ability-strs)
                                         (let [idx (.indexOf ability-strs target)
                                               trash-ab-card (nth trash-ab-cards idx)
                                               cdef (-> (card-def trash-ab-card)
