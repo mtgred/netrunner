@@ -357,21 +357,22 @@
                                                         " spending "
                                                         (clojure.string/join
                                                           ", "
-                                                          (map #(str (get selected-cards (:cid %))
-                                                                     " virus "
-                                                                     (pluralize "counter" (get selected-cards (:cid %)))
+                                                          (map #(str (quantify (get selected-cards (:cid %)) "virus counter")
                                                                      " from "
                                                                      (:title %))
                                                                (map #(find-cid % (all-installed state :runner))
                                                                     (keys selected-cards))))))))
                                    (clear-wait-prompt state :corp)
                                    (effect-completed state side eid))))))
-              :cancel-effect (req (let [counters (get-in (get-card state card) [:counter :virus] 0)]
-                                    (add-counter state :runner card :virus (- counters))
-                                    (doseq [c (all-installed state :runner)]
-                                      (let [cid (:cid c)]
-                                        (when (contains? selected-cards cid)
-                                          (add-counter state :runner c :virus (cid selected-cards)))))))})]
+              :cancel-effect (req (doseq [c (all-installed state :runner)]
+                                    (let [cid (:cid c)]
+                                      (when (contains? selected-cards cid)
+                                        (add-counter state :runner c :virus (get selected-cards cid)))))
+                                  (let [counters (get-in (get-card state card) [:counter :virus] 0)]
+                                    (add-counter state :runner card :virus (- counters)))
+                                  (clear-wait-prompt state :corp)
+                                  (swap! state dissoc-in [:per-turn (:cid card)])
+                                  (access-non-agenda state side eid accessed-card))})]
      {:flags {:slow-trash (req true)}
       :interactions
       {:trash-ability

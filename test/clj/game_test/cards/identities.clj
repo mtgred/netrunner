@@ -352,21 +352,58 @@
               (do-game
                 (new-game (default-corp [(qty card 1)])
                           (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                                     [(qty "Cache" 2)]))
+                                     [(qty "Cache" 1) (qty "Medium" 1)]))
                 (take-credits state :corp)
                 (play-from-hand state :runner "Cache")
-                (play-from-hand state :runner "Cache")
+                (play-from-hand state :runner "Medium")
+                (run-empty-server state "R&D")
                 (run-empty-server state "HQ")
                 (prompt-choice-partial :runner "Freedom")
                 (prompt-select :runner (get-program state 0))
                 (prompt-select :runner (get-program state 1))
-                (is (= 1 (count (:discard (get-corp)))))
-                (prn (get (last (get @state :log)) :text))))]
+                (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))]
       (doall (map fk-test
                   ["Dedicated Response Team"
                    "Consulting Visit"
                    "Builder"
-                   "Research Station"])))))
+                   "Research Station"]))))
+  (testing "Doesn't trigger when accessing an Agenda"
+    (do-game
+      (new-game (default-corp [(qty "Hostile Takeover" 1)])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                           [(qty "Cache" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (run-empty-server state "HQ")
+      (is (= 1 (->> @state :runner :prompt first :choices count)) "Should only have 1 option")
+      (is (= "Steal" (->> @state :runner :prompt first :choices first)) "Only option should be 'Steal'")))
+  (testing "Shows multiple prompts when playing Imp"
+    (do-game
+      (new-game (default-corp [(qty "Dedicated Response Team" 1)])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                           [(qty "Cache" 1) (qty "Imp" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Imp")
+      (run-empty-server state "HQ")
+      (is (= 4 (->> @state :runner :prompt first :choices count)) "Should have 4 options: Freedom, Imp, Trash, No action")))
+  (testing "Should return to access prompts when Done is pressed"
+    (do-game
+      (new-game (default-corp [(qty "Dedicated Response Team" 1)])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                           [(qty "Cache" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (run-empty-server state "HQ")
+      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should have normal 3 prompts: Freedom, Trash, No action")
+      (prompt-choice-partial :runner "Freedom")
+      (prompt-select :runner (get-program state 0))
+      (prompt-choice :runner "Done")
+      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should go back to normal access prompts")
+      (prompt-choice-partial :runner "Freedom")
+      (prompt-select :runner (get-program state 0))
+      (prompt-select :runner (get-program state 0))
+      (is (= 1 (count (:discard (get-corp)))) "Card should now be properly discarded"))))
 
 (deftest gabriel-santiago
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
