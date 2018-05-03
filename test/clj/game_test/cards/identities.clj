@@ -365,6 +365,42 @@
                    "Consulting Visit"
                    "Builder"
                    "Research Station"]))))
+  (testing "Triggers when play/rez cost less than or equal to number of available virus counters"
+    (letfn [(fk-test [card]
+              (do-game
+                (new-game (default-corp [(qty card 1)])
+                          (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                                     [(qty "Cache" 1)]))
+                (take-credits state :corp)
+                (play-from-hand state :runner "Cache")
+                (run-empty-server state "HQ")
+                (let [cost (->> (get-corp) :hand first :cost)]
+                  (prompt-choice-partial :runner "Freedom")
+                  (when (< 0 cost)
+                    (dotimes [_ cost]
+                      (prompt-select :runner (get-program state 0)))))
+                (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))]
+      (doall (map fk-test
+                  ["Beanstalk Royalties"
+                   "Aggressive Negotiation"
+                   "Consulting Visit"
+                   "Door to Door"]))))
+  (testing "Doesn't trigger when there aren't enough available virus counters"
+    (letfn [(fk-test [card]
+              (do-game
+                (new-game (default-corp [(qty card 1)])
+                          (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                                     [(qty "Cache" 1)]))
+                (take-credits state :corp)
+                (play-from-hand state :runner "Cache")
+                (run-empty-server state "HQ")
+                (is (= 1 (->> @state :runner :prompt first :choices count)) "Should only have 1 option")
+                (is (= "No action" (->> @state :runner :prompt first :choices first)) "Only option should be 'No action'")))]
+      (doall (map fk-test
+                  ["Archer"
+                   "Fire Wall"
+                   "Colossus"
+                   "Tyrant"]))))
   (testing "Can use multiple programs for virus counter payment"
     (do-game
       (new-game (default-corp [(qty "Dedicated Response Team" 1)])
@@ -390,22 +426,6 @@
       (run-empty-server state "HQ")
       (is (= 1 (->> @state :runner :prompt first :choices count)) "Should only have 1 option")
       (is (= "Steal" (->> @state :runner :prompt first :choices first)) "Only option should be 'Steal'")))
-  (testing "Doesn't trigger when there aren't enough available virus counters"
-    (letfn [(fk-test [card]
-              (do-game
-                (new-game (default-corp [(qty card 1)])
-                          (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                                     [(qty "Cache" 1)]))
-                (take-credits state :corp)
-                (play-from-hand state :runner "Cache")
-                (run-empty-server state "HQ")
-                (is (= 1 (->> @state :runner :prompt first :choices count)) "Should only have 1 option")
-                (is (= "No action" (->> @state :runner :prompt first :choices first)) "Only option should be 'No action'")))]
-      (doall (map fk-test
-                  ["Archer"
-                   "Fire Wall"
-                   "Colossus"
-                   "Tyrant"]))))
   (testing "Shows multiple prompts when playing Imp"
     (do-game
       (new-game (default-corp [(qty "Dedicated Response Team" 1)])
