@@ -377,6 +377,7 @@
       :interactions
       {:trash-ability
        {:interactive (req true)
+        :label "[Freedom]: Trash card"
         :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                        (not (is-type? target "Agenda"))
                        (<= (:cost target)

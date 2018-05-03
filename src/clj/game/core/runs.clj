@@ -129,8 +129,7 @@
           (let [trash-ab-cards (->> (concat (all-active state :runner)
                                             (get-in @state [:runner :play-area]))
                                     (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
-                card-titles (map :title trash-ab-cards)
-                ability-strs (map #(str % " ability") card-titles)
+                ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
                 trash-cost-str (when trash-cost
                                  [(str "Pay " (str trash-cost "[Credits] ") "to trash")])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
@@ -170,7 +169,7 @@
                                   (when-completed (trash state side card nil)
                                                   (access-end state side eid c)))
 
-                              (.contains target "ability")
+                              (some #(= % target) ability-strs)
                               (let [idx (.indexOf ability-strs target)
                                     trash-ab-card (nth trash-ab-cards idx)
                                     cdef (-> (card-def trash-ab-card)
@@ -228,8 +227,7 @@
         trash-ab-cards (->> (concat (all-active state :runner)
                                     (get-in @state [:runner :play-area]))
                             (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [c])))
-        card-titles (map :title trash-ab-cards)
-        ability-strs (map #(str % " ability") card-titles)
+        ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)
                     (if cost-as-symbol
@@ -268,7 +266,7 @@
                                                             (steal-agenda state side eid c)))
 
                                         ;; Use trash ability
-                                        (.contains target "ability")
+                                        (some #(= % target) ability-strs)
                                         (let [idx (.indexOf ability-strs target)
                                               trash-ab-card (nth trash-ab-cards idx)
                                               cdef (-> (card-def trash-ab-card)

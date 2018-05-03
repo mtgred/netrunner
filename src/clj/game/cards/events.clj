@@ -352,7 +352,8 @@
                      card nil))
     :events {:run-ends nil}
     :interactions {:trash-ability
-                   {:msg (msg "trash " (:title target) " at no cost")
+                   {:label "[Demolition Run]: Trash card"
+                    :msg (msg "trash " (:title target) " at no cost")
                     :delayed-completion true
                     :effect (effect (trash-no-cost eid target))}}}
 

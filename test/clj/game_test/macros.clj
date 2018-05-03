@@ -16,7 +16,7 @@
          ~'prompt-choice-partial (fn [~'side ~'choice]
                                    (core/resolve-prompt
                                      ~'state ~'side
-                                     {:choice (~'refresh (first (filter #(clojure.string/starts-with? % ~'choice)
+                                     {:choice (~'refresh (first (filter #(.contains % ~'choice)
                                                                         (->> @~'state ~'side :prompt first :choices))))}))
          ~'prompt-card (fn [~'side ~'card]
                          (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
