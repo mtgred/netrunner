@@ -1422,7 +1422,8 @@
     :abilities [ability]
     :events {:corp-turn-begins ability
              :corp-install {:req (req (ice? target))
-                            :effect (effect (trash card)
+                            :delayed-completion true
+                            :effect (effect (trash eid card nil)
                                             (system-msg "trashes Server Diagnostics"))}}})
 
    "Shannon Claire"

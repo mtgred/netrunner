@@ -399,7 +399,8 @@
                                card nil))}}}
 
    "Haas-Bioroid: Engineering the Future"
-   {:events {:corp-install {:req (req (first-event? state corp :corp-install))
+   {:events {:corp-install {:silent (req true)
+                            :req (req (first-event? state corp :corp-install))
                             :once :per-turn
                             :msg "gain 1 [Credits]"
                             :effect (effect (gain :credit 1))}}}
