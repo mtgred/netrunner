@@ -339,26 +339,27 @@
               :prompt "Select a card with at least 1 virus counter"
               :choices {:req #(and (installed? %)
                                    (> (get-in % [:counter :virus] 0) 0))}
-              :effect (req (let [selected-cards (merge-with + selected-cards {(:cid target) 1})]
-                             (add-counter state :runner card :virus 1)
-                             (add-counter state :runner target :virus -1)
-                             (let [card (get-card state card)]
-                               (if (< (get-in card [:counter :virus] 0) play-or-rez)
-                                 (continue-ability state side (fkca accessed-card play-or-rez selected-cards) card nil)
-                                 (let [counters (get-in (get-card state card) [:counter :virus] 0)]
-                                   (resolve-trash-no-cost state side accessed-card)
-                                   (add-counter state :runner card :virus (- counters))
-                                   (system-msg state :runner
-                                     (str "trash " (:title accessed-card) " at no cost"
-                                       (when (> play-or-rez 0)
-                                         (str " spending "
-                                           (clojure.string/join ", "
-                                             (map #(str (quantify (get selected-cards (:cid %)) "virus counter")
-                                                     " from " (:title %))
-                                                  (map #(find-cid % (all-installed state :runner))
-                                                       (keys selected-cards))))))))
-                                   (clear-wait-prompt state :corp)
-                                   (effect-completed state side eid))))))
+              :effect (req (when (not= (:cid target) (:cid card))
+                             (let [selected-cards (merge-with + selected-cards {(:cid target) 1})]
+                               (add-counter state :runner card :virus 1)
+                               (add-counter state :runner target :virus -1)
+                               (let [card (get-card state card)]
+                                 (if (< (get-in card [:counter :virus] 0) play-or-rez)
+                                   (continue-ability state side (fkca accessed-card play-or-rez selected-cards) card nil)
+                                   (let [counters (get-in (get-card state card) [:counter :virus] 0)]
+                                     (resolve-trash-no-cost state side accessed-card)
+                                     (add-counter state :runner card :virus (- counters))
+                                     (system-msg state :runner
+                                       (str "trash " (:title accessed-card) " at no cost"
+                                         (when (> play-or-rez 0)
+                                           (str " spending "
+                                             (clojure.string/join ", "
+                                               (map #(str (quantify (get selected-cards (:cid %)) "virus counter")
+                                                       " from " (:title %))
+                                                    (map #(find-cid % (all-installed state :runner))
+                                                         (keys selected-cards))))))))
+                                     (clear-wait-prompt state :corp)
+                                     (effect-completed state side eid)))))))
               :cancel-effect (req (doseq [c (all-installed state :runner)]
                                     (let [cid (:cid c)]
                                       (when (contains? selected-cards cid)
