@@ -416,6 +416,23 @@
       (prompt-select :runner (get-program state 0))
       (prompt-select :runner (get-resource state 0))
       (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))
+  (testing "Can use viruses on hosted cards"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 2)])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                           [(qty "Trypano" 1)]))
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (let [iw (get-ice state :rd 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Trypano")
+        (prompt-select :runner (refresh iw))
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (prompt-choice :runner "Yes")
+        (run-empty-server state "HQ")
+        (prompt-choice-partial :runner "Freedom")
+        (prompt-select :runner (->> (refresh iw) :hosted first)))
+      (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))
   (testing "Doesn't trigger when accessing an Agenda"
     (do-game
       (new-game (default-corp [(qty "Hostile Takeover" 1)])
