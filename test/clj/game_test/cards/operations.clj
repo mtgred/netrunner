@@ -1615,12 +1615,15 @@
     (new-game (default-corp [(qty "Sub Boost" 1) (qty "Quandary" 1)])
               (default-runner))
     (play-from-hand state :corp "Quandary" "HQ")
-    (play-from-hand state :corp "Sub Boost")
     (let [qu (get-ice state :hq 0)]
       (core/rez state :corp qu)
-      (prompt-select :corp qu)
+      (is (not (core/has-subtype? (refresh qu) "Barrier")) "Quandry starts without Barrier")
+      (is (= 1 (count (:subroutines (refresh qu)))) "Quandry has 1 subroutine")
+      (play-from-hand state :corp "Sub Boost")
+      (prompt-select :corp (refresh qu))
       (is (core/has-subtype? (refresh qu) "Code Gate") "Quandary has Code Gate")
-      (is (core/has-subtype? (refresh qu) "Barrier") "Quandary ICE Barrier"))))
+      (is (core/has-subtype? (refresh qu) "Barrier") "Quandary ICE Barrier")
+      (is (= 2 (count (:subroutines (refresh qu)))) "Quandry gains a subroutine"))))
 
 (deftest subcontract-scorched
   ;; Subcontract - Don't allow second operation until damage prevention completes
@@ -2076,7 +2079,7 @@
           "Wetwork Refit is hosted on Eli 1.0")
       (is (= 2 (count (:subroutines (refresh eli))))
           "Eli 1.0 has 2 different subroutines")
-      (is (= "Do 1 brain damage" (:label (first (:subroutines (refresh eli)))))
+      (is (= "[Wetwork Refit] Do 1 brain damage" (:label (first (:subroutines (refresh eli)))))
           "Eli 1.0 has a brain damage subroutine as his first subroutine")
 
       (core/move state :corp (first (:hosted (refresh eli))) :hand)

@@ -126,8 +126,9 @@
                      (card-flag? card :can-trash-operation true))
         ;; If card has already been trashed this access don't show option to pay to trash (eg. Ed Kim)
         (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
-          (let [trash-ab-cards (->> (all-active state :runner)
-                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % card)))
+          (let [trash-ab-cards (->> (concat (all-active state :runner)
+                                            (get-in @state [:runner :play-area]))
+                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
                 ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
                 trash-cost-str (when trash-cost
                                  [(str "Pay " (str trash-cost "[Credits] ") "to trash")])
@@ -223,8 +224,9 @@
         cost-as-symbol (when (= 1 (count cost-strs)) (costs-to-symbol cost))
         ;; any trash abilities
         can-steal-this? (can-steal? state side c)
-        trash-ab-cards (->> (all-active state :runner)
-                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % c)))
+        trash-ab-cards (->> (concat (all-active state :runner)
+                                    (get-in @state [:runner :play-area]))
+                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [c])))
         ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)
@@ -232,7 +234,7 @@
                       [(str "Pay " cost-as-symbol " to steal")]
                       ["Steal"]))
         no-action-str (when (or (nil? steal-str)
-                                (not= steal-str "Steal"))
+                                (not= steal-str ["Steal"]))
                         ["No action"])
         prompt-str (str "You accessed " card-name ".")
         choices (into [] (concat ability-strs steal-str no-action-str))]

@@ -246,17 +246,24 @@
     (do-play-ability state side card ab targets)))
 
 (defn play-subroutine
-  "Triggers a card's subroutine using its zero-based index into the card's card-def :subroutines vector."
+  "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
   ([state side args] (play-subroutine state side (make-eid state) args))
   ([state side eid {:keys [card subroutine targets] :as args}]
    (let [card (get-card state card)
-         cdef (card-def card)
-         sub (get-in cdef [:subroutines subroutine])
-         cost (:cost sub)]
-     (when (or (nil? cost)
-               (apply can-pay? state side (:title card) cost))
-       (when-let [activatemsg (:activatemsg sub)] (system-msg state side activatemsg))
-       (resolve-ability state side eid sub card targets)))))
+         sub (nth (:subroutines card) subroutine nil)]
+     (if (or (nil? sub)
+             (nil? (:from-cid sub)))
+       (let [cdef-idx (if (nil? sub) subroutine (-> sub :data :cdef-idx))
+             cdef (card-def card)
+             cdef-sub (get-in cdef [:subroutines cdef-idx])
+             cost (:cost cdef-sub)]
+         (when (or (nil? cost)
+                   (apply can-pay? state side (:title card) cost))
+           (when-let [activatemsg (:activatemsg cdef-sub)] (system-msg state side activatemsg))
+           (resolve-ability state side eid cdef-sub card targets)))
+       (when-let [sub-card (find-latest state {:cid (:from-cid sub) :side side})]
+         (when-let [sub-effect (:sub-effect (card-def sub-card))]
+           (resolve-ability state side eid sub-effect card (assoc (:data sub) :targets targets))))))))
 
 ;;; Corp actions
 (defn trash-resource
