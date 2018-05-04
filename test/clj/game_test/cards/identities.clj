@@ -469,7 +469,19 @@
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (prompt-select :runner (get-program state 0))
-      (is (= 1 (count (:discard (get-corp)))) "Card should now be properly discarded"))))
+      (is (= 1 (count (:discard (get-corp)))) "Card should now be properly discarded")))
+  (testing "Shouldn't grant additional accesses after trashing accessed card. #3423"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 10)])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist"
+                           [(qty "Cache" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (run-empty-server state "R&D")
+      (prompt-choice-partial :runner "Freedom")
+      (prompt-select :runner (get-program state 0))
+      (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest gabriel-santiago
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn
