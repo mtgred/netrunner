@@ -1720,7 +1720,8 @@
                               (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card)))))}]}
 
    "Zaibatsu Loyalty"
-   {:prevent {:expose [:all]}
+   {:interactions {:prevent [{:type [:expose]
+                              :req (req true)}]}
     :derezzed-events
     {:pre-expose
      {:delayed-completion true
