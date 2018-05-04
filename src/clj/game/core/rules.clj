@@ -416,7 +416,7 @@
          (let [type (->> ktype name (str "trash-") keyword)
                prevent (get-prevent-list state :runner type)]
            ;; Check for prevention effects
-           (if (and (not unpreventable) (not= cause :ability-cost) (cards-can-prevent? state :runner prevent type))
+           (if (and (not unpreventable) (not= cause :ability-cost) (cards-can-prevent? state :runner prevent type card args))
              (do (system-msg state :runner "has the option to prevent trash effects")
                  (show-wait-prompt state :corp "Runner to prevent trash effects" {:priority 10})
                  (show-prompt state :runner nil

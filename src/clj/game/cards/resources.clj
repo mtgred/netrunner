@@ -636,7 +636,7 @@
                                   :effect (effect (move target :discard)
                                                   (trash-prevent (keyword type) 1))})]
      {:interactions {:prevent [{:type [:trash-hardware :trash-resource :trash-program]
-                                :req (req true)}]}
+                                :req (req (not= :purge (:cause target)))}]}
       :abilities [(dummy-prevent "hardware")
                   (dummy-prevent "resource")
                   (dummy-prevent "program")]})
