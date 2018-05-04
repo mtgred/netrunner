@@ -1550,7 +1550,7 @@
      :abilities [{:req (req (:run @state))
                   :effect (req (let [ice-pos  (get-in @state [:run :position])]
                                  (resolve-ability state side
-                                   {:prompt (msg "Choose a piece of ICE protecting a central server at position " ice-pos )
+                                   {:prompt (msg "Choose a piece of ICE protecting a central server at the same position as " (:title current-ice) )
                                     :choices {:req #(and (is-central? (second (:zone %)))
                                                          (ice? %)
                                                          (= ice-pos (inc (ice-index state %))))}
