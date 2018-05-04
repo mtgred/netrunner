@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare close-access-prompt)
+(declare close-access-prompt event-count)
 
 (defn- genetics-trigger?
   "Returns true if Genetics card should trigger - does not work with Adjusted Chronotype"
@@ -1185,29 +1185,26 @@
     :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (tag-prevent 1))}]}
 
    "No One Home"
-   (letfn [(start-trace [type]
+   (letfn [(first-chance? [state side] (< (+ (event-count state side :pre-tag)
+                                             (event-count state side :pre-damage)) 2))
+           (start-trace [type]
              (let [message (str "avoid any " (if (= type :net) "amount of net damage" "number of tags"))]
-             {:player :corp
-              :label (str "Trace 0 - if unsuccessful, " message)
-              :trace {:base 0
-                      :priority 11
-                      :unsuccessful {:msg message
-                                     :effect (req (if (= type :net)
-                                                    (damage-prevent state side :net Integer/MAX_VALUE)
-                                                    (tag-prevent state side Integer/MAX_VALUE)))}}}))]
-   {:prevent {:tag [:all]
-              :damage [:net]}
-    :abilities [{:msg "force the Corp to trace"
-                 :delayed-completion true
-                 :once :per-turn
-                 :effect (req (let [type (get-in @state [:prevent :current])]
-                                (when-completed (trash state side card {:unpreventable true})
-                                                (continue-ability state side (start-trace type)
-                                                                  card nil))))}]
-    :events {:pre-resolve-damage {:silent (req true)
-                                  :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
-             :pre-resolve-tag {:silent (req true)
-                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}})
+               {:player :corp
+                :label (str "Trace 0 - if unsuccessful, " message)
+                :trace {:base 0
+                        :priority 11
+                        :unsuccessful {:msg message
+                                       :effect (req (if (= type :net)
+                                                      (damage-prevent state side :net Integer/MAX_VALUE)
+                                                      (tag-prevent state side Integer/MAX_VALUE)))}}}))]
+     {:interactions {:prevent [{:type [:net :tag]
+                                :req (req (first-chance? state side))}]}
+      :abilities [{:msg "force the Corp to trace"
+                   :delayed-completion true
+                   :effect (req (let [type (get-in @state [:prevent :current])]
+                                  (when-completed (trash state side card {:unpreventable true})
+                                                  (continue-ability state side (start-trace type)
+                                                                    card nil))))}]})
    "Off-Campus Apartment"
    {:flags {:runner-install-draw true}
     :abilities [{:label "Install and host a connection on Off-Campus Apartment"

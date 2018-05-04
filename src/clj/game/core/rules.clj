@@ -1,9 +1,9 @@
 (in-ns 'game.core)
 
-(declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
-         in-corp-scored? prevent-draw steal-trigger-events make-result show-prompt system-say system-msg trash-cards
-         untrashable-while-rezzed? update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?
-         remove-old-current)
+(declare can-run? card-init card-str cards-can-prevent? close-access-prompt enforce-msg gain-agenda-point
+         get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx prevent-draw make-result
+         remove-old-current show-prompt system-say system-msg steal-trigger-events trash-cards
+         untrashable-while-rezzed? update-all-ice  untrashable-while-resources? win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -232,28 +232,24 @@
    (swap! state update-in [:damage :damage-prevent] dissoc type)
    ;; alert listeners that damage is about to be calculated.
    (trigger-event state side :pre-damage type card n)
-   (let [n (damage-count state side type n args)]
-     (let [prevent (get-in @state [:prevent :damage type])]
-       (if (and (not unpreventable) prevent (pos? (count prevent)))
-         ;; runner can prevent the damage.
-         (do (system-msg state :runner "has the option to avoid damage")
-             (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
-             (swap! state assoc-in [:prevent :current] type)
-             (show-prompt
-               state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
-               (fn [_]
-                 (let [prevent (get-in @state [:damage :damage-prevent type])]
-                   (when prevent
-                     (trigger-event state side :prevented-damage type prevent))
-                   (system-msg state :runner
-                               (if prevent
-                                 (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                      " " (name type) " damage")
-                                 "will not prevent damage"))
-                   (clear-wait-prompt state :corp)
-                   (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
-               {:priority 10}))
-         (resolve-damage state side eid type n args))))))
+   (let [n (damage-count state side type n args)
+         prevent (get-prevent-list state :runner type)]
+     (if (and (not unpreventable) prevent (cards-can-prevent? state :runner prevent type))
+       ;; runner can prevent the damage.
+       (do (system-msg state :runner "has the option to avoid damage")
+           (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
+           (swap! state assoc-in [:prevent :current] type)
+           (show-prompt
+             state :runner nil (str "Prevent any of the " n " " (name type) " damage?") ["Done"]
+             (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])]
+                       (when prevent (trigger-event state side :prevented-damage type prevent))
+                       (system-msg state :runner
+                                   (if prevent (str "prevents " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                                    " " (name type) " damage") "will not prevent damage"))
+                       (clear-wait-prompt state :corp)
+                       (resolve-damage state side eid type (max 0 (- n (or prevent 0))) args)))
+             {:priority 10}))
+       (resolve-damage state side eid type n args)))))
 
 
 ;;; Tagging
@@ -289,25 +285,22 @@
   ([state side eid n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
    (trigger-event state side :pre-tag card)
-   (let [n (tag-count state side n args)]
-     (let [prevent (get-in @state [:prevent :tag :all])]
-       (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
-         (do (system-msg state :runner "has the option to avoid tags")
-             (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
-             (swap! state assoc-in [:prevent :current] :tag)
-             (show-prompt
-               state :runner nil (str "Avoid any of the " n " tags?") ["Done"]
-               (fn [_]
-                 (let [prevent (get-in @state [:tag :tag-prevent])]
-                   (system-msg state :runner
-                               (if prevent
-                                 (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                      (if (< 1 prevent) " tags" " tag"))
-                                 "will not avoid tags"))
-                   (clear-wait-prompt state :corp)
-                   (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
-               {:priority 10}))
-         (resolve-tag state side eid n args))))))
+   (let [n (tag-count state side n args)
+         prevent (get-prevent-list state :runner :tag)]
+     (if (and (pos? n) (not unpreventable) (cards-can-prevent? state :runner prevent :tag))
+       (do (system-msg state :runner "has the option to avoid tags")
+           (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
+           (swap! state assoc-in [:prevent :current] :tag)
+           (show-prompt
+             state :runner nil (str "Avoid any of the " n " tags?") ["Done"]
+             (fn [_] (let [prevent (get-in @state [:tag :tag-prevent])]
+                       (system-msg state :runner
+                                   (if prevent (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                                    (if (< 1 prevent) " tags" " tag")) "will not avoid tags"))
+                       (clear-wait-prompt state :corp)
+                       (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
+             {:priority 10}))
+       (resolve-tag state side eid n args)))))
 
 
 ;;;; Bad Publicity
