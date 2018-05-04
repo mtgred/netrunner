@@ -958,7 +958,7 @@
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                       (all-active-installed state :runner)))))}
 
-    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
+    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
     :effect (effect (lose :corp :hand-size {:mod 1}))
     :leave-play (effect (gain :corp :hand-size {:mod 1}))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
@@ -1546,17 +1546,18 @@
       :abilities [ability]})
 
    "Slipstream"
-    {:abilities [{:req (req (:run @state))
-                  :effect (req (let [passed-pos  (inc (get-in @state [:run :position]))]
+    {:implementation "Use Slipstream before hitting Continue to pass current ice"
+     :abilities [{:req (req (:run @state))
+                  :effect (req (let [ice-pos  (get-in @state [:run :position])]
                                  (resolve-ability state side
-                                   {:prompt (msg "Choose a piece of ICE protecting a central server at position " passed-pos )
+                                   {:prompt (msg "Choose a piece of ICE protecting a central server at position " ice-pos )
                                     :choices {:req #(and (is-central? (second (:zone %)))
                                                          (ice? %)
-                                                         (= passed-pos (inc (ice-index state %))))}
+                                                         (= ice-pos (inc (ice-index state %))))}
                                     :msg (msg "approach " (card-str state target))
                                     :effect (req (let [dest (second (:zone target))]
                                                    (swap! state update-in [:run]
-                                                          #(assoc % :position passed-pos :server [dest]))
+                                                          #(assoc % :position ice-pos :server [dest]))
                                                    (trash state side card)))}
                                 card nil)))}]}
 
