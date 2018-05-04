@@ -960,7 +960,44 @@
       ;; Gang sign fires
       (prompt-choice :runner "Card from hand")
       (prompt-choice :runner "No action")
-      (is (= 0 (count (:scored (get-runner)))) "No stolen agendas"))))
+      (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")))
+  (testing "Trash order"
+    (do-game
+      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 1)])
+                (default-runner))
+      (play-from-hand state :corp "Old Hollywood Grid" "New remote")
+      (play-from-hand state :corp "Project Beale" "Server 1")
+      (take-credits state :corp)
+      (let [ohg (get-content state :remote1 0)
+            pb (get-content state :remote1 1)]
+        (run-on state "Server 1")
+        (core/rez state :corp ohg)
+        (run-successful state)
+        (is (empty? (:scored (get-runner))) "Start with no stolen agendas")
+        ;; runner now chooses which to access.
+        (prompt-select :runner (refresh ohg))
+        (prompt-choice-partial :runner "Pay") ;; trash OHG
+        (prompt-select :runner (refresh pb))
+        (prompt-choice-partial :runner "No")
+        (is (empty? (:scored (get-runner))) "End with no stolen agendas")
+
+        (run-empty-server state "Server 1")
+        (prompt-choice-partial :runner "Steal")
+        (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
+  (testing "Steal other agendas"
+    (do-game
+      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 2)])
+                (default-runner))
+      (play-from-hand state :corp "Old Hollywood Grid" "New remote")
+      (play-from-hand state :corp "Project Beale" "Server 1")
+      (play-from-hand state :corp "Project Beale" "New remote")
+      (take-credits state :corp)
+      (let [ohg (get-content state :remote1 0)
+            pb (get-content state :remote1 1)]
+        (core/rez state :corp ohg)
+        (run-empty-server state "Server 2")
+        (prompt-choice-partial :runner "Steal")
+        (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda")))))
 
 (deftest overseer-matrix
   ;; Overseer Matrix - corp takes a tag when trashing a card in this server
