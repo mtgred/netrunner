@@ -655,7 +655,7 @@
     :events {:successful-run-ends {:once :per-turn
                                    :req (req (let [successes (turn-events state side :successful-run-ends)]
                                                (and (#{[:rd] [:hq]} (:server target))
-                                                    (empty? (filter #(some #{:rd :hq} (:server (first %))) successes)))))
+                                                    (not-any? #(some #{:rd :hq} (:server (first %))) successes))))
                                    :msg (msg "draw " (:cards-accessed target 0) " cards")
                                    :effect (effect (draw (:cards-accessed target 0)))}}}
 
