@@ -437,7 +437,8 @@
                                   :effect (effect (trash card {:cause :ability-cost}))}]})
 
    "Deus X"
-   {:prevent {:damage [:net]}
+   {:interactions {:prevent [{:type [:net]
+                              :req (req true)}]}
     :abilities [{:msg "break any number of AP subroutines"
                  :effect (effect (trash card {:cause :ability-cost}))}
                 {:msg "prevent any amount of net damage"

@@ -247,7 +247,8 @@
       :events {:runner-turn-begins ability}})
 
    "Biometric Spoofing"
-   {:prevent {:damage [:net :meat :brain]}
+   {:interactions {:prevent [{:type [:net :brain :meat]
+                              :req (req true)}]}
     :abilities [{:label "[Trash]: Prevent 2 damage"
                  :msg "prevent 2 damage"
                  :effect (effect (trash card {:cause :ability-cost})
@@ -256,7 +257,8 @@
                                  (damage-prevent :meat 2))}]}
 
    "Bio-Modeled Network"
-   {:prevent {:damage [:net]}
+   {:interactions {:prevent [{:type [:net]
+                              :req (req true)}]}
     :events {:pre-damage {:req (req (= target :net))
                           :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}}
     :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
@@ -301,7 +303,8 @@
                                                 (trash card))}}}
 
    "Caldera"
-   {:prevent {:damage [:net :brain]}
+   {:interactions {:prevent [{:type [:net :brain]
+                              :req (req true)}]}
     :abilities [{:cost [:credit 3]
                  :msg "prevent 1 net damage"
                  :effect (effect (damage-prevent :net 1))}
@@ -343,7 +346,8 @@
                   :effect (effect (damage-prevent target Integer/MAX_VALUE))}}}
 
    "Citadel Sanctuary"
-   {:prevent {:damage [:meat]}
+   {:interactions {:prevent [{:type [:meat]
+                              :req (req true)}]}
     :abilities [{:label "[Trash] and trash all cards in Grip to prevent all meat damage"
                  :msg "trash all cards in their Grip and prevent all meat damage"
                  :effect (req (trash state side card {:cause :ability-cost})
@@ -433,7 +437,8 @@
     :events {:successful-run nil :run-ends nil}}
 
    "Crash Space"
-   {:prevent {:damage [:meat]}
+   {:interactions {:prevent [{:type [:meat]
+                              :req (req true)}]}
     :recurring 2
     :abilities [{:label "Trash to prevent up to 3 meat damage"
                  :msg "prevent up to 3 meat damage"
@@ -546,7 +551,8 @@
                                                        :effect (effect (breaker-strength-bonus (count (:hand runner))))}}) card))}}
 
    "Decoy"
-   {:prevent {:tag [:all]}
+   {:interactions {:prevent [{:type [:tag]
+                              :req (req true)}]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
    "DJ Fenris"
@@ -912,7 +918,8 @@
    {:effect (effect (tag-runner :runner eid 1)
                     (add-counter card :power (-> @state :runner :tag (+ 3))))
     :flags {:untrashable-while-resources true}
-    :prevent {:damage [:meat]}
+    :interactions {:prevent [{:type [:meat]
+                              :req (req true)}]}
     :abilities [{:label "Prevent 1 meat damage"
                  :counter-cost [:power 1]
                  :effect (req (damage-prevent state side :meat 1)
@@ -1180,7 +1187,8 @@
                          :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
 
    "New Angeles City Hall"
-   {:prevent {:tag [:all]}
+   {:interactions {:prevent [{:type [:tag]
+                              :req (req true)}]}
     :events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
     :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (tag-prevent 1))}]}
 
@@ -1467,7 +1475,8 @@
                               (tag-runner state :runner eid 1))}]}
 
    "Sacrificial Clone"
-   {:prevent {:damage [:meat :net :brain]}
+   {:interactions {:prevent [{:type [:net :brain :meat]
+                              :req (req true)}]}
     :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has-subtype? % "Virtual"))
                                                         (get-in runner [:rig :resource]))

@@ -386,7 +386,8 @@
                                  (damage-prevent :brain 2))}]}
 
    "Forger"
-   {:prevent {:tag [:all]}
+   {:interactions {:prevent [{:type [:tag]
+                              :req (req true)}]}
     :in-play [:link 1]
     :abilities [{:msg "avoid 1 tag" :label "[Trash]: Avoid 1 tag"
                  :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}
@@ -440,7 +441,8 @@
 
    "Heartbeat"
    {:in-play [:memory 1]
-    :prevent {:damage [:meat :net :brain]}
+    :interactions {:prevent [{:type [:net :brain :meat]
+                              :req (req true)}]}
     :abilities [{:msg (msg "prevent 1 damage, trashing a facedown " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :priority 50
@@ -578,7 +580,8 @@
                                           (runner-install state side target nil)
                                             (when (< n 3)
                                               (resolve-ability state side (mh (inc n)) card nil)))})]
-     {:prevent {:damage [:net :brain]}
+     {:interactions {:prevent [{:type [:net :brain]
+                                :req (req true)}]}
       :in-play [:memory 3]
       :effect (effect (resolve-ability (mhelper 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
@@ -690,7 +693,8 @@
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
-    :prevent {:damage [:meat]}
+    :interactions {:prevent [{:type [:meat]
+                              :req (req true)}]}
     :abilities [{:counter-cost [:power 1]
                  :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
@@ -761,7 +765,8 @@
                                                      (runner-install state side c)))}}} card nil))}
 
    "Ramujan-reliant 550 BMI"
-   {:prevent {:damage [:net :brain]}
+   {:interactions {:prevent [{:type [:net :brain]
+                              :req (req true)}]}
     :abilities [{:req (req (not-empty (:deck runner)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                                 (resolve-ability state side

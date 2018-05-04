@@ -602,7 +602,8 @@
                                     card nil))}}}
 
    "Net Shield"
-   {:prevent {:damage [:net]}
+   {:interactions {:prevent [{:type [:net]
+                              :req (req true)}]}
     :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
                  :effect (effect (damage-prevent :net 1))}]}
 
