@@ -234,7 +234,7 @@
    (trigger-event state side :pre-damage type card n)
    (let [n (damage-count state side type n args)
          prevent (get-prevent-list state :runner type)]
-     (if (and (not unpreventable) prevent (cards-can-prevent? state :runner prevent type))
+     (if (and (not unpreventable) (cards-can-prevent? state :runner prevent type))
        ;; runner can prevent the damage.
        (do (system-msg state :runner "has the option to avoid damage")
            (show-wait-prompt state :corp "Runner to prevent damage" {:priority 10})
