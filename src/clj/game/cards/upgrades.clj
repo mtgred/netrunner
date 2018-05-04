@@ -24,7 +24,7 @@
                                                        (swap! state update-in [:run :run-effect]
                                                               #(assoc % :replace-access
                                                                         {:mandatory true
-                                                                         :effect (effect (handle-access [ash])) :card ash})))))
+                                                                         :effect (effect (access-card ash)) :card ash})))))
                                       :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
 
    "Awakening Center"
@@ -395,6 +395,31 @@
                               :delayed-completion true
                               :effect (effect (damage eid :net 1 {:card card}))}}}
 
+   "Intake"
+   {:flags {:rd-reveal (req true)}
+    :access {:req (req (not= (first (:zone card)) :discard))
+             :interactive (req true)
+             :trace {:base 4
+                     :label "add an installed program or virtual resource to the Grip"
+                     :delayed-completion true
+                     :effect (req (show-wait-prompt state :runner "Corp to resolve Intake")
+                                  (continue-ability
+                                    state :corp
+                                    {:prompt "Select a program or virtual resource"
+                                     :player :corp
+                                     :choices {:req #(and (installed? %)
+                                                          (or (program? %)
+                                                              (and (resource? %)
+                                                                   (has-subtype? % "Virtual"))))}
+                                     :delayed-completion true
+                                     :msg (msg "move " (:title target) " to the Grip")
+                                     :cancel-effect (effect (clear-wait-prompt :runner)
+                                                            (effect-completed eid))
+                                     :effect (req (move state :runner target :hand)
+                                                  (clear-wait-prompt state :runner)
+                                                  (effect-completed state side eid))}
+                                    card nil))}}}
+
    "Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]
              (let [remaining (remove-once #(= (:cid %) (:cid ice)) ices)]
@@ -546,7 +571,8 @@
 
    "Mumbad Virtual Tour"
    {:implementation "Only forces trash if runner has no Imps and enough credits in the credit pool"
-    :flags {:must-trash true}
+    :flags {:must-trash (req (when installed
+                               true))}
     :access {:req (req installed)
              :effect (req (let [trash-cost (trash-cost state side card)
                                 no-salsette (remove #(= (:title %) "Salsette Slums") (all-active state :runner))
@@ -560,6 +586,29 @@
                                           "(Whizzard, Imp, Ghost Runner, Net Celebrity...)")))))}
     :trash-effect {:when-inactive true
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
+
+   "Mwanza City Grid"
+   (let [gain-creds {:req (req (and installed
+                                    this-server
+                                    (:successful run)
+                                    (pos? (:cards-accessed run))))
+                     :silent (req true)
+                     :effect (req (let [cnt (:cards-accessed run)
+                                        total (* 2 cnt)]
+                                    (gain state :corp :credit total)
+                                    (system-msg state :corp
+                                                (str "gains " total " [Credits] from Mwanza City Grid"))))}]
+     {:events {:pre-access {:req (req (and installed this-server))
+                            :msg "force the Runner to access 3 additional cards"
+                            :effect (effect (access-bonus 3))}
+               :run-ends gain-creds}
+      :trash-effect
+      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+       :effect (effect (register-events {:run-ends
+                                         (assoc gain-creds :req (req (= (first (:server run))
+                                                                        (second (:previous-zone card)))))
+                                         :successful-run-ends {:effect (effect (unregister-events card))}}
+                                        (assoc card :zone '(:discard))))}})
 
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
@@ -636,22 +685,55 @@
    "Old Hollywood Grid"
    (let [ohg {:req (req (or (in-same-server? card target)
                             (from-same-server? card target)))
-              :effect (effect (register-persistent-flag!
-                                card :can-steal
-                                (fn [state _ card]
-                                  (if-not (some #(= (:title %) (:title card)) (:scored runner))
-                                    ((constantly false)
-                                      (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
-                                    true))))}]
+              :effect (req (register-persistent-flag!
+                             state side
+                             card :can-steal
+                             (fn [state _ card]
+                               (if-not (some #(= (:title %) (:title card)) (:scored runner))
+                                 ((constantly false)
+                                    (toast state :runner "Cannot steal due to Old Hollywood Grid." "warning"))
+                                 true))))}]
      {:trash-effect
-              {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-               :effect (effect (register-events {:pre-steal-cost (assoc ohg :req (req (or (= (:zone (get-nested-host target)) (:previous-zone card))
-                                                                                          (= (central->zone (:zone target))
-                                                                                             (butlast (:previous-zone card))))))
-                                                 :run-ends {:effect (effect (unregister-events card))}}
-                                                (assoc card :zone '(:discard))))}
+      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
+       :effect (req (register-events
+                      state side
+                      {:pre-steal-cost (assoc ohg :req (req (or (= (:zone (get-nested-host target))
+                                                                   (:previous-zone card))
+                                                                (= (central->zone (:zone target))
+                                                                   (butlast (:previous-zone card))))))
+                       :run-ends {:effect (req (unregister-events state side (find-latest state card))
+                                               (clear-persistent-flag! state side card :can-steal))}}
+                      (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ohg
-               :post-access-card {:effect (effect (clear-persistent-flag! target :can-steal))}}})
+               :access {:effect (req (clear-persistent-flag! state side card :can-steal))}
+               :run-ends nil}})
+
+   "Overseer Matrix"
+   (let [om {:req (req (in-same-server? card target))
+             :delayed-completion true
+             :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
+                             (continue-ability
+                               {:optional
+                                {:prompt "Pay 1 [Credits] to use Overseer Matrix ability?"
+                                 :player :corp
+                                 :end-effect (effect (clear-wait-prompt :runner)
+                                                     (effect-completed eid))
+                                 :yes-ability {:cost [:credit 1]
+                                               :msg "give the Runner 1 tag"
+                                               :delayed-completion true
+                                               :effect (req (tag-runner state :runner eid 1))}}}
+                               card nil))}]
+     {:trash-effect
+      {:req (req (and (= :servers (first (:previous-zone card)))
+                      (:run @state)))
+       :effect (effect (register-events {:runner-trash (assoc om :req (req (or (= (:zone (get-nested-host target))
+                                                                                  (:previous-zone card))
+                                                                               (= (central->zone (:zone target))
+                                                                                  (butlast (:previous-zone card))))))
+                                         :run-ends {:effect (effect (unregister-events card))}}
+                                        (assoc card :zone '(:discard))))}
+      :events {:run-ends nil
+               :runner-trash om}})
 
    "Panic Button"
    {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
@@ -702,7 +784,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
-    :in-play [:hand-size-modification 2]}
+    :in-play [:hand-size {:mod 2}]}
 
    "Ruhr Valley"
    {:events {:run {:req (req this-server)
@@ -923,21 +1005,20 @@
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
                  :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
-                              (lose state :runner :hand-size-modification 1))}]
+                              (lose state :runner :hand-size {:mod 1}))}]
     :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events state side
                                                    {:corp-turn-begins
                                                     {:msg (msg "increase the Runner's maximum hand size by " n)
-                                                     :effect (effect (gain :runner :hand-size-modification n)
+                                                     :effect (effect (gain :runner :hand-size {:mod n})
                                                                      (unregister-events card)
                                                                      (update! (dissoc card :times-used)))}}
                                                    (assoc card :zone '(:discard)))))}
     :events {:corp-turn-begins {:req (req (:times-used card))
                                 :msg (msg "increase the Runner's maximum hand size by "
                                           (:times-used card))
-                                :effect (effect (gain :runner :hand-size-modification
-                                                      (:times-used card))
+                                :effect (effect (gain :runner :hand-size {:mod (:times-used card)})
                                                 (update! (dissoc card :times-used)))}}}
 
    "Warroid Tracker"

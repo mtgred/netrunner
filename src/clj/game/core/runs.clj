@@ -2,7 +2,7 @@
 
 (declare any-flag-fn? clear-run-register! run-cleanup
          gain-run-credits update-ice-in-server update-all-ice
-         get-agenda-points gain-agenda-point optional-ability7
+         get-agenda-points gain-agenda-point optional-ability
          get-remote-names card-name can-access-loud can-steal?
          prevent-jack-out card-flag? can-run?)
 
@@ -34,6 +34,14 @@
   (swap! state update-in [:runner :run-credit] + n)
   (gain state :runner :credit n))
 
+(defn access-end
+  "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
+  [state side eid c]
+  (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
+    ;; Do not trigger :no-trash if card has already been trashed
+    (trigger-event state side :no-trash c))
+  (trigger-event-sync state side eid :post-access-card c))
+
 ;;; Stealing agendas
 (defn steal
   "Moves a card to the runner's :scored area, triggering events from the completion of the steal."
@@ -57,24 +65,22 @@
                                        (remove-old-current state side :corp))}
           :card-ability (ability-as-handler c (:stolen (card-def c)))}
          c)
-       (effect-completed state side eid nil)))))
+       (access-end state side eid card)))))
 
-(defn- resolve-steal-events
+(defn- steal-trigger-events
   "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
-  ([state side card] (resolve-steal-events state side (make-eid state) card))
+  ([state side card] (steal-trigger-events state side (make-eid state) card))
   ([state side eid card]
-   (trigger-event state side :access card)
-   (effect-completed state side eid card)))
+   (access-end state side eid card)))
 
-(defn- resolve-steal
-  "Finish the stealing of an agenda."
-  ([state side card] (resolve-steal state side (make-eid state) card))
+(defn- steal-agenda
+  "Trigger the stealing of an agenda, now that costs have been paid."
+  ([state side card] (steal-agenda state side (make-eid state) card))
   ([state side eid card]
    (let [cdef (card-def card)]
-     (when-completed (resolve-steal-events state side card)
-                     (if (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
-                       (steal state :runner eid card)
-                       (effect-completed state side eid nil))))))
+     (if (or (not (:steal-req cdef)) ((:steal-req cdef) state :runner (make-eid state) card nil))
+       (steal state :runner eid card)
+       (access-end state side eid card)))))
 
 (defn steal-cost-bonus
   "Applies a cost to the next steal attempt. costs can be a vector of [:key value] pairs,
@@ -106,74 +112,88 @@
       merge-costs flatten vec))
 
 (defn- access-non-agenda
+  "Access a non-agenda. Show a prompt to trash for trashable cards."
   [state side eid c]
-  (trigger-event state side :access c)
   (trigger-event state side :pre-trash c)
   (if (not= (:zone c) [:discard]) ; if not accessing in Archives
-    (if-let [trash-cost (trash-cost state side c)]
-      ;; The card has a trash cost (Asset, Upgrade)
-      (let [card (assoc c :seen true)
-            name (:title card)
-            trash-msg (str trash-cost " [Credits] to trash " name " from " (name-zone :corp (:zone card)))]
-        (if (and (get-in @state [:runner :register :force-trash])
-                 (can-pay? state :runner name :credit trash-cost))
-          ;; If the runner is forced to trash this card (Neutralize All Threats)
-          (continue-ability state :runner
-                            {:cost [:credit trash-cost]
-                             :delayed-completion true
-                             :effect (req (when (:run @state)
-                                            (swap! state assoc-in [:run :did-trash] true)
-                                            (swap! state assoc-in [:run :did-access] true))
-                                          (swap! state assoc-in [:runner :register :trashed-card] true)
-                                          (trash state side eid card nil)
-                                          (system-msg state side (str "is forced to pay " trash-msg)))}
-                            card nil)
-          ;; Otherwise, show the option to pay to trash the card.
-          (when-not (and (is-type? card "Operation")
-                         ;; Don't show the option if Edward Kim's auto-trash flag is true.
-                         (card-flag? card :can-trash-operation true))
-            ;; If card has already been trashed this access don't show option to pay to trash (eg. Ed Kim)
-            (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
-              (continue-ability state :runner
-                                {:optional
-                                 {:delayed-completion true
-                                  :prompt (str "Pay " trash-cost " [Credits] to trash " name "?")
-                                  :no-ability {:effect (req
-                                                         ;; toggle access flag to prevent Hiro issue #2638
-                                                         (swap! state dissoc :access)
-                                                         (trigger-event state side :no-trash c)
-                                                         (swap! state assoc :access true)
-                                                         (effect-completed state side eid))}
-                                  :yes-ability {:cost [:credit trash-cost]
-                                                :delayed-completion true
-                                                :effect (req (when (:run @state)
-                                                               (swap! state assoc-in [:run :did-trash] true))
-                                                             (swap! state assoc-in [:runner :register :trashed-card] true)
-                                                             (trash state side eid card nil)
-                                                             (system-msg state side (str "pays " trash-msg)))}}}
-                                card nil)))))
-      ;; The card does not have a trash cost
-      (do (prompt! state :runner c (str "You accessed " (:title c)) ["OK"] {:eid eid})
-          ;; TODO: Trigger :no-trash after hit "OK" on access
-          (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
-            ;; Do not trigger :no-trash if card (operation) has already been trashed
-            (trigger-event state side :no-trash c))))
-    (effect-completed state side eid)))
+    ;; The card has a trash cost (Asset, Upgrade)
+    (let [trash-cost (trash-cost state side c)
+          card (assoc c :seen true)
+          card-name (:title card)]
+      ;; Show the option to pay to trash the card.
+      (when-not (and (is-type? card "Operation")
+                     ;; Don't show the option if Edward Kim's auto-trash flag is true.
+                     (card-flag? card :can-trash-operation true))
+        ;; If card has already been trashed this access don't show option to pay to trash (eg. Ed Kim)
+        (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
+          (let [trash-ab-cards (->> (concat (all-active state :runner)
+                                            (get-in @state [:runner :play-area]))
+                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
+                ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
+                trash-cost-str (when trash-cost
+                                 [(str "Pay " (str trash-cost "[Credits] ") "to trash")])
+                ;; If the runner is forced to trash this card (Neutralize All Threats)
+                forced-to-trash? (or (and (get-in @state [:runner :register :force-trash])
+                                          (can-pay? state :runner card-name :credit trash-cost))
+                                     (card-flag-fn? state side card :must-trash true))
+                trash-msg (when trash-cost
+                            (str trash-cost " [Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
+                pay-str (when trash-cost
+                          (str (if forced-to-trash? "is forced to pay " "pays ") trash-msg))
+                prompt-str (str "You accessed " card-name ".")
+                no-action-str (when-not forced-to-trash?
+                                ["No action"])
+                choices (into [] (concat ability-strs trash-cost-str no-action-str))]
+            (continue-ability
+              state :runner
+              {:delayed-completion true
+               :prompt prompt-str
+               :choices choices
+               :effect (req (cond
+                              (= target "No action")
+                              (do
+                                ;; toggle access flag to prevent Hiro issue #2638
+                                (swap! state dissoc :access)
+                                (trigger-event state side :no-trash c)
+                                (swap! state assoc :access true)
+                                (access-end state side eid c))
+
+                              (.contains target "Pay")
+                              (do (lose state side :credit trash-cost)
+                                  (when (:run @state)
+                                    (swap! state assoc-in [:run :did-trash] true)
+                                    (when forced-to-trash?
+                                      (swap! state assoc-in [:run :did-access] true)))
+                                  (swap! state assoc-in [:runner :register :trashed-card] true)
+                                  (system-msg state side pay-str)
+                                  (when-completed (trash state side card nil)
+                                                  (access-end state side eid c)))
+
+                              (some #(= % target) ability-strs)
+                              (let [idx (.indexOf ability-strs target)
+                                    trash-ab-card (nth trash-ab-cards idx)
+                                    cdef (-> (card-def trash-ab-card)
+                                             :interactions
+                                             :trash-ability)]
+                                (when-completed (resolve-ability state side cdef trash-ab-card [card])
+                                                (access-end state side eid c)))))}
+              card nil)))))
+    (access-end state side eid c)))
 
 (defn- steal-pay-choice
   "Enables a vector of costs to be resolved in the order of choosing"
-  [state side choices chosen n card]
+  [state side cost-strs chosen n card]
   {:delayed-completion true
    :prompt "Pay steal cost?"
-   :choices (conj (vec choices) "Don't steal")
+   :choices (conj (vec cost-strs) "No action")
    :effect (req
-             (if (= target "Don't steal")
+             (if (= target "No action")
                (continue-ability state :runner
                                  {:delayed-completion true
                                   :effect (req (when-not (find-cid (:cid card) (:deck corp))
                                                     (system-msg state side (str "decides not to pay to steal " (:title card))))
-                                                  (trigger-event state side :no-steal card)
-                                                  (resolve-steal-events state side eid card))} card nil)
+                                               (trigger-event state side :no-steal card)
+                                               (steal-trigger-events state side eid card))} card nil)
                (let [name (:title card)
                      chosen (cons target chosen)
                      clicks (count (re-seq #"\[Click\]+" target))
@@ -187,55 +207,75 @@
                          (if (< (count chosen) n)
                            (continue-ability
                              state side
-                             (steal-pay-choice state :runner (remove-once #(= target %) choices) chosen n card)
+                             (steal-pay-choice state :runner (remove-once #(= target %) cost-strs) chosen n card)
                              card nil)
-                           (resolve-steal state side eid card))))
-                   (resolve-steal-events state side eid card)))))})
+                           (steal-agenda state side eid card))))
+                   (steal-trigger-events state side eid card)))))})
 
 (defn- access-agenda
+  "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid c]
   (trigger-event state side :pre-steal-cost c)
-  (if-not (can-steal? state side c)
-    ;; The runner cannot steal this agenda.
-    (when-completed (resolve-steal-events state side c)
-                    (do (prompt! state :runner c (str "You accessed but cannot steal " (:title c)) ["OK"] {})
-                        (trigger-event state side :no-steal c)
-                        (effect-completed state side eid c)))
-    ;; The runner can potentially steal this agenda.
-    (let [cost (steal-cost state side c)
-          name (:title c)
-          choices (map costs-to-symbol (partition 2 cost))
-          n (count choices)]
-      ;; Steal costs are additional costs and can be denied by the runner.
-      (cond
-        ;; Ask if the runner will pay a single additional cost to steal.
-        (= 1 (count choices))
-        (optional-ability
-          state :runner eid c (str "Pay " (costs-to-symbol cost) " to steal " name "?")
-          {:yes-ability
-                       {:delayed-completion true
-                        :effect (req (if (can-pay? state side name cost)
-                                       (when-completed (pay-sync state side nil cost {:action :steal-cost})
-                                                       (do (system-msg state side (str "pays " (costs-to-symbol cost)
-                                                                                   " to steal " name))
-                                                           (resolve-steal state side eid c)))
-                                       (do (trigger-event state side :no-steal card)
-                                           (resolve-steal-events state side eid c))))}
-           :no-ability {:delayed-completion true
-                        :effect (effect (trigger-event :no-steal card)
-                                        (resolve-steal-events eid c))}}
-          nil)
+  (let [cost (steal-cost state side c)
+        card-name (:title c)
+        cost-strs (map costs-to-symbol (partition 2 cost))
+        n (count cost-strs)
+        can-pay-costs? (can-pay? state side card-name cost)
+        cost-as-symbol (when (= 1 (count cost-strs)) (costs-to-symbol cost))
+        ;; any trash abilities
+        can-steal-this? (can-steal? state side c)
+        trash-ab-cards (->> (concat (all-active state :runner)
+                                    (get-in @state [:runner :play-area]))
+                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [c])))
+        ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
+        ;; strs
+        steal-str (when (and can-steal-this? can-pay-costs?)
+                    (if cost-as-symbol
+                      [(str "Pay " cost-as-symbol " to steal")]
+                      ["Steal"]))
+        no-action-str (when (or (nil? steal-str)
+                                (not= steal-str ["Steal"]))
+                        ["No action"])
+        prompt-str (str "You accessed " card-name ".")
+        choices (into [] (concat ability-strs steal-str no-action-str))]
+    ;; Steal costs are additional costs and can be denied by the runner.
+    (continue-ability state :runner
+                      (if (> (count cost-strs) 1)
+                        ;; Use the better function for multiple costs
+                        (steal-pay-choice state :runner cost-strs '() n c)
+                        ;; Otherwise, just handle everything right friggin here
+                        {:delayed-completion true
+                         :prompt prompt-str
+                         :choices choices
+                         :effect (req (cond
+                                        ;; Can't steal or pay, or won't pay single additional cost to steal
+                                        (= target "No action")
+                                        (when-completed (steal-trigger-events state side c)
+                                                        (do (trigger-event state side :no-steal c)
+                                                            (access-end state side eid c)))
 
-        ;; For multiple additional costs give the runner the choice of order to pay
-        (> (count choices) 1)
-        (continue-ability state side (steal-pay-choice state :runner choices '() n c) c nil)
+                                        ;; Steal normally
+                                        (= target "Steal")
+                                        (steal-agenda state :runner eid c)
 
-        ;; Otherwise, show the "You access" prompt with the single option to Steal.
-        :else
-        (continue-ability state :runner
-                          {:delayed-completion true
-                           :prompt (str "You access " name) :choices ["Steal"]
-                           :effect (req (resolve-steal state :runner eid c))} c nil)))))
+                                        ;; Pay single additiional cost to steal
+                                        (.contains target "Pay")
+                                        (when-completed (pay-sync state side nil cost {:action :steal-cost})
+                                                        (do (system-msg state side
+                                                              (str "pays " cost-as-symbol " to steal " card-name))
+                                                            (steal-agenda state side eid c)))
+
+                                        ;; Use trash ability
+                                        (some #(= % target) ability-strs)
+                                        (let [idx (.indexOf ability-strs target)
+                                              trash-ab-card (nth trash-ab-cards idx)
+                                              cdef (-> (card-def trash-ab-card)
+                                                       :interactions
+                                                       :trash-ability)]
+                                          (when-completed (resolve-ability state side cdef trash-ab-card [c])
+                                                          (do (trigger-event state side :no-steal c)
+                                                              (access-end state side eid c))))))})
+                      c nil)))
 
 (defn- reveal-access?
   "Check if the card should be revealed on access"
@@ -263,75 +303,74 @@
     (when (reveal-access? state side card)
       (system-msg state side (str "must reveal they accessed " (:title card))))))
 
-(defn- resolve-handle-access
+(defn- access-trigger-events
+  "Trigger access effects, then move into trash/steal choice."
   [state side eid c title]
   (let [cdef (card-def c)
         c (assoc c :seen true)
-        access-effect (:access cdef)]
+        access-effect (when-let [acc (:access cdef)]
+                        (ability-as-handler c acc))]
     (msg-handle-access state side c title)
-    (when-let [name (:title c)]
-      (if (is-type? c "Agenda")
-        ;; Accessing an agenda
-        (if (and access-effect
-                 (can-trigger? state side access-effect c nil))
-          ;; deal with access effects first. This is where Film Critic can be used to prevent these
-          (continue-ability state :runner
-                            {:delayed-completion true
-                             :prompt             (str "You must access " name)
-                             :choices            ["Access"]
-                             :effect             (req (when-completed
-                                                        (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                                                        (access-agenda state side eid c)))} c nil)
-          (access-agenda state side eid c))
-        ;; Accessing a non-agenda
-        (if (and access-effect
-                 (= (:zone c) (:zone (get-card state c))))
-          ;; if card wasn't moved by a pre-access effect
-          (when-completed (resolve-ability state (to-keyword (:side c)) access-effect c nil)
-                          (if (= (:zone c) (:zone (get-card state c)))
-                            ;; if the card wasn't moved by the access effect
-                            (access-non-agenda state side eid c)
-                            (effect-completed state side eid)))
-          (access-non-agenda state side eid c))))))
+    (when-completed (trigger-event-simult state side :access
+                                          {:card-ability access-effect
+                                           ;; Cancel other access handlers if the card moves zones because of a handler
+                                           :cancel-fn (fn [state] (not (get-card state c)))}
+                                          c)
+                    (if (get-card state c) ; make sure the card has not been moved by a handler
+                      (if (is-type? c "Agenda")
+                        (access-agenda state side eid c)
+                        ;; Accessing a non-agenda
+                        (access-non-agenda state side eid c))
+                      (access-end state side eid c)))))
 
-(defn- handle-access-pay
+(defn- access-pay
+  "Force the runner to pay any costs to access this card, if any, before proceeding with access."
   [state side eid c title]
   (let [acost (access-cost state side c)
         ;; hack to prevent toasts when playing against Gagarin and accessing on 0 credits
         anon-card (dissoc c :title)
-        cant-pay #(prompt! state :runner nil "You can't pay the cost to access this card" ["OK"] {})]
+        cant-pay {:prompt "You can't pay the cost to access this card"
+                  :choices ["OK"]
+                  :delayed-completion true
+                  :effect (effect (access-end eid c))}]
     (cond
       ;; Check if a pre-access-card effect trashed the card (By Any Means)
       (not (get-card state c))
-      (effect-completed state side eid)
+      (access-end state side eid c)
 
       ;; Either there were no access costs, or the runner could pay them.
       (empty? acost)
-      (resolve-handle-access state side eid c title)
+      (access-trigger-events state side eid c title)
 
       (not-empty acost)
+      ;; Await the payment of the costs; if payment succeeded, proceed with access.
       (when-completed (pay-sync state side anon-card acost)
                       (if async-result
-                        (resolve-handle-access state side eid c title)
-                        (cant-pay)))
+                        (access-trigger-events state side eid c title)
+                        (resolve-ability state :runner eid cant-pay c nil)))
       :else
       ;; The runner cannot afford the cost to access the card
-      (cant-pay)))
-  (trigger-event state side :post-access-card c))
+      (resolve-ability state :runner eid cant-pay c nil))))
 
-(defn handle-access
-  "Apply game rules for accessing the given list of cards (which generally only contains 1 card.)"
-  ([state side cards] (handle-access state side (make-eid state) cards nil))
-  ([state side eid cards] (handle-access state side eid cards (:title (first cards))))
-  ([state side eid cards title]
+(defn access-card
+  "Apply game rules for accessing the given card."
+  ([state side card] (access-card state side (make-eid state) card nil))
+  ([state side eid card] (access-card state side eid card (:title card)))
+  ([state side eid card title]
+    ;; Indicate that we are in the access step.
    (swap! state assoc :access true)
-   (doseq [c cards]
-     ;; Reset counters for increasing costs of trash, steal, and access.
-     (swap! state update-in [:bonus] dissoc :trash)
-     (swap! state update-in [:bonus] dissoc :steal-cost)
-     (swap! state update-in [:bonus] dissoc :access-cost)
-     (when-completed (trigger-event-sync state side :pre-access-card c)
-                     (handle-access-pay state side eid c title)))))
+    ;; Reset counters for increasing costs of trash, steal, and access.
+   (swap! state update-in [:bonus] dissoc :trash)
+   (swap! state update-in [:bonus] dissoc :steal-cost)
+   (swap! state update-in [:bonus] dissoc :access-cost)
+    ;; First trigger pre-access-card, then move to determining if we can trash or steal.
+   (when-completed (trigger-event-sync state side :pre-access-card card)
+                   (access-pay state side eid card title))))
+
+(defn prevent-access
+  "Prevents the runner from accessing cards this run. This will cancel any run effects and not trigger access routines."
+  [state _]
+  (swap! state assoc-in [:run :prevent-access] true))
 
 (defn max-access
   "Put an upper limit on the number of cards that can be accessed in this run. For Eater."
@@ -360,7 +399,7 @@
   {:prompt "Click a card to access it. You must access all cards in this server."
    :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) cards)}
    :delayed-completion true
-   :effect (req (when-completed (handle-access state side [target])
+   :effect (req (when-completed (access-card state side target)
                                 (if (< 1 (count cards))
                                   (continue-ability state side (access-helper-remote (filter #(not= (:cid %) (:cid target)) cards))
                                                     card nil)
@@ -371,7 +410,7 @@
    :effect (req (if (and (>= 1 (count cards))
                          (not (any-flag-fn? state :runner :slow-remote-access true
                                             (concat (all-active state :runner) (all-active state :corp)))))
-                  (handle-access state side eid cards)
+                  (access-card state side eid (first cards))
                   (continue-ability state side (access-helper-remote cards) card nil)))})
 
 (defn access-helper-hq-or-rd
@@ -403,7 +442,7 @@
                                            from-root)]
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue
-                        (when-completed (handle-access state side unrezzed)
+                        (when-completed (access-card state side (first unrezzed))
                                         (if (or (pos? amount) (< 1 (count from-root)))
                                           (continue-ability
                                             state side
@@ -418,7 +457,7 @@
                            :prompt (str "Choose an upgrade in " server-name " to access.")
                            :choices {:req #(and (= (second (:zone %)) chosen-zone)
                                                 (complement already-accessed))}
-                           :effect (req (when-completed (handle-access state side [target])
+                           :effect (req (when-completed (access-card state side target)
                                                         (continue-ability
                                                           state side
                                                           (access-helper-hq-or-rd state chosen-zone label amount select-fn title-fn
@@ -428,8 +467,8 @@
                     ;; accessing a card in deck
                     (= target card-from)
                     (let [accessed (select-fn already-accessed)]
-                      (when-completed (handle-access state side (make-eid state) [accessed]
-                                                     (title-fn accessed))
+                      (when-completed (access-card state side (make-eid state) accessed
+                                                   (title-fn accessed))
 
                                       (let [from-root (get-root-content state)]
                                         (if (or (< 1 amount) (not-empty from-root))
@@ -448,7 +487,7 @@
                     ;; accessing a rezzed upgrade
                     :else
                     (let [accessed (some #(when (= (:title %) target) %) (get-root-content state))]
-                      (when-completed (handle-access state side [accessed])
+                      (when-completed (access-card state side accessed)
                                       (if (or (pos? amount) (< 1 (count (get-root-content state))))
                                         (continue-ability
                                           state side
@@ -461,7 +500,7 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
-                    (handle-access state side eid cards "an unseen card")
+                    (access-card state side eid (first cards) "an unseen card")
                     (let [from-rd (access-count state side :rd-access)]
                       (continue-ability state side (access-helper-hq-or-rd
                                                      state :rd "deck" from-rd
@@ -477,7 +516,7 @@
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
-                    (handle-access state side eid cards)
+                    (access-card state side eid (first cards))
                     (let [from-hq (min (access-count state side :hq-access)
                                        (-> @state :corp :hand count))
                           ; Handle root only access - no cards to access in hand
@@ -555,7 +594,7 @@
                     ;; accessing a card that was added to archives because of the effect of another card
                     (let [accessed (first (shuffle (facedown-cards already-accessed)))
                           already-accessed (conj already-accessed accessed)]
-                      (when-completed (handle-access state side [accessed])
+                      (when-completed (access-card state side accessed)
                                       (if (must-continue? already-accessed)
                                         (next-access state side eid already-accessed card)
                                         (effect-completed state side eid))))
@@ -567,7 +606,7 @@
                       (if (= 1 (count unrezzed))
                         ;; only one unrezzed upgrade; access it and continue
                         (let [already-accessed (conj already-accessed (first unrezzed))]
-                          (when-completed (handle-access state side unrezzed)
+                          (when-completed (access-card state side (first unrezzed))
                                           (if (must-continue? already-accessed)
                                             (next-access state side eid already-accessed card)
                                             (effect-completed state side eid))))
@@ -579,7 +618,7 @@
                            :choices {:req #(and (= (second (:zone %)) :archives)
                                                 (not (already-accessed %)))}
                            :effect (req (let [already-accessed (conj already-accessed target)]
-                                          (when-completed (handle-access state side [target])
+                                          (when-completed (access-card state side target)
                                                           (if (must-continue? already-accessed)
                                                             (next-access state side eid already-accessed card)
                                                             (effect-completed state side eid)))))}
@@ -590,7 +629,7 @@
                     (let [accessed (some #(when (= (:title %) target) %)
                                          (concat (faceup-accessible already-accessed) (root-content already-accessed)))
                           already-accessed (conj already-accessed accessed)]
-                      (when-completed (handle-access state side [accessed])
+                      (when-completed (access-card state side accessed)
                                       (if (must-continue? already-accessed)
                                         (next-access state side eid already-accessed card)
                                         (effect-completed state side eid))))))}))
@@ -601,7 +640,7 @@
                       archives-count (+ (count (-> @state :corp :discard)) (count (-> @state :corp :servers :archives :content)))]
                   (if (not-empty cards)
                     (if (= 1 archives-count)
-                      (handle-access state side eid cards)
+                      (access-card state side eid (first cards))
                       (continue-ability state side (access-helper-archives state archives-count #{}) card nil))
                     (effect-completed state side eid))))})
 
@@ -640,13 +679,12 @@
                    (do (let [cards (cards-to-access state side server)
                              cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
                              n (count cards)]
-                         ;; Cannot use `zero?` as it does not deal with `nil` nicely (throws exception)
-                         (if (or (safe-zero? (get-in @state [:run :max-access]))
-                                 (empty? cards))
+                         ;; Make `:did-access` true when reaching the access step (no replacement)
+                         (when (:run @state) (swap! state assoc-in [:run :did-access] true))
+                         (if (or (zero? n)
+                                 (safe-zero? (get-in @state [:run :max-access])))
                            (system-msg state side "accessed no cards during the run")
-                           (do (when (:run @state)
-                                 (swap! state assoc-in [:run :did-access] true))
-                               (swap! state assoc-in [:runner :register :accessed-cards] true)
+                           (do (swap! state assoc-in [:runner :register :accessed-cards] true)
                                (when-completed (resolve-ability state side (choose-access cards server) nil nil)
                                                (effect-completed state side eid nil))
                                (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
@@ -675,30 +713,40 @@
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
   [state side]
-  (let [successful-run-effect (get-in @state [:run :run-effect :successful-run])]
-    (when (and successful-run-effect (not (apply trigger-suppress state side :successful-run
-                                                 (get-in @state [:run :run-effect :card]))))
+  (let [successful-run-effect (get-in @state [:run :run-effect :successful-run])
+        card (get-in @state [:run :run-effect :card])]
+    (when (and successful-run-effect
+               (not (apply trigger-suppress state side :successful-run card)))
       (resolve-ability state side successful-run-effect (:card successful-run-effect) nil)))
   (when-completed (register-successful-run state side (get-in @state [:run :server]))
-                  (let [server (get-in @state [:run :server]) ; bind here as the server might have changed
-                        run-effect (get-in @state [:run :run-effect])
-                        r (:req run-effect)
+                  (let [the-run (:run @state)
+                        server (:server the-run) ; bind here as the server might have changed
+                        run-effect (:run-effect the-run)
+                        run-req (:req run-effect)
                         card (:card run-effect)
                         replace-effect (:replace-access run-effect)]
-                    (if (and replace-effect
-                             (or (not r) (r state side (make-eid state) card [(first server)])))
-                      (if (:mandatory replace-effect)
-                        (replace-access state side replace-effect card)
-                        (swap! state update-in [side :prompt]
-                               (fn [p]
-                                 (conj (vec p) {:msg "Use Run ability instead of accessing cards?"
-                                                :choices ["Run ability" "Access"]
-                                                :effect #(if (= % "Run ability")
-                                                          (replace-access state side replace-effect card)
-                                                          (when-completed (do-access state side server)
-                                                                          (handle-end-run state side)))}))))
-                      (when-completed (do-access state side server)
-                                      (handle-end-run state side))))))
+                    (if (:prevent-access the-run)
+                      (do (system-msg state :runner "is prevented from accessing any cards this run")
+                          (resolve-ability state :runner
+                                           {:prompt "You are prevented from accessing any cards this run."
+                                            :choices ["OK"]
+                                            :effect (effect (handle-end-run))}
+                                           nil nil))
+                      (if (and replace-effect
+                               (or (not run-req)
+                                   (run-req state side (make-eid state) card [(first server)])))
+                        (if (:mandatory replace-effect)
+                          (replace-access state side replace-effect card)
+                          (swap! state update-in [side :prompt]
+                                 (fn [p]
+                                   (conj (vec p) {:msg "Use replacement effect instead of accessing cards?"
+                                                  :choices ["Replacement effect" "Access cards"]
+                                                  :effect #(if (= % "Replacement effect")
+                                                             (replace-access state side replace-effect card)
+                                                             (when-completed (do-access state side server)
+                                                                             (handle-end-run state side)))}))))
+                        (when-completed (do-access state side server)
+                                        (handle-end-run state side)))))))
 
 (defn successful-run
   "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 4.3."

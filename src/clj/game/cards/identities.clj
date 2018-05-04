@@ -32,6 +32,7 @@
    {:events {:corp-install
              {:delayed-completion true
               :req (req (and (first-event? state :corp :corp-install)
+                             (pos? (:turn @state))
                              (not (rezzed? target))))
               :effect
               (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
@@ -243,14 +244,14 @@
 
    "Cerebral Imaging: Infinite Frontiers"
    {:effect (req (when (> (:turn @state) 1)
-                   (swap! state assoc-in [:corp :hand-size-base] (:credit corp)))
+                   (swap! state assoc-in [:corp :hand-size :base] (:credit corp)))
                  (add-watch state :cerebral-imaging
                             (fn [k ref old new]
                               (let [credit (get-in new [:corp :credit])]
                                 (when (not= (get-in old [:corp :credit]) credit)
-                                  (swap! ref assoc-in [:corp :hand-size-base] credit))))))
+                                  (swap! ref assoc-in [:corp :hand-size :base] credit))))))
     :leave-play (req (remove-watch state :cerebral-imaging)
-                     (swap! state assoc-in [:corp :hand-size-base] 5))}
+                     (swap! state assoc-in [:corp :hand-size :base] 5))}
 
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))
@@ -299,10 +300,10 @@
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
-   {:effect (effect (lose :hand-size-modification 1)
-                    (lose :runner :hand-size-modification 1))
-    :leave-play (effect (gain :hand-size-modification 1)
-                        (gain :runner :hand-size-modification 1))}
+   {:effect (effect (lose :hand-size {:mod 1})
+                    (lose :runner :hand-size {:mod 1}))
+    :leave-play (effect (gain :hand-size {:mod 1})
+                        (gain :runner :hand-size {:mod 1}))}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
@@ -331,6 +332,64 @@
                                              (some #{:discard} (:previous-zone target))))
                               :msg (msg "draw a card")
                               :effect (req (draw state side eid 1 nil))}}}
+
+   "Freedom Khumalo: Crypto-Anarchist"
+   (letfn [(fkca [accessed-card play-or-rez selected-cards]
+             (if (not= 0 play-or-rez)
+               {:delayed-completion true
+                :prompt "Select a card with at least 1 virus counter"
+                :choices {:req #(and (installed? %)
+                                     (> (get-in % [:counter :virus] 0) 0))}
+                :effect (req (when (not= (:cid target) (:cid card))
+                               (add-counter state :runner card :virus 1)
+                               (add-counter state :runner target :virus -1)
+                               (let [card (get-card state card)
+                                     selected-cards (merge-with + selected-cards {(:cid target) 1})]
+                                 (if (< (get-in card [:counter :virus] 0) play-or-rez)
+                                   (continue-ability state side (fkca accessed-card play-or-rez selected-cards) card nil)
+                                   (let [counters (get-in (get-card state card) [:counter :virus] 0)]
+                                     (add-counter state :runner card :virus (- counters))
+                                     (system-msg state :runner
+                                       (str "trash " (:title accessed-card) " at no cost"
+                                         (when (> play-or-rez 0)
+                                           (str " spending "
+                                             (clojure.string/join ", "
+                                               (map #(str (quantify (get selected-cards (:cid %)) "virus counter")
+                                                       " from " (:title %))
+                                                    (map #(find-cid % (all-installed state :runner))
+                                                         (keys selected-cards))))))))
+                                     (clear-wait-prompt state :corp)
+                                     (trash-no-cost state side eid accessed-card))))))
+                :cancel-effect (req (doseq [c (all-installed state :runner)]
+                                      (let [cid (:cid c)]
+                                        (when (contains? selected-cards cid)
+                                          (add-counter state :runner c :virus (get selected-cards cid)))))
+                                    (let [counters (get-in (get-card state card) [:counter :virus] 0)]
+                                      (add-counter state :runner card :virus (- counters)))
+                                    (clear-wait-prompt state :corp)
+                                    (swap! state dissoc-in [:per-turn (:cid card)])
+                                    (access-non-agenda state side eid accessed-card))}
+               {:delayed-completion true
+                :msg (msg "trash " (:title accessed-card) " at no cost")
+                :effect (effect (clear-wait-prompt :corp)
+                                (trash-no-cost eid accessed-card))}))]
+     {:flags {:slow-trash (req true)}
+      :interactions
+      {:trash-ability
+       {:interactive (req true)
+        :delayed-completion true
+        :label "[Freedom]: Trash card"
+        :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                       (not (is-type? target "Agenda"))
+                       (<= (:cost target)
+                           (reduce + (map #(get-in % [:counter :virus])
+                                          (filter #(> (get-in % [:counter :virus] 0) 0)
+                                                  (all-installed state :runner)))))))
+        :once :per-turn
+        :effect (req (let [accessed-card target
+                           play-or-rez (:cost target)]
+                       (show-wait-prompt state :corp "Runner to use Freedom Khumalo's ability")
+                       (continue-ability state side (fkca accessed-card play-or-rez (hash-map)) card nil)))}}})
 
    "Fringe Applications: Tomorrow, Today"
    {:events
@@ -711,8 +770,8 @@
    {:recurring 2}
 
    "NBN: The World is Yours*"
-   {:effect (effect (gain :hand-size-modification 1))
-    :leave-play (effect (lose :hand-size-modification 1))}
+   {:effect (effect (gain :hand-size {:mod 1}))
+    :leave-play (effect (lose :hand-size {:mod 1}))}
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:req (req (first-event? state :corp :server-created))
@@ -755,8 +814,9 @@
                                                 (update! (assoc card :fill-hq true)))}}
       :abilities [{:req (req (:fill-hq card))
                    :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
-                   :effect (effect (draw (- 5 (count (:hand corp))))
-                                   (update! (dissoc card :fill-hq)))}]})
+                   :effect (req (draw state side (- 5 (count (:hand corp))))
+                                (update! state side (dissoc card :fill-hq))
+                                (swap! state dissoc :turn-events))}]})
 
    "Nisei Division: The Next Generation"
    {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}

@@ -126,13 +126,17 @@
   [state card]
   (installed-byname state (to-keyword (:side card)) (:title card)))
 
-(defn hand-size
-  "Returns the current maximum handsize of the specified side."
-  [state side]
-  (let [side' (get @state side)
-        base (get side' :hand-size-base 0)
-        mod (get side' :hand-size-modification 0)]
+(defn base-mod-size
+  "Returns the value of properties using the `base` and `mod` system"
+  [state side prop]
+  (let [base (get-in @state [side prop :base] 0)
+        mod (get-in @state [side prop :mod] 0)]
     (+ base mod)))
+
+(defn hand-size
+  "Returns the current maximum hand-size of the specified side."
+  [state side]
+  (base-mod-size state side :hand-size))
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"

@@ -66,11 +66,15 @@
 (defn- strength-pump
   "Creates a strength pump ability.
   Cost can be a credit amount or a list of costs e.g. [:credit 2]."
-  ([cost strength] (strength-pump cost strength nil))
-  ([cost strength all-run]
-   {:msg (str "add " strength " strength" (when all-run " for the remainder of the run"))
+  ([cost strength] (strength-pump cost strength :encounter))
+  ([cost strength duration]
+   {:msg (str "add " strength " strength" (cond
+                                            (= duration :all-run)
+                                            " for the remainder of the run"
+                                            (= duration :all-turn)
+                                            " for the remainder of the turn"))
     :cost [:credit cost]
-    :effect (effect (pump card strength (or all-run :encounter)))
+    :effect (effect (pump card strength duration))
     :pump strength}))
 
 (defn- break-sub
@@ -245,7 +249,8 @@
     ; We would need a :once :per-access key to make this work for Gang Sign etc.
     :abilities [(break-sub 1 1)
                 {:label "Add a virus counter"
-                 :effect (effect (add-counter card :virus 1))}]
+                 :effect (effect (system-msg "manually adds a virus counter to Aumakua")
+                                 (add-counter card :virus 1))}]
     :strength-bonus (req (get-virus-counters state side card))
     :events {:run-ends {:req (req (and (not (or (get-in @state [:run :did-trash])
                                                 (get-in @state [:run :did-steal])))
@@ -613,6 +618,30 @@
                  :req (req (ice? (get-nested-host card)))
                  :msg "break 1 subroutine on the host ICE"}]}
 
+   "Laamb"
+   (auto-icebreaker
+     ["Barrier"]
+     {:abilities [(break-sub 2 0 "Barrier")
+                  (strength-pump 3 6)
+                  {:once :per-turn
+                   :cost [:credit 2]
+                   :label (str "Turn currently encountered ice into Barrier")
+                   :msg (msg "turn " (:title current-ice) " into Barrier")
+                   :req (req (and current-ice (rezzed? current-ice) (not (has-subtype? current-ice "Barrier"))))
+                   :effect (req (let [ice current-ice
+                                      stargets (:subtype-target ice)
+                                      stypes (:subtype ice)
+                                      remove-subtype {:effect (effect
+                                                                (update! (assoc ice :subtype-target stargets :subtype stypes))
+                                                                (unregister-events card)
+                                                                (register-events (:events (card-def card)) card))}]
+                                  (update! state side (assoc ice
+                                                             :subtype-target (combine-subtypes true stargets "Barrier")
+                                                             :subtype (combine-subtypes true stypes "Barrier")))
+                                  (update-ice-strength state side (get-card state ice))
+                                  (register-events state side {:pass-ice remove-subtype
+                                                               :run-ends remove-subtype} card)))}]})
+
    "Leviathan"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 3 3 "Code Gate")
@@ -762,7 +791,6 @@
                      :abilities [(break-sub 2 1 "Sentry")
                                  (strength-pump 1 1)]
                      :events {:pass-ice {:req (req (and (has-subtype? target "Sentry") (rezzed? target)) (pos? (count (:deck runner))))
-                                         :delayed-completion true
                                          :optional {:prompt (msg "Use Persephone's ability??")
                                                     :yes-ability {:prompt "How many subroutines resolved on the passed ICE?"
                                                                   :delayed-completion true

@@ -737,6 +737,11 @@
    {:subroutines [{:msg "draw 1 card" :effect (effect (draw))}
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
+   
+   "Endless EULA"
+   {:subroutines [end-the-run]
+    :runner-abilities [(runner-break [:credit 1] 1)
+                       (runner-break [:credit 6] 6)]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -751,6 +756,10 @@
                    :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-active-installed state :runner))]
                                   (trash state side c)))}]
     :runner-abilities [(runner-break [:click 1] 1)]}
+
+   "Envelope"
+   {:subroutines [(do-net-damage 1)
+                  end-the-run]}
 
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
@@ -875,10 +884,10 @@
     :subroutines [{:req (req (:run @state))
                    :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
                    :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
-                   :effect (effect (lose :runner :hand-size-modification 2)
+                   :effect (effect (lose :runner :hand-size {:mod 2})
                                    (register-events {:corp-turn-begins
                                                      {:msg "increase the Runner's maximum hand size by 2"
-                                                      :effect (effect (gain :runner :hand-size-modification 2)
+                                                      :effect (effect (gain :runner :hand-size {:mod 2})
                                                                       (unregister-events card))}} card))}]
     :events {:corp-turn-begins nil}}
 
@@ -960,8 +969,7 @@
    "Holmegaard"
    {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
                                     :msg "stop the Runner from accessing any cards this run"
-                                    :effect (req (max-access state side 0)
-                                                 (swap! state update-in [:run :run-effect] dissoc :replace-access))})
+                                    :effect (effect (prevent-access))})
                   {:label "Trash an icebreaker"
                    :prompt "Choose an icebreaker to trash"
                    :msg (msg "trash " (:title target))
@@ -1147,13 +1155,46 @@
                         :effect (effect (damage eid :net 1 {:card card}))}}
     :subroutines [end-the-run]}
 
+   "Kamali 1.0"
+   (letfn [(better-name [kind] (if (= "hardware" kind) "piece of hardware" kind))
+           (runner-trash [kind]
+             {:prompt (str "Select an installed " (better-name kind) " to trash")
+              :label (str "Trash an installed " (better-name kind))
+              :msg (msg "trash " (:title target))
+              :delayed-completion true
+              :choices {:req #(and (installed? %)
+                                   (is-type? % (capitalize kind)))}
+              :cancel-effect (effect (system-msg (str "fails to trash an installed " (better-name kind)))
+                                     (effect-completed eid))
+              :effect (effect (trash eid target {:cause :subroutine}))})
+           (sub-map [kind]
+             {:player :runner
+              :delayed-completion true
+              :prompt "Choose one"
+              :choices ["Take 1 brain damage" (str "Trash an installed " (better-name kind))]
+              :effect (req (if (= target "Take 1 brain damage")
+                             (do (system-msg state :corp "uses Kamali 1.0 to give the Runner 1 brain damage")
+                                 (damage state :runner eid :brain 1 {:card card}))
+                             (continue-ability state :runner (runner-trash kind) card nil)))})
+           (brain-trash [kind]
+             {:label (str "Force the Runner to take 1 brain damage or trash an installed " (better-name kind))
+              :msg (str "force the Runner to take 1 brain damage or trash an installed " (better-name kind))
+              :delayed-completion true
+              :effect (req (show-wait-prompt state :corp "Runner to decide on Kamali 1.0 action")
+                           (when-completed (resolve-ability state side (sub-map kind) card nil)
+                                           (clear-wait-prompt state :corp)))})]
+     {:subroutines [(brain-trash "resource")
+                    (brain-trash "hardware")
+                    (brain-trash "program")]
+      :runner-abilities [(runner-break [:click 1] 1)]})
+
    "Kitsune"
    {:subroutines [{:prompt "Select a card in HQ to force access"
                    :choices {:req in-hand?}
                    :label "Force the Runner to access a card in HQ"
                    :msg (msg "force the Runner to access " (:title target))
                    :effect (req (trash state side card)
-                                (when-completed (handle-access state side targets)
+                                (when-completed (access-card state side target)
                                   (when-completed (trigger-event-sync state side :pre-access :hq)
                                     (let [from-hq (dec (access-count state side :hq-access))]
                                       (continue-ability
@@ -1298,6 +1339,14 @@
                                 (when (<= 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0)))
                                   (end-run state side)))}]}
 
+   "Masvingo"
+   {:implementation "Number of subs is manual"
+    :advanceable :always
+    :abilities [{:label "Gain subroutines"
+                 :msg (msg "gain " (:advance-counter card 0) " subroutines")}]
+    :effect (effect (add-prop card :advance-counter 1))
+    :subroutines [end-the-run]}
+
    "Merlin"
    (grail-ice (do-net-damage 2))
 
@@ -1373,11 +1422,9 @@
     :subroutines [{:label "Draw 1 card, then shuffle 1 card from HQ into R&D"
                    :effect (req (when-completed (resolve-ability state side
                                                   {:optional
-                                                   {:delayed-completion true
-                                                    :prompt "Draw 1 card?"
+                                                   {:prompt "Draw 1 card?"
                                                     :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}
-                                                    :no-ability {:effect (req (effect-completed state side eid))}}}
+                                                                  :effect (effect (draw))}}}
                                                  card nil)
                                                 (resolve-ability state side
                                                   {:prompt "Choose 1 card in HQ to shuffle into R&D"
@@ -1430,8 +1477,7 @@
                                                   {:optional
                                                    {:prompt "Draw 1 card?"
                                                     :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}
-                                                    :no-ability {:effect (req (effect-completed state side eid))}}}
+                                                                  :effect (effect (draw))}}}
                                                  card nil)))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
@@ -1608,7 +1654,6 @@
                          {:optional
                           {:player :corp
                            :prompt "Draw 1 card?"
-                           :delayed-completion true
                            :yes-ability
                            {:delayed-completion true
                             :effect (effect (clear-wait-prompt :runner)
@@ -1804,7 +1849,7 @@
                   {:label "Force the Runner to access the top card of R&D"
                    :effect (req (doseq [c (take (get-in @state [:runner :rd-access]) (:deck corp))]
                                   (system-msg state :runner (str "accesses " (:title c)))
-                                  (handle-access state side [c])))}]}
+                                  (access-card state side c)))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"

@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare card-init card-str close-access-prompt enforce-msg gain-agenda-point get-agenda-points installed? is-type?
-         in-corp-scored? prevent-draw resolve-steal-events make-result show-prompt system-say system-msg trash-cards
+         in-corp-scored? prevent-draw steal-trigger-events make-result show-prompt system-say system-msg trash-cards
          untrashable-while-rezzed? update-all-ice win win-decked play-sfx can-run? untrashable-while-resources?
          remove-old-current)
 
@@ -208,7 +208,7 @@
                                   cards-trashed (take n (shuffle hand))]
                               (when (= type :brain)
                                 (swap! state update-in [:runner :brain-damage] #(+ % n))
-                                (swap! state update-in [:runner :hand-size-modification] #(- % n)))
+                                (swap! state update-in [:runner :hand-size :mod] #(- % n)))
                               (when-let [trashed-msg (join ", " (map :title cards-trashed))]
                                 (system-msg state :runner (str "trashes " trashed-msg " due to " (name type) " damage")))
                               (if (< (count hand) n)
@@ -376,10 +376,14 @@
         card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
 
     (when-let [trash-effect (:trash-effect cdef)]
-      (when (and (not disabled) (or (and (= (:side card) "Runner")
-                                         (:installed card))
-                                    (and (:rezzed card) (not host-trashed))
-                                    (and (:when-inactive trash-effect) (not host-trashed))))
+      (when (and (not disabled)
+                 (or (and (= (:side card) "Runner")
+                          (:installed card)
+                          (not (:facedown card)))
+                     (and (:rezzed card)
+                          (not host-trashed))
+                     (and (:when-inactive trash-effect)
+                          (not host-trashed))))
         (resolve-ability state side trash-effect moved-card (list cause))))
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
     (swap! state update-in [:trash :trash-list] dissoc oid)
@@ -401,7 +405,7 @@
     {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
    (if (and card (not (some #{:discard} zone)))
      (cond
-       
+
        (untrashable-while-rezzed? card)
        (do (enforce-msg state card "cannot be trashed while installed")
            (effect-completed state side eid))
@@ -467,26 +471,11 @@
                                  (trashrec trashlist)))))]
      (preventrec cards))))
 
-(defn- resolve-trash-no-cost
-  [state side card & {:keys [seen unpreventable]
-                      :or {seen true}}]
-  (trash state side (assoc card :seen seen) {:unpreventable unpreventable})
-  (swap! state assoc-in [side :register :trashed-card] true))
-
-(defn trash-no-cost
-  "Trashes a card at no cost while it is being accessed. (Imp.)"
-  [state side]
-  (let [prompt (-> @state side :prompt first)
-             card (:card prompt)
-             eid (:eid prompt)]
-    (when card
-      ;; trashing before the :access events actually fire; fire them manually
-      (if (is-type? card "Agenda")
-        (when-completed (resolve-steal-events state side card)
-                        (resolve-trash-no-cost state side card))
-        (resolve-trash-no-cost state side card))
-      (close-access-prompt state side))))
-
+(defn- trash-no-cost
+  [state side eid card & {:keys [seen unpreventable]
+                          :or {seen true}}]
+  (swap! state assoc-in [side :register :trashed-card] true)
+  (trash state side eid (assoc card :seen seen) {:unpreventable unpreventable}))
 
 ;;; Agendas
 (defn get-agenda-points
@@ -534,9 +523,12 @@
 
 (defn as-agenda
   "Adds the given card to the given side's :scored area as an agenda worth n points."
-  [state side card n]
-  (move state side (assoc (deactivate state side card) :agendapoints n) :scored)
-  (gain-agenda-point state side n))
+  ([state side card n] (as-agenda state side (make-eid state) card n))
+  ([state side eid card n]
+   (move state side (assoc (deactivate state side card) :agendapoints n) :scored)
+   (when-completed (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+                   (do (gain-agenda-point state side n)
+                       (effect-completed state side eid)))))
 
 (defn forfeit
   "Forfeits the given agenda to the :rfg zone."
@@ -584,7 +576,7 @@
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
-       (resolve-trash-no-cost state from-side card :seen false :unpreventable true)))))
+       (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
 
 ;; Exposing
 (defn expose-prevent
