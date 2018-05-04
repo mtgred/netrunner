@@ -427,7 +427,9 @@
                [:p
                 [:label
                  [:input {:type "checkbox" :checked (om/get-state owner :private)
-                          :on-change #(om/set-state! owner :protected (.. % -target -checked))}]
+                          :on-change #(let [checked (.. % -target -checked)]
+                                        (om/set-state! owner :protected checked)
+                                        (when (not checked) (om/set-state! owner :password "")))}]
                  "Password protected"]]
                (when (:protected state)
                  [:p
