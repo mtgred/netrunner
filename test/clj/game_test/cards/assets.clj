@@ -2252,6 +2252,79 @@
     (is (= 3 (count (:scored (get-runner)))) "The Board added to Runner score area")
     (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")))
 
+(deftest the-board-fifteen-minutes
+  ;; The Board - handle Fifteen Minutes clicked out of Runner's score area
+  (do-game
+    (new-game (default-corp [(qty "The Board" 1)
+                             (qty "15 Minutes" 1)])
+              (default-runner))
+    (play-from-hand state :corp "The Board" "New remote")
+    (play-from-hand state :corp "15 Minutes" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+
+    (is (= 0 (:agenda-point (get-runner))) "Runner has 0 agenda points")
+    (run-empty-server state :remote2)
+    (prompt-choice-partial :runner "Steal")
+    (is (= 0 (:agenda-point (get-runner))) "Runner stays at 1 agenda point")
+    (is (= 1 (count (:scored (get-runner)))) "Runner has 1 agenda in scored area")
+    (take-credits state :runner)
+
+    (let [fifm (first (:scored (get-runner)))]
+      (card-ability state :corp (refresh fifm) 0)
+      (is (= 0 (:agenda-point (get-runner))) "Runner drops to 0 agenda points")
+      (is (empty? (:scored (get-runner))) "Runner has no agendas in scored area"))))
+
+(deftest the-board-scored-agenda
+  ;; The Board - Corp scoring agenda shouldn't trigger The Board to lower Runner points
+  (do-game
+    (new-game (default-corp [(qty "The Board" 1)
+                             (qty "Hostile Takeover" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 6)
+    (play-from-hand state :corp "The Board" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (take-credits state :corp)
+
+    (is (= 0 (:agenda-point (get-runner))) "Runner has 0 agenda points")
+    (run-empty-server state :remote3)
+    (prompt-choice-partial :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))) "Runner has 1 agenda point")
+    (is (= 1 (count (:scored (get-runner)))) "Runner has 1 agenda in scored area")
+    (take-credits state :runner)
+
+    (core/rez state :corp (get-content state :remote1 0))
+    (is (= 0 (:agenda-point (get-runner))) "Runner loses 1 agenda point")
+    (is (= 1 (count (:scored (get-runner)))) "Runner still has 1 agenda in scored area")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 0 (:agenda-point (get-runner))) "Runner still has 0 agenda points")
+    (is (= 1 (count (:scored (get-runner)))) "Runner still has 1 agenda in scored area")))
+
+(deftest the-board-two-copies
+  ;; The Board - Scoring two copies should be 4 agenda points
+  (do-game
+    (new-game (default-corp [(qty "The Board" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 6)
+    (play-from-hand state :corp "The Board" "New remote")
+    (play-from-hand state :corp "The Board" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 14)
+    (is (= 0 (:agenda-point (get-runner))) "Runner has 0 agenda points")
+    (is (empty? (:scored (get-runner))) "Runner has no agendas")
+    (run-empty-server state :remote2)
+    (prompt-choice-partial :runner "Pay")
+    (is (= 1 (:agenda-point (get-runner))) "Runner has 1 agenda point")
+    (is (= 1 (count (:scored (get-runner)))) "Runner has 1 agenda in scored area")
+    (run-empty-server state :remote1)
+    (prompt-choice-partial :runner "Pay")
+    (is (= 4 (:agenda-point (get-runner))) "Runner has 4 agenda points")
+    (is (= 2 (count (:scored (get-runner)))) "Runner has 2 agendas in scored area")))
+
 (deftest the-root
   ;; The Root - recurring credits refill at Step 1.2
   (do-game
