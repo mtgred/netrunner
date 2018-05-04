@@ -310,12 +310,13 @@
   ([state side card] (rez state side (make-eid state) card nil))
   ([state side card args]
    (rez state side (make-eid state) card args))
-  ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt] :as args}]
+  ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus] :as args}]
    (let [card (if no-get-card
                 card
                 (get-card state card))
          altcost (when-not no-get-card
                    (:alternative-cost (card-def card)))]
+     (when cached-bonus (rez-cost-bonus state side cached-bonus))
      (if (or force (can-rez? state side card))
        (do
          (trigger-event state side :pre-rez card)
@@ -323,17 +324,19 @@
                    (:install-rezzed (card-def card)))
            (do (trigger-event state side :pre-rez-cost card)
                (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
-                 (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
-                          {:delayed-completion true
-                           :effect (req (if (and (= target "Yes")
-                                                 (can-pay? state side (:title card) altcost))
-                                          (do (pay state side card altcost)
-                                              (rez state side (-> card (dissoc :alternative-cost))
-                                                   {:ignore-cost true
-                                                    :no-get-card true
-                                                    :paid-alt true}))
-                                          (rez state side (-> card (dissoc :alternative-cost))
-                                               {:no-get-card true})))})
+                 (let [curr-bonus (get-rez-cost-bonus state side)]
+                   (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
+                            {:delayed-completion true
+                             :effect (req (if (and (= target "Yes")
+                                                   (can-pay? state side (:title card) altcost))
+                                            (do (pay state side card altcost)
+                                              (rez state side eid (-> card (dissoc :alternative-cost))
+                                                   (merge args {:ignore-cost true
+                                                                :no-get-card true
+                                                                :paid-alt true})))
+                                            (do (rez state side eid (-> card (dissoc :alternative-cost))
+                                                     (merge args {:no-get-card true
+                                                                  :cached-bonus curr-bonus})))))}))
                  (let [cdef (card-def card)
                        cost (rez-cost state side card)
                        costs (concat (when-not ignore-cost [:credit cost])
