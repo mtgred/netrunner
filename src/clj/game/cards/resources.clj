@@ -635,7 +635,8 @@
                                                        (in-hand? %))}
                                   :effect (effect (move target :discard)
                                                   (trash-prevent (keyword type) 1))})]
-     {:prevent {:trash [:hardware :resource :program]}
+     {:interactions {:prevent [{:type [:trash-hardware :trash-resource :trash-program]
+                                :req (req true)}]}
       :abilities [(dummy-prevent "hardware")
                   (dummy-prevent "resource")
                   (dummy-prevent "program")]})
@@ -674,7 +675,8 @@
                               :req (req (genetics-trigger? state side :successful-run))}}}
 
    "Fall Guy"
-   {:prevent {:trash [:resource]}
+   {:interactions {:prevent [{:type [:trash-resource]
+                              :req (req true)}]}
     :abilities [{:label "[Trash]: Prevent another installed resource from being trashed"
                  :effect (effect (trash-prevent :resource 1) (trash card {:unpreventable true :cause :ability-cost}))}
                 {:label "[Trash]: Gain 2 [Credits]"
@@ -1488,7 +1490,8 @@
                               (damage-prevent state side :brain Integer/MAX_VALUE))}]}
 
    "Sacrificial Construct"
-   {:prevent {:trash [:program :hardware]}
+   {:interactions {:prevent [{:type [:trash-program :trash-hardware]
+                              :req (req true)}]}
     :abilities [{:effect (effect (trash-prevent :program 1) (trash-prevent :hardware 1)
                                  (trash card {:cause :ability-cost}))}]}
 

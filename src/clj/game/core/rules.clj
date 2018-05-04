@@ -324,10 +324,6 @@
         (trigger-event-sync state side eid :corp-gain-bad-publicity n))
     (effect-completed state side eid)))
 
-(let [n (damage-count state side type n args)
-      prevent (get-prevent-list state :runner type)]
-  (if (and (not unpreventable) (cards-can-prevent? state :runner prevent type))
-
 (defn gain-bad-publicity
   "Attempts to give the runner n bad-publicity, allowing for boosting/prevention effects."
   ([state side n] (gain-bad-publicity state side (make-eid state) n nil))
@@ -352,7 +348,7 @@
                    (clear-wait-prompt state :runner)
                    (resolve-bad-publicity state side eid (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
-         (resolve-bad-publicity state side eid n args)))))))
+         (resolve-bad-publicity state side eid n args))))))
 
 
 ;;; Trashing
@@ -371,7 +367,6 @@
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})
         card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
-
     (when-let [trash-effect (:trash-effect cdef)]
       (when (and (not disabled)
                  (or (and (= (:side card) "Runner")
@@ -418,9 +413,10 @@
        (let [ktype (keyword (clojure.string/lower-case type))]
          (when (and (not unpreventable) (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-         (let [prevent (get-in @state [:prevent :trash ktype])]
+         (let [type (->> ktype name (str "trash-") keyword)
+               prevent (get-prevent-list state :runner type)]
            ;; Check for prevention effects
-           (if (and (not unpreventable) (not= cause :ability-cost) (pos? (count prevent)))
+           (if (and (not unpreventable) (not= cause :ability-cost) (cards-can-prevent? state :runner prevent type))
              (do (system-msg state :runner "has the option to prevent trash effects")
                  (show-wait-prompt state :corp "Runner to prevent trash effects" {:priority 10})
                  (show-prompt state :runner nil
