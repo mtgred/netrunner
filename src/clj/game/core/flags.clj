@@ -438,11 +438,11 @@
   "Checks if the specified ability definition should prevent.
   Checks for a :req in the :prevent map of the card-def.
   Defaults to false if req check not met"
-  ([state side card req-fn]
-   (ab-can-prevent? state side (make-eid state) card req-fn))
-  ([state side eid card req-fn]
+  ([state side card req-fn target args]
+   (ab-can-prevent? state side (make-eid state) card req-fn target args))
+  ([state side eid card req-fn target args]
    (cond
-     req-fn (req-fn state side eid card nil)
+     req-fn (req-fn state side eid card (list (assoc args :prevent-target target)))
      :else false)))
 
 (defn get-card-prevention
@@ -453,14 +453,15 @@
 
 (defn card-can-prevent?
   "Checks if a cards req (truthy test) can be met for this type"
-  [state side card type]
+  [state side card type target args]
   (let [abilities (get-card-prevention card type)]
-    (some #(-> % false? not) (map #(ab-can-prevent? state side card (:req %)) abilities))))
+    (some #(-> % false? not) (map #(ab-can-prevent? state side card (:req %) target args) abilities))))
 
 (defn cards-can-prevent?
   "Checks if any cards in a list can prevent this type"
-  [state side cards type]
-  (some #(true? %) (map #(card-can-prevent? state side % type) cards)))
+  ([state side cards type] (cards-can-prevent? state side cards type nil nil))
+  ([state side cards type target args]
+  (some #(true? %) (map #(card-can-prevent? state side % type target args) cards))))
 
 (defn get-prevent-list
   "Get list of cards that have prevent for a given type"
