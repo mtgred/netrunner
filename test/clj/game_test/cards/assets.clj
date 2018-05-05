@@ -172,6 +172,29 @@
       (is (= 0 (:advance-counter (refresh ar))) "Anson Rose should lose all advancement counters")
       (is (= 2 (:advance-counter (refresh iw))) "Ice Wall should gain 2 advancement counter"))))
 
+(deftest aryabhata-tech
+  ;; Aryabhata Tech
+  (do-game
+    (new-game
+      (default-corp [(qty "Aryabhata Tech" 1)
+                     (qty "Hunter" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Aryabhata Tech" "New remote")
+    (play-from-hand state :corp "Hunter" "HQ")
+    (let [at (get-content state :remote1 0)
+          h (get-ice state :hq 0)]
+      (core/rez state :corp (refresh at))
+      (core/rez state :corp (refresh h))
+      (take-credits state :corp)
+      (run-on state :hq)
+      (let [c-credits (:credit (get-corp))
+            r-credits (:credit (get-runner))]
+        (card-subroutine state :corp h 0)
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (= 1 (- (:credit (get-corp)) c-credits)))
+        (is (= -1 (- (:credit (get-runner)) r-credits)))))))
+
 (deftest bio-ethics-multiple
   ;; Bio-Ethics Association: preventing damage from multiple copies
   (do-game
