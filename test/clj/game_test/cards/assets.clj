@@ -97,6 +97,18 @@
       (card-ability state :corp alix 0)
       (is (= 8 (:credit (get-corp))) "Gain 4 credits from Alix"))))
 
+(deftest allele-repression
+  ;; Allele Repression
+  (do-game
+    (new-game (default-corp [(qty "Allele Repression" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Allele Repression" "New remote")
+    (let [ar (get-content state :remote1 0)]
+      (core/advance state :corp (refresh ar))
+      (core/advance state :corp (refresh ar))
+      (card-ability state :corp ar 0)
+      (is (= 1 (count (:discard (get-corp)))) "Allele Repression is trashed"))))
+
 (deftest amani-senai
   ;; Amani Senai - trace on score/steal to bounce, with base strength = advancement req of the agenda
   (do-game
