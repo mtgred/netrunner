@@ -228,6 +228,29 @@
         (prompt-choice :runner "Done")
         (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage")))))
 
+(deftest bioroid-work-crew
+  ;; Bioroid Work Crew
+  (letfn [(bwc-test [card]
+            (do-game
+              (new-game
+                (default-corp [(qty "Bioroid Work Crew" 1)
+                               (qty card 1)])
+                (default-runner))
+              (play-from-hand state :corp "Bioroid Work Crew" "New remote")
+              (let [bwc (get-content state :remote1 0)]
+                (core/rez state :corp bwc)
+                (card-ability state :corp bwc 0)
+                (prompt-select :corp (find-card card (:hand (get-corp))))
+                (prn (->> (get-corp) :prompt first :choices))
+                (prompt-choice :corp "New remote")
+                (is (= 0 (count (:hand (get-corp)))))
+                (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now"))))]
+    (doall (map bwc-test
+                ["Hostile Takeover"
+                 "Dedicated Response Team"
+                 "Builder"
+                 "Research Station"]))))
+
 (deftest blacklist
   ;; Blacklist
   (testing "#2426.  Need to allow steal."
