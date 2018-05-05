@@ -153,7 +153,8 @@
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
       :events {:corp-turn-begins ability
-               :rez {:req (req (and (ice? target) (pos? (:advance-counter card 0))))
+               :rez {:req (req (and (ice? target)
+                                    (pos? (:advance-counter card 0))))
                      :delayed-completion true
                      :effect (req (let [ice (get-card state target)
                                         icename (:title ice)]

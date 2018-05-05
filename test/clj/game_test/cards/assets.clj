@@ -143,6 +143,35 @@
       (prompt-choice :corp 0)
       (is (= 2 (get-in @state [:trace :strength])) "Trace base strength is 2 after scoring second Breakthrough"))))
 
+(deftest anson-rose
+  ;; Anson Rose
+  (do-game
+    (new-game
+      (default-corp [(qty "Anson Rose" 1) (qty "Ice Wall" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Anson Rose" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [ar (get-content state :remote1 0)
+          iw (get-ice state :hq 0)]
+      (core/rez state :corp (refresh ar))
+      (is (nil? (:advance-counter (refresh ar))) "Anson Rose should start with 0 advancement counters")
+      (is (nil? (:advance-counter (refresh iw))) "Ice Wall should start with 0 advancement counters")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/end-phase-12 state :corp nil)
+      (is (= 1 (:advance-counter (refresh ar))) "Anson Rose should gain 1 advancement counter at start of turn")
+      (is (nil? (:advance-counter (refresh iw))) "Ice Wall should still have 0 counters so far")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/end-phase-12 state :corp nil)
+      (is (= 2 (:advance-counter (refresh ar))) "Anson Rose should gain 1 advancement counter at start of turn")
+      (is (nil? (:advance-counter (refresh iw))) "Ice Wall should still have 0 counters so far")
+      (core/rez state :corp (refresh iw))
+      (prompt-choice :corp "Yes")
+      (prompt-choice :corp 2)
+      (is (= 0 (:advance-counter (refresh ar))) "Anson Rose should lose all advancement counters")
+      (is (= 2 (:advance-counter (refresh iw))) "Ice Wall should gain 2 advancement counter"))))
+
 (deftest bio-ethics-multiple
   ;; Bio-Ethics Association: preventing damage from multiple copies
   (do-game
