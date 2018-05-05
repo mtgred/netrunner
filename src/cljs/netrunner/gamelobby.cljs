@@ -5,6 +5,7 @@
             [cljs.core.async :refer [chan put! <!] :as async]
             [taoensso.sente  :as sente]
             [clojure.string :refer [join]]
+            [jinteki.utils :refer [str->int]]
             [netrunner.ajax :refer [GET]]
             [netrunner.ws :as ws]
             [netrunner.appstate :refer [app-state]]
@@ -15,6 +16,12 @@
             [netrunner.deckbuilder :refer [format-deck-status-span deck-status-span process-decks load-decks num->percent]]))
 
 (def socket-channel (chan))
+
+(defn- play-sound
+  [element-id]
+  (when (get-in @app-state [:options :sounds])
+    (when-let [element (.getElementById js/document element-id)]
+      (.play element))))
 
 (defn sort-games-list [games]
   (sort-by #(vec (map (assoc % :started (not (:started %))
@@ -40,7 +47,7 @@
                    delete (apply dissoc update (keys (:delete diff)))]
                (sort-games-list (vals delete)))))
     (when (and notification (not (:gameid @app-state)))
-      (.play (.getElementById js/document notification)))))
+      (play-sound notification))))
 
 (ws/register-ws-handler!
   :lobby/select
@@ -52,7 +59,7 @@
   (fn [{:keys [user text notification] :as msg}]
     (swap! app-state update-in [:messages] #(conj % msg))
     (when notification
-      (.play (.getElementById js/document notification)))))
+      (play-sound notification))))
 
 (ws/register-ws-handler!
   :lobby/timeout
@@ -78,13 +85,13 @@
                         (swap! app-state assoc :games (sort-games-list (vals (:games msg)))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
-                          (.play (.getElementById js/document sound)))))
+                          (play-sound sound))))
           "say" (do (swap! app-state update-in [:messages]
                            #(conj % {:user (:user msg) :text (:text msg)}))
                     (when-let [sound (:notification msg)]
-                      (.play (.getElementById js/document sound ))))
-          "start" (launch-game (:state msg))
+                      (play-sound sound)))
           "Invalid password" (js/console.log "pwd" (:gameid msg))
+          "start" (launch-game (:state msg))
           "lobby-notification" (toast (:text msg) (:severity msg) nil)
           nil))))
 
