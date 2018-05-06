@@ -446,7 +446,7 @@
       (prompt-choice :runner "HQ")
       (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
       (run-successful state)
-      (prompt-choice :runner "Imp ability")
+      (prompt-choice-partial :runner "Imp")
       (prompt-select :runner (get-program state 0))
       (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
       ; Cold Read works when Blacklist rezzed - #2378
@@ -682,17 +682,15 @@
     (is (= 3 (:credit (get-runner))) "Paid 2 credits for the event")
     (prompt-choice :runner "R&D")
     (is (= [:rd] (get-in @state [:run :server])) "Run initiated on R&D")
-    (prompt-choice :runner "No action") ; dismiss instructional prompt for Demolition Run
     (run-successful state)
-    (let [demo (get-in @state [:runner :play-area 0])] ; Demolition Run "hack" is to put it out in the play area
-      (prompt-choice :runner "Unrezzed upgrade in R&D")
-      (card-ability state :runner demo 0)
-      (is (= 3 (:credit (get-runner))) "Trashed Shell Corporation at no cost")
-      (prompt-choice :runner "Card from deck")
-      (card-ability state :runner demo 0)  ; trash False Lead instead of stealing
-      (is (= 0 (:agenda-point (get-runner))) "Didn't steal False Lead")
-      (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
-      (is (empty? (:prompt (get-runner))) "Run concluded"))))
+    (prompt-choice :runner "Unrezzed upgrade in R&D")
+    (prompt-choice-partial :runner "Demolition Run")
+    (is (= 3 (:credit (get-runner))) "Trashed Shell Corporation at no cost")
+    (prompt-choice :runner "Card from deck")
+    (prompt-choice-partial :runner "Demolition Run")
+    (is (= 0 (:agenda-point (get-runner))) "Didn't steal False Lead")
+    (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
+    (is (empty? (:prompt (get-runner))) "Run concluded")))
 
 (deftest deuces-wild
   ;; Deuces Wild

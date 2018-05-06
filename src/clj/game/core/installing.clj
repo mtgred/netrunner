@@ -73,9 +73,11 @@
 (defn- subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"
   [cdef]
-  (let [subs (:subroutines cdef)]
-    (for [sub subs]
-      {:label (make-label sub)})))
+  (map-indexed (fn [idx sub]
+                 {:label (make-label sub)
+                  :from-cid nil
+                  :data {:cdef-idx idx}})
+               (:subroutines cdef)))
 
 (defn card-init
   "Initializes the abilities and events of the given card."

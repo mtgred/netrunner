@@ -261,7 +261,7 @@
     (play-from-hand state :runner "Imp")
     (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
-      (prompt-choice :runner "Imp ability")
+      (prompt-choice-partial :runner "Imp")
       (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
       (run-empty-server state "HQ")
       (prompt-choice :runner "No action")
@@ -272,7 +272,7 @@
     (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
       (run-empty-server state "HQ")
-      (prompt-choice :runner "Imp ability"))
+      (prompt-choice-partial :runner "Imp"))
     (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
 (deftest trash-seen-and-unseen
@@ -453,8 +453,6 @@
       (take-credits state :runner))
     (testing "Turn 4 Corp"
       (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
-      ; (prn "publics2" (refresh publics2))
-      ; (is (= :scored (:zone (refresh publics2))))
       (is (= 12 (:credit (get-corp))))))))
 
 (deftest run-bad-publicity-credits

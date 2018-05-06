@@ -65,6 +65,14 @@
 
 (def zoom-channel (chan))
 
+(defn check-lock?
+  "Check if we can clear client lock based on action-id"
+  []
+  (let [aid [(:side @game-state) :aid]]
+    (when (not= (get-in @game-state aid)
+                (get-in @last-state aid))
+      (reset! lock false))))
+
 (defn handle-state [{:keys [state]}]
   (init-game state)
   (reset! lock false))
@@ -72,8 +80,8 @@
 (defn handle-diff [{:keys [gameid diff]}]
   (when (= gameid (:gameid @game-state))
     (swap! game-state #(differ/patch @last-state diff))
-    (reset! last-state @game-state)
-    (reset! lock false)))
+    (check-lock?)
+    (reset! last-state @game-state)))
 
 (defn handle-timeout [{:keys [gameid]}]
   (when (= gameid (:gameid @game-state))
@@ -680,6 +688,8 @@
        (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
       (when (and current-strength (not= strength current-strength))
         current-strength [:div.darkbg.strength current-strength])
+      (when (get-in cursor [:special :extra-subs])
+        [:div.darkbg.extra-subs \+])
       (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
       (when server-target [:div.darkbg.server-target server-target])
       (when subtype-target
@@ -996,7 +1006,7 @@
         (when me? (controls :brain-damage))]
        (let [{:keys [base mod]} hand-size]
          [:div (str (+ base mod) " Max hand size")
-          (when me? (controls :hand-size {:mod -1} {:mod +1}))])]))))
+          (when me? (controls :hand-size {:mod 1} {:mod -1}))])]))))
 
 (defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub hand-size active]} owner]
   (om/component
@@ -1012,7 +1022,7 @@
         (when me? (controls :bad-publicity))]
        (let [{:keys [base mod]} hand-size]
          [:div (str (+ base mod) " Max hand size")
-          (when me? (controls :hand-size {:mod -1} {:mod +1}))])]))))
+          (when me? (controls :hand-size {:mod 1} {:mod -1}))])]))))
 
 (defn server-view [{:keys [server central-view run] :as cursor} owner opts]
   (om/component

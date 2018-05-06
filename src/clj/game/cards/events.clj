@@ -259,12 +259,12 @@
                                                                                                title " from being trashed at no cost"))
                                                                   (clear-wait-prompt state :runner))}
                                        :no-ability {:msg (msg "trash " title " at no cost")
+                                                    :delayed-completion true
                                                     :effect (effect (clear-wait-prompt :runner)
-                                                                    (resolve-trash-no-cost c))}}}
+                                                                    (trash-no-cost eid c))}}}
                                     card nil))
-                               (do (resolve-trash-no-cost state side c)
-                                   (system-msg state side (str "uses Credit Crash to trash " title " at no cost"))
-                                   (effect-completed state side eid)))))}
+                               (do (system-msg state side (str "uses Credit Crash to trash " title " at no cost"))
+                                   (trash-no-cost state side eid c)))))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Credit Kiting"
@@ -344,17 +344,19 @@
    {:req (req (or rd-runnable hq-runnable))
     :prompt "Choose a server"
     :choices ["HQ" "R&D"]
-    :abilities [{:msg (msg "trash " (:title (:card (first (get-in @state [side :prompt])))) " at no cost")
-                 :effect (effect (trash-no-cost))}]
     :effect (effect (run target nil card)
-                    (prompt! card (str "Click Demolition Run in the Temporary Zone to trash a card being accessed at no cost") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c {:resolve-effect false})
                                       (register-events state side
                                                        {:run-ends {:effect (effect (trash c))}} c)))}
                      card nil))
-    :events {:run-ends nil}}
+    :events {:run-ends nil}
+    :interactions {:trash-ability
+                   {:label "[Demolition Run]: Trash card"
+                    :msg (msg "trash " (:title target) " at no cost")
+                    :delayed-completion true
+                    :effect (effect (trash-no-cost eid target))}}}
 
    "Deuces Wild"
    (let [all [{:effect (effect (gain :credit 3))

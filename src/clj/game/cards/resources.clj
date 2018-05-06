@@ -991,7 +991,7 @@
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                       (all-active-installed state :runner)))))}
 
-    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
+    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
     :effect (effect (lose :corp :hand-size {:mod 1}))
     :leave-play (effect (gain :corp :hand-size {:mod 1}))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
@@ -1061,11 +1061,13 @@
     :abilities [{:label "Bypass the encountered ice"
                  :req (req (and (:run @state)
                                 (rezzed? current-ice)))
-                 :msg (msg "bypass " (:title current-ice) (when (pos? (:click (:runner @state)))
-                                                             (str " and loses "
-                                                                  (apply str (repeat (:click (:runner @state)) "[Click]")))))
+                 :msg (msg "bypass "
+                           (:title current-ice)
+                           (when (pos? (:click runner))
+                             (str " and loses "
+                                  (apply str (repeat (:click runner) "[Click]")))))
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (lose :click (:click (:runner @state))))}]}
+                                 (lose :click (:click runner)))}]}
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library"
@@ -1595,6 +1597,22 @@
                                                          st nil))})))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
+
+   "Slipstream"
+    {:implementation "Use Slipstream before hitting Continue to pass current ice"
+     :abilities [{:req (req (:run @state))
+                  :effect (req (let [ice-pos  (get-in @state [:run :position])]
+                                 (resolve-ability state side
+                                   {:prompt (msg "Choose a piece of ICE protecting a central server at the same position as " (:title current-ice) )
+                                    :choices {:req #(and (is-central? (second (:zone %)))
+                                                         (ice? %)
+                                                         (= ice-pos (inc (ice-index state %))))}
+                                    :msg (msg "approach " (card-str state target))
+                                    :effect (req (let [dest (second (:zone target))]
+                                                   (swap! state update-in [:run]
+                                                          #(assoc % :position ice-pos :server [dest]))
+                                                   (trash state side card)))}
+                                card nil)))}]}
 
    "Spoilers"
    {:events {:agenda-scored {:interactive (req true)
