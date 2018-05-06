@@ -43,6 +43,8 @@
   (when (and (is-type? c "Agenda")
              (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
     (trigger-event state side :no-steal c))
+  (when (get-card state c)
+    (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
   (trigger-event-sync state side eid :post-access-card c))
 
 ;;; Stealing agendas
@@ -148,12 +150,7 @@
                :choices choices
                :effect (req (cond
                               (= target "No action")
-                              (do
-                                ;; toggle access flag to prevent Hiro issue #2638
-                                (swap! state dissoc :access)
-                                (trigger-event state side :no-trash c)
-                                (swap! state assoc :access true)
-                                (access-end state side eid c))
+                              (access-end state side eid c)
 
                               (.contains target "Pay")
                               (do (lose state side :credit trash-cost)
