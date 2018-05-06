@@ -44,22 +44,26 @@
 
 (defn show-alt-art?
   "Is the current user allowed to use alternate art cards and do they want to see them?"
-  []
+  ([] (show-alt-art? false))
+  ([allow-all-users]
   (and
     (get-in @app-state [:options :show-alt-art] true)
-    (get-in @app-state [:user :special] false)))
+    (or allow-all-users
+        (get-in @app-state [:user :special] false)))))
 
-(defn image-url [card]
-  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
-                (get-in @app-state [:options :alt-arts (keyword (:code card))]))
-        alt-card (get (:alt-arts @app-state) (:code card))
-        has-art (and (show-alt-art?)
-                     art
-                     (contains? (:alt_art alt-card) (keyword art)))
-        version-path (if has-art
-                       (get (:alt_art alt-card) (keyword art) (:code card))
-                       (:code card))]
-    (str "/img/cards/" version-path ".png")))
+(defn image-url
+  ([card] (image-url card false))
+  ([card allow-all-users]
+   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
+                 (get-in @app-state [:options :alt-arts (keyword (:code card))]))
+         alt-card (get (:alt-arts @app-state) (:code card))
+         has-art (and (show-alt-art? allow-all-users)
+                      art
+                      (contains? (:alt_art alt-card) (keyword art)))
+         version-path (if has-art
+                        (get (:alt_art alt-card) (keyword art) (:code card))
+                        (:code card))]
+     (str "/img/cards/" version-path ".png"))))
 
 (defn- alt-version-from-string
   "Given a string name, get the keyword version or nil"
@@ -76,7 +80,7 @@
                    (filter #(= alt-only %) alt-keys)
                    alt-keys)]
     (if (and alt-arts
-             (show-alt-art?))
+             (show-alt-art? true))
       (->> alt-arts
         (concat [""])
         (map (fn [art] (if art
@@ -209,12 +213,13 @@
          (str pack " " number
               (when-let [art (:art card)]
                 (str " [" (alt-art-name art) "]")))))]
-     (if (selected-alt-art card cursor)
-      [:div.selected-alt "Selected Alt Art"]
-      (when (:art card)
-        [:button.alt-art-selector
-         {:on-click #(select-alt-art card cursor)}
-         "Select Art"]))
+     (when (show-alt-art?)
+       (if (selected-alt-art card cursor)
+         [:div.selected-alt "Selected Alt Art"]
+         (when (:art card)
+           [:button.alt-art-selector
+            {:on-click #(select-alt-art card cursor)}
+            "Select Art"])))
     ]])
 
 (defn card-view [card owner]
@@ -231,7 +236,7 @@
                          (selected-alt-art card cursor) "selected-alt")})
          (if (:showText state)
            (card-text card cursor)
-           (when-let [url (image-url card)]
+           (when-let [url (image-url card true)]
              [:img {:src url
                     :alt (:title card)
                     :onClick #(do (.preventDefault %)
@@ -410,7 +415,7 @@
                alt-art-sets (concat `("Alt Art")
                                     (map #(format-pack-name (:name %))
                                          (sort-by :position (:alt-info @app-state))))]
-           (for [filter [["Set" :set-filter (if (show-alt-art?)
+           (for [filter [["Set" :set-filter (if (show-alt-art? true)
                                               (concat set-names alt-art-sets)
                                               set-names)]
                          ["Side" :side-filter ["Corp" "Runner"]]
