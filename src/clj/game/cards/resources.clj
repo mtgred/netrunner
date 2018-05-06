@@ -689,17 +689,11 @@
            (host-agenda? [agenda]
              {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
                         :yes-ability {:effect (req (host state side card (move state side agenda :play-area))
-
-
-                                                   ;;TODO: is this necessary?
-                                                   (trigger-event state side :no-steal agenda)
-
-                                                   ;;(close-access-prompt state side)
+                                                   (access-end state side eid agenda)
                                                    (when-not (:run @state)
                                                      (swap! state dissoc :access)))
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
-     {;:implementation "Use hosting ability when presented with Access prompt for an agenda"
-      :events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
+     {:events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
                                        (is-type? target "Agenda")))
                         :delayed-completion true
                         :effect (effect (continue-ability (host-agenda? target) card nil))}}
