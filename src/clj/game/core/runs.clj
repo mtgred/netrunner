@@ -40,6 +40,9 @@
   (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
     ;; Do not trigger :no-trash if card has already been trashed
     (trigger-event state side :no-trash c))
+  (when (and (is-type? c "Agenda")
+             (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
+    (trigger-event state side :no-steal c))
   (trigger-event-sync state side eid :post-access-card c))
 
 ;;; Stealing agendas
@@ -66,12 +69,6 @@
           :card-ability (ability-as-handler c (:stolen (card-def c)))}
          c)
        (access-end state side eid card)))))
-
-(defn- steal-trigger-events
-  "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
-  ([state side card] (steal-trigger-events state side (make-eid state) card))
-  ([state side eid card]
-   (access-end state side eid card)))
 
 (defn- steal-agenda
   "Trigger the stealing of an agenda, now that costs have been paid."
@@ -189,11 +186,11 @@
    :effect (req
              (if (= target "No action")
                (continue-ability state :runner
-                                 {:delayed-completion true
-                                  :effect (req (when-not (find-cid (:cid card) (:deck corp))
-                                                    (system-msg state side (str "decides not to pay to steal " (:title card))))
-                                               (trigger-event state side :no-steal card)
-                                               (steal-trigger-events state side eid card))} card nil)
+                 {:delayed-completion true
+                  :effect (req (when-not (find-cid (:cid card) (:deck corp))
+                                 (system-msg state side (str "decides not to pay to steal " (:title card))))
+                               (access-end state side eid card))}
+                 card nil)
                (let [name (:title card)
                      chosen (cons target chosen)
                      clicks (count (re-seq #"\[Click\]+" target))
@@ -210,7 +207,7 @@
                              (steal-pay-choice state :runner (remove-once #(= target %) cost-strs) chosen n card)
                              card nil)
                            (steal-agenda state side eid card))))
-                   (steal-trigger-events state side eid card)))))})
+                   (access-end state side eid card)))))})
 
 (defn- access-agenda
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
@@ -250,9 +247,7 @@
                          :effect (req (cond
                                         ;; Can't steal or pay, or won't pay single additional cost to steal
                                         (= target "No action")
-                                        (when-completed (steal-trigger-events state side c)
-                                                        (do (trigger-event state side :no-steal c)
-                                                            (access-end state side eid c)))
+                                        (access-end state side eid c)
 
                                         ;; Steal normally
                                         (= target "Steal")

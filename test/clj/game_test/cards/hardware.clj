@@ -499,7 +499,7 @@
       (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
-      ;; (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
+      (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
       (prompt-choice :runner "No action")
       (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw now")
       (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
