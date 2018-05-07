@@ -499,11 +499,11 @@
       (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
-      ;; (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
+      (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
       (prompt-choice :runner "No action")
       (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw now")
       (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
-  (testing "with Hiro in hand - Hiro not moved to runner scored area on trash decline #2638"
+  (testing "with Hiro in hand - Hiro not moved to runner scored area on trash decline. #2638"
     (do-game
       (new-game (default-corp [(qty "Chairman Hiro" 1)])
                 (default-runner [(qty "Maw" 1)]))
@@ -512,8 +512,20 @@
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
       (prompt-choice :runner "No action")
-      (is (= 0 (count (:scored (get-corp)))) "Hiro not scored")
-      (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw"))))
+      (is (= 0 (count (:scored (get-runner)))) "Hiro not scored")
+      (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw")))
+  (testing "Maw shouldn't trigger on stolen agenda. #3433"
+    (do-game
+      (new-game (default-corp [(qty "Hostile Takeover" 1)
+                               (qty "Ice Wall" 5)])
+                (default-runner [(qty "Maw" 1)]))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Maw")
+      (run-empty-server state :remote1)
+      (prompt-choice :runner "Steal")
+      (is (= 0 (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
