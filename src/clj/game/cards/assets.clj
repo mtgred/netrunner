@@ -512,9 +512,10 @@
     :abilities [{:choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (effect (rez-cost-bonus -1)
-                                 (rez target {:no-warning true})
-                                 (update! (assoc card :ebc-rezzed (:cid target))))}
+                 :delayed-completion true
+                 :effect (req (rez-cost-bonus state side -1)
+                              (when-completed (rez state side target {:no-warning true})
+                                              (update! state side (assoc card :ebc-rezzed (:cid target)))))}
                 {:prompt "Choose an asset to add to HQ"
                  :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
