@@ -1,5 +1,5 @@
 (in-ns 'game.core)
-(declare any-flag-fn? corp-trace-prompt optional-ability
+(declare any-flag-fn? init-trace optional-ability
          check-optional check-psi check-trace complete-ability
          do-choices do-ability
          psi-game resolve-ability-eid resolve-psi resolve-trace show-select)
@@ -167,7 +167,7 @@
   [state side {:keys [eid] :as ability} card targets]
   (when-let [trace (:trace ability)]
     (if (can-trigger? state side ability card targets)
-      (corp-trace-prompt state card (assoc trace :eid (:eid ability)))
+      (init-trace state card (assoc trace :eid (:eid ability)))
       (effect-completed state side eid card))))
 
 (defn- do-choices
@@ -494,7 +494,7 @@
 
 
 ;;; Traces
-(defn- init-trace
+(defn- trace-reply
   "Shows a trace prompt to the runner, after the corp has already spent credits to boost."
   [state side card {:keys [base eid priority] :as ability} boost]
   (clear-wait-prompt state :runner)
@@ -533,7 +533,7 @@
                                               (resolve-ability state :corp kicker card [strength runner-trace])))
                                           (effect-completed state side eid nil)))))))
 
-(defn corp-trace-prompt
+(defn init-trace
   "Starts the trace process by showing the boost prompt to the corp."
   [state card {:keys [base priority] :as trace}]
   (trigger-event state :corp :pre-init-trace card)
@@ -541,7 +541,7 @@
         bonus (get-in @state [:bonus :trace] 0)]
     (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority (or priority 2)})
     (show-trace-prompt state :corp card "Boost trace strength?"
-                       #(init-trace state :corp card trace %) {:priority (or priority 2) :base base-trace :bonus bonus})))
+                       #(trace-reply state :corp card trace %) {:priority (or priority 2) :base base-trace :bonus bonus})))
 
 (defn rfg-and-shuffle-rd-effect
   ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n))
