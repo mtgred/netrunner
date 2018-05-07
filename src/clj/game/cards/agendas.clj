@@ -385,7 +385,6 @@
                {:req (req (and (is-type? target "ICE")
                                (empty? (let [cards (map first (turn-events state side :corp-install))]
                                          (filter #(is-type? % "ICE") cards)))))
-                :once :per-turn
                 :effect (effect (ignore-install-cost true))}
              :corp-install
                {:req (req (and (is-type? target "ICE")

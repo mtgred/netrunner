@@ -599,7 +599,7 @@
     (prompt-select :corp (get-ice state :hq 0))
     (is (= 3 (:credit (get-corp))) "Corp not charged for Architects of Tomorrow rez of Eli 1.0")))
 
-(deftest haas-bioroid-asa-group
+(deftest haas-bioroid-asa-group-operation-install
   ;; Asa Group - don't allow installation of operations
   (do-game
     (new-game
@@ -610,6 +610,45 @@
     (is (empty? (get-content state :remote1)) "Asa Group installed an event in a server")
     (prompt-select :corp (find-card "Urban Renewal" (:hand (get-corp))))
     (is (= "Urban Renewal" (:title (get-content state :remote1 0))) "Asa Group can install an asset in a remote")))
+
+(deftest haas-bioroid-asa-group-agenda-install
+  ;; Asa cannot install agendas
+  (do-game
+    (new-game
+      (make-deck "Asa Group: Security Through Vigilance" [(qty "Pup" 1) (qty "Project Vitruvius" 1) (qty "Urban Renewal" 1)])
+      (default-runner))
+    (play-from-hand state :corp "Pup" "New remote")
+    (prompt-select :corp (find-card "Project Vitruvius" (:hand (get-corp))))
+    (is (empty? (get-content state :remote1)) "Asa Group installed an event in a server")
+    (prompt-select :corp (find-card "Urban Renewal" (:hand (get-corp))))
+    (is (= "Urban Renewal" (:title (get-content state :remote1 0))) "Asa Group can install an asset in a remote")))
+
+(deftest haas-bioroid-asa-group-mirrormorph
+  ;; Checks that the prompts show up in the right order, and does the right things
+  (do-game
+    (new-game
+      (make-deck "Asa Group: Security Through Vigilance" [(qty "Shipment from MirrorMorph" 1)
+                                                          (qty "Pup" 1)
+                                                          (qty "Red Herrings" 1)
+                                                          (qty "Marilyn Campaign" 1)
+                                                          (qty "Project Vitruvius" 1)])
+      (default-runner))
+    (let [marilyn (find-card "Marilyn Campaign" (:hand (get-corp)))
+          pup (find-card "Pup" (:hand (get-corp)))
+          herrings (find-card "Red Herrings" (:hand (get-corp)))
+          vitruvius (find-card "Project Vitruvius" (:hand (get-corp)))]
+      (play-from-hand state :corp "Shipment from MirrorMorph")
+      (prompt-select :corp marilyn)
+      (prompt-choice :corp "New remote")
+      (is (= (:cid marilyn) (:cid (get-content state :remote1 0))) "Marilyn is installed as first card")
+      (prompt-select :corp herrings) ;; This should be the Asa prompt, should be automatically installed in remote1
+      (is (= 2 (count (get-content state :remote1))) "Red Herrings is installed in Server 1")
+      (prompt-select :corp pup)
+      (prompt-choice :corp "New remote")
+      (prompt-select :corp vitruvius)
+      (prompt-choice :corp "New remote")
+      (is (empty? (:prompt (get-corp))) "No more prompts")
+      (is (= 6 (count (:servers (get-corp)))) "There are six servers, including centrals"))))
 
 (deftest haas-bioroid-engineering-the-future-employee-strike
   ;; EtF - interaction with Employee Strike
