@@ -695,6 +695,7 @@
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
      {:events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
                                        (is-type? target "Agenda")))
+                        :interactive (req true)
                         :delayed-completion true
                         :effect (effect (continue-ability (host-agenda? target) card nil))}}
       :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
