@@ -528,7 +528,7 @@
    {:delayed-completion true
     :effect (effect (mill :corp 2)
                     (system-msg "trashes the top 2 cards of R&D")
-                    (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4))}
+                    (rfg-and-shuffle-rd-effect eid (first (:play-area corp)) 4 false))}
 
    "Green Level Clearance"
    {:msg "gain 3 [Credits] and draw 1 card"
@@ -949,7 +949,7 @@
    {:events {:pre-steal-cost {:effect (effect (steal-cost-bonus [:credit 2]))}}}
 
    "Preemptive Action"
-   {:effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) 3))}
+   {:effect (effect (rfg-and-shuffle-rd-effect (first (:play-area corp)) (min (count (:discard corp)) 3) true))}
 
    "Priority Construction"
    (letfn [(install-card [chosen]
