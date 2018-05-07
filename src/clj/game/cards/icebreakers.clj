@@ -149,19 +149,25 @@
 (defn- conspiracy
   "Install-from-heap breakers"
   [title type abilities]
-  (let [install-prompt {:req (req (and (= (:zone card) [:discard])
+  (let [install-prompt {:persistent (req true)
+                        :req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
-                                       (not (install-locked? state side))
-                                       (not (some #(= title (:title %)) (all-active-installed state :runner)))
-                                       (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
-                        :optional {:player :runner
-                                   :prompt (str "Install " title "?")
-                                   :yes-ability {:effect (effect (unregister-events card)
-                                                                 (runner-install :runner card))}
-                                   :no-ability {:effect (req  ;; Add a register to note that the player was already asked about installing,
-                                                              ;; to prevent multiple copies from prompting multiple times.
-                                                              (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                                       (not (install-locked? state side))))
+                        :delayed-completion true
+                        :effect (effect (continue-ability
+                                          {:req (req true);(and (not (some #(= title (:title %)) (all-active-installed state :runner)))
+                                                      ;    (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
+                                           :optional {:req (req (and (not (some #(= title (:title %)) (all-active-installed state :runner)))
+                                                                     (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
+                                                      :player :runner
+                                                      :prompt (str "Install " title "?")
+                                                      :yes-ability {:effect (effect (unregister-events card)
+                                                                                    (runner-install :runner card))}
+                                                      :no-ability {:effect (req ;; Add a register to note that the player was already asked about installing,
+                                                                                ;; to prevent multiple copies from prompting multiple times.
+                                                                                (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                                          card targets))}
         heap-event (req (when (= (:zone card) [:discard])
                           (unregister-events state side card)
                           (register-events state side

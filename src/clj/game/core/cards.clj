@@ -259,7 +259,7 @@
   (when disabled
     (let [c (dissoc card :disabled)]
       (update! state side c)
-      (when (active? card)
+      (when (active? c)
         (card-init state side c {:resolve-effect false})))))
 
 (defn flip-facedown

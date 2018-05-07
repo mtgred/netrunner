@@ -77,11 +77,11 @@
    {:events
     {:run
      {:req (req (first-event? state side :run))
+      :once :per-turn
       :effect (effect (show-wait-prompt :runner "Corp to use Advanced Concept Hopper")
                       (continue-ability
                         {:player :corp
                          :prompt "Use Advanced Concept Hopper to draw 1 card or gain 1 [Credits]?"
-                         :once :per-turn
                          :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
                          :effect (req (case target
                                         "Gain 1 [Credits]"
@@ -385,6 +385,7 @@
                {:req (req (and (is-type? target "ICE")
                                (empty? (let [cards (map first (turn-events state side :corp-install))]
                                          (filter #(is-type? % "ICE") cards)))))
+                :once :per-turn
                 :effect (effect (ignore-install-cost true))}
              :corp-install
                {:req (req (and (is-type? target "ICE")

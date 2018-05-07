@@ -404,7 +404,7 @@
                                                  {:prompt (str "Choose a location to install " (:title target))
                                                   :choices (req (remove #(= this %) (corp-install-list state nice)))
                                                   :delayed-completion true
-                                                  :effect (effect (corp-install nice target {:no-install-cost true}))}
+                                                  :effect (effect (corp-install eid nice target {:no-install-cost true}))}
                                                  card nil)))}
                {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
                 :prompt "Choose ICE to install from HQ in this server"
@@ -420,7 +420,7 @@
                                       (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
                                (card-init state side newice {:resolve-effect false
                                                              :init-data true})
-                               (trigger-event state side :corp-install newice)))}]})
+                               (trigger-event-sync state side eid :corp-install newice)))}]})
 
    "Brainstorm"
    {:abilities [{:label "Gain subroutines"
