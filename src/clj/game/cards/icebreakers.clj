@@ -160,12 +160,11 @@
                                        (not (install-locked? state side))))
                         :delayed-completion true
                         :effect (effect (continue-ability
-                                          {:req (req (println (str "Checking continue-ability for " (:cid card)))
-                                                     (println (str "Status: " (and (not (some #(= title (:title %)) (all-active-installed state :runner)))
-                                                          (not (get-in @state [:run :register :conspiracy (:cid current-ice)])))))
-                                                  (and (not (some #(= title (:title %)) (all-active-installed state :runner)))
-                                                          (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
-                                           :optional {:player :runner
+                                          {:req (req true);(and (not (some #(= title (:title %)) (all-active-installed state :runner)))
+                                                      ;    (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
+                                           :optional {:req (req (and (not (some #(= title (:title %)) (all-active-installed state :runner)))
+                                                                     (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
+                                                      :player :runner
                                                       :prompt (str "Install " title "?")
                                                       :yes-ability {:effect (effect (unregister-events card)
                                                                                     (runner-install :runner card))}
