@@ -41,8 +41,8 @@
                       (keep-hand state side nil)
                       (mulligan state side nil))))))
 
-(defn init-game
-  "Initializes a new game with the given players vector."
+(defn- init-game-state
+  "Initialises the game state"
   [{:keys [players gameid spectatorhands room] :as game}]
   (let [corp (some #(when (= (:side %) "Corp") %) players)
         runner (some #(when (= (:side %) "Runner") %) players)
@@ -55,38 +55,45 @@
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
         corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
-        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
-        state (atom
-                {:gameid gameid :log [] :active-player :runner :end-turn true
-                 :room room
-                 :rid 0 :turn 0 :eid 0
-                 :sfx [] :sfx-current-id 0
-                 :options {:spectatorhands spectatorhands}
-                 :corp {:user (:user corp) :identity corp-identity
-                        :options corp-options
-                        :deck (zone :deck corp-deck)
-                        :deck-id corp-deck-id
-                        :hand []
-                        :discard [] :scored [] :rfg [] :play-area []
-                        :servers {:hq {} :rd{} :archives {}}
-                        :click 0 :credit 5 :bad-publicity 0 :has-bad-pub 0
-                        :toast []
-                        :hand-size-base 5 :hand-size-modification 0
-                        :agenda-point 0
-                        :click-per-turn 3 :agenda-point-req 7 :keep false}
-                 :runner {:user (:user runner) :identity runner-identity
-                          :options runner-options
-                          :deck (zone :deck runner-deck)
-                          :deck-id runner-deck-id
-                          :hand []
-                          :discard [] :scored [] :rfg [] :play-area []
-                          :rig {:program [] :resource [] :hardware []}
-                          :toast []
-                          :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0
-                          :hand-size-base 5 :hand-size-modification 0
-                          :agenda-point 0
-                          :hq-access 1 :rd-access 1 :tagged 0
-                          :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})]
+        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))]
+    (atom
+      {:gameid gameid :log [] :active-player :runner :end-turn true
+       :room room
+       :rid 0 :turn 0 :eid 0
+       :sfx [] :sfx-current-id 0
+       :options {:spectatorhands spectatorhands}
+       :corp {:user (:user corp) :identity corp-identity
+              :options corp-options
+              :deck (zone :deck corp-deck)
+              :deck-id corp-deck-id
+              :hand []
+              :discard [] :scored [] :rfg [] :play-area []
+              :servers {:hq {} :rd {} :archives {}}
+              :click 0 :credit 5 :bad-publicity 0 :has-bad-pub 0
+              :toast []
+              :hand-size {:base 5 :mod 0}
+              :agenda-point 0
+              :click-per-turn 3 :agenda-point-req 7 :keep false}
+       :runner {:user (:user runner) :identity runner-identity
+                :options runner-options
+                :deck (zone :deck runner-deck)
+                :deck-id runner-deck-id
+                :hand []
+                :discard [] :scored [] :rfg [] :play-area []
+                :rig {:program [] :resource [] :hardware []}
+                :toast []
+                :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0
+                :hand-size {:base 5 :mod 0}
+                :agenda-point 0
+                :hq-access 1 :rd-access 1 :tagged 0
+                :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})))
+
+(defn init-game
+  "Initializes a new game with the given players vector."
+  [game]
+  (let [state (init-game-state game)
+        corp-identity (get-in @state [:corp :identity])
+        runner-identity (get-in @state [:runner :identity])]
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
     ;(swap! game-states assoc gameid state)
@@ -242,14 +249,16 @@
              (doseq [a (get-in @state [side :register :end-turn])]
                (resolve-ability state side (:ability a) (:card a) (:targets a)))
              (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
-             (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
-                   hosted-cards (filter :installed (mapcat :hosted rig-cards))
-                   hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
-               (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
-                 ;; Clear the added-virus-counter flag for each virus in play.
-                 ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
-                 (when (has-subtype? card "Virus")
-                   (set-prop state :runner card :added-virus-counter false))))
+             (doseq [card (all-active-installed state :runner)]
+               ;; Clear the added-virus-counter flag for each virus in play.
+               ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
+               (when (has-subtype? card "Virus")
+                 (set-prop state :runner card :added-virus-counter false))
+               ;; Remove all-turn strength from icebreakers.
+               ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
+               (when (has-subtype? card "Icebreaker")
+                 (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
+                 (update-breaker-strength state :runner card)))
              (swap! state assoc :end-turn true)
              (swap! state update-in [side :register] dissoc :cannot-draw)
              (swap! state update-in [side :register] dissoc :drawn-this-turn)

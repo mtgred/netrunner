@@ -73,9 +73,11 @@
 (defn- subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"
   [cdef]
-  (let [subs (:subroutines cdef)]
-    (for [sub subs]
-      {:label (make-label sub)})))
+  (map-indexed (fn [idx sub]
+                 {:label (make-label sub)
+                  :from-cid nil
+                  :data {:cdef-idx idx}})
+               (:subroutines cdef)))
 
 (defn card-init
   "Initializes the abilities and events of the given card."
@@ -254,6 +256,10 @@
                                        ;; Ignore all costs. Pass eid to rez.
                                        (= install-state :rezzed-no-cost)
                                        (rez state side eid moved-card {:ignore-cost :all-costs})
+
+                                       ;; ;; Ignore rez cost only. Pass eid to rez.
+                                       (= install-state :rezzed-no-rez-cost)
+                                       (rez state side eid moved-card {:ignore-cost :rez-costs})
 
                                        ;; Pay costs. Pass eid to rez.
                                        (= install-state :rezzed)

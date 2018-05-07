@@ -7,12 +7,17 @@
          ~'get-corp (fn [] (:corp @~'state))
          ~'get-runner (fn [] (:runner @~'state))
          ~'get-run (fn [] (:run @~'state))
-         ~'get-hand-size (fn [~'side] (+ (:hand-size-base (~'side @~'state))
-                                         (:hand-size-modification (~'side @~'state))))
+         ~'get-hand-size (fn [~'side] (+ (get-in @~'state [~'side :hand-size :base])
+                                         (get-in @~'state [~'side :hand-size :mod])))
          ~'refresh (fn [~'card] (core/get-card ~'state ~'card))
          ~'prompt-choice (fn [~'side ~'choice]
                            (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
                            (core/resolve-prompt ~'state ~'side {:choice (~'refresh ~'choice)}))
+         ~'prompt-choice-partial (fn [~'side ~'choice]
+                                   (core/resolve-prompt
+                                     ~'state ~'side
+                                     {:choice (~'refresh (first (filter #(.contains % ~'choice)
+                                                                        (->> @~'state ~'side :prompt first :choices))))}))
          ~'prompt-card (fn [~'side ~'card]
                          (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
                          (core/resolve-prompt ~'state ~'side {:card (~'refresh ~'card)}))

@@ -48,32 +48,40 @@
 
 (deftest aumakua
   ;; Aumakua - Gain credit on no-trash
-  (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 3)])
-              (default-runner [(qty "Aumakua" 1)]))
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Aumakua")
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "No")
-    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
-    (core/gain state :runner :credit 5)
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
-    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
+  (testing "Gain counter on no trash"
+    (do-game
+      (new-game (default-corp [(qty "PAD Campaign" 3)])
+                (default-runner [(qty "Aumakua" 1)]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "No action")
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
+      (core/gain state :runner :credit 5)
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay")
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
+  (testing "Gain counters on empty archives"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Aumakua"])
+                {:start-as :runner})
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state :archives)
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from accessing empty Archives")))
 
-(deftest aumakua-neutralize-all-threats
-  ;; Aumakua - Neutralize All Threats interaction
-  (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 3)])
-              (default-runner [(qty "Aumakua" 1) (qty "Neutralize All Threats" 1)]))
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Aumakua")
-    (play-from-hand state :runner "Neutralize All Threats")
-    (core/gain state :runner :credit 5)
-    (run-empty-server state "Server 1")
-    (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash")))
+  (testing "Neutralize All Threats interaction"
+    (do-game
+      (new-game (default-corp [(qty "PAD Campaign" 3)])
+                (default-runner [(qty "Aumakua" 1) (qty "Neutralize All Threats" 1)]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aumakua")
+      (play-from-hand state :runner "Neutralize All Threats")
+      (core/gain state :runner :credit 5)
+      (run-empty-server state "Server 1")
+      (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash"))))
 
 (deftest baba-yaga
   (do-game
@@ -213,6 +221,22 @@
       (is (= "Crypsis" (:title (first (:discard (get-runner)))))
           "Crypsis was trashed"))))
 
+(deftest darwin
+  ;; Darwin - starts at 0 strength
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Darwin" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Darwin")
+    (let [darwin (get-program state 0)]
+      (is (zero? (get-counters (refresh darwin) :virus)) "Darwin starts with 0 virus counters")
+      (is (= 0 (:current-strength (refresh darwin ))) "Darwin starts at 0 strength")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (refresh darwin) 1) ; add counter
+      (is (= 1 (get-counters (refresh darwin) :virus)) "Darwin gains 1 virus counter")
+      (is (= 1 (:current-strength (refresh darwin ))) "Darwin is at 1 strength"))))
+
 (deftest deus-x-multiple-hostile-infrastructure
   ;; Multiple Hostile Infrastructure vs. Deus X
   (do-game
@@ -230,7 +254,7 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Deus X")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
@@ -247,11 +271,10 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Deus X")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Access")
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
-      (prompt-choice :runner "Yes")
+      (prompt-choice-partial :runner "Pay")
       (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
       (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
 

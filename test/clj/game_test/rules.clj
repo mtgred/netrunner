@@ -247,7 +247,7 @@
           (take-credits state :corp)
           (run-empty-server state "Server 1")
           (prompt-select :runner dh)
-          (prompt-choice :runner "Yes") ; trash Director Haas
+          (prompt-choice-partial :runner "Pay") ; trash Director Haas
           (prompt-choice :runner "Done")
           (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn"))))))
 
@@ -261,19 +261,18 @@
     (play-from-hand state :runner "Imp")
     (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
-      (card-ability state :runner imp 0)
+      (prompt-choice-partial :runner "Imp")
       (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
       (run-empty-server state "HQ")
-      (card-ability state :runner imp 0)
+      (prompt-choice :runner "No action")
       (is (= 1 (count (:discard (get-corp)))) "Card can't be trashed, Imp already used this turn")
-      (prompt-choice :runner "OK")
       (play-from-hand state :runner "Scavenge")
       (prompt-select :runner imp)
       (prompt-select :runner (find-card "Imp" (:discard (get-runner)))))
     (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
       (run-empty-server state "HQ")
-      (card-ability state :runner imp 0))
+      (prompt-choice-partial :runner "Imp"))
     (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
 (deftest trash-seen-and-unseen
@@ -285,10 +284,10 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp 1)
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "No")
+    (prompt-choice :runner "No action")
     ;; run and trash the second asset
     (run-empty-server state "Server 2")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (take-credits state :runner 2)
     (play-from-hand state :corp "PAD Campaign" "Server 1")
     (prompt-choice :corp "OK")
@@ -307,7 +306,7 @@
     (take-credits state :corp 2)
     ;; run and trash the asset
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (is (:seen (first (get-in @state [:corp :discard]))) "Asset trashed by runner is Seen")
     (take-credits state :runner 3)
     (play-from-hand state :corp "Interns")
@@ -454,8 +453,6 @@
       (take-credits state :runner))
     (testing "Turn 4 Corp"
       (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
-      ; (prn "publics2" (refresh publics2))
-      ; (is (= :scored (:zone (refresh publics2))))
       (is (= 12 (:credit (get-corp))))))))
 
 (deftest run-bad-publicity-credits
@@ -470,15 +467,15 @@
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (prompt-choice :corp "No")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :hq)
     (prompt-choice :corp "No")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :rd)
     (prompt-choice :corp "No")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))
 
 (deftest run-psi-bad-publicity-credits
@@ -544,19 +541,19 @@
       (prompt-choice :runner 2)
       (prompt-choice :runner "Card from deck")
       (is (= "Hedge Fund" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Unrezzed upgrade in R&D")
       (is (= "Keegan Lane" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Card from deck")
       (is (= "Sweeps Week" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Midway Station Grid")
       (is (= "Midway Station Grid" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Card from deck")
       (is (= "Manhunt" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest multi-steal-archives

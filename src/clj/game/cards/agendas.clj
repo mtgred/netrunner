@@ -620,8 +620,7 @@
                      {:optional
                       {:prompt "Take 1 bad publicity from Illicit Sales?"
                        :yes-ability {:msg "take 1 bad publicity"
-                                     :effect (effect (gain-bad-publicity :corp 1))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}}
+                                     :effect (effect (gain-bad-publicity :corp 1))}}}
                      card nil)
                    (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
                          (gain state side :credit n)
@@ -776,20 +775,14 @@
              :unsuccessful-trace nq}})
 
    "NEXT Wave 2"
-   {:delayed-completion true
-    :not-when-scored true
-    :effect (req (if (some #(and (rezzed? %)
-                                 (ice? %)
-                                 (has-subtype? % "NEXT"))
-                           (all-installed state :corp))
-                   (continue-ability state side
-                     {:optional
-                      {:prompt "Do 1 brain damage with NEXT Wave 2?"
-                       :yes-ability {:msg "do 1 brain damage"
-                                     :effect (effect (damage eid :brain 1 {:card card}))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}}
-                    card nil)
-                   (effect-completed state side eid)))}
+   {:not-when-scored true
+    :req (req (some #(and (rezzed? %)
+                          (ice? %)
+                          (has-subtype? % "NEXT"))
+                    (all-installed state :corp)))
+    :optional {:prompt "Do 1 brain damage with NEXT Wave 2?"
+               :yes-ability {:msg "do 1 brain damage"
+                             :effect (effect (damage eid :brain 1 {:card card}))}}}
 
    "Nisei MK II"
    {:silent (req true)
@@ -953,9 +946,13 @@
 
    "Quantum Predictive Model"
    {:flags {:rd-reveal (req true)}
-    :steal-req (req (not tagged))
     :access {:req (req tagged)
-             :effect (effect (as-agenda card 1))
+             :delayed-completion true
+             :effect (req (when-completed (as-agenda state side card 1)
+                                          (continue-ability state :runner
+                                            {:prompt "Quantum Predictive Model was added to the corp's score area"
+                                             :choices ["OK"]}
+                                            card nil)))
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
@@ -1022,10 +1019,26 @@
    "Remote Data Farm"
    {:silent (req true)
     :msg "increase their maximum hand size by 2"
-    :effect (effect (gain :hand-size-modification 2))
+    :effect (effect (gain :hand-size {:mod 2}))
     :swapped {:msg "increase their maximum hand size by 2"
-              :effect (effect (gain :hand-size-modification 2))}
-    :leave-play (effect (lose :hand-size-modification 2))}
+              :effect (effect (gain :hand-size {:mod 2}))}
+    :leave-play (effect (lose :hand-size {:mod 2}))}
+
+   "Remote Enforcement"
+   {:interactive (req true)
+    :optional {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
+               :yes-ability {:delayed-completion true
+                             :prompt "Choose a piece of ice"
+                             :choices (req (filter ice? (:deck corp)))
+                             :effect (req (let [chosen-ice target]
+                                            (continue-ability state side
+                                              {:delayed-completion true
+                                               :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                               :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
+                                                                (corp-install-list state chosen-ice))
+                                               :effect (effect (shuffle! :deck)
+                                                               (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
+                                              card nil)))}}}
 
    "Research Grant"
    {:interactive (req true)
@@ -1051,10 +1064,10 @@
    "Self-Destruct Chips"
    {:silent (req true)
     :msg "decrease the Runner's maximum hand size by 1"
-    :effect (effect (lose :runner :hand-size-modification 1))
+    :effect (effect (lose :runner :hand-size {:mod 1}))
     :swapped {:msg "decrease the Runner's maximum hand size by 1"
-              :effect (effect (lose :runner :hand-size-modification 1))}
-    :leave-play (effect (gain :runner :hand-size-modification 1))}
+              :effect (effect (lose :runner :hand-size {:mod 1}))}
+    :leave-play (effect (gain :runner :hand-size {:mod 1}))}
 
    "Sensor Net Activation"
    {:effect (effect (add-counter card :agenda 1))
@@ -1203,6 +1216,17 @@
    {:interactive (req true)
     :msg "lose 2 bad publicity"
     :effect (effect (lose :bad-publicity 2))}
+
+   "Viral Weaponization"
+   {:effect (effect (register-events
+                      {:corp-turn-ends
+                       {:msg "do 1 net damage for each card in the grip"
+                        :delayed-completion true
+                        :effect (req (let [cnt (count (:hand runner))]
+                                       (unregister-events state side card)
+                                       (damage state side eid :net cnt {:card card})))}}
+                      card))
+    :events {:corp-turn-ends nil}}
 
    "Voting Machine Initiative"
    {:silent (req true)
