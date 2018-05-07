@@ -231,6 +231,26 @@
     (is (= 5 (:memory (get-runner))) "Gain 1 memory")
     (is (= 3 (:credit (get-runner))) "Got 1c for successful run on Desperado")))
 
+(deftest dinosaurus-adept
+  ;; Dinosaurus - hosting a breaker with strength based on unused MU should calculate correctly
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Adept" 1)
+                               (qty "Dinosaurus" 1)]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Dinosaurus")
+    (play-from-hand state :runner "Adept")
+    (is (= 2 (:memory (get-runner))) "2 MU used")
+    (let [dino (get-hardware state 0)
+          adpt (get-program state 0)]
+      (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
+      (card-ability state :runner dino 1)
+      (prompt-select :runner (refresh adpt))
+      (let [hosted-adpt (first (:hosted (refresh dino)))]
+        (is (= 4 (:memory (get-runner))) "0 MU used")
+        (is (= 8 (:current-strength (refresh hosted-adpt))) "Adept at 8 strength hosted")))))
+
 (deftest dinosaurus-strength-boost-mu-savings
   ;; Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker
   (do-game

@@ -11,7 +11,7 @@
                  [cheshire "5.6.3"]
                  [org.omcljs/om "0.9.0"]
                  [sablono "0.3.4"]
-                 [com.novemberain/monger "3.1.0"]
+                 [danhut/monger "3.1.0"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.3.1"]
                  [com.taoensso/sente "1.11.0"]
@@ -34,14 +34,14 @@
                  [clj-http "3.7.0"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
-            [lein-figwheel "0.5.11"]
+            [lein-figwheel "0.5.15"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
             [lein-exec "0.3.7"]]
 
-  :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.11"]
+  :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.15"]
                                   [com.cemerick/piggieback "0.2.1"]]
-                   :plugins [[lein-figwheel "0.5.11"]]
+                   :plugins [[lein-figwheel "0.5.15"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]

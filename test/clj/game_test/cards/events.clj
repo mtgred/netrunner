@@ -15,7 +15,7 @@
     (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
     ;; play Account Siphon, use ability
     (play-run-event state (first (:hand (get-runner))) :hq)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (is (= 2 (:tag (get-runner))) "Runner took 2 tags")
     (is (= 15 (:credit (get-runner))) "Runner gained 10 credits")
     (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
@@ -48,7 +48,7 @@
     (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
     (let [nach (get-in @state [:runner :rig :resource 0])]
       (play-run-event state (first (get-in @state [:runner :hand])) :hq)
-      (prompt-choice :runner "Run ability")
+      (prompt-choice :runner "Replacement effect")
       (is (= 4 (:credit (get-runner))) "Runner still has 4 credits due to BP")
       (card-ability state :runner nach 0)
       (is (= 2 (:credit (get-runner))) "Runner has 2 credits left")
@@ -196,11 +196,11 @@
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Logos")
-    (is (= 1 (:hand-size-modification (get-runner))) "Hand-size increased from Logos")
+    (is (= 1 (get-in (get-runner) [:hand-size :mod])) "Hand-size increased from Logos")
     (is (= 5 (:memory (get-runner))) "Memory increased from Logos")
     (play-from-hand state :runner "Origami")
     (play-from-hand state :runner "Origami")
-    (is (= 5 (:hand-size-modification (get-runner))) "Hand-size increased from Logos and Origami")
+    (is (= 5 (get-in (get-runner) [:hand-size :mod])) "Hand-size increased from Logos and Origami")
     (is (= 3 (:memory (get-runner))) "Memory decreased from Origamis")
     (core/gain state :runner :click 3 :credit 2)
     (run-empty-server state "Archives")
@@ -211,7 +211,7 @@
     (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
     (let [logos (find-card "Logos" (get-in (get-runner) [:rig :facedown]))]
       (is (:facedown (refresh logos)) "Logos is facedown")
-      (is (= 0 (:hand-size-modification (get-runner))) "Hand-size reset with Logos and Origami facedown")
+      (is (= 0 (get-in (get-runner) [:hand-size :mod])) "Hand-size reset with Logos and Origami facedown")
       (is (= 4 (:memory (get-runner))) "Memory reset with Logos and Origami facedown"))))
 
 (deftest apocalypse-turn-facedown
@@ -234,7 +234,10 @@
     (let [tmc (get-in @state [:runner :rig :facedown 0])]
       (is (:facedown (refresh tmc)) "Tri-maf Contact is facedown")
       (is (= 3 (count (:hand (get-runner))))
-          "No meat damage dealt by Tri-maf's leave play effect"))))
+          "No meat damage dealt by Tri-maf's leave play effect")
+      (core/trash state :runner tmc)
+      (is (= 3 (count (:hand (get-runner))))
+          "No meat damage dealt by trashing facedown Tri-maf"))))
 
 (deftest because-i-can
   ;; make a successful run on a remote to shuffle its contents into R&D
@@ -251,6 +254,7 @@
       (is (= 3 (count (get-in @state [:corp :servers :remote1 :content])))
           "3 cards in server 1 before successful run")
       (run-successful state)
+      (prompt-choice :runner "Replacement effect")
       (is (= (+ n 3) (count (get-in @state [:corp :deck]))) "3 cards were shuffled into R&D")
       (is (= 0 (count (get-in @state [:corp :servers :remote1 :content]))) "No cards left in server 1"))
     (take-credits state :runner)
@@ -268,6 +272,7 @@
       (is (= :remote3 (first (get-in @state [:run :server]))))
       (is (= 1 (count (get-in @state [:corp :servers :remote3 :content]))) "1 cards in server 3 before successful run")
       (run-successful state)
+      (prompt-choice :runner "Replacement effect")
       (is (= (+ n 1) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
       (is (= 0 (count (get-in @state [:corp :servers :remote3 :content]))) "No cards left in server 3"))))
 
@@ -398,7 +403,7 @@
     (play-from-hand state :runner "CBI Raid")
     (is (= :hq (get-in @state [:run :server 0])))
     (run-successful state)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (prompt-choice :corp (find-card "Caprice Nisei" (:hand (get-corp))))
     (prompt-choice :corp (find-card "Adonis Campaign" (:hand (get-corp))))
     (prompt-choice :corp (find-card "Quandary" (:hand (get-corp))))
@@ -633,8 +638,7 @@
     (is (empty? (:prompt (get-runner))) "Deuces prompt not queued")
     (run-continue state)
     (run-successful state)
-    (is (= 1 (count (:prompt (get-runner)))) "Deuces prompt not queued")
-    (prompt-choice :runner "Access")
+    (is (= 2 (count (:prompt (get-runner)))) "Deuces prompt not queued")
     (prompt-choice :corp "0")
     (prompt-choice :runner "0")
     (prompt-choice :runner "Steal")
@@ -667,7 +671,7 @@
    (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
    ;; play Diversion of Funds, use ability
    (play-run-event state (first (:hand (get-runner))) :hq)
-   (prompt-choice :runner "Run ability")
+   (prompt-choice :runner "Replacement effect")
    (is (= 9 (:credit (get-runner))) "Runner netted 4 credits")
    (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
 
@@ -865,8 +869,26 @@
       (play-from-hand state :runner "Exploratory Romp")
       (prompt-choice :runner "Server 1")
       (run-successful state)
-      (prompt-choice :runner "Run ability")
+      (prompt-choice :runner "Replacement effect")
       (prompt-choice :runner "2")
+      (prompt-select :runner (refresh tg))
+      (is (= 0 (:tag (get-runner))) "No tags, didn't access TGTBT")
+      (is (= 0 (:advance-counter (refresh tg))) "Advancements removed"))))
+
+(deftest exploratory-romp-negative
+  ;; Exploratory Romp - Don't remove more than the existing number of advancement tokens
+  (do-game
+    (new-game (default-corp [(qty "TGTBT" 1)])
+              (default-runner [(qty "Exploratory Romp" 1)]))
+    (play-from-hand state :corp "TGTBT" "New remote")
+    (let [tg (get-content state :remote1 0)]
+      (advance state tg 2)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Exploratory Romp")
+      (prompt-choice :runner "Server 1")
+      (run-successful state)
+      (prompt-choice :runner "Replacement effect")
+      (prompt-choice :runner "3")
       (prompt-select :runner (refresh tg))
       (is (= 0 (:tag (get-runner))) "No tags, didn't access TGTBT")
       (is (= 0 (:advance-counter (refresh tg))) "Advancements removed"))))
@@ -1050,7 +1072,7 @@
                               ])
               (default-runner [(qty "Glut Cipher" 3)]))
     (take-credits state :corp)
-    (trash-from-hand state :corp "Ice Wall") 
+    (trash-from-hand state :corp "Ice Wall")
     (trash-from-hand state :corp "Ice Wall")
     (trash-from-hand state :corp "Hedge Fund")
     (is (= 3 (count (:discard (get-corp)))) "There are 3 cards in Archives")
@@ -1078,7 +1100,7 @@
     (prompt-select :corp (get-discarded state :corp 4))
     (prompt-select :corp (get-discarded state :corp 5))
     (is (nil? (-> (get-corp) :prompt first)) "Selecting 5 cards closed prompt")
-    (let [discard (:discard (get-corp))] 
+    (let [discard (:discard (get-corp))]
       (is (find-card "Hedge Fund" discard) "Hedge Fund is still in Archives")
       (is (= 6 (count discard)) "There are 6 cards in Archives")
       (is (= 1 (count (filter :seen discard))) "There is 1 seen card in Archives"))
@@ -1146,7 +1168,7 @@
     (play-from-hand state :runner "Indexing")
     (is (= :rd (get-in @state [:run :server 0])))
     (run-successful state)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (prompt-choice :runner (find-card "Caprice Nisei" (:deck (get-corp))))
     (prompt-choice :runner (find-card "Adonis Campaign" (:deck (get-corp))))
     (prompt-choice :runner (find-card "Quandary" (:deck (get-corp))))
@@ -1584,7 +1606,7 @@
     (play-from-hand state :runner "Political Graffiti")
     (is (= [:archives] (get-in @state [:run :server])) "Run initiated on Archives")
     (run-successful state)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (prompt-select :runner (find-card "Breaking News" (:scored (get-corp))))
     (is (= 0 (:agenda-point (get-corp))) "Political Dealings lowered agenda points by 1")
     (play-from-hand state :runner "Turntable")
@@ -1613,7 +1635,7 @@
     (play-from-hand state :runner "Political Graffiti")
     (is (= [:archives] (get-in @state [:run :server])) "Run initiated on Archives")
     (run-successful state)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (prompt-select :runner (find-card "Hostile Takeover" (:scored (get-corp))))
     (is (= 0 (:agenda-point (get-corp))) "Political Dealings lowered agenda points by 1")
     (take-credits state :runner)
@@ -1847,7 +1869,7 @@
     (play-from-hand state :runner "Retrieval Run")
     (is (= [:archives] (get-in @state [:run :server])) "Run initiated on Archives")
     (run-successful state)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (let [ms (first (:discard (get-runner)))]
       (prompt-choice :runner ms)
       (is (= "Morning Star" (:title (first (get-in @state [:runner :rig :program]))))
@@ -1884,7 +1906,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Rip Deal")
     (run-successful state)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (is (= "Choose 1 card(s) to move from the Heap to your Grip" (-> (get-runner) :prompt first :msg)))))
 
 (deftest rip-deal-gauntlet
@@ -1902,7 +1924,7 @@
     (play-from-hand state :runner "Rip Deal")
     (run-successful state)
     (prompt-choice :runner 1)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (is (= "Choose 2 card(s) to move from the Heap to your Grip" (-> (get-runner) :prompt first :msg)))))
 
 (deftest rumor-mill
@@ -1932,8 +1954,8 @@
     (score-agenda state :corp (get-content state :remote5 0))
     (take-credits state :corp)
     (core/gain state :runner :credit 100 :click 100)
-    (is (= 4 (:hand-size-modification (get-corp))) "Corp has +4 hand size")
-    (is (= -2 (:hand-size-modification (get-runner))) "Runner has -2 hand size")
+    (is (= 4 (get-in (get-corp) [:hand-size :mod])) "Corp has +4 hand size")
+    (is (= -2 (get-in (get-runner) [:hand-size :mod])) "Runner has -2 hand size")
 
     (play-from-hand state :runner "Rumor Mill")
 
@@ -1942,8 +1964,8 @@
     (is (= 1 (count (:scored (get-corp)))) "No agenda was auto-forfeit to rez Ibrahim Salem")
 
     ;; In-play effects
-    (is (= 0 (:hand-size-modification (get-corp))) "Corp has original hand size")
-    (is (= 0 (:hand-size-modification (get-runner))) "Runner has original hand size")
+    (is (= 0 (get-in (get-corp) [:hand-size :mod])) "Corp has original hand size")
+    (is (= 0 (get-in (get-runner) [:hand-size :mod])) "Runner has original hand size")
 
     ;; "When you rez" effects should not apply
     (core/rez state :corp (get-content state :remote4 0))
@@ -1970,8 +1992,8 @@
 
     ;; Trash RM, make sure everything works again
     (play-from-hand state :corp "Housekeeping")
-    (is (= 4 (:hand-size-modification (get-corp))) "Corp has +4 hand size")
-    (is (= 0 (:hand-size-modification (get-runner))) "Runner has +0 hand size")
+    (is (= 4 (get-in (get-corp) [:hand-size :mod])) "Corp has +4 hand size")
+    (is (= 0 (get-in (get-runner) [:hand-size :mod])) "Runner has +0 hand size")
 
     ;; Additional costs to rez should now be applied again
     (core/rez state :corp (get-content state :remote7 0))
@@ -2344,7 +2366,7 @@
     (play-from-hand state :runner "Sure Gamble")
     (is (= 13 (:credit (get-runner))))
     (play-run-event state (find-card "Vamp" (:hand (get-runner))) :hq)
-    (prompt-choice :runner "Run ability")
+    (prompt-choice :runner "Replacement effect")
     (prompt-choice :runner 8)
     (is (= 1 (:tag (get-runner))) "Took 1 tag")
     (is (= 5 (:credit (get-runner))) "Paid 8 credits")

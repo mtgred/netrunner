@@ -1736,7 +1736,9 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (let [credits (:credit (get-corp))
-            cards (count (:hand (get-corp)))]
+            cards (count (:hand (get-corp)))
+            rj (get-content state :remote1 0)]
+        (card-ability state :corp rj 0)
         (prompt-choice :corp "Yes")
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 3 cards) (count (:hand (get-corp))))))))
@@ -1752,7 +1754,9 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (let [credits (:credit (get-corp))
-            cards (count (:hand (get-corp)))]
+            cards (count (:hand (get-corp)))
+            rj (get-content state :remote1 0)]
+        (card-ability state :corp rj 0)
         (prompt-choice :corp "Yes")
         (is (= (+ 3 credits) (:credit (get-corp))))
         (is (= (+ 2 cards) (count (:hand (get-corp)))))

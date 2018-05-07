@@ -218,7 +218,6 @@
       (take-credits state :corp)
       (run-on state :remote1)
       (run-successful state)
-      (prompt-choice :runner "Access")
       (prompt-choice :corp "2")
       (prompt-select :corp (refresh iw))
       (prompt-choice :runner "Steal")
@@ -754,22 +753,21 @@
       (play-from-hand state :corp "Fetal AI" "New remote")
       (take-credits state :corp 2)
       (run-empty-server state "Server 1")
-      (prompt-choice :runner "Access")
       (prompt-choice :runner "Yes")
       (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
       (is (= 3 (:credit (get-runner))) "Runner paid 2cr to steal Fetal AI")
       (is (= 1 (count (:scored (get-runner)))) "Runner stole Fetal AI"))
-  (testing "can't afford to steal"
-    (do-game
-      (new-game (default-corp [(qty "Fetal AI" 3)])
-                (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]))
-      (play-from-hand state :corp "Fetal AI" "New remote")
-      (take-credits state :corp 2)
-      (core/lose state :runner :credit 5)
-      (run-empty-server state "Server 1")
-      (prompt-choice :runner "Yes")
-      (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
-      (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
+    (testing "can't afford to steal"
+      (do-game
+        (new-game (default-corp [(qty "Fetal AI" 3)])
+                  (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]))
+        (play-from-hand state :corp "Fetal AI" "New remote")
+        (take-credits state :corp 2)
+        (core/lose state :runner :credit 5)
+        (run-empty-server state "Server 1")
+        (prompt-choice :runner "Yes")
+        (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
+        (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
 
 (deftest firmware-updates
   ;; Firmware Updates
@@ -1904,15 +1902,13 @@
     (testing "Access intalled with tag"
       (run-on state :remote2)
       (run-successful state)
-      (prompt-choice :runner "Access")
-      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "OK") ;; this is now a prompt that QPM was added to Corp score area
       (is (= 2 (:agenda-point (get-runner))) "Runner should not steal")
       (is (= 1 (:agenda-point (get-corp))) "Corp should score"))
     (testing "Access R&D with tag"
       (run-on state :rd)
       (run-successful state)
-      (prompt-choice :runner "Access")
-      (prompt-choice :runner "Steal")
+      (prompt-choice :runner "OK")
       (is (= 2 (:agenda-point (get-runner))) "Runner should not steal")
       (is (= 2 (:agenda-point (get-corp))) "Corp should score"))
     (is (= 0 (count (:deck (get-corp)))))))
@@ -2259,13 +2255,13 @@
       (run-successful state)
       (prompt-select :runner tg1)
       ;; Accesses TGTBT but can't steal
-      (prompt-choice :runner "Access")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag from accessing without stealing")
+      (prompt-choice :runner "OK")
       (prompt-select :runner ohg))
+
     (prompt-choice :runner "Yes") ;; Trashes OHG
     (run-empty-server state "Server 2")
     ;; Accesses TGTBT and can steal
-    (prompt-choice :runner "Access")
     (prompt-choice :runner "Steal")
 
     (is (= 2 (:tag (get-runner))) "Runner took 1 tag from accessing and stealing")))
@@ -2322,7 +2318,6 @@
     (take-credits state :corp)
     (testing "No steal on not-equal Psi game"
       (run-empty-server state "HQ")
-      (prompt-choice :runner "Access")
       (prompt-choice :corp "1 [Credits]")
       (prompt-choice :runner "0 [Credits]")
       ;; Cannot steal prompt
@@ -2330,7 +2325,6 @@
       (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))
     (testing "Successful steal on equal Psi game"
       (run-empty-server state "HQ")
-      (prompt-choice :runner "Access")
       (prompt-choice :corp "1 [Credits]")
       (prompt-choice :runner "1 [Credits]")
       (prompt-choice :runner "Steal")

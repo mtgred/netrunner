@@ -37,7 +37,8 @@
        (list (hiccup/include-js "/cljs/goog/base.js")
              (hiccup/include-js (str "cljs/app.js?v=" version))
              [:script
-              (for [req ["netrunner.appstate"
+              (for [req ["netrunner.utils"
+                         "netrunner.appstate"
                          "netrunner.main"
                          "netrunner.ajax"
                          "netrunner.auth"

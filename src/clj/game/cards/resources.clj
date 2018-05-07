@@ -217,7 +217,7 @@
                                                                                   (runner-install state side eid c nil)))}}} card nil)))}}})
 
    "Beach Party"
-   {:in-play [:hand-size-modification 5]
+   {:in-play [:hand-size {:mod 5}]
     :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
 
    "Beth Kilrain-Chang"
@@ -285,7 +285,7 @@
                                  (move target :rfg))}]}
 
    "Borrowed Satellite"
-   {:in-play [:hand-size-modification 1 :link 1]}
+   {:in-play [:hand-size {:mod 1} :link 1]}
 
    "Bug Out Bag"
    {:prompt "How many power counters?"
@@ -677,20 +677,25 @@
                      :effect (effect (pay :corp card :credit 2))}}}
 
    "Film Critic"
-   (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))]
-     {:implementation "Use hosting ability when presented with Access prompt for an agenda"
-      :abilities [{:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
-                                  (is-type? (:card (first (get-in @state [side :prompt]))) "Agenda")))
-                   :label "Host an agenda being accessed"
-                   :effect (req (when-let [agenda (:card (first (get-in @state [side :prompt])))]
-                                  (host state side card (move state side agenda :play-area))
-                                  (trigger-event state side :no-steal agenda)
-                                  (close-access-prompt state side)
-                                  (effect-completed state side eid nil)
-                                  (when-not (:run @state)
-                                    (swap! state dissoc :access))))
-                   :msg (msg "host " (:title (:card (first (get-in @state [side :prompt])))) " instead of accessing it")}
-                  {:cost [:click 2] :label "Add hosted agenda to your score area"
+   (letfn [(get-agenda [card] (first (filter #(= "Agenda" (:type %)) (:hosted card))))
+           (host-agenda? [agenda]
+             {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
+                        :yes-ability {:effect (req (host state side card (move state side agenda :play-area))
+
+
+                                                   ;;TODO: is this necessary?
+                                                   (trigger-event state side :no-steal agenda)
+
+                                                   ;;(close-access-prompt state side)
+                                                   (when-not (:run @state)
+                                                     (swap! state dissoc :access)))
+                                      :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
+     {;:implementation "Use hosting ability when presented with Access prompt for an agenda"
+      :events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
+                                       (is-type? target "Agenda")))
+                        :delayed-completion true
+                        :effect (effect (continue-ability (host-agenda? target) card nil))}}
+      :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
                    :req (req (not (empty? (:hosted card))))
                    :effect (req (let [c (move state :runner (get-agenda card) :scored)]
                                   (gain-agenda-point state :runner (get-agenda-points state :runner c))))
@@ -701,15 +706,13 @@
    "Find the Truth"
    {:events {:post-runner-draw {:msg (msg "reveal that they drew: "
                                           (join ", " (map :title (get-in @state [:runner :register :most-recent-drawn]))))}
-             :pre-successful-run {:interactive (req true)
-                                  :optional {:delayed-completion true
-                                             :req (req (= 1 (count (get-in @state [:runner :register :successful-run]))))
-                                             :prompt "Use Find the Truth to look at the top card of R&D?"
-                                             :yes-ability {:msg "look at the top card of R&D"
-                                                           :effect (req (prompt! state :runner card (str "The top card of R&D is "
-                                                                                                         (:title (first (:deck corp)))) ["OK"] {})
-                                                                        (effect-completed state side eid))}
-                                             :no-ability {:effect (req (effect-completed state side eid))}}}}}
+             :successful-run {:interactive (req true)
+                              :optional {:req (req (and (first-event? state side :successful-run)
+                                                        (-> @state :corp :deck count pos?)))
+                                         :prompt "Use Find the Truth to look at the top card of R&D?"
+                                         :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
+                                                       :msg "look at the top card of R&D"
+                                                       :choices ["OK"]}}}}}
 
    "First Responders"
    {:abilities [{:cost [:credit 2]
@@ -955,7 +958,6 @@
 
    "Lewi Guilherme"
    (let [ability {:once :per-turn
-                  :delayed-completion true
                   :optional {:once :per-turn
                              :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
                              :yes-ability {:effect (req (if (pos? (:credit runner))
@@ -970,8 +972,8 @@
                                                       (all-active-installed state :runner)))))}
 
     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
-    :effect (effect (lose :corp :hand-size-modification 1))
-    :leave-play (effect (gain :corp :hand-size-modification 1))
+    :effect (effect (lose :corp :hand-size {:mod 1}))
+    :leave-play (effect (gain :corp :hand-size {:mod 1}))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
     :events {:runner-turn-begins ability}})
 
@@ -1351,7 +1353,7 @@
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Public Sympathy"
-   {:in-play [:hand-size-modification 2]}
+   {:in-play [:hand-size {:mod 2}]}
 
    "Rachel Beckman"
    {:in-play [:click 1 :click-per-turn 1]
@@ -1452,7 +1454,7 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
-   {:in-play [:hand-size-modification -2]
+   {:in-play [:hand-size {:mod -2}]
     :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))
                                 :msg (msg "draw a card")
                                 :effect (effect (draw 1))}}}
@@ -1794,9 +1796,9 @@
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
                                 (when (not= (get-in old [:runner :credit]) credit)
-                                  (swap! ref assoc-in [:runner :hand-size-base] credit))))))
+                                  (swap! ref assoc-in [:runner :hand-size :base] credit))))))
     :leave-play (req (remove-watch state :theophilius-bagbiter)
-                     (swap! state assoc-in [:runner :hand-size-base] 5))}
+                     (swap! state assoc-in [:runner :hand-size :base] 5))}
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
@@ -1828,13 +1830,14 @@
    "Virus Breeding Ground"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}
     :abilities [{:cost [:click 1]
-                 :msg (msg "move 1 virus counter to " (:title target))
                  :req (req (pos? (get-in card [:counter :virus] 0)))
-                 :choices {:req #(and (has-subtype? % "Virus")
-                                      (pos? (get-in % [:counter :virus] 0)))}
-                 :effect (req (when (pos? (get-virus-counters state side target))
-                                (add-counter state side card :virus -1)
-                                (add-counter state side target :virus 1)))}]}
+                 :effect (req (resolve-ability
+                                state side
+                                {:msg (msg "move 1 virus counter to " (:title target))
+                                 :choices {:req #(pos? (get-virus-counters state side %))}
+                                 :effect (req (add-counter state side card :virus -1)
+                                              (add-counter state side target :virus 1))}
+                                card nil))}]}
 
    "Wasteland"
    {:events {:runner-trash {:req (req (and (first-installed-trash-own? state :runner)
