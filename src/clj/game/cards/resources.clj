@@ -924,9 +924,7 @@
                               (add-counter state side card :credit (- (get-in card [:counter :credit] 0))))}]}
 
  "Kasi String"
- {:implementation "Add counters manually for access outside of a run or cards that replace access like Ash"
-   ;We would need a :once :per-access key to make this work for Gang Sign etc.
-  :events {:run-ends {:once :per-turn
+ {:events {:run-ends {:once :per-turn
                       :req (req (and (not (get-in @state [:run :did-steal]))
                                      (get-in @state [:run :did-access])
                                      (is-remote? (:server run))))
