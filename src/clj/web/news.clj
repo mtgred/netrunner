@@ -21,7 +21,10 @@
                 :date  (f/parse trello-time-formatter (:dateLastActivity c))})})
 
     (catch Exception e
-      (prn "Exception in news fetch" e))))
+      (->> e
+        (Throwable->map)
+        (:cause)
+        (prn "Exception in news fetch")))))
 
 (defn get-news []
   (let [{:keys [time news]} @news-items
