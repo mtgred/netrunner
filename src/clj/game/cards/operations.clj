@@ -7,6 +7,7 @@
                                 is-remote? is-central? get-server-type other-side same-card? same-side?
                                 combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
                                 pluralize quantify type->rig-zone safe-zero?]]
+            [game.cards.ice :refer [end-the-run]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
