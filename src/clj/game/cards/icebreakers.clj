@@ -149,12 +149,7 @@
 (defn- conspiracy
   "Install-from-heap breakers"
   [title type abilities]
-  (let [install-prompt {:req (req (println (str "Checking installability for " (:cid card)))
-                                  (println (str "Status: " (and (= (:zone card) [:discard])
-                                       (rezzed? current-ice)
-                                       (has-subtype? current-ice type)
-                                       (not (install-locked? state side)))))
-                               (and (= (:zone card) [:discard])
+  (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
                                        (not (install-locked? state side))))
