@@ -142,8 +142,8 @@
   the server to install into with a string."
   ([state side title] (play-from-hand state side title nil))
   ([state side title server]
-    (core/play state side {:card (find-card title (get-in @state [side :hand]))
-                           :server server})))
+   (core/play state side {:card (find-card title (get-in @state [side :hand]))
+                          :server server})))
 
 
 ;;; Run functions
@@ -256,6 +256,6 @@
 
 (defn play-and-score
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
-  ([state title]
-   (play-from-hand state :corp title "New remote")
-   (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0))))
+  [state title]
+  (play-from-hand state :corp title "New remote")
+  (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0)))

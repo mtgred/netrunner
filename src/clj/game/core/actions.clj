@@ -5,7 +5,7 @@
 (declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?
-         can-run-server? can-score? say play-sfx)
+         can-run-server? can-score? say play-sfx base-mod-size)
 
 ;;; Neutral actions
 (defn play
@@ -47,17 +47,29 @@
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
     (play-sfx state side "click-credit")))
 
+(defn- change-msg
+  "Send a system message indicating the property change"
+  [state side kw new-val delta]
+  (let [key (name kw)]
+    (system-msg state side
+                (str "sets " (.replace key "-" " ") " to " new-val
+                     " (" (if (pos? delta) (str "+" delta) delta) ")"))))
+
+(defn- change-map
+  "Change a player's property using the :mod system"
+  [state side key delta]
+  (gain state side key delta)
+  (change-msg state side key (base-mod-size state side key) (:mod delta)))
+
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (let [kw key
-        key (name key)]
-    (if (neg? delta)
-      (deduct state side [kw (- delta)])
-      (swap! state update-in [side kw] (partial + delta)))
-    (system-msg state side
-                (str "sets " (.replace key "-" " ") " to " (get-in @state [side kw])
-                     " (" (if (pos? delta) (str "+" delta) delta) ")"))))
+  (if (map? delta)
+    (change-map state side key delta)
+    (do (if (neg? delta)
+          (deduct state side [key (- delta)])
+          (swap! state update-in [side key] (partial + delta)))
+      (change-msg state side key (get-in @state [side key]) delta))))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."
@@ -246,17 +258,24 @@
     (do-play-ability state side card ab targets)))
 
 (defn play-subroutine
-  "Triggers a card's subroutine using its zero-based index into the card's card-def :subroutines vector."
+  "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
   ([state side args] (play-subroutine state side (make-eid state) args))
   ([state side eid {:keys [card subroutine targets] :as args}]
    (let [card (get-card state card)
-         cdef (card-def card)
-         sub (get-in cdef [:subroutines subroutine])
-         cost (:cost sub)]
-     (when (or (nil? cost)
-               (apply can-pay? state side (:title card) cost))
-       (when-let [activatemsg (:activatemsg sub)] (system-msg state side activatemsg))
-       (resolve-ability state side eid sub card targets)))))
+         sub (nth (:subroutines card) subroutine nil)]
+     (if (or (nil? sub)
+             (nil? (:from-cid sub)))
+       (let [cdef-idx (if (nil? sub) subroutine (-> sub :data :cdef-idx))
+             cdef (card-def card)
+             cdef-sub (get-in cdef [:subroutines cdef-idx])
+             cost (:cost cdef-sub)]
+         (when (or (nil? cost)
+                   (apply can-pay? state side (:title card) cost))
+           (when-let [activatemsg (:activatemsg cdef-sub)] (system-msg state side activatemsg))
+           (resolve-ability state side eid cdef-sub card targets)))
+       (when-let [sub-card (find-latest state {:cid (:from-cid sub) :side side})]
+         (when-let [sub-effect (:sub-effect (card-def sub-card))]
+           (resolve-ability state side eid sub-effect card (assoc (:data sub) :targets targets))))))))
 
 ;;; Corp actions
 (defn trash-resource

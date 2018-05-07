@@ -13,6 +13,11 @@
          ~'prompt-choice (fn [~'side ~'choice]
                            (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
                            (core/resolve-prompt ~'state ~'side {:choice (~'refresh ~'choice)}))
+         ~'prompt-choice-partial (fn [~'side ~'choice]
+                                   (core/resolve-prompt
+                                     ~'state ~'side
+                                     {:choice (~'refresh (first (filter #(.contains % ~'choice)
+                                                                        (->> @~'state ~'side :prompt first :choices))))}))
          ~'prompt-card (fn [~'side ~'card]
                          (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
                          (core/resolve-prompt ~'state ~'side {:card (~'refresh ~'card)}))

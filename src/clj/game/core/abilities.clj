@@ -221,7 +221,7 @@
                      (get-in card [:counter (first counter-cost)] 0)))
              (or (not advance-counter-cost)
                  (<= advance-counter-cost (or advance-counter 0))))
-    ;; Ensure that any costs can be paid.
+    ;; Ensure that any costs can be paid
     (when-let [cost-str (apply pay (concat [state side card] cost [{:action (:cid card)}]))]
       (let [c (if counter-cost
                 (update-in card [:counter (first counter-cost)]
@@ -230,18 +230,18 @@
             c (if advance-counter-cost
                 (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
                 c)]
-        ;; Remove any counters.
+        ;; Remove any counters
         (when (or counter-cost advance-counter-cost)
           (update! state side c)
           (when (is-type? card "Agenda")
             (trigger-event state side :agenda-counter-spent card)))
-        ;; Print the message.
+        ;; Print the message
         (print-msg state side ability card targets cost-str)
-        ;; Trigger the effect.
+        ;; Trigger the effect
         (do-effect state side ability c targets)
-        ;; Record the :end-turn effect.
+        ;; Record the :end-turn effect
         (register-end-turn state side ability card targets))
-      ;; Record the ability has been triggered if it is restricted to happening once..
+      ;; Record the ability has been triggered if it is restricted to happening once
       (register-once state ability card))))
 
 (defn- print-msg

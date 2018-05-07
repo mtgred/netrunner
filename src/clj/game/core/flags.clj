@@ -3,19 +3,26 @@
 ;;;; Various functions for checking small "flag" values of cards, runs, players, etc.
 
 (defn card-flag?
-  "Checks the card to see if it has a :flags entry of the given flag-key with the given value"
+  "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
   ;; TODO: add a register for mutable state card flags, separate from this
-  [card flag-key value]
-  (let [cdef (card-def card)]
-    (= value (get-in cdef [:flags flag-key]))))
+  ([card flag-key]
+   (let [cdef (card-def card)]
+     (some? (get-in cdef [:flags flag-key]))))
+  ([card flag-key value]
+   (let [cdef (card-def card)]
+     (= value (get-in cdef [:flags flag-key])))))
 
 (defn card-flag-fn?
   "Checks the card to see if it has a :flags entry of the given flag-key, whose value is a four-argument
   function that returns the given value"
-  [state side card flag-key value]
-  (let [cdef (card-def card)
-        func (get-in cdef [:flags flag-key])]
-    (and func (= (func state side (make-eid state) card nil) value))))
+  ([state side card flag-key]
+   (let [cdef (card-def card)
+         func (get-in cdef [:flags flag-key])]
+     (func state side (make-eid state) card nil)))
+  ([state side card flag-key value]
+   (let [cdef (card-def card)
+         func (get-in cdef [:flags flag-key])]
+     (and func (= (func state side (make-eid state) card nil) value)))))
 
 (defn any-flag-fn?
   "Checks `card-flag-fn? on all installed cards on specified side for the value with the flag-key

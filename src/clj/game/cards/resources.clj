@@ -106,7 +106,9 @@
                  :msg (msg "break 1 subroutine")}]}
 
    "All-nighter"
-   {:abilities [{:cost [:click 1] :effect (effect (trash card {:cause :ability-cost}) (gain :click 2))
+   {:abilities [{:cost [:click 1]
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (gain :click 2))
                  :msg "gain [Click][Click]"}]}
 
    "Angel Arena"
@@ -218,7 +220,8 @@
 
    "Beach Party"
    {:in-play [:hand-size {:mod 5}]
-    :events {:runner-turn-begins {:msg "lose [Click]" :effect (effect (lose :click 1))}}}
+    :events {:runner-turn-begins {:msg "lose [Click]"
+                                  :effect (effect (lose :click 1))}}}
 
    "Beth Kilrain-Chang"
    (let [ability {:once :per-turn
@@ -299,8 +302,12 @@
 
    "Caldera"
    {:prevent {:damage [:net :brain]}
-    :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
-                {:cost [:credit 3] :msg "prevent 1 brain damage" :effect (effect (damage-prevent :brain 1))}]}
+    :abilities [{:cost [:credit 3]
+                 :msg "prevent 1 net damage"
+                 :effect (effect (damage-prevent :net 1))}
+                {:cost [:credit 3]
+                 :msg "prevent 1 brain damage"
+                 :effect (effect (damage-prevent :brain 1))}]}
 
    "Charlatan"
    {:abilities [{:cost [:click 2]
@@ -669,8 +676,9 @@
 
    "Fan Site"
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
+                             :delayed-completion true
                              :req (req (installed? card))
-                             :effect (effect (as-agenda :runner card 0))}}}
+                             :effect (req (as-agenda state :runner eid card 0))}}}
 
    "Fester"
    {:events {:purge {:msg "force the Corp to lose 2 [Credits] if able"
@@ -858,6 +866,30 @@
                  :effect (effect (gain-bad-publicity :corp 1)
                                  (trash card {:cause :ability-cost}))}]}
 
+   "Jackpot!"
+   (let [jackpot {:interactive (req true)
+                  :delayed-completion true
+                  :req (req (= :runner (:as-agenda-side target)))
+                  :effect (req (show-wait-prompt state :corp "Runner to use Jackpot!")
+                               (continue-ability
+                                 state side
+                                 {:optional
+                                  {:prompt "Trash Jackpot!?"
+                                   :no-ability {:effect (effect (clear-wait-prompt :corp))}
+                                   :yes-ability
+                                   {:prompt "Choose how many [Credit] to take"
+                                    :choices {:number (req (get-in card [:counter :credit] 0))}
+                                    :delayed-completion true
+                                    :effect (req (gain state :runner :credit target)
+                                                 (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
+                                                 (clear-wait-prompt state :corp)
+                                                 (trash state :runner eid card nil))}}}
+                                 card nil))}]
+     {:events
+      {:runner-turn-begins {:effect (effect (add-counter :runner card :credit 1))}
+       :agenda-stolen (dissoc jackpot :req)
+       :as-agenda jackpot}})
+
    "Jak Sinclair"
    (let [ability {:label "Make a run (start of turn)"
                   :prompt "Choose a server to run with Jak Sinclair"
@@ -969,7 +1001,7 @@
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                       (all-active-installed state :runner)))))}
 
-    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
+    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
     :effect (effect (lose :corp :hand-size {:mod 1}))
     :leave-play (effect (gain :corp :hand-size {:mod 1}))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
@@ -1008,6 +1040,7 @@
    "Liberated Chela"
    {:abilities [{:cost [:click 5 :forfeit]
                  :msg "add it to their score area"
+                 :delayed-completion true
                  :effect (req (if (not (empty? (:scored corp)))
                                 (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
                                     (resolve-ability
@@ -1022,14 +1055,29 @@
                                                                   :effect (effect (forfeit target)
                                                                                   (move :runner card :rfg)
                                                                                   (clear-wait-prompt :runner))}
-                                                                 {:effect (effect (as-agenda :runner card 2)
-                                                                                  (clear-wait-prompt :runner))
+                                                                 {:delayed-completion true
+                                                                  :effect (req (clear-wait-prompt state :runner)
+                                                                               (as-agenda state :runner eid card 2))
                                                                   :msg "add it to their score area as an agenda worth 2 points"})
                                                               card nil))} card nil))
                                 (resolve-ability
                                   state side
-                                  {:effect (effect (as-agenda :runner card 2))
+                                  {:delayed-completion true
+                                   :effect (req (as-agenda state :runner eid card 2))
                                    :msg "add it to their score area as an agenda worth 2 points"} card nil)))}]}
+
+   "Logic Bomb"
+   {:implementation "Bypass effect is manual"
+    :abilities [{:label "Bypass the encountered ice"
+                 :req (req (and (:run @state)
+                                (rezzed? current-ice)))
+                 :msg (msg "bypass "
+                           (:title current-ice)
+                           (when (pos? (:click runner))
+                             (str " and loses "
+                                  (apply str (repeat (:click runner) "[Click]")))))
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (lose :click (:click runner)))}]}
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library"
@@ -1536,14 +1584,17 @@
    {:recurring 2}
 
    "Security Testing"
-   (let [ability {:prompt "Choose a server for Security Testing" :choices (req (conj servers "No server"))
+   (let [ability {:prompt "Choose a server for Security Testing"
+                  :choices (req (conj servers "No server"))
                   :msg (msg "target " target)
-                  :req (req (and (not (click-spent? :runner state)) (not (used-this-turn? (:cid card) state))))
+                  :req (req (and (not (click-spent? :runner state))
+                                 (not (used-this-turn? (:cid card) state))))
                   :effect (req (when (not= target "No server")
                                  (update! state side (assoc card :server-target target))))}]
      {:events {:runner-turn-begins ability
                :successful-run
-               {:req (req (= (zone->name (get-in @state [:run :server])) (:server-target (get-card state card))))
+               {:req (req (= (zone->name (get-in @state [:run :server]))
+                             (:server-target (get-card state card))))
                 :once :per-turn
                 :effect (req (let [st card]
                                (swap! state assoc-in [:run :run-effect :replace-access]
@@ -1556,9 +1607,26 @@
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
 
+   "Slipstream"
+    {:implementation "Use Slipstream before hitting Continue to pass current ice"
+     :abilities [{:req (req (:run @state))
+                  :effect (req (let [ice-pos  (get-in @state [:run :position])]
+                                 (resolve-ability state side
+                                   {:prompt (msg "Choose a piece of ICE protecting a central server at the same position as " (:title current-ice) )
+                                    :choices {:req #(and (is-central? (second (:zone %)))
+                                                         (ice? %)
+                                                         (= ice-pos (inc (ice-index state %))))}
+                                    :msg (msg "approach " (card-str state target))
+                                    :effect (req (let [dest (second (:zone target))]
+                                                   (swap! state update-in [:run]
+                                                          #(assoc % :position ice-pos :server [dest]))
+                                                   (trash state side card)))}
+                                card nil)))}]}
+
    "Spoilers"
    {:events {:agenda-scored {:interactive (req true)
-                             :msg "trash the top card of R&D" :effect (effect (mill :corp))}}}
+                             :msg "trash the top card of R&D"
+                             :effect (effect (mill :corp))}}}
 
    "Starlight Crusade Funding"
    {:msg "ignore additional costs on Double events"

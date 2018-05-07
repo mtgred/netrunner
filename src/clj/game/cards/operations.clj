@@ -78,8 +78,9 @@
                        :yes-ability {:msg (msg "let the Runner make a run on " serv)
                                      :effect (effect (clear-wait-prompt :corp)
                                                      (game.core/run eid serv nil card))}
-                       :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                    (as-agenda :corp (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
+                       :no-ability {:delayed-completion true
+                                    :effect (req (clear-wait-prompt state :corp)
+                                                    (as-agenda state :corp eid (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
                                     :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                     card nil)))}
 
@@ -269,7 +270,8 @@
 
    "\"Clones are not People\""
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 1 agenda point"
-                             :effect (effect (as-agenda :corp card 1))}}}
+                             :delayed-completion true
+                             :effect (req (as-agenda state :corp eid card 1))}}}
 
    "Closed Accounts"
    {:req (req tagged)
@@ -1356,16 +1358,32 @@
                  (shuffle! state side :deck)
                  (draw state side eid (count targets) nil))}
 
+   "Standard Procedure"
+   {:req (req (last-turn? state :runner :successful-run))
+    :prompt "Choose a card type"
+    :choices ["Event" "Hardware" "Program" "Resource"]
+    :effect (req (let [n (* 2 (count (filter #(is-type? % target) (:hand runner))))]
+                   (gain state :corp :credit n)
+                   (system-msg state side (str "uses Standard Procedure to name " target ", reveal "
+                                               (join ", " (map :title (:hand runner)))
+                                               " in the Runner's Grip, and gain " n " [Credits]"))))}
+
    "Stock Buy-Back"
    {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")
     :effect (effect (gain :credit (* 3 (count (:scored runner)))))}
 
    "Sub Boost"
-   {:choices {:req #(and (ice? %) (rezzed? %))}
-    :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
-    :effect (effect (update! (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
-                    (update-ice-strength target)
-                    (host (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))}
+   (let [new-sub {:label "[Sub Boost] End the run"}]
+     {:sub-effect end-the-run
+      :choices {:req #(and (ice? %) (rezzed? %))}
+      :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
+      :effect (req (update! state side (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
+                      (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub)
+                      (update-ice-strength state side target)
+                      (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
+      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :events {:rez {:req (req (= (:cid target) (:cid (:host card))))
+                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
 
    "Subcontract"
    (letfn [(sc [i sccard]
@@ -1626,13 +1644,17 @@
                                      card nil)))}
 
    "Wetwork Refit"
-   {:choices {:req #(and (ice? %)
-                         (has-subtype? % "Bioroid")
-                         (rezzed? %))}
-    :msg (msg "give " (card-str state target) "\"[Subroutine] Do 1 brain damage\" before all its other subroutines")
-    :effect (effect (update! (assoc target :subroutines (cons (do-brain-damage 1) (:subroutines target))))
-                    (host (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
-    :leave-play (effect (update! (assoc (:host card) :subroutines (rest (:subroutines (:host card))))))}
+   (let [new-sub {:label "[Wetwork Refit] Do 1 brain damage"}]
+     {:choices {:req #(and (ice? %)
+                           (has-subtype? % "Bioroid")
+                           (rezzed? %))}
+      :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 brain damage\" before all its other subroutines")
+      :sub-effect (do-brain-damage 1)
+      :effect (req (add-extra-sub state :corp (:cid card) target 0 new-sub)
+                   (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
+      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :events {:rez {:req (req (= (:cid target) (:cid (:host card))))
+                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) 0 new-sub))}}})
 
    "Witness Tampering"
    {:msg "remove 2 bad publicity"
