@@ -692,7 +692,8 @@
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
                           :yes-ability {:msg "force the Corp to draw 1 card"
-                                        :effect (effect (draw :corp))}
+                                        :delayed-completion true
+                                        :effect (effect (draw :corp eid 1 nil))}
                           :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
                         card nil))}}}
 
