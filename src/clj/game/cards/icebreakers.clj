@@ -149,7 +149,8 @@
 (defn- conspiracy
   "Install-from-heap breakers"
   [title type abilities]
-  (let [install-prompt {:req (req (and (= (:zone card) [:discard])
+  (let [install-prompt {:persistent (req true)
+                        :req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
                                        (not (install-locked? state side))))

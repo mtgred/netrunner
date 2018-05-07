@@ -82,7 +82,8 @@
                               (continue-ability state side (dome card) card nil))}]})
 
    "Ben Musashi"
-   (let [bm {:req (req (or (in-same-server? card target)
+   (let [bm {:persistent (req true)
+             :req (req (or (in-same-server? card target)
                            (from-same-server? card target)))
              :effect (effect (steal-cost-bonus [:net-damage 2]))}]
      {:trash-effect
@@ -90,7 +91,8 @@
                :effect (effect (register-events {:pre-steal-cost (assoc bm :req (req (or (= (:zone target) (:previous-zone card))
                                                                                          (= (central->zone (:zone target))
                                                                                             (butlast (:previous-zone card))))))
-                                                 :run-ends {:effect (effect (unregister-events card))}}
+                                                 :run-ends {:persistent (req true)
+                                                            :effect (effect (unregister-events card))}}
                                                 (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost bm :run-ends nil}})
 
@@ -213,11 +215,13 @@
     :trash-effect
                {:effect (req (register-events
                                state side
-                               (let [ct {:effect (req (unregister-events state side card)
+                               (let [ct {:persistent (req true)
+                                         :effect (req (unregister-events state side card)
                                                       (update! state side (dissoc card :troubleshooter-target))
                                                       (update-ice-strength state side (:troubleshooter-target card)))}]
                                  {:pre-ice-strength
-                                                    {:req (req (= (:cid target) (:cid (:troubleshooter-target card))))
+                                                    {:persistent (req true)
+                                                     :req (req (= (:cid target) (:cid (:troubleshooter-target card))))
                                                      :effect (effect (ice-strength-bonus (:troubleshooter-amount card) target))}
                                   :runner-turn-ends ct :corp-turn-ends ct}) card))}}
 
@@ -374,10 +378,12 @@
                                    :effect (effect (trash target) (clear-wait-prompt :runner))} card nil)
                                 (do (register-events
                                       state side
-                                      {:pre-ice-strength {:req (req (= (card->server state card)
+                                      {:pre-ice-strength {:persistent (req true)
+                                                          :req (req (= (card->server state card)
                                                                        (card->server state target)))
                                                           :effect (effect (ice-strength-bonus 2 target))}
-                                       :run-ends {:effect (effect (unregister-events card))}} card)
+                                       :run-ends {:persistent (req true)
+                                                  :effect (effect (unregister-events card))}} card)
                                     (continue-ability
                                       state side
                                       {:effect (req (update-ice-in-server
@@ -588,7 +594,8 @@
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
    "Mwanza City Grid"
-   (let [gain-creds {:req (req (and installed
+   (let [gain-creds {:persistent (req true)
+                     :req (req (and installed
                                     this-server
                                     (:successful run)
                                     (pos? (:cards-accessed run))))
@@ -607,7 +614,8 @@
        :effect (effect (register-events {:run-ends
                                          (assoc gain-creds :req (req (= (first (:server run))
                                                                         (second (:previous-zone card)))))
-                                         :successful-run-ends {:effect (effect (unregister-events card))}}
+                                         :successful-run-ends {:persistent (req true)
+                                                               :effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard))))}})
 
    "NeoTokyo Grid"
@@ -685,6 +693,7 @@
    "Old Hollywood Grid"
    (let [ohg {:req (req (or (in-same-server? card target)
                             (from-same-server? card target)))
+              :persistent (req true)
               :effect (req (register-persistent-flag!
                              state side
                              card :can-steal
@@ -711,6 +720,7 @@
    "Overseer Matrix"
    (let [om {:req (req (in-same-server? card target))
              :delayed-completion true
+             :persistent (req true)
              :effect (effect (show-wait-prompt :runner "Corp to use Overseer Matrix")
                              (continue-ability
                                {:optional
@@ -730,7 +740,8 @@
                                                                                   (:previous-zone card))
                                                                                (= (central->zone (:zone target))
                                                                                   (butlast (:previous-zone card))))))
-                                         :run-ends {:effect (effect (unregister-events card))}}
+                                         :run-ends {:persistent (req true)
+                                                    :effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard))))}
       :events {:run-ends nil
                :runner-trash om}})
@@ -770,7 +781,8 @@
              :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
 
    "Red Herrings"
-   (let [ab {:req (req (or (in-same-server? card target)
+   (let [ab {:persistent (req true)
+             :req (req (or (in-same-server? card target)
                            (from-same-server? card target)))
              :effect (effect (steal-cost-bonus [:credit 5]))}]
      {:trash-effect
@@ -778,7 +790,8 @@
        :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
                                                                                  (= (central->zone (:zone target))
                                                                                     (butlast (:previous-zone card))))))
-                                         :run-ends {:effect (effect (unregister-events card))}}
+                                         :run-ends {:persistent (req true)
+                                                    :effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ab :run-ends nil}})
 
@@ -860,7 +873,8 @@
                                    (lock-install (:cid card) :corp)
                                    (toast :runner "Cannot install until the end of the run")
                                    (toast :corp "Cannot install until the end of the run")
-                                   (register-events {:run-ends {:effect (effect (unlock-install (:cid card) :runner)
+                                   (register-events {:run-ends {:persistent (req true)
+                                                                :effect (effect (unlock-install (:cid card) :runner)
                                                                                 (unlock-install (:cid card) :corp))}}
                                                     (assoc card :zone '(:discard))))}
     :events {:run-ends nil
@@ -870,7 +884,8 @@
    {:recurring 2}
 
    "Strongbox"
-   (let [ab {:req (req (or (in-same-server? card target)
+   (let [ab {:persistent (req true)
+             :req (req (or (in-same-server? card target)
                            (from-same-server? card target)))
              :effect (effect (steal-cost-bonus [:click 1]))}]
      {:trash-effect
@@ -878,7 +893,8 @@
        :effect (effect (register-events {:pre-steal-cost (assoc ab :req (req (or (= (:zone target) (:previous-zone card))
                                                                                  (= (central->zone (:zone target))
                                                                                     (butlast (:previous-zone card))))))
-                                         :run-ends {:effect (effect (unregister-events card))}}
+                                         :run-ends {:persistent (req true)
+                                                    :effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard))))}
       :events {:pre-steal-cost ab :run-ends nil}})
 
@@ -1010,7 +1026,8 @@
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events state side
                                                    {:corp-turn-begins
-                                                    {:msg (msg "increase the Runner's maximum hand size by " n)
+                                                    {:persistent (req true)
+                                                     :msg (msg "increase the Runner's maximum hand size by " n)
                                                      :effect (effect (gain :runner :hand-size {:mod n})
                                                                      (unregister-events card)
                                                                      (update! (dissoc card :times-used)))}}

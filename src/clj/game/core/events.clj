@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare can-trigger? card-def clear-wait-prompt effect-completed event-title get-card get-nested-host get-remote-names
+(declare active? can-trigger? card-def clear-wait-prompt effect-completed event-title get-card get-nested-host get-remote-names
          get-runnable-zones get-zones installed? make-eid register-effect-completed register-suppress resolve-ability
          show-wait-prompt trigger-suppress unregister-suppress)
 
@@ -42,9 +42,12 @@
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]
   (let [e (first handlers)
-        ability (:ability e)]
+        c (:card e)
+        ability (:ability e)
+        persistent (:persistent ability)]
     (if e
-      (if-let [card (get-card state (:card e))]
+      (if-let [card (or (#(when (active? %) %) (get-card state c))
+                        (when (and persistent (persistent state side eid c targets)) c))]
         (when-completed (resolve-ability state side (dissoc ability :req) card targets)
                         (apply trigger-event-sync-next state side eid (next handlers) event targets))
         (apply trigger-event-sync-next state side eid (next handlers) event targets))

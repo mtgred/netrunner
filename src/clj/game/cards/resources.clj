@@ -593,7 +593,8 @@
                                 (disable-card state side c)
                                 (register-events state side
                                                  {:post-runner-turn-ends
-                                                  {:effect (req (enable-card state side (get-card state c))
+                                                  {:persistent (req true)
+                                                   :effect (req (enable-card state side (get-card state c))
                                                                 (when-let [reactivate-effect (:reactivate (card-def c))]
                                                                   (resolve-ability state :runner reactivate-effect
                                                                                    (get-card state c) nil))
@@ -992,6 +993,7 @@
                                                       (all-active-installed state :runner)))))}
 
     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
+    :reactivate {:effect (req (:effect (card-def card)))} ;; Should fix Lewi + Dr. Lovegood
     :effect (effect (lose :corp :hand-size {:mod 1}))
     :leave-play (effect (gain :corp :hand-size {:mod 1}))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
@@ -1769,11 +1771,13 @@
     :events {:runner-turn-ends nil :corp-turn-ends nil :pre-breaker-strength nil}
     :trash-effect {:effect
                    (effect (register-events
-                             (let [hai {:effect (effect (unregister-events card)
+                             (let [hai {:persistent (req true)
+                                        :effect (effect (unregister-events card)
                                                         (update! (dissoc card :hai-target))
                                                         (update-breaker-strength (:hai-target card)))}]
                                {:runner-turn-ends hai :corp-turn-ends hai
-                                :pre-breaker-strength {:req (req (= (:cid target)(:cid (:hai-target card))))
+                                :pre-breaker-strength {:persistent (req true)
+                                                       :req (req (= (:cid target)(:cid (:hai-target card))))
                                                        :effect (effect (breaker-strength-bonus 2))}}) card))}}
 
    "The Shadow Net"
