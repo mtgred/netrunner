@@ -161,10 +161,16 @@
                    {:title "/faceup command"} nil))
 
 (defn command-counter [state side args]
-  (if (= 1 (count args))
+  (cond
+    (empty? args)
+    (command-counter-smart state side `("1"))
+
+    (= 1 (count args))
     (command-counter-smart state side args)
+
+    :else
     (let [typestr (.toLowerCase (first args))
-          value (if-let [n (string->num (second args))] n 0)
+          value (if-let [n (string->num (second args))] n 1)
           one-letter (if (<= 1 (.length typestr)) (.substring typestr 0 1) "")
           two-letter (if (<= 2 (.length typestr)) (.substring typestr 0 2) one-letter)
           counter-type (cond (= "v" one-letter) :virus
