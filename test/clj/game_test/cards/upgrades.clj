@@ -853,7 +853,21 @@
           (prompt-choice :runner "Card from hand")
           (prompt-choice :runner "No action"))
         (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
-        (is (= 17 (:credit (get-corp))) "Corp gains 10 credits")))))
+        (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
+  (testing "works well with replacement effects"
+    ;; Regression test for #3456
+    (do-game
+      (new-game (default-corp ["Mwanza City Grid" "Hedge Fund"])
+                (default-runner ["Embezzle"]))
+      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (take-credits state :corp)
+      (core/rez state :corp (get-content state :hq 0))
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+      (play-run-event state (first (:hand (get-runner))) :hq)
+      (prompt-choice :runner "ICE")
+      (is (zero? (count (:discard (get-corp)))) "No cards trashed from HQ")
+      (is (not (:run @state)) "Run ended after Embezzle completed - no accesses from Mwanza")
+      (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza"))))
 
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement
