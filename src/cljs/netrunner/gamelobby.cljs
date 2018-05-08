@@ -16,6 +16,12 @@
 
 (def socket-channel (chan))
 
+(defn resume-sound
+  "Chrome doesn't allow audio until audio context is resumed (or created) after a user interaction."
+  []
+  (when-let [audio-context (aget js/Howler "ctx")]
+    (.resume audio-context)))
+
 (defn sort-games-list [games]
   (sort-by #(vec (map (assoc % :started (not (:started %))
                                :mygame (if-let [og (:originalPlayers %)]
@@ -278,13 +284,13 @@
        (sab/html
         [:div.gameline {:class (when (= current-game gameid) "active")}
          (when (and (:allowspectator game) (not (or password-game current-game editing)))
-           [:button {:on-click #(join "watch")} "Watch" editing])
+           [:button {:on-click #(do (join "watch") (resume-sound))} "Watch" editing])
          (when-not (or current-game editing (= (count players) 2) started password-game)
-           [:button {:on-click #(join "join")} "Join"])
+           [:button {:on-click #(do (join "join") (resume-sound))} "Join"])
          (when (and (not current-game) (not editing) started (not password-game)
                     (some #(= % (get-in @app-state [:user :_id]))
                           (map #(get-in % [:user :_id]) original-players)))
-           [:button {:on-click #(join "rejoin")} "Rejoin"])
+           [:button {:on-click #(do (join "rejoin") (resume-sound))} "Rejoin"])
          (let [c (count (:spectators game))]
            [:h4 (str (when-not (empty? (:password game))
                        "[PRIVATE] ")
@@ -375,7 +381,7 @@
            [:div.button-bar
             (if (or gameid (:editing state))
               [:button.float-left {:class "disabled"} "New game"]
-              [:button.float-left {:on-click #(new-game cursor owner)} "New game"])
+              [:button.float-left {:on-click #(do (new-game cursor owner) (resume-sound))} "New game"])
             [:div.rooms
              (room-tab cursor owner games "competitive" "Competitive")
              (room-tab cursor owner games "casual" "Casual")]]
