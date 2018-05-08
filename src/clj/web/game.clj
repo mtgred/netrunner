@@ -156,8 +156,7 @@
         (println "\tGameID:" gameid)
         (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
         (println "\tCommand:" command)
-        (println "\tArgs:" args)
-        (println "\tGame:" game)))))
+        (println "\tArgs:" args)))))
 
 (defn handle-game-watch
   "Handles a watch command when a game has started."
