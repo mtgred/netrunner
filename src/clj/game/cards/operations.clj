@@ -1460,6 +1460,10 @@
       :effect (req (let [serv (next (server->zone state target))]
                      (continue-ability state side (sun serv) card nil)))})
 
+   "Surveillance Sweep"
+   {:events {:pre-init-trace {:effect (req (swap! state assoc-in [:trace :player] :runner))}}
+    :leave-play (req (swap! state dissoc-in [:trace :player]))}
+
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))
     :msg (msg "gain " (count (:hand runner)) " [Credits]")}

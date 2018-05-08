@@ -1865,6 +1865,29 @@
     (play-from-hand state :corp "Successful Demonstration")
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
 
+(deftest surveillance-sweep
+  ;; Surveillance Sweep
+  (do-game
+    (new-game (default-corp [(qty "Restructured Datapool" 1) (qty "Surveillance Sweep" 1)])
+              (default-runner [(qty "Scrubbed" 1)]))
+    (is (= 0 (:tag (get-runner))) "Runner should start with no tags")
+    (play-from-hand state :corp "Surveillance Sweep")
+    (play-and-score state "Restructured Datapool")
+    (let [rd-scored (get-scored state :corp)]
+      (card-ability state :corp rd-scored 0)
+      (is (= :waiting (->> (get-corp) :prompt first :prompt-type)) "Corp should wait on Runner first")
+      (prompt-choice :runner 0)
+      (prompt-choice :corp 0)
+      (is (= 1 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Scrubbed")
+      (take-credits state :runner)
+      (card-ability state :corp rd-scored 0)
+      (is (= :waiting (->> (get-runner) :prompt first :prompt-type)) "Runner should now be waiting on Corp")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 2 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability"))))
+
 (deftest the-all-seeing-i-prevent-trash
   ;; Counts number of cards if one card is prevented trashed with fall guy
   (do-game
@@ -1909,9 +1932,7 @@
       (card-ability state :runner fall-guy 0))
     (prompt-choice :runner "Done") ;; This assumes hosted cards get put in trash-list before host
     (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
-    (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")
-    )
-  )
+    (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")))
 
 (deftest the-all-seeing-i-jarogniew-mercs
   ;; The All-Seeing I should not trash Jarogniew Mercs if there are other installed resources
