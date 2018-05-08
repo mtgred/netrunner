@@ -715,7 +715,7 @@
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
     ;; Don't need a msg since game will print that card access is prevented
-    :events {:successful-run {:effect (req (prevent-access))}
+    :events {:successful-run {:effect (effect (prevent-access))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"
