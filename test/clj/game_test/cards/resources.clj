@@ -702,6 +702,22 @@
       (is (= 1 (count (:discard (get-corp)))) "Agenda trashed")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
+(deftest film-critic-mca-informant
+  ;; Film Critic - required hosted cards to be an agenda before firing ability
+  (do-game
+    (new-game (default-corp [(qty "MCA Informant" 1)])
+              (default-runner [(qty "Film Critic" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (let [fc (first (get-in @state [:runner :rig :resource]))]
+      (take-credits state :runner)
+      (play-from-hand state :corp "MCA Informant")
+      (prompt-select :corp fc)
+      (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant hosted on FC")
+      (take-credits state :corp)
+      (card-ability state :runner fc 0)
+      (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant still hosted on FC"))))
+
 (deftest find-the-truth
   ;; Find the Truth
   (testing "Basic test - On successful run see the top card from R&D before access"

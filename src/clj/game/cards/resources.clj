@@ -699,7 +699,7 @@
                         :delayed-completion true
                         :effect (effect (continue-ability (host-agenda? target) card nil))}}
       :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
-                   :req (req (not (empty? (:hosted card))))
+                   :req (req (get-agenda card))
                    :effect (req (let [c (move state :runner (get-agenda card) :scored)]
                                   (gain-agenda-point state :runner (get-agenda-points state :runner c))))
                    :msg (msg (let [c (get-agenda card)]
