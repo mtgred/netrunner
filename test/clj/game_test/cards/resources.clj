@@ -969,6 +969,29 @@
       (is (= 14 (:credit (get-runner))) "Runner gains 2 credits")
       (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
 
+(deftest jackpot-film-critic
+  ;; Jackpot! should fire when moving agendas from Film Critic to scored area
+  (do-game
+    (new-game (default-corp [(qty "Project Vitruvius" 1)])
+              (default-runner [(qty "Jackpot!" 1) (qty "Film Critic" 1)]))
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (play-from-hand state :runner "Jackpot!")
+    (let [fc (get-resource state 0)
+          jak (get-resource state 1)]
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Yes")
+      (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner 1)
+      (is (= 1 (count (:scored (get-runner)))) "Moved agenda to scored area")
+      (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed")
+      (is (empty? (:hosted (refresh fc))) "Removed agenda hosted on FC"))))
+
 (deftest jackpot-hiro
   ;; Jackpot! - should fire when trashing Chairman Hiro
   (do-game
