@@ -1154,18 +1154,23 @@
                 [:div
                  (when (:base prompt)
                    ;; This is trace prompt
-                   (if (= side :corp)
-                     ;; This is a trace prompt for the corp, show runner link + credits
-                     [:div.info "Runner has " (:link runner) [:span {:class "anr-icon link"}]
-                      " + " (:credit runner) [:span {:class "anr-icon credit"}]]
-                     ;; This is a trace prompt for the runner, show trace strength
+                   (if (nil? (:strength prompt))
+                     (if (= side :corp)
+                       ;; This is a trace prompt for the corp, show runner link + credits
+                       [:div.info "Runner has " (:link runner) [:span {:class "anr-icon link"}]
+                        " + " (:credit runner) [:span {:class "anr-icon credit"}]]
+                       ;; Trace in which the runner pays first, showing base trace strength and corp credits
+                       [:div.info "Corp base trace " (:base prompt) [:span {:class "anr-icon link"}]
+                        " + " (:credit corp) [:span {:class "anr-icon credit"}]])
+                     ;; This is a trace prompt for the responder to the trace, show strength
                      [:div.info (str "Trace - " (:strength prompt))]))
                  [:div.credit-select
                   ;; Inform user of base trace / link and any bonuses
-                  (when-let [base (:base prompt)]
-                    (let [bonus (:bonus prompt 0)
-                          preamble (if (pos? bonus) (str base " + " bonus) (str base))]
-                      [:span (str preamble " + ")]))
+                  (when (:strength prompt)
+                    (when-let [base (:base prompt)]
+                      (let [bonus (:bonus prompt 0)
+                            preamble (if (pos? bonus) (str base " + " bonus) (str base))]
+                        [:span (str preamble " + ")])))
                   [:select#credit (for [i (range (inc (:credit me)))]
                                     [:option {:value i} i])] " credits"]
                  [:button {:on-click #(send-command "choice"
