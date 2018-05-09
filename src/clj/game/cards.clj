@@ -142,6 +142,40 @@
           (unregister-events state side h)
           (register-events state side (:events (card-def newh)) newh))))))
 
+(defn pick-virus-counters-to-spend
+  "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
+  This function returns a map for use with resolve-ability or continue-ability.
+  The ability triggered returns either {:number n :msg msg} on completed effect, or :cancel on a cancel.
+  n is the number of virus counters selected, msg is the msg string of all the cards and the virus counters taken from each."
+  ([] (pick-virus-counters-to-spend (hash-map) 0 nil))
+  ([target-count] (pick-virus-counters-to-spend (hash-map) 0 target-count))
+  ([selected-cards counter-count target-count]
+   {:delayed-completion true
+    :prompt (str "Select a card with virus counters ("
+                 counter-count (when (pos? target-count) " out of " target-count)
+                 " virus counters taken)")
+    :choices {:req #(and (installed? %)
+                         (pos? (get-in % [:counter :virus] 0)))}
+    :effect (req (add-counter state :runner target :virus -1)
+                 (let [selected-cards (update selected-cards (:cid target)
+                                              ;; Store card reference and number of counters picked
+                                              ;; Overwrite card reference each time
+                                              #(assoc % :card target :number (inc (:number % 0))))
+                       counter-count (inc counter-count)]
+                   (if (or (not target-count)
+                           (< counter-count target-count))
+                     (continue-ability state side
+                                       (pick-virus-counters-to-spend selected-cards counter-count target-count)
+                                       card nil)
+                     (let [msg (join ", " (map #(let [{:keys [card number]} %
+                                                      title (:title card)]
+                                                  (str (quantify number "virus counter") " from " title))
+                                               (vals selected-cards)))]
+                       (effect-completed state side (make-result eid {:number (inc counter-count) :msg msg}))))))
+    :cancel-effect (req (doseq [{:keys [card number]} (vals selected-cards)]
+                          (add-counter state :runner (get-card state card) :virus number))
+                        (effect-completed state side (make-result eid :cancel)))}))
+
 ;; Load all card definitions into the current namespace.
 (load "cards/agendas")
 (load "cards/assets")
