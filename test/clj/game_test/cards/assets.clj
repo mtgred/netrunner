@@ -557,6 +557,32 @@
       (is (= 4 (get-in @state [:corp :credit])))
       (is (= 14 (get-counters (refresh eve) :credit))))))
 
+(deftest executive-boot-camp-alternate-rez-cost
+  ;; Executive Boot Camp - works with Ice that has alternate rez costs
+  (do-game
+    (new-game (default-corp [(qty "15 Minutes" 1) (qty "Executive Boot Camp" 1)
+                             (qty "Tithonium" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 3)
+    (score-agenda state :corp (find-card "15 Minutes" (:hand (get-corp))))
+    (play-from-hand state :corp "Tithonium" "HQ")
+    (play-from-hand state :corp "Executive Boot Camp" "New remote")
+    (let [ebc (get-content state :remote1 0)
+          tith (get-ice state :hq 0)]
+      (core/rez state :corp ebc)
+      (take-credits state :corp)
+      (is (= 9 (:credit (get-corp))) "Corp ends turn with 9 credits")
+
+      (take-credits state :runner)
+
+      (is (not (:rezzed (refresh tith))) "Tithonium not rezzed")
+      (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      (card-ability state :corp ebc 0)
+      (prompt-select :corp tith)
+      (prompt-choice :corp "No")
+      (is (and (:installed (refresh tith)) (:rezzed (refresh tith))) "Rezzed Tithonium")
+      (is (= 1 (:credit (get-corp))) "EBC saved 1 credit on the rez of Tithonium"))))
+
 (deftest executive-boot-camp-suppress-start-of-turn
   ;; Executive Boot Camp - suppress the start-of-turn event on a rezzed card. Issue #1346.
   (do-game
