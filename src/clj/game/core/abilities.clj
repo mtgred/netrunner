@@ -557,7 +557,6 @@
     (show-trace-prompt state other card (str "Boost " other-type " strength?")
                        #(resolve-trace state side card trace %)
                        trace)
-    ; (swap! state assoc :trace {:strength strength :ability trace :card card})
     (trigger-event state side :trace nil)))
 
 (defn trace-start
