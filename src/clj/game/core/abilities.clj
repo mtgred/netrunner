@@ -352,9 +352,9 @@
 
 (defn- show-trace-prompt
   "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
-  Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
+   Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
   ([state side card message f args] (show-trace-prompt state side (make-eid state) card message f args))
-  ([state side eid card message f {:keys [priority base bonus strength] :as args}]
+  ([state side eid card message f {:keys [priority player other base bonus strength link] :as args}]
    (let [prompt (if (string? message) message (message state side nil card nil))
          newitem {:eid eid
                   :msg prompt
@@ -362,9 +362,12 @@
                   :effect f
                   :card card
                   :priority priority
+                  :player player
+                  :other other
                   :base base
                   :bonus bonus
-                  :strength strength}]
+                  :strength strength
+                  :link link}]
      (add-to-prompt-queue state side newitem))))
 
 (defn show-select
@@ -519,10 +522,12 @@
     (system-msg state other (str " spends " boost
                                  "[Credits] to increase " (if (corp-start? trace) "link" "trace")
                                  " strength to " (if (corp-start? trace)
-                                                   corp-strength
-                                                   runner-strength)))
+                                                   runner-strength
+                                                   corp-strength)))
+    (clear-wait-prompt state player)
     (let [successful (> corp-strength runner-strength)
           which-ability (assoc (if successful trace (:unsuccessful trace)) :eid (make-eid state))]
+      (system-say state side (str "The trace was " (when-not successful "un") "successful."))
       (when-completed (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace)
                                           {:runner-spent (if (corp-start? trace)
                                                            boost
@@ -560,8 +565,6 @@
   [state side card {:keys [player other base bonus priority] :as trace}]
   (system-msg state :corp (str "uses " (:title card)
                                " to initiate a trace with strength " (+ base bonus)
-                               " (" base
-                               (when (pos? bonus) (str " + " bonus " bonus)"))
                                " (" (make-label trace) ")"))
   (show-wait-prompt state other
                     (str (if (corp-start? trace) "Corp" "Runner")
@@ -576,12 +579,12 @@
 (defn init-trace
   [state side card {:keys [base priority] :as trace}]
   (trigger-event state :corp :pre-init-trace card)
-  (let [trace (assoc trace :player (determine-initiator state trace))
-        trace (assoc trace :other (if (corp-start? trace) :runner :corp))
-        trace (assoc trace :base (if (fn? base) (base state :corp (make-eid state) card nil) base))
-        trace (assoc trace :bonus (get-in @state [:bonus :trace] 0))
-        trace (assoc trace :link (get-in @state [:runner :link] 0))
-        trace (assoc trace :priority (or priority 2))]
+  (let [trace (merge trace {:player (determine-initiator state trace)
+                            :other (if (= :corp (determine-initiator state trace)) :runner :corp)
+                            :base (if (fn? base) (base state :corp (make-eid state) card nil) base)
+                            :bonus (get-in @state [:bonus :trace] 0)
+                            :link (get-in @state [:runner :link] 0)
+                            :priority (or priority 2)})]
     (trace-start state side card trace)))
 
 (defn rfg-and-shuffle-rd-effect

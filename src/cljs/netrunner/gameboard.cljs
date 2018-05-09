@@ -1152,25 +1152,32 @@
                 ;; choice of number of credits
                 (= (:choices prompt) "credit")
                 [:div
-                 (when (:base prompt)
-                   ;; This is trace prompt
+                 (when-let [base (:base prompt)]
+                   ;; This is the initial trace prompt
                    (if (nil? (:strength prompt))
-                     (if (= side :corp)
+                     (if (= "corp" (:player prompt))
                        ;; This is a trace prompt for the corp, show runner link + credits
-                       [:div.info "Runner has " (:link runner) [:span {:class "anr-icon link"}]
+                       [:div.info "Runner: " (:link runner) [:span {:class "anr-icon link"}]
                         " + " (:credit runner) [:span {:class "anr-icon credit"}]]
                        ;; Trace in which the runner pays first, showing base trace strength and corp credits
-                       [:div.info "Corp base trace " (:base prompt) [:span {:class "anr-icon link"}]
+                       [:div.info "Trace: " (when (:bonus prompt) (+ base (:bonus prompt)) base)
                         " + " (:credit corp) [:span {:class "anr-icon credit"}]])
                      ;; This is a trace prompt for the responder to the trace, show strength
-                     [:div.info (str "Trace - " (:strength prompt))]))
+                     (if (= "corp" (:player prompt))
+                       [:div.info "vs Trace: " (:strength prompt)]
+                       [:div.info "vs Runner: " (:strength prompt) [:span {:class "anr-icon link"}]])))
                  [:div.credit-select
                   ;; Inform user of base trace / link and any bonuses
-                  (when (:strength prompt)
-                    (when-let [base (:base prompt)]
-                      (let [bonus (:bonus prompt 0)
-                            preamble (if (pos? bonus) (str base " + " bonus) (str base))]
-                        [:span (str preamble " + ")])))
+                  (when-let [base (:base prompt)]
+                    (if (nil? (:strength prompt))
+                      (if (= "corp" (:player prompt))
+                        (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
+                          [:span (str strength " + ")])
+                        [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )])
+                      (if (= "corp" (:player prompt))
+                        [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )]
+                        (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
+                          [:span (str strength " + ")]))))
                   [:select#credit (for [i (range (inc (:credit me)))]
                                     [:option {:value i} i])] " credits"]
                  [:button {:on-click #(send-command "choice"
