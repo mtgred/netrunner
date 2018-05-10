@@ -360,8 +360,9 @@
                                        (do (clear-wait-prompt state :corp)
                                            (if-let [msg (:msg async-result)]
                                              (do (system-msg state :runner
-                                                             (str "trash " (:title accessed-card)
-                                                                  " at no cost spending " msg))
+                                                             (str "uses Freedom Khumalo: Crypto-Anarchist to"
+                                                                  " trash " (:title accessed-card)
+                                                                  " at no cost, spending " msg))
                                                  (trash-no-cost state side eid accessed-card))
                                              ;; Player cancelled ability
                                              (do (swap! state dissoc-in [:per-turn (:cid card)])
