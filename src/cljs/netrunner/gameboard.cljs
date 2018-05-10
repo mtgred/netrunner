@@ -1,18 +1,18 @@
 (ns netrunner.gameboard
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [om.core :as om :include-macros true]
-            [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [chan put! <!] :as async]
+  (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
+            [differ.core :as differ]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
             [netrunner.utils :refer [toastr-options influence-dot map-longest]]
-            [differ.core :as differ]
-            [om.dom :as dom]
             [netrunner.ws :as ws]
-            [jinteki.utils :refer [str->int]]
-            [jinteki.cards :refer [all-cards]]))
+            [om.core :as om :include-macros true]
+            [om.dom :as dom]
+            [sablono.core :as sab :include-macros true]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
@@ -1279,25 +1279,25 @@
     (om/set-state! owner :sfx-last-played {:gameid gameid :id sfx-current-id})))
 
 (def corp-stats
-  (let [s (-> @game-state :stats :corp)]
-    [["Clicks Gained" #(-> s :gain :click)]
-     ["Credits Gained" #(-> s :gain :credit)]
-     ["Credits Lost" #(-> s :lose :credit)]
-     ["Credits by Click" #(-> s :click :credit)]
-     ["Cards Drawn" #(-> s :gain :card)]
-     ["Cards Drawn by Click" #(-> s :click :draw)]]))
+  (let [s #(-> @game-state :stats :corp)]
+    [["Clicks Gained" #(-> (s) :gain :click)]
+     ["Credits Gained" #(-> (s) :gain :credit)]
+     ["Credits Lost" #(-> (s) :lose :credit)]
+     ["Credits by Click" #(-> (s) :click :credit)]
+     ["Cards Drawn" #(-> (s) :gain :card)]
+     ["Cards Drawn by Click" #(-> (s) :click :draw)]]))
 
 (def runner-stats
-  (let [s (-> @game-state :stats :runner)]
-    [["Clicks Gained" #(-> s :gain :click)]
-     ["Credits Gained" #(-> s :gain :credit)]
-     ["Credits Lost" #(-> s :lose :credit)]
-     ["Credits by Click" #(-> s :click :credit)]
-     ["Cards Drawn" #(-> s :gain :card)]
-     ["Cards Drawn by Click" #(-> s :click :draw)]
-     ["Tags Gained" #(-> s :gain :tag)]
-     ["Runs Made" #(-> s :runs :started)]
-     ["Cards Accessed" #(-> s :access :cards)]]))
+  (let [s #(-> @game-state :stats :runner)]
+    [["Clicks Gained" #(-> (s) :gain :click)]
+     ["Credits Gained" #(-> (s) :gain :credit)]
+     ["Credits Lost" #(-> (s) :lose :credit)]
+     ["Credits by Click" #(-> (s) :click :credit)]
+     ["Cards Drawn" #(-> (s) :gain :card)]
+     ["Cards Drawn by Click" #(-> (s) :click :draw)]
+     ["Tags Gained" #(-> (s) :gain :tag)]
+     ["Runs Made" #(-> (s) :runs :started)]
+     ["Cards Accessed" #(-> (s) :access :cards)]]))
 
 (defn show-stat
   "Determines statistic counter and if it should be shown"
@@ -1334,6 +1334,7 @@
 
       :else
       (str ") wins by scoring agenda points on turn "  (:turn @game-state)))]
+   [:div "Time taken: " (-> @game-state :stats :time :elapsed) " minutes"]
    [:br]
    (build-game-stats)
    [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "✘"]])

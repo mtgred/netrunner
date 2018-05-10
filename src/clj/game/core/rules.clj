@@ -634,22 +634,27 @@
     (system-msg state side "cleared the win condition")
     (swap! state dissoc-in [:runner :clear-win])
     (swap! state dissoc-in [:corp :clear-win])
+    (swap! state dissoc-in [:stats :time :ended])
     (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
 
 (defn win
   "Records a win reason for statistics."
   [state side reason]
   (when-not (:winner @state)
-    (system-msg state side "wins the game")
-    (play-sfx state side "game-end")
-    (swap! state assoc
-           :winner side
-           :loser (other-side side)
-           :winning-user (get-in @state [side :user :username])
-           :losing-user (get-in @state [(other-side side) :user :username])
-           :reason reason :end-time (java.util.Date.)
-           :winning-deck-id (get-in @state [side :deck-id])
-           :losing-deck-id (get-in @state [(other-side side) :deck-id]))))
+    (let [started (get-in @state [:stats :time :started])
+          now (t/now)]
+      (system-msg state side "wins the game")
+      (play-sfx state side "game-end")
+      (swap! state assoc
+             :stats {:time {:ended now}}
+             :stats {:time {:elapsed (t/in-minutes (t/interval started now))}}
+             :winner side
+             :loser (other-side side)
+             :winning-user (get-in @state [side :user :username])
+             :losing-user (get-in @state [(other-side side) :user :username])
+             :reason reason :end-time (java.util.Date.)
+             :winning-deck-id (get-in @state [side :deck-id])
+             :losing-deck-id (get-in @state [(other-side side) :deck-id])))))
 
 (defn win-decked
   "Records a win via decking the corp."
