@@ -221,7 +221,7 @@
         trash-ab-cards (when (not= (:zone c) [:discard])
                          (->> (concat (all-active state :runner)
                                       (get-in @state [:runner :play-area]))
-                              (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [c]))))
+                              (filter #(can-trigger? state :runner (->> % card-def :interactions :trash-ability) % [c]))))
         ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)
