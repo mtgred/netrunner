@@ -118,6 +118,7 @@
          (swap! state update-in [side :deck] (partial drop draws-after-prevent))
          (swap! state assoc-in [side :register :most-recent-drawn] drawn)
          (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
+         (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
          (swap! state update-in [:bonus] dissoc :draw)
          (if (and (not suppress-event) (pos? deck-count))
            (when-completed
@@ -279,6 +280,7 @@
   (if (pos? n)
     (do (gain state :runner :tag n)
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
+        (swap! state update-in [:stats :runner :gain :tag] (fnil + 0) n)
         (trigger-event-sync state side eid :runner-gain-tag n))
     (effect-completed state side eid)))
 

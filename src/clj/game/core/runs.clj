@@ -25,6 +25,7 @@
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
+       (swap! state update-in [:stats side :runs :started] (fnil inc 0))
        (trigger-event-sync state :runner (make-eid state) :run s)
        (when (>= n 2) (trigger-event state :runner :run-big s n))))))
 
@@ -114,6 +115,7 @@
   "Access a non-agenda. Show a prompt to trash for trashable cards."
   [state side eid c]
   (trigger-event state side :pre-trash c)
+  (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (if (not= (:zone c) [:discard]) ; if not accessing in Archives
     ;; The card has a trash cost (Asset, Upgrade)
     (let [trash-cost (trash-cost state side c)
@@ -210,6 +212,7 @@
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid c]
   (trigger-event state side :pre-steal-cost c)
+  (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [cost (steal-cost state side c)
         card-name (:title c)
         cost-strs (map costs-to-symbol (partition 2 cost))

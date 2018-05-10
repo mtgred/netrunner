@@ -36,6 +36,7 @@
     (system-msg state side "spends [Click] to draw a card")
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
     (draw state side)
+    (swap! state update-in [:stats side :click :draw] (fnil inc 0))
     (play-sfx state side "click-card")))
 
 (defn click-credit
@@ -44,6 +45,7 @@
   (when (pay state side nil :click 1 {:action :corp-click-credit})
     (system-msg state side "spends [Click] to gain 1 [Credits]")
     (gain state side :credit 1)
+    (swap! state update-in [:stats side :click :credit] (fnil inc 0))
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
     (play-sfx state side "click-credit")))
 

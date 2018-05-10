@@ -7,7 +7,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
-            [netrunner.utils :refer [toastr-options influence-dot]]
+            [netrunner.utils :refer [toastr-options influence-dot map-longest]]
             [differ.core :as differ]
             [om.dom :as dom]
             [netrunner.ws :as ws]
@@ -1278,6 +1278,64 @@
   (when sfx-current-id
     (om/set-state! owner :sfx-last-played {:gameid gameid :id sfx-current-id})))
 
+(def corp-stats
+  [["Clicks Gained" #(-> @game-state :stats :corp :gain :click)]
+   ["Credits Gained" #(-> @game-state :stats :corp :gain :credit)]
+   ["Credits Lost" #(-> @game-state :stats :corp :click :credit)]
+   ["Credits by Click" #(-> @game-state :stats :corp :click :credit)]
+   ["Cards Drawn" #(-> @game-state :stats :corp :gain :card)]
+   ["Cards Drawn by Click" #(-> @game-state :corp :stats :click :draw)]])
+
+(def runner-stats
+  [["Clicks Gained" #(-> @game-state :stats :runner :gain :click)]
+   ["Credits Gained" #(-> @game-state :stats :runner :gain :credit)]
+   ["Credits Lost" #(-> @game-state :stats :runner :click :credit)]
+   ["Credits by Click" #(-> @game-state :stats :runner :click :credit)]
+   ["Cards Drawn" #(-> @game-state :stats :runner :gain :card)]
+   ["Cards Drawn by Click" #(-> @game-state :stats :runner :click :draw)]
+   ["Tags Gained" #(-> @game-state :stats :runner :gain :tag)]
+   ["Runs Made" #(-> @game-state :stats :runner :runs :started)]
+   ["Cards Accessed" #(-> @game-state :stats :runner :access :cards)]])
+
+(defn show-stat
+  "Determines statistic counter and if it should be shown"
+  [side]
+  (when-let [stat-fn (-> side second)]
+    (let [stat (stat-fn)]
+      (if (pos? stat) stat "-"))))
+
+(defn build-game-stats
+  "Builds the end of game statistics div & table"
+  []
+  (let [stats (map-longest list nil corp-stats runner-stats)]
+    [:div
+     [:table.win.table
+      [:tr.win.th
+       [:td.win.th "Corp"] [:td.win.th]
+       [:td.win.th "Runner"] [:td.win.th]]
+      (for [[corp runner] stats]
+        [:tr [:td (first corp)] [:td (show-stat corp)]
+         [:td (first runner)] [:td (show-stat runner)]])]]))
+
+(defn build-win-box
+  "Builds the end of game pop up game end"
+  [game-state]
+  [:div.win.centered.blue-shade
+   [:div
+    (:winning-user @game-state) " (" (-> @game-state :winner capitalize)
+    (cond
+      (= "Decked" (@game-state :reason capitalize))
+      (str ") wins due to the Corp being decked on turn " (:turn @game-state))
+
+      (= "Flatline" (@game-state :reason capitalize))
+      (str ") wins by flatlining the Runner on turn " (:turn @game-state))
+
+      :else
+      (str ") wins by scoring agenda points on turn "  (:turn @game-state)))]
+   [:br]
+   (build-game-stats)
+   [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "✘"]])
+
 (defn gameboard [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 turn corp runner] :as cursor} owner]
   (reify
     om/IInitState
@@ -1331,19 +1389,7 @@
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
             (when (and (:winner @game-state) (not (:win-shown @app-state)))
-              [:div.win.centered.blue-shade
-               (:winning-user @game-state) " (" (-> @game-state :winner capitalize)
-               (cond
-                 (= "Decked" (@game-state :reason capitalize))
-                 ") wins due to the Corp being decked"
-
-                 (= "Flatline" (@game-state :reason capitalize))
-                 ") wins by flatlining the Runner"
-
-                 :else
-                 ") wins by scoring agenda points")
-
-               [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "x"]])
+              (build-win-box game-state))
             [:div {:class (:background (:options @app-state))}]
             [:div.rightpane
              [:div.card-zoom
