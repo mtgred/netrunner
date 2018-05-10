@@ -280,7 +280,6 @@
   (if (pos? n)
     (do (gain state :runner :tag n)
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
-        (swap! state update-in [:stats :runner :gain :tag] (fnil + 0) n)
         (trigger-event-sync state side eid :runner-gain-tag n))
     (effect-completed state side eid)))
 

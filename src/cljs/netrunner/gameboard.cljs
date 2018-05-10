@@ -1279,23 +1279,25 @@
     (om/set-state! owner :sfx-last-played {:gameid gameid :id sfx-current-id})))
 
 (def corp-stats
-  [["Clicks Gained" #(-> @game-state :stats :corp :gain :click)]
-   ["Credits Gained" #(-> @game-state :stats :corp :gain :credit)]
-   ["Credits Lost" #(-> @game-state :stats :corp :click :credit)]
-   ["Credits by Click" #(-> @game-state :stats :corp :click :credit)]
-   ["Cards Drawn" #(-> @game-state :stats :corp :gain :card)]
-   ["Cards Drawn by Click" #(-> @game-state :corp :stats :click :draw)]])
+  (let [s (-> @game-state :stats :corp)]
+    [["Clicks Gained" #(-> s :gain :click)]
+     ["Credits Gained" #(-> s :gain :credit)]
+     ["Credits Lost" #(-> s :lose :credit)]
+     ["Credits by Click" #(-> s :click :credit)]
+     ["Cards Drawn" #(-> s :gain :card)]
+     ["Cards Drawn by Click" #(-> s :click :draw)]]))
 
 (def runner-stats
-  [["Clicks Gained" #(-> @game-state :stats :runner :gain :click)]
-   ["Credits Gained" #(-> @game-state :stats :runner :gain :credit)]
-   ["Credits Lost" #(-> @game-state :stats :runner :click :credit)]
-   ["Credits by Click" #(-> @game-state :stats :runner :click :credit)]
-   ["Cards Drawn" #(-> @game-state :stats :runner :gain :card)]
-   ["Cards Drawn by Click" #(-> @game-state :stats :runner :click :draw)]
-   ["Tags Gained" #(-> @game-state :stats :runner :gain :tag)]
-   ["Runs Made" #(-> @game-state :stats :runner :runs :started)]
-   ["Cards Accessed" #(-> @game-state :stats :runner :access :cards)]])
+  (let [s (-> @game-state :stats :runner)]
+    [["Clicks Gained" #(-> s :gain :click)]
+     ["Credits Gained" #(-> s :gain :credit)]
+     ["Credits Lost" #(-> s :lose :credit)]
+     ["Credits by Click" #(-> s :click :credit)]
+     ["Cards Drawn" #(-> s :gain :card)]
+     ["Cards Drawn by Click" #(-> s :click :draw)]
+     ["Tags Gained" #(-> s :gain :tag)]
+     ["Runs Made" #(-> s :runs :started)]
+     ["Cards Accessed" #(-> s :access :cards)]]))
 
 (defn show-stat
   "Determines statistic counter and if it should be shown"
