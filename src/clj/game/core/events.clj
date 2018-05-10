@@ -248,7 +248,10 @@
 (defn first-event?
   "Returns true if the given event has not occurred yet this turn."
   ([state side ev] (first-event? state side ev (constantly true)))
-  ([state side ev f] (= (count (filter f (turn-events state side ev))) 1)))
+  ([state side ev f] 
+   (print (turn-events state side ev))
+   (print (filter f (turn-events state side ev)))
+   (= (count (filter f (turn-events state side ev))) 1)))
 
 (defn second-event?
   "Returns true if the given event has occurred exactly once this turn."

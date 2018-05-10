@@ -268,7 +268,7 @@
       :req (req (and (= target :net)
                      (corp-can-choose-damage? state)
                      (> (last targets) 0)
-                     (first-event? state :runner :net #(= :net (first %)))))
+                     (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))))
       :effect (req (damage-defer state side :net (last targets))
                    (if (= 0 (count (:hand runner)))
                      (do (swap! state update-in [:damage] dissoc :damage-choose-corp)
