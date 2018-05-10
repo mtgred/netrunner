@@ -803,6 +803,22 @@
       (prompt-choice :runner "Card from hand")
       (prompt-choice :runner "Steal"))))
 
+(deftest gang-sign-correct-prompts
+         ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
+   (do-game
+     (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Snare!" 1)])
+               (default-runner [(qty "Gang Sign" 1)]))
+     (take-credits state :corp)
+     (play-from-hand state :runner "Gang Sign")
+     (take-credits state :runner)
+     (play-from-hand state :corp "Hostile Takeover" "New remote")
+     (score-agenda state :corp (get-content state :remote1 0))
+     (prompt-choice :runner "Card from hand")
+     ;; Runner has "wait for Snare, wait for on-access" prompts.
+     (is (= 2 (count (:prompt (get-runner)))) "Runner only has the Waiting prompt, not Snare!'s pay-prompt")
+     ;; Core has "pay for Snare, wait for agenda-scored" prompts.
+     (is (= 2 (count (:prompt (get-corp)))) "Corp has the prompt to use Snare!")))
+
 (deftest gene-conditioning-shoppe
   ;; Gene Conditioning Shoppe - set :genetics-trigger-twice flag
   (do-game
