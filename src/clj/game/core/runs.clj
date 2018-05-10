@@ -218,9 +218,10 @@
         cost-as-symbol (when (= 1 (count cost-strs)) (costs-to-symbol cost))
         ;; any trash abilities
         can-steal-this? (can-steal? state side c)
-        trash-ab-cards (->> (concat (all-active state :runner)
-                                    (get-in @state [:runner :play-area]))
-                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [c])))
+        trash-ab-cards (when (not= (:zone c) [:discard])
+                         (->> (concat (all-active state :runner)
+                                      (get-in @state [:runner :play-area]))
+                              (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [c]))))
         ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)

@@ -379,7 +379,16 @@
         ;; Fail psi game
         (prompt-choice-partial :runner "Imp")
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
-        (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")))))
+        (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))))
+  (testing "vs cards in Archives"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover"])
+                (default-runner ["Imp"]))
+      (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :discard)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (run-empty-server state "Archives")
+      (is (= ["Steal"] (->> (get-runner) :prompt first :choices)) "Should only get the option to steal"))))
 
 (deftest incubator-transfer-virus-counters
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program
