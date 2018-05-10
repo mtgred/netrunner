@@ -268,7 +268,7 @@
       :req (req (and (= target :net)
                      (corp-can-choose-damage? state)
                      (> (last targets) 0)
-                     (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))))
+                     (first-event? state :runner :net #(= :net (first %)))))
       :effect (req (damage-defer state side :net (last targets))
                    (if (= 0 (count (:hand runner)))
                      (do (swap! state update-in [:damage] dissoc :damage-choose-corp)
@@ -297,7 +297,7 @@
                              :no-ability {:effect (req (clear-wait-prompt state :runner)
                                                        (swap! state update-in [:damage] dissoc :damage-choose-corp))}}}
                            card nil))))}}
-    :req (req (empty? (filter #(= :net (first %)) (turn-events state :runner :damage))))
+    :req (req (first-event? state :runner :damage #(= :net (first %))))
     :effect (effect (enable-corp-damage-choice))
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
@@ -443,8 +443,7 @@
               :once :per-turn
               :req (req (and (rezzed? target)
                              (has-subtype? target "Bioroid")
-                             (empty? (filter #(and (rezzed? %) (has-subtype? % "Bioroid"))
-                                             (turn-events state side :pass-ice)))))
+                             (first-event? state side :pass-ice #(and (rezzed? %) (has-subtype? % "Bioroid")))))
               :effect (effect (show-wait-prompt :runner "Corp to use Haas-Bioroid: Architects of Tomorrow")
                               (continue-ability
                                 {:prompt "Select a Bioroid to rez" :player :corp
@@ -662,10 +661,7 @@
 
    "Ken \"Express\" Tenma: Disappeared Clone"
    {:events {:play-event {:req (req (and (has-subtype? target "Run")
-                                         (empty? (filter #(has-subtype? % "Run")
-                                                         ;; have to flatten because each element is a list containing
-                                                         ;; the Event card that was played
-                                                         (flatten (turn-events state :runner :play-event))))))
+                                         (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
                           :msg "gain 1 [Credits]"
                           :effect (effect (gain :credit 1))}}}
 
@@ -691,8 +687,7 @@
      {:delayed-completion true
       :interactive (req true)
       :req (req (and (is-central? (:server run))
-                     (empty? (let [successes (turn-events state side :successful-run)]
-                               (filter #(is-central? %) successes)))))
+                     (first-event? state :runner :successful-run #(is-central? %))))
       :effect (effect (continue-ability
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
@@ -945,8 +940,7 @@
    "Spark Agency: Worldswide Reach"
    {:events
     {:rez {:req (req (and (has-subtype? target "Advertisement")
-                          (empty? (filter #(has-subtype? % "Advertisement")
-                                          (flatten (turn-events state :corp :rez))))))
+                          (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
 
@@ -1096,8 +1090,7 @@
                           ;; (some #(= (:title %) (:title target)) (concat (:deck corp) (:play-area corp)))
                           ;; Based on ruling re: searching and failing to find, we no longer enforce the requirement
                           ;; of there being a target ice to bring into HQ.
-                          (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
-                                    (filter ice? rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
+                          (first-event? state side :rez #(ice? (first %))))) ;; Is this the first ice you've rezzed this turn
            :optional
            {:prompt "Add another copy to HQ?"
             :yes-ability {:effect (req (if-let [found-card (some #(when (= (:title %) (:title target)) %) (concat (:deck corp) (:play-area corp)))]

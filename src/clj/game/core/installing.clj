@@ -252,41 +252,40 @@
 
                  ;; Check to see if a second agenda/asset was installed.
                  (when-completed (corp-install-asset-agenda state side moved-card dest-zone server)
-                                 (do (letfn [(event [state side eid _] (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
-                                       (cond
-                                         ;; Ignore all costs. Pass eid to rez.
-                                         (= install-state :rezzed-no-cost)
-                                         (when-completed (event state side nil)
-                                                         (rez state side eid moved-card {:ignore-cost :all-costs}))
+                                 (letfn [(event [state side eid _] (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
+                                   (cond
+                                     ;; Ignore all costs. Pass eid to rez.
+                                     (= install-state :rezzed-no-cost)
+                                     (when-completed (event state side nil)
+                                                     (rez state side eid moved-card {:ignore-cost :all-costs}))
 
-                                         ;; ;; Ignore rez cost only. Pass eid to rez.
-                                         (= install-state :rezzed-no-rez-cost)
-                                         (when-completed (event state side nil)
-                                                         (rez state side eid moved-card {:ignore-cost :rez-costs}))
+                                     ;; ;; Ignore rez cost only. Pass eid to rez.
+                                     (= install-state :rezzed-no-rez-cost)
+                                     (when-completed (event state side nil)
+                                                     (rez state side eid moved-card {:ignore-cost :rez-costs}))
 
-                                         ;; Pay costs. Pass eid to rez.
-                                         (= install-state :rezzed)
-                                         (when-completed (event state side nil)
-                                                         (rez state side eid moved-card nil))
+                                     ;; Pay costs. Pass eid to rez.
+                                     (= install-state :rezzed)
+                                     (when-completed (event state side nil)
+                                                     (rez state side eid moved-card nil))
 
-                                         ;; "Face-up" cards.
-                                         (= install-state :face-up)
-                                         (if (:install-state cdef)
-                                           (when-completed (card-init state side
-                                                                      (assoc (get-card state moved-card) :rezzed true :seen true)
-                                                                      {:resolve-effect false
-                                                                       :init-data true})
-                                                           (event state side eid nil))
-                                           (do (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))
-                                               (event state side eid nil)))
+                                     ;; "Face-up" cards.
+                                     (= install-state :face-up)
+                                     (if (:install-state cdef)
+                                       (when-completed (card-init state side
+                                                                  (assoc (get-card state moved-card) :rezzed true :seen true)
+                                                                  {:resolve-effect false
+                                                                   :init-data true})
+                                                       (event state side eid nil))
+                                       (do (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))
+                                           (event state side eid nil)))
 
-                                         ;; All other cards. Trigger events, which will trigger effect-completed.
-                                         :else
-                                         (event state side eid nil)))
-
-                                     (when-let [dre (:derezzed-events cdef)]
-                                       (when-not (:rezzed (get-card state moved-card))
-                                         (register-events state side dre moved-card)))))))))
+                                     ;; All other cards. Trigger events, which will trigger effect-completed.
+                                     :else
+                                     (event state side eid nil))
+                                   (when-let [dre (:derezzed-events cdef)]
+                                     (when-not (:rezzed (get-card state moved-card))
+                                       (register-events state side dre moved-card)))))))))
          (clear-install-cost-bonus state side))))))
 
 

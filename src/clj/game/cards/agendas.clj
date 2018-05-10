@@ -388,8 +388,7 @@
                 :effect (effect (ignore-install-cost true))}
              :corp-install
                {:req (req (and (is-type? target "ICE")
-                               (empty? (let [cards (map first (turn-events state side :corp-install))]
-                                         (filter #(is-type? % "ICE") cards)))))
+                               (first-event? state side :corp-install #(is-type? (first %) "ICE"))))
                 :msg (msg "ignore the install cost of the first ICE this turn")}}}
 
    "Efficiency Committee"

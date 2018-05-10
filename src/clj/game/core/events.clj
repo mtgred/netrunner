@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
 (declare active? can-trigger? card-def clear-wait-prompt effect-completed event-title get-card get-nested-host get-remote-names
-         get-runnable-zones get-zones installed? make-eid register-effect-completed register-suppress resolve-ability
+         get-runnable-zones get-zones installed? is-type? make-eid register-effect-completed register-suppress resolve-ability
          show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
@@ -30,14 +30,14 @@
   "Resolves all abilities registered as handlers for the given event key, passing them
   the targets given."
   [state side event & targets]
+  (swap! state update-in [:turn-events] #(cons [event targets] %))
   (let [get-side #(-> % :card :side game.utils/to-keyword)
         is-active-player #(= (:active-player @state) (get-side %))]
     (doseq [{:keys [ability] :as e} (sort-by (complement is-active-player) (get-in @state [:events event]))]
       (when-let [card (get-card state (:card e))]
         (when (and (not (apply trigger-suppress state side event (cons card targets)))
                    (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
-          (resolve-ability state side ability card targets))))
-    (swap! state update-in [:turn-events] #(cons [event targets] %))))
+          (resolve-ability state side ability card targets))))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]
@@ -57,6 +57,7 @@
   "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler. Does not
   give the user a choice of what order to resolve handlers."
   [state side eid event & targets]
+  (swap! state update-in [:turn-events] #(cons [event targets] %))
   (let [get-side #(-> % :card :side game.utils/to-keyword)
         is-active-player #(= (:active-player @state) (get-side %))]
 
@@ -64,7 +65,6 @@
                                 (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
                            (get-in @state [:events event]))
           handlers (sort-by (complement is-active-player) handlers)]
-      (swap! state update-in [:turn-events] #(cons [event targets] %))
       (when-completed (apply trigger-event-sync-next state side handlers event targets)
                       (effect-completed state side eid nil)))))
 
@@ -163,6 +163,7 @@
                  (Film Critic)
   targets:       a varargs list of targets to the event, as usual"
   ([state side eid event {:keys [first-ability card-ability after-active-player cancel-fn] :as options} & targets]
+   (swap! state update-in [:turn-events] #(cons [event targets] %))
    (let [get-side #(-> % :card :side game.utils/to-keyword)
          get-ability-side #(-> % :ability :side)
          active-player (:active-player @state)
@@ -198,7 +199,7 @@
                                    (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                    {:priority -1})
                  (when-completed (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
-                                 (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+                                 (do 
                                      (clear-wait-prompt state active-player)
                                      (effect-completed state side eid nil))))))))))
 
@@ -246,18 +247,18 @@
 
 (defn first-event?
   "Returns true if the given event has not occurred yet this turn."
-  [state side ev]
-  (empty? (turn-events state side ev)))
+  ([state side ev] (first-event? state side ev (constantly true)))
+  ([state side ev f] (= (count (filter f (turn-events state side ev))) 1)))
 
 (defn second-event?
   "Returns true if the given event has occurred exactly once this turn."
-  [state side ev]
-  (= (count (turn-events state side ev)) 1))
+  ([state side ev] (second-event? state side ev (constantly true)))
+  ([state side ev f] (= (count (filter f (turn-events state side ev))) 2)))
 
 (defn first-successful-run-on-server?
   "Returns true if the active run is the first succesful run on the given server"
   [state server]
-  (empty? (filter #(= [server] %) (turn-events state :runner :successful-run))))
+  (first-event? state :runner :successful-run #(= [server] %)))
 
 (defn get-turn-damage
   "Returns the value of damage take this turn"
@@ -272,12 +273,12 @@
 (defn first-installed-trash?
   "Returns true if this is the first trash of an installed card this turn by this side"
   [state side]
-  (empty? (get-installed-trashed state side)))
+  (= (count (get-installed-trashed state side)) 1))
 
 (defn first-installed-trash-own?
   "Returns true if this is the first trash of an owned installed card this turn by this side"
   [state side]
-  (empty? (filter #(= (:side (first %)) (side-str side)) (get-installed-trashed state side))))
+  (= (count (filter #(= (:side (first %)) (side-str side)) (get-installed-trashed state side))) 1))
 
 ;;; Effect completion triggers
 (defn register-effect-completed
