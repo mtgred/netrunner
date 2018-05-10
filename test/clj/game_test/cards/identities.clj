@@ -447,8 +447,9 @@
     (do-game
       (new-game (default-corp [(qty "Dedicated Response Team" 1)])
                 (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                           [(qty "Cache" 1) (qty "Imp" 1)]))
+                           [(qty "Sure Gamble" 1) (qty "Cache" 1) (qty "Imp" 1)]))
       (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Cache")
       (play-from-hand state :runner "Imp")
       (run-empty-server state "HQ")
@@ -1149,6 +1150,7 @@
       (prompt-choice :runner 0)
       (is (empty? (:prompt (get-runner))) "Forger can't avoid the tag")
       (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
+      (core/gain state :runner :credit 2)
       (run-empty-server state "Server 2")
       (prompt-choice-partial :runner "Pay")
       (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))

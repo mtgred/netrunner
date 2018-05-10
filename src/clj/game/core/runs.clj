@@ -116,9 +116,10 @@
   (trigger-event state side :pre-trash c)
   (if (not= (:zone c) [:discard]) ; if not accessing in Archives
     ;; The card has a trash cost (Asset, Upgrade)
-    (let [trash-cost (trash-cost state side c)
-          card (assoc c :seen true)
-          card-name (:title card)]
+    (let [card (assoc c :seen true)
+          card-name (:title card)
+          trash-cost (trash-cost state side c)
+          can-pay (when trash-cost (can-pay? state :runner nil :credit trash-cost))]
       ;; Show the option to pay to trash the card.
       (when-not (and (is-type? card "Operation")
                      ;; Don't show the option if Edward Kim's auto-trash flag is true.
@@ -129,15 +130,15 @@
                                             (get-in @state [:runner :play-area]))
                                     (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
                 ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
-                trash-cost-str (when trash-cost
-                                 [(str "Pay " (str trash-cost "[Credits] ") "to trash")])
+                trash-cost-str (when can-pay
+                                 [(str "Pay " trash-cost "[Credits] to trash")])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
-                forced-to-trash? (or (and (get-in @state [:runner :register :force-trash])
-                                          (can-pay? state :runner card-name :credit trash-cost))
-                                     (card-flag-fn? state side card :must-trash true))
-                trash-msg (when trash-cost
-                            (str trash-cost " [Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
-                pay-str (when trash-cost
+                forced-to-trash? (and can-pay
+                                      (or (get-in @state [:runner :register :force-trash])
+                                          (card-flag-fn? state side card :must-trash true)))
+                trash-msg (when can-pay
+                            (str trash-cost "[Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
+                pay-str (when can-pay
                           (str (if forced-to-trash? "is forced to pay " "pays ") trash-msg))
                 prompt-str (str "You accessed " card-name ".")
                 no-action-str (when-not forced-to-trash?

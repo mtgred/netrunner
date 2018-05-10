@@ -814,7 +814,31 @@
         (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp")
         ;; Trash Imp to reset :slow-trash flag
         (core/move state :runner (refresh imp) :discard)
-        (is (not (core/any-flag-fn? state :runner :slow-trash true)))))))
+        (is (not (core/any-flag-fn? state :runner :slow-trash true))))))
+  (testing "not forced to trash when credits below 5"
+    (do-game
+      (new-game (default-corp [(qty "Mumbad Virtual Tour" 3)])
+                (default-runner ["Imp"]))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (is (= 3 (:credit (get-runner))) "Runner paid install costs")
+      (run-empty-server state "Server 1")
+      (is (= 2 (->> (get-runner) :prompt first :choices count)) "Should have Imp and no action options")
+      (prompt-choice-partial :runner "Imp")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 2")
+      (is (= 2 (->> (get-runner) :prompt first :choices count)) "Should have Imp and no action options")
+      (prompt-choice-partial :runner "Imp")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 3")
+      (is (= 1 (->> (get-runner) :prompt first :choices count)) "Should only have no action option")
+      (prompt-choice :runner "No action")
+      (is (= 2 (->> (get-corp) :discard count)) "Runner was not forced to trash MVT"))))
 
 (deftest mwanza-city-grid
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed

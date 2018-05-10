@@ -1043,7 +1043,7 @@
     (play-from-hand state :corp "Crisium Grid" "HQ")
     (core/rez state :corp (get-content state :hq 0))
     (take-credits state :corp)
-    (core/gain state :runner :click 2)
+    (core/gain state :runner :click 2 :credit 2)
     (play-from-hand state :runner "John Masanori")
     (is (= 4 (count (:hand (get-runner)))))
     (run-empty-server state "HQ")
