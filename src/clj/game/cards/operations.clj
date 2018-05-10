@@ -686,7 +686,8 @@
                                          :msg "do 1 brain damage"
                                          :delayed-completion true
                                          :effect (effect (damage :runner eid :brain 1 {:card card}))}}]
-     {:events {:pre-access-card (assoc trace-for-brain-damage :req (req (is-type? target "Agenda")))
+     {:events {:access (assoc trace-for-brain-damage :req (req (is-type? target "Agenda"))
+                                                     :interactive (req (is-type? target "Agenda")))
                :agenda-scored trace-for-brain-damage}})
 
    "Lag Time"

@@ -598,7 +598,7 @@
                      :req (req (and installed
                                     this-server
                                     (:successful run)
-                                    (pos? (:cards-accessed run))))
+                                    (pos? (:cards-accessed run 0))))
                      :silent (req true)
                      :effect (req (let [cnt (:cards-accessed run)
                                         total (* 2 cnt)]

@@ -499,11 +499,11 @@
       (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
-      ;; (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
+      (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
       (prompt-choice :runner "No action")
       (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw now")
       (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
-  (testing "with Hiro in hand - Hiro not moved to runner scored area on trash decline #2638"
+  (testing "with Hiro in hand - Hiro not moved to runner scored area on trash decline. #2638"
     (do-game
       (new-game (default-corp [(qty "Chairman Hiro" 1)])
                 (default-runner [(qty "Maw" 1)]))
@@ -512,8 +512,20 @@
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
       (prompt-choice :runner "No action")
-      (is (= 0 (count (:scored (get-corp)))) "Hiro not scored")
-      (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw"))))
+      (is (= 0 (count (:scored (get-runner)))) "Hiro not scored")
+      (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw")))
+  (testing "Maw shouldn't trigger on stolen agenda. #3433"
+    (do-game
+      (new-game (default-corp [(qty "Hostile Takeover" 1)
+                               (qty "Ice Wall" 5)])
+                (default-runner [(qty "Maw" 1)]))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Maw")
+      (run-empty-server state :remote1)
+      (prompt-choice :runner "Steal")
+      (is (= 0 (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
@@ -626,6 +638,30 @@
       (prompt-choice :runner "No action")
       (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards"))))
 
+(deftest obelus-crisium
+  ;; Obelus - running and trashing Crisium Grid makes run neither successful/unsuccessful
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1) (qty "Crisium Grid" 1)])
+              (default-runner [(qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :corp ["Crisium Grid"])
+    (play-from-hand state :corp "Crisium Grid" "R&D")
+    (core/rez state :corp (get-content state :rd 0))
+    (take-credits state :corp)
+
+    (starting-hand state :runner ["Obelus"])
+    (play-from-hand state :runner "Obelus")
+    (is (empty? (:hand (get-runner))) "No cards in hand")
+    (run-empty-server state "R&D")
+    (prompt-choice :runner "Crisium Grid")
+    (prompt-choice-partial :runner "Pay")
+    (prompt-choice-partial :runner "Card")
+    (prompt-choice-partial :runner "No")
+    (is (empty? (:hand (get-runner))) "Crisium Grid blocked successful run")
+
+    (run-empty-server state "R&D")
+    (prompt-choice-partial :runner "No")
+    (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))
+
 (deftest obelus-hades-shard
   ;; Obelus - using Hades Shard during run to increase draw
   (do-game
@@ -644,6 +680,25 @@
     (card-ability state :runner (get-resource state 0) 0)
     (prompt-choice :runner "No action")
     (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards")))
+
+(deftest obelus-remote-server
+  ;; Obelus - running a remote server first doesn't block card draw
+  (do-game
+    (new-game (default-corp [(qty "Urban Renewal" 1) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :corp ["Urban Renewal"])
+    (play-from-hand state :corp "Urban Renewal" "New remote")
+    (take-credits state :corp)
+
+    (starting-hand state :runner ["Obelus"])
+    (play-from-hand state :runner "Obelus")
+    (is (empty? (:hand (get-runner))) "No cards in hand")
+    (run-empty-server state "Server 1")
+    (prompt-choice-partial :runner "No")
+
+    (run-empty-server state "R&D")
+    (prompt-choice-partial :runner "No")
+    (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))
 
 (deftest plascrete
   ;; Plascrete Carapace - Prevent meat damage

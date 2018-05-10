@@ -1283,8 +1283,8 @@
     om/IInitState
     (init-state [this]
       (let [audio-sfx (fn [name] (list (keyword name)
-                                       (new js/Howl (clj->js {:urls [(str "/sound/" name ".ogg")
-                                                                     (str "/sound/" name ".mp3")]}))))]
+                                       (new js/Howl (clj->js {:src [(str "/sound/" name ".ogg")
+                                                                    (str "/sound/" name ".mp3")]}))))]
         {:soundbank
          (apply hash-map (concat
                           (audio-sfx "agenda-score")

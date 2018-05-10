@@ -689,24 +689,21 @@
            (host-agenda? [agenda]
              {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
                         :yes-ability {:effect (req (host state side card (move state side agenda :play-area))
-
-
-                                                   ;;TODO: is this necessary?
-                                                   (trigger-event state side :no-steal agenda)
-
-                                                   ;;(close-access-prompt state side)
+                                                   (access-end state side eid agenda)
                                                    (when-not (:run @state)
                                                      (swap! state dissoc :access)))
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
-     {;:implementation "Use hosting ability when presented with Access prompt for an agenda"
-      :events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
+     {:events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
                                        (is-type? target "Agenda")))
+                        :interactive (req true)
                         :delayed-completion true
                         :effect (effect (continue-ability (host-agenda? target) card nil))}}
       :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
-                   :req (req (not (empty? (:hosted card))))
-                   :effect (req (let [c (move state :runner (get-agenda card) :scored)]
-                                  (gain-agenda-point state :runner (get-agenda-points state :runner c))))
+                   :req (req (get-agenda card))
+                   :delayed-completion true
+                   :effect (req (let [c (get-agenda card)
+                                      points (get-agenda-points state :runner c)]
+                                  (as-agenda state :runner eid c points)))
                    :msg (msg (let [c (get-agenda card)]
                                (str "add " (:title c) " to their score area and gain "
                                     (quantify (get-agenda-points state :runner c) "agenda point"))))}]})
