@@ -55,7 +55,7 @@
 
 (ws/register-ws-handler!
   :lobby/message
-  (fn [{:keys [user text notification] :as msg}]
+  (fn [{:keys [text notification] :as msg}]
     (swap! app-state update-in [:messages] #(conj % msg))
     (when notification
       (.play (.getElementById js/document notification)))))
@@ -189,7 +189,7 @@
       [:h3 "Select your deck"]
       [:div.deck-collection
        (let [players (:players (some #(when (= (:gameid %) gameid) %) games))
-             side (:side (some #(when (= (:user %) user) %) players))]
+             side (:side (some #(when (= (-> % :user :_id) (:_id user)) %) players))]
          [:div {:data-dismiss "modal"}
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
             [:div.deckline {:on-click #(ws/ws-send! [:lobby/deck (:_id deck)])}
@@ -364,6 +364,11 @@
      room-name " (" open-games open-games-symbol " "
      closed-games closed-games-symbol ")"]))
 
+(defn- first-user?
+  "Is this user the first user in the game?"
+  [players user]
+  (= (-> players first :user :_id) (:_id user)))
+
 (defn game-lobby [{:keys [games gameid messages sets user password-gameid] :as cursor} owner]
   (reify
     om/IInitState
@@ -447,12 +452,12 @@
                (let [players (:players game)]
                  [:div
                   [:div.button-bar
-                   (when (= (-> players first :user) user)
+                   (when (first-user? players user)
                      (if (every? :deck players)
                        [:button {:on-click #(ws/ws-send! [:netrunner/start gameid])} "Start"]
                        [:button {:class "disabled"} "Start"]))
                    [:button {:on-click #(leave-lobby cursor owner)} "Leave"]
-                   (when (= (-> players first :user) user)
+                   (when (first-user? players user)
                      [:button {:on-click #(ws/ws-send! [:lobby/swap gameid])} "Swap sides"])]
                   [:div.content
                    [:h2 (:title game)]
@@ -466,12 +471,12 @@
                        (when-let [{:keys [_id name status] :as deck} (:deck player)]
                          [:span {:class (:status status)}
                           [:span.label
-                           (if (= (:user player) user)
+                           (if (= (-> player :user :_id) (:_id user))
                              name
                              "Deck selected")]])
                        (when-let [deck (:deck player)]
                          [:div.float-right (format-deck-status-span (:status deck) true false)])
-                       (when (= (:user player) user)
+                       (when (= (-> player :user :_id) (:_id user))
                          [:span.fake-link.deck-load
                           {:data-target "#deck-select" :data-toggle "modal"
                            :on-click (fn [] (send {:action "deck" :gameid (:gameid @app-state) :deck nil}))
