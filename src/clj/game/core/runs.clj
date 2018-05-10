@@ -133,7 +133,8 @@
                 trash-cost-str (when can-pay
                                  [(str "Pay " trash-cost "[Credits] to trash")])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
-                forced-to-trash? (and can-pay
+                forced-to-trash? (and (or can-pay
+                                          (seq trash-ab-cards))
                                       (or (get-in @state [:runner :register :force-trash])
                                           (card-flag-fn? state side card :must-trash true)))
                 trash-msg (when can-pay

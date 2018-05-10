@@ -835,8 +835,7 @@
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 2")
-      (is (= #{"[Imp]: Trash card" "No action"}
-             (->> (get-runner) :prompt first :choices (into #{}))) "Should have Imp and no action options")
+      (is (= ["[Imp]: Trash card"] (->> (get-runner) :prompt first :choices)) "Should only have Imp option")
       (prompt-choice-partial :runner "Imp")
       (take-credits state :runner)
       (core/lose state :runner :credit (:credit (get-runner)))
