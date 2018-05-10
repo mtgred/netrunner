@@ -225,8 +225,10 @@
         ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)
-                    (if cost-as-symbol
-                      [(str "Pay " cost-as-symbol " to steal")]
+                    (if (seq cost-strs)
+                      (if (= n 1)
+                        [(str "Pay " cost-as-symbol " to steal")]
+                        ["Pay to steal"])
                       ["Steal"]))
         no-action-str (when (or (nil? steal-str)
                                 (not= steal-str ["Steal"]))
@@ -235,39 +237,41 @@
         choices (into [] (concat ability-strs steal-str no-action-str))]
     ;; Steal costs are additional costs and can be denied by the runner.
     (continue-ability state :runner
-                      (if (> (count cost-strs) 1)
-                        ;; Use the better function for multiple costs
-                        (steal-pay-choice state :runner cost-strs '() n c)
-                        ;; Otherwise, just handle everything right friggin here
-                        {:delayed-completion true
-                         :prompt prompt-str
-                         :choices choices
-                         :effect (req (cond
-                                        ;; Can't steal or pay, or won't pay single additional cost to steal
-                                        (= target "No action")
-                                        (access-end state side eid c)
+                      {:delayed-completion true
+                       :prompt prompt-str
+                       :choices choices
+                       :effect (req (cond
+                                      ;; Can't steal or pay, or won't pay single additional cost to steal
+                                      (= target "No action")
+                                      (access-end state side eid c)
 
-                                        ;; Steal normally
-                                        (= target "Steal")
-                                        (steal-agenda state :runner eid c)
+                                      ;; Steal normally
+                                      (= target "Steal")
+                                      (steal-agenda state :runner eid c)
 
-                                        ;; Pay single additiional cost to steal
-                                        (.contains target "Pay")
+                                      ;; Pay single additiional cost to steal
+                                      (.contains target "Pay")
+                                      (if (> n 1)
+                                        ;; Use the better function for multiple costs
+                                        (resolve-ability state :runner
+                                                         (steal-pay-choice state :runner cost-strs '() n c)
+                                                         c nil)
+                                        ;; Otherwise, just handle everything right friggin here
                                         (when-completed (pay-sync state side nil cost {:action :steal-cost})
                                                         (do (system-msg state side
-                                                              (str "pays " cost-as-symbol " to steal " card-name))
-                                                            (steal-agenda state side eid c)))
+                                                                        (str "pays " cost-as-symbol " to steal " card-name))
+                                                            (steal-agenda state side eid c))))
 
-                                        ;; Use trash ability
-                                        (some #(= % target) ability-strs)
-                                        (let [idx (.indexOf ability-strs target)
-                                              trash-ab-card (nth trash-ab-cards idx)
-                                              cdef (-> (card-def trash-ab-card)
-                                                       :interactions
-                                                       :trash-ability)]
-                                          (when-completed (resolve-ability state side cdef trash-ab-card [c])
-                                                          (do (trigger-event state side :no-steal c)
-                                                              (access-end state side eid c))))))})
+                                      ;; Use trash ability
+                                      (some #(= % target) ability-strs)
+                                      (let [idx (.indexOf ability-strs target)
+                                            trash-ab-card (nth trash-ab-cards idx)
+                                            cdef (-> (card-def trash-ab-card)
+                                                     :interactions
+                                                     :trash-ability)]
+                                        (when-completed (resolve-ability state side cdef trash-ab-card [c])
+                                                        (do (trigger-event state side :no-steal c)
+                                                            (access-end state side eid c))))))}
                       c nil)))
 
 (defn- reveal-access?

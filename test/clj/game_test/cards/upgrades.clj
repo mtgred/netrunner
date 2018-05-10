@@ -112,6 +112,7 @@
         ;; prompt should be asking for the net damage costs
         (is (= "Obokata Protocol" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
+        (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "2 net damage")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
@@ -134,6 +135,7 @@
         ;; prompt should be asking for the net damage costs
         (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
+        (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "2 [Credits]")
         (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")

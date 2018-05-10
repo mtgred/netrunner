@@ -31,6 +31,7 @@
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (run-empty-server state :remote1)
+    (prompt-choice-partial :runner "Pay")
     (prompt-choice :runner "[Click]")
     (prompt-choice :runner "2 [Credits]")
     (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
