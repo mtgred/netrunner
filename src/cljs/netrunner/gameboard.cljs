@@ -1330,7 +1330,10 @@
       (str ") wins due to the Corp being decked on turn " (:turn @game-state))
 
       (= "Flatline" (@game-state :reason capitalize))
-      (str ") wins by flatlining the Runner on turn " (:turn @game-state))
+      (str ") wins by flatline on turn " (:turn @game-state))
+
+      (= "Concede" (@game-state :reason capitalize))
+      (str ") wins by concession on turn " (:turn @game-state))
 
       :else
       (str ") wins by scoring agenda points on turn "  (:turn @game-state)))]
