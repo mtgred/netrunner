@@ -388,7 +388,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Imp")
       (run-empty-server state "Archives")
-      (is (= ["Steal"] (->> (get-runner) :prompt first :choices)) "Should only get the option to steal"))))
+      (is (= ["Steal"] (->> (get-runner) :prompt first :choices)) "Should only get the option to steal Hostile on access in Archives"))))
 
 (deftest incubator-transfer-virus-counters
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program
