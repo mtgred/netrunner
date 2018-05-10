@@ -1462,7 +1462,8 @@
                      (continue-ability state side (sun serv) card nil)))})
 
    "Surveillance Sweep"
-   {:events {:pre-init-trace {:effect (req (swap! state assoc-in [:trace :player] :runner))}}
+   {:events {:run {:effect (req (swap! state assoc-in [:trace :player] :runner))}
+             :run-end {:effect (req (swap! state dissoc-in [:trace :player]))}}
     :leave-play (req (swap! state dissoc-in [:trace :player]))}
 
    "Sweeps Week"
