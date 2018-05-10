@@ -490,11 +490,11 @@
       (play-from-hand state :runner "Cache")
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state "R&D")
-      (is (nil? (->> (get-program state 1) :counter :virus)) "Shouldn't have any virus counters yet.")
+      (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakuma shouldn't have any virus counters yet.")
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
-      (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")
-      (is (nil? (->> (get-program state 1) :counter :virus)) "Doesn't gain any virus counters from trash ability.")
+      (is (= 1 (count (:discard (get-corp)))) "Ice Wall should be discarded now")
+      (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakuma oesn't gain any virus counters from trash ability.")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest gabriel-santiago
