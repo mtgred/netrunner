@@ -116,12 +116,13 @@
    {:effect (effect (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
     :events {:runner-turn-ends {:effect (effect (unregister-events card))}
-             :pre-access-card {:req (req (not= [:discard] (:zone target)))
-                               :delayed-completion true
-                               :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
-                               :effect (req (when-completed (trash state side (assoc target :seen true) nil)
-                                                            (do (swap! state assoc-in [:runner :register :trashed-card] true)
-                                                                (damage state :runner eid :meat 1 {:unboostable true}))))}}}
+             :access {:req (req (not= [:discard] (:zone target)))
+                      :interactive (req true)
+                      :delayed-completion true
+                      :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
+                      :effect (req (when-completed (trash state side (assoc target :seen true) nil)
+                                                   (do (swap! state assoc-in [:runner :register :trashed-card] true)
+                                                       (damage state :runner eid :meat 1 {:unboostable true}))))}}}
 
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
@@ -258,12 +259,12 @@
                                                                                                title " from being trashed at no cost"))
                                                                   (clear-wait-prompt state :runner))}
                                        :no-ability {:msg (msg "trash " title " at no cost")
+                                                    :delayed-completion true
                                                     :effect (effect (clear-wait-prompt :runner)
-                                                                    (resolve-trash-no-cost c))}}}
+                                                                    (trash-no-cost eid c))}}}
                                     card nil))
-                               (do (resolve-trash-no-cost state side c)
-                                   (system-msg state side (str "uses Credit Crash to trash " title " at no cost"))
-                                   (effect-completed state side eid)))))}
+                               (do (system-msg state side (str "uses Credit Crash to trash " title " at no cost"))
+                                   (trash-no-cost state side eid c)))))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Credit Kiting"
@@ -343,17 +344,19 @@
    {:req (req (or rd-runnable hq-runnable))
     :prompt "Choose a server"
     :choices ["HQ" "R&D"]
-    :abilities [{:msg (msg "trash " (:title (:card (first (get-in @state [side :prompt])))) " at no cost")
-                 :effect (effect (trash-no-cost))}]
     :effect (effect (run target nil card)
-                    (prompt! card (str "Click Demolition Run in the Temporary Zone to trash a card being accessed at no cost") ["OK"] {})
                     (resolve-ability
                       {:effect (req (let [c (move state side (last (:discard runner)) :play-area)]
                                       (card-init state side c {:resolve-effect false})
                                       (register-events state side
                                                        {:run-ends {:effect (effect (trash c))}} c)))}
                      card nil))
-    :events {:run-ends nil}}
+    :events {:run-ends nil}
+    :interactions {:trash-ability
+                   {:label "[Demolition Run]: Trash card"
+                    :msg (msg "trash " (:title target) " at no cost")
+                    :delayed-completion true
+                    :effect (effect (trash-no-cost eid target))}}}
 
    "Deuces Wild"
    (let [all [{:effect (effect (gain :credit 3))
@@ -712,7 +715,7 @@
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
     ;; Don't need a msg since game will print that card access is prevented
-    :events {:successful-run {:effect (req (prevent-access))}
+    :events {:successful-run {:effect (effect (prevent-access))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"

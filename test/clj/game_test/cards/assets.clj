@@ -557,6 +557,32 @@
       (is (= 4 (get-in @state [:corp :credit])))
       (is (= 14 (get-counters (refresh eve) :credit))))))
 
+(deftest executive-boot-camp-alternate-rez-cost
+  ;; Executive Boot Camp - works with Ice that has alternate rez costs
+  (do-game
+    (new-game (default-corp [(qty "15 Minutes" 1) (qty "Executive Boot Camp" 1)
+                             (qty "Tithonium" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 3)
+    (score-agenda state :corp (find-card "15 Minutes" (:hand (get-corp))))
+    (play-from-hand state :corp "Tithonium" "HQ")
+    (play-from-hand state :corp "Executive Boot Camp" "New remote")
+    (let [ebc (get-content state :remote1 0)
+          tith (get-ice state :hq 0)]
+      (core/rez state :corp ebc)
+      (take-credits state :corp)
+      (is (= 9 (:credit (get-corp))) "Corp ends turn with 9 credits")
+
+      (take-credits state :runner)
+
+      (is (not (:rezzed (refresh tith))) "Tithonium not rezzed")
+      (is (:corp-phase-12 @state) "Corp in Step 1.2")
+      (card-ability state :corp ebc 0)
+      (prompt-select :corp tith)
+      (prompt-choice :corp "No")
+      (is (and (:installed (refresh tith)) (:rezzed (refresh tith))) "Rezzed Tithonium")
+      (is (= 1 (:credit (get-corp))) "EBC saved 1 credit on the rez of Tithonium"))))
+
 (deftest executive-boot-camp-suppress-start-of-turn
   ;; Executive Boot Camp - suppress the start-of-turn event on a rezzed card. Issue #1346.
   (do-game
@@ -2252,6 +2278,79 @@
     (is (= 3 (count (:scored (get-runner)))) "The Board added to Runner score area")
     (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")))
 
+(deftest the-board-fifteen-minutes
+  ;; The Board - handle Fifteen Minutes clicked out of Runner's score area
+  (do-game
+    (new-game (default-corp [(qty "The Board" 1)
+                             (qty "15 Minutes" 1)])
+              (default-runner))
+    (play-from-hand state :corp "The Board" "New remote")
+    (play-from-hand state :corp "15 Minutes" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+
+    (is (= 0 (:agenda-point (get-runner))) "Runner has 0 agenda points")
+    (run-empty-server state :remote2)
+    (prompt-choice-partial :runner "Steal")
+    (is (= 0 (:agenda-point (get-runner))) "Runner stays at 1 agenda point")
+    (is (= 1 (count (:scored (get-runner)))) "Runner has 1 agenda in scored area")
+    (take-credits state :runner)
+
+    (let [fifm (first (:scored (get-runner)))]
+      (card-ability state :corp (refresh fifm) 0)
+      (is (= 0 (:agenda-point (get-runner))) "Runner drops to 0 agenda points")
+      (is (empty? (:scored (get-runner))) "Runner has no agendas in scored area"))))
+
+(deftest the-board-scored-agenda
+  ;; The Board - Corp scoring agenda shouldn't trigger The Board to lower Runner points
+  (do-game
+    (new-game (default-corp [(qty "The Board" 1)
+                             (qty "Hostile Takeover" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 6)
+    (play-from-hand state :corp "The Board" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (take-credits state :corp)
+
+    (is (= 0 (:agenda-point (get-runner))) "Runner has 0 agenda points")
+    (run-empty-server state :remote3)
+    (prompt-choice-partial :runner "Steal")
+    (is (= 1 (:agenda-point (get-runner))) "Runner has 1 agenda point")
+    (is (= 1 (count (:scored (get-runner)))) "Runner has 1 agenda in scored area")
+    (take-credits state :runner)
+
+    (core/rez state :corp (get-content state :remote1 0))
+    (is (= 0 (:agenda-point (get-runner))) "Runner loses 1 agenda point")
+    (is (= 1 (count (:scored (get-runner)))) "Runner still has 1 agenda in scored area")
+    (score-agenda state :corp (get-content state :remote2 0))
+    (is (= 0 (:agenda-point (get-runner))) "Runner still has 0 agenda points")
+    (is (= 1 (count (:scored (get-runner)))) "Runner still has 1 agenda in scored area")))
+
+(deftest the-board-two-copies
+  ;; The Board - Scoring two copies should be 4 agenda points
+  (do-game
+    (new-game (default-corp [(qty "The Board" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 6)
+    (play-from-hand state :corp "The Board" "New remote")
+    (play-from-hand state :corp "The Board" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (core/rez state :corp (get-content state :remote2 0))
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 14)
+    (is (= 0 (:agenda-point (get-runner))) "Runner has 0 agenda points")
+    (is (empty? (:scored (get-runner))) "Runner has no agendas")
+    (run-empty-server state :remote2)
+    (prompt-choice-partial :runner "Pay")
+    (is (= 1 (:agenda-point (get-runner))) "Runner has 1 agenda point")
+    (is (= 1 (count (:scored (get-runner)))) "Runner has 1 agenda in scored area")
+    (run-empty-server state :remote1)
+    (prompt-choice-partial :runner "Pay")
+    (is (= 4 (:agenda-point (get-runner))) "Runner has 4 agenda points")
+    (is (= 2 (count (:scored (get-runner)))) "Runner has 2 agendas in scored area")))
+
 (deftest the-root
   ;; The Root - recurring credits refill at Step 1.2
   (do-game
@@ -2345,6 +2444,40 @@
       ;; Corp turn 4 - damage fires
       (is (= 1 (count (:discard (get-corp)))) "Urban Renewal got trashed")
       (is (= 4 (count (:discard (get-runner)))) "Urban Renewal did 4 meat damage"))))
+
+(deftest warden-fatuma
+  ;; Warden Fatuma - rezzed bioroid ice gains an additional sub
+  (do-game
+    (new-game (default-corp [(qty "Warden Fatuma" 1) (qty "Kakugo" 1)
+                             (qty "Eli 2.0" 1) (qty "Ichi 2.0" 1)])
+              (default-runner))
+    (core/gain state :corp :credit 20 :click 5)
+    (play-from-hand state :corp "Kakugo" "Archives")
+    (play-from-hand state :corp "Eli 2.0" "HQ")
+    (play-from-hand state :corp "Ichi 2.0" "R&D")
+    (play-from-hand state :corp "Warden Fatuma" "New remote")
+    (let [wf (get-content state :remote1 0)
+          kak (get-ice state :archives 0)
+          eli (get-ice state :hq 0)
+          ichi (get-ice state :rd 0)]
+      (core/rez state :corp kak)
+      (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo starts with 1 sub")
+      (core/rez state :corp eli)
+      (is (= 2 (count (:subroutines (refresh eli)))) "Eli 2.0 starts with 2 subs")
+      (is (= 0 (count (:subroutines (refresh ichi)))) "Unrezzed Ichi 2.0 starts with 0 subs")
+      (core/rez state :corp wf)
+      (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
+      (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 gains 1 sub")
+      (is (= 0 (count (:subroutines (refresh ichi)))) "Unrezzed Ichi 2.0 stays at 0 subs")
+      (core/rez state :corp ichi)
+      (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
+      (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 stays at 1 sub")
+      (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 rezzes with 3 subs")
+      (core/derez state :corp (refresh wf))
+      (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
+      (is (= 2 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
+      (is (= 2 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts")
+    )))
 
 (deftest watchdog
   ;; Watchdog - Reduce rez cost of first ICE per turn by number of Runner tags

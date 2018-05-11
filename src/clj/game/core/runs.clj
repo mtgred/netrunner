@@ -40,6 +40,11 @@
   (when-not (find-cid (:cid c) (get-in @state [:corp :discard]))
     ;; Do not trigger :no-trash if card has already been trashed
     (trigger-event state side :no-trash c))
+  (when (and (is-type? c "Agenda")
+             (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
+    (trigger-event state side :no-steal c))
+  (when (get-card state c)
+    (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
   (trigger-event-sync state side eid :post-access-card c))
 
 ;;; Stealing agendas
@@ -66,12 +71,6 @@
           :card-ability (ability-as-handler c (:stolen (card-def c)))}
          c)
        (access-end state side eid card)))))
-
-(defn- steal-trigger-events
-  "Trigger events from accessing an agenda, which were delayed to account for Film Critic."
-  ([state side card] (steal-trigger-events state side (make-eid state) card))
-  ([state side eid card]
-   (access-end state side eid card)))
 
 (defn- steal-agenda
   "Trigger the stealing of an agenda, now that costs have been paid."
@@ -126,10 +125,10 @@
                      (card-flag? card :can-trash-operation true))
         ;; If card has already been trashed this access don't show option to pay to trash (eg. Ed Kim)
         (when-not (find-cid (:cid card) (get-in @state [:corp :discard]))
-          (let [trash-ab-cards (->> (all-active state :runner)
-                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % card)))
-                card-titles (map :title trash-ab-cards)
-                ability-strs (map #(str % " ability") card-titles)
+          (let [trash-ab-cards (->> (concat (all-active state :runner)
+                                            (get-in @state [:runner :play-area]))
+                                    (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
+                ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
                 trash-cost-str (when trash-cost
                                  [(str "Pay " (str trash-cost "[Credits] ") "to trash")])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
@@ -151,12 +150,7 @@
                :choices choices
                :effect (req (cond
                               (= target "No action")
-                              (do
-                                ;; toggle access flag to prevent Hiro issue #2638
-                                (swap! state dissoc :access)
-                                (trigger-event state side :no-trash c)
-                                (swap! state assoc :access true)
-                                (access-end state side eid c))
+                              (access-end state side eid c)
 
                               (.contains target "Pay")
                               (do (lose state side :credit trash-cost)
@@ -169,7 +163,7 @@
                                   (when-completed (trash state side card nil)
                                                   (access-end state side eid c)))
 
-                              (.contains target "ability")
+                              (some #(= % target) ability-strs)
                               (let [idx (.indexOf ability-strs target)
                                     trash-ab-card (nth trash-ab-cards idx)
                                     cdef (-> (card-def trash-ab-card)
@@ -189,11 +183,11 @@
    :effect (req
              (if (= target "No action")
                (continue-ability state :runner
-                                 {:delayed-completion true
-                                  :effect (req (when-not (find-cid (:cid card) (:deck corp))
-                                                    (system-msg state side (str "decides not to pay to steal " (:title card))))
-                                               (trigger-event state side :no-steal card)
-                                               (steal-trigger-events state side eid card))} card nil)
+                 {:delayed-completion true
+                  :effect (req (when-not (find-cid (:cid card) (:deck corp))
+                                 (system-msg state side (str "decides not to pay to steal " (:title card))))
+                               (access-end state side eid card))}
+                 card nil)
                (let [name (:title card)
                      chosen (cons target chosen)
                      clicks (count (re-seq #"\[Click\]+" target))
@@ -210,7 +204,7 @@
                              (steal-pay-choice state :runner (remove-once #(= target %) cost-strs) chosen n card)
                              card nil)
                            (steal-agenda state side eid card))))
-                   (steal-trigger-events state side eid card)))))})
+                   (access-end state side eid card)))))})
 
 (defn- access-agenda
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
@@ -224,17 +218,17 @@
         cost-as-symbol (when (= 1 (count cost-strs)) (costs-to-symbol cost))
         ;; any trash abilities
         can-steal-this? (can-steal? state side c)
-        trash-ab-cards (->> (all-active state :runner)
-                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % c)))
-        card-titles (map :title trash-ab-cards)
-        ability-strs (map #(str % " ability") card-titles)
+        trash-ab-cards (->> (concat (all-active state :runner)
+                                    (get-in @state [:runner :play-area]))
+                            (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [c])))
+        ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
         ;; strs
         steal-str (when (and can-steal-this? can-pay-costs?)
                     (if cost-as-symbol
                       [(str "Pay " cost-as-symbol " to steal")]
                       ["Steal"]))
         no-action-str (when (or (nil? steal-str)
-                                (not= steal-str "Steal"))
+                                (not= steal-str ["Steal"]))
                         ["No action"])
         prompt-str (str "You accessed " card-name ".")
         choices (into [] (concat ability-strs steal-str no-action-str))]
@@ -250,9 +244,7 @@
                          :effect (req (cond
                                         ;; Can't steal or pay, or won't pay single additional cost to steal
                                         (= target "No action")
-                                        (when-completed (steal-trigger-events state side c)
-                                                        (do (trigger-event state side :no-steal c)
-                                                            (access-end state side eid c)))
+                                        (access-end state side eid c)
 
                                         ;; Steal normally
                                         (= target "Steal")
@@ -266,7 +258,7 @@
                                                             (steal-agenda state side eid c)))
 
                                         ;; Use trash ability
-                                        (.contains target "ability")
+                                        (some #(= % target) ability-strs)
                                         (let [idx (.indexOf ability-strs target)
                                               trash-ab-card (nth trash-ab-cards idx)
                                               cdef (-> (card-def trash-ab-card)

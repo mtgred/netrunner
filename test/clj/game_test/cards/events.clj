@@ -367,6 +367,32 @@
       (prompt-choice :corp "No") ;; Don't trigger CTM trace
       (is (empty? (:prompt (get-runner))) "No prompt to steal since agenda was trashed")
       (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
+      (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")))
+  (testing "alongside Film Critic: should get the option to trigger either"
+    (do-game
+      (new-game (default-corp [(qty "Hostile Takeover" 2)])
+                (default-runner [(qty "By Any Means" 1) (qty "Film Critic" 1) (qty "Sure Gamble" 2)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "By Any Means")
+      (play-from-hand state :runner "Film Critic")
+      (is (= 1 (count (:discard (get-runner)))) "By Any Means has been played")
+      (run-empty-server state "HQ")
+      (is (= #{"Film Critic" "By Any Means"}
+             (->> (get-runner) :prompt first :choices (into #{}))) "A choice of which to trigger first")
+      (prompt-choice :runner "Film Critic")
+      (prompt-choice :runner "No")
+      (is (= 1 (count (:discard (get-corp)))) "Agenda was trashed")
+      (is (= 1 (count (:hand (get-runner)))) "Took 1 meat damage")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/move state :runner (find-card "By Any Means" (:discard (get-runner))) :hand)
+      (play-from-hand state :runner "By Any Means")
+      (run-empty-server state "HQ")
+      (is (= #{"Film Critic" "By Any Means"}
+             (->> (get-runner) :prompt first :choices (into #{}))) "A choice of which to trigger first")
+      (prompt-choice :runner "By Any Means")
+      (is (nil? (->> (get-runner) :prompt first :choices)) "By Any Means trashes with no prompt")
+      (is (= 2 (count (:discard (get-corp)))) "Agenda was trashed")
       (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage"))))
 
 (deftest careful-planning
@@ -446,7 +472,7 @@
       (prompt-choice :runner "HQ")
       (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
       (run-successful state)
-      (prompt-choice :runner "Imp ability")
+      (prompt-choice-partial :runner "Imp")
       (prompt-select :runner (get-program state 0))
       (is (= 2 (count (:discard (get-runner)))) "Imp and Cold Read in discard")
       ; Cold Read works when Blacklist rezzed - #2378
@@ -682,17 +708,15 @@
     (is (= 3 (:credit (get-runner))) "Paid 2 credits for the event")
     (prompt-choice :runner "R&D")
     (is (= [:rd] (get-in @state [:run :server])) "Run initiated on R&D")
-    (prompt-choice :runner "No action") ; dismiss instructional prompt for Demolition Run
     (run-successful state)
-    (let [demo (get-in @state [:runner :play-area 0])] ; Demolition Run "hack" is to put it out in the play area
-      (prompt-choice :runner "Unrezzed upgrade in R&D")
-      (card-ability state :runner demo 0)
-      (is (= 3 (:credit (get-runner))) "Trashed Shell Corporation at no cost")
-      (prompt-choice :runner "Card from deck")
-      (card-ability state :runner demo 0)  ; trash False Lead instead of stealing
-      (is (= 0 (:agenda-point (get-runner))) "Didn't steal False Lead")
-      (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
-      (is (empty? (:prompt (get-runner))) "Run concluded"))))
+    (prompt-choice :runner "Unrezzed upgrade in R&D")
+    (prompt-choice-partial :runner "Demolition Run")
+    (is (= 3 (:credit (get-runner))) "Trashed Shell Corporation at no cost")
+    (prompt-choice :runner "Card from deck")
+    (prompt-choice-partial :runner "Demolition Run")
+    (is (= 0 (:agenda-point (get-runner))) "Didn't steal False Lead")
+    (is (= 2 (count (:discard (get-corp)))) "2 cards in Archives")
+    (is (empty? (:prompt (get-runner))) "Run concluded")))
 
 (deftest deuces-wild
   ;; Deuces Wild
@@ -1063,6 +1087,17 @@
       (card-ability state :corp (refresh zaibatsu) 0) ; prevent the expose!
       (prompt-choice :corp "Done")
       (is (= 8 (:credit (get-runner))) "A prevented expose does not"))))
+
+(deftest feint
+  ;; Feint - bypass 2 pieces of ice on HQ, but access no cards
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Feint" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feint")
+    (run-successful state)
+    (prompt-choice :runner "Ok")
+    (is (not (:run @state)) "Run is over")))
 
 (deftest frantic-coding-install
   ;; Frantic Coding - Install 1 program, other 9 cards are trashed

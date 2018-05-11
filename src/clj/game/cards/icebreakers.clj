@@ -754,7 +754,7 @@
    (conspiracy "Paperclip" "Barrier"
                [{:label (str "X [Credits]: +X strength, break X subroutines")
                  :choices {:number (req (:credit runner))
-                           :default (req (if current-ice
+                           :default (req (if (:current-strength current-ice)
                                            (max (- (:current-strength current-ice)
                                                    (:current-strength card))
                                                 1)

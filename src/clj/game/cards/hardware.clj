@@ -401,13 +401,29 @@
                   :choices {:req is-virus-program?}
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
-     {:events {:runner-turn-begins ability
-               :runner-trash {:req (req (= (:side target) "Corp"))
-                              :optional
-                              {:prompt "Gain a virus counter on Friday Chip?"
-                               :yes-ability
-                               {:effect (effect (add-counter :runner card :virus 1)
-                                                (system-msg :runner (str "places 1 virus counter on Friday Chip")))}}}}})
+     {:abilities [{:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
+                                   (toast (str "Friday Chip will now "
+                                               (if (get-in card [:special :auto-accept]) "no longer " "")
+                                               "automatically add counters.") "info"))
+                   :label "Toggle auomatically adding virus counters"}]
+      :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
+      :events {:runner-turn-begins ability
+               :runner-trash {:delayed-completion true
+                              :req (req (some #(card-is? % :side :corp) targets))
+                              :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                                                 auto-ab {:effect (effect (add-counter :runner card :virus amt-trashed))
+                                                          :msg "place " (quantify amt-trashed "virus counter") "on Friday Chip"}
+                                                 sing-ab {:optional {:prompt "Place a virus counter on Friday Chip?"
+                                                                     :yes-ability {:effect (effect (add-counter :runner card :virus 1))
+                                                                                   :msg "place 1 virus counter on Friday Chip"}}}
+                                                 mult-ab {:prompt "Place virus counters on Friday Chip?"
+                                                          :choices {:number (req amt-trashed)
+                                                                    :default (req amt-trashed)}
+                                                          :msg (msg "place " (quantify target "virus counter") " on Friday Chip")
+                                                          :effect (effect (add-counter :runner card :virus target))}
+                                                 ab (if (> amt-trashed 1) mult-ab sing-ab)
+                                                 ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
+                                             (continue-ability state side ab card targets)))}}})
 
    "Gebrselassie"
    {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
@@ -511,8 +527,7 @@
 
    "Maw"
    (let [ability {:label "Trash a card from HQ"
-                  :req (req (and (first-event? state side :no-trash)
-                                 (first-event? state side :no-steal)
+                  :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
                                  (pos? (count (:hand corp)))
                                  (not= (first (:zone target)) :discard)))
                   :once :per-turn
@@ -521,11 +536,13 @@
                                      card-seen? (= (:cid target) (:cid card-to-trash))
                                      card-to-trash (if card-seen? (assoc card-to-trash :seen true)
                                                                   card-to-trash)]
-                                 (trash state :corp card-to-trash)))}]
+                                 ;; toggle access flag to prevent Hiro issue #2638
+                                 (swap! state dissoc :access)
+                                 (trash state :corp card-to-trash)
+                                 (swap! state assoc :access true)))}]
      {:in-play [:memory 2]
       :abilities [ability]
-      :events {:no-trash ability
-               :no-steal ability}})
+      :events {:post-access-card ability}})
 
    "Maya"
    {:in-play [:memory 2]
@@ -659,9 +676,9 @@
     :leave-play (req (remove-watch state :obelus)
                      (lose state :runner :hand-size {:mod (:tag runner)}))
     :events {:successful-run-ends {:once :per-turn
-                                   :req (req (let [successes (rest (turn-events state side :successful-run))]
+                                   :req (req (let [successes (turn-events state side :successful-run-ends)]
                                                (and (#{[:rd] [:hq]} (:server target))
-                                                    (empty? (filter #(#{'(:rd) '(:hq)} %) successes)))))
+                                                    (not-any? #(some #{:rd :hq} (:server (first %))) successes))))
                                    :msg (msg "draw " (:cards-accessed target 0) " cards")
                                    :effect (effect (draw (:cards-accessed target 0)))}}}
 

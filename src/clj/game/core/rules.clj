@@ -3,7 +3,7 @@
 (declare can-run? card-init card-str cards-can-prevent? close-access-prompt enforce-msg gain-agenda-point
          get-prevent-list get-agenda-points in-corp-scored? installed? is-type? play-sfx prevent-draw make-result
          remove-old-current show-prompt system-say system-msg steal-trigger-events trash-cards
-         untrashable-while-rezzed? update-all-ice  untrashable-while-resources? win win-decked)
+         untrashable-while-rezzed? update-all-ice untrashable-while-resources? win win-decked)
 
 ;;;; Functions for applying core Netrunner game rules.
 
@@ -365,8 +365,7 @@
   ([state side eid {:keys [zone type disabled] :as card} oid
    {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args}]
   (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})
-        card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
+        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
       (when (and (not disabled)
                  (or (and (= (:side card) "Runner")
@@ -464,26 +463,11 @@
                                  (trashrec trashlist)))))]
      (preventrec cards))))
 
-(defn- resolve-trash-no-cost
-  [state side card & {:keys [seen unpreventable]
-                      :or {seen true}}]
+(defn- trash-no-cost
+  [state side eid card & {:keys [seen unpreventable]
+                          :or {seen true}}]
   (swap! state assoc-in [side :register :trashed-card] true)
-  (trash state side (assoc card :seen seen) {:unpreventable unpreventable}))
-
-(defn trash-no-cost
-  "Trashes a card at no cost while it is being accessed. (Imp.)"
-  [state side]
-  (let [prompt (-> @state side :prompt first)
-             card (:card prompt)
-             eid (:eid prompt)]
-    (when card
-      ;; trashing before the :access events actually fire; fire them manually
-      (if (is-type? card "Agenda")
-        (when-completed (steal-trigger-events state side card)
-                        (resolve-trash-no-cost state side card))
-        (resolve-trash-no-cost state side card))
-      (close-access-prompt state side))))
-
+  (trash state side eid (assoc card :seen seen) {:unpreventable unpreventable}))
 
 ;;; Agendas
 (defn get-agenda-points
@@ -584,7 +568,7 @@
   ([state from-side to-side n]
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
-       (resolve-trash-no-cost state from-side card :seen false :unpreventable true)))))
+       (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
 
 ;; Exposing
 (defn expose-prevent

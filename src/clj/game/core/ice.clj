@@ -2,6 +2,30 @@
 
 (declare card-flag?)
 
+;;; Ice subroutine functions
+(defn add-extra-sub
+  "Add a run time subroutine to a piece of ice (Warden, Sub Boost, etc). -1 as the idx adds to the end."
+  [state side cid ice idx sub]
+  (let [new-sub (assoc sub :from-cid cid)
+        curr-subs (vec (:subroutines ice))
+        offset (if (= -1 idx) (count curr-subs) idx)
+        new-subs (apply conj (subvec curr-subs 0 offset) new-sub (subvec curr-subs offset))]
+    (update! state :corp
+             (-> ice
+               (assoc :subroutines new-subs)
+               (assoc-in [:special :extra-subs] true)))))
+
+(defn remove-extra-subs
+  "Remove runtime subroutines assigned from the given cid from a piece of ice."
+  [state side cid ice]
+  (let [curr-subs (:subroutines ice)
+        new-subs (remove #(= cid (:from-cid %)) curr-subs)
+        extra-subs (some #(not (nil? (:from-cid %))) new-subs)]
+    (update! state :corp
+             (-> ice
+               (assoc :subroutines new-subs)
+               (assoc-in [:special :extra-subs] extra-subs)))))
+
 ;;; Ice strength functions
 (defn ice-strength-bonus
   "Increase the strength of the given ice by n. Negative values cause a decrease."

@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare expose-prevent)
+(declare expose-prevent runner-loses-click)
 
 ;;; Asset-specific helpers
 (defn installed-access-trigger
@@ -512,9 +512,10 @@
     :abilities [{:choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (effect (rez-cost-bonus -1)
-                                 (rez target {:no-warning true})
-                                 (update! (assoc card :ebc-rezzed (:cid target))))}
+                 :delayed-completion true
+                 :effect (req (rez-cost-bonus state side -1)
+                              (when-completed (rez state side target {:no-warning true})
+                                              (update! state side (assoc card :ebc-rezzed (:cid target)))))}
                 {:prompt "Choose an asset to add to HQ"
                  :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
@@ -1596,17 +1597,22 @@
                  :msg (msg "derez " (:advance-counter card)) :effect (effect (trash card))}]}
 
    "The Board"
-   {:effect (effect (lose :runner :agenda-point (count (:scored runner))))
-    :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
-    :trash-effect {:when-inactive true
-                   :req (req (:access @state))
-                   :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
-                   :delayed-completion true
-                   :effect (req (as-agenda state :runner eid card 2))}
-    :events {:agenda-stolen {:effect (effect (lose :runner :agenda-point 1))}
-             :card-moved {:req (req (or (some #{:scored} (:zone (first targets)))
-                                        (some #{:scored} (:zone (second targets)))))
-                          :effect (effect ((if (some #{:scored} (:zone (first targets))) gain lose) :runner :agenda-point 1))}}}
+   (let [the-board {:req (req (and (= :runner (:as-agenda-side target))
+                                   (not= (:cid target) (:cid card))))
+                    :effect (effect (lose :runner :agenda-point 1))}]
+         {:effect (effect (lose :runner :agenda-point (count (:scored runner))))
+          :leave-play (effect (gain :runner :agenda-point (count (:scored runner))))
+          :trash-effect {:when-inactive true
+                         :req (req (:access @state))
+                         :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
+                         :delayed-completion true
+                         :effect (req (as-agenda state :runner eid card 2))}
+          :events {:agenda-stolen (dissoc the-board :req)
+                   :as-agenda the-board
+                   :pre-card-moved {:req (req (let [c (first targets)
+                                                    c-cid (:cid c)]
+                                                (some #(when (= c-cid (:cid %)) %) (:scored runner))))
+                                    :effect (req (gain state :runner :agenda-point 1))}}})
 
    "The News Now Hour"
    {:events {:runner-turn-begins {:effect (req (prevent-current state side))}}
@@ -1678,6 +1684,34 @@
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
                    :delayed-completion true
                    :effect (req (as-agenda state :runner eid card 2))}}
+
+   "Warden Fatuma"
+   (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose 1 [Click], if able"}]
+
+     (letfn [(all-rezzed-bios [state]
+               (filter #(and (ice? %)
+                             (has-subtype? % "Bioroid")
+                             (rezzed? %))
+                       (all-installed state :corp)))
+
+             (remove-one [cid state ice]
+               (remove-extra-subs state :corp cid ice))
+
+             (add-one [cid state ice]
+               (add-extra-sub state :corp cid ice 0 new-sub))
+
+             (update-all [state func] (doseq [i (all-rezzed-bios state)] (func state i)))
+             ]
+       {:effect (req (system-msg
+                       state :corp
+                       "uses Warden Fatuma to add \"[Subroutine] The Runner loses [Click], if able\" before all other subroutines")
+                  (update-all state (partial add-one (:cid card))))
+        :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
+                      (update-all state (partial remove-one (:cid card))))
+        :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
+                     :effect (req (lose state :runner :click 1))}
+        :events {:rez {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
+                       :effect (req (add-one (:cid card) state (get-card state target)))}}}))
 
    "Watchdog"
    {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))

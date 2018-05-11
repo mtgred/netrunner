@@ -697,24 +697,21 @@
            (host-agenda? [agenda]
              {:optional {:prompt (str "You access " (:title agenda) ". Host it on Film Critic?")
                         :yes-ability {:effect (req (host state side card (move state side agenda :play-area))
-
-
-                                                   ;;TODO: is this necessary?
-                                                   (trigger-event state side :no-steal agenda)
-
-                                                   ;;(close-access-prompt state side)
+                                                   (access-end state side eid agenda)
                                                    (when-not (:run @state)
                                                      (swap! state dissoc :access)))
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
-     {;:implementation "Use hosting ability when presented with Access prompt for an agenda"
-      :events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
+     {:events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
                                        (is-type? target "Agenda")))
+                        :interactive (req true)
                         :delayed-completion true
                         :effect (effect (continue-ability (host-agenda? target) card nil))}}
       :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
-                   :req (req (not (empty? (:hosted card))))
-                   :effect (req (let [c (move state :runner (get-agenda card) :scored)]
-                                  (gain-agenda-point state :runner (get-agenda-points state :runner c))))
+                   :req (req (get-agenda card))
+                   :delayed-completion true
+                   :effect (req (let [c (get-agenda card)
+                                      points (get-agenda-points state :runner c)]
+                                  (as-agenda state :runner eid c points)))
                    :msg (msg (let [c (get-agenda card)]
                                (str "add " (:title c) " to their score area and gain "
                                     (quantify (get-agenda-points state :runner c) "agenda point"))))}]})
@@ -999,7 +996,7 @@
             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :drip-economy true)
                                                       (all-active-installed state :runner)))))}
 
-    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over.
+    ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
     :effect (effect (lose :corp :hand-size {:mod 1}))
     :leave-play (effect (gain :corp :hand-size {:mod 1}))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
@@ -1069,11 +1066,13 @@
     :abilities [{:label "Bypass the encountered ice"
                  :req (req (and (:run @state)
                                 (rezzed? current-ice)))
-                 :msg (msg "bypass " (:title current-ice) (when (pos? (:click (:runner @state)))
-                                                             (str " and loses "
-                                                                  (apply str (repeat (:click (:runner @state)) "[Click]")))))
+                 :msg (msg "bypass "
+                           (:title current-ice)
+                           (when (pos? (:click runner))
+                             (str " and loses "
+                                  (apply str (repeat (:click runner) "[Click]")))))
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (lose :click (:click (:runner @state))))}]}
+                                 (lose :click (:click runner)))}]}
 
    "London Library"
    {:abilities [{:label "Install a non-virus program on London Library"
@@ -1602,6 +1601,22 @@
                                                          st nil))})))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
       :abilities [ability]})
+
+   "Slipstream"
+    {:implementation "Use Slipstream before hitting Continue to pass current ice"
+     :abilities [{:req (req (:run @state))
+                  :effect (req (let [ice-pos  (get-in @state [:run :position])]
+                                 (resolve-ability state side
+                                   {:prompt (msg "Choose a piece of ICE protecting a central server at the same position as " (:title current-ice) )
+                                    :choices {:req #(and (is-central? (second (:zone %)))
+                                                         (ice? %)
+                                                         (= ice-pos (inc (ice-index state %))))}
+                                    :msg (msg "approach " (card-str state target))
+                                    :effect (req (let [dest (second (:zone target))]
+                                                   (swap! state update-in [:run]
+                                                          #(assoc % :position ice-pos :server [dest]))
+                                                   (trash state side card)))}
+                                card nil)))}]}
 
    "Spoilers"
    {:events {:agenda-scored {:interactive (req true)
