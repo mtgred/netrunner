@@ -289,7 +289,8 @@
            (not= (:faction card) "Jinteki"))))
 
 (defn valid-deck? [{:keys [identity cards] :as deck}]
-  (and (>= (card-count cards) (min-deck-size identity))
+  (and (not (nil? identity))
+       (>= (card-count cards) (min-deck-size identity))
        (<= (influence-count deck) (id-inf-limit identity))
        (every? #(and (allowed? (:card %) identity)
                      (legal-num-copies? identity %)) cards)
