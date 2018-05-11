@@ -1285,7 +1285,9 @@
      ["Credits Lost" #(-> (s) :lose :credit)]
      ["Credits by Click" #(-> (s) :click :credit)]
      ["Cards Drawn" #(-> (s) :gain :card)]
-     ["Cards Drawn by Click" #(-> (s) :click :draw)]]))
+     ["Cards Drawn by Click" #(-> (s) :click :draw)]
+     ["Damage Done" #(-> (s) :damage :all)]
+     ["Cards Rezzed" #(-> (s) :cards :rezzed)]]))
 
 (def runner-stats
   (let [s #(-> @game-state :stats :runner)]

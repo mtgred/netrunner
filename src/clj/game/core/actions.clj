@@ -372,6 +372,7 @@
                        (do (update-ice-strength state side card)
                            (play-sfx state side "rez-ice"))
                        (play-sfx state side "rez-other"))
+                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                      (trigger-event-sync state side eid :rez card)))))
            (effect-completed state side eid))
          (swap! state update-in [:bonus] dissoc :cost))

@@ -215,9 +215,13 @@
                               (if (< (count hand) n)
                                 (do (flatline state)
                                     (trash-cards state side (make-eid state) cards-trashed
-                                                 {:unpreventable true}))
+                                                 {:unpreventable true})
+                                    (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                                    (swap! state update-in [:stats :corp :damage type] (fnil + 0) n))
                                 (do (trash-cards state side (make-eid state) cards-trashed
                                                  {:unpreventable true :cause type})
+                                    (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                                    (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
                                     (trigger-event state side :damage type card n)))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (swap! state update-in [:damage] dissoc :damage-replace)
@@ -634,7 +638,6 @@
     (system-msg state side "cleared the win condition")
     (swap! state dissoc-in [:runner :clear-win])
     (swap! state dissoc-in [:corp :clear-win])
-    (swap! state dissoc-in [:stats :time :ended])
     (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
 
 (defn win
@@ -645,9 +648,9 @@
           now (t/now)]
       (system-msg state side "wins the game")
       (play-sfx state side "game-end")
+      (swap! state assoc-in [:stats :time :ended] now)
+      (swap! state assoc-in [:stats :time :elapsed] (t/in-minutes (t/interval started now)))
       (swap! state assoc
-             :stats {:time {:ended now}}
-             :stats {:time {:elapsed (t/in-minutes (t/interval started now))}}
              :winner side
              :loser (other-side side)
              :winning-user (get-in @state [side :user :username])
