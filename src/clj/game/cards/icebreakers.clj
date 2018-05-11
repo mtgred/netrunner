@@ -13,10 +13,14 @@
                                                               (not= % "credit"))
                                                         (:cost pumpabi))))
               current-ice (when-not (get-in @state [:run :ending]) (get-card state current-ice))
-              strdif (when current-ice (max 0 (- (or (:current-strength current-ice)
-                                                     (:strength current-ice))
-                                                 (or (:current-strength card)
-                                                     (:strength card)))))
+              strdif (when (and (or (:current-strength current-ice)
+                                    (:strength current-ice))
+                                (or (:current-strength card)
+                                    (:strength card)))
+                       (max 0 (- (or (:current-strength current-ice)
+                                     (:strength current-ice))
+                                 (or (:current-strength card)
+                                     (:strength card)))))
               pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
           (update! state side
                    (assoc card :abilities
