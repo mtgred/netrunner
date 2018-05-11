@@ -11,7 +11,7 @@
   ;; Acacia - Optionally gain credits for number of virus tokens then trash
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Acacia" 1) (qty "Virus Breeding Ground" 1) (qty "Datasucker" 1)]))
+              (default-runner ["Acacia" "Virus Breeding Ground" "Datasucker"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Acacia")
     (play-from-hand state :runner "Virus Breeding Ground")
@@ -37,8 +37,8 @@
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
   (do-game
-    (new-game (default-corp [(qty "Shock!" 1) (qty "Launch Campaign" 1)])
-              (default-runner [(qty "Archives Interface" 1) (qty "Imp" 1)]))
+    (new-game (default-corp ["Shock!" "Launch Campaign"])
+              (default-runner ["Archives Interface" "Imp"]))
     (take-credits state :corp)
     (core/move state :corp (find-card "Shock!" (:hand (get-corp))) :discard)
     (core/move state :corp (find-card "Launch Campaign" (:hand (get-corp))) :discard)
@@ -62,7 +62,7 @@
   ;; Astrolabe - Draw on new server install
   (do-game
     (new-game (default-corp [(qty "Snare!" 3)])
-              (default-runner [(qty "Astrolabe" 3) (qty "Sure Gamble" 3) (qty "Cloak" 1)]))
+              (default-runner ["Astrolabe" 3) (qty "Sure Gamble" 3) (qty "Cloak"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Astrolabe")
     (take-credits state :runner 3)
@@ -77,9 +77,9 @@
 (deftest blackguard
   ;; Blackguard - +2 MU, forced rez of exposed ice
   (do-game
-   (new-game (default-corp [(qty "Ice Wall" 1)])
-             (default-runner [(qty "Blackguard" 1)
-                              (qty "Snitch" 1)]))
+   (new-game (default-corp ["Ice Wall"])
+             (default-runner ["Blackguard"
+                              "Snitch"]))
    (play-from-hand state :corp "Ice Wall" "Archives")
    (take-credits state :corp)
    (core/gain state :runner :credit 100)
@@ -96,7 +96,7 @@
   ;; Box-E - +2 MU, +2 max hand size
   (do-game
    (new-game (default-corp)
-             (default-runner [(qty "Box-E" 1)]))
+             (default-runner ["Box-E"]))
    (take-credits state :corp)
    (play-from-hand state :runner "Box-E")
    (is (= 6 (:memory (get-runner))))
@@ -106,7 +106,7 @@
   ;; Brain Chip handsize and memory limit
   (do-game
    (new-game (default-corp)
-             (default-runner [(qty "Brain Chip" 1)]))
+             (default-runner ["Brain Chip"]))
    (take-credits state :corp)
    (play-from-hand state :runner "Brain Chip")
    (swap! state assoc-in [:runner :agenda-point] -2) ; hard set ap
@@ -123,7 +123,7 @@
   ;; Test clone chip usage- outside and during run
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Datasucker" 1) (qty "Clone Chip" 2)]))
+              (default-runner ["Datasucker" (qty "Clone Chip" 2)]))
     (take-credits state :corp)
     (trash-from-hand state :runner "Datasucker")
     (play-from-hand state :runner "Clone Chip")
@@ -138,7 +138,7 @@
   ;; Test clone chip usage - dont show inavalid choices
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Inti" 1) (qty "Magnum Opus" 1) (qty "Clone Chip" 1)]))
+              (default-runner ["Inti" "Magnum Opus" "Clone Chip"]))
     (take-credits state :corp)
     (trash-from-hand state :runner "Inti")
     (trash-from-hand state :runner "Magnum Opus")
@@ -178,8 +178,8 @@
 (deftest cortez-chip
   ;; Cortez Chip - Trash to add 2 credits to rez cost of an ICE until end of turn
   (do-game
-    (new-game (default-corp [(qty "Quandary" 1)])
-              (default-runner [(qty "Cortez Chip" 1)]))
+    (new-game (default-corp ["Quandary"])
+              (default-runner ["Cortez Chip"]))
     (play-from-hand state :corp "Quandary" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Cortez Chip")
@@ -204,7 +204,7 @@
   ;; Daredevil
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 2)])
-              (default-runner [(qty "Daredevil" 1) (qty "Sure Gamble" 3) (qty "Easy Mark" 2)]))
+              (default-runner ["Daredevil" (qty "Sure Gamble" 3) (qty "Easy Mark" 2)]))
     (starting-hand state :runner ["Daredevil"])
     (play-from-hand state :corp "Ice Wall" "Archives")
     (play-from-hand state :corp "Ice Wall" "Archives")
@@ -235,8 +235,8 @@
   ;; Dinosaurus - hosting a breaker with strength based on unused MU should calculate correctly
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Adept" 1)
-                               (qty "Dinosaurus" 1)]))
+              (default-runner ["Adept"
+                               "Dinosaurus"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Dinosaurus")
@@ -255,7 +255,7 @@
   ;; Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Dinosaurus" 1) (qty "Battering Ram" 1)]))
+              (default-runner ["Dinosaurus" "Battering Ram"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Dinosaurus")
@@ -276,7 +276,7 @@
   ;; Doppelgänger - run again when successful
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Doppelgänger" 1)]))
+              (default-runner ["Doppelgänger"]))
     (core/gain state :corp :bad-publicity 1)
     (take-credits state :corp)
     (play-from-hand state :runner "Doppelgänger")
@@ -292,8 +292,8 @@
 (deftest dorm-computer
   ;; make a run and avoid all tags for the remainder of the run
   (do-game
-    (new-game (default-corp [(qty "Snare!" 1)])
-              (default-runner [(qty "Dorm Computer" 1)]))
+    (new-game (default-corp ["Snare!"])
+              (default-runner ["Dorm Computer"]))
     (play-from-hand state :corp "Snare!" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Dorm Computer")
@@ -312,9 +312,9 @@
 (deftest feedback-filter
   ;; Feedback Filter - Prevent net and brain damage
   (do-game
-    (new-game (default-corp [(qty "Data Mine" 1)
-                             (qty "Cerebral Overwriter" 1)
-                             (qty "Mushin No Shin" 1)])
+    (new-game (default-corp ["Data Mine"
+                             "Cerebral Overwriter"
+                             "Mushin No Shin"])
               (default-runner [(qty "Feedback Filter" 2) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Mushin No Shin")
     (prompt-select :corp (find-card "Cerebral Overwriter" (:hand (get-corp))))
@@ -346,8 +346,8 @@
 (deftest friday-chip
   ;; Friday Chip - gain counters for trashing cards, move a counter on turn start
   (do-game
-    (new-game (default-corp [(qty "Adonis Campaign" 1) (qty "Hedge Fund" 1)])
-              (default-runner [(qty "Friday Chip" 1) (qty "Aumakua" 1)]))
+    (new-game (default-corp ["Adonis Campaign" "Hedge Fund"])
+              (default-runner ["Friday Chip" "Aumakua"]))
     (play-from-hand state :corp "Adonis Campaign" "New remote")
     (take-credits state :corp)
     (core/gain state :runner :credit 20)
@@ -378,7 +378,7 @@
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Grimoire" 1) (qty "Imp" 1)]))
+              (default-runner ["Grimoire" "Imp"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Grimoire")
     (is (= 6 (:memory (get-runner))) "Gained 2 MU")
@@ -389,8 +389,8 @@
 (deftest heartbeat
   ;; Heartbeat - +1 MU, trash installed card to prevent 1 damage
   (do-game
-    (new-game (default-corp [(qty "Pup" 1) (qty "Neural Katana" 1)])
-              (make-deck "Apex: Invasive Predator" [(qty "Heartbeat" 2) (qty "Sure Gamble" 2) (qty "Cache" 1)]))
+    (new-game (default-corp ["Pup" "Neural Katana"])
+              (make-deck "Apex: Invasive Predator" ["Heartbeat" 2) (qty "Sure Gamble" 2) (qty "Cache"]))
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Neural Katana" "R&D")
     (take-credits state :corp)
@@ -422,7 +422,7 @@
   ;; Knobkierie - first successful run, place a virus counter on a virus program
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Knobkierie" 1) (qty "Hivemind" 1) (qty "Eater" 1)]))
+              (default-runner ["Knobkierie" "Hivemind" "Eater"]))
     (core/gain state :runner :credit 20)
     (take-credits state :corp)
     (play-from-hand state :runner "Knobkierie")
@@ -453,7 +453,7 @@
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "LLDS Processor" 2) (qty "Inti" 1) (qty "Passport" 1)]))
+              (default-runner ["LLDS Processor" 2) (qty "Inti" "Passport"]))
     (take-credits state :corp)
     (play-from-hand state :runner "LLDS Processor")
     (play-from-hand state :runner "Inti")
@@ -472,7 +472,7 @@
   (testing "Basic test"
     (do-game
       (new-game (default-corp [(qty "BOOM!" 5)])
-                (default-runner [(qty "Maw" 1)]))
+                (default-runner ["Maw"]))
       (take-credits state :corp)
       (core/gain state :runner :credit 20)
       (run-empty-server state :hq)
@@ -493,8 +493,8 @@
   (testing "Check trashed card is trashed face-up if it's the card that is accessed, issue #2695"
     ;; Also checks Maw auto-trashes on Operation with no trash cost
     (do-game
-      (new-game (default-corp [(qty "Hedge Fund" 1)])
-                (default-runner [(qty "Maw" 1)]))
+      (new-game (default-corp ["Hedge Fund"])
+                (default-runner ["Maw"]))
       (take-credits state :corp)
       (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Maw")
@@ -505,8 +505,8 @@
       (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
   (testing "with Hiro in hand - Hiro not moved to runner scored area on trash decline. #2638"
     (do-game
-      (new-game (default-corp [(qty "Chairman Hiro" 1)])
-                (default-runner [(qty "Maw" 1)]))
+      (new-game (default-corp ["Chairman Hiro"])
+                (default-runner ["Maw"]))
       (take-credits state :corp)
       (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Maw")
@@ -516,9 +516,9 @@
       (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw")))
   (testing "Maw shouldn't trigger on stolen agenda. #3433"
     (do-game
-      (new-game (default-corp [(qty "Hostile Takeover" 1)
+      (new-game (default-corp ["Hostile Takeover"
                                (qty "Ice Wall" 5)])
-                (default-runner [(qty "Maw" 1)]))
+                (default-runner ["Maw"]))
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (take-credits state :corp)
       (core/gain state :runner :credit 20)
@@ -531,7 +531,7 @@
   ;; Maya - Move accessed card to bottom of R&D
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
-              (default-runner [(qty "Maya" 1) (qty "Sure Gamble" 3)]))
+              (default-runner ["Maya" (qty "Sure Gamble" 3)]))
     (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
     (take-credits state :corp)
@@ -563,7 +563,7 @@
   ;; Maya - Does not interrupt multi-access.
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
-              (default-runner [(qty "Maya" 1) (qty "Sure Gamble" 3) (qty "R&D Interface" 1)]))
+              (default-runner ["Maya" "Sure Gamble" 3) (qty "R&D Interface"]))
     (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
     (take-credits state :corp)
@@ -583,7 +583,7 @@
   ;; Net-Ready Eyes
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Sure Gamble" 3) (qty "Net-Ready Eyes" 1) (qty "Peacock" 1)]))
+              (default-runner ["Sure Gamble" 3) (qty "Net-Ready Eyes" "Peacock"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Peacock")
@@ -602,7 +602,7 @@
   ;; Obelus - Increase max hand size with tags, draw cards on first successful HQ/R&D run
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Obelus" 1) (qty "Nerve Agent" 1)
+              (default-runner ["Obelus" "Nerve Agent"
                                (qty "Sure Gamble" 3) (qty "Cache" 3)]))
     (take-credits state :corp)
     (starting-hand state :runner ["Obelus" "Nerve Agent"])
@@ -641,8 +641,8 @@
 (deftest obelus-crisium
   ;; Obelus - running and trashing Crisium Grid makes run neither successful/unsuccessful
   (do-game
-    (new-game (default-corp [(qty "Hedge Fund" 1) (qty "Crisium Grid" 1)])
-              (default-runner [(qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+    (new-game (default-corp ["Hedge Fund" "Crisium Grid"])
+              (default-runner ["Obelus" (qty "Sure Gamble" 3)]))
     (starting-hand state :corp ["Crisium Grid"])
     (play-from-hand state :corp "Crisium Grid" "R&D")
     (core/rez state :corp (get-content state :rd 0))
@@ -666,7 +666,7 @@
   ;; Obelus - using Hades Shard during run to increase draw
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 3)])
-              (default-runner [(qty "Obelus" 1) (qty "Hades Shard" 1)
+              (default-runner ["Obelus" "Hades Shard"
                                (qty "Sure Gamble" 3) (qty "Cache" 3)]))
     (starting-hand state :corp ["Hedge Fund" "Hedge Fund"])
     (trash-from-hand state :corp "Hedge Fund")
@@ -684,8 +684,8 @@
 (deftest obelus-remote-server
   ;; Obelus - running a remote server first doesn't block card draw
   (do-game
-    (new-game (default-corp [(qty "Urban Renewal" 1) (qty "Hedge Fund" 1)])
-              (default-runner [(qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+    (new-game (default-corp ["Urban Renewal" "Hedge Fund"])
+              (default-runner ["Obelus" (qty "Sure Gamble" 3)]))
     (starting-hand state :corp ["Urban Renewal"])
     (play-from-hand state :corp "Urban Renewal" "New remote")
     (take-credits state :corp)
@@ -703,8 +703,8 @@
 (deftest plascrete
   ;; Plascrete Carapace - Prevent meat damage
   (do-game
-    (new-game (default-corp [(qty "Scorched Earth" 1)])
-              (default-runner [(qty "Plascrete Carapace" 1) (qty "Sure Gamble" 1)]))
+    (new-game (default-corp ["Scorched Earth"])
+              (default-runner ["Plascrete Carapace" "Sure Gamble"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Plascrete Carapace")
     (let [plas (get-in @state [:runner :rig :hardware 0])]
@@ -724,7 +724,7 @@
   ;; Rabbit Hole - +1 link, optionally search Stack to install more copies
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Sure Gamble" 1) (qty "Rabbit Hole" 3)]))
+              (default-runner ["Sure Gamble" (qty "Rabbit Hole" 3)]))
     (take-credits state :corp)
     (core/move state :runner (find-card "Rabbit Hole" (:hand (get-runner))) :deck)
     (core/move state :runner (find-card "Rabbit Hole" (:hand (get-runner))) :deck)
@@ -741,8 +741,8 @@
 (deftest ramujan-reliant
   ;; Prevent up to X net or brain damage.
   (do-game
-    (new-game (default-corp [(qty "Data Mine" 1)
-                             (qty "Snare!" 1)])
+    (new-game (default-corp ["Data Mine"
+                             "Snare!"])
               (default-runner [(qty "Ramujan-reliant 550 BMI" 4) (qty "Sure Gamble" 6)]))
     (starting-hand state :runner
                    ["Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Ramujan-reliant 550 BMI" "Sure Gamble"])
@@ -780,8 +780,8 @@
 (deftest ramujan-reliant-empty
   ;; Prevent up to X net or brain damage. Empty stack
   (do-game
-    (new-game (default-corp [(qty "Data Mine" 1)])
-              (default-runner [(qty "Ramujan-reliant 550 BMI" 1) (qty "Sure Gamble" 1)]))
+    (new-game (default-corp ["Data Mine"])
+              (default-runner ["Ramujan-reliant 550 BMI" "Sure Gamble"]))
     (play-from-hand state :corp "Data Mine" "Server 1")
     (let [dm (get-ice state :remote1 0)]
       (take-credits state :corp)
@@ -797,8 +797,8 @@
 (deftest recon-drone
   ;; trash and pay X to prevent that much damage from a card you are accessing
   (do-game
-    (new-game (default-corp [(qty "Snare!" 1) (qty "House of Knives" 1)
-                             (qty "Prisec" 1) (qty "Cerebral Overwriter" 1)])
+    (new-game (default-corp ["Snare!" "House of Knives"
+                             "Prisec" "Cerebral Overwriter"])
               (default-runner [(qty "Recon Drone" 10)]))
     (core/gain state :corp :click 10)
     (core/gain state :corp :credit 100)
@@ -877,7 +877,7 @@
   ;; Replicator - interaction with Bazaar. Issue #1511.
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Replicator" 1) (qty "Bazaar" 1) (qty "Spy Camera" 6)]))
+              (default-runner ["Replicator" "Bazaar" (qty "Spy Camera" 6)]))
     (letfn [(count-spy [n] (= n (count (filter #(= "Spy Camera" (:title %)) (-> (get-runner) :rig :hardware)))))]
       (take-credits state :corp)
       (starting-hand state :runner ["Replicator" "Bazaar" "Spy Camera"])
@@ -919,8 +919,8 @@
 (deftest rubicon-switch
   ;; Rubicon Switch
   (do-game
-   (new-game (default-corp [(qty "Ice Wall" 1) (qty "Pachinko" 1)])
-             (default-runner [(qty "Rubicon Switch" 1)]))
+   (new-game (default-corp ["Ice Wall" "Pachinko"])
+             (default-runner ["Rubicon Switch"]))
    (play-from-hand state :corp "Ice Wall" "HQ")
    (play-from-hand state :corp "Pachinko" "R&D")
    (let [iw (get-ice state :hq 0)
@@ -943,8 +943,8 @@
   ;; Once per turn drop encountered ICE to zero strenght
   ;; Also handle archangel then re-install sifr should not break the game #2576
   (do-game
-    (new-game (default-corp [(qty "Archangel" 1) (qty "IP Block" 1) (qty "Hedge Fund" 1)])
-              (default-runner [(qty "Modded" 1) (qty "Clone Chip" 1) (qty "Şifr" 1) (qty "Parasite" 1)]))
+    (new-game (default-corp ["Archangel" "IP Block" "Hedge Fund"])
+              (default-runner ["Modded" "Clone Chip" "Şifr" "Parasite"]))
     (core/gain state :corp :credit 100)
     (core/gain state :runner :credit 100)
     (play-from-hand state :corp "Archangel" "HQ")
@@ -995,8 +995,8 @@
 (deftest spinal-modem
   ;; Spinal Modem - +1 MU, 2 recurring credits, take 1 brain damage on successful trace during run
   (do-game
-    (new-game (default-corp [(qty "Caduceus" 1)])
-              (default-runner [(qty "Spinal Modem" 1) (qty "Sure Gamble" 1)]))
+    (new-game (default-corp ["Caduceus"])
+              (default-runner ["Spinal Modem" "Sure Gamble"]))
     (play-from-hand state :corp "Caduceus" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Spinal Modem")
@@ -1031,8 +1031,8 @@
   ;; Spy Camera - Full test
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Spy Camera" 6) (qty "Sure Gamble" 1) (qty "Desperado" 1)
-                               (qty "Diesel" 1) (qty "Corroder" 1) (qty "Patron" 1) (qty "Kati Jones" 1)]))
+              (default-runner ["Spy Camera" 6) (qty "Sure Gamble" "Desperado"
+                               "Diesel" "Corroder" "Patron" "Kati Jones"]))
     (starting-hand state :runner ["Spy Camera" "Spy Camera" "Spy Camera"
                                   "Spy Camera" "Spy Camera" "Spy Camera"])
     (is (= 6 (count (:hand (get-runner)))))
@@ -1074,10 +1074,10 @@
   ;; Access additional cards on run on HQ, not with Gang Sign
   ;; Issue #2749
   (do-game
-    (new-game (default-corp [(qty "Hostile Takeover" 1)
+    (new-game (default-corp ["Hostile Takeover"
                              (qty "Hedge Fund" 3)])
-              (default-runner [(qty "The Gauntlet" 1)
-                               (qty "Gang Sign" 1)]))
+              (default-runner ["The Gauntlet"
+                               "Gang Sign"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Gang Sign")
@@ -1095,9 +1095,9 @@
   ;; The Personal Touch - Give +1 strength to an icebreaker
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "The Personal Touch" 1)
-                               (qty "Paricia" 1)
-                               (qty "Faerie" 1)]))
+              (default-runner ["The Personal Touch"
+                               "Paricia"
+                               "Faerie"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Paricia")
     (play-from-hand state :runner "Faerie")
@@ -1114,10 +1114,10 @@
 (deftest titanium-ribs
   ;; Titanium Ribs - Choose cards lost to damage, but not on Corp turn against Chronos Protocol
   (do-game
-    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Pup" 1) (qty "Viktor 1.0" 1)
-                                                                     (qty "Neural EMP" 1)])
-              (default-runner [(qty "Titanium Ribs" 2) (qty "Sure Gamble" 1)
-                               (qty "Fall Guy" 1) (qty "Kati Jones" 1)]))
+    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" ["Pup" "Viktor 1.0"
+                                                                     "Neural EMP"])
+              (default-runner ["Titanium Ribs" 2) (qty "Sure Gamble"
+                               "Fall Guy" "Kati Jones"]))
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Viktor 1.0" "R&D")
     (take-credits state :corp)
@@ -1146,8 +1146,8 @@
 (deftest turntable-swap
   ;; Turntable - Swap a stolen agenda for a scored agenda
   (do-game
-    (new-game (default-corp [(qty "Domestic Sleepers" 1) (qty "Project Vitruvius" 1)])
-              (default-runner [(qty "Turntable" 1)]))
+    (new-game (default-corp ["Domestic Sleepers" "Project Vitruvius"])
+              (default-runner ["Turntable"]))
     (play-from-hand state :corp "Project Vitruvius" "New remote")
     (let [ag1 (get-content state :remote1 0)]
       (score-agenda state :corp ag1)
@@ -1168,8 +1168,8 @@
   ;; Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn
   ;;           - Corp doesn't gain a click on the Runner's turn when it receives a Mandatory Upgrades
   (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 2) (qty "Project Vitruvius" 1)])
-              (default-runner [(qty "Turntable" 1)]))
+    (new-game (default-corp ["Mandatory Upgrades" 2) (qty "Project Vitruvius"])
+              (default-runner ["Turntable"]))
     (score-agenda state :corp (find-card "Mandatory Upgrades" (:hand (get-corp))))
     (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")
     (take-credits state :corp)
@@ -1193,7 +1193,7 @@
   ;; Vigil - Draw 1 card when turn begins if Corp HQ is filled to max hand size
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 3) (qty "PAD Campaign" 2)])
-              (default-runner [(qty "Vigil" 1) (qty "Sure Gamble" 2)]))
+              (default-runner ["Vigil" (qty "Sure Gamble" 2)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Vigil")
     (is (= 5 (:memory (get-runner))))
@@ -1213,8 +1213,8 @@
 (deftest zamba
   ;; Zamba - Whenever corp card is exposed you may gain 1 credit
   (do-game
-   (new-game (default-corp [(qty "Ice Wall" 1)])
-             (default-runner [(qty "Zamba" 1) (qty "Infiltration" 2)]))
+   (new-game (default-corp ["Ice Wall"])
+             (default-runner ["Zamba" (qty "Infiltration" 2)]))
    (play-from-hand state :corp "Ice Wall" "Archives")
    (take-credits state :corp)
    (play-from-hand state :runner "Zamba")

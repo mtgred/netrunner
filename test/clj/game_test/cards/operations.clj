@@ -54,8 +54,8 @@
 (deftest twenty-four-seven-news-cycle-swaps
   ;; 24/7 News Cycle - Swapped agendas are able to be used. #1555
   (do-game
-    (new-game (default-corp [(qty "24/7 News Cycle" 1) (qty "Chronos Project" 1)
-                             (qty "Philotic Entanglement" 1) (qty "Profiteering" 1)])
+    (new-game (default-corp ["24/7 News Cycle" "Chronos Project"
+                             "Philotic Entanglement" "Profiteering"])
               (default-runner [(qty "Turntable" 3)]))
     (score-agenda state :corp (find-card "Chronos Project" (:hand (get-corp))))
     (score-agenda state :corp (find-card "Philotic Entanglement" (:hand (get-corp))))
@@ -85,8 +85,8 @@
 (deftest accelerated-diagnostics
   ;; Accelerated Diagnostics - Interaction with prompt effects, like Shipment from SanSan
   (do-game
-    (new-game (default-corp [(qty "Accelerated Diagnostics" 1) (qty "Cerebral Overwriter" 1) (qty "Shipment from SanSan" 1)
-                             (qty "Hedge Fund" 1) (qty "Back Channels" 1)])
+    (new-game (default-corp ["Accelerated Diagnostics" "Cerebral Overwriter" "Shipment from SanSan"
+                             "Hedge Fund" "Back Channels"])
               (default-runner))
     (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
     (play-from-hand state :corp "Cerebral Overwriter" "New remote")
@@ -112,9 +112,9 @@
 (deftest accelerated-diagnostics-with-current
   ;; Accelerated Diagnostics - Interaction with Current
   (do-game
-    (new-game (default-corp [(qty "Accelerated Diagnostics" 1) (qty "Cerebral Overwriter" 1)
-                             (qty "Enhanced Login Protocol" 1) (qty "Shipment from SanSan" 1)
-                             (qty "Hedge Fund" 1)])
+    (new-game (default-corp ["Accelerated Diagnostics" "Cerebral Overwriter"
+                             "Enhanced Login Protocol" "Shipment from SanSan"
+                             "Hedge Fund"])
               (default-runner))
     (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
     (play-from-hand state :corp "Cerebral Overwriter" "New remote")
@@ -140,7 +140,7 @@
 (deftest an-offer-you-cant-refuse
   ;; An Offer You Can't Refuse - exact card added to score area, not the last discarded one
   (do-game
-    (new-game (default-corp [(qty "Celebrity Gift" 1) (qty "An Offer You Can't Refuse" 1)])
+    (new-game (default-corp ["Celebrity Gift" "An Offer You Can't Refuse"])
               (default-runner))
     (play-from-hand state :corp "An Offer You Can't Refuse")
     (prompt-choice :corp "R&D")
@@ -156,7 +156,7 @@
 (deftest big-brother
   ;; Big Brother - Give the Runner 2 tags if already tagged
   (do-game
-    (new-game (default-corp [(qty "Big Brother" 1)])
+    (new-game (default-corp ["Big Brother"])
               (default-runner))
     (play-from-hand state :corp "Big Brother")
     (is (= 1 (count (:hand (get-corp)))) "Card not played because Runner has no tags")
@@ -167,7 +167,7 @@
 (deftest biotic-labor
   ;; Biotic Labor - Gain 2 clicks
   (do-game
-    (new-game (default-corp [(qty "Biotic Labor" 1)])
+    (new-game (default-corp ["Biotic Labor"])
               (default-runner))
     (play-from-hand state :corp "Biotic Labor")
     (is (= 1 (:credit (get-corp))))
@@ -188,8 +188,8 @@
 (deftest casting-call
   ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128
   (do-game
-    (new-game (default-corp [(qty "Casting Call" 2) (qty "Oaktown Renovation" 1)
-                             (qty "Improved Tracers" 1) (qty "Hunter" 1)])
+    (new-game (default-corp ["Casting Call" 2) (qty "Oaktown Renovation"
+                             "Improved Tracers" "Hunter"])
               (default-runner))
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Hunter" "HQ")
@@ -217,7 +217,7 @@
 (deftest cerebral-cast-runner-wins
   ;; Cerebral Cast: if the runner succefully ran last turn, psi game to give runner choice of tag or BD
   (do-game
-    (new-game (default-corp [(qty "Cerebral Cast" 1)])
+    (new-game (default-corp ["Cerebral Cast"])
               (default-runner))
 	    (play-from-hand state :corp "Cerebral Cast")
 	    (is (= 3 (:click (get-corp))) "Cerebral Cast precondition not met; card not played")
@@ -255,7 +255,7 @@
 (deftest cerebral-static-chaos-theory
   ;; Cerebral Static - vs Chaos Theory
   (do-game
-    (new-game (default-corp [(qty "Cerebral Static" 1) (qty "Lag Time" 1)])
+    (new-game (default-corp ["Cerebral Static" "Lag Time"])
               (make-deck "Chaos Theory: Wünderkind" [(qty "Sure Gamble" 3)]))
     (is (= 5 (:memory (get-runner))) "CT starts with 5 memory")
     (play-from-hand state :corp "Cerebral Static")
@@ -266,7 +266,7 @@
 (deftest closed-accounts
   ;; Closed Accounts - Play if Runner is tagged to make Runner lose all credits
   (do-game
-    (new-game (default-corp [(qty "Closed Accounts" 1)])
+    (new-game (default-corp ["Closed Accounts"])
               (default-runner))
     (play-from-hand state :corp "Closed Accounts")
     (is (and (= 3 (:click (get-corp)))
@@ -279,8 +279,8 @@
 (deftest commercialization-single-advancement
   ;; Commercialization - Single advancement token
   (do-game
-    (new-game (default-corp [(qty "Commercialization" 1)
-                             (qty "Ice Wall" 1)])
+    (new-game (default-corp ["Commercialization"
+                             "Ice Wall"])
               (default-runner))
     (play-from-hand state :corp "Ice Wall" "HQ")
     (core/add-counter state :corp (refresh (get-ice state :hq 0)) :advancement 1)
@@ -291,8 +291,8 @@
 (deftest commercialization-double-advancement
   ;; Commercialization - Two advancement tokens
   (do-game
-    (new-game (default-corp [(qty "Commercialization" 1)
-                             (qty "Ice Wall" 1)])
+    (new-game (default-corp ["Commercialization"
+                             "Ice Wall"])
               (default-runner))
     (play-from-hand state :corp "Ice Wall" "HQ")
     (core/add-counter state :corp (refresh (get-ice state :hq 0)) :advancement 2)
@@ -303,11 +303,11 @@
 (deftest consulting-visit
   ;; Consulting Visit - Only show single copies of operations corp can afford as choices. Play chosen operation
   (do-game
-    (new-game (default-corp [(qty "Consulting Visit" 1)
+    (new-game (default-corp ["Consulting Visit"
                              (qty "Beanstalk Royalties" 2)
-                             (qty "Green Level Clearance" 1)
-                             (qty "Breaking News" 1)
-                             (qty "Hedge Fund" 1)])
+                             "Green Level Clearance"
+                             "Breaking News"
+                             "Hedge Fund"])
               (default-runner))
     (is (= 5 (:credit (get-corp))))
     (starting-hand state :corp ["Consulting Visit"])
@@ -323,13 +323,13 @@
 (deftest consulting-visit-mumbad
   ;; Consulting Visit - Works properly when played with Mumbad City Hall
   (do-game
-    (new-game (default-corp [(qty "Mumbad City Hall" 1)
-                             (qty "Beanstalk Royalties" 1)
-                             (qty "Green Level Clearance" 1)
-                             (qty "Breaking News" 1)
-                             (qty "Hedge Fund" 1)
-                             (qty "Consulting Visit" 1)
-                             (qty "Mumba Temple" 1)])
+    (new-game (default-corp ["Mumbad City Hall"
+                             "Beanstalk Royalties"
+                             "Green Level Clearance"
+                             "Breaking News"
+                             "Hedge Fund"
+                             "Consulting Visit"
+                             "Mumba Temple"])
               (default-runner))
     (is (= 5 (:credit (get-corp))))
     (starting-hand state :corp ["Mumbad City Hall"])
@@ -353,8 +353,8 @@
   ;; Death and Taxes gain credit on runner install, runner trash installed card
   ;; Also regression test for #3160
   (do-game
-    (new-game (default-corp [(qty "Death and Taxes" 1) (qty "PAD Campaign" 1)])
-              (default-runner [(qty "Aumakua" 1) (qty "DaVinci" 1) (qty "Fall Guy" 1)]))
+    (new-game (default-corp ["Death and Taxes" "PAD Campaign"])
+              (default-runner ["Aumakua" "DaVinci" "Fall Guy"]))
     (play-from-hand state :corp "Death and Taxes")
     (is (= (- 5 2) (:credit (get-corp))) "Corp paid 2 to play Death and Taxes")
     (play-from-hand state :corp "PAD Campaign" "New remote")
@@ -375,7 +375,7 @@
 (deftest defective-brainchips
   ;; Defective Brainchips - Do 1 add'l brain damage the first time Runner takes some each turn
   (do-game
-    (new-game (default-corp [(qty "Defective Brainchips" 1) (qty "Viktor 1.0" 1)])
+    (new-game (default-corp ["Defective Brainchips" "Viktor 1.0"])
               (default-runner [(qty "Sure Gamble" 2) (qty "Shiv" 2)]))
     (play-from-hand state :corp "Defective Brainchips")
     (play-from-hand state :corp "Viktor 1.0" "HQ")
@@ -416,8 +416,8 @@
 
 (deftest diversified-portfolio
   (do-game
-    (new-game (default-corp [(qty "Diversified Portfolio" 1)
-                             (qty "Paper Wall" 1)
+    (new-game (default-corp ["Diversified Portfolio"
+                             "Paper Wall"
                              (qty "PAD Campaign" 3)])
               (default-runner))
     (core/gain state :corp :click 2)
@@ -476,7 +476,7 @@
   ;; Enforcing Loyalty - Win trace to trash installed card not of Runner's faction
   (do-game
     (new-game (default-corp [(qty "Enforcing Loyalty" 2)])
-              (make-deck "Chaos Theory: Wünderkind" [(qty "Inti" 1) (qty "Caldera" 1)]))
+              (make-deck "Chaos Theory: Wünderkind" ["Inti" "Caldera"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Inti")
     (play-from-hand state :runner "Caldera")
@@ -493,8 +493,8 @@
   ;; Enhanced Login Protocol
   (testing "First click run each turn costs an additional click"
     (do-game
-      (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
-                (default-runner [(qty "Employee Strike" 1)]))
+      (new-game (default-corp ["Enhanced Login Protocol"])
+                (default-runner ["Employee Strike"]))
       (play-from-hand state :corp "Enhanced Login Protocol")
       (take-credits state :corp)
       (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
@@ -519,8 +519,8 @@
       (is (= 2 (:click (get-runner))) "Runner doesn't spend 1 additional click to make a run")))
   (testing "Card ability runs don't cost additional clicks"
     (do-game
-      (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
-                (default-runner [(qty "Sneakdoor Beta" 1)]))
+      (new-game (default-corp ["Enhanced Login Protocol"])
+                (default-runner ["Sneakdoor Beta"]))
       (play-from-hand state :corp "Enhanced Login Protocol")
       (take-credits state :corp)
       (play-from-hand state :runner "Sneakdoor Beta")
@@ -542,7 +542,7 @@
   (testing "with New Angeles Sol, Enhanced Login Protocol trashed and reinstalled on steal doesn't double remove penalty"
     (do-game
       (new-game
-        (make-deck "New Angeles Sol: Your News" [(qty "Enhanced Login Protocol" 1) (qty "Breaking News" 1)])
+        (make-deck "New Angeles Sol: Your News" ["Enhanced Login Protocol" "Breaking News"])
         (default-runner))
       (play-from-hand state :corp "Breaking News" "New remote")
       (play-from-hand state :corp "Enhanced Login Protocol")
@@ -556,8 +556,8 @@
       (is (= 1 (:click (get-runner))) "Runner has 1 click")))
   (testing "Run event don't cost additional clicks"
     (do-game
-      (new-game (default-corp [(qty "Enhanced Login Protocol" 1)])
-                (default-runner [(qty "Out of the Ashes" 1)]))
+      (new-game (default-corp ["Enhanced Login Protocol"])
+                (default-runner ["Out of the Ashes"]))
       (play-from-hand state :corp "Enhanced Login Protocol")
       (take-credits state :corp)
       (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
@@ -577,9 +577,9 @@
   (testing "Works when played on the runner's turn"
     (do-game
       (new-game (make-deck "New Angeles Sol: Your News"
-                           [(qty "Enhanced Login Protocol" 1)
-                            (qty "Breaking News" 1)])
-                (default-runner [(qty "Hades Shard" 1)]))
+                           ["Enhanced Login Protocol"
+                            "Breaking News"])
+                (default-runner ["Hades Shard"]))
       (trash-from-hand state :corp "Breaking News")
       (take-credits state :corp)
       (core/gain state :runner :credit 2)
@@ -595,9 +595,9 @@
 (testing "Doesn't fire if already run when played on the runner's turn"
   (do-game
     (new-game (make-deck "New Angeles Sol: Your News"
-                         [(qty "Enhanced Login Protocol" 1)
-                          (qty "Breaking News" 1)])
-              (default-runner [(qty "Hades Shard" 1)]))
+                         ["Enhanced Login Protocol"
+                          "Breaking News"])
+              (default-runner ["Hades Shard"]))
     (trash-from-hand state :corp "Breaking News")
     (take-credits state :corp)
     (run-on state :hq)
@@ -617,11 +617,11 @@
 (deftest exchange-of-information
   ;; Exchange of Information - Swapping agendas works correctly
   (do-game
-    (new-game (default-corp [(qty "Exchange of Information" 1)
-                             (qty "Market Research" 1)
-                             (qty "Breaking News" 1)
-                             (qty "Project Beale" 1)
-                             (qty "Explode-a-palooza" 1)])
+    (new-game (default-corp ["Exchange of Information"
+                             "Market Research"
+                             "Breaking News"
+                             "Project Beale"
+                             "Explode-a-palooza"])
               (default-runner))
 
       (score-agenda state :corp (find-card "Market Research" (:hand (get-corp))))
@@ -649,11 +649,11 @@
 (deftest exchange-of-information-breaking-news
   ;; Exchange of Information - Swapping a just scored Breaking News keeps the tags
   (do-game
-    (new-game (default-corp [(qty "Exchange of Information" 1)
-                             (qty "Market Research" 1)
-                             (qty "Breaking News" 1)
-                             (qty "Project Beale" 1)
-                             (qty "Explode-a-palooza" 1)])
+    (new-game (default-corp ["Exchange of Information"
+                             "Market Research"
+                             "Breaking News"
+                             "Project Beale"
+                             "Explode-a-palooza"])
               (default-runner))
 
       (take-credits state :corp)
@@ -678,8 +678,8 @@
 (deftest exchange-of-information-fifteen-minutes
   ;; Exchange of Information - Swapping a 15 Minutes still keeps the ability. #1783
   (do-game
-    (new-game (default-corp [(qty "Exchange of Information" 2) (qty "15 Minutes" 1)
-                             (qty "Project Beale" 1)])
+    (new-game (default-corp ["Exchange of Information" 2) (qty "15 Minutes"
+                             "Project Beale"])
               (default-runner))
     (score-agenda state :corp (find-card "15 Minutes" (:hand (get-corp))))
     (take-credits state :corp)
@@ -718,8 +718,8 @@
 (deftest exchange-of-information-mandatory-upgrades
   ;; Exchange of Information - Swapping a Mandatory Upgrades gives the Corp an additional click per turn. #1687
   (do-game
-    (new-game (default-corp [(qty "Exchange of Information" 2) (qty "Mandatory Upgrades" 1)
-                             (qty "Global Food Initiative" 1)])
+    (new-game (default-corp ["Exchange of Information" 2) (qty "Mandatory Upgrades"
+                             "Global Food Initiative"])
               (default-runner))
     (score-agenda state :corp (find-card "Global Food Initiative" (:hand (get-corp))))
     (take-credits state :corp)
@@ -756,8 +756,8 @@
 (deftest hatchet-job
   ;; Hatchet Job - Win trace to add installed non-virtual to grip
   (do-game
-    (new-game (default-corp [(qty "Hatchet Job" 1)])
-              (default-runner [(qty "Upya" 1) (qty "Ghost Runner" 1)]))
+    (new-game (default-corp ["Hatchet Job"])
+              (default-runner ["Upya" "Ghost Runner"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Ghost Runner")
     (play-from-hand state :runner "Upya")
@@ -827,8 +827,8 @@
 (deftest housekeeping
   ;; Housekeeping - Runner must trash a card from Grip on first install of a turn
   (do-game
-    (new-game (default-corp [(qty "Housekeeping" 1)])
-              (default-runner [(qty "Cache" 2) (qty "Fall Guy" 1) (qty "Mr. Li" 1)]))
+    (new-game (default-corp ["Housekeeping"])
+              (default-runner ["Cache" 2) (qty "Fall Guy" "Mr. Li"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Fall Guy")
     (take-credits state :runner)
@@ -845,7 +845,7 @@
   ;; Invasion of Privacy - Full test
   (do-game
     (new-game (default-corp [(qty "Invasion of Privacy" 3)])
-              (default-runner [(qty "Sure Gamble" 2) (qty "Fall Guy" 1) (qty "Cache" 2)]))
+              (default-runner ["Sure Gamble" 2) (qty "Fall Guy" (qty "Cache" 2)]))
     (core/gain state :corp :click 3 :credit 6)
     ;; trash 2 cards
     (play-from-hand state :corp "Invasion of Privacy")
@@ -879,7 +879,7 @@
   ;; IPO - credits with Terminal operations
   (do-game
     (new-game
-      (default-corp [(qty "IPO" 1)])
+      (default-corp ["IPO"])
       (default-runner))
     (take-credits state :corp)
     (take-credits state :runner)
@@ -889,7 +889,7 @@
 
 (deftest lag-time
   (do-game
-    (new-game (default-corp [(qty "Lag Time" 1) (qty "Vanilla" 1) (qty "Lotus Field" 1)])
+    (new-game (default-corp ["Lag Time" "Vanilla" "Lotus Field"])
               (default-runner))
     (take-credits state :corp)
     (take-credits state :runner)
@@ -903,7 +903,7 @@
 
 (deftest lateral-growth
   (do-game
-    (new-game (default-corp [(qty "Lateral Growth" 1) (qty "Breaking News" 1)])
+    (new-game (default-corp ["Lateral Growth" "Breaking News"])
               (default-runner))
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Lateral Growth")
@@ -916,7 +916,7 @@
 (deftest manhunt-every-run
   ;; Manhunt - only fires once per turn. Unreported issue.
   (do-game
-    (new-game (default-corp [(qty "Manhunt" 1) (qty "Hedge Fund" 3)])
+    (new-game (default-corp ["Manhunt" (qty "Hedge Fund" 3)])
               (default-runner))
     (play-from-hand state :corp "Manhunt")
     (take-credits state :corp)
@@ -984,7 +984,7 @@
 (deftest mass-commercialization
   ;; Mass Commercialization
   (do-game
-    (new-game (default-corp [(qty "Mass Commercialization" 1)
+    (new-game (default-corp ["Mass Commercialization"
                              (qty "Ice Wall" 3)])
               (default-runner))
     (play-from-hand state :corp "Ice Wall" "HQ")
@@ -1001,7 +1001,7 @@
 (deftest midseason-replacements
   ;; Midseason Replacements - Trace to give Runner tags after they steal an agenda
   (do-game
-    (new-game (default-corp [(qty "Midseason Replacements" 1) (qty "Breaking News" 1)])
+    (new-game (default-corp ["Midseason Replacements" "Breaking News"])
               (default-runner))
     (play-from-hand state :corp "Midseason Replacements")
     (is (= 3 (:click (get-corp))) "Midseason precondition not met; Corp not charged a click")
@@ -1021,7 +1021,7 @@
 (deftest mushin-no-shin
   ;; Mushin No Shin - Add 3 advancements to a card; prevent rez/score of that card the rest of the turn
   (do-game
-    (new-game (default-corp [(qty "Mushin No Shin" 2) (qty "Ronin" 1) (qty "Profiteering" 1)])
+    (new-game (default-corp ["Mushin No Shin" 2) (qty "Ronin" "Profiteering"])
               (default-runner))
     (play-from-hand state :corp "Mushin No Shin")
     (prompt-select :corp (find-card "Ronin" (:hand (get-corp))))
@@ -1048,7 +1048,7 @@
 (deftest neural-emp
   ;; Neural EMP - Play if Runner made a run the previous turn to do 1 net damage
   (do-game
-    (new-game (default-corp [(qty "Neural EMP" 1)])
+    (new-game (default-corp ["Neural EMP"])
               (default-runner))
     (play-from-hand state :corp "Neural EMP")
     (is (= 3 (:click (get-corp))) "Neural precondition not met; card not played")
@@ -1061,7 +1061,7 @@
 (deftest oversight-ai
   ;; Oversight AI - Rez a piece of ICE ignoring all costs
   (do-game
-    (new-game (default-corp [(qty "Oversight AI" 1) (qty "Archer" 1)])
+    (new-game (default-corp ["Oversight AI" "Archer"])
               (default-runner))
     (play-from-hand state :corp "Archer" "R&D")
     (let [archer (get-ice state :rd 0)]
@@ -1075,7 +1075,7 @@
 (deftest patch
   ;; Patch - +2 current strength
   (do-game
-    (new-game (default-corp [(qty "Patch" 1) (qty "Vanilla" 1)])
+    (new-game (default-corp ["Patch" "Vanilla"])
               (default-runner))
     (play-from-hand state :corp "Vanilla" "HQ")
     (core/rez state :corp (get-ice state :hq 0))
@@ -1086,7 +1086,7 @@
 (deftest paywall-implementation
   ;; Paywall Implementation - Gain 1 credit for every successful run
   (do-game
-    (new-game (default-corp [(qty "Paywall Implementation" 1)])
+    (new-game (default-corp ["Paywall Implementation"])
               (default-runner))
     (play-from-hand state :corp "Paywall Implementation")
     (is (= "Paywall Implementation" (:title (first (get-in @state [:corp :current]))))
@@ -1101,7 +1101,7 @@
 (deftest peak-efficiency
   ;; Peak Efficiency - Gain 1 credit for each rezzed ICE
   (do-game
-    (new-game (default-corp [(qty "Peak Efficiency" 1) (qty "Paper Wall" 3) (qty "Wraparound" 1)])
+    (new-game (default-corp ["Peak Efficiency" "Paper Wall" 3) (qty "Wraparound"])
               (default-runner))
     (core/gain state :corp :click 3)
     (play-from-hand state :corp "Paper Wall" "HQ")
@@ -1118,7 +1118,7 @@
   ;; Power Shutdown - Trash cards from R&D to force Runner to trash a program or hardware
   (do-game
     (new-game (default-corp [(qty "Power Shutdown" 3) (qty "Hive" 3)])
-              (default-runner [(qty "Grimoire" 1) (qty "Cache" 1)]))
+              (default-runner ["Grimoire" "Cache"]))
     (play-from-hand state :corp "Power Shutdown")
     (is (empty? (:discard (get-corp))) "Not played, no run last turn")
     (take-credits state :corp)
@@ -1141,8 +1141,8 @@
 (deftest precognition
   ;; Precognition - Full test
   (do-game
-    (new-game (default-corp [(qty "Precognition" 1) (qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1)
-                             (qty "Quandary" 1) (qty "Jackson Howard" 1) (qty "Global Food Initiative" 1)])
+    (new-game (default-corp ["Precognition" "Caprice Nisei" "Adonis Campaign"
+                             "Quandary" "Jackson Howard" "Global Food Initiative"])
               (default-runner))
     (starting-hand state :corp ["Precognition"])
     (play-from-hand state :corp "Precognition")
@@ -1169,7 +1169,7 @@
   ;; Preemptive Action - Shuffles cards into R&D and removes itself from game
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 3)
-                             (qty "Preemptive Action" 1)])
+                             "Preemptive Action"])
               (default-runner))
     (play-from-hand state :corp "Subliminal Messaging")
     (play-from-hand state :corp "Subliminal Messaging")
@@ -1184,7 +1184,7 @@
 (deftest psychographics
   ;; Psychographics - Place advancements up to the number of Runner tags on a card
   (do-game
-    (new-game (default-corp [(qty "Psychographics" 1) (qty "Project Junebug" 1)])
+    (new-game (default-corp ["Psychographics" "Project Junebug"])
               (default-runner))
     (core/gain state :runner :tag 4)
     (play-from-hand state :corp "Project Junebug" "New remote")
@@ -1198,8 +1198,8 @@
 (deftest psychokinesis
   ;; Pyschokinesis - Terminal Event (end the turn); Look at R&D, install an Asset, Agenda, or Upgrade in a Remote Server
   (do-game
-    (new-game (default-corp [(qty "Psychokinesis" 3) (qty "Caprice Nisei" 1) (qty "Adonis Campaign" 1)
-                              (qty "Global Food Initiative" 1)])
+    (new-game (default-corp ["Psychokinesis" 3) (qty "Caprice Nisei" "Adonis Campaign"
+                              "Global Food Initiative"])
               (default-runner))
     (starting-hand state :corp ["Psychokinesis","Psychokinesis","Psychokinesis"])
     ;; Test installing an Upgrade
@@ -1233,7 +1233,7 @@
 (deftest punitive-counterstrike
   ;; Punitive Counterstrike - deal meat damage equal to printed agenda points
   (do-game
-    (new-game (default-corp [(qty "Global Food Initiative" 1) (qty "Punitive Counterstrike" 1)])
+    (new-game (default-corp ["Global Food Initiative" "Punitive Counterstrike"])
               (default-runner))
     (play-from-hand state :corp "Global Food Initiative" "New remote")
     (take-credits state :corp)
@@ -1249,8 +1249,8 @@
 (deftest red-planet-couriers
   ;; Red Planet Couriers - Move all advancements on cards to 1 advanceable card
   (do-game
-    (new-game (default-corp [(qty "Red Planet Couriers" 1) (qty "Ice Wall" 2)
-                             (qty "GRNDL Refinery" 1) (qty "Government Takeover" 1)])
+    (new-game (default-corp ["Red Planet Couriers" (qty "Ice Wall" 2)
+                             "GRNDL Refinery" "Government Takeover"])
               (default-runner))
     (core/gain state :corp :click 4)
     (play-from-hand state :corp "Government Takeover" "New remote")
@@ -1274,8 +1274,8 @@
 (deftest reuse
   ;; Reuse - Gain 2 credits for each card trashed from HQ
   (do-game
-    (new-game (default-corp [(qty "Reuse" 2) (qty "Hive" 1) (qty "IQ" 1)
-                             (qty "Ice Wall" 1)])
+    (new-game (default-corp ["Reuse" 2) (qty "Hive" "IQ"
+                             "Ice Wall"])
               (default-runner))
     (play-from-hand state :corp "Reuse")
     (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
@@ -1290,7 +1290,7 @@
   ;; Reverse Infection - purge and trash 1 card from stack for every 3 counters purged - or gain 2 credits
   (do-game
     (new-game (default-corp [(qty "Reverse Infection" 2)])
-              (default-runner [(qty "Virus Breeding Ground" 1) (qty "Datasucker" 1) (qty "Sure Gamble" 3)]))
+              (default-runner ["Virus Breeding Ground" "Datasucker" (qty "Sure Gamble" 3)]))
     (starting-hand state :runner ["Virus Breeding Ground" "Datasucker"])
     (play-from-hand state :corp "Reverse Infection")
     (prompt-choice :corp "Gain 2 [Credits]")
@@ -1311,8 +1311,8 @@
 (deftest rolling-brownout
   ;; Rolling Brownout - Increase cost of events/operations by 1, gain 1c on first Runner event of turn
   (do-game
-    (new-game (default-corp [(qty "Rolling Brownout" 1) (qty "Beanstalk Royalties" 1)
-                             (qty "Domestic Sleepers" 1)])
+    (new-game (default-corp ["Rolling Brownout" "Beanstalk Royalties"
+                             "Domestic Sleepers"])
               (default-runner [(qty "Easy Mark" 3)]))
     (play-from-hand state :corp "Rolling Brownout")
     (play-from-hand state :corp "Beanstalk Royalties")
@@ -1333,8 +1333,8 @@
   ;; Salem's Hospitality - Full test
   (do-game
     (new-game (default-corp [(qty "Salem's Hospitality" 3)])
-              (default-runner [(qty "I've Had Worse" 3) (qty "Faust" 1)
-                               (qty "Levy AR Lab Access" 1)]))
+              (default-runner ["I've Had Worse" 3) (qty "Faust"
+                               "Levy AR Lab Access"]))
     (play-from-hand state :corp "Salem's Hospitality")
     (is (= 5 (count (:hand (get-runner)))))
     (prompt-choice :corp "I've Had Worse")
@@ -1346,7 +1346,7 @@
 (deftest scorched-earth
   ;; Scorched Earth - burn 'em
   (do-game
-    (new-game (default-corp [(qty "Scorched Earth" 1)])
+    (new-game (default-corp ["Scorched Earth"])
               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
     (core/gain state :runner :tag 1)
     (play-from-hand state :corp "Scorched Earth")
@@ -1355,7 +1355,7 @@
 (deftest scorched-earth-no-tag
   ;; Scorched Earth - not tagged
   (do-game
-    (new-game (default-corp [(qty "Scorched Earth" 1)])
+    (new-game (default-corp ["Scorched Earth"])
               (default-runner [(qty "Sure Gamble" 3) (qty "Lucky Find" 3)]))
     (play-from-hand state :corp "Scorched Earth")
     (is (= 3 (:click (get-corp))) "Corp not charged a click")
@@ -1375,8 +1375,8 @@
 (deftest self-growth-program
   ;; Self-Growth Program - Add 2 installed cards to grip if runner is tagged
   (do-game
-    (new-game (default-corp [(qty "Self-Growth Program" 1)])
-              (default-runner [(qty "Clone Chip" 1) (qty "Inti" 1)]))
+    (new-game (default-corp ["Self-Growth Program"])
+              (default-runner ["Clone Chip" "Inti"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Clone Chip")
     (play-from-hand state :runner "Inti")
@@ -1397,8 +1397,8 @@
 (deftest service-outage
   ;; Service Outage - First click run each turn costs a credit
   (do-game
-    (new-game (default-corp [(qty "Service Outage" 1)])
-              (default-runner [(qty "Employee Strike" 1)]))
+    (new-game (default-corp ["Service Outage"])
+              (default-runner ["Employee Strike"]))
     (play-from-hand state :corp "Service Outage")
     (take-credits state :corp)
 
@@ -1438,8 +1438,8 @@
 (deftest service-outage-card-ability
   ;; Service Outage - First card ability run each turn costs an additional credit
   (do-game
-    (new-game (default-corp [(qty "Service Outage" 1)])
-              (default-runner [(qty "Sneakdoor Beta" 1)]))
+    (new-game (default-corp ["Service Outage"])
+              (default-runner ["Sneakdoor Beta"]))
     (play-from-hand state :corp "Service Outage")
     (take-credits state :corp)
     (play-from-hand state :runner "Sneakdoor Beta")
@@ -1471,7 +1471,7 @@
 (deftest service-outage-run-events
   ;; Service Outage - First run event each turn costs an additional credit
   (do-game
-    (new-game (default-corp [(qty "Service Outage" 1)])
+    (new-game (default-corp ["Service Outage"])
               (default-runner [(qty "Out of the Ashes" 2)]))
     (play-from-hand state :corp "Service Outage")
     (take-credits state :corp)
@@ -1504,9 +1504,9 @@
 (deftest service-outage-runner-turn-first-run
   ;; Service Outage - Works when played on the runner's turn
   (do-game
-    (new-game (make-deck "New Angeles Sol: Your News" [(qty "Service Outage" 1)
-                                                       (qty "Breaking News" 1)])
-              (default-runner [(qty "Hades Shard" 1)]))
+    (new-game (make-deck "New Angeles Sol: Your News" ["Service Outage"
+                                                       "Breaking News"])
+              (default-runner ["Hades Shard"]))
     (trash-from-hand state :corp "Breaking News")
     (take-credits state :corp)
 
@@ -1527,9 +1527,9 @@
 (deftest service-outage-runner-turn-second-run
   ;; Service Outage - Doesn't fire if already run when played on the runner's turn
   (do-game
-    (new-game (make-deck "New Angeles Sol: Your News" [(qty "Service Outage" 1)
-                                                       (qty "Breaking News" 1)])
-              (default-runner [(qty "Hades Shard" 1)]))
+    (new-game (make-deck "New Angeles Sol: Your News" ["Service Outage"
+                                                       "Breaking News"])
+              (default-runner ["Hades Shard"]))
     (trash-from-hand state :corp "Breaking News")
     (take-credits state :corp)
 
@@ -1555,8 +1555,8 @@
   ;; Service Outage trashed and reinstalled on steal doesn't double remove penalty
   (do-game
     (new-game
-      (make-deck "New Angeles Sol: Your News" [(qty "Service Outage" 1)
-                                               (qty "Breaking News" 1)])
+      (make-deck "New Angeles Sol: Your News" ["Service Outage"
+                                               "Breaking News"])
       (default-runner))
     (play-from-hand state :corp "Breaking News" "New remote")
     (play-from-hand state :corp "Service Outage")
@@ -1612,7 +1612,7 @@
 (deftest sub-boost
   ;; Sub Boost - Give ICE Barrier
   (do-game
-    (new-game (default-corp [(qty "Sub Boost" 1) (qty "Quandary" 1)])
+    (new-game (default-corp ["Sub Boost" "Quandary"])
               (default-runner))
     (play-from-hand state :corp "Quandary" "HQ")
     (let [qu (get-ice state :hq 0)]
@@ -1628,8 +1628,8 @@
 (deftest subcontract-scorched
   ;; Subcontract - Don't allow second operation until damage prevention completes
   (do-game
-    (new-game (default-corp [(qty "Scorched Earth" 2) (qty "Subcontract" 1)])
-              (default-runner [(qty "Plascrete Carapace" 1)]))
+    (new-game (default-corp ["Scorched Earth" 2) (qty "Subcontract"])
+              (default-runner ["Plascrete Carapace"]))
     (take-credits state :corp)
     (core/gain state :runner :tag 1)
     (play-from-hand state :runner "Plascrete Carapace")
@@ -1645,7 +1645,7 @@
   ;; Subcontract - interaction with Terminal operations
   (do-game
     (new-game
-      (default-corp [(qty "Hard-Hitting News" 2) (qty "Subcontract" 1)])
+      (default-corp ["Hard-Hitting News" 2) (qty "Subcontract"])
       (default-runner))
     (core/gain state :runner :tag 1)
     (take-credits state :corp)
@@ -1662,7 +1662,7 @@
   ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 3)])
-              (make-deck "Noise: Hacker Extraordinaire" [(qty "Cache" 3) (qty "Utopia Shard" 1)]))
+              (make-deck "Noise: Hacker Extraordinaire" ["Cache" 3) (qty "Utopia Shard"]))
     (play-from-hand state :corp "Subliminal Messaging")
     (is (= 6 (:credit (get-corp))))
     (is (= 3 (:click (get-corp))) "First Subliminal Messaging gains 1 click")
@@ -1701,7 +1701,7 @@
 (deftest subliminal-messaging-archived
   ;; Subliminal Messaging - Scenario involving Subliminal being added to HQ with Archived Memories
   (do-game
-    (new-game (default-corp [(qty "Subliminal Messaging" 2) (qty "Archived Memories" 1)])
+    (new-game (default-corp ["Subliminal Messaging" 2) (qty "Archived Memories"])
               (default-runner))
     (play-from-hand state :corp "Subliminal Messaging")
     (play-from-hand state :corp "Subliminal Messaging")
@@ -1724,7 +1724,7 @@
 (deftest subliminal-messaging-jackson
   ;; Subliminal Messaging - Scenario involving Subliminal being reshuffled into R&D with Jackson
   (do-game
-    (new-game (default-corp [(qty "Subliminal Messaging" 1) (qty "Jackson Howard" 1)])
+    (new-game (default-corp ["Subliminal Messaging" "Jackson Howard"])
               (default-runner))
     (play-from-hand state :corp "Subliminal Messaging")
     (play-from-hand state :corp "Jackson Howard" "New remote")
@@ -1787,7 +1787,7 @@
 (deftest success-bad-publicity
   ;; Success - Works with bad publicity
   (do-game
-    (new-game (default-corp [(qty "NAPD Contract" 1) (qty "Project Beale" 1) (qty "Success" 1)])
+    (new-game (default-corp ["NAPD Contract" "Project Beale" "Success"])
               (default-runner))
     (play-from-hand state :corp "NAPD Contract" "New remote")
     (play-from-hand state :corp "Project Beale" "New remote")
@@ -1811,7 +1811,7 @@
 (deftest success-public-agenda
   ;; Success - Works with public agendas
   (do-game
-    (new-game (default-corp [(qty "Oaktown Renovation" 1) (qty "Vanity Project" 1) (qty "Success" 1)])
+    (new-game (default-corp ["Oaktown Renovation" "Vanity Project" "Success"])
               (default-runner))
     (core/gain state :corp :click 1)
     (score-agenda state :corp (find-card "Vanity Project" (:hand (get-corp))))
@@ -1832,9 +1832,9 @@
   ;; Success interaction with Jemison, regression test for issue #2704
   (do-game
     (new-game (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success."
-                         [(qty "Success" 1)
-                          (qty "High-Risk Investment" 1)
-                          (qty "Government Takeover" 1)])
+                         ["Success"
+                          "High-Risk Investment"
+                          "Government Takeover"])
               (default-runner))
     (core/gain state :corp :click 1)
     (score-agenda state :corp (find-card "High-Risk Investment" (:hand (get-corp))))
@@ -1852,7 +1852,7 @@
 (deftest successful-demonstration
   ;; Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits
   (do-game
-    (new-game (default-corp [(qty "Successful Demonstration" 1)])
+    (new-game (default-corp ["Successful Demonstration"])
               (default-runner))
     (play-from-hand state :corp "Successful Demonstration")
     (is (and (= 3 (:click (get-corp)))
@@ -1868,8 +1868,8 @@
 (deftest the-all-seeing-i-prevent-trash
   ;; Counts number of cards if one card is prevented trashed with fall guy
   (do-game
-    (new-game (default-corp [(qty "The All-Seeing I" 1)])
-              (default-runner [(qty "Fall Guy" 1) (qty "Same Old Thing" 2)]))
+    (new-game (default-corp ["The All-Seeing I"])
+              (default-runner ["Fall Guy" (qty "Same Old Thing" 2)]))
     (letfn [(res [] (count (get-in (get-runner) [:rig :resource])))]
       (take-credits state :corp)
       (play-from-hand state :runner "Same Old Thing")
@@ -1889,8 +1889,8 @@
 (deftest the-all-seeing-i-hosted-cards
   ;; Checks that All-seeing I does not double-trash hosted cards, trashes hosted cards
   (do-game
-    (new-game (default-corp [(qty "The All-Seeing I" 1)])
-              (default-runner [(qty "Fall Guy" 2) (qty "Off-Campus Apartment" 1)]))
+    (new-game (default-corp ["The All-Seeing I"])
+              (default-runner ["Fall Guy" 2) (qty "Off-Campus Apartment"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Off-Campus Apartment")
     (let [oca (get-resource state 0)
@@ -1941,8 +1941,8 @@
 (deftest threat-assessment
   ;; Threat Assessment - play only if runner trashed a card last turn, move a card to the stack or take 2 tags
   (do-game
-    (new-game (default-corp [(qty "Threat Assessment" 3) (qty "Adonis Campaign" 1)])
-              (default-runner [(qty "Desperado" 1) (qty "Corroder" 1)]))
+    (new-game (default-corp ["Threat Assessment" 3) (qty "Adonis Campaign"])
+              (default-runner ["Desperado" "Corroder"]))
     (play-from-hand state :corp "Adonis Campaign" "New remote")
     (take-credits state :corp)
     (run-on state :remote1)
@@ -1992,8 +1992,8 @@
 (deftest transparency-initiative
   ;; Transparency Initiative - Full test
   (do-game
-    (new-game (default-corp [(qty "Transparency Initiative" 1) (qty "Oaktown Renovation" 1)
-                             (qty "Project Atlas" 1) (qty "Hostile Takeover" 1) (qty "Casting Call" 1)])
+    (new-game (default-corp ["Transparency Initiative" "Oaktown Renovation"
+                             "Project Atlas" "Hostile Takeover" "Casting Call"])
               (default-runner))
     (core/gain state :corp :click 5)
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
@@ -2028,8 +2028,8 @@
 (deftest wake-up-call-en-passant
   ;; Wake Up Call - should fire after using En Passant to trash ice
   (do-game
-    (new-game (default-corp [(qty "Enigma" 1) (qty "Wake Up Call" 1)])
-              (default-runner [(qty "En Passant" 1) (qty "Maya" 1)]))
+    (new-game (default-corp ["Enigma" "Wake Up Call"])
+              (default-runner ["En Passant" "Maya"]))
     (play-from-hand state :corp "Enigma" "HQ")
     (take-credits state :corp)
 
@@ -2053,8 +2053,8 @@
 (deftest wetwork-refit
   ;; Wetwork Refit - Only works on Bioroid ICE and adds a subroutine
   (do-game
-    (new-game (default-corp [(qty "Eli 1.0" 1)
-                             (qty "Vanilla" 1)
+    (new-game (default-corp ["Eli 1.0"
+                             "Vanilla"
                              (qty "Wetwork Refit" 3)])
               (default-runner))
     (core/gain state :corp :credit 20)

@@ -26,9 +26,9 @@
 (deftest aimor
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
   (do-game
-    (new-game (default-corp [(qty "Aimor" 1)])
-              (default-runner [(qty "Sure Gamble" 2) (qty "Desperado" 1)
-                               (qty "Corroder" 1) (qty "Patron" 1)]))
+    (new-game (default-corp ["Aimor"])
+              (default-runner ["Sure Gamble" 2) (qty "Desperado"
+                               "Corroder" "Patron"]))
     (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
     (play-from-hand state :corp "Aimor" "HQ")
     (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor installed")
@@ -44,8 +44,8 @@
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (do-game
-    (new-game (default-corp [(qty "Archangel" 1) (qty "Hedge Fund" 1)])
-              (default-runner [(qty "Bank Job" 1)]))
+    (new-game (default-corp ["Archangel" "Hedge Fund"])
+              (default-runner ["Bank Job"]))
     (starting-hand state :corp ["Hedge Fund"])
     (take-credits state :corp)
     (play-from-hand state :runner "Bank Job")
@@ -78,7 +78,7 @@
 (deftest asteroid-belt
   ;; Asteroid Belt - Space ICE rez cost reduced by 3 credits per advancement
   (do-game
-    (new-game (default-corp [(qty "Asteroid Belt" 1)])
+    (new-game (default-corp ["Asteroid Belt"])
               (default-runner))
     (core/gain state :corp :credit 5)
     (play-from-hand state :corp "Asteroid Belt" "HQ")
@@ -93,7 +93,7 @@
 (deftest bandwidth
   ;; Bandwidth - Give the Runner 1 tag; remove 1 tag if the run is successful
   (do-game
-    (new-game (default-corp [(qty "Bandwidth" 1)])
+    (new-game (default-corp ["Bandwidth"])
               (default-runner))
     (play-from-hand state :corp "Bandwidth" "Archives")
     (let [bw (get-ice state :archives 0)]
@@ -113,7 +113,7 @@
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
   (do-game
-    (new-game (default-corp [(qty "Bullfrog" 1) (qty "Pup" 2)])
+    (new-game (default-corp ["Bullfrog" (qty "Pup" 2)])
               (default-runner))
     (play-from-hand state :corp "Bullfrog" "HQ")
     (play-from-hand state :corp "Pup" "R&D")
@@ -134,7 +134,7 @@
 (deftest cell-portal
   ;; Cell Portal - Bounce Runner to outermost position and derez itself
   (do-game
-    (new-game (default-corp [(qty "Cell Portal" 1) (qty "Paper Wall" 2)])
+    (new-game (default-corp ["Cell Portal" (qty "Paper Wall" 2)])
               (default-runner))
     (core/gain state :corp :credit 5)
     (play-from-hand state :corp "Cell Portal" "HQ")
@@ -154,7 +154,7 @@
 (deftest chimera
   ;; Chimera - Gains chosen subtype
   (do-game
-    (new-game (default-corp [(qty "Chimera" 1)])
+    (new-game (default-corp ["Chimera"])
               (default-runner))
     (play-from-hand state :corp "Chimera" "HQ")
     (let [ch (get-ice state :hq 0)]
@@ -167,7 +167,7 @@
 (deftest cortex-lock
   ;; Cortex Lock - Do net damage equal to Runner's unused memory
   (do-game
-    (new-game (default-corp [(qty "Cortex Lock" 1)])
+    (new-game (default-corp ["Cortex Lock"])
               (default-runner [(qty "Corroder" 2) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Cortex Lock" "HQ")
     (take-credits state :corp)
@@ -182,7 +182,7 @@
 (deftest crick
   ;; Crick - Strength boost when protecting Archives; installs a card from Archives
   (do-game
-    (new-game (default-corp [(qty "Crick" 2) (qty "Ice Wall" 1)])
+    (new-game (default-corp ["Crick" 2) (qty "Ice Wall"])
               (default-runner))
     (play-from-hand state :corp "Crick" "HQ")
     (play-from-hand state :corp "Crick" "Archives")
@@ -202,7 +202,7 @@
 (deftest curtain-wall
   ;; Curtain Wall - Strength boost when outermost ICE
   (do-game
-    (new-game (default-corp [(qty "Curtain Wall" 1) (qty "Paper Wall" 1)])
+    (new-game (default-corp ["Curtain Wall" "Paper Wall"])
               (default-runner))
     (core/gain state :corp :credit 10)
     (play-from-hand state :corp "Curtain Wall" "HQ")
@@ -218,9 +218,9 @@
 (deftest data-hound
   ;; Data Hound - Full test
   (do-game
-    (new-game (default-corp [(qty "Data Hound" 1)])
-              (default-runner [(qty "Sure Gamble" 2) (qty "Desperado" 1)
-                               (qty "Corroder" 1) (qty "Patron" 1)]))
+    (new-game (default-corp ["Data Hound"])
+              (default-runner ["Sure Gamble" 2) (qty "Desperado"
+                               "Corroder" "Patron"]))
     (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
     (play-from-hand state :corp "Data Hound" "HQ")
     (take-credits state :corp)
@@ -257,7 +257,7 @@
 (deftest data-mine
   ;; Data Mine - do one net and trash
   (do-game
-    (new-game (default-corp [(qty "Data Mine" 1)])
+    (new-game (default-corp ["Data Mine"])
               (default-runner))
     (play-from-hand state :corp "Data Mine" "Server 1")
     (take-credits state :corp)
@@ -270,7 +270,7 @@
 (deftest draco
   ;; Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run
   (do-game
-    (new-game (default-corp [(qty "Dracō" 1)])
+    (new-game (default-corp ["Dracō"])
               (default-runner))
     (play-from-hand state :corp "Dracō" "HQ")
     (take-credits state :corp)
@@ -289,7 +289,7 @@
 (deftest enigma
   ;; Enigma - Force Runner to lose 1 click if able
   (do-game
-    (new-game (default-corp [(qty "Enigma" 1)])
+    (new-game (default-corp ["Enigma"])
               (default-runner))
     (play-from-hand state :corp "Enigma" "HQ")
     (take-credits state :corp)
@@ -303,7 +303,7 @@
 (deftest envelope
   ;; Envelope - do 1 net damage, end the run
   (do-game
-    (new-game (default-corp [(qty "Envelope" 1)])
+    (new-game (default-corp ["Envelope"])
               (default-runner))
     (play-from-hand state :corp "Envelope" "HQ")
     (take-credits state :corp)
@@ -320,8 +320,8 @@
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
-    (new-game (default-corp [(qty "Excalibur" 1)])
-              (default-runner [(qty "Stimhack" 1)]))
+    (new-game (default-corp ["Excalibur"])
+              (default-runner ["Stimhack"]))
     (play-from-hand state :corp "Excalibur" "HQ")
     (take-credits state :corp)
     (let [excal (get-ice state :hq 0)]
@@ -346,7 +346,7 @@
 (deftest fenris
   ;; Fenris - Illicit ICE give Corp 1 bad publicity when rezzed
   (do-game
-    (new-game (default-corp [(qty "Fenris" 1)])
+    (new-game (default-corp ["Fenris"])
               (default-runner))
     (play-from-hand state :corp "Fenris" "HQ")
     (take-credits state :corp)
@@ -362,8 +362,8 @@
 (deftest flare
   ;; Flare - Trash 1 program, do 2 unpreventable meat damage, and end the run
   (do-game
-    (new-game (default-corp [(qty "Flare" 1)])
-              (default-runner [(qty "Plascrete Carapace" 1) (qty "Clone Chip" 1) (qty "Cache" 3)]))
+    (new-game (default-corp ["Flare"])
+              (default-runner ["Plascrete Carapace" "Clone Chip" (qty "Cache" 3)]))
     (play-from-hand state :corp "Flare" "HQ")
     (core/gain state :corp :credit 2)
     (take-credits state :corp)
@@ -386,7 +386,7 @@
 (deftest free-lunch
   ;; Free Lunch - Spend 1 power counter to make Runner lose 1c
   (do-game
-    (new-game (default-corp [(qty "Free Lunch" 1)])
+    (new-game (default-corp ["Free Lunch"])
               (default-runner))
     (play-from-hand state :corp "Free Lunch" "HQ")
     (let [fl (get-ice state :hq 0)]
@@ -403,7 +403,7 @@
 (deftest gemini-kicker
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success
   (do-game
-    (new-game (default-corp [(qty "Gemini" 1) (qty "Hedge Fund" 2)])
+    (new-game (default-corp ["Gemini" (qty "Hedge Fund" 2)])
               (default-runner [(qty "Sure Gamble" 3) (qty "Dirty Laundry" 2)]))
     (play-from-hand state :corp "Gemini" "HQ")
     (play-from-hand state :corp "Hedge Fund")
@@ -424,8 +424,8 @@
 (deftest gemini-chronos-protocol
   ;; Gemini - Interaction with Chronos Protocol and kicker
   (do-game
-    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Gemini" 1) (qty "Hedge Fund" 2)])
-              (default-runner [(qty "Sure Gamble" 1) (qty "Dirty Laundry" 2)]))
+    (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" ["Gemini" (qty "Hedge Fund" 2)])
+              (default-runner ["Sure Gamble" (qty "Dirty Laundry" 2)]))
     (play-from-hand state :corp "Gemini" "HQ")
     (play-from-hand state :corp "Hedge Fund")
     (play-from-hand state :corp "Hedge Fund")
@@ -443,8 +443,8 @@
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace
   (do-game
-    (new-game (default-corp [(qty "Holmegaard" 1) (qty "Hostile Takeover" 1)])
-              (default-runner [(qty "Cache" 1) (qty "Inti" 1)]))
+    (new-game (default-corp ["Holmegaard" "Hostile Takeover"])
+              (default-runner ["Cache" "Inti"]))
     (core/gain state :corp :credit 10)
     (play-from-hand state :corp "Holmegaard" "HQ")
     (let [holm (get-ice state :hq 0)]
@@ -490,7 +490,7 @@
 (deftest its-a-trap
   ;; It's a Trap! - 2 net dmg on expose, self-trash and make Runner trash installed card
   (do-game
-    (new-game (default-corp [(qty "It's a Trap!" 1)])
+    (new-game (default-corp ["It's a Trap!"])
               (default-runner [(qty "Cache" 3) (qty "Infiltration" 2)]))
     (play-from-hand state :corp "It's a Trap!" "Archives")
     (let [iat (get-ice state :archives 0)]
@@ -510,8 +510,8 @@
 (deftest jua-encounter
   ;; Jua (encounter effect) - Prevent Runner from installing cards for the rest of the turn
   (do-game
-    (new-game (default-corp [(qty "Jua" 1)])
-              (default-runner [(qty "Desperado" 1) (qty "Sure Gamble" 1)]))
+    (new-game (default-corp ["Jua"])
+              (default-runner ["Desperado" "Sure Gamble"]))
     (play-from-hand state :corp "Jua" "HQ")
     (take-credits state :corp)
     (let [jua (get-ice state :hq 0)]
@@ -533,8 +533,8 @@
 (deftest jua-sub
   ;; Jua (subroutine effect) - Select 2 runner cards, runner moves one to the stack
   (do-game
-    (new-game (default-corp [(qty "Jua" 1)])
-              (default-runner [(qty "Desperado" 1) (qty "Gordian Blade" 1)]))
+    (new-game (default-corp ["Jua"])
+              (default-runner ["Desperado" "Gordian Blade"]))
     (play-from-hand state :corp "Jua" "HQ")
     (take-credits state :corp)
     (let [jua (get-ice state :hq 0)]
@@ -557,8 +557,8 @@
 (deftest kakugo-swap
   ;; Kakugo - ability continues to work when ice is swapped
   (do-game
-   (new-game (default-corp [(qty "Kakugo" 1)
-                            (qty "Ice Wall" 1)])
+   (new-game (default-corp ["Kakugo"
+                            "Ice Wall"])
              (default-runner))
    (play-from-hand state :corp "Kakugo" "R&D")
    (play-from-hand state :corp "Ice Wall" "Archives")
@@ -582,9 +582,9 @@
 (deftest kamali
   ;; Kamali 1.0
   (do-game
-    (new-game (default-corp [(qty "Kamali 1.0" 1)])
-              (default-runner [(qty "Astrolabe" 1) (qty "Decoy" 1)
-                               (qty "Cache" 1) (qty "Hedge Fund" 1)]))
+    (new-game (default-corp ["Kamali 1.0"])
+              (default-runner ["Astrolabe" "Decoy"
+                               "Cache" "Hedge Fund"]))
     (play-from-hand state :corp "Kamali 1.0" "HQ")
     (take-credits state :corp)
 
@@ -618,7 +618,7 @@
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
-    (new-game (default-corp [(qty "Lockdown" 1)])
+    (new-game (default-corp ["Lockdown"])
               (default-runner [(qty "Diesel" 2) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Lockdown" "R&D")
     (take-credits state :corp)
@@ -641,8 +641,8 @@
 (deftest lotus-field-unlowerable
   ;; Lotus Field strength cannot be lowered
   (do-game
-    (new-game (default-corp [(qty "Lotus Field" 1) (qty "Lag Time" 1)])
-              (default-runner [(qty "Ice Carver" 1) (qty "Parasite" 1)]))
+    (new-game (default-corp ["Lotus Field" "Lag Time"])
+              (default-runner ["Ice Carver" "Parasite"]))
     (play-from-hand state :corp "Lotus Field" "Archives")
     (take-credits state :corp 2)
     (let [lotus (get-ice state :archives 0)]
@@ -668,7 +668,7 @@
 (deftest mausolus
   ;; Mausolus - 3 adv tokens change the subroutines
   (do-game
-    (new-game (default-corp [(qty "Mausolus" 1)])
+    (new-game (default-corp ["Mausolus"])
               (default-runner [(qty "NetChip" 5)]))
     (play-from-hand state :corp "Mausolus" "HQ")
     (let [mau (get-ice state :hq 0)]
@@ -704,7 +704,7 @@
 
 (deftest masvingo
   (do-game
-    (new-game (default-corp [(qty "Masvingo" 1)])
+    (new-game (default-corp ["Masvingo"])
               (default-runner))
     (play-from-hand state :corp "Masvingo" "HQ")
     (let [mas (get-ice state :hq 0)]
@@ -730,7 +730,7 @@
 (deftest mind-game
   ;; Mind game - PSI redirect to different server
   (do-game
-    (new-game (default-corp [(qty "Mind Game" 1)])
+    (new-game (default-corp ["Mind Game"])
               (default-runner))
     (play-from-hand state :corp "Mind Game" "HQ")
     (take-credits state :corp)
@@ -747,7 +747,7 @@
 (deftest minelayer
   ;; Minelayer - Install a piece of ICE in outermost position of Minelayer's server at no cost
   (do-game
-    (new-game (default-corp [(qty "Minelayer" 1) (qty "Fire Wall" 1)])
+    (new-game (default-corp ["Minelayer" "Fire Wall"])
               (default-runner))
     (play-from-hand state :corp "Minelayer" "HQ")
     (take-credits state :corp)
@@ -762,9 +762,9 @@
 (deftest morph-ice-subtype-changing
   ;; Morph ice gain and lose subtypes from normal advancements and placed advancements
   (do-game
-    (new-game (default-corp [(qty "Wendigo" 1)
-                             (qty "Shipment from SanSan" 1)
-                             (qty "Superior Cyberwalls" 1)])
+    (new-game (default-corp ["Wendigo"
+                             "Shipment from SanSan"
+                             "Superior Cyberwalls"])
               (default-runner))
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "Superior Cyberwalls" "New remote")
@@ -788,7 +788,7 @@
 (deftest mother-goddess
   ;; Mother Goddess - Gains other ice subtypes
   (do-game
-    (new-game (default-corp [(qty "Mother Goddess" 1) (qty "NEXT Bronze" 1)])
+    (new-game (default-corp ["Mother Goddess" "NEXT Bronze"])
               (default-runner))
     (core/gain state :corp :credit 1)
     (play-from-hand state :corp "Mother Goddess" "HQ")
@@ -807,7 +807,7 @@
 (deftest next-bronze
   ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice
   (do-game
-    (new-game (default-corp [(qty "NEXT Bronze" 2) (qty "NEXT Silver" 1)])
+    (new-game (default-corp ["NEXT Bronze" 2) (qty "NEXT Silver"])
               (default-runner))
     (core/gain state :corp :credit 2)
     (play-from-hand state :corp "NEXT Bronze" "HQ")
@@ -833,7 +833,7 @@
 (deftest nightdancer
   ;; Nightdancer - Runner loses a click if able, corp gains a click on next turn
   (do-game
-    (new-game (default-corp [(qty "Nightdancer" 1)])
+    (new-game (default-corp ["Nightdancer"])
               (default-runner))
     (play-from-hand state :corp "Nightdancer" "HQ")
     (take-credits state :corp)
@@ -853,7 +853,7 @@
   ;; Oduduwa - Gain 1 advancement token when encountered.
   ;; May placed x advancement tokens on another ice where x is the number of counters on Oduduwa already.
   (do-game
-    (new-game (default-corp [(qty "Oduduwa" 1) (qty "Enigma" 1)])
+    (new-game (default-corp ["Oduduwa" "Enigma"])
               (default-runner))
     (play-from-hand state :corp "Oduduwa" "HQ")
     (play-from-hand state :corp "Enigma" "R&D")
@@ -892,7 +892,7 @@
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
   (do-game
-    (new-game (default-corp [(qty "Resistor" 1)])
+    (new-game (default-corp ["Resistor"])
               (default-runner))
     (play-from-hand state :corp "Resistor" "HQ")
     (let [resistor (get-ice state :hq 0)]
@@ -908,7 +908,7 @@
 (deftest sadaka-sub1
   ;; Sadaka - Look at the top 3 cards of R&D, arrange those or shuffle R&D. You may draw 1 card.
   (do-game
-    (new-game (default-corp [(qty "Sadaka" 1) (qty "Enigma" 3)])
+    (new-game (default-corp ["Sadaka" (qty "Enigma" 3)])
               (default-runner))
     (starting-hand state :corp ["Sadaka"])
     (play-from-hand state :corp "Sadaka" "Archives")
@@ -930,7 +930,7 @@
   ;; Sadaka - You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka.
   (do-game
     (new-game (default-corp [(qty "Sadaka" 2) (qty "Enigma" 3)])
-              (default-runner [(qty "Bank Job" 1)]))
+              (default-runner ["Bank Job"]))
     (play-from-hand state :corp "Sadaka" "Archives")
     (play-from-hand state :corp "Sadaka" "HQ")
     (let [sadaka (get-ice state :archives 0)
@@ -964,8 +964,8 @@
 (deftest sandman
   ;; Sandman - add an installed runner card to the grip
   (do-game
-    (new-game (default-corp [(qty "Sandman" 1)])
-              (default-runner [(qty "Inti" 1) (qty "Scrubber" 1)]))
+    (new-game (default-corp ["Sandman"])
+              (default-runner ["Inti" "Scrubber"]))
     (play-from-hand state :corp "Sandman" "HQ")
     (take-credits state :corp)
 
@@ -987,7 +987,7 @@
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters
   (do-game
-    (new-game (default-corp [(qty "Searchlight" 1)])
+    (new-game (default-corp ["Searchlight"])
               (default-runner))
     (play-from-hand state :corp "Searchlight" "HQ")
     (let [searchlight (get-ice state :hq 0)]
@@ -1005,7 +1005,7 @@
 (deftest seidr-adaptive-barrier
   ;; Seidr Adaptive Barrier - +1 strength for every ice protecting its server
   (do-game
-    (new-game (default-corp [(qty "Seidr Adaptive Barrier" 1) (qty "Ice Wall" 2)])
+    (new-game (default-corp ["Seidr Adaptive Barrier" (qty "Ice Wall" 2)])
               (default-runner))
     (core/gain state :corp :credit 10)
     (play-from-hand state :corp "Seidr Adaptive Barrier" "HQ")
@@ -1020,8 +1020,8 @@
 (deftest self-adapting-code-wall-unlowerable
   ;; self-adapting code wall strength cannot be lowered
   (do-game
-    (new-game (default-corp [(qty "Self-Adapting Code Wall" 1) (qty "Lag Time" 1)])
-              (default-runner [(qty "Ice Carver" 1) (qty "Parasite" 1)]))
+    (new-game (default-corp ["Self-Adapting Code Wall" "Lag Time"])
+              (default-runner ["Ice Carver" "Parasite"]))
     (play-from-hand state :corp "Self-Adapting Code Wall" "Archives")
     (take-credits state :corp 2)
     (let [sacw (get-ice state :archives 0)]
@@ -1047,7 +1047,7 @@
 (deftest sherlock
   ;; Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack
   (do-game
-    (new-game (default-corp [(qty "Sherlock 1.0" 1)])
+    (new-game (default-corp ["Sherlock 1.0"])
               (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Sherlock 1.0" "HQ")
     (take-credits state :corp)
@@ -1064,9 +1064,9 @@
 (deftest shiro
   ;; Shiro - Full test
   (do-game
-    (new-game (default-corp [(qty "Shiro" 1) (qty "Caprice Nisei" 1)
-                             (qty "Quandary" 1) (qty "Jackson Howard" 1)])
-              (default-runner [(qty "R&D Interface" 1)]))
+    (new-game (default-corp ["Shiro" "Caprice Nisei"
+                             "Quandary" "Jackson Howard"])
+              (default-runner ["R&D Interface"]))
     (starting-hand state :corp ["Shiro"])
     (play-from-hand state :corp "Shiro" "HQ")
     (take-credits state :corp)
@@ -1097,7 +1097,7 @@
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run
   (do-game
-    (new-game (default-corp [(qty "Snowflake" 1)])
+    (new-game (default-corp ["Snowflake"])
               (default-runner))
     (play-from-hand state :corp "Snowflake" "HQ")
     (take-credits state :corp)
@@ -1116,7 +1116,7 @@
 (deftest special-offer-trash-ice-during-run
   ;; Special Offer trashes itself and updates the run position
   (do-game
-    (new-game (default-corp [(qty "Ice Wall" 1) (qty "Special Offer" 1)])
+    (new-game (default-corp ["Ice Wall" "Special Offer"])
               (default-runner))
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Special Offer" "HQ")
@@ -1135,7 +1135,7 @@
 (deftest sand-storm-alone
   ;; Sand Storm should not end the run if protecting an otherwise empty/naked server
   (do-game
-    (new-game (default-corp [(qty "Sand Storm" 1) (qty "PAD Campaign" 1)])
+    (new-game (default-corp ["Sand Storm" "PAD Campaign"])
               (default-runner))
     (play-from-hand state :corp "Sand Storm" "New remote")
     (play-from-hand state :corp "PAD Campaign" "New remote")
@@ -1150,8 +1150,8 @@
 (deftest tithonium
   ;; Forfeit option as rez cost, can have hosted condition counters
   (do-game
-    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Tithonium" 1) (qty "Patch" 1)])
-              (default-runner [(qty "Pawn" 1) (qty "Wasteland" 1)]))
+    (new-game (default-corp ["Hostile Takeover" "Tithonium" "Patch"])
+              (default-runner ["Pawn" "Wasteland"]))
     (core/gain state :corp :click 10)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (play-from-hand state :corp "Tithonium" "HQ")
@@ -1195,7 +1195,7 @@
 (deftest tithonium-oversight-ai
   ;; Do not prompt for alt cost #2734
   (do-game
-    (new-game (default-corp [(qty "Hostile Takeover" 1) (qty "Oversight AI" 1) (qty "Tithonium" 1)])
+    (new-game (default-corp ["Hostile Takeover" "Oversight AI" "Tithonium"])
               (default-runner))
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (play-from-hand state :corp "Tithonium" "R&D")
@@ -1235,7 +1235,7 @@
 (deftest turing-positional-strength
   ;; Turing - Strength boosted when protecting a remote server
   (do-game
-    (new-game (default-corp [(qty "Turing" 2) (qty "Hedge Fund" 1)])
+    (new-game (default-corp ["Turing" 2) (qty "Hedge Fund"])
               (default-runner))
     (play-from-hand state :corp "Hedge Fund")
     (play-from-hand state :corp "Turing" "HQ")
@@ -1252,8 +1252,8 @@
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game
-    (new-game (default-corp [(qty "Waiver" 1)])
-              (default-runner [(qty "Corroder" 1) (qty "Dean Lister" 1) (qty "Ubax" 1) (qty "Caldera" 1)]))
+    (new-game (default-corp ["Waiver"])
+              (default-runner ["Corroder" "Dean Lister" "Ubax" "Caldera"]))
     (play-from-hand state :corp "Waiver" "HQ")
     (let [waiv (get-ice state :hq 0)]
       (core/rez state :corp waiv)
@@ -1267,8 +1267,8 @@
 (deftest wraparound
   ;; Wraparound - Strength boosted when no fracter is installed
   (do-game
-    (new-game (default-corp [(qty "Wraparound" 1)])
-              (default-runner [(qty "Corroder" 1)]))
+    (new-game (default-corp ["Wraparound"])
+              (default-runner ["Corroder"]))
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
       (core/rez state :corp wrap)
