@@ -159,16 +159,13 @@
   (swap! app-state dissoc :password-gameid))
 
 (defn leave-game []
-  (ws/ws-send! [:netrunner/leave])
+  (ws/ws-send! [:netrunner/leave {:gameid-str (:gameid @game-state)}])
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid :win-shown)
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
   (-> "#gamelobby" js/$ .fadeIn))
-
-(defn concede []
-  (ws/ws-send! [:netrunner/concede]))
 
 (defn send-msg [event owner]
   (.preventDefault event)

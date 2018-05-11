@@ -148,7 +148,10 @@
         (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state) :typing true}])))))
 
 (defn mute-spectators [mute-state]
-  (ws/ws-send! [:netrunner/mute-spectators mute-state]))
+  (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state) :mute-state mute-state}]))
+
+(defn concede []
+  (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]
