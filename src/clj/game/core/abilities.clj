@@ -544,14 +544,16 @@
                        #(init-trace state :corp card trace %) {:priority (or priority 2) :base base-trace :bonus bonus})))
 
 (defn rfg-and-shuffle-rd-effect
-  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n))
-  ([state side eid card n]
+  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
+  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
+  ([state side eid card n all?]
    (move state side card :rfg)
    (continue-ability state side
                     {:show-discard  true
                      :choices {:max n
                                :req #(and (= (:side %) "Corp")
-                                          (= (:zone %) [:discard]))}
+                                          (= (:zone %) [:discard]))
+                               :all all?}
                      :msg (msg "shuffle "
                                (let [seen (filter :seen targets)
                                      m (count (filter #(not (:seen %)) targets))]

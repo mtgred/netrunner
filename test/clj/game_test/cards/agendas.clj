@@ -1054,8 +1054,6 @@
         (take-credits state :corp)
         (core/lose state :runner :credit (:credit (get-runner)) :click 3)
         (run-empty-server state :remote1)
-        (run-successful state)
-        (prompt-choice :runner "2 [Credits]")
         (prompt-choice :runner "No action")
         (is (= 0 (:credit (get-runner))) "Runner couldn't afford to steal, so no credits spent")
         (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project"))
@@ -1064,8 +1062,6 @@
         (take-credits state :corp)
         (core/lose state :runner :credit (:credit (get-runner)) :click 3)
         (run-empty-server state :remote1)
-        (run-successful state)
-        (prompt-choice :runner "[Click]")
         (prompt-choice :runner "No action")
         (is (= 0 (:click (get-runner))) "Runner couldn't afford to steal, so no clicks spent")
         (is (= 0 (count (:scored (get-runner)))) "Runner could not steal Ikawah Project"))
@@ -1077,6 +1073,7 @@
         (is (= 5 (:credit (get-runner))) "Runner should be reset to 5 credits")
         (is (= 4 (:click (get-runner))) "Runner should be reset to 4 clicks")
         (run-empty-server state :remote1)
+        (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "[Click]")
         (prompt-choice :runner "2 [Credits]")
         (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
@@ -1092,10 +1089,10 @@
       (starting-hand state :corp ["Ikawah Project"])
       (run-empty-server state "R&D")
       (prompt-choice :runner "No action")
-      (is (not (last-log-contains? state "not to pay to steal Ikawah Project")) "Ikawah Project should not be mentioned")
+      (is (not (last-log-contains? state "Ikawah Project")) "Ikawah Project should not be mentioned")
       (run-empty-server state "HQ")
       (prompt-choice :runner "No action")
-      (is (last-log-contains? state "not to pay to steal Ikawah Project") "Ikawah Project should be mentioned"))))
+      (is (last-log-contains? state "Ikawah Project") "Ikawah Project should be mentioned"))))
 
 (deftest illicit-sales
   ;; Illicit Sales
