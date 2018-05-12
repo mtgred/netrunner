@@ -1441,7 +1441,7 @@
                  :effect (req (let [n (:cost target)
                                     t (:title target)]
                                 (move state side target :rfg)
-                                (deduct state side [:memory {:used (:memoryunits target)}])
+                                (free-mu state (:memoryunits target))
                                 (resolve-ability state side
                                   {:prompt "Choose a non-virus program to install"
                                    :msg (req (if (not= target "No install")

@@ -14,11 +14,8 @@
                                                    #(- % value)
                                                    (sub->0 value))))
     ;; values that expect map, if passed a number use default map
-    (#{:hand-size} attr)
+    (#{:hand-size :memory} attr)
     (deduct state side [attr {:mod value}])
-    ;; Memory default is :used to better handle paying MU costs of install
-    (= :memory attr)
-    (deduct state side [:memory {:used value}])
 
     :else
     (do (swap! state update-in [side attr] (if (= attr :agenda-point)
@@ -213,6 +210,10 @@
       (map? amount)
       (doseq [[subtype amount] amount]
         (swap! state update-in [side type subtype] (safe-inc-n amount)))
+      ;; Default cases for the types that expect a map
+      (#{:hand-size :memory} type)
+      (gain state side type {:mod amount})
+
       ;; Else assume amount is a number and try to increment type by it.
       :else
       (swap! state update-in [side type] (safe-inc-n amount)))))

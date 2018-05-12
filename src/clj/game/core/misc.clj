@@ -152,6 +152,18 @@
   (when (neg? (available-mu state))
     (toast state :runner "You have run out of memory units!")))
 
+(defn free-mu
+  "Frees up specified amount of mu (reduces :used)"
+  ([state _ n] (free-mu state n))
+  ([state n]
+   (deduct state :runner [:memory {:used n}])))
+
+(defn use-mu
+  "Increases amount of mu used (increased :used)"
+  ([state _ n] (use-mu state n))
+  ([state n]
+   (gain state :runner :memory {:used n})))
+
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
   [state side scored stolen]

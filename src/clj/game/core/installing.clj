@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
-(declare available-mu host in-play? install-locked? make-rid rez run-flag? server-list server->zone set-prop system-msg
-         turn-flag? update-breaker-strength update-ice-strength update-run-ice)
+(declare available-mu free-mu host in-play? install-locked? make-rid rez run-flag? server-list server->zone set-prop system-msg
+         turn-flag? update-breaker-strength update-ice-strength update-run-ice use-mu)
 
 ;;;; Functions for the installation and deactivation of cards.
 
@@ -47,7 +47,7 @@
    (when (and (:memoryunits card)
               (:installed card)
               (not (:facedown card)))
-     (lose state :runner :memory {:used (:memoryunits card)}))
+     (free-mu state (:memoryunits card)))
    (when (and (find-cid (:cid card) (all-active-installed state side))
               (not (:disabled card))
               (or (:rezzed card)
@@ -342,12 +342,10 @@
 
 (defn- runner-get-cost
   "Get the total install cost for specified card"
-  [state side {:keys [cost memoryunits] :as card}
+  [state side {:keys [cost] :as card}
    {:keys [extra-cost no-cost facedown] :as params}]
   (install-cost state side card
-                (concat extra-cost
-                        (when (and (not no-cost) (not facedown)) [:credit cost])
-                        (when (and memoryunits (not facedown)) [:memory memoryunits]))))
+                (concat extra-cost (when (and (not no-cost) (not facedown)) [:credit cost]))))
 
 (defn- runner-install-message
   "Prints the correct msg for the card install"
@@ -399,9 +397,10 @@
                                                                  :init-data true}))]
                    (runner-install-message state side (:title card) cost-str params)
                    (play-sfx state side "install-runner")
-                   (when (is-type? card "Program")
-                     (when no-mu
-                       (lose state :runner :memory {:used (:memoryunits card)}))
+                   (when (and (is-type? card "Program")
+                              (not no-mu))
+                     ;; Use up mu from program
+                     (use-mu state (:memoryunits card))
                      (toast-check-mu state))
                    (handle-virus-counter-flag state side installed-card)
                    (when (and (not facedown) (is-type? card "Resource"))

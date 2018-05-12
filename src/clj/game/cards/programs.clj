@@ -251,7 +251,7 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
-                 :effect (req (lose state side :memory {:used (:memoryunits target)})
+                 :effect (req (free-mu state (:memoryunits target))
                               (when (-> target :cost pos?)
                                 (gain state side :credit 1))
                               (update-breaker-strength state side target)
@@ -263,13 +263,13 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) (when (-> target :cost pos?)))
-                 :effect (effect (lose :memory {:used (:memoryunits target)})
+                 :effect (effect (free-mu (:memoryunits target))
                                  (update-breaker-strength target)
                                  (host card (get-card state target))
                                  (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}]
     :events {:card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dheg-prog])))
                           :effect (effect (update! (dissoc-in card [:special :dheg-prog]))
-                                          (gain :memory {:used (:memoryunits target)}))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Diwan"
    {:prompt "Choose the server that this copy of Diwan is targeting:"
@@ -315,13 +315,13 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (lose :memory {:used (:memoryunits target)})
+                                 (free-mu (:memoryunits target))
                                  (update! (assoc (get-card state card)
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
                           :effect (effect (update! (assoc card
                                                           :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (gain :memory {:used (:memoryunits target)}))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Egret"
    {:implementation "Added subtypes don't get removed when Egret is moved/trashed"
@@ -549,7 +549,7 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (lose :memory {:used (:memoryunits target)})
+                 :effect (effect (free-mu (:memoryunits target))
                                  (update-breaker-strength target)
                                  (host card (get-card state target))
                                  (update! (assoc-in (get-card state card)
@@ -561,7 +561,7 @@
                                                              [:special :hosted-programs]
                                                              (remove #(= (:cid target) %)
                                                                      (get-in card [:special :hosted-programs]))))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "LLDS Energy Regulator"
    {:prevent {:trash [:hardware]}
@@ -772,7 +772,7 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (lose :memory {:used (:memoryunits target)})
+                                 (free-mu (:memoryunits target))
                                  (update! (assoc (get-card state card)
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
@@ -782,7 +782,7 @@
                                     (add-counter state side c :virus 1)))}
              :card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
                           :effect (effect (update! (assoc card :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (gain :memory {:used (:memoryunits target)}))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Reaver"
    {:events {:runner-trash {:req (req (and (first-installed-trash? state side)

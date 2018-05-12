@@ -112,7 +112,7 @@
                               (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Box-E"
-   {:in-play [:memory {:mod 2} :hand-size {:mod 2}]}
+   {:in-play [:memory 2 :hand-size 2]}
 
    "Brain Cage"
    {:in-play [:hand-size {:mod 3}]
@@ -121,19 +121,19 @@
    "Brain Chip"
    (let [runner-points (fn [s] (max (get-in s [:runner :agenda-point] 0) 0))]
      {:effect (req (gain state :runner
-                         :memory {:mod (runner-points @state)}
-                         :hand-size {:mod (runner-points @state)})
+                         :memory (runner-points @state)
+                         :hand-size (runner-points @state))
                    (add-watch state (keyword (str "brainchip" (:cid card)))
-                          (fn [k ref old new]
-                            (let [bonus (- (runner-points new) (runner-points old))]
-                              (when (not= 0 bonus)
-                               (gain state :runner
-                                     :memory {:mod bonus}
-                                     :hand-size {:mod bonus}))))))
+                              (fn [k ref old new]
+                                (let [bonus (- (runner-points new) (runner-points old))]
+                                  (when-not (zero? bonus)
+                                    (gain state :runner
+                                          :memory bonus
+                                          :hand-size bonus))))))
       :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
                        (lose state :runner
-                             :memory {:mod (runner-points @state)}
-                             :hand-size {:mod (runner-points @state)}))})
+                             :memory (runner-points @state)
+                             :hand-size (runner-points @state)))})
 
    "Capstone"
    {:abilities [{:req (req (> (count (:hand runner)) 0))
@@ -287,7 +287,7 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (req (deduct state side [:memory {:used (:memoryunits target)}])
+                 :effect (req (free-mu state (:memoryunits target))
                               (->> target
                                 (get-card state)
                                 (host state side card)
@@ -297,7 +297,7 @@
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
                           :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
-                                          (gain :memory {:used (:memoryunits target)}))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Doppelgänger"
    {:in-play [:memory {:mod 1}]
@@ -652,7 +652,7 @@
                                                         (installed? %))}
                                    :msg (msg "host " (:title target))
                                    :effect (effect (host card target)
-                                                   (deduct [:memory {:used (:memoryunits target)}])
+                                                   (free-mu (:memoryunits target))
                                                    (update! (assoc (get-card state card)
                                                                    :hosted-programs
                                                                    (cons (:cid target) (:hosted-programs card)))))}
@@ -661,7 +661,7 @@
                           :effect (effect (update! (assoc card
                                                           :hosted-programs
                                                           (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (gain :memory {:used (:memoryunits target)}))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Obelus"
    {:in-play [:memory {:mod 1}]
@@ -702,11 +702,11 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (deduct [:memory {:used (:memoryunits target)}])
+                                 (free-mu (:memoryunits target))
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}]
    :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
-                                          (gain :memory {:used (:memoryunits target)}))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]

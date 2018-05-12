@@ -53,28 +53,28 @@
                              (:events cdef))))
 
 (defn cloud-icebreaker [cdef]
-  (assoc cdef :effect (req (add-watch state (keyword (str "cloud" (:cid card)))
-                        (fn [k ref old new]
-                          (let [old-link (get-in old [:runner :link])
-                                new-link (get-in new [:runner :link])
-                                cloud-turned-on (and (< old-link 2)
-                                                     (>= new-link 2))
-                                cloud-turned-off (and (>= old-link 2)
-                                                      (< new-link 2))]
-                            (cond
-                              cloud-turned-on
-                              (deduct state :runner [:memory {:used (:memoryunits card)}])
+  (assoc cdef :effect (req (let [link (get-in @state [:runner :link])]
+                             (when (>= link 2)
+                               (free-mu state (:memoryunits card))))
+                           (add-watch state (keyword (str "cloud" (:cid card)))
+                                      (fn [k ref old new]
+                                        (let [old-link (get-in old [:runner :link])
+                                              new-link (get-in new [:runner :link])
+                                              cloud-turned-on (and (< old-link 2)
+                                                                   (>= new-link 2))
+                                              cloud-turned-off (and (>= old-link 2)
+                                                                    (< new-link 2))]
+                                          (cond
+                                            cloud-turned-on
+                                            (free-mu state (:memoryunits card))
 
-                              cloud-turned-off
-                              (gain state :runner :memory {:used (:memoryunits card)}))))))
+                                            cloud-turned-off
+                                            (use-mu state (:memoryunits card)))))))
               :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
                                (let [link (get-in @state [:runner :link])]
                                  (when (>= link 2)
-                                   ;; to counter normal MU used reduction on program install
-                                   (gain state :runner :memory {:used (:memoryunits card)}))))
-              :install-cost-bonus (req (let [link (get-in @state [:runner :link])]
-                                         (when (>= link 2)
-                                           [:memory (- (:memoryunits card))])))))
+                                   ;; To counteract the normal freeing of MU on program `:leave-play`
+                                   (use-mu state (:memoryunits card)))))))
 
 (defn- strength-pump
   "Creates a strength pump ability.
