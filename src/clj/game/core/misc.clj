@@ -148,6 +148,12 @@
   [state]
   (- (mu-count state) (get-in @state [:runner :memory :used] 0)))
 
+(defn toast-check-mu
+  "Check runner has not exceeded, toast if they have"
+  [state]
+  (when (neg? (available-mu state))
+    (toast state :runner "You have run out of memory units!")))
+
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
   [state side scored stolen]

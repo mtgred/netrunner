@@ -41,11 +41,12 @@
   [costs]
   (let [fc (partition 2 (flatten (clean-forfeit costs)))
         jc (filter #(not= :net-damage (first %)) fc)
-        dc (filter #(= :net-damage (first %)) fc)]
-    (vec (map vec (concat
-      (reduce #(let [k (first %2) value (last %2)]
-                    (assoc %1 k (+ (or (k %1) 0) value)))
-                 {} jc) dc)))))
+        dc (filter #(= :net-damage (first %)) fc)
+        reduce-fn (fn [cost-map cost]
+                    (let [[cost-type value] cost
+                          old-value (get cost-map cost-type 0)]
+                      (assoc cost-map cost-type (+ old-value value))))]
+    (vec (map vec (concat (reduce reduce-fn {} jc) dc)))))
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with (complement pred) coll)]

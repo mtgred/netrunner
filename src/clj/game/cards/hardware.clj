@@ -278,8 +278,7 @@
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (in-hand? %))}
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card})
+                 :effect (effect (runner-install target {:host-card card :no-mu true})
                                  (update! (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
@@ -288,7 +287,7 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (req (gain state side :memory (:memoryunits target))
+                 :effect (req (deduct state side [:memory {:used (:memoryunits target)}])
                               (->> target
                                 (get-card state)
                                 (host state side card)
@@ -298,7 +297,7 @@
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
                           :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (gain :memory {:used (:memoryunits target)}))}}}
 
    "Doppelgänger"
    {:in-play [:memory {:mod 1}]
@@ -638,8 +637,7 @@
                                                         (<= (:memoryunits %) n)
                                                         (in-hand? %))}
                                    :msg (msg "host " (:title target))
-                                   :effect (effect (gain :memory (:memoryunits target))
-                                                   (runner-install target {:host-card card})
+                                   :effect (effect (runner-install target {:host-card card :no-mu true})
                                                    (update! (assoc (get-card state card)
                                                                    :hosted-programs
                                                                    (cons (:cid target) (:hosted-programs card)))))}
@@ -654,7 +652,7 @@
                                                         (installed? %))}
                                    :msg (msg "host " (:title target))
                                    :effect (effect (host card target)
-                                                   (gain :memory (:memoryunits target))
+                                                   (deduct [:memory {:used (:memoryunits target)}])
                                                    (update! (assoc (get-card state card)
                                                                    :hosted-programs
                                                                    (cons (:cid target) (:hosted-programs card)))))}
@@ -663,7 +661,7 @@
                           :effect (effect (update! (assoc card
                                                           :hosted-programs
                                                           (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (gain :memory {:used (:memoryunits target)}))}}}
 
    "Obelus"
    {:in-play [:memory {:mod 1}]
@@ -695,8 +693,7 @@
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card})
+                 :effect (effect (runner-install target {:host-card card :no-mu true})
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}
                 {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
                  :prompt "Select an installed program of 1[Memory Unit] or less to host on Omni-drive"
@@ -705,11 +702,11 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
+                                 (deduct [:memory {:used (:memoryunits target)}])
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}]
    :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (gain :memory {:used (:memoryunits target)}))}}}
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]

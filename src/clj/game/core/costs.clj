@@ -13,10 +13,16 @@
                                                    ;; Modifications may be negative
                                                    #(- % value)
                                                    (sub->0 value))))
+    ;; values that expect map, if passed a number use default map
+    (#{:hand-size} attr)
+    (deduct state side [attr {:mod value}])
+    ;; Memory default is :used to better handle paying MU costs of install
+    (= :memory attr)
+    (deduct state side [:memory {:used value}])
+
     :else
-    (do (swap! state update-in [side attr] (if (or (= attr :memory)
-                                                   (= attr :agenda-point))
-                                             ;; Memory or agenda points may be negative
+    (do (swap! state update-in [side attr] (if (= attr :agenda-point)
+                                             ;; Agenda points may be negative
                                              #(- % value)
                                              (sub->0 value)))
         (when (and (= attr :credit)
@@ -44,7 +50,7 @@
       (flag-stops-pay? state side cost-type)
       computer-says-no
 
-      (not (or (some #(= cost-type %) [:memory :net-damage])
+      (not (or (#{:memory :net-damage} cost-type)
                (and (= cost-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
                (and (= cost-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
                (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))

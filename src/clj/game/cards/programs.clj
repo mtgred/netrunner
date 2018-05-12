@@ -178,8 +178,8 @@
                              (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
                 {:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
-                                 (toast (str "Consume will now " 
-                                             (if (get-in card [:special :auto-accept]) "no longer " "") 
+                                 (toast (str "Consume will now "
+                                             (if (get-in card [:special :auto-accept]) "no longer " "")
                                              "automatically add counters.") "info"))
                  :label "Toggle auomatically adding virus counters"}]}
 
@@ -539,8 +539,7 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
-                                    :effect (effect (gain :memory (:memoryunits target))
-                                                    (runner-install target {:host-card card})
+                                    :effect (effect (runner-install target {:host-card card :no-mu true})
                                                     (update! (assoc-in (get-card state card)
                                                                     [:special :hosted-programs]
                                                                     (cons (:cid target)
@@ -552,7 +551,7 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (gain :memory (:memoryunits target))
+                 :effect (effect (lose :memory {:used (:memoryunits target)})
                                  (update-breaker-strength target)
                                  (host card (get-card state target))
                                  (update! (assoc-in (get-card state card)
