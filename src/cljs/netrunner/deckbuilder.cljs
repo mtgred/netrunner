@@ -276,8 +276,12 @@
          (end-delete owner))))))
 
 (defn new-deck [side owner]
-  (let [old-deck (om/get-state owner :deck)]
-    (om/set-state! owner :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
+  (let [old-deck (om/get-state owner :deck)
+        id (->> side
+             side-identities
+             (sort-by :title)
+             first)]
+    (om/set-state! owner :deck {:name "New deck" :cards [] :identity id})
     (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
     (edit-deck owner)
     (om/set-state! owner :old-deck old-deck)))
