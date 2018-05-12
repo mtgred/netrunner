@@ -79,7 +79,7 @@
               (default-runner [(qty "Kati Jones" 2) (qty "Scheherazade" 2)
                                (qty "Off-Campus Apartment" 1) (qty "Hivemind" 2)]))
     (take-credits state :corp)
-    (core/gain state :runner :click 1 :memory 2)
+    (core/gain state :runner :click 1 :memory {:mod 2})
     (core/draw state :runner 2)
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")

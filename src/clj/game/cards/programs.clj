@@ -240,10 +240,9 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
-                                    :effect (effect (gain :memory (:memoryunits target))
-                                                    (when (-> target :cost pos?)
+                                    :effect (effect (when (-> target :cost pos?)
                                                       (install-cost-bonus state side [:credit -1]))
-                                                    (runner-install target {:host-card card})
+                                                    (runner-install target {:host-card card :no-mu true})
                                                     (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
                                   card nil))}
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
@@ -252,7 +251,7 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
-                 :effect (req (gain state side :memory (:memoryunits target))
+                 :effect (req (lose state side :memory {:used (:memoryunits target)})
                               (when (-> target :cost pos?)
                                 (gain state side :credit 1))
                               (update-breaker-strength state side target)
@@ -264,13 +263,13 @@
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) (when (-> target :cost pos?)))
-                 :effect (effect (gain :memory (:memoryunits target))
+                 :effect (effect (lose :memory {:used (:memoryunits target)})
                                  (update-breaker-strength target)
                                  (host card (get-card state target))
                                  (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}]
     :events {:card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dheg-prog])))
                           :effect (effect (update! (dissoc-in card [:special :dheg-prog]))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (gain :memory {:used (:memoryunits target)}))}}}
 
    "Diwan"
    {:prompt "Choose the server that this copy of Diwan is targeting:"
@@ -304,8 +303,7 @@
                                                          (not (has-subtype? % "Icebreaker"))
                                                          (in-hand? %))}
                                     :msg (msg "install and host " (:title target))
-                                    :effect (effect (gain :memory (:memoryunits target))
-                                                    (runner-install target {:host-card card})
+                                    :effect (effect (runner-install target {:host-card card :no-mu true})
                                                     (update! (assoc (get-card state card)
                                                                     :hosted-programs
                                                                     (cons (:cid target) (:hosted-programs card)))))}
@@ -317,13 +315,13 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
+                                 (lose :memory {:used (:memoryunits target)})
                                  (update! (assoc (get-card state card)
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
                           :effect (effect (update! (assoc card
                                                           :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (gain :memory {:used (:memoryunits target)}))}}}
 
    "Egret"
    {:implementation "Added subtypes don't get removed when Egret is moved/trashed"
@@ -761,8 +759,7 @@
                                                          (has-subtype? % "Virus")
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
-                                    :effect (effect (gain :memory (:memoryunits target))
-                                                    (runner-install target {:host-card card})
+                                    :effect (effect (runner-install target {:host-card card :no-mu true})
                                                     (update! (assoc (get-card state card)
                                                                     :hosted-programs
                                                                     (cons (:cid target) (:hosted-programs card)))))}
@@ -775,7 +772,7 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
+                                 (lose :memory {:used (:memoryunits target)})
                                  (update! (assoc (get-card state card)
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
@@ -785,7 +782,7 @@
                                     (add-counter state side c :virus 1)))}
              :card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
                           :effect (effect (update! (assoc card :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (gain :memory {:used (:memoryunits target)}))}}}
 
    "Reaver"
    {:events {:runner-trash {:req (req (and (first-installed-trash? state side)
