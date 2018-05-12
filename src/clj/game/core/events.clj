@@ -95,12 +95,16 @@
                 (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
                   (let [to-resolve
                         (if (= 1 (count non-silent)) (first non-silent) (first handlers))
+                        ab (dissoc (:ability to-resolve) :req)
+                        c (:card to-resolve)
+                        persistent (:persistent ab)
                         others (if (= 1 (count non-silent))
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
                                  (next handlers))]
-                    (if-let [the-card (get-card state (:card to-resolve))]
+                    (if-let [the-card (or (#(when (active? %) %) (get-card state c))
+                                          (when (and persistent (persistent state side eid c event-targets)) c))]
                       {:delayed-completion true
-                       :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
+                       :effect (req (when-completed (resolve-ability state side ab
                                                                      the-card event-targets)
                                                     (if (should-continue state handlers)
                                                       (continue-ability state side
