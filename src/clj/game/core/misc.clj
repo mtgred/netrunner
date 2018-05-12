@@ -138,6 +138,16 @@
   [state side]
   (base-mod-size state side :hand-size))
 
+(defn mu-count
+  "Returns the current amount of available MU, not counting used MU"
+  [state]
+  (base-mod-size state :runner :memory))
+
+(defn available-mu
+  "Returns the available MU the runner has"
+  [state]
+  (- (mu-count state) (get-in @state [:runner :memory :used] 0)))
+
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
   [state side scored stolen]
