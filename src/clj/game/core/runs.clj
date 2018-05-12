@@ -254,9 +254,9 @@
                                       (.contains target "Pay")
                                       (if (> n 1)
                                         ;; Use the better function for multiple costs
-                                        (resolve-ability state :runner
-                                                         (steal-pay-choice state :runner cost-strs '() n c)
-                                                         c nil)
+                                        (continue-ability state :runner
+                                                          (steal-pay-choice state :runner cost-strs '() n c)
+                                                          c nil)
                                         ;; Otherwise, just handle everything right friggin here
                                         (when-completed (pay-sync state side nil cost {:action :steal-cost})
                                                         (do (system-msg state side
