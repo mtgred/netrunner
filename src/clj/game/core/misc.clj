@@ -126,6 +126,8 @@
   [state card]
   (installed-byname state (to-keyword (:side card)) (:title card)))
 
+;;; Stuff for handling {:base x :mod y} data structures
+
 (defn base-mod-size
   "Returns the value of properties using the `base` and `mod` system"
   [state side prop]
@@ -138,15 +140,11 @@
   [state side]
   (base-mod-size state side :hand-size))
 
-(defn mu-count
-  "Returns the current amount of available MU, not counting used MU"
-  [state]
-  (base-mod-size state :runner :memory))
-
 (defn available-mu
   "Returns the available MU the runner has"
   [state]
-  (- (mu-count state) (get-in @state [:runner :memory :used] 0)))
+  (- (base-mod-size state :runner :memory)
+     (get-in @state [:runner :memory :used] 0)))
 
 (defn toast-check-mu
   "Check runner has not exceeded, toast if they have"

@@ -257,11 +257,11 @@
   (do-game
     (new-game (default-corp [(qty "Cerebral Static" 1) (qty "Lag Time" 1)])
               (make-deck "Chaos Theory: Wünderkind" [(qty "Sure Gamble" 3)]))
-    (is (= 5 (:memory (get-runner))) "CT starts with 5 memory")
+    (is (= 5 (core/available-mu state)) "CT starts with 5 memory")
     (play-from-hand state :corp "Cerebral Static")
-    (is (= 4 (:memory (get-runner))) "Cerebral Static causes CT to have 4 memory")
+    (is (= 4 (core/available-mu state)) "Cerebral Static causes CT to have 4 memory")
     (play-from-hand state :corp "Lag Time")
-    (is (= 5 (:memory (get-runner))) "CT 5 memory restored")))
+    (is (= 5 (core/available-mu state)) "CT 5 memory restored")))
 
 (deftest closed-accounts
   ;; Closed Accounts - Play if Runner is tagged to make Runner lose all credits

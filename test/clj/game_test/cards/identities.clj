@@ -211,6 +211,13 @@
     (is (= 13 (:credit (get-corp))) "Has 13 credits")
     (is (= 13 (core/hand-size state :corp)) "Max hand size is 13")))
 
+(deftest chaos-theory
+  ;; Chaos Theory, start with +1 MU
+  (do-game
+    (new-game (default-corp)
+              (make-deck "Chaos Theory: Wünderkind" []))
+    (is (= 5 (core/available-mu state)) "Chaos Theory starts the game with +1 MU")))
+
 (deftest chronos-protocol
   ;; Chronos Protocol - Choose Runner discard for first net damage of a turn
   (do-game

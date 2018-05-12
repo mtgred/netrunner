@@ -70,7 +70,7 @@
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-in @state [:runner :rig :program 0])]
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
-      (is (= (- 4 (:memoryunits gord)) (:memory (get-runner))) "Program MU was applied"))))
+      (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
 (deftest runner-installing-uniques
   ;; Installing a copy of an active unique Runner card is prevented
@@ -112,7 +112,7 @@
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-in @state [:runner :rig :program 0])]
       (core/trash state :runner gord)
-      (is (= 4 (:memory (get-runner))) "Trashing the program restored MU"))))
+      (is (= 4 (core/available-mu state)) "Trashing the program restored MU"))))
 
 (deftest agenda-forfeit-runner
   ;; forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda

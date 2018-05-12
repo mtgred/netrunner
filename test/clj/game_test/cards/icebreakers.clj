@@ -15,10 +15,10 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Adept")
     (let [ad (get-program state 0)]
-      (is (= 2 (:memory (get-runner))))
+      (is (= 2 (core/available-mu state)))
       (is (= 4 (:current-strength (refresh ad))) "+2 strength for 2 unused MU")
       (play-from-hand state :runner "Box-E")
-      (is (= 4 (:memory (get-runner))))
+      (is (= 4 (core/available-mu state)))
       (is (= 6 (:current-strength (refresh ad))) "+4 strength for 4 unused MU"))))
 
 (deftest atman-install-0
@@ -28,7 +28,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Atman")
     (prompt-choice :runner 0)
-    (is (= 3 (:memory (get-runner))))
+    (is (= 3 (core/available-mu state)))
     (let [atman (get-in @state [:runner :rig :program 0])]
       (is (= 0 (get-counters atman :power)) "0 power counters")
       (is (= 0 (:current-strength atman)) "0 current strength"))))
@@ -41,7 +41,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Atman")
     (prompt-choice :runner 2)
-    (is (= 3 (:memory (get-runner))))
+    (is (= 3 (core/available-mu state)))
     (let [atman (get-in @state [:runner :rig :program 0])]
       (is (= 2 (get-counters atman :power)) "2 power counters")
       (is (= 2 (:current-strength atman)) "2 current strength"))))
@@ -105,7 +105,7 @@
       (card-ability state :runner baba 1)
       (prompt-select :runner (find-card "Sharpshooter" (:program (:rig (get-runner)))))
       (is (= 2 (count (:hosted (refresh baba)))) "Faerie and Sharpshooter hosted on Baba Yaga")
-      (is (= 1 (:memory (get-runner))) "1 MU left with 2 breakers on Baba Yaga")
+      (is (= 1 (core/available-mu state)) "1 MU left with 2 breakers on Baba Yaga")
       (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog"))))
 
 (deftest cerberus-rex
@@ -462,9 +462,9 @@
     (take-credits state :runner 1)
     (play-from-hand state :runner "Akamatsu Mem Chip")
     (play-from-hand state :runner "Akamatsu Mem Chip")
-    (is (= 6 (:memory (get-runner))))
+    (is (= 6 (core/available-mu state)))
     (play-from-hand state :runner "Overmind")
-    (is (= 5 (:memory (get-runner))))
+    (is (= 5 (core/available-mu state)))
     (let [ov (get-in @state [:runner :rig :program 0])]
       (is (= 5 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
@@ -599,10 +599,10 @@
       (is (= 2 (:current-strength (refresh shiv))) "2 installed breakers; 2 strength")
       (play-from-hand state :runner "Inti")
       (is (= 3 (:current-strength (refresh shiv))) "3 installed breakers; 3 strength")
-      (is (= 1 (:memory (get-runner))) "3 MU consumed")
+      (is (= 1 (core/available-mu state)) "3 MU consumed")
       (play-from-hand state :runner "Access to Globalsec")
       (is (= 2 (:link (get-runner))) "2 link")
-      (is (= 2 (:memory (get-runner))) "Shiv stops using MU when 2+ link"))))
+      (is (= 2 (core/available-mu state)) "Shiv stops using MU when 2+ link"))))
 
 (deftest snowball
   ;; Snowball - Strength boost until end of run when used to break a subroutine

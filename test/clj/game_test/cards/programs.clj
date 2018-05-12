@@ -106,7 +106,7 @@
     (play-from-hand state :runner "Dhegdheer")
     (play-from-hand state :runner "Adept")
     (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
-    (is (= 2 (:memory (get-runner))) "2 MU used")
+    (is (= 2 (core/available-mu state)) "2 MU used")
     (let [dheg (get-program state 0)
           adpt (get-program state 1)]
       (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
@@ -114,7 +114,7 @@
       (prompt-select :runner (refresh adpt))
       (let [hosted-adpt (first (:hosted (refresh dheg)))]
         (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
-        (is (= 4 (:memory (get-runner))) "0 MU used")
+        (is (= 4 (core/available-mu state)) "0 MU used")
         (is (= 6 (:current-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
 
 (deftest diwan
@@ -171,11 +171,11 @@
               (default-runner [(qty "Djinn" 1) (qty "Chakana" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Djinn")
-    (is (= 3 (:memory (get-runner))))
+    (is (= 3 (core/available-mu state)))
     (let [djinn (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner djinn 1)
       (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
-      (is (= 3 (:memory (get-runner))) "No memory used to host on Djinn")
+      (is (= 3 (core/available-mu state)) "No memory used to host on Djinn")
       (is (= "Chakana" (:title (first (:hosted (refresh djinn))))) "Djinn has a hosted Chakana")
       (is (= 1 (:credit (get-runner))) "Full cost to host on Djinn"))))
 
@@ -283,7 +283,7 @@
               (default-runner [(qty "Hyperdriver" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Hyperdriver")
-    (is (= 1 (:memory (get-runner))) "3 MU used")
+    (is (= 1 (core/available-mu state)) "3 MU used")
     (take-credits state :runner)
     (take-credits state :corp)
     (is (:runner-phase-12 @state) "Runner in Step 1.2")
@@ -304,7 +304,7 @@
     (let [dheg (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner dheg 0)
       (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
-      (is (= 4 (:memory (get-runner))) "0 MU used")
+      (is (= 4 (core/available-mu state)) "0 MU used")
       (is (= 2 (:click (get-runner))) "2 clicks used")
       (is (= 3 (:credit (get-runner))) "2 credits used")
       (take-credits state :runner)
@@ -314,7 +314,7 @@
         (card-ability state :runner hyp 0)
         (core/end-phase-12 state :runner nil)
         (is (= 7 (:click (get-runner))) "Used Hyperdriver")
-        (is (= 4 (:memory (get-runner))) "Still 0 MU used")))))
+        (is (= 4 (core/available-mu state)) "Still 0 MU used")))))
 
 (deftest imp
   ;; Imp
@@ -468,14 +468,14 @@
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Leprechaun")
     (play-from-hand state :runner "Adept")
-    (is (= 1 (:memory (get-runner))) "3 MU used")
+    (is (= 1 (core/available-mu state)) "3 MU used")
     (let [lep (get-program state 0)
           adpt (get-program state 1)]
       (is (= 3 (:current-strength (refresh adpt))) "Adept at 3 strength individually")
       (card-ability state :runner lep 1)
       (prompt-select :runner (refresh adpt))
       (let [hosted-adpt (first (:hosted (refresh lep)))]
-        (is (= 3 (:memory (get-runner))) "1 MU used")
+        (is (= 3 (core/available-mu state)) "1 MU used")
         (is (= 5 (:current-strength (refresh hosted-adpt))) "Adept at 5 strength hosted")))))
 
 (deftest leprechaun-mu-savings
@@ -490,17 +490,17 @@
       (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (= 2 (:credit (get-runner))))
-      (is (= 3 (:memory (get-runner))) "Hyperdriver 3 MU not deducted from available MU")
+      (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not deducted from available MU")
       (card-ability state :runner lep 0)
       (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
       (is (= 1 (:click (get-runner))))
       (is (= 0 (:credit (get-runner))))
-      (is (= 3 (:memory (get-runner))) "Imp 1 MU not deducted from available MU")
+      (is (= 3 (core/available-mu state)) "Imp 1 MU not deducted from available MU")
       ;; Trash Hyperdriver
       (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard)
-      (is (= 3 (:memory (get-runner))) "Hyperdriver 3 MU not added to available MU")
+      (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not added to available MU")
       (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
-      (is (= 3 (:memory (get-runner))) "Imp 1 MU not added to available MU"))))
+      (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU"))))
 
 (deftest magnum-opus-click
   ;; Magnum Opus - Gain 2 cr
@@ -509,7 +509,7 @@
               (default-runner [(qty "Magnum Opus" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Magnum Opus")
-    (is (= 2 (:memory (get-runner))))
+    (is (= 2 (core/available-mu state)))
     (is (= 0 (:credit (get-runner))))
     (let [mopus (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner mopus 0)
@@ -546,7 +546,7 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Paintbrush")
-    (is (= 2 (:memory (get-runner))))
+    (is (= 2 (core/available-mu state)))
     (let [iwall (get-ice state :hq 0)
           pb (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner pb 0)
@@ -573,7 +573,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Parasite")
         (prompt-select :runner wrap)
-        (is (= 3 (:memory (get-runner))) "Parasite consumes 1 MU")
+        (is (= 3 (core/available-mu state)) "Parasite consumes 1 MU")
         (let [psite (first (:hosted (refresh wrap)))]
           (is (= 0 (get-counters psite :virus)) "Parasite has no counters yet")
           (take-credits state :runner)
@@ -660,7 +660,7 @@
           (play-from-hand state :runner "Parasite")
           (prompt-select :runner enig)
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed instantly")
-          (is (= 4 (:memory (get-runner))))
+          (is (= 4 (core/available-mu state)))
           (is (= 2 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
   (testing "Trashed along with host ICE when its strength has been reduced to 0"
     (do-game
@@ -722,12 +722,12 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Progenitor")
     (play-from-hand state :runner "Virus Breeding Ground")
-    (is (= 4 (:memory (get-runner))))
+    (is (= 4 (core/available-mu state)))
     (let [prog (get-in @state [:runner :rig :program 0])
           vbg (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner prog 0)
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
-      (is (= 4 (:memory (get-runner))) "No memory used to host on Progenitor")
+      (is (= 4 (core/available-mu state)) "No memory used to host on Progenitor")
       (let [hive (first (:hosted (refresh prog)))]
         (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
         (is (= 1 (get-counters hive :virus)) "Hivemind has 1 counter")
@@ -751,10 +751,10 @@
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (= 2 (:credit (get-runner))))
-      (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not deducted from available MU")
+      (is (= 4 (core/available-mu state)) "Hivemind 2 MU not deducted from available MU")
       ;; Trash Hivemind
       (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
-      (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not added to available MU"))))
+      (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU"))))
 
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
@@ -869,7 +869,7 @@
       (is (= 1 (count (:hosted (refresh sch)))))
       (is (= 2 (:click (get-runner))) "Spent 1 click to install and host")
       (is (= 6 (:credit (get-runner))) "Gained 1 credit")
-      (is (= 3 (:memory (get-runner))) "Programs hosted on Scheh consume MU")
+      (is (= 3 (core/available-mu state)) "Programs hosted on Scheh consume MU")
       (card-ability state :runner sch 0)
       (prompt-select :runner (find-card "Cache" (:hand (get-runner))))
       (is (= 2 (count (:hosted (refresh sch)))))
@@ -894,7 +894,7 @@
       (card-ability state :runner smc1 0)
       (prompt-card :runner (find-card "Reaver" (:deck (get-runner))))
       (is (= 6 (:credit (get-runner))) "Paid 2 for SMC, 2 for install - 6 credits left")
-      (is (= 1 (:memory (get-runner))) "SMC MU refunded")
+      (is (= 1 (core/available-mu state)) "SMC MU refunded")
       (take-credits state :runner)
       (take-credits state :corp)
       (card-ability state :runner smc2 0)
@@ -1064,7 +1064,7 @@
         (prompt-select :runner (game.core/get-card state architect-rezzed))
         (play-from-hand state :runner "Trypano")
         (prompt-select :runner architect-unrezzed)
-        (is (= 2 (:memory (get-runner))) "Trypano consumes 1 MU"))
+        (is (= 2 (core/available-mu state)) "Trypano consumes 1 MU"))
       ;; wait 4 turns to make both Trypanos have 4 counters on them
       (dotimes [n 4]
         (take-credits state :runner)
