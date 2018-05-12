@@ -101,9 +101,8 @@
 (deftest apocalypse-hosting
   ;; Apocalypse - Ensure MU is correct and no duplicate cards in heap
   (do-game
-    (new-game (default-corp ["Launch Campaign" 2) (qty "Ice Wall"])
-              (default-runner ["Scheherazade" "Corroder"
-                               "Hivemind" (qty "Apocalypse" 2)]))
+    (new-game (default-corp [(qty "Launch Campaign" 2) "Ice Wall"])
+              (default-runner ["Scheherazade" "Corroder" "Hivemind" (qty "Apocalypse" 2)]))
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
@@ -189,7 +188,7 @@
 (deftest apocalypse-in-play-ability
   ;; Apocalypse - Turn Runner cards facedown and reduce memory and hand-size gains
   (do-game
-    (new-game (default-corp ["Launch Campaign" 2) (qty "Ice Wall"])
+    (new-game (default-corp [(qty "Launch Campaign" 2) "Ice Wall"])
               (default-runner ["Logos" "Apocalypse" (qty "Origami" 2)]))
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
@@ -217,7 +216,7 @@
 (deftest apocalypse-turn-facedown
   ;; Apocalypse - Turn Runner cards facedown without firing their trash effects
   (do-game
-    (new-game (default-corp ["Launch Campaign" 2) (qty "Ice Wall"])
+    (new-game (default-corp [(qty "Launch Campaign" 2) "Ice Wall"])
               (default-runner [(qty "Tri-maf Contact" 3) (qty "Apocalypse" 3)]))
     (play-from-hand state :corp "Ice Wall" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
@@ -970,7 +969,7 @@
   ;; Eureka! - Install the program but trash the event
   (do-game
     (new-game (default-corp)
-              (default-runner ["Eureka!" 2) (qty "Torch" "Sure Gamble"]))
+              (default-runner [(qty "Eureka!" 2) "Torch" "Sure Gamble"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 1)
     (core/move state :runner (find-card "Torch" (:hand (get-runner))) :deck)
@@ -1144,7 +1143,7 @@
   ;; Check only one current used
   (do-game
     (new-game (default-corp [(qty "Project Beale" 2)])
-              (default-runner ["Street Peddler" "\"Freedom Through Equality\"" 3) (qty "Sure Gamble"]))
+              (default-runner ["Street Peddler" (qty "\"Freedom Through Equality\"" 3) "Sure Gamble"]))
     (starting-hand state :runner ["Street Peddler"
                                   "\"Freedom Through Equality\""
                                   "\"Freedom Through Equality\""
@@ -1331,7 +1330,7 @@
     (new-game (make-deck "Chronos Protocol: Selective Mind-mapping"
                          ["Snare!" "PAD Campaign" "Hostile Infrastructure"
                           "Braintrust" "Hedge Fund" "Power Shutdown"])
-              (default-runner ["Information Sifting" 2) (qty "Deus X" 2) (qty "Sure Gamble"]))
+              (default-runner [(qty "Information Sifting" 2) (qty "Deus X" 2) "Sure Gamble"]))
     (play-from-hand state :corp "Hostile Infrastructure" "New remote")
     (core/gain state :corp :credit 10)
     (core/rez state :corp (get-content state :remote1 0))
@@ -1543,7 +1542,7 @@
   ;; Making an Entrance - Full test
   (do-game
     (new-game (default-corp)
-              (default-runner ["Making an Entrance" 2) (qty "Sure Gamble" "Desperado"
+              (default-runner [(qty "Making an Entrance" 2) "Sure Gamble" "Desperado"
                                "Diesel" "Corroder" "Patron"]))
     (starting-hand state :runner ["Making an Entrance"])
     (is (= 1 (count (:hand (get-runner)))))
@@ -1826,7 +1825,7 @@
   ;; Run. Add 2 strength to each installer breaker.
   (do-game
     (new-game (default-corp)
-              (default-runner ["Pushing the Envelope" 3) (qty "Corroder" 2) (qty "Atman"]))
+              (default-runner [(qty "Pushing the Envelope" 3) (qty "Corroder" 2) "Atman"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 20)
     (core/gain state :runner :click 10)
@@ -1979,7 +1978,7 @@
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
   (do-game
-    (new-game (default-corp ["Vanilla" 2) (qty "Paper Wall"])
+    (new-game (default-corp [(qty "Vanilla" 2) "Paper Wall"])
               (default-runner ["Reshape"]))
     (play-from-hand state :corp "Paper Wall" "R&D")
     (play-from-hand state :corp "Vanilla" "HQ")
@@ -2317,7 +2316,7 @@
   ;; System Seizure - First icebreaker boosted keeps strength for remainder of that run.
   (do-game
     (new-game (default-corp ["Wraparound"])
-              (default-runner ["Corroder" 2) (qty "System Seizure"]))
+              (default-runner [(qty "Corroder" 2) "System Seizure"]))
     (play-from-hand state :corp "Wraparound" "HQ")
     (take-credits state :corp)
     (core/gain state :runner :credit 3)
@@ -2361,7 +2360,7 @@
   ;; Test Run - Programs hosted after install get returned to Stack. Issue #1081
   (do-game
     (new-game (default-corp ["Wraparound"])
-              (default-runner ["Test Run" 2) (qty "Morning Star"
+              (default-runner [(qty "Test Run" 2) "Morning Star"
                                "Knight" "Leprechaun"]))
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
@@ -2522,7 +2521,7 @@
   ;; Unscheduled Maintenance - prevent Corp from installing more than 1 ICE per turn
   (do-game
     (new-game
-      (default-corp ["Vanilla" 2) (qty "Breaking News"])
+      (default-corp [(qty "Vanilla" 2) "Breaking News"])
       (default-runner ["Unscheduled Maintenance"]))
     (play-from-hand state :corp "Breaking News" "New remote")
     (take-credits state :corp)

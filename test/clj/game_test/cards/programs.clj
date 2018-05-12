@@ -584,7 +584,7 @@
   (testing "Installed on untrashable Architect should keep gaining counters past 3 and make strength go negative"
     (do-game
       (new-game (default-corp [(qty "Architect" 3) (qty "Hedge Fund" 3)])
-                (default-runner ["Parasite" 3) (qty "Grimoire"]))
+                (default-runner [(qty "Parasite" 3) "Grimoire"]))
       (play-from-hand state :corp "Architect" "HQ")
       (let [arch (get-ice state :hq 0)]
         (core/rez state :corp arch)
@@ -604,7 +604,7 @@
           (is (= -1 (:current-strength (refresh arch))) "Architect at -1 strength")))))
   (testing "Should stay on hosted card moved by Builder"
     (do-game
-      (new-game (default-corp ["Builder" 3) (qty "Ice Wall"])
+      (new-game (default-corp [(qty "Builder" 3) "Ice Wall"])
                 (default-runner [(qty "Parasite" 3)]))
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Builder" "Archives")
@@ -656,7 +656,7 @@
   (testing "Trashed along with host ICE when its strength has been reduced to 0"
     (do-game
       (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
-                (default-runner ["Parasite" 3) (qty "Grimoire"]))
+                (default-runner [(qty "Parasite" 3) "Grimoire"]))
       (play-from-hand state :corp "Enigma" "HQ")
       (let [enig (get-ice state :hq 0)]
         (core/rez state :corp enig)
@@ -777,7 +777,7 @@
   ;; Reaver / Freelance Coding Construct - should not draw when trash from hand #2671
   (do-game
     (new-game (default-corp)
-              (default-runner ["Reaver" 9) (qty "Imp" "Snitch" "Freelance Coding Contract"]))
+              (default-runner [(qty "Reaver" 9) "Imp" "Snitch" "Freelance Coding Contract"]))
     (starting-hand state :runner ["Reaver" "Imp" "Snitch" "Freelance Coding Contract"])
     (take-credits state :corp)
     (play-from-hand state :runner "Reaver")
@@ -793,7 +793,7 @@
 (deftest rng-key
   ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
   (do-game
-    (new-game (default-corp ["Enigma" 5) (qty "Hedge Fund"])
+    (new-game (default-corp [(qty "Enigma" 5) "Hedge Fund"])
               (default-runner ["RNG Key" (qty "Paperclip" 2)]))
     (starting-hand state :corp ["Hedge Fund"])
     (starting-hand state :runner ["RNG Key"])
@@ -874,7 +874,7 @@
   ;; Trash & pay 2 to search deck for a program and install it. Shuffle.
   (do-game
     (new-game (default-corp)
-              (default-runner ["Self-modifying Code" 3) (qty "Reaver"]))
+              (default-runner [(qty "Self-modifying Code" 3) "Reaver"]))
     (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
     (core/gain state :runner :credit 5)
     (take-credits state :corp)
@@ -1044,7 +1044,7 @@
   (testing "Hivemind and Architect interactions"
     (do-game
       (new-game (default-corp [(qty "Architect" 2)])
-                (default-runner ["Trypano" 2) (qty "Hivemind"]))
+                (default-runner [(qty "Trypano" 2) "Hivemind"]))
       (play-from-hand state :corp "Architect" "HQ")
       (play-from-hand state :corp "Architect" "R&D")
       (let [architect-rezzed (get-ice state :hq 0)

@@ -241,7 +241,7 @@
 (deftest compromised-employee
   ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
   (do-game
-    (new-game (default-corp ["Pup" 2) (qty "Launch Campaign"])
+    (new-game (default-corp [(qty "Pup" 2) "Launch Campaign"])
               (default-runner ["Compromised Employee"]))
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Pup" "R&D")
@@ -586,7 +586,7 @@
 (deftest fan-site-eoi
   ;; Fan Site - Don't trigger after swap with Exchange of Information. Issue #1824
   (do-game
-    (new-game (default-corp ["Hostile Takeover" 2) (qty "Exchange of Information"])
+    (new-game (default-corp [(qty "Hostile Takeover" 2) "Exchange of Information"])
               (default-runner ["Fan Site"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Fan Site")
@@ -647,7 +647,7 @@
 (deftest film-critic-discarded-executives
   ;; Film Critic - Prevent Corp-trashed execs going to Runner scored. Issues #1181/#1042
   (do-game
-    (new-game (default-corp ["Director Haas" 3) (qty "Project Vitruvius" 3) (qty "Hedge Fund"])
+    (new-game (default-corp [(qty "Director Haas" 3) (qty "Project Vitruvius" 3) "Hedge Fund"])
               (default-runner ["Film Critic"]))
     (play-from-hand state :corp "Project Vitruvius" "New remote")
     (take-credits state :corp)
@@ -683,7 +683,7 @@
 (deftest film-critic-hostile-infrastructure
   ;; Do not take a net damage when a hosted agenda is trashed due to film critic trash #2382
   (do-game
-    (new-game (default-corp ["Hostile Infrastructure" 3) (qty "Project Vitruvius"])
+    (new-game (default-corp [(qty "Hostile Infrastructure" 3) "Project Vitruvius"])
               (default-runner ["Film Critic" (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Hostile Infrastructure" "New remote")
     (play-from-hand state :corp "Project Vitruvius" "New remote")
@@ -778,8 +778,8 @@
 (deftest gang-sign
   ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
   (do-game
-    (new-game (default-corp ["Hostile Takeover" 3) (qty "Braintrust" 2) (qty "Crisium Grid"])
-              (default-runner ["Gang Sign" 2) (qty "HQ Interface"]))
+    (new-game (default-corp [(qty "Hostile Takeover" 3) (qty "Braintrust" 2) "Crisium Grid"])
+              (default-runner [(qty "Gang Sign" 2) "HQ Interface"]))
     (play-from-hand state :corp "Crisium Grid" "HQ")
     (take-credits state :corp)
     (core/gain state :runner :credit 100)
@@ -1216,7 +1216,7 @@
   ;; Muertos Gang Member - Install and Trash
   (do-game
     (new-game (default-corp ["Tollbooth" "Ice Wall"])
-              (default-runner ["Hedge Fund" 3) (qty "Muertos Gang Member"]))
+              (default-runner [(qty "Hedge Fund" 3) "Muertos Gang Member"]))
     (play-from-hand state :corp "Tollbooth" "HQ")
     (play-from-hand state :corp "Ice Wall" "Archives")
     (take-credits state :corp)
@@ -1325,7 +1325,7 @@
 (deftest neutralize-all-threats
   ;; Neutralize All Threats - Access 2 cards from HQ, force trash first accessed card with a trash cost
   (do-game
-    (new-game (default-corp ["Hedge Fund" 2) (qty "Breaker Bay Grid" "Elizabeth Mills"])
+    (new-game (default-corp [(qty "Hedge Fund" 2) "Breaker Bay Grid" "Elizabeth Mills"])
               (default-runner ["Neutralize All Threats"]))
     (play-from-hand state :corp "Breaker Bay Grid" "New remote")
     (play-from-hand state :corp "Elizabeth Mills" "New remote")
@@ -1410,7 +1410,7 @@
   ;; Off-Campus Apartment - second ability does not break cards that are hosting others, e.g., Street Peddler
   (do-game
     (new-game (default-corp)
-              (default-runner ["Street Peddler" 2) (qty "Off-Campus Apartment" (qty "Spy Camera" 6)]))
+              (default-runner [(qty "Street Peddler" 2) "Off-Campus Apartment" (qty "Spy Camera" 6)]))
     (take-credits state :corp)
     (starting-hand state :runner ["Street Peddler" "Street Peddler" "Off-Campus Apartment"])
     (core/move state :runner (find-card "Street Peddler" (:hand (get-runner))) :deck {:front true})
@@ -1463,7 +1463,7 @@
   (do-game
     (new-game (default-corp)
               (default-runner ["Paige Piper" (qty "Frantic Coding" 2) (qty "Sure Gamble" 3)
-                               "Gordian Blade" 2) (qty "Ninja" (qty "Bank Job" 3) (qty "Indexing" 2)]))
+                               (qty "Gordian Blade" 2) "Ninja" (qty "Bank Job" 3) (qty "Indexing" 2)]))
     (take-credits state :corp)
     (starting-hand state :runner ["Paige Piper" "Frantic Coding" "Frantic Coding"])
     (play-from-hand state :runner "Paige Piper")
@@ -1591,7 +1591,7 @@
   ;; Sacrificial Construct - Trash to prevent trash of installed program or hardware
   (do-game
     (new-game (default-corp)
-              (default-runner ["Sacrificial Construct" 2) (qty "Cache"
+              (default-runner [(qty "Sacrificial Construct" 2) "Cache"
                                "Motivation" "Astrolabe"]))
     (take-credits state :corp)
     (core/gain state :runner :click 1)
@@ -1855,7 +1855,7 @@
   ;; Muertos/Brain Chip uninstall effect not fired when removed off peddler/hosting Issue #2294+#2358
   (do-game
     (new-game (default-corp ["Jackson Howard"])
-              (default-runner ["Street Peddler" 2)(qty "Muertos Gang Member" "Brain Chip"]))
+              (default-runner [(qty "Street Peddler" 2) "Muertos Gang Member" "Brain Chip"]))
     (core/move state :runner (find-card "Muertos Gang Member" (:hand (get-runner))) :deck {:front true})
     (core/move state :runner (find-card "Brain Chip" (:hand (get-runner))) :deck {:front true})
     (core/move state :runner (find-card "Street Peddler" (:hand (get-runner))) :deck {:front true})
@@ -2245,7 +2245,7 @@
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
   (do-game
     (new-game (default-corp)
-              (default-runner ["Tri-maf Contact" "Cache" 3) (qty "Shiv"]))
+              (default-runner ["Tri-maf Contact" (qty "Cache" 3) "Shiv"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Tri-maf Contact")
     (let [tmc (get-resource state 0)]
@@ -2387,7 +2387,7 @@
 (deftest xanadu
   ;; Xanadu - Increase all ICE rez cost by 1 credit
   (do-game
-    (new-game (default-corp ["Paper Wall" 2) (qty "Launch Campaign"])
+    (new-game (default-corp [(qty "Paper Wall" 2) "Launch Campaign"])
               (default-runner ["Xanadu"]))
     (play-from-hand state :corp "Paper Wall" "HQ")
     (play-from-hand state :corp "Paper Wall" "R&D")

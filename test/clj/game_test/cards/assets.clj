@@ -139,7 +139,7 @@
   ;; Blacklist
   (testing "#2426.  Need to allow steal."
     (do-game
-      (new-game (default-corp ["Fetal AI" 3) (qty "Blacklist"])
+      (new-game (default-corp [(qty "Fetal AI" 3) "Blacklist"])
                 (default-runner))
       (trash-from-hand state :corp "Fetal AI")
       (play-from-hand state :corp "Blacklist" "New remote")
@@ -324,7 +324,7 @@
 (deftest daily-business-show
   ;; Daily Business Show - Full test
   (do-game
-    (new-game (default-corp ["Daily Business Show" 3) (qty "Hedge Fund" "Jackson Howard"
+    (new-game (default-corp [(qty "Daily Business Show" 3) "Hedge Fund" "Jackson Howard"
                              "Resistor" "Product Placement" "Breaking News"])
               (default-runner))
     (starting-hand state :corp ["Daily Business Show" "Daily Business Show" "Daily Business Show" "Hedge Fund"])
@@ -396,7 +396,7 @@
 (deftest daily-business-show-manual-draw
   ;; Daily Business Show - Should not trigger if rezzed after mandatory draw
   (do-game
-    (new-game (default-corp ["Daily Business Show" 3) (qty "Hedge Fund" "Jackson Howard"
+    (new-game (default-corp [(qty "Daily Business Show" 3) "Hedge Fund" "Jackson Howard"
                              "Resistor" "Product Placement" "Breaking News"])
               (default-runner))
     (starting-hand state :corp ["Daily Business Show"])
@@ -846,7 +846,7 @@
   ;; Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn
   (do-game
     (new-game (default-corp ["Genetics Pavilion"])
-              (default-runner ["Diesel" "Sure Gamble" 3) (qty "Sports Hopper"]))
+              (default-runner ["Diesel" (qty "Sure Gamble" 3) "Sports Hopper"]))
     (play-from-hand state :corp "Genetics Pavilion" "New remote")
     (let [gp (get-content state :remote1 0)]
       (take-credits state :corp)
@@ -1407,7 +1407,7 @@
 (deftest news-team
   ;; News Team - on access take 2 tags or take as agenda worth -1
   (do-game
-    (new-game (default-corp ["News Team" 3) (qty "Blacklist"])
+    (new-game (default-corp [(qty "News Team" 3) "Blacklist"])
               (default-runner))
     (trash-from-hand state :corp "News Team")
     (play-from-hand state :corp "Blacklist" "New remote")
@@ -1701,7 +1701,7 @@
   ;; Forfeit agenda to rez up to 3 ICE with 2 credit discount per agenda point
   (do-game
     (new-game
-      (default-corp ["Chiyashi" 3) (qty "Quarantine System" "Project Beale"])
+      (default-corp [(qty "Chiyashi" 3) "Quarantine System" "Project Beale"])
       (default-runner))
     (core/gain state :corp :credit 100)
     (core/gain state :corp :click 100)
@@ -1957,7 +1957,7 @@
 (deftest shock-chairman-hiro
   ;; issue #2319 - ensure :access flag is cleared on run end
   (do-game
-    (new-game (default-corp ["Shock!" 3) (qty "Chairman Hiro"])
+    (new-game (default-corp [(qty "Shock!" 3) "Chairman Hiro"])
               (default-runner))
     (trash-from-hand state :corp "Shock!")
     (play-from-hand state :corp "Shock!" "New remote")
@@ -2397,7 +2397,7 @@
 (deftest turtlebacks
   ;; Turtlebacks - Gain 1 credit for every new server created
   (do-game
-    (new-game (default-corp ["Turtlebacks" "PAD Campaign" 2) (qty "Wraparound"])
+    (new-game (default-corp ["Turtlebacks" (qty "PAD Campaign" 2) "Wraparound"])
               (default-runner))
     (core/gain state :corp :click 1)
     (play-from-hand state :corp "Turtlebacks" "New remote")

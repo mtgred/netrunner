@@ -13,7 +13,7 @@
     (do-game
       (new-game
         (make-deck "Weyland Consortium: Builder of Nations"
-                   ["PAD Campaign" "The Cleaners" "Pup" 3) (qty "Oaktown Renovation"])
+                   ["PAD Campaign" "The Cleaners" (qty "Pup" 3) "Oaktown Renovation"])
         (make-deck "419: Amoral Scammer" []))
       (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
       (play-from-hand state :corp "Pup" "HQ")
@@ -244,7 +244,7 @@
   ;; Pay 4 net damage to steal.  Only 3 damage left after Chronos.  No trigger of damage prevent.
   (do-game
     (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" [(qty "Obokata Protocol" 5)])
-              (default-runner ["Sure Gamble" 3) (qty "Inti" "Feedback Filter"]))
+              (default-runner [(qty "Sure Gamble" 3) "Inti" "Feedback Filter"]))
     (core/gain state :runner :credit 10)
     (play-from-hand state :corp "Obokata Protocol" "New remote")
     (take-credits state :corp)
@@ -261,7 +261,7 @@
   (do-game
     (new-game
       (make-deck "Chronos Protocol: Selective Mind-mapping" ["Pup"])
-      (default-runner ["Employee Strike" "Scrubbed" 3) (qty "Sure Gamble"]))
+      (default-runner ["Employee Strike" (qty "Scrubbed" 3) "Sure Gamble"]))
     (play-from-hand state :corp "Pup" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Employee Strike")
@@ -285,7 +285,7 @@
   (testing "Trash first operation accessed each turn, but not if first one was in Archives"
     (do-game
       (new-game
-        (default-corp ["Hedge Fund" 3) (qty "Restructure" 2) (qty "PAD Campaign"])
+        (default-corp [(qty "Hedge Fund" 3) (qty "Restructure" 2) "PAD Campaign"])
         (make-deck "Edward Kim: Humanity's Hammer" ["Eater" (qty "Sure Gamble" 2)]))
       (play-from-hand state :corp "Hedge Fund")
       (trash-from-hand state :corp "PAD Campaign")
@@ -583,7 +583,7 @@
   ;; Architects of Tomorrow - prompt to rez after passing bioroid
   (do-game
     (new-game
-      (make-deck "Haas-Bioroid: Architects of Tomorrow" ["Eli 1.0" 2) (qty "Pup"])
+      (make-deck "Haas-Bioroid: Architects of Tomorrow" [(qty "Eli 1.0" 2) "Pup"])
       (default-runner))
     (core/gain state :corp :credit 3)
     (play-from-hand state :corp "Eli 1.0" "Archives")
@@ -615,7 +615,7 @@
   ;; EtF - interaction with Employee Strike
   (do-game
     (new-game
-      (make-deck "Haas-Bioroid: Engineering the Future" ["Eli 1.0" 3) (qty "Paywall Implementation"])
+      (make-deck "Haas-Bioroid: Engineering the Future" [(qty "Eli 1.0" 3) "Paywall Implementation"])
       (default-runner ["Employee Strike"]))
     (take-credits state :corp)
     (is (= 8 (:credit (get-corp))) "Corp has 8 credits at turn end")
@@ -1012,7 +1012,7 @@
 (deftest leela-upgrades
   ;; Leela Patel - upgrades returned to hand in the middle of a run do not break the run. Issue #2008.
   (do-game
-    (new-game (default-corp ["Crisium Grid" 3) (qty "Project Atlas" 3) (qty "Shock!"])
+    (new-game (default-corp [(qty "Crisium Grid" 3) (qty "Project Atlas" 3) "Shock!"])
               (make-deck "Leela Patel: Trained Pragmatist" ["Sure Gamble"]))
     (starting-hand state :corp ["Crisium Grid" "Crisium Grid" "Crisium Grid" "Project Atlas" "Shock!" "Project Atlas"])
     (play-from-hand state :corp "Crisium Grid" "HQ")
@@ -1173,7 +1173,7 @@
   ;; New Angeles Sol - interaction with runner stealing agendas
   (do-game
     (new-game
-      (make-deck "New Angeles Sol: Your News" ["Paywall Implementation" 2) (qty "Breaking News"])
+      (make-deck "New Angeles Sol: Your News" [(qty "Paywall Implementation" 2) "Breaking News"])
       (default-runner))
     (play-from-hand state :corp "Breaking News" "New remote")
     (play-from-hand state :corp "Paywall Implementation")
@@ -1586,7 +1586,7 @@
   (do-game
     (new-game
       (make-deck "SSO Industries: Fueling Innovation"
-                 ["Hortum" 2) (qty "Oaktown Renovation" 2) (qty "Braintrust"])
+                 [(qty "Hortum" 2) (qty "Oaktown Renovation" 2) "Braintrust"])
       (default-runner))
     (play-from-hand state :corp "Braintrust" "New remote")
     (take-credits state :corp)
@@ -1792,7 +1792,7 @@
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 3)])
               (make-deck "Wyvern: Chemically Enhanced"
-                         ["Sure Gamble" 2) (qty "Corroder"
+                         [(qty "Sure Gamble" 2) "Corroder"
                           "Clone Chip" "Easy Mark"]))
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")

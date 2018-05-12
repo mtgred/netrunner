@@ -208,7 +208,7 @@
 (deftest award-bait
   ;; Award Bait
   (do-game
-    (new-game (default-corp ["Award Bait" 2) (qty "Ice Wall"])
+    (new-game (default-corp [(qty "Award Bait" 2) "Ice Wall"])
               (default-runner))
     (core/move state :corp (find-card "Award Bait" (:hand (get-corp))) :deck)
     (play-from-hand state :corp "Ice Wall" "HQ")
@@ -381,7 +381,7 @@
 (deftest clone-retirement
   ;; Clone Retirement
   (do-game
-    (new-game (default-corp ["Clone Retirement" 2) (qty "Hostile Takeover"])
+    (new-game (default-corp [(qty "Clone Retirement" 2) "Hostile Takeover"])
               (default-runner))
     (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))))
@@ -1484,7 +1484,7 @@
 (deftest next-wave-2
   ;; NEXT Wave 2
   (do-game
-    (new-game (default-corp ["NEXT Wave 2" 2) (qty "NEXT Bronze"])
+    (new-game (default-corp [(qty "NEXT Wave 2" 2) "NEXT Bronze"])
               (default-runner))
     (is (= 0 (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
     (play-from-hand state :corp "NEXT Bronze" "HQ")
@@ -1751,7 +1751,7 @@
   (testing "test with Titan"
     (do-game
       (new-game (make-deck "Titan Transnational: Investing In Your Future"
-                           ["Project Atlas" 2) (qty "Beanstalk Royalties" "Hedge Fund"])
+                           [(qty "Project Atlas" 2) "Beanstalk Royalties" "Hedge Fund"])
                 (default-runner))
       ;; Set up
       (starting-hand state :corp ["Project Atlas" "Project Atlas"])
@@ -1802,7 +1802,7 @@
 (deftest project-kusanagi
   ;; Project Kusanagi
   (do-game
-    (new-game (default-corp ["Project Kusanagi" 2) (qty "Ice Wall"])
+    (new-game (default-corp [(qty "Project Kusanagi" 2) "Ice Wall"])
               (default-runner))
     (play-from-hand state :corp "Ice Wall" "HQ")
     (core/gain state :corp :click 10 :credit 10)
@@ -2196,7 +2196,7 @@
 (deftest sensor-net-activation
   ;; Sensor Net Activation
   (do-game
-    (new-game (default-corp ["Sensor Net Activation" 2) (qty "Enforcer 1.0" "Ash 2X3ZB9CY"])
+    (new-game (default-corp [(qty "Sensor Net Activation" 2) "Enforcer 1.0" "Ash 2X3ZB9CY"])
               (default-runner))
     (play-from-hand state :corp "Enforcer 1.0" "HQ")
     (play-and-score state "Sensor Net Activation")
@@ -2266,7 +2266,7 @@
   ;; TGTBT - Give the Runner 1 tag when they access
   ;; OHG still not working...
   (do-game
-    (new-game (default-corp ["TGTBT" 2) (qty "Old Hollywood Grid"])
+    (new-game (default-corp [(qty "TGTBT" 2) "Old Hollywood Grid"])
               (default-runner))
     (play-from-hand state :corp "TGTBT" "New remote")
     (play-from-hand state :corp "Old Hollywood Grid" "Server 1")
@@ -2422,7 +2422,7 @@
   ;; Veterans Program
   (testing "Veterans Program basic test"
     (do-game
-      (new-game (default-corp ["Hostile Takeover" 2) (qty "Veterans Program"])
+      (new-game (default-corp [(qty "Hostile Takeover" 2) "Veterans Program"])
                 (default-runner))
       (play-and-score state "Hostile Takeover")
       (play-and-score state "Hostile Takeover")

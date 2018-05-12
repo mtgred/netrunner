@@ -11,7 +11,7 @@
   (testing "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
     (do-game
       (new-game
-        (default-corp ["Neural EMP" "Hedge Fund" 3) (qty "SEA Source"])
+        (default-corp ["Neural EMP" (qty "Hedge Fund" 3) "SEA Source"])
         (default-runner ["Fall Guy" "Off-Campus Apartment" "Net Shield"
                          "Wireless Net Pavilion" "Sure Gamble"]))
       (play-from-hand state :corp "Hedge Fund")

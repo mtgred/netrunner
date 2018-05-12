@@ -173,7 +173,7 @@
       (is (:card (first (:prompt (get-runner)))) "Accessing a card from R&D; not showing Bernice Mai as possible access")))
   (testing "interaction with Dedicated Response Team"
     (do-game
-      (new-game (default-corp ["Bernice Mai" 3) (qty "Dedicated Response Team"])
+      (new-game (default-corp [(qty "Bernice Mai" 3) "Dedicated Response Team"])
                 (default-runner))
       (play-from-hand state :corp "Bernice Mai" "New remote")
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
@@ -216,7 +216,7 @@
 (deftest breaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
-   (new-game (default-corp ["Breaker Bay Grid" 2) (qty "The Root" "Strongbox"])
+   (new-game (default-corp [(qty "Breaker Bay Grid" 2) "The Root" "Strongbox"])
              (default-runner))
    (core/gain state :corp :click 1)
    (play-from-hand state :corp "Breaker Bay Grid" "New remote")
@@ -278,7 +278,7 @@
 (deftest calibration-testing
   ;; Calibration Testing - advanceable / non-advanceable
   (do-game
-    (new-game (default-corp ["Calibration Testing" 2) (qty "Project Junebug" "PAD Campaign"])
+    (new-game (default-corp [(qty "Calibration Testing" 2) "Project Junebug" "PAD Campaign"])
               (default-runner))
     (core/gain state :corp :credit 10)
     (core/gain state :corp :click 1)
@@ -340,7 +340,7 @@
 (deftest chilo-city-grid
   ;; ChiLo City Grid - Give 1 tag for successful traces during runs on its server
   (do-game
-    (new-game (default-corp ["Caduceus" 2) (qty "ChiLo City Grid"])
+    (new-game (default-corp [(qty "Caduceus" 2) "ChiLo City Grid"])
               (default-runner))
     (play-from-hand state :corp "ChiLo City Grid" "New remote")
     (play-from-hand state :corp "Caduceus" "Server 1")
@@ -367,7 +367,7 @@
 (deftest code-replicator
   ;; Code Replicator - trash to make runner approach passed (rezzed) ice again
   (do-game
-    (new-game (default-corp ["Ice Wall" 3) (qty "Code Replicator"])
+    (new-game (default-corp [(qty "Ice Wall" 3) "Code Replicator"])
               (default-runner))
     (core/gain state :corp :click 1)
     (core/gain state :corp :credit 5)
@@ -395,7 +395,7 @@
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE
   (do-game
-    (new-game (default-corp ["Quandary" 2) (qty "Corporate Troubleshooter"])
+    (new-game (default-corp [(qty "Quandary" 2) "Corporate Troubleshooter"])
               (default-runner))
     (core/gain state :corp :credit 5)
     (play-from-hand state :corp "Corporate Troubleshooter" "HQ")
@@ -1126,7 +1126,7 @@
       (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
   (testing "Multiple unrezzed upgrades in Archives interaction with DRT"
     (do-game
-      (new-game (default-corp ["Prisec" 2) (qty "Dedicated Response Team"])
+      (new-game (default-corp [(qty "Prisec" 2) "Dedicated Response Team"])
                 (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
       (play-from-hand state :corp "Prisec" "Archives")
@@ -1333,7 +1333,7 @@
   ;; Trash to stop installs for the rest of the run
   (do-game
     (new-game (default-corp [(qty "Signal Jamming" 3)])
-              (default-runner ["Self-modifying Code" 3) (qty "Reaver"]))
+              (default-runner [(qty "Self-modifying Code" 3) "Reaver"]))
     (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
     (play-from-hand state :corp "Signal Jamming" "HQ")
     (take-credits state :corp)
@@ -1478,7 +1478,7 @@
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
   (do-game
     (new-game (default-corp ["Pup" "Tori Hanzō"])
-              (default-runner ["Sure Gamble" 3) (qty "Net Shield"]))
+              (default-runner [(qty "Sure Gamble" 3) "Net Shield"]))
     (core/gain state :corp :credit 10)
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Tori Hanzō" "HQ")

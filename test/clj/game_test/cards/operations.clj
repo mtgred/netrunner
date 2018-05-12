@@ -188,7 +188,7 @@
 (deftest casting-call
   ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128
   (do-game
-    (new-game (default-corp ["Casting Call" 2) (qty "Oaktown Renovation"
+    (new-game (default-corp [(qty "Casting Call" 2) "Oaktown Renovation"
                              "Improved Tracers" "Hunter"])
               (default-runner))
     (core/gain state :corp :click 1)
@@ -219,37 +219,37 @@
   (do-game
     (new-game (default-corp ["Cerebral Cast"])
               (default-runner))
-	    (play-from-hand state :corp "Cerebral Cast")
-	    (is (= 3 (:click (get-corp))) "Cerebral Cast precondition not met; card not played")
-	    (take-credits state :corp)
-	    (run-empty-server state "Archives")
-	    (take-credits state :runner)
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "0 [Credits]")
-	    (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")
-		(is (= 0 (:tag (get-runner))) "Runner took no tags")))
+    (play-from-hand state :corp "Cerebral Cast")
+    (is (= 3 (:click (get-corp))) "Cerebral Cast precondition not met; card not played")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "0 [Credits]")
+    (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")
+    (is (= 0 (:tag (get-runner))) "Runner took no tags")))
 
 (deftest cerebral-cast-corp-wins
   ;; Cerebral Cast: if the runner succefully ran last turn, psi game to give runner choice of tag or BD
   (do-game
     (new-game (default-corp [(qty "Cerebral Cast" 2)])
               (default-runner))
-	    (take-credits state :corp)
-	    (run-empty-server state "Archives")
-	    (take-credits state :runner)
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "1 [Credits]")
-		(prompt-choice :runner "1 brain damage")
-	    (is (= 1 (count (:discard (get-runner)))) "Runner took a brain damage")
-		(is (= 0 (:tag (get-runner))) "Runner took no tags from brain damage choice")
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "1 [Credits]")
-		(prompt-choice :runner "1 tag")
-	    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
-		(is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (prompt-choice :runner "1 brain damage")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took a brain damage")
+    (is (= 0 (:tag (get-runner))) "Runner took no tags from brain damage choice")
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (prompt-choice :runner "1 tag")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
+    (is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))
 
 
 (deftest cerebral-static-chaos-theory
@@ -678,7 +678,7 @@
 (deftest exchange-of-information-fifteen-minutes
   ;; Exchange of Information - Swapping a 15 Minutes still keeps the ability. #1783
   (do-game
-    (new-game (default-corp ["Exchange of Information" 2) (qty "15 Minutes"
+    (new-game (default-corp [(qty "Exchange of Information" 2) "15 Minutes"
                              "Project Beale"])
               (default-runner))
     (score-agenda state :corp (find-card "15 Minutes" (:hand (get-corp))))
@@ -718,7 +718,7 @@
 (deftest exchange-of-information-mandatory-upgrades
   ;; Exchange of Information - Swapping a Mandatory Upgrades gives the Corp an additional click per turn. #1687
   (do-game
-    (new-game (default-corp ["Exchange of Information" 2) (qty "Mandatory Upgrades"
+    (new-game (default-corp [(qty "Exchange of Information" 2) "Mandatory Upgrades"
                              "Global Food Initiative"])
               (default-runner))
     (score-agenda state :corp (find-card "Global Food Initiative" (:hand (get-corp))))
@@ -828,7 +828,7 @@
   ;; Housekeeping - Runner must trash a card from Grip on first install of a turn
   (do-game
     (new-game (default-corp ["Housekeeping"])
-              (default-runner ["Cache" 2) (qty "Fall Guy" "Mr. Li"]))
+              (default-runner [(qty "Cache" 2) "Fall Guy" "Mr. Li"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Fall Guy")
     (take-credits state :runner)
@@ -845,7 +845,7 @@
   ;; Invasion of Privacy - Full test
   (do-game
     (new-game (default-corp [(qty "Invasion of Privacy" 3)])
-              (default-runner ["Sure Gamble" 2) (qty "Fall Guy" (qty "Cache" 2)]))
+              (default-runner [(qty "Sure Gamble" 2) "Fall Guy" (qty "Cache" 2)]))
     (core/gain state :corp :click 3 :credit 6)
     ;; trash 2 cards
     (play-from-hand state :corp "Invasion of Privacy")
@@ -884,8 +884,8 @@
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "IPO")
-	(is (= 13 (:credit (get-corp))))
-	(is (= 0 (:click (get-corp))) "Terminal ends turns")))
+    (is (= 13 (:credit (get-corp))))
+    (is (= 0 (:click (get-corp))) "Terminal ends turns")))
 
 (deftest lag-time
   (do-game
@@ -899,7 +899,7 @@
     (core/rez state :corp (get-ice state :hq 0))
     (core/rez state :corp (get-ice state :rd 0))
     (is (= 1 (:current-strength (get-ice state :hq 0))) "Vanilla at 1 strength")
-	(is (= 5 (:current-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
+    (is (= 5 (:current-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
 
 (deftest lateral-growth
   (do-game
@@ -1021,7 +1021,7 @@
 (deftest mushin-no-shin
   ;; Mushin No Shin - Add 3 advancements to a card; prevent rez/score of that card the rest of the turn
   (do-game
-    (new-game (default-corp ["Mushin No Shin" 2) (qty "Ronin" "Profiteering"])
+    (new-game (default-corp [(qty "Mushin No Shin" 2) "Ronin" "Profiteering"])
               (default-runner))
     (play-from-hand state :corp "Mushin No Shin")
     (prompt-select :corp (find-card "Ronin" (:hand (get-corp))))
@@ -1101,7 +1101,7 @@
 (deftest peak-efficiency
   ;; Peak Efficiency - Gain 1 credit for each rezzed ICE
   (do-game
-    (new-game (default-corp ["Peak Efficiency" "Paper Wall" 3) (qty "Wraparound"])
+    (new-game (default-corp ["Peak Efficiency" (qty "Paper Wall" 3) "Wraparound"])
               (default-runner))
     (core/gain state :corp :click 3)
     (play-from-hand state :corp "Paper Wall" "HQ")
@@ -1198,7 +1198,7 @@
 (deftest psychokinesis
   ;; Pyschokinesis - Terminal Event (end the turn); Look at R&D, install an Asset, Agenda, or Upgrade in a Remote Server
   (do-game
-    (new-game (default-corp ["Psychokinesis" 3) (qty "Caprice Nisei" "Adonis Campaign"
+    (new-game (default-corp [(qty "Psychokinesis" 3) "Caprice Nisei" "Adonis Campaign"
                               "Global Food Initiative"])
               (default-runner))
     (starting-hand state :corp ["Psychokinesis","Psychokinesis","Psychokinesis"])
@@ -1274,7 +1274,7 @@
 (deftest reuse
   ;; Reuse - Gain 2 credits for each card trashed from HQ
   (do-game
-    (new-game (default-corp ["Reuse" 2) (qty "Hive" "IQ"
+    (new-game (default-corp [(qty "Reuse" 2) "Hive" "IQ"
                              "Ice Wall"])
               (default-runner))
     (play-from-hand state :corp "Reuse")
@@ -1333,7 +1333,7 @@
   ;; Salem's Hospitality - Full test
   (do-game
     (new-game (default-corp [(qty "Salem's Hospitality" 3)])
-              (default-runner ["I've Had Worse" 3) (qty "Faust"
+              (default-runner [(qty "I've Had Worse" 3) "Faust"
                                "Levy AR Lab Access"]))
     (play-from-hand state :corp "Salem's Hospitality")
     (is (= 5 (count (:hand (get-runner)))))
@@ -1628,7 +1628,7 @@
 (deftest subcontract-scorched
   ;; Subcontract - Don't allow second operation until damage prevention completes
   (do-game
-    (new-game (default-corp ["Scorched Earth" 2) (qty "Subcontract"])
+    (new-game (default-corp [(qty "Scorched Earth" 2) "Subcontract"])
               (default-runner ["Plascrete Carapace"]))
     (take-credits state :corp)
     (core/gain state :runner :tag 1)
@@ -1645,7 +1645,7 @@
   ;; Subcontract - interaction with Terminal operations
   (do-game
     (new-game
-      (default-corp ["Hard-Hitting News" 2) (qty "Subcontract"])
+      (default-corp [(qty "Hard-Hitting News" 2) "Subcontract"])
       (default-runner))
     (core/gain state :runner :tag 1)
     (take-credits state :corp)
@@ -1662,7 +1662,7 @@
   ;; Subliminal Messaging - Playing/trashing/milling will all prompt returning to hand
   (do-game
     (new-game (default-corp [(qty "Subliminal Messaging" 3)])
-              (make-deck "Noise: Hacker Extraordinaire" ["Cache" 3) (qty "Utopia Shard"]))
+              (make-deck "Noise: Hacker Extraordinaire" [(qty "Cache" 3) "Utopia Shard"]))
     (play-from-hand state :corp "Subliminal Messaging")
     (is (= 6 (:credit (get-corp))))
     (is (= 3 (:click (get-corp))) "First Subliminal Messaging gains 1 click")
@@ -1701,7 +1701,7 @@
 (deftest subliminal-messaging-archived
   ;; Subliminal Messaging - Scenario involving Subliminal being added to HQ with Archived Memories
   (do-game
-    (new-game (default-corp ["Subliminal Messaging" 2) (qty "Archived Memories"])
+    (new-game (default-corp [(qty "Subliminal Messaging" 2) "Archived Memories"])
               (default-runner))
     (play-from-hand state :corp "Subliminal Messaging")
     (play-from-hand state :corp "Subliminal Messaging")
@@ -1890,7 +1890,7 @@
   ;; Checks that All-seeing I does not double-trash hosted cards, trashes hosted cards
   (do-game
     (new-game (default-corp ["The All-Seeing I"])
-              (default-runner ["Fall Guy" 2) (qty "Off-Campus Apartment"]))
+              (default-runner [(qty "Fall Guy" 2) "Off-Campus Apartment"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Off-Campus Apartment")
     (let [oca (get-resource state 0)
@@ -1941,7 +1941,7 @@
 (deftest threat-assessment
   ;; Threat Assessment - play only if runner trashed a card last turn, move a card to the stack or take 2 tags
   (do-game
-    (new-game (default-corp ["Threat Assessment" 3) (qty "Adonis Campaign"])
+    (new-game (default-corp [(qty "Threat Assessment" 3) "Adonis Campaign"])
               (default-runner ["Desperado" "Corroder"]))
     (play-from-hand state :corp "Adonis Campaign" "New remote")
     (take-credits state :corp)

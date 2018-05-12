@@ -62,7 +62,7 @@
   ;; Astrolabe - Draw on new server install
   (do-game
     (new-game (default-corp [(qty "Snare!" 3)])
-              (default-runner ["Astrolabe" 3) (qty "Sure Gamble" 3) (qty "Cloak"]))
+              (default-runner [(qty "Astrolabe" 3) (qty "Sure Gamble" 3) "Cloak"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Astrolabe")
     (take-credits state :runner 3)
@@ -390,7 +390,7 @@
   ;; Heartbeat - +1 MU, trash installed card to prevent 1 damage
   (do-game
     (new-game (default-corp ["Pup" "Neural Katana"])
-              (make-deck "Apex: Invasive Predator" ["Heartbeat" 2) (qty "Sure Gamble" 2) (qty "Cache"]))
+              (make-deck "Apex: Invasive Predator" [(qty "Heartbeat" 2) (qty "Sure Gamble" 2) "Cache"]))
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Neural Katana" "R&D")
     (take-credits state :corp)
@@ -453,7 +453,7 @@
   ;; LLDS Processor - Add 1 strength until end of turn to an icebreaker upon install
   (do-game
     (new-game (default-corp)
-              (default-runner ["LLDS Processor" 2) (qty "Inti" "Passport"]))
+              (default-runner [(qty "LLDS Processor" 2) "Inti" "Passport"]))
     (take-credits state :corp)
     (play-from-hand state :runner "LLDS Processor")
     (play-from-hand state :runner "Inti")
@@ -563,7 +563,7 @@
   ;; Maya - Does not interrupt multi-access.
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
-              (default-runner ["Maya" "Sure Gamble" 3) (qty "R&D Interface"]))
+              (default-runner ["Maya" (qty "Sure Gamble" 3) "R&D Interface"]))
     (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
     (take-credits state :corp)
@@ -583,7 +583,7 @@
   ;; Net-Ready Eyes
   (do-game
     (new-game (default-corp)
-              (default-runner ["Sure Gamble" 3) (qty "Net-Ready Eyes" "Peacock"]))
+              (default-runner [(qty "Sure Gamble" 3) "Net-Ready Eyes" "Peacock"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Peacock")
@@ -1031,7 +1031,7 @@
   ;; Spy Camera - Full test
   (do-game
     (new-game (default-corp)
-              (default-runner ["Spy Camera" 6) (qty "Sure Gamble" "Desperado"
+              (default-runner [(qty "Spy Camera" 6) "Sure Gamble" "Desperado"
                                "Diesel" "Corroder" "Patron" "Kati Jones"]))
     (starting-hand state :runner ["Spy Camera" "Spy Camera" "Spy Camera"
                                   "Spy Camera" "Spy Camera" "Spy Camera"])
@@ -1116,7 +1116,7 @@
   (do-game
     (new-game (make-deck "Chronos Protocol: Selective Mind-mapping" ["Pup" "Viktor 1.0"
                                                                      "Neural EMP"])
-              (default-runner ["Titanium Ribs" 2) (qty "Sure Gamble"
+              (default-runner [(qty "Titanium Ribs" 2) "Sure Gamble"
                                "Fall Guy" "Kati Jones"]))
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Viktor 1.0" "R&D")
@@ -1168,7 +1168,7 @@
   ;; Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn
   ;;           - Corp doesn't gain a click on the Runner's turn when it receives a Mandatory Upgrades
   (do-game
-    (new-game (default-corp ["Mandatory Upgrades" 2) (qty "Project Vitruvius"])
+    (new-game (default-corp [(qty "Mandatory Upgrades" 2) "Project Vitruvius"])
               (default-runner ["Turntable"]))
     (score-agenda state :corp (find-card "Mandatory Upgrades" (:hand (get-corp))))
     (is (= 4 (:click-per-turn (get-corp))) "Up to 4 clicks per turn")

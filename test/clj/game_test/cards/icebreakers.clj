@@ -150,7 +150,7 @@
 (deftest chameleon-scheherazade
   ;; Chameleon - Returns to hand after hosting. #977
   (do-game
-    (new-game (default-corp) (default-runner ["Chameleon" 2) (qty "Scheherazade"]))
+    (new-game (default-corp) (default-runner [(qty "Chameleon" 2) "Scheherazade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Chameleon")
     (prompt-choice :runner "Barrier")
@@ -557,7 +557,7 @@
   ;; See #3187
   (do-game
     (new-game
-      (default-corp ["Zed 1.0" "Zed 2.0" 3) (qty "AR-Enhanced Security"])
+      (default-corp ["Zed 1.0" (qty "Zed 2.0" 3) "AR-Enhanced Security"])
       (default-runner [(qty "Persephone" 10)]))
     (core/move state :corp (find-card "Zed 2.0" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Zed 2.0" (:hand (get-corp))) :deck)

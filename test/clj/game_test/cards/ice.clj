@@ -27,8 +27,7 @@
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
   (do-game
     (new-game (default-corp ["Aimor"])
-              (default-runner ["Sure Gamble" 2) (qty "Desperado"
-                               "Corroder" "Patron"]))
+              (default-runner [(qty "Sure Gamble" 2) "Desperado" "Corroder" "Patron"]))
     (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
     (play-from-hand state :corp "Aimor" "HQ")
     (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor installed")
@@ -182,7 +181,7 @@
 (deftest crick
   ;; Crick - Strength boost when protecting Archives; installs a card from Archives
   (do-game
-    (new-game (default-corp ["Crick" 2) (qty "Ice Wall"])
+    (new-game (default-corp [(qty "Crick" 2) "Ice Wall"])
               (default-runner))
     (play-from-hand state :corp "Crick" "HQ")
     (play-from-hand state :corp "Crick" "Archives")
@@ -219,7 +218,7 @@
   ;; Data Hound - Full test
   (do-game
     (new-game (default-corp ["Data Hound"])
-              (default-runner ["Sure Gamble" 2) (qty "Desperado"
+              (default-runner [(qty "Sure Gamble" 2) "Desperado"
                                "Corroder" "Patron"]))
     (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
     (play-from-hand state :corp "Data Hound" "HQ")
@@ -807,7 +806,7 @@
 (deftest next-bronze
   ;; NEXT Bronze - Add 1 strength for every rezzed NEXT ice
   (do-game
-    (new-game (default-corp ["NEXT Bronze" 2) (qty "NEXT Silver"])
+    (new-game (default-corp [(qty "NEXT Bronze" 2) "NEXT Silver"])
               (default-runner))
     (core/gain state :corp :credit 2)
     (play-from-hand state :corp "NEXT Bronze" "HQ")
@@ -1235,7 +1234,7 @@
 (deftest turing-positional-strength
   ;; Turing - Strength boosted when protecting a remote server
   (do-game
-    (new-game (default-corp ["Turing" 2) (qty "Hedge Fund"])
+    (new-game (default-corp [(qty "Turing" 2) "Hedge Fund"])
               (default-runner))
     (play-from-hand state :corp "Hedge Fund")
     (play-from-hand state :corp "Turing" "HQ")
