@@ -304,7 +304,7 @@
     (let [dheg (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner dheg 0)
       (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
-      (is (= 4 (core/available-mu state)) "0 MU used")
+      (is (= 4 (core/available-mu state)) "0 MU used by Hyperdriver hosted on Dhegdheer")
       (is (= 2 (:click (get-runner))) "2 clicks used")
       (is (= 3 (:credit (get-runner))) "2 credits used")
       (take-credits state :runner)
@@ -314,7 +314,7 @@
         (card-ability state :runner hyp 0)
         (core/end-phase-12 state :runner nil)
         (is (= 7 (:click (get-runner))) "Used Hyperdriver")
-        (is (= 4 (core/available-mu state)) "Still 0 MU used")))))
+        (is (= 4 (core/available-mu state)) "Still 0 MU used after Hyperdriver removed from game")))))
 
 (deftest imp
   ;; Imp

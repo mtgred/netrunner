@@ -150,7 +150,7 @@
   "Check runner has not exceeded, toast if they have"
   [state]
   (when (neg? (available-mu state))
-    (toast state :runner "You have run out of memory units!")))
+    (toast state :runner "You have exceeded your memory units!")))
 
 (defn free-mu
   "Frees up specified amount of mu (reduces :used)"

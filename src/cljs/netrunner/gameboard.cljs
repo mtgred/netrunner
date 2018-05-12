@@ -1000,7 +1000,11 @@
                   (when (pos? run-credit)
                     (str " (" run-credit " for run)")))
         (when me? (controls :credit))]
-       [:div (str memory " Memory Unit" (if (not= memory 1) "s" "")) (when (neg? memory) [:div.warning "!"]) (when me? (controls :memory))]
+       (let [{:keys [base mod used]} memory
+             max-mu (+ base mod)
+             unused (- max-mu used)]
+         [:div (str unused " of " max-mu " MU unused")
+          (when (neg? unused) [:div.warning "!"]) (when me? (controls :memory))])
        [:div (str link " Link Strength") (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]

@@ -2,7 +2,7 @@
 
 ;; These functions are called by main.clj in response to commands sent by users.
 
-(declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
+(declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size)
@@ -61,15 +61,29 @@
   (gain state side key delta)
   (change-msg state side key (base-mod-size state side key) (:mod delta)))
 
+(defn- change-mu
+  "Send a system message indicating how mu was changed"
+  [state side delta]
+  (free-mu state delta)
+  (system-msg state side
+              (str "sets unused MU to " (available-mu state)
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (if (map? delta)
+  (cond
+    (= :memory key)
+    (change-mu state side delta)
+
+    (map? delta)
     (change-map state side key delta)
+
+    :else
     (do (if (neg? delta)
           (deduct state side [key (- delta)])
           (swap! state update-in [side key] (partial + delta)))
-      (change-msg state side key (get-in @state [side key]) delta))))
+        (change-msg state side key (get-in @state [side key]) delta))))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."

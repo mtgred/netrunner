@@ -9,8 +9,9 @@
     ;; value is a map, should be :base, :mod, etc.
     (map? value)
     (doseq [[subattr value] value]
-      (swap! state update-in [side attr subattr] (if (= subattr :mod)
-                                                   ;; Modifications may be negative
+      (swap! state update-in [side attr subattr] (if (#{:mod :used} subattr)
+                                                   ;; Modifications and mu used may be negative
+                                                   ;; mu used is for easier implementation of the 0-mu hosting things
                                                    #(- % value)
                                                    (sub->0 value))))
     ;; values that expect map, if passed a number use default map
