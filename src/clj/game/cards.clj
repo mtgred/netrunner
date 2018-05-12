@@ -152,8 +152,8 @@
   ([selected-cards counter-count target-count]
    {:delayed-completion true
     :prompt (str "Select a card with virus counters ("
-                 counter-count (when (pos? target-count) (str " out of " target-count))
-                 " virus counters taken)")
+                 counter-count (when (pos? target-count) (str " of " target-count))
+                 " virus counters)")
     :choices {:req #(and (installed? %)
                          (pos? (get-in % [:counter :virus] 0)))}
     :effect (req (add-counter state :runner target :virus -1)
