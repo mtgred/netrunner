@@ -112,6 +112,7 @@
         ;; prompt should be asking for the net damage costs
         (is (= "Obokata Protocol" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
+        (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "2 net damage")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
@@ -134,6 +135,7 @@
         ;; prompt should be asking for the net damage costs
         (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
+        (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "2 [Credits]")
         (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
@@ -814,7 +816,45 @@
         (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp")
         ;; Trash Imp to reset :slow-trash flag
         (core/move state :runner (refresh imp) :discard)
-        (is (not (core/any-flag-fn? state :runner :slow-trash true)))))))
+        (is (not (core/any-flag-fn? state :runner :slow-trash true))))))
+  (testing "interactions with Imp and various amounts of money"
+    (do-game
+      (new-game (default-corp [(qty "Mumbad Virtual Tour" 3)])
+                (default-runner ["Imp"]))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (is (= 3 (:credit (get-runner))) "Runner paid install costs")
+      (core/gain state :runner :credit 2)
+      (run-empty-server state "Server 1")
+      (is (= #{"[Imp]: Trash card" "Pay 5[Credits] to trash"}
+             (->> (get-runner) :prompt first :choices (into #{}))) "Should have Imp and MVT options")
+      (prompt-choice-partial :runner "Imp")
+      (take-credits state :runner)
+      (core/lose state :runner :credit (:credit (get-runner)))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 2")
+      (is (= ["[Imp]: Trash card"] (->> (get-runner) :prompt first :choices)) "Should only have Imp option")
+      (prompt-choice-partial :runner "Imp")
+      (take-credits state :runner)
+      (core/lose state :runner :credit (:credit (get-runner)))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 3")
+      (is (= ["No action"] (->> (get-runner) :prompt first :choices)) "Should only have no action option")
+      (prompt-choice :runner "No action")
+      (is (= 2 (->> (get-corp) :discard count)) "Runner was not forced to trash MVT")))
+  (testing "not forced to trash when credits below 5"
+    (do-game
+      (new-game (default-corp [(qty "Mumbad Virtual Tour" 3)])
+                (default-runner ["Cache"]))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (is (= 4 (:credit (get-runner))) "Runner paid install costs")
+      (run-empty-server state "Server 1")
+      (is (= ["No action"] (->> (get-runner) :prompt first :choices)) "Can't trash"))))
 
 (deftest mwanza-city-grid
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
