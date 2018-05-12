@@ -494,7 +494,7 @@
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall should be discarded now")
-      (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakua oesn't gain any virus counters from trash ability.")
+      (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakua doesn't gain any virus counters from trash ability.")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest gabriel-santiago
