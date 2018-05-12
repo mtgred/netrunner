@@ -169,6 +169,8 @@
                                     cdef (-> (card-def trash-ab-card)
                                              :interactions
                                              :trash-ability)]
+                                (when (:run @state)
+                                  (swap! state assoc-in [:run :did-trash] true))
                                 (when-completed (resolve-ability state side cdef trash-ab-card [card])
                                                 (access-end state side eid c)))))}
               card nil)))))
@@ -265,6 +267,8 @@
                                               cdef (-> (card-def trash-ab-card)
                                                        :interactions
                                                        :trash-ability)]
+                                          (when (:run @state)
+                                            (swap! state assoc-in [:run :did-trash] true))
                                           (when-completed (resolve-ability state side cdef trash-ab-card [c])
                                                           (do (trigger-event state side :no-steal c)
                                                               (access-end state side eid c))))))})
