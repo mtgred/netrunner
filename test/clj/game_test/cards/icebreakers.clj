@@ -314,7 +314,7 @@
                                  "Sacrificial Construct"
                                  "Fall Guy"
                                  "Astrolabe"
-                                 (qty "Gordian Blade" 1 )
+                                 "Gordian Blade"
                                  "Armitage Codebusting"]))
       (take-credits state :corp)
       (core/draw state :runner 1)
