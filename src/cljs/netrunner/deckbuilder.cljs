@@ -167,7 +167,8 @@
 
 (defn load-decks [decks]
   (swap! app-state assoc :decks decks)
-  (put! select-channel (first (sort-by :date > decks)))
+  (when-let [selected-deck (first (sort-by :date > decks))]
+    (put! select-channel selected-deck))
   (swap! app-state assoc :decks-loaded true))
 
 (defn process-decks
@@ -616,8 +617,13 @@
          [:div.viewport {:ref "viewport"}
           [:div.decks
            [:div.button-bar
-            [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
-            [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"]]
+            (if (:user @app-state)
+              (list
+                [:button {:on-click #(new-deck "Corp" owner)} "New Corp deck"]
+                [:button {:on-click #(new-deck "Runner" owner)} "New Runner deck"])
+              (list
+                [:button {:class "disabled"} "New Corp deck"]
+                [:button {:class "disabled"} "New Runner deck"]))]
            [:div.deck-collection
             (when-not (:edit state)
               (om/build deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (om/get-state owner :deck)}))
