@@ -89,7 +89,7 @@
 (defn capitalize [string]
   (str (Character/toUpperCase (first string)) (subs string 1)))
 
-(defn costs-to-symbol
+(defn costs->symbol
   "Used during steal to print runner prompt for payment"
   [costs]
   (join ", " (map #(let [key (first %) value (last %)]
