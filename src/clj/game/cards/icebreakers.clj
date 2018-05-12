@@ -21,7 +21,9 @@
                                      (:strength current-ice))
                                  (or (:current-strength card)
                                      (:strength card)))))
-              pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+              pumpnum (when (and strdif
+                                 (:pump pumpabi))
+                        (int (Math/ceil (/ strdif (:pump pumpabi)))))]
           (update! state side
                    (assoc card :abilities
                           (if (and pumpcst
