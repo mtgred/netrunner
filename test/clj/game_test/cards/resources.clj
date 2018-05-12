@@ -811,7 +811,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Gang Sign")
     (take-credits state :runner)
-    (play-and-score state :corp "Hostile Takeover")
+    (play-and-score state "Hostile Takeover")
     (prompt-choice :runner "Card from hand")
     ;; Runner has "wait for Snare, wait for on-access" prompts.
     (is (= 2 (count (:prompt (get-runner)))) "Runner only has the Waiting prompt, not Snare!'s pay-prompt")
