@@ -254,8 +254,8 @@
                      (swap! state assoc-in [:corp :hand-size :base] 5))}
 
    "Chaos Theory: Wünderkind"
-   {:effect (effect (gain :memory 1))
-    :leave-play (effect (lose :runner :memory 1))}
+   {:effect (effect (gain :memory {:mod 1}))
+    :leave-play (effect (lose :runner :memory {:mod 1}))}
 
    "Chronos Protocol: Selective Mind-mapping"
    {:events
