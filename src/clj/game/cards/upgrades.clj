@@ -598,7 +598,9 @@
                                     (gain state :corp :credit total)
                                     (system-msg state :corp
                                                 (str "gains " total " [Credits] from Mwanza City Grid"))))}]
-     {:events {:pre-access {:req (req (and installed this-server))
+     {:events {:pre-access {:req (req (and installed
+                                           ;; Pre-access server is same server as that Mwanza is in the root of
+                                           (= target (second  (:zone card)))))
                             :msg "force the Runner to access 3 additional cards"
                             :effect (effect (access-bonus 3))}
                :run-ends gain-creds}
