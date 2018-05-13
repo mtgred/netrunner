@@ -203,7 +203,7 @@
                          (if (< (count chosen) n)
                            (continue-ability
                              state side
-                             (steal-pay-choice state :runner(remove-once (partial = target) cost-strs) chosen n card)
+                             (steal-pay-choice state :runner (remove-once #(= % target) cost-strs) chosen n card)
                              card nil)
                            (steal-agenda state side eid card))))
                    (access-end state side eid card)))))})
