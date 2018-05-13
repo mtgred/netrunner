@@ -63,12 +63,14 @@
 
 (defn- active-game?
   [gameid-str client-id]
-  (let [gameid (java.util.UUID/fromString gameid-str)
-        game-from-gameid (lobby/game-for-id gameid)
-        game-from-clientid (lobby/game-for-client client-id)]
-    (and game-from-clientid
-         game-from-gameid
-         (= (:gameid game-from-clientid) (:gameid game-from-gameid)))))
+  (if (nil? gameid-str)
+    false
+    (let [gameid (java.util.UUID/fromString gameid-str)
+          game-from-gameid (lobby/game-for-id gameid)
+          game-from-clientid (lobby/game-for-client client-id)]
+      (and game-from-clientid
+           game-from-gameid
+           (= (:gameid game-from-clientid) (:gameid game-from-gameid))))))
 
 (defn handle-game-start
   [{{{:keys [username] :as user} :user} :ring-req
