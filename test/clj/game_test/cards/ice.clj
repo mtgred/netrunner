@@ -615,6 +615,24 @@
      (is (empty? (get-in @state [:runner :rig :program])) "Cache trashed")
      (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
 
+(deftest kitsune
+  (testing "Kitsune - Corp choices card for Runner to access"
+    (do-game
+      (new-game (default-corp ["Kitsune" "Snare!"])
+                (default-runner))
+      (play-from-hand state :corp "Kitsune" "R&D")
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (let [kitsune (get-ice state :rd 0)]
+        (core/rez state :corp kitsune)
+        (card-subroutine state :corp kitsune 0)
+        (prompt-select :corp (find-card "Snare!" (:hand (get-corp))))
+        ;; Runner access Snare! corp has prompt
+        (is (= :waiting (-> @state :runner :prompt first :prompt-type))
+            "Runner has prompt to wait for Corp to use Snare!")
+        (prompt-choice :corp "Yes")
+        (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use")))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
