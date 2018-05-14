@@ -658,10 +658,7 @@
 
    "Ken \"Express\" Tenma: Disappeared Clone"
    {:events {:play-event {:req (req (and (has-subtype? target "Run")
-                                         (empty? (filter #(has-subtype? % "Run")
-                                                         ;; have to flatten because each element is a list containing
-                                                         ;; the Event card that was played
-                                                         (flatten (turn-events state :runner :play-event))))))
+                                         (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
                           :msg "gain 1 [Credits]"
                           :effect (effect (gain :credit 1))}}}
 
@@ -686,8 +683,7 @@
      {:delayed-completion true
       :interactive (req true)
       :req (req (and (is-central? (:server run))
-                     (empty? (let [successes (turn-events state side :successful-run)]
-                               (filter #(is-central? %) successes)))))
+                     (first-event? state side :successful-run #(is-central? %))))
       :effect (effect (continue-ability
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
@@ -939,8 +935,7 @@
    "Spark Agency: Worldswide Reach"
    {:events
     {:rez {:req (req (and (has-subtype? target "Advertisement")
-                          (empty? (filter #(has-subtype? % "Advertisement")
-                                          (flatten (turn-events state :corp :rez))))))
+                          (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
 

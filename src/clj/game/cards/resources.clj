@@ -43,19 +43,22 @@
 
    "Activist Support"
    {:events
-    {:corp-turn-begins {:req (req (= 0 (:tag runner)))
-                        :msg "take 1 tag"
+    {:corp-turn-begins {:msg "take 1 tag"
                         :delayed-completion true
-                        :effect (effect (tag-runner :runner eid 1))}
-     :runner-turn-begins {:req (req (not has-bad-pub))
-                          :msg "give the Corp 1 bad publicity"
-                          :effect (effect (gain-bad-publicity :corp 1))}}}
+                        :effect (req (if (= 0 (:tag runner))
+                                       (tag-runner state :runner eid 1)
+                                       (effect-completed state :runner eid card)))}
+     :runner-turn-begins {:msg "give the Corp 1 bad publicity"
+                          :delayed-completion true
+                          :effect (req (if (not has-bad-pub)
+                                         (gain-bad-publicity state :corp eid 1)
+                                         (effect-completed state :runner eid card)))}}}
 
    "Adjusted Chronotype"
    {:events {:runner-loss {:req (req (and (some #{:click} target)
-                                          (let [click-losses (filter #(= :click %) (mapcat first (turn-events state side :runner-loss)))]
-                                            (or (empty? click-losses)
-                                                (and (= (count click-losses) 1)
+                                          (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-loss))))]
+                                            (or (= 1 click-losses)
+                                                (and (= 2 click-losses)
                                                      (has-flag? state side :persistent :genetics-trigger-twice))))))
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
@@ -1487,9 +1490,11 @@
 
    "Safety First"
    {:in-play [:hand-size {:mod -2}]
-    :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))
-                                :msg (msg "draw a card")
-                                :effect (effect (draw 1))}}}
+    :events {:runner-turn-ends {:msg (msg "draw a card")
+                                :delayed-completion true
+                                :effect (req (if (< (count (:hand runner)) (hand-size state :runner)) 
+                                               (draw state :runner eid 1 nil)
+                                               (effect-completed state :runner eid card)))}}}
 
    "Salvaged Vanadis Armory"
    {:events {:damage
@@ -1869,8 +1874,8 @@
    (let [ability {:label "Gain 1 [Credits] (start of turn)"
                   :msg "gain 1 [Credits]"
                   :once :per-turn
-                  :req (req (and (>= (:link runner) 2) (:runner-phase-12 @state)))
-                  :effect (effect (gain :credit 1))}]
+                  :effect (req (when (and (>= (:link runner) 2) (:runner-phase-12 @state))
+                                 (gain state :runner :credit 1)))}]
    {:flags {:drip-economy true}
     :abilities [ability]
     :events {:runner-turn-begins ability}})
