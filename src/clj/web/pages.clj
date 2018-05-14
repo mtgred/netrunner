@@ -7,8 +7,8 @@
             [clj-time.core :as t]
             [clj-time.coerce :as c]
             [hiccup.page :as hiccup]
+            [clojure.pprint]
             [cheshire.core :as json]))
-
 
 (defn layout [{:keys [version user] :as req} & content]
   (hiccup/html5
@@ -37,21 +37,9 @@
        (list (hiccup/include-js "/cljs/goog/base.js")
              (hiccup/include-js (str "cljs/app.js?v=" version))
              [:script
-              (for [req ["netrunner.utils"
-                         "netrunner.appstate"
-                         "netrunner.main"
-                         "netrunner.ajax"
-                         "netrunner.auth"
-                         "netrunner.chat"
-                         "netrunner.gameboard"
-                         "netrunner.gamelobby"
-                         "netrunner.cardbrowser"
-                         "netrunner.deckbuilder"
-                         "netrunner.help"
-                         "netrunner.about"
-                         "netrunner.account"
-                         "netrunner.stats"
-                         "netrunner.news"
+              (for [req ["nr.utils"
+                         "nr.appstate"
+                         "nr.main"
                          "dev.figwheel"]]
                 (str "goog.require(\"" req "\");"))])
        (list (hiccup/include-js (str "js/app.js?v=" version))
