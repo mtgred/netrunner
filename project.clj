@@ -89,6 +89,8 @@
                             "src/cljs/externs/moment.js"
                             "src/cljs/externs/toastr.js"]}}]}
 
+ :clean-targets ^{:protect false} [:target-path "resources/public/cljs/app.js"]
+
   :figwheel {:http-server-root "public"
              :server-port 3449
              :css-dirs ["resources/public/css"]}
