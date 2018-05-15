@@ -169,11 +169,12 @@
     (if (and (#{"Asset" "Agenda"} (:type card))
              prev-card
              (not (:host card)))
-      (resolve-ability state side eid {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
-                                       :choices ["OK"]
-                                       :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
-                                                    (when (get-card state prev-card) ; make sure they didn't trash the card themselves
-                                                    (trash state :corp prev-card {:keep-server-alive true})))}
+      (continue-ability state side {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
+                                    :choices ["OK"]
+                                    :delayed-completion true
+                                    :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
+                                                 (when (get-card state prev-card) ; make sure they didn't trash the card themselves
+                                                   (trash state :corp eid prev-card {:keep-server-alive true})))}
                        nil nil)
       (effect-completed state side eid))))
 
