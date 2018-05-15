@@ -552,29 +552,30 @@
     :abilities [{:once :per-turn
                  :delayed-completion true
                  :label "Move this accessed card to bottom of R&D"
-                 :req (req (when-let [c (:card (first (get-in @state [:runner :prompt])))]
-                             (in-deck? c)))
+                 :req (req (when-let [accessed-card (:card (first (get-in @state [:runner :prompt])))]
+                             (in-deck? accessed-card)))
                  :msg "move the card just accessed to the bottom of R&D"
-                 :effect (req (let [c (:card (first (get-in @state [:runner :prompt])))]
-                                (when (is-type? c "Agenda") ; trashing before the :access events actually fire; fire them manually
-                                  (steal-trigger-events state side c))
-                                (move state :corp c :deck)
+                 :effect (req (let [accessed-card (:card (first (get-in @state [:runner :prompt])))]
+                                (move state :corp accessed-card :deck)
                                 (when-completed (tag-runner state :runner (make-eid state) 1)
                                                 (close-access-prompt state side))))}
                 {:once :per-turn
                  :label "Move a previously accessed card to bottom of R&D"
                  :effect (effect (resolve-ability
-                                   {; only allow targeting cards that were accessed this turn -- not perfect, but good enough?
-                                    :delayed-completion true
-                                    :choices {:req #(some (fn [c] (= (:cid %) (:cid c)))
+                                   {:delayed-completion true
+                                    ; only allow targeting cards that were accessed this turn
+                                    :choices {:req #(some (fn [accessed-card]
+                                                            (= (:cid %) (:cid accessed-card)))
                                                           (map first (turn-events state side :access)))}
                                     :msg (msg "move " (:title target) " to the bottom of R&D")
                                     :effect (req (move state :corp target :deck)
                                                  (tag-runner state :runner eid 1)
                                                  (swap! state update-in [side :prompt] rest)
                                                  (when-let [run (:run @state)]
-                                                   (when (and (:ended run) (empty? (get-in @state [:runner :prompt])))
-                                                     (handle-end-run state :runner))))} card nil))}]}
+                                                   (when (and (:ended run)
+                                                              (empty? (get-in @state [:runner :prompt])))
+                                                     (handle-end-run state :runner))))}
+                                   card nil))}]}
 
    "MemStrips"
    {:implementation "MU usage restriction not enforced"

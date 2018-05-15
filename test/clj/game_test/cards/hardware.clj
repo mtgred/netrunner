@@ -530,9 +530,9 @@
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
   (do-game
-    (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Scorched Earth" 2) (qty "Snare!" 2)])
+    (new-game (default-corp [(qty "Hedge Fund" 2) (qty "Snare!" 2) "Hostile Takeover" "Scorched Earth"])
               (default-runner [(qty "Maya" 1) (qty "Sure Gamble" 3)]))
-    (core/move state :corp (find-card "Scorched Earth" (:hand (get-corp))) :deck)
+    (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Snare!" (:hand (get-corp))) :deck)
     (take-credits state :corp)
     (play-from-hand state :runner "Maya")
