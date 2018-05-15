@@ -95,7 +95,6 @@
                         (if (= 1 (count non-silent)) (first non-silent) (first handlers))
                         ab (dissoc (:ability to-resolve) :req)
                         c (:card to-resolve)
-                        persistent (when (:persistent ab) ((:persistent ab) state side eid c event-targets))
                         others (if (= 1 (count non-silent))
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
                                  (next handlers))]
