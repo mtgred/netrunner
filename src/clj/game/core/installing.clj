@@ -201,11 +201,8 @@
     (concat hosts (server-list state card))))
 
 (defn- corp-install-continue
-  [state side eid card server {:keys [install-state host-card] :as args} cost-str]
+  [state side eid card server {:keys [install-state host-card] :as args} slot cost-str]
   (let [cdef (card-def card)
-        slot (if host-card
-               (:zone host-card)
-               (conj (server->zone state server) (if (ice? card) :ices :content)))
         dest-zone (get-in @state (cons :corp slot))
         install-state (or install-state (:install-state cdef)) 
         c (-> card
@@ -260,11 +257,8 @@
                             (register-events state side dre moved-card))))))))
 
 (defn- corp-install-pay
-  [state side eid card server {:keys [extra-cost no-install-cost host-card action] :as args}]
-  (let [slot (if host-card
-               (:zone host-card)
-               (conj (server->zone state server) (if (ice? card) :ices :content)))
-        dest-zone (get-in @state (cons :corp slot))
+  [state side eid card server {:keys [extra-cost no-install-cost host-card action] :as args} slot]
+  (let [dest-zone (get-in @state (cons :corp slot))
         ice-cost (if (and (ice? card)
                           (not no-install-cost)
                           (not (ignore-install-cost? state side)))
@@ -276,8 +270,8 @@
                            (pay state side card end-cost {action action}))]
       (if (= server "New remote")
         (when-completed (trigger-event-sync state side :server-created card)
-                        (corp-install-continue state side eid card server args cost-str))
-        (corp-install-continue state side eid card server args cost-str))
+                        (corp-install-continue state side eid card server args slot cost-str))
+        (corp-install-continue state side eid card server args slot cost-str))
       (do (clear-install-cost-bonus state side)
           (effect-completed state side eid card)))))
 
@@ -306,7 +300,7 @@
        ;; trigger :pre-corp-install before computing install costs so that
        ;; event handlers may adjust the cost.
        (when-completed (trigger-event-sync state side :pre-corp-install card {:server server :dest-zone dest-zone})
-                       (corp-install-pay state side eid card server args))))))
+                       (corp-install-pay state side eid card server args slot))))))
 
 
 ;;; Installing a runner card

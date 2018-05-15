@@ -55,7 +55,8 @@
    "Astrolabe"
    {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
-                              :effect (effect (draw :runner))}}}
+                              :delayed-completion true
+                              :effect (effect (draw :runner eid 1 nil))}}}
 
    "Autoscripter"
    {:events {:runner-install {:silent (req true)

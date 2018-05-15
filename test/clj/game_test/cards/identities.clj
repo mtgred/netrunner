@@ -615,7 +615,7 @@
   ;; Asa Group - don't allow installation of agendas
   (do-game
     (new-game
-      (make-deck "Asa Group: Security Through Vigilance" [(qty "Pup") (qty "Project Vitruvius") (qty "Urban Renewal")])
+      (make-deck "Asa Group: Security Through Vigilance" [(qty "Pup" 1) (qty "Project Vitruvius" 1) (qty "Urban Renewal" 1)])
       (default-runner))
     (play-from-hand state :corp "Pup" "New remote")
     (prompt-select :corp (find-card "Project Vitruvius" (:hand (get-corp))))
@@ -627,11 +627,11 @@
   ;; Checks that asa group and mirrormorph prompts appear in the correct order
   (do-game
     (new-game
-      (make-deck "Asa Group: Security Through Vigilance" [(qty "Shipment from MirrorMorph")
-                                                          (qty "Pup")
-                                                          (qty "Red Herrings")
-                                                          (qty "Marilyn Campaign")
-                                                          (qty "Project Vitruvius")])
+      (make-deck "Asa Group: Security Through Vigilance" [(qty "Shipment from MirrorMorph" 1)
+                                                          (qty "Pup" 1)
+                                                          (qty "Red Herrings" 1)
+                                                          (qty "Marilyn Campaign" 1)
+                                                          (qty "Project Vitruvius" 1)])
       (default-runner))
     (let  [marilyn (find-card "Marilyn Campaign" (:hand (get-corp)))
            pup (find-card "Pup" (:hand (get-corp)))
