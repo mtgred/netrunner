@@ -1,6 +1,6 @@
 (ns web.game
   (:require [web.ws :as ws]
-            [web.lobby :refer [all-games old-states] :as lobby]
+            [web.lobby :refer [all-games old-states already-in-game?] :as lobby]
             [web.utils :refer [response]]
             [web.stats :as stats]
             [game.main :as main]
@@ -187,8 +187,9 @@
     (when (and user game (lobby/allowed-in-game game user) state @state)
       (if-not started
         false ; don't handle this message, let lobby/handle-game-watch.
-        (if (or (empty? game-password)
-                (bcrypt/check password game-password))
+        (if (and (not (already-in-game? user game))
+                 (or (empty? game-password)
+                     (bcrypt/check password game-password)))
           (let [{:keys [spect-state]} (main/public-states state)]
             ;; Add as a spectator, inform the client that this is the active game,
             ;; add a chat message, then send full states to all players.
