@@ -1867,6 +1867,20 @@
       (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
       (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
 
+(deftest ronin
+  ;; Ronin - doesn't fire (or crash) if no advance counters
+  (do-game
+    (new-game (default-corp [(qty "Ronin" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ronin" "New remote")
+    (let [ron (get-content state :remote1 0)]
+      (is (nil? (:advance-counter (refresh ron))) "Ronin starts with no counters")
+      (core/rez state :corp (refresh ron))
+      (card-ability state :corp (refresh ron) 0)
+      (is (nil? (:advance-counter (refresh ron))) "Ronin didn't gain counters")
+      (is (= 3 (count (:hand (get-runner))))
+          "Ronin ability didn't fire with 0 advancements"))))
+
 (deftest sandburg
   ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
   (do-game
