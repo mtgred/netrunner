@@ -267,7 +267,7 @@
         end-cost (if no-install-cost 0 (install-cost state side card all-cost))]
     (if-let [cost-str (and (corp-can-install? state side card dest-zone)
                            (not (install-locked? state :corp))
-                           (pay state side card end-cost {action action}))]
+                           (pay state side card end-cost {:action action}))]
       (if (= server "New remote")
         (when-completed (trigger-event-sync state side :server-created card)
                         (corp-install-continue state side eid card server args slot cost-str))
