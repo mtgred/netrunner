@@ -160,7 +160,8 @@
               ;; :Counter prompts deduct counters from the card
               (add-counter state side (:card prompt) (:counter choices) (- choice)))
             ;; trigger the prompt's effect function
-            ((:effect prompt) (or choice card))
+            (when-let [effect-prompt (:effect prompt)]
+              (effect-prompt (or choice card)))
             (finish-prompt state side prompt card)))
       (do (if-let [cancel-effect (:cancel-effect prompt)]
             ;; trigger the cancel effect
