@@ -37,8 +37,7 @@
       (when-let [card (get-card state (:card e))]
         (when (and (not (apply trigger-suppress state side event (cons card targets)))
                    (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
-          (resolve-ability state side ability card targets))))
-    ))
+          (resolve-ability state side ability card targets))))))
 
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]
@@ -102,7 +101,8 @@
                                  (next handlers))]
                     (if-let [the-card (get-card state c)]
                       {:delayed-completion true
-                       :effect (req (when-completed (resolve-ability state side ab 
+                       :effect (req (when-completed (resolve-ability state (to-keyword (:side the-card))
+                                                                     ab
                                                                      the-card event-targets)
                                                     (if (should-continue state handlers)
                                                       (continue-ability state side
@@ -118,7 +118,8 @@
                    :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
                                       the-card (get-card state (:card to-resolve))]
                                   (when-completed
-                                    (resolve-ability state side (:ability to-resolve) the-card event-targets)
+                                    (resolve-ability state (to-keyword (:side the-card))
+                                                     (:ability to-resolve) the-card event-targets)
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler

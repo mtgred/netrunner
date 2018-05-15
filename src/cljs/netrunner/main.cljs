@@ -51,7 +51,7 @@
            (when (:started game)
              [:div.float-right
               (when is-player
-                [:a.concede-button {:on-click gamelobby/concede} "Concede"])
+                [:a.concede-button {:on-click gameboard/concede} "Concede"])
               [:a.leave-button {:on-click gamelobby/leave-game} "Leave game"]
               (when is-player
                 [:a.mute-button {:on-click #(gameboard/mute-spectators (not (:mute-spectators game)))}

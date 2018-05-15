@@ -372,7 +372,7 @@
       (system-msg state side custom-message)
       (system-msg state side
                   (str (build-spend-msg cost-str "install") card-title
-                       (when host-card (str " on " (:title host-card)))
+                       (when host-card (str " on " (card-str state host-card)))
                        (when no-cost " at no cost"))))))
 
 (defn- handle-virus-counter-flag

@@ -447,8 +447,9 @@
     (do-game
       (new-game (default-corp [(qty "Dedicated Response Team" 1)])
                 (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                           [(qty "Cache" 1) (qty "Imp" 1)]))
+                           [(qty "Sure Gamble" 1) (qty "Cache" 1) (qty "Imp" 1)]))
       (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Cache")
       (play-from-hand state :runner "Imp")
       (run-empty-server state "HQ")
@@ -481,6 +482,20 @@
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")
+      (is (not (:run @state)) "Run ended")))
+  (testing "Shouldn't give Aumakua additional counters on trash. #3479"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 10)])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache" "Aumakua"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state "R&D")
+      (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakuma shouldn't have any virus counters yet.")
+      (prompt-choice-partial :runner "Freedom")
+      (prompt-select :runner (get-program state 0))
+      (is (= 1 (count (:discard (get-corp)))) "Ice Wall should be discarded now")
+      (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakua doesn't gain any virus counters from trash ability.")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest gabriel-santiago
@@ -1188,6 +1203,7 @@
       (prompt-choice :runner 0)
       (is (empty? (:prompt (get-runner))) "Forger can't avoid the tag")
       (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
+      (core/gain state :runner :credit 2)
       (run-empty-server state "Server 2")
       (prompt-choice-partial :runner "Pay")
       (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))

@@ -69,19 +69,18 @@
                     :else card))))))
 
 (defn- build-identity-name
-  [title setname art]
-  (let [set-title (if setname (str title " (" setname ")") title)]
-    (if art
-      (str set-title " [" art "]")
-      set-title)))
+  [title setname]
+  (if setname
+    (str title " (" setname ")")
+    title))
 
 (defn parse-identity
   "Parse an id to the corresponding card map"
-  [{:keys [side title art setname]}]
+  [{:keys [side title setname]}]
   (if (nil? title)
     {:display-name "Missing Identity"}
     (let [card (lookup side {:title title})]
-      (assoc card :art art :display-name (build-identity-name title setname art)))))
+      (assoc card :display-name (build-identity-name title setname)))))
 
 (defn add-params-to-card
   "Add art and id parameters to a card hash"
@@ -205,9 +204,7 @@
           (filter #(not (contains? %1 :replaced_by))))
         all-titles (map :title cards)
         add-deck (partial add-deck-name all-titles)]
-    (->> cards
-      (map add-deck)
-      (reduce expand-alts []))))
+    (map add-deck cards)))
 
 (defn- insert-params
   "Add card parameters into the string representation"
@@ -299,11 +296,7 @@
                        card-id)))
            ;; only include keys that are relevant
            identity (select-keys (:identity deck) [:title :side :code])
-           identity-art (if (contains? (:identity deck) :art)
-                          (do
-                            (conj identity {:art (:art (:identity deck))}))
-                          identity)
-           data (assoc deck :cards cards :identity identity-art)]
+           data (assoc deck :cards cards :identity identity)]
        (try (js/ga "send" "event" "deckbuilder" "save") (catch js/Error e))
        (go (let [new-id (get-in (<! (if (:_id deck)
                                       (PUT "/data/decks" data :json)
@@ -569,15 +562,12 @@
   [state target-value]
   (let [side (get-in state [:deck :identity :side])
         json-map (.parse js/JSON (.. target-value -target -value))
-        id-map (js->clj json-map :keywordize-keys true)
-        card (lookup side id-map)]
-    (if-let [art (:art id-map)]
-      (assoc card :art art)
-      card)))
+        id-map (js->clj json-map :keywordize-keys true)]
+    (lookup side id-map)))
 
 (defn- identity-option-string
   [card]
-  (.stringify js/JSON (clj->js {:title (:title card) :id (:code card) :art (:art card)})))
+  (.stringify js/JSON (clj->js {:title (:title card) :id (:code card)})))
 
 (defn deck-builder
   "Make the deckbuilder view"
