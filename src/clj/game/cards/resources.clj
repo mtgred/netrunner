@@ -43,15 +43,15 @@
 
    "Activist Support"
    {:events
-    {:corp-turn-begins {:msg "take 1 tag"
-                        :delayed-completion true
+    {:corp-turn-begins {:delayed-completion true
                         :effect (req (if (= 0 (:tag runner))
-                                       (tag-runner state :runner eid 1)
+                                       (do (tag-runner state :runner eid 1)
+                                           (system-msg state :runner (str "uses " (:title card) " to take 1 tag")))
                                        (effect-completed state :runner eid card)))}
-     :runner-turn-begins {:msg "give the Corp 1 bad publicity"
-                          :delayed-completion true
+     :runner-turn-begins {:delayed-completion true
                           :effect (req (if (not has-bad-pub)
-                                         (gain-bad-publicity state :corp eid 1)
+                                         (do (gain-bad-publicity state :corp eid 1)
+                                             (system-msg state :runner (str "uses " (:title card) " to give the corp 1 bad publicity")))
                                          (effect-completed state :runner eid card)))}}}
 
    "Adjusted Chronotype"
@@ -1493,7 +1493,8 @@
     :events {:runner-turn-ends {:msg (msg "draw a card")
                                 :delayed-completion true
                                 :effect (req (if (< (count (:hand runner)) (hand-size state :runner)) 
-                                               (draw state :runner eid 1 nil)
+                                               (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
+                                                   (draw state :runner eid 1 nil))
                                                (effect-completed state :runner eid card)))}}}
 
    "Salvaged Vanadis Armory"
@@ -1872,9 +1873,9 @@
 
    "Underworld Contact"
    (let [ability {:label "Gain 1 [Credits] (start of turn)"
-                  :msg "gain 1 [Credits]"
                   :once :per-turn
                   :effect (req (when (and (>= (:link runner) 2) (:runner-phase-12 @state))
+                                 (system-msg state :runner (str "uses " (:title card) " to gain 1 [Credits]"))
                                  (gain state :runner :credit 1)))}]
    {:flags {:drip-economy true}
     :abilities [ability]

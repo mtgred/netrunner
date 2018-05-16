@@ -229,7 +229,7 @@
                           (when-completed (event state side nil)
                                           (rez state side eid moved-card {:ignore-cost :all-costs}))
 
-                          ;; ;; Ignore rez cost only. Pass eid to rez.
+                          ;; Ignore rez cost only. Pass eid to rez.
                           :rezzed-no-rez-cost
                           (when-completed (event state side nil)
                                           (rez state side eid moved-card {:ignore-cost :rez-costs}))

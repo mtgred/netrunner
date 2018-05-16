@@ -94,11 +94,11 @@
                   (let [to-resolve
                         (if (= 1 (count non-silent)) (first non-silent) (first handlers))
                         ability-to-resolve (dissoc (:ability to-resolve) :req)
-                        c (:card to-resolve)
+                        card-to-resolve (:card to-resolve)
                         others (if (= 1 (count non-silent))
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
                                  (next handlers))]
-                    (if-let [the-card (get-card state c)]
+                    (if-let [the-card (get-card state card-to-resolve)]
                       {:delayed-completion true
                        :effect (req (when-completed (resolve-ability state (to-keyword (:side the-card))
                                                                      ability-to-resolve
@@ -202,8 +202,7 @@
                                    (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                    {:priority -1})
                  (when-completed (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
-                                 (do 
-                                     (clear-wait-prompt state active-player)
+                                 (do (clear-wait-prompt state active-player)
                                      (effect-completed state side eid nil))))))))))
 
 

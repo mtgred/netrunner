@@ -680,8 +680,8 @@
                      (lose state :runner :hand-size {:mod (:tag runner)}))
     :events {:successful-run-ends {:once :per-turn
                                    :req (req (and (#{:rd :hq} (first (:server target)))
-                                               (first-event? state side :successful-run-ends
-                                                             #(#{:rd :hq} (first (:server (first %)))))))
+                                                  (first-event? state side :successful-run-ends
+                                                                #(#{:rd :hq} (first (:server (first %)))))))
                                    :msg (msg "draw " (:cards-accessed target 0) " cards")
                                    :effect (effect (draw (:cards-accessed target 0)))}}}
 

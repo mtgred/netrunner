@@ -813,7 +813,7 @@
                                                 (effect-completed state side eid))
                                               (effect-completed state side eid)))}
              :post-access-card {:effect (effect (update! (assoc-in card [:special :rng-guess] nil)))}
-             :successful-run {:req (req (and (or (= target :hq) (= target :rd))
+             :successful-run {:req (req (and (#{:hq :rd} target)
                                              (first-event? state :runner :successful-run #{[:hq] [:rd]})))
                               :optional {:prompt "Fire RNG Key?"
                                          :yes-ability {:prompt "Guess a number"

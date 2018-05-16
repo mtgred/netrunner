@@ -159,7 +159,7 @@
                                        (not (install-locked? state side))))
                         :delayed-completion true
                         :effect (effect (continue-ability
-                                          {:optional {:req (req (and (not (some #(= title (:title %)) (all-active-installed state :runner)))
+                                          {:optional {:req (req (and (not-any? #(= title (:title %)) (all-active-installed state :runner))
                                                                      (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
                                                       :player :runner
                                                       :prompt (str "Install " title "?")
