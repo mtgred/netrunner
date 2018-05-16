@@ -460,6 +460,27 @@
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))
       (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")))
 
+(deftest clone-suffrage-movement
+  ;; Clone Suffrage Movement
+  (do-game
+    (new-game (default-corp ["Clone Suffrage Movement" (qty "Hedge Fund" 2) "Ice Wall"])
+              (default-runner))
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "Clone Suffrage Movement" "New remote")
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (let [csm (get-content state :remote1 0)]
+      (core/rez state :corp (refresh csm))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 2 (-> (get-corp) :discard count)) "Clone Suffrage Movement should activate")
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (find-card "Hedge Fund" (:discard (get-corp))))
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (empty? (get-in @state [:corp :prompt])) "Clone Suffrage Movement didn't activate cuz of the ice"))))
+
 (deftest clyde-van-rite
   ;; Clyde Van Rite - Multiple scenarios involving Runner not having credits/cards to trash
   (do-game

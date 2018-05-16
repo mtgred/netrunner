@@ -296,15 +296,29 @@
                                  (tag-runner state side eid 1))))}}}
 
    "Clone Suffrage Movement"
-   {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :flags {:corp-phase-12 (req (and (some #(is-type? % "Operation") (:discard corp))
-                                     unprotected))}
-    :abilities [{:label "Add 1 operation from Archives to HQ"
-                 :prompt "Select an operation in Archives to add to HQ" :show-discard true
-                 :choices {:req #(and (is-type? % "Operation")
-                                      (= (:zone %) [:discard]))}
-                 :effect (effect (move target :hand)) :once :per-turn
-                 :msg (msg "add " (if (:seen target) (:title target) "a facedown card") " to HQ")}]}
+   (let [ability
+         {:label "Add 1 operation from Archives to HQ"
+          :prompt "Select an operation in Archives to add to HQ"
+          :once :per-turn
+          :show-discard true
+          :choices {:req #(and (is-type? % "Operation")
+                               (= (:zone %) [:discard]))}
+          :msg (msg "add "
+                    (if (:seen target)
+                      (:title target)
+                      "a facedown card")
+                    " to HQ")
+          :effect (effect (move target :hand))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins
+               {:optional
+                {:req (req (and (some #(is-type? % "Operation") (:discard corp))
+                                unprotected))
+                 :prompt "Do you want to add an operation from Archives to HQ?"
+                 :yes-ability {:effect (effect (show-wait-prompt :runner "Corp to use Clone Suffrage Movement")
+                                               (continue-ability ability card nil)
+                                               (clear-wait-prompt :runner))}}}}
+      :abilities [ability]})
 
    "Clyde Van Rite"
    (let [ability {:prompt "Pay 1 [Credits] or trash the top card of the Stack"
@@ -412,14 +426,18 @@
               ;; The once and once-key force a single DBS to act on behalf of all rezzed DBS's.
               :once :per-turn
               :once-key :daily-business-show-draw-bonus
-              :effect (req (let [dbs (count (filter #(and (= "06086" (:code %)) (rezzed? %)) (all-installed state :corp)))]
+              :effect (req (let [dbs (count (filter #(and (= "06086" (:code %))
+                                                          (rezzed? %))
+                                                    (all-installed state :corp)))]
                              (draw-bonus state side dbs)))}
              :post-corp-draw
              {:req (req (first-event? state :corp :post-corp-draw))
               :once :per-turn
               :once-key :daily-business-show-put-bottom
               :delayed-completion true
-              :effect (req (let [dbs (count (filter #(and (= "06086" (:code %)) (rezzed? %)) (all-installed state :corp)))
+              :effect (req (let [dbs (count (filter #(and (= "06086" (:code %))
+                                                          (rezzed? %))
+                                                    (all-installed state :corp)))
                                  drawn (get-in @state [:corp :register :most-recent-drawn])]
                              (show-wait-prompt state :runner "Corp to use Daily Business Show")
                              (continue-ability
@@ -428,7 +446,8 @@
                                 :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
                                 :choices {:max dbs
                                           :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
-                                :effect (req (doseq [c targets] (move state side c :deck))
+                                :effect (req (doseq [c targets]
+                                               (move state side c :deck))
                                              (clear-wait-prompt state :runner))
                                 :cancel-effect (effect (clear-wait-prompt :runner))}
                                card targets)))}}}
