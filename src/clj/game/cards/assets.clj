@@ -260,7 +260,8 @@
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :flags {:corp-phase-12 (req (> (:credit corp) 0))}
     :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund"
-                 :prompt "Choose how many [Credit] to move" :once :per-turn
+                 :prompt "Choose how many [Credit] to move"
+                 :once :per-turn
                  :choices {:number (req (min (:credit corp) 3))}
                  :effect (effect (lose :credit target)
                                  (add-counter card :credit target))
@@ -272,7 +273,7 @@
                                  (trash card {:cause :ability-cost}))}]
     :events {:corp-turn-begins {:req (req (>= (get-in card [:counter :credit] 0) 6))
                                 :effect (effect (add-counter card :credit 2)
-                                                (system-msg (str "adds 2 [Credit] to C.I. Fund")))}}}
+                                                (system-msg (str "adds 2[Credits] to C.I. Fund")))}}}
 
    "City Surveillance"
    {:events {:runner-turn-begins

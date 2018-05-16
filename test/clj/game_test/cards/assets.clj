@@ -406,6 +406,37 @@
       (card-ability state :corp slee 1)
       (is (= 5 (count (:discard (get-runner)))) "Chief Slee should do 5 meat damage"))))
 
+(deftest ci-fund
+  ;; C.I. Fund
+  (do-game
+    (new-game (default-corp ["C.I. Fund" "Hedge Fund"])
+              (default-runner))
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "C.I. Fund" "New remote")
+    (take-credits state :corp)
+    (let [ci (get-content state :remote1 0)]
+      (core/rez state :corp ci)
+      (take-credits state :runner)
+      (card-ability state :corp ci 0)
+      (prompt-choice :corp 3)
+      (is (= 3 (-> (refresh ci) :counter :credit)))
+      (core/end-phase-12 state :corp nil)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp ci 0)
+      (prompt-choice :corp 3)
+      (is (= 6 (-> (refresh ci) :counter :credit)))
+      (core/end-phase-12 state :corp nil)
+      (is (= 8 (-> (refresh ci) :counter :credit)))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/end-phase-12 state :corp nil)
+      (is (= 10 (-> (refresh ci) :counter :credit)))
+      (let [credits (:credit (get-corp))]
+        (card-ability state :corp ci 1)
+        (is (= 8 (- (:credit (get-corp)) credits)))
+        (is (nil? (-> (refresh ci) :counter :credit)))))))
+
 (deftest city-surveillance
   ;; City Surveillance - Runner chooses to pay 1 credit or take 1 tag at start of their turn
   (do-game
