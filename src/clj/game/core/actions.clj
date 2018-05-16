@@ -58,8 +58,8 @@
 (defn- change-map
   "Change a player's property using the :mod system"
   [state side key delta]
-  (gain state side key delta)
-  (change-msg state side key (base-mod-size state side key) (:mod delta)))
+  (gain state side key {:mod delta})
+  (change-msg state side key (base-mod-size state side key) delta))
 
 (defn- change-mu
   "Send a system message indicating how mu was changed"
@@ -73,10 +73,12 @@
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
   (cond
+    ;; Memory needs special treatment and message
     (= :memory key)
     (change-mu state side delta)
 
-    (map? delta)
+    ;; Hand size needs special treatment as it expects a map
+    (= :hand-size key)
     (change-map state side key delta)
 
     :else

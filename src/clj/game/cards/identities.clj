@@ -254,8 +254,8 @@
                      (swap! state assoc-in [:corp :hand-size :base] 5))}
 
    "Chaos Theory: Wünderkind"
-   {:effect (effect (gain :memory {:mod 1}))
-    :leave-play (effect (lose :runner :memory {:mod 1}))}
+   {:effect (effect (gain :memory 1))
+    :leave-play (effect (lose :runner :memory 1))}
 
    "Chronos Protocol: Selective Mind-mapping"
    {:events
@@ -300,10 +300,10 @@
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
-   {:effect (effect (lose :hand-size {:mod 1})
-                    (lose :runner :hand-size {:mod 1}))
-    :leave-play (effect (gain :hand-size {:mod 1})
-                        (gain :runner :hand-size {:mod 1}))}
+   {:effect (effect (lose :hand-size 1)
+                    (lose :runner :hand-size 1))
+    :leave-play (effect (gain :hand-size 1)
+                        (gain :runner :hand-size 1))}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
@@ -771,8 +771,8 @@
    {:recurring 2}
 
    "NBN: The World is Yours*"
-   {:effect (effect (gain :hand-size {:mod 1}))
-    :leave-play (effect (lose :hand-size {:mod 1}))}
+   {:effect (effect (gain :hand-size 1))
+    :leave-play (effect (lose :hand-size 1))}
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:req (req (first-event? state :corp :server-created))

@@ -34,7 +34,7 @@
                               :effect (effect (update! (assoc (-> card :host) :subtype (-> card :host :subtype (remove-subtypes-once ["AI"])))))}}}
 
    "Akamatsu Mem Chip"
-   {:in-play [:memory {:mod 1}]}
+   {:in-play [:memory 1]}
 
    "Archives Interface"
    {:events
@@ -53,7 +53,7 @@
                                      :msg (msg "remove " (:title target) " from the game")
                                      :effect (effect (move :corp target :rfg))}}} card nil))}}}
    "Astrolabe"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
                               :effect (effect (draw :runner))}}}
 
@@ -72,7 +72,7 @@
                                                 (system-msg "trashes Autoscripter"))}}}
 
    "Blackguard"
-   {:in-play [:memory {:mod 2}]
+   {:in-play [:memory 2]
     :events {:expose
              {:msg (msg "attempt to force the rez of " (:title target))
               :delayed-completion true
@@ -115,7 +115,7 @@
    {:in-play [:memory 2 :hand-size 2]}
 
    "Brain Cage"
-   {:in-play [:hand-size {:mod 3}]
+   {:in-play [:hand-size 3]
     :effect (effect (damage eid :brain 1 {:card card}))}
 
    "Brain Chip"
@@ -183,7 +183,7 @@
                                         (system-msg state side (str "uses " (:title card) " to install " (:title target))))))}]}
 
    "Comet"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :events {:play-event {:req (req (first-event? state side :play-event))
                           :effect (req (system-msg state :runner
                                                    (str "can play another event without spending a [Click] by clicking on Comet"))
@@ -214,7 +214,7 @@
 
    "Cyberdelia"
    {:implementation "Credit gain is manually triggered."
-    :in-play [:memory {:mod 1}]
+    :in-play [:memory 1]
     :abilities [{:msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
                  :once :per-turn
                  :effect (effect (gain :credit 1))}]}
@@ -223,13 +223,13 @@
    {:recurring 1}
 
    "CyberSolutions Mem Chip"
-   {:in-play [:memory {:mod 2}]}
+   {:in-play [:memory 2]}
 
    "Cybsoft MacroDrive"
    {:recurring 1}
 
    "Daredevil"
-   {:in-play [:memory {:mod 2}]
+   {:in-play [:memory 2]
     :events {:run-big {:once :per-turn
                        :req (req (first-event? state side :run-big))
                        :msg "draw two cards"
@@ -248,7 +248,7 @@
 
    "Deep Red"
    {:implementation "MU use restriction not enforced"
-    :in-play [:memory {:mod 3}]
+    :in-play [:memory 3]
     :events {:runner-install
              {:optional
               {:req (req (has-subtype? target "Caïssa"))
@@ -267,7 +267,7 @@
                                              card nil)))}}}}}
 
    "Desperado"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :events {:successful-run {:silent (req true)
                               :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
 
@@ -300,7 +300,7 @@
                                           (use-mu (:memoryunits target)))}}}
 
    "Doppelgänger"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :events {:runner-install
              {:req (req (= card target))
               :silent (req true)
@@ -342,7 +342,7 @@
    {:recurring 1}
 
    "Dyson Mem Chip"
-   {:in-play [:memory {:mod 1} :link 1]}
+   {:in-play [:memory 1 :link 1]}
 
    "e3 Feedback Implants"
    {:implementation "Usage restriction not enforced"
@@ -454,13 +454,13 @@
                  :effect (effect (expose eid current-ice))}]}
 
    "Grimoire"
-   {:in-play [:memory {:mod 2}]
+   {:in-play [:memory 2]
     :events {:runner-install {:silent (req true)
                               :req (req (has-subtype? target "Virus"))
                               :effect (effect (add-counter target :virus 1))}}}
 
    "Heartbeat"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :prevent {:damage [:meat :net :brain]}
     :abilities [{:msg (msg "prevent 1 damage, trashing a facedown " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
@@ -475,7 +475,7 @@
 
    "Knobkierie"
    {:implementation "MU usage restriction not enforced"
-    :in-play [:memory {:mod 3}]
+    :in-play [:memory 3]
     :events {:successful-run
              {:req (req (and (first-event? state :runner :successful-run)
                              (pos? (count-virus-programs state))))
@@ -494,7 +494,7 @@
                  :msg "expose 1 card"}]}
 
    "LLDS Memory Diamond"
-   {:in-play [:link 1 :memory {:mod 1} :hand-size {:mod 1}]}
+   {:in-play [:link 1 :memory 1 :hand-size 1]}
 
    "LLDS Processor"
    {:events
@@ -515,7 +515,7 @@
    {:recurring 1}
 
    "Logos"
-   {:in-play [:memory {:mod 1} :hand-size {:mod 1}]
+   {:in-play [:memory 1 :hand-size 1]
     :events {:agenda-scored
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
               :choices (req (cancellable (:deck runner)))
@@ -524,7 +524,7 @@
                               (move target :hand))}}}
 
    "Māui"
-   {:in-play [:memory {:mod 2}]
+   {:in-play [:memory 2]
     :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
     :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))}
 
@@ -543,12 +543,12 @@
                                  (swap! state dissoc :access)
                                  (trash state :corp card-to-trash)
                                  (swap! state assoc :access true)))}]
-     {:in-play [:memory {:mod 2}]
+     {:in-play [:memory 2]
       :abilities [ability]
       :events {:post-access-card ability}})
 
    "Maya"
-   {:in-play [:memory {:mod 2}]
+   {:in-play [:memory 2]
     :abilities [{:once :per-turn
                  :delayed-completion true
                  :label "Move this accessed card to bottom of R&D"
@@ -578,10 +578,10 @@
 
    "MemStrips"
    {:implementation "MU usage restriction not enforced"
-    :in-play [:memory {:mod 3}]}
+    :in-play [:memory 3]}
 
    "Mirror"
-   {:in-play [:memory {:mod 2}]
+   {:in-play [:memory 2]
     :events {:successful-run
              {:delayed-completion true
               :req (req (= target :rd))
@@ -601,7 +601,7 @@
                                             (when (< n 3)
                                               (resolve-ability state side (mh (inc n)) card nil)))})]
      {:prevent {:damage [:net :brain]}
-      :in-play [:memory {:mod 3}]
+      :in-play [:memory 3]
       :effect (effect (resolve-ability (mhelper 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
                    :priority 50
@@ -664,7 +664,7 @@
                                           (use-mu (:memoryunits target)))}}}
 
    "Obelus"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :effect (req (gain state :runner :hand-size {:mod (:tag runner)})
                  (add-watch state :obelus
                    (fn [k ref old new]
@@ -725,7 +725,7 @@
                                              (draw :corp 1))}
                :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                          (effect-completed state side eid))}}}]
-     {:in-play [:link 1 :memory {:mod 1}]
+     {:in-play [:link 1 :memory 1]
       :events {:pass-ice {:req (req (and (= (:server run) [:hq]) (= (:position run) 1) ; trigger when last ICE passed
                                          (pos? (count (:deck runner)))))
                           :delayed-completion true
@@ -744,7 +744,7 @@
    {:recurring 1}
 
    "Q-Coherence Chip"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :events (let [e {:req (req (= (last (:zone target)) :program))
                      :effect (effect (trash card)
                                      (system-msg (str "trashes Q-Coherence Chip")))}]
@@ -826,7 +826,7 @@
                                          rr nil))})))}}}
 
    "Reflection"
-   {:in-play [:memory {:mod 1} :link 1]
+   {:in-play [:memory 1 :link 1]
     :events {:jack-out {:msg (msg "force the Corp to reveal " (:title (first (shuffle (:hand corp)))) " from HQ")}}}
 
    "Replicator"
@@ -905,7 +905,7 @@
                               (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Security Nexus"
-   {:in-play [:memory {:mod 1} :link 1]
+   {:in-play [:memory 1 :link 1]
     :abilities [{:req (req (:run @state))
                  :once :per-turn
                  :delayed-completion true
@@ -938,15 +938,15 @@
     :events {:pre-access nil :run-ends nil}}
 
    "Şifr"
-   {:in-play [:memory {:mod 2}]
+   {:in-play [:memory 2]
     :abilities [{:once :per-turn
                  :req (req (rezzed? current-ice))
                  :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
-                 :effect (effect (lose :runner :hand-size {:mod 1})
+                 :effect (effect (lose :runner :hand-size 1)
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
     :events {:runner-turn-begins {:req (req (:sifr-used card))
-                                  :effect (effect (gain :runner :hand-size {:mod 1})
+                                  :effect (effect (gain :runner :hand-size 1)
                                                   (update! (dissoc card :sifr-used)))}
              :pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
                                 :effect (req (let [ice-str (:current-strength target)]
@@ -961,7 +961,7 @@
     :events {:pre-trash {:effect (effect (trash-cost-bonus -1))}}}
 
    "Spinal Modem"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :recurring 2
     :events {:successful-trace {:req (req run)
                                 :effect (effect (system-msg (str "suffers 1 brain damage from Spinal Modem"))
@@ -994,7 +994,7 @@
 
    "The Gauntlet"
    {:implementation "Requires Runner to manually (and honestly) set how many ICE were broken directly protecting HQ"
-    :in-play [:memory {:mod 2}]
+    :in-play [:memory 2]
     :events {:post-successful-run {:req (req (and (= :hq target)
                                                   run))
                                    :silent (req true)
@@ -1015,7 +1015,7 @@
                                     :effect (effect (breaker-strength-bonus 1))}}}
 
    "The Toolbox"
-   {:in-play [:link 2 :memory {:mod 2}]
+   {:in-play [:link 2 :memory 2]
     :recurring 2}
 
    "Titanium Ribs"
@@ -1072,7 +1072,7 @@
                                                              (ability (count (:deck corp)))))}}}}})
 
    "Turntable"
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :events {:agenda-stolen
              {:interactive (req true)
               :req (req (not (empty? (:scored corp))))
@@ -1104,7 +1104,7 @@
                   :label "Draw 1 card (start of turn)"
                   :once :per-turn
                   :effect (effect (draw 1))}]
-     {:in-play [:memory {:mod 1}]
+     {:in-play [:memory 1]
       :flags {:runner-turn-draw true
               :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                         (cons (get-in @state [:runner :identity])
@@ -1133,7 +1133,7 @@
                   :label "Draw 1 card (start of turn)"
                   :once :per-turn
                   :effect (effect (draw 1))}]
-   {:in-play [:memory {:mod 1}]
+   {:in-play [:memory 1]
     :events {:runner-turn-begins ability}
     :abilities [ability]})
 
@@ -1143,6 +1143,6 @@
 
    "Zamba"
    {:implementation "Credit gain is automatic"
-    :in-play [:memory {:mod 2}]
+    :in-play [:memory 2]
     :events {:expose {:effect (effect (gain :runner :credit 1))
                       :msg "gain 1 [Credits]"}}}})

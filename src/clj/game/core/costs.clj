@@ -14,7 +14,7 @@
                                                    ;; mu used is for easier implementation of the 0-mu hosting things
                                                    #(- % value)
                                                    (sub->0 value))))
-    ;; values that expect map, if passed a number use default map
+    ;; values that expect map, if passed a number use default subattr of :mod
     (#{:hand-size :memory} attr)
     (deduct state side [attr {:mod value}])
 

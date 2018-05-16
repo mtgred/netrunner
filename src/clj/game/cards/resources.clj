@@ -219,7 +219,7 @@
                                                                                   (runner-install state side eid c nil)))}}} card nil)))}}})
 
    "Beach Party"
-   {:in-play [:hand-size {:mod 5}]
+   {:in-play [:hand-size 5]
     :events {:runner-turn-begins {:msg "lose [Click]"
                                   :effect (effect (lose :click 1))}}}
 
@@ -288,7 +288,7 @@
                                  (move target :rfg))}]}
 
    "Borrowed Satellite"
-   {:in-play [:hand-size {:mod 1} :link 1]}
+   {:in-play [:hand-size 1 :link 1]}
 
    "Bug Out Bag"
    {:prompt "How many power counters?"
@@ -988,8 +988,8 @@
                                                       (all-active-installed state :runner)))))}
 
     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
-    :effect (effect (lose :corp :hand-size {:mod 1}))
-    :leave-play (effect (gain :corp :hand-size {:mod 1}))
+    :effect (effect (lose :corp :hand-size 1))
+    :leave-play (effect (gain :corp :hand-size 1))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
     :events {:runner-turn-begins ability}})
 
@@ -1385,7 +1385,7 @@
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Public Sympathy"
-   {:in-play [:hand-size {:mod 2}]}
+   {:in-play [:hand-size 2]}
 
    "Rachel Beckman"
    {:in-play [:click 1 :click-per-turn 1]
