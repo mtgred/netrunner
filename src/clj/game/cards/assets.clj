@@ -296,29 +296,30 @@
                                  (tag-runner state side eid 1))))}}}
 
    "Clone Suffrage Movement"
-   (let [ability
-         {:label "Add 1 operation from Archives to HQ"
-          :prompt "Select an operation in Archives to add to HQ"
-          :once :per-turn
-          :show-discard true
-          :choices {:req #(and (is-type? % "Operation")
-                               (= (:zone %) [:discard]))}
-          :msg (msg "add "
-                    (if (:seen target)
-                      (:title target)
-                      "a facedown card")
-                    " to HQ")
-          :effect (effect (move target :hand))}]
-     {:derezzed-events {:runner-turn-ends corp-rez-toast}
-      :events {:corp-turn-begins
-               {:optional
-                {:req (req (and (some #(is-type? % "Operation") (:discard corp))
-                                unprotected))
-                 :prompt "Do you want to add an operation from Archives to HQ?"
-                 :yes-ability {:effect (effect (show-wait-prompt :runner "Corp to use Clone Suffrage Movement")
-                                               (continue-ability ability card nil)
-                                               (clear-wait-prompt :runner))}}}}
-      :abilities [ability]})
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :events {:corp-turn-begins
+             {:optional
+              {:req (req (and unprotected
+                              (some #(is-type? % "Operation") (:discard corp))))
+               :prompt "Do you want to add an operation from Archives to HQ?"
+               :yes-ability
+               {:effect
+                (effect (show-wait-prompt :runner "Corp to use Clone Suffrage Movement")
+                        (continue-ability
+                          {:label "Add 1 operation from Archives to HQ"
+                           :prompt "Select an operation in Archives to add to HQ"
+                           :once :per-turn
+                           :show-discard true
+                           :choices {:req #(and (is-type? % "Operation")
+                                                (= (:zone %) [:discard]))}
+                           :msg (msg "add "
+                                     (if (:seen target)
+                                       (:title target)
+                                       "a facedown card")
+                                     " to HQ")
+                           :effect (effect (move target :hand))}
+                          card nil)
+                        (clear-wait-prompt :runner))}}}}}
 
    "Clyde Van Rite"
    (let [ability {:prompt "Pay 1 [Credits] or trash the top card of the Stack"
