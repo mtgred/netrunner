@@ -40,6 +40,9 @@
               (for [req ["nr.utils"
                          "nr.appstate"
                          "nr.main"
+                         "nr.about"
+                         "nr.auth"
+                         "nr.help"
                          "dev.figwheel"]]
                 (str "goog.require(\"" req "\");"))])
        (list (hiccup/include-js (str "js/app.js?v=" version))
