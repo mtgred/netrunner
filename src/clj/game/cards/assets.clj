@@ -343,14 +343,12 @@
                                  (mill state :runner))))}}}
 
    "Commercial Bankers Group"
-   (let [ability {:req (req unprotected)
-                  :label "Gain 3 [Credits] (start of turn)"
-                  :once :per-turn
-                  :msg "gain 3 [Credits]"
-                  :effect (effect (gain :credit 3))}]
-     {:derezzed-events {:runner-turn-ends corp-rez-toast}
-      :events {:corp-turn-begins ability}
-      :abilities [ability]})
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :events {:corp-turn-begins
+             {:req (req unprotected)
+              :once :per-turn
+              :msg "gain 3[Credits]"
+              :effect (effect (gain :credit 3))}}}
 
    "Constellation Protocol"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
