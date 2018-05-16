@@ -484,37 +484,36 @@
 (deftest clyde-van-rite
   ;; Clyde Van Rite - Multiple scenarios involving Runner not having credits/cards to trash
   (do-game
-    (new-game (default-corp [(qty "Clyde Van Rite" 1)])
-              (default-runner [(qty "Sure Gamble" 3) (qty "Restructure" 2) (qty "John Masanori" 2)]))
+    (new-game (default-corp ["Clyde Van Rite" "Ice Wall"])
+              (default-runner [(qty "Sure Gamble" 7)]))
     (play-from-hand state :corp "Clyde Van Rite" "New remote")
     (let [clyde (get-content state :remote1 0)]
       (core/rez state :corp clyde)
       (take-credits state :corp)
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp in Step 1.2")
-      ;; Runner chooses to pay - has 1+ credit so pays 1 credit
-      (card-ability state :corp clyde 0)
+      ;; Runner has 1+ credit and chooses to pay 1 credit
       (is (= 9 (:credit (get-runner))))
       (is (= 2 (count (:deck (get-runner)))))
-      (prompt-choice :runner "Pay 1 [Credits]")
+      (is (some #{"Pay 1[Credits]" "Trash top card"} (-> (get-runner) :prompt first :choices)))
+      (prompt-choice-partial :runner "Pay")
       (is (= 8 (:credit (get-runner))))
       (is (= 2 (count (:deck (get-runner)))))
-      (core/end-phase-12 state :corp nil)
       (take-credits state :corp)
       (take-credits state :runner)
-      ;; Runner chooses to pay - can't pay 1 credit so trash top card
-      (core/lose state :runner :credit 12)
-      (card-ability state :corp clyde 0)
+      ;; Runner can't pay 1 credit so must trash top card
+      (core/lose state :runner :credit (:credit (get-runner)))
       (is (= 0 (:credit (get-runner))))
       (is (= 2 (count (:deck (get-runner)))))
-      (prompt-choice :runner "Pay 1 [Credits]")
+      (is (some #{"Trash top card"} (-> (get-runner) :prompt first :choices)))
+      (prompt-choice-partial :runner "Trash")
       (is (= 0 (:credit (get-runner))))
       (is (= 1 (count (:deck (get-runner)))))
       (core/end-phase-12 state :corp nil)
       (take-credits state :corp)
       (take-credits state :runner)
-      ;; Runner chooses to trash - has 1+ card in Stack so trash 1 card
-      (card-ability state :corp clyde 0)
+      ;; Runner has 1+ card in Stack and chooses to trash 1 card
+      (is (some #{"Pay 1[Credits]" "Trash top card"} (-> (get-runner) :prompt first :choices)))
       (is (= 4 (:credit (get-runner))))
       (is (= 1 (count (:deck (get-runner)))))
       (prompt-choice :runner "Trash top card")
@@ -523,13 +522,22 @@
       (core/end-phase-12 state :corp nil)
       (take-credits state :corp)
       (take-credits state :runner)
-      ;; Runner chooses to trash - no cards in Stack so pays 1 credit
-      (card-ability state :corp clyde 0)
+      ;; Runner has no cards in Stack so must pay 1 credit
       (is (= 8 (:credit (get-runner))))
       (is (= 0 (count (:deck (get-runner)))))
-      (prompt-choice :runner "Trash top card")
+      (is (some #{"Pay 1[Credits]"} (-> (get-runner) :prompt first :choices)))
+      (prompt-choice-partial :runner "Pay")
       (is (= 7 (:credit (get-runner))))
-      (is (= 0 (count (:deck (get-runner))))))))
+      (is (= 0 (count (:deck (get-runner)))))
+      (take-credits state :corp)
+      (dotimes [_ 4]
+        (core/click-credit state :runner nil))
+      (core/lose state :runner :credit (:credit (get-runner)))
+      (core/end-turn state :runner nil)
+      ;; Runner has no credits and no cards so nothing happens
+      (is (= 0 (:credit (get-runner))))
+      (is (= 0 (count (:deck (get-runner)))))
+      (is (empty? (get-in @state [:corp :prompt]))))))
 
 (deftest commercial-bankers-group
   ;; Commercial Bankers Group - Gain 3 credits at turn start if unprotected by ice

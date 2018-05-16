@@ -322,35 +322,25 @@
                         (clear-wait-prompt :runner))}}}}}
 
    "Clyde Van Rite"
-   (let [ability {:prompt "Pay 1 [Credits] or trash the top card of the Stack"
-                  :once :per-turn
-                  :choices ["Pay 1 [Credits]" "Trash top card"]
-                  :player :runner :msg "make the Runner pay 1 [Credits] or trash the top card of the Stack"
-                  :effect (req (cond
-                                 ;; Pay 1 credit scenarios
-                                 (or (and (= target "Pay 1 [Credits]")
-                                          (pos? (:credit runner)))
-                                     (and (= target "Trash top card")
-                                          (pos? (:credit runner))
-                                          (zero? (count (:deck runner)))))
-                                 (do (pay state side card :credit 1)
-                                     (system-msg state side "pays 1 [Credits]"))
-
-                                 ;; Trash top card scenarios
-                                 (or (and (= target "Trash top card")
-                                          (pos? (count (:deck runner))))
-                                     (and (= target "Pay 1 [Credits]")
-                                          (pos? (count (:deck runner)))
-                                          (zero? (:credit runner))))
-                                 (do (mill state :runner)
-                                     (system-msg state side "trashes the top card of the Stack"))
-
-                                 :else (system-msg state side "cannot pay 1 [Credits] or
-                                 trash the top card of the Stack")))}]
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :flags {:corp-phase-12 (req true)}
-    :events {:corp-turn-begins ability}
-    :abilities [ability]})
+    :events {:corp-turn-begins
+             {:req (req (or (pos? (:credit runner))
+                            (pos? (count (:deck runner)))))
+              :player :runner
+              :prompt "Pay 1[Credits] or trash the top card of the Stack"
+              :once :per-turn
+              :choices (req (concat (when (pos? (:credit runner))
+                                      ["Pay 1[Credits]"])
+                                    (when (pos? (count (:deck runner)))
+                                      ["Trash top card"])))
+              :msg "make the Runner pay 1[Credits] or trash the top card of the Stack"
+              :effect (req (case target
+                             "Pay 1[Credits]"
+                             (do (system-msg state side "pays 1[Credits]")
+                                 (pay state side card :credit 1))
+                             "Trash top card"
+                             (do (system-msg state side "trashes the top card of the Stack")
+                                 (mill state :runner))))}}}
 
    "Commercial Bankers Group"
    (let [ability {:req (req unprotected)
