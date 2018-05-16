@@ -5,11 +5,11 @@
             [nr.ajax :refer [GET]]
             [nr.ws :as ws]
             [nr.appstate :refer [app-state]]
-            [nr.auth :refer [authenticated avatar] :as auth]
+            ;[nr.auth :refer [authenticated avatar] :as auth]
             ;[nr.gameboard :refer [init-game game-state toast launch-game parse-state]]
             ;[nr.cardbrowser :refer [image-url non-game-toast] :as cb]
-            [nr.stats :refer [notnum->zero]]
-            [nr.deckbuilder :refer [format-deck-status-span deck-status-span process-decks load-decks num->percent]]
+            ;[nr.stats :refer [notnum->zero]]
+            ;[nr.deckbuilder :refer [format-deck-status-span deck-status-span process-decks load-decks num->percent]]
             [taoensso.sente  :as sente]))
 
 
