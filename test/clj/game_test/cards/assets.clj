@@ -241,7 +241,6 @@
                 (core/rez state :corp bwc)
                 (card-ability state :corp bwc 0)
                 (prompt-select :corp (find-card card (:hand (get-corp))))
-                (prn (->> (get-corp) :prompt first :choices))
                 (prompt-choice :corp "New remote")
                 (is (= 0 (count (:hand (get-corp)))))
                 (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now"))))]
@@ -266,6 +265,30 @@
       (prompt-choice-partial :runner "Pay")
       (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
       (is (= 1 (count (:scored (get-runner))))))))
+
+(deftest breached-dome
+  ;; Breached Dome
+  (do-game
+    (new-game (default-corp [(qty "Breached Dome" 10)])
+              (default-runner [(qty "Sure Gamble" 10)]))
+    (trash-from-hand state :corp "Breached Dome")
+    (play-from-hand state :corp "Breached Dome" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "R&D")
+    (prompt-choice :runner "No action")
+    (is (= 4 (count (:hand (get-runner)))) "Runner took 1 meat damage")
+    (is (= 4 (count (:deck (get-runner)))) "Runner milled 1 card")
+    (is (= 2 (count (:discard (get-runner)))) "Runner's discard grew by 2")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "No action")
+    (is (= 3 (count (:hand (get-runner)))) "Runner took 1 meat damage")
+    (is (= 3 (count (:deck (get-runner)))) "Runner milled 1 card")
+    (is (= 4 (count (:discard (get-runner)))) "Runner's discard grew by 2")
+    (run-empty-server state "Archives")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 meat damage")
+    (is (= 2 (count (:deck (get-runner)))) "Runner milled 1 card")
+    (is (= 6 (count (:discard (get-runner)))) "Runner's discard grew by 2")))
+
 
 (deftest brain-taping-warehouse
   ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ICE by 1 for each unspent Runner click
