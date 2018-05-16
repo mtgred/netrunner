@@ -557,89 +557,86 @@
       (is (= 11 (:credit (get-corp))) "Bankers Group didn't pay credits"))))
 
 (deftest daily-business-show
-  ;; Daily Business Show - Full test
-  (do-game
-    (new-game (default-corp [(qty "Daily Business Show" 3) (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
-                             (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
-              (default-runner))
-    (starting-hand state :corp ["Daily Business Show" "Daily Business Show" "Daily Business Show" "Hedge Fund"])
-    (core/gain state :corp :credit 1)
-    (play-from-hand state :corp "Daily Business Show" "New remote")
-    (play-from-hand state :corp "Daily Business Show" "New remote")
-    (play-from-hand state :corp "Daily Business Show" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (core/rez state :corp (get-content state :remote2 0))
-    (core/rez state :corp (get-content state :remote3 0))
-    (take-credits state :corp)
-    (is (= 1 (count (:hand (get-corp)))))
-    (take-credits state :runner)
-    (is (= 5 (count (:hand (get-corp)))) "Drew an additional 3 cards with 3 DBS")
-    (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
-    (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp)))) ;invalid target
-    (prompt-select :corp (find-card "Resistor" (:hand (get-corp))))
-    (prompt-select :corp (find-card "Product Placement" (:hand (get-corp))))
-    (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
-    (is (= 2 (count (:hand (get-corp)))))
-    (is (= "Hedge Fund" (:title (first (:hand (get-corp))))))
-    (is (= "Jackson Howard" (:title (second (:hand (get-corp))))))
-    (is (= "Resistor" (:title (last (:deck (get-corp))))) "Resistor last card in deck")
-    (is (= "Product Placement" (:title (last (butlast (:deck (get-corp))))))
-        "Product Placement second last card in deck")
-    (is (= "Breaking News" (:title (last (butlast (butlast (:deck (get-corp)))))))
-        "Breaking News third last card in deck")))
-
-(deftest daily-business-show-sensie-actors-union
-  ;; Daily Business Show - Sensie Actors Union interaction
-  (do-game
-    (new-game (default-corp [(qty "Daily Business Show" 1) (qty "Sensie Actors Union" 2)
-                             (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
-                             (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
-              (default-runner))
-    (starting-hand state :corp ["Daily Business Show" "Sensie Actors Union" "Sensie Actors Union" "Hedge Fund"])
-    (play-from-hand state :corp "Daily Business Show" "New remote")
-    (play-from-hand state :corp "Sensie Actors Union" "New remote")
-    (play-from-hand state :corp "Sensie Actors Union" "New remote")
-    (let [sensie1 (get-content state :remote2 0)
-          sensie2 (get-content state :remote3 0)]
+  ;; Daily Business Show
+  (testing "Full test"
+    (do-game
+      (new-game (default-corp [(qty "Daily Business Show" 3) (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
+                               (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
+                (default-runner))
+      (starting-hand state :corp ["Daily Business Show" "Daily Business Show" "Daily Business Show" "Hedge Fund"])
+      (core/gain state :corp :credit 1)
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (play-from-hand state :corp "Daily Business Show" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
-      (core/rez state :corp sensie1)
-      (core/rez state :corp sensie2)
+      (core/rez state :corp (get-content state :remote2 0))
+      (core/rez state :corp (get-content state :remote3 0))
       (take-credits state :corp)
-      (take-credits state :runner)
-      ;; Use first Sensie
       (is (= 1 (count (:hand (get-corp)))))
-      (card-ability state :corp sensie1 0)
-      (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, +1 with DBS")
-      (prompt-select :corp (find-card "Resistor" (:hand (get-corp)))) ; DBS target
-      (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; Sensie target
-      (is (= 3 (count (:hand (get-corp)))))
-      (is (= "Hedge Fund" (:title (last (:deck (get-corp))))) "Hedge Fund last card in deck")
-      (is (= "Resistor" (:title (last (butlast (:deck (get-corp))))))
-          "Resistor second last card in deck")
-      ;; Try to use first Sensie again
-      (card-ability state :corp sensie1 0)
-      (is (empty? (get-in @state [:corp :prompt])) "Sensie didn't activate")
-      (is (= 3 (count (:hand (get-corp)))))
-      ;; Use second Sensie
-      (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
+      (take-credits state :runner)
+      (is (= 5 (count (:hand (get-corp)))) "Drew an additional 3 cards with 3 DBS")
+      (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
+      (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp)))) ;invalid target
+      (prompt-select :corp (find-card "Resistor" (:hand (get-corp))))
+      (prompt-select :corp (find-card "Product Placement" (:hand (get-corp))))
+      (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
       (is (= 2 (count (:hand (get-corp)))))
-      (card-ability state :corp sensie2 0)
-      (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, DBS didn't activate")
-      (prompt-select :corp (find-card "Breaking News" (:hand (get-corp)))) ; Sensie target
-      (is (= "Breaking News" (:title (last (:deck (get-corp))))) "Breaking News last card in deck"))))
-
-(deftest daily-business-show-manual-draw
-  ;; Daily Business Show - Should not trigger if rezzed after mandatory draw
-  (do-game
-    (new-game (default-corp [(qty "Daily Business Show" 3) (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
-                             (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
-              (default-runner))
-    (starting-hand state :corp ["Daily Business Show"])
-    (play-from-hand state :corp "Daily Business Show" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (core/draw state :corp)
-    (is (= 1 (count (:hand (get-corp)))) "DBS did not fire on manual draw")
-    (is (empty? (:prompt (get-corp))) "Corp is not being asked to bury a card with DBS")    ))
+      (is (= "Hedge Fund" (:title (first (:hand (get-corp))))))
+      (is (= "Jackson Howard" (:title (second (:hand (get-corp))))))
+      (is (= "Resistor" (:title (last (:deck (get-corp))))) "Resistor last card in deck")
+      (is (= "Product Placement" (:title (last (butlast (:deck (get-corp))))))
+          "Product Placement second last card in deck")
+      (is (= "Breaking News" (:title (last (butlast (butlast (:deck (get-corp)))))))
+          "Breaking News third last card in deck")))
+  (testing "Sensie Actors Union interaction"
+    (do-game
+      (new-game (default-corp [(qty "Daily Business Show" 1) (qty "Sensie Actors Union" 2)
+                               (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
+                               (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
+                (default-runner))
+      (starting-hand state :corp ["Daily Business Show" "Sensie Actors Union" "Sensie Actors Union" "Hedge Fund"])
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (play-from-hand state :corp "Sensie Actors Union" "New remote")
+      (play-from-hand state :corp "Sensie Actors Union" "New remote")
+      (let [sensie1 (get-content state :remote2 0)
+            sensie2 (get-content state :remote3 0)]
+        (core/rez state :corp (get-content state :remote1 0))
+        (core/rez state :corp sensie1)
+        (core/rez state :corp sensie2)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        ;; Use first Sensie
+        (is (= 1 (count (:hand (get-corp)))))
+        (card-ability state :corp sensie1 0)
+        (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, +1 with DBS")
+        (prompt-select :corp (find-card "Resistor" (:hand (get-corp)))) ; DBS target
+        (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; Sensie target
+        (is (= 3 (count (:hand (get-corp)))))
+        (is (= "Hedge Fund" (:title (last (:deck (get-corp))))) "Hedge Fund last card in deck")
+        (is (= "Resistor" (:title (last (butlast (:deck (get-corp))))))
+            "Resistor second last card in deck")
+        ;; Try to use first Sensie again
+        (card-ability state :corp sensie1 0)
+        (is (empty? (get-in @state [:corp :prompt])) "Sensie didn't activate")
+        (is (= 3 (count (:hand (get-corp)))))
+        ;; Use second Sensie
+        (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
+        (is (= 2 (count (:hand (get-corp)))))
+        (card-ability state :corp sensie2 0)
+        (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, DBS didn't activate")
+        (prompt-select :corp (find-card "Breaking News" (:hand (get-corp)))) ; Sensie target
+        (is (= "Breaking News" (:title (last (:deck (get-corp))))) "Breaking News last card in deck"))))
+  (testing "Should not trigger if rezzed after mandatory draw"
+    (do-game
+      (new-game (default-corp [(qty "Daily Business Show" 3) (qty "Hedge Fund" 1) (qty "Jackson Howard" 1)
+                               (qty "Resistor" 1) (qty "Product Placement" 1) (qty "Breaking News" 1)])
+                (default-runner))
+      (starting-hand state :corp ["Daily Business Show"])
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (core/draw state :corp)
+      (is (= 1 (count (:hand (get-corp)))) "DBS did not fire on manual draw")
+      (is (empty? (:prompt (get-corp))) "Corp is not being asked to bury a card with DBS"))))
 
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged
