@@ -276,16 +276,24 @@
                                                 (system-msg (str "adds 2[Credits] to C.I. Fund")))}}}
 
    "City Surveillance"
-   {:events {:runner-turn-begins
-             {:prompt "Pay 1 [Credits] or take 1 tag" :choices ["Pay 1 [Credits]" "Take 1 tag"]
-              :player :runner :msg "make the Runner pay 1 [Credits] or take 1 tag"
+   {:derezzed-events {:corp-turn-ends corp-rez-toast}
+    :flags {:runner-phase-12 (req (> (:credit runner) 0))}
+    :events {:runner-turn-begins
+             {:player :runner
+              :prompt "Pay 1[Credits] or take 1 tag"
+              :choices (req [(when (> (:credit runner) 0)
+                              "Pay 1[Credits]")
+                             "Take 1 tag"])
+              :msg "make the Runner pay 1[Credits] or take 1 tag"
               :delayed-completion true
-              :effect (req (if-not (and (= target "Pay 1 [Credits]")
-                                        (pay state side card :credit 1)
-                                        (effect-completed state side eid))
-                             (do (tag-runner state side eid 1)
-                                 (system-msg state side "takes 1 tag"))
-                             (system-msg state side "pays 1 [Credits]")))}}}
+              :effect (req (case target
+                             "Pay 1[Credits]"
+                             (do (system-msg state :runner "pays 1[Credits]")
+                                 (pay state :runner card :credit 1)
+                                 (effect-completed state side eid))
+
+                             (do (system-msg state :runner "takes 1 tag")
+                                 (tag-runner state side eid 1))))}}}
 
    "Clone Suffrage Movement"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}

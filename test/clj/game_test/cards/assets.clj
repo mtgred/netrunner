@@ -446,14 +446,17 @@
     (let [surv (get-content state :remote1 0)]
       (core/rez state :corp surv)
       (take-credits state :corp)
-      (prompt-choice :runner "Pay 1 [Credits]")
+      (is (some #{"Pay 1[Credits]" "Take 1 tag"} (-> (get-runner) :prompt first :choices)))
+      (prompt-choice :runner "Pay 1[Credits]")
       (is (= 4 (:credit (get-runner))) "Runner paid 1 credit")
       (is (= 0 (:tag (get-runner))) "Runner didn't take a tag")
       (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")
       (take-credits state :runner)
+      (core/lose state :runner :credit (:credit (get-runner))) ;; Set Runner's credits to 0 so they can't choose to pay
       (take-credits state :corp)
+      (is (some #{"Take 1 tag"} (-> (get-runner) :prompt first :choices)))
       (prompt-choice :runner "Take 1 tag")
-      (is (= 8 (:credit (get-runner))) "Runner paid no credits")
+      (is (= 0 (:credit (get-runner))) "Runner paid no credits")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))
       (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")))
 
