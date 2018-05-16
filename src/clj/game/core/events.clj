@@ -93,7 +93,7 @@
                 (if (or (= 1 (count handlers)) (empty? interactive) (= 1 (count non-silent)))
                   (let [to-resolve
                         (if (= 1 (count non-silent)) (first non-silent) (first handlers))
-                        ab (dissoc (:ability to-resolve) :req)
+                        ability-to-resolve (dissoc (:ability to-resolve) :req)
                         c (:card to-resolve)
                         others (if (= 1 (count non-silent))
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
@@ -101,7 +101,7 @@
                     (if-let [the-card (get-card state c)]
                       {:delayed-completion true
                        :effect (req (when-completed (resolve-ability state (to-keyword (:side the-card))
-                                                                     ab
+                                                                     ability-to-resolve
                                                                      the-card event-targets)
                                                     (if (should-continue state handlers)
                                                       (continue-ability state side
@@ -115,10 +115,11 @@
                    :choices titles
                    :delayed-completion true
                    :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
+                                      ability-to-resolve (dissoc (:ability to-resolve) :req)
                                       the-card (get-card state (:card to-resolve))]
                                   (when-completed
                                     (resolve-ability state (to-keyword (:side the-card))
-                                                     (:ability to-resolve) the-card event-targets)
+                                                     ability-to-resolve the-card event-targets)
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler
