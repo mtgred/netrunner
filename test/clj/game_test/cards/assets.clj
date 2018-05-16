@@ -289,7 +289,6 @@
     (is (= 2 (count (:deck (get-runner)))) "Runner milled 1 card")
     (is (= 6 (count (:discard (get-runner)))) "Runner's discard grew by 2")))
 
-
 (deftest brain-taping-warehouse
   ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ICE by 1 for each unspent Runner click
   (do-game
@@ -320,7 +319,7 @@
               (default-runner))
     (play-from-hand state :corp "Broadcast Square" "New remote")
     (core/rez state :corp (get-content state :remote1 0))
-    (is (= 3 (:credit (get-corp))) "Corp should have spent 2 credits: (= 3 (- 5 2))")
+    (is (= 3 (:credit (get-corp))) "Corp should have spent 2 credits")
     (play-from-hand state :corp "Profiteering" "New remote")
     (score-agenda state :corp (get-content state :remote2 0))
     (prompt-choice :corp "3")  ;; Take 3 bad publicity from Profiteering, gain 15 (if bad publicity actually taken)
@@ -328,14 +327,14 @@
     (prompt-choice :runner 0)  ;; Runner doesn't pump trace; loses trace
     (is (= 1 (:agenda-point (get-corp))) "Corp should score a 1-point agenda")
     (is (= 0 (:bad-publicity (get-corp))) "Corp should gain 0 bad publicity")
-    (is (= 3 (:credit (get-corp))) "Corp should gain 0 credits: (= 3 (+ 3 0))")
+    (is (= 3 (:credit (get-corp))) "Corp should gain 0 credits")
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (score-agenda state :corp (get-content state :remote3 0))
     (prompt-choice :corp 0)  ;; Corp doesn't pump trace, base 3
     (prompt-choice :runner 3)  ;; Runner pumps trace; wins trace
-    (is (= 2 (:agenda-point (get-corp))) "Corp should score a 1-point agenda: (= 2 (+ 1 1))")
+    (is (= 2 (:agenda-point (get-corp))) "Corp should score a 1-point agenda")
     (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from failed trace")
-    (is (= 10 (:credit (get-corp))) "Corp should gain 7 credits: (= 10 (+ 3 7))")))
+    (is (= 10 (:credit (get-corp))) "Corp should gain 7 credits")))
 
 (deftest capital-investors
   ;; Capital Investors - Click for 2 credits
@@ -349,6 +348,21 @@
       (card-ability state :corp cap 0)
       (is (= 0 (:click (get-corp))) "Used twice, spent 2 clicks")
       (is (= 7 (:credit (get-corp))) "Used twice, gained 4 credits"))))
+
+(deftest cerebral-overwriter
+  ;; Cerebral Overwriter
+  (do-game
+    (new-game (default-corp ["Cerebral Overwriter"])
+              (default-runner))
+    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+    (let [co (get-content state :remote1 0)]
+      (core/advance state :corp {:card (refresh co)})
+      (core/advance state :corp {:card (refresh co)})
+      (is (= 2 (get-in (refresh co) [:advance-counter])))
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (prompt-choice :corp "Yes") ; choose to do the optional ability
+      (is (= 2 (:brain-damage (get-runner))) "Runner takes 2 brain damage"))))
 
 (deftest chairman-hiro
   ;; Chairman Hiro - Reduce Runner max hand size; add as 2 agenda points if Runner trashes him

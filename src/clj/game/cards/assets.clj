@@ -216,7 +216,8 @@
 
    "Brain-Taping Warehouse"
    {:events {:pre-rez
-             {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
+             {:req (req (and (ice? target)
+                             (has-subtype? target "Bioroid")))
               :effect (effect (rez-cost-bonus (- (:click runner))))}}}
 
    "Broadcast Square"
@@ -226,12 +227,14 @@
                                          :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}
 
    "Capital Investors"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+   {:abilities [{:cost [:click 1]
+                 :msg "gain 2 [Credits]"
+                 :effect (effect (gain :credit 2))}]}
 
    "Cerebral Overwriter"
-   (advance-ambush 3 {:req (req (< 0 (:advance-counter (get-card state card) 0)))
+   (advance-ambush 3 {:delayed-completion true
+                      :req (req (< 0 (:advance-counter (get-card state card) 0)))
                       :msg (msg "do " (:advance-counter (get-card state card) 0) " brain damage")
-                      :delayed-completion true
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
