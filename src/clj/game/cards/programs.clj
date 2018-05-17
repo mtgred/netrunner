@@ -567,7 +567,7 @@
                                           (lose :memory (:memoryunits target)))}}}
 
    "LLDS Energy Regulator"
-   {:interactions {:prevent [{:type [:trash-hardware]
+   {:interactions {:prevent [{:type #{:trash-hardware}
                               :req (req true)}]}
     :abilities [{:cost [:credit 3]
                  :msg "prevent a hardware from being trashed"
@@ -621,7 +621,7 @@
                                     card nil))}}}
 
    "Net Shield"
-   {:interactions {:prevent [{:type [:net]
+   {:interactions {:prevent [{:type #{:net}
                               :req (req true)}]}
     :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
                  :effect (effect (damage-prevent :net 1))}]}

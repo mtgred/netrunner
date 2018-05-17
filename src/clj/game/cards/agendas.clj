@@ -633,7 +633,7 @@
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
-   {:interactions {:prevent [{:type [:jack-out]
+   {:interactions {:prevent [{:type #{:jack-out}
                               :req (req (-> card :counter :power pos?))}]}
     :silent (req true)
     :effect (effect (add-counter card :power 2))
