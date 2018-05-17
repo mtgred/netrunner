@@ -173,8 +173,9 @@
                                     :choices ["OK"]
                                     :delayed-completion true
                                     :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
-                                                 (when (get-card state prev-card) ; make sure they didn't trash the card themselves
-                                                   (trash state :corp eid prev-card {:keep-server-alive true})))}
+                                                 (if (get-card state prev-card) ; make sure they didn't trash the card themselves
+                                                   (trash state :corp eid prev-card {:keep-server-alive true})
+                                                   (effect-completed state :corp eid)))}
                        nil nil)
       (effect-completed state side eid))))
 
@@ -202,6 +203,8 @@
     (concat hosts (server-list state card))))
 
 (defn- corp-install-continue
+  "Used by corp-install to actually install the card, rez it if it's supposed to be installed
+  rezzed, and calls :corp-install in an awaitable fashion."
   [state side eid card server {:keys [install-state host-card] :as args} slot cost-str]
   (let [cdef (card-def card)
         dest-zone (get-in @state (cons :corp slot))
@@ -257,6 +260,7 @@
                             (register-events state side dre moved-card))))))))
 
 (defn- corp-install-pay
+  "Used by corp-install to pay install costs, code continues in corp-install-continue"
   [state side eid card server {:keys [extra-cost no-install-cost host-card action] :as args} slot]
   (let [dest-zone (get-in @state (cons :corp slot))
         ice-cost (if (and (ice? card)
@@ -264,18 +268,28 @@
                           (not (ignore-install-cost? state side)))
                    (count dest-zone) 0)
         all-cost (concat extra-cost [:credit ice-cost])
-        end-cost (if no-install-cost 0 (install-cost state side card all-cost))]
-    (if-let [cost-str (and (corp-can-install? state side card dest-zone)
-                           (not (install-locked? state :corp))
-                           (pay state side card end-cost {:action action}))]
-      (if (= server "New remote")
-        (when-completed (trigger-event-sync state side :server-created card)
-                        (corp-install-continue state side eid card server args slot cost-str))
-        (corp-install-continue state side eid card server args slot cost-str))
-      (do (clear-install-cost-bonus state side)
-          (effect-completed state side eid card)))))
+        end-cost (if no-install-cost 0 (install-cost state side card all-cost))
+        end-fn #((clear-install-cost-bonus state side)
+                 (effect-completed state side eid card))]
+    (if (and (corp-can-install? state side card dest-zone)
+             (not (install-locked? state :corp)))
+      (when-completed (pay-sync state side card end-cost {:action action})
+                      (if-let [cost-str async-result]
+                        (if (= server "New remote")
+                          (when-completed (trigger-event-sync state side :server-created card)
+                                          (corp-install-continue state side eid card server args slot cost-str))
+                          (corp-install-continue state side eid card server args slot cost-str))
+                        end-fn))
+      end-fn)))
 
 (defn corp-install
+  "Installs a card in the chosen server. If server is nil, asks for server to install in.
+  The args input takes the following values:
+  :host-card - Card to host on
+  :extra-cost - Extra install costs
+  :no-install-cost - true if install costs should be ignored
+  :action - What type of action installed the card
+  :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :faceup"
   ([state side card server] (corp-install state side (make-eid state) card server nil))
   ([state side card server args] (corp-install state side (make-eid state) card server args))
   ([state side eid card server {:keys [host-card] :as args}]
