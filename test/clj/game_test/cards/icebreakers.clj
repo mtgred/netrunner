@@ -486,6 +486,18 @@
     (run-on state "Archives")
     (is (empty? (:prompt (get-runner))) "No prompt to install second Paperclip")))
 
+(deftest paperclip-facedown
+  ;; Paperclip - firing on facedown ice shouldn't crash
+  (do-game
+    (new-game (default-corp [(qty "Vanilla" 1)])
+              (default-runner [(qty "Paperclip" 1)]))
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paperclip")
+    (run-on state "Archives")
+    (card-ability state :runner (get-program state 0) 0)
+    (prompt-choice :runner 0)))
+
 (deftest paperclip-multiple
   ;; Paperclip - do not show a second install prompt if user said No to first, when multiple are in heap
   (do-game

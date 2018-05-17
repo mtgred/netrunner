@@ -1088,6 +1088,17 @@
       (prompt-choice :corp "Done")
       (is (= 8 (:credit (get-runner))) "A prevented expose does not"))))
 
+(deftest feint
+  ;; Feint - bypass 2 pieces of ice on HQ, but access no cards
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Feint" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feint")
+    (run-successful state)
+    (prompt-choice :runner "Ok")
+    (is (not (:run @state)) "Run is over")))
+
 (deftest frantic-coding-install
   ;; Frantic Coding - Install 1 program, other 9 cards are trashed
   (do-game

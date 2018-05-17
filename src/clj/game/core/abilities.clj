@@ -501,7 +501,7 @@
   (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
   (let [bonus (get-in @state [:bonus :trace] 0)
         base (if (fn? base) (base state side (make-eid state) card nil) base)
-        total (+ base boost bonus)
+        total ((fnil + 0 0 0) base boost bonus)
         link (get-in @state [:runner :link] 0)]
     (system-msg state :corp (str "uses " (:title card)
                                  " to initiate a trace with strength " total
@@ -544,14 +544,16 @@
                        #(init-trace state :corp card trace %) {:priority (or priority 2) :base base-trace :bonus bonus})))
 
 (defn rfg-and-shuffle-rd-effect
-  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n))
-  ([state side eid card n]
+  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
+  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
+  ([state side eid card n all?]
    (move state side card :rfg)
    (continue-ability state side
                     {:show-discard  true
                      :choices {:max n
                                :req #(and (= (:side %) "Corp")
-                                          (= (:zone %) [:discard]))}
+                                          (= (:zone %) [:discard]))
+                               :all all?}
                      :msg (msg "shuffle "
                                (let [seen (filter :seen targets)
                                      m (count (filter #(not (:seen %)) targets))]

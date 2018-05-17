@@ -34,6 +34,10 @@
                    (assoc :username username))
           status (decks/calculate-deck-status check-deck)
           deck (assoc deck :status status)]
+      (when (nil? (:identity check-deck))
+        (println "NIL IDENTITY WHEN SAVING DECK")
+        (println "Deck:" deck)
+        (println "-----------------------------"))
       (if-let [deck-id (:_id deck)]
         (if (:identity deck)
           (do (mc/update db "decks"

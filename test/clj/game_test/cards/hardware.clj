@@ -647,8 +647,8 @@
     (play-from-hand state :corp "Crisium Grid" "R&D")
     (core/rez state :corp (get-content state :rd 0))
     (take-credits state :corp)
-
     (starting-hand state :runner ["Obelus"])
+    (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Obelus")
     (is (empty? (:hand (get-runner))) "No cards in hand")
     (run-empty-server state "R&D")
@@ -657,7 +657,6 @@
     (prompt-choice-partial :runner "Card")
     (prompt-choice-partial :runner "No")
     (is (empty? (:hand (get-runner))) "Crisium Grid blocked successful run")
-
     (run-empty-server state "R&D")
     (prompt-choice-partial :runner "No")
     (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))

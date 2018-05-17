@@ -702,6 +702,22 @@
       (is (= 1 (count (:discard (get-corp)))) "Agenda trashed")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
+(deftest film-critic-mca-informant
+  ;; Film Critic - required hosted cards to be an agenda before firing ability
+  (do-game
+    (new-game (default-corp [(qty "MCA Informant" 1)])
+              (default-runner [(qty "Film Critic" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (let [fc (first (get-in @state [:runner :rig :resource]))]
+      (take-credits state :runner)
+      (play-from-hand state :corp "MCA Informant")
+      (prompt-select :corp fc)
+      (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant hosted on FC")
+      (take-credits state :corp)
+      (card-ability state :runner fc 0)
+      (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant still hosted on FC"))))
+
 (deftest find-the-truth
   ;; Find the Truth
   (testing "Basic test - On successful run see the top card from R&D before access"
@@ -786,6 +802,21 @@
       (prompt-choice :runner "Steal")
       (prompt-choice :runner "Card from hand")
       (prompt-choice :runner "Steal"))))
+
+(deftest gang-sign-correct-prompts
+  ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
+  (do-game
+    (new-game (default-corp ["Hostile Takeover" "Snare!"])
+              (default-runner ["Gang Sign"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gang Sign")
+    (take-credits state :runner)
+    (play-and-score state "Hostile Takeover")
+    (prompt-choice :runner "Card from hand")
+    ;; Runner has "wait for Snare, wait for on-access" prompts.
+    (is (= 2 (count (:prompt (get-runner)))) "Runner only has the Waiting prompt, not Snare!'s pay-prompt")
+    ;; Core has "pay for Snare, wait for agenda-scored" prompts.
+    (is (= 2 (count (:prompt (get-corp)))) "Corp has the prompt to use Snare!")))
 
 (deftest gene-conditioning-shoppe
   ;; Gene Conditioning Shoppe - set :genetics-trigger-twice flag
@@ -953,6 +984,29 @@
       (is (= 14 (:credit (get-runner))) "Runner gains 2 credits")
       (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
 
+(deftest jackpot-film-critic
+  ;; Jackpot! should fire when moving agendas from Film Critic to scored area
+  (do-game
+    (new-game (default-corp [(qty "Project Vitruvius" 1)])
+              (default-runner [(qty "Jackpot!" 1) (qty "Film Critic" 1)]))
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (play-from-hand state :runner "Jackpot!")
+    (let [fc (get-resource state 0)
+          jak (get-resource state 1)]
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Yes")
+      (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner 1)
+      (is (= 1 (count (:scored (get-runner)))) "Moved agenda to scored area")
+      (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed")
+      (is (empty? (:hosted (refresh fc))) "Removed agenda hosted on FC"))))
+
 (deftest jackpot-hiro
   ;; Jackpot! - should fire when trashing Chairman Hiro
   (do-game
@@ -1004,7 +1058,7 @@
     (play-from-hand state :corp "Crisium Grid" "HQ")
     (core/rez state :corp (get-content state :hq 0))
     (take-credits state :corp)
-    (core/gain state :runner :click 2)
+    (core/gain state :runner :click 2 :credit 2)
     (play-from-hand state :runner "John Masanori")
     (is (= 4 (count (:hand (get-runner)))))
     (run-empty-server state "HQ")
