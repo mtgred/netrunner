@@ -828,6 +828,21 @@
         "Director Haas added to Runner score area")
     (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points")))
 
+(deftest docklands-crackdown
+  ;; Docklands Crackdown
+  (letfn [(dlcd-test [number]
+            (do-game
+              (new-game (default-corp ["Docklands Crackdown"])
+                        (default-runner ["Cache"]))
+              (play-from-hand state :corp "Docklands Crackdown" "New remote")
+              (let [dlcd (get-content state :remote1 0)]
+                (core/rez state :corp dlcd)
+                (core/add-counter state :corp dlcd :power number)
+                (take-credits state :corp)
+                (play-from-hand state :runner "Cache")
+                (is (= (- 4 number) (:credit (get-runner)))))))]
+    (doall (map dlcd-test [0 1 2 3 4]))))
+
 (deftest early-premiere
   ;; Early Premiere - Pay 1c at start of turn to place an advancement on a card in a server
   (do-game
