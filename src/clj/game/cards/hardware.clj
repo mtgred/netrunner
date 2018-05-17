@@ -563,7 +563,7 @@
                  :label "Move a previously accessed card to bottom of R&D"
                  :effect (effect (resolve-ability
                                    {:delayed-completion true
-                                    ; only allow targeting cards that were accessed this turn
+                                    ;; only allow targeting cards that were accessed this turn
                                     :choices {:req #(some (fn [accessed-card]
                                                             (= (:cid %) (:cid accessed-card)))
                                                           (map first (turn-events state side :access)))}
