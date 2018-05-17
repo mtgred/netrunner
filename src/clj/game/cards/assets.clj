@@ -114,8 +114,9 @@
                                                               (str "pays " target " [Credits] to prevent "
                                                                    (quantify prevented "random card")
                                                                    " in HQ from being shuffled into R&D")))
-                                                (shuffle-into-deck state :corp :hand))
-                                              (clear-wait-prompt state :corp))} card nil))}]}
+                                                (shuffle-into-deck state :corp :hand)))
+                                 :end-effect (effect (clear-wait-prompt state :corp))}
+                                card nil))}]}
 
    "Alix T4LB07"
    {:events {:corp-install {:effect (effect (add-counter card :power 1))}}
@@ -149,7 +150,8 @@
    "Anson Rose"
    (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
                   :once :per-turn
-                  :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
+                  :effect (effect (system-msg (str "places 1 advancement counter on Anson Rose"))
+                                  (add-prop card :advance-counter 1 {:placed true}))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
       :events {:corp-turn-begins ability
@@ -159,18 +161,19 @@
                      :effect (req (let [ice (get-card state target)
                                         icename (:title ice)]
                                     (show-wait-prompt state :runner "Corp to use Anson Rose")
-                                    (continue-ability state side
+                                    (continue-ability
+                                      state side
                                       {:optional
                                        {:prompt (msg "Move advancement tokens from Anson Rose to " icename "?")
-                                        :yes-ability {:prompt "Choose how many advancement tokens to remove from Anson Rose"
-                                                      :choices {:number (req (:advance-counter card))}
-                                                      :effect (effect (clear-wait-prompt :runner)
-                                                                      (add-prop :corp ice :advance-counter target {:placed true})
-                                                                      (add-prop :corp card :advance-counter (- target) {:placed true})
-                                                                      (system-msg (str "uses Anson Rose to move " target " advancement tokens to "
-                                                                                       (card-str state ice))))}
-                                        :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                                     card nil)))}}
+                                        :yes-ability
+                                        {:prompt "Choose how many advancement tokens to remove from Anson Rose"
+                                         :choices {:number (req (:advance-counter card))}
+                                         :effect (effect (add-prop :corp ice :advance-counter target {:placed true})
+                                                         (add-prop :corp card :advance-counter (- target) {:placed true})
+                                                         (system-msg (str "uses Anson Rose to move " target
+                                                                          " advancement tokens to " (card-str state ice))))
+                                         :end-effect {:effect (effect (clear-wait-prompt :runner))}}}}
+                                      card nil)))}}
       :abilities [ability]})
 
    "Aryabhata Tech"
@@ -297,103 +300,100 @@
 
    "Clone Suffrage Movement"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins
-             {:optional
-              {:req (req (and unprotected
-                              (some #(is-type? % "Operation") (:discard corp))))
-               :prompt "Do you want to add an operation from Archives to HQ?"
-               :yes-ability
-               {:effect
-                (effect (show-wait-prompt :runner "Corp to use Clone Suffrage Movement")
-                        (continue-ability
-                          {:label "Add 1 operation from Archives to HQ"
-                           :prompt "Select an operation in Archives to add to HQ"
-                           :once :per-turn
-                           :show-discard true
-                           :choices {:req #(and (is-type? % "Operation")
-                                                (= (:zone %) [:discard]))}
-                           :msg (msg "add "
-                                     (if (:seen target)
-                                       (:title target)
-                                       "a facedown card")
-                                     " to HQ")
-                           :effect (effect (move target :hand))}
-                          card nil)
-                        (clear-wait-prompt :runner))}}}}}
+    :flags {:corp-phase-12 (req (and (some #(is-type? % "Operation") (:discard corp))
+                                     unprotected))}
+    :abilities [{:label "Add 1 operation from Archives to HQ"
+                 :effect (effect (show-wait-prompt :runner "Corp to use Clone Suffrage Movement")
+                                 (continue-ability
+                                   {:prompt "Select an operation in Archives to add to HQ"
+                                    :once :per-turn
+                                    :show-discard true
+                                    :choices {:req #(and (is-type? % "Operation")
+                                                         (= (:zone %) [:discard]))}
+                                    :msg (msg "add "
+                                              (if (:seen target)
+                                                (:title target)
+                                                "a facedown card")
+                                              " to HQ")
+                                    :effect (effect (move target :hand))
+                                    :end-effect {:effect (effect (clear-wait-prompt :runner))}}
+                                   card nil))}]}
 
    "Clyde Van Rite"
-   {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins
-             {:req (req (or (pos? (:credit runner))
-                            (pos? (count (:deck runner)))))
-              :player :runner
-              :prompt "Pay 1[Credits] or trash the top card of the Stack"
-              :once :per-turn
-              :choices (req (concat (when (pos? (:credit runner))
-                                      ["Pay 1[Credits]"])
-                                    (when (pos? (count (:deck runner)))
-                                      ["Trash top card"])))
-              :msg "make the Runner pay 1[Credits] or trash the top card of the Stack"
-              :effect (req (case target
-                             "Pay 1[Credits]"
-                             (do (system-msg state side "pays 1[Credits]")
-                                 (pay state side card :credit 1))
-                             "Trash top card"
-                             (do (system-msg state side "trashes the top card of the Stack")
-                                 (mill state :runner))))}}}
+   (let [ability {:req (req (or (pos? (:credit runner))
+                                (pos? (count (:deck runner)))))
+                  :player :runner
+                  :once :per-turn
+                  :prompt "Pay 1[Credits] or trash the top card of the Stack"
+                  :choices (req (concat (when (pos? (:credit runner))
+                                          ["Pay 1[Credits]"])
+                                        (when (pos? (count (:deck runner)))
+                                          ["Trash top card"])))
+                  :msg "make the Runner pay 1[Credits] or trash the top card of the Stack"
+                  :effect (req (case target
+                                 "Pay 1[Credits]"
+                                 (do (system-msg state side "pays 1[Credits]")
+                                     (pay state side card :credit 1))
+                                 "Trash top card"
+                                 (do (system-msg state side "trashes the top card of the Stack")
+                                     (mill state :runner))))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :flags {:corp-phase-12 (req true)}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Commercial Bankers Group"
-   {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins
-             {:req (req unprotected)
-              :once :per-turn
-              :msg "gain 3[Credits]"
-              :effect (effect (gain :credit 3))}}}
+   (let [ability {:req (req unprotected)
+                  :label "Gain 3[Credits] (start of turn)"
+                  :once :per-turn
+                  :msg "gain 3[Credits]"
+                  :effect (effect (gain :credit 3))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Constellation Protocol"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :events {:corp-turn-begins
-             {:optional
-              {:req (req (let [a-token (->> (all-installed state :corp)
-                                            (filter ice?)
-                                            (filter #(pos? (:advance-counter % 0)))
-                                            (remove empty?)
-                                            first
-                                            :title)]
-                           (as-> (all-installed state :corp) it
-                             (filter ice? it)
-                             (filter can-be-advanced? it)
-                             (remove empty? it)
-                             (map :title it)
-                             (split-with (partial not= a-token) it)
-                             (concat (first it) (-> it rest first rest))
-                             (count it)
-                             (pos? it))))
-               :prompt "Do you want to move an advancement counter between ice?"
-               :yes-ability
-               {:effect
-                (req (show-wait-prompt state :runner "Corp to use Constellation Protocol")
-                     (continue-ability
-                       state side
-                       {:choices {:req #(and (ice? %)
-                                             (:advance-counter %))}
-                        :effect (req (let [from-ice target]
-                                       (continue-ability
-                                         state side
-                                         {:prompt "Move to where?"
-                                          :choices {:req #(and (ice? %)
-                                                               (not= (:cid from-ice) (:cid %))
-                                                               (can-be-advanced? %))}
-                                          :effect (effect (add-prop :corp target :advance-counter 1)
-                                                          (add-prop :corp from-ice :advance-counter -1)
-                                                          (system-msg
-                                                            (str "uses Constellation Protocol to move an advancement token from "
-                                                                 (card-str state from-ice)
-                                                                 " to "
-                                                                 (card-str state target))))}
-                                         card nil)))}
-                                       card nil)
-                     (clear-wait-prompt state :runner))}}}}}
+    :flags {:corp-phase-12
+            (req (let [a-token (->> (all-installed state :corp)
+                                    (filter ice?)
+                                    (filter #(pos? (:advance-counter % 0)))
+                                    (remove empty?)
+                                    first
+                                    :title)]
+                   (as-> (all-installed state :corp) it
+                     (filter ice? it)
+                     (filter can-be-advanced? it)
+                     (remove empty? it)
+                     (map :title it)
+                     (split-with (partial not= a-token) it)
+                     (concat (first it) (-> it rest first rest))
+                     (count it)
+                     (pos? it))))}
+    :abilities [{:label "Move an advancement counter between ICE"
+                 :once :per-turn
+                 :effect (req (show-wait-prompt state :runner "Corp to use Constellation Protocol")
+                              (continue-ability
+                                state side
+                                {:choices {:req #(and (ice? %)
+                                                      (:advance-counter %))}
+                                 :effect (req (let [from-ice target]
+                                                (continue-ability
+                                                  state side
+                                                  {:prompt "Move to where?"
+                                                   :choices {:req #(and (ice? %)
+                                                                        (not= (:cid from-ice) (:cid %))
+                                                                        (can-be-advanced? %))}
+                                                   :effect (effect (add-prop :corp target :advance-counter 1)
+                                                                   (add-prop :corp from-ice :advance-counter -1)
+                                                                   (system-msg
+                                                                     (str "uses Constellation Protocol to move an advancement token from "
+                                                                          (card-str state from-ice)
+                                                                          " to "
+                                                                          (card-str state target))))}
+                                                  card nil)))
+                                 :end-effect {:effect (effect (clear-wait-prompt :runner))}}
+                                card nil))}]}
 
    "Contract Killer"
    {:advanceable :always
@@ -416,19 +416,18 @@
    "Corporate Town"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :additional-cost [:forfeit]
-    :events {:corp-turn-begins
-             {:optional
-              {:req (req (and (rezzed? card)
-                              (->> (all-active-installed state :runner)
-                                   (filter resource?)
-                                   count
-                                   pos?)))
-               :prompt "Trash a resource with Corporate Town?"
-               :yes-ability {:delayed-completion true
-                             :prompt "Select a resource to trash with Corporate Town"
-                             :choices {:req resource?}
-                             :msg (msg "trash " (:title target))
-                             :effect (effect (trash eid target {:unpreventable true}))}}}}}
+    :flags {:corp-phase-12 (req (and (rezzed? card)
+                                     (->> (all-active-installed state :runner)
+                                          (filter resource?)
+                                          count
+                                          pos?)))}
+    :abilities [{:label "Trash a resource"
+                 :once :per-turn
+                 :delayed-completion true
+                 :prompt "Select a resource to trash with Corporate Town"
+                 :choices {:req resource?}
+                 :msg (msg "trash " (:title target))
+                 :effect (effect (trash eid target {:unpreventable true}))}]}
 
    "CPC Generator"
    {:events {:runner-click-credit {:once :per-turn
@@ -467,9 +466,8 @@
                                 :choices {:max dbs
                                           :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
                                 :effect (req (doseq [c targets]
-                                               (move state side c :deck))
-                                             (clear-wait-prompt state :runner))
-                                :cancel-effect (effect (clear-wait-prompt :runner))}
+                                               (move state side c :deck)))
+                                :end-effect (effect (clear-wait-prompt :runner))}
                                card targets)))}}}
 
    "Dedicated Response Team"
@@ -944,10 +942,8 @@
                                          :yes-ability {:msg "shuffle it back into R&D"
                                                        :effect (req (move state :corp card :deck)
                                                                     (shuffle! state :corp :deck)
-                                                                    (clear-wait-prompt state :runner)
                                                                     (effect-completed state side eid))}
-                                         :no-ability {:effect (req (clear-wait-prompt state :runner)
-                                                                   (effect-completed state side eid))}}}
+                                         :end-effect (effect (clear-wait-prompt :runner))}}
                                       card nil))}})
 
    "Mark Yale"

@@ -474,12 +474,15 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= 2 (-> (get-corp) :discard count)) "Clone Suffrage Movement should activate")
-      (prompt-choice :corp "Yes")
+      (is (:corp-phase-12 @state) "Corp should get option to fire Clone Suffrage Movement")
+      ;; Runner has 1+ credit and chooses to pay 1 credit
+      (card-ability state :corp csm 0)
       (prompt-select :corp (find-card "Hedge Fund" (:discard (get-corp))))
+      (core/end-phase-12 state :corp nil)
       (play-from-hand state :corp "Ice Wall" "Server 1")
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (empty? (get-in @state [:corp :prompt])) "Clone Suffrage Movement didn't activate cuz of the ice"))))
+      (is (not (:corp-phase-12 @state)) "Clone Suffrage Movement didn't activate cuz of the ice"))))
 
 (deftest clyde-van-rite
   ;; Clyde Van Rite - Multiple scenarios involving Runner not having credits/cards to trash
@@ -493,16 +496,19 @@
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp in Step 1.2")
       ;; Runner has 1+ credit and chooses to pay 1 credit
+      (card-ability state :corp clyde 0)
       (is (= 9 (:credit (get-runner))))
       (is (= 2 (count (:deck (get-runner)))))
       (is (some #{"Pay 1[Credits]" "Trash top card"} (-> (get-runner) :prompt first :choices)))
       (prompt-choice-partial :runner "Pay")
       (is (= 8 (:credit (get-runner))))
       (is (= 2 (count (:deck (get-runner)))))
+      (core/end-phase-12 state :corp nil)
       (take-credits state :corp)
       (take-credits state :runner)
       ;; Runner can't pay 1 credit so must trash top card
       (core/lose state :runner :credit (:credit (get-runner)))
+      (card-ability state :corp clyde 0)
       (is (= 0 (:credit (get-runner))))
       (is (= 2 (count (:deck (get-runner)))))
       (is (some #{"Trash top card"} (-> (get-runner) :prompt first :choices)))
@@ -513,9 +519,10 @@
       (take-credits state :corp)
       (take-credits state :runner)
       ;; Runner has 1+ card in Stack and chooses to trash 1 card
-      (is (some #{"Pay 1[Credits]" "Trash top card"} (-> (get-runner) :prompt first :choices)))
+      (card-ability state :corp clyde 0)
       (is (= 4 (:credit (get-runner))))
       (is (= 1 (count (:deck (get-runner)))))
+      (is (some #{"Pay 1[Credits]" "Trash top card"} (-> (get-runner) :prompt first :choices)))
       (prompt-choice :runner "Trash top card")
       (is (= 4 (:credit (get-runner))))
       (is (= 0 (count (:deck (get-runner)))))
@@ -523,6 +530,7 @@
       (take-credits state :corp)
       (take-credits state :runner)
       ;; Runner has no cards in Stack so must pay 1 credit
+      (card-ability state :corp clyde 0)
       (is (= 8 (:credit (get-runner))))
       (is (= 0 (count (:deck (get-runner)))))
       (is (some #{"Pay 1[Credits]"} (-> (get-runner) :prompt first :choices)))
@@ -535,6 +543,7 @@
       (core/lose state :runner :credit (:credit (get-runner)))
       (core/end-turn state :runner nil)
       ;; Runner has no credits and no cards so nothing happens
+      (card-ability state :corp clyde 0)
       (is (= 0 (:credit (get-runner))))
       (is (= 0 (count (:deck (get-runner)))))
       (is (empty? (get-in @state [:corp :prompt]))))))
@@ -576,13 +585,15 @@
         (advance state fw 1)
         (take-credits state :corp)
         (take-credits state :runner)
-        (prompt-choice :corp "Yes")
+        (is (:corp-phase-12 @state) "Should be waiting for Constellation Protocol to be fired")
+        (card-ability state :corp cp 0)
         (is (= 1 (:advance-counter (refresh iw))))
         (is (= 1 (:advance-counter (refresh fw))))
         (prompt-select :corp (refresh iw))
         (prompt-select :corp (refresh fw))
         (is (= 0 (:advance-counter (refresh iw))))
-        (is (= 2 (:advance-counter (refresh fw)))))))
+        (is (= 2 (:advance-counter (refresh fw))))
+        (core/end-phase-12 state :corp nil))))
   (testing "Variable number of advanceable cards"
     (do-game
       (new-game (default-corp ["Constellation Protocol" "Ice Wall" "Hive"])
@@ -593,20 +604,20 @@
         (core/rez state :corp cp))
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire with no advanceable ice")
+      (is (not (:corp-phase-12 @state)) "Constellation Protocol shouldn't fire with no advanceable ice")
       (play-from-hand state :corp "Ice Wall" "New remote")
       (let [iw (get-ice state :remote2 0)]
         (core/rez state :corp iw)
         (advance state iw 1)
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire with only a single ice"))
+        (is (not (:corp-phase-12 @state)) "Constellation Protocol shouldn't fire with only a single ice"))
       (play-from-hand state :corp "Hive" "New remote")
       (let [hive (get-ice state :remote3 0)]
         (core/rez state :corp hive)
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire when the target ice can't be advanced"))))
+        (is (not (:corp-phase-12 @state)) "Constellation Protocol shouldn't fire when the target ice can't be advanced"))))
   (testing "Can't advance assets"
     (do-game
       (new-game (default-corp ["Constellation Protocol" "Ice Wall" "Contract Killer"])
@@ -624,7 +635,7 @@
         (advance state iw 1))
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire when only target is asset"))))
+      (is (not (:corp-phase-12 @state)) "Constellation Protocol shouldn't fire when only target is asset"))))
 
 (deftest contract-killer
   ;; Contract Killer
@@ -664,16 +675,17 @@
     (let [ct (get-content state :remote2 0)
           ht (get-scored state :corp)]
       (core/rez state :corp ct)
-      (prompt-select :corp ht))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Data Dealer")
-    (take-credits state :runner)
-    (prompt-choice :corp "Yes")
-    (prompt-select :corp (get-resource state 0))
-    (is (= 1 (-> (get-runner) :discard count)) "Corporate Town should trash Data Dealer")
-    (take-credits state :corp)
-    (take-credits state :runner)
-    (is (empty? (get-in @state [:corp :prompt])) "Corporate Town shouldn't activate if there are no resources")))
+      (prompt-select :corp ht)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Data Dealer")
+      (take-credits state :runner)
+      (card-ability state :corp ct 0)
+      (prompt-select :corp (get-resource state 0))
+      (is (= 1 (-> (get-runner) :discard count)) "Corporate Town should trash Data Dealer")
+      (core/end-phase-12 state :corp nil)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (not (:corp-phase-12 @state)) "Corporate Town shouldn't activate if there are no resources"))))
 
 (deftest cpc-generator
   ;; CPC Generator

@@ -158,7 +158,7 @@
      (is (get-in @state [:run :run-effect]) "There is a run-effect")
      (core/no-action state :corp nil)
      (core/successful-run state :runner nil)
-     (if show-prompt 
+     (if show-prompt
        (is (get-in @state [:runner :prompt]) "A prompt is shown")
        (is (not (get-in @state [:runner :prompt])) "A prompt is not shown"))
      (is (get-in @state [:run :successful]) "Run is marked successful"))))
