@@ -556,6 +556,59 @@
       (take-credits state :runner)
       (is (= 11 (:credit (get-corp))) "Bankers Group didn't pay credits"))))
 
+(deftest constellation-protocol
+  ;; Constellation Protocol
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Constellation Protocol" "Ice Wall" "Fire Wall"])
+                (default-runner))
+      (core/gain state :corp :credit 100 :click 10)
+      (play-from-hand state :corp "Constellation Protocol" "New remote")
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-from-hand state :corp "Fire Wall" "New remote")
+      (let [cp (get-content state :remote1 0)
+            iw (get-ice state :remote2 0)
+            fw (get-ice state :remote3 0)]
+        (core/rez state :corp cp)
+        (core/rez state :corp iw)
+        (core/rez state :corp fw)
+        (advance state iw 1)
+        (advance state fw 1)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (prompt-choice :corp "Yes")
+        (is (= 1 (:advance-counter (refresh iw))))
+        (is (= 1 (:advance-counter (refresh fw))))
+        (prompt-select :corp (refresh iw))
+        (prompt-select :corp (refresh fw))
+        (is (= 0 (:advance-counter (refresh iw))))
+        (is (= 2 (:advance-counter (refresh fw))))
+        )))
+  (testing "Variaable number of advanceable cards"
+    (do-game
+      (new-game (default-corp ["Constellation Protocol" "Ice Wall" "Hive"])
+                (default-runner))
+      (core/gain state :corp :credit 100 :click 10)
+      (play-from-hand state :corp "Constellation Protocol" "New remote")
+      (let [cp (get-content state :remote1 0)]
+        (core/rez state :corp cp))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire with no advanceable ice")
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (let [iw (get-ice state :remote2 0)]
+        (core/rez state :corp iw)
+        (advance state iw 1)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire with only a single ice"))
+      (play-from-hand state :corp "Hive" "New remote")
+      (let [hive (get-ice state :remote3 0)]
+        (core/rez state :corp hive)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire when the target ice can't be advanced")))))
+
 (deftest daily-business-show
   ;; Daily Business Show
   (testing "Full test"
