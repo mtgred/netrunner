@@ -180,32 +180,30 @@
 
 (defn- steal-pay-choice
   "Enables a vector of costs to be resolved in the order of choosing"
-  [state side cost-strs chosen n card]
+  [state side cost-strs chosen n {:keys [title cid] :as card}]
   {:delayed-completion true
-   :prompt "Pay steal cost?"
+   :prompt (str "Pay steal cost for " title "?")
    :choices (conj (vec cost-strs) "No action")
    :effect (req
              (if (= target "No action")
                (continue-ability state :runner
-                 {:delayed-completion true
-                  :effect (req (when-not (find-cid (:cid card) (:deck corp))
-                                 (system-msg state side (str "decides not to pay to steal " (:title card))))
-                               (access-end state side eid card))}
+                                 {:delayed-completion true
+                                  :effect (req (when-not (find-cid cid (:deck corp))
+                                                 (system-msg state side (str "decides not to pay to steal " title)))
+                                               (access-end state side eid card))}
                  card nil)
-               (let [name (:title card)
-                     chosen (cons target chosen)
+               (let [chosen (cons target chosen)
                      clicks (count (re-seq #"\[Click\]+" target))
                      kw (if (pos? clicks) :click (to-keyword (join "-" (rest (split target #" ")))))
                      val (if (pos? clicks) clicks (string->num (first (split target #" "))))]
-                 (if (can-pay? state side name [kw val])
+                 (if (can-pay? state side title [kw val])
                    (when-completed
                      (pay-sync state side nil [kw val] {:action :steal-cost})
-                     (do (system-msg state side (str "pays " target
-                                                   " to steal " (:title card)))
+                     (do (system-msg state side (str "pays " target " to steal " title))
                          (if (< (count chosen) n)
                            (continue-ability
                              state side
-                             (steal-pay-choice state :runner (remove-once #(= target %) cost-strs) chosen n card)
+                             (steal-pay-choice state :runner (remove-once #(= % target) cost-strs) chosen n card)
                              card nil)
                            (steal-agenda state side eid card))))
                    (access-end state side eid card)))))})
