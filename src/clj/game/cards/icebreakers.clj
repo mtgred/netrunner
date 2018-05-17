@@ -21,7 +21,9 @@
                                      (:strength current-ice))
                                  (or (:current-strength card)
                                      (:strength card)))))
-              pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+              pumpnum (when (and strdif
+                                 (:pump pumpabi))
+                        (int (Math/ceil (/ strdif (:pump pumpabi)))))]
           (update! state side
                    (assoc card :abilities
                           (if (and pumpcst
@@ -29,7 +31,7 @@
                                    (rezzed? current-ice)
                                    (or (some #(has-subtype? current-ice %) (:breaks card))
                                        (= (first (:breaks card)) "All"))
-                                   (pos? strdif))
+                                   (pos? pumpnum))
                             (vec (cons {:dynamic :auto-pump
                                         :cost [:credit (* pumpcst pumpnum)]
                                         :label (str "Match strength of " (:title current-ice))}
