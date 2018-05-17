@@ -398,8 +398,9 @@
                    (runner-install-message state side (:title card) cost-str params)
                    (play-sfx state side "install-runner")
                    (when (and (is-type? card "Program")
+                              (not facedown)
                               (not no-mu))
-                     ;; Use up mu from program
+                     ;; Use up mu from program not installed facedown
                      (use-mu state (:memoryunits card))
                      (toast-check-mu state))
                    (handle-virus-counter-flag state side installed-card)
