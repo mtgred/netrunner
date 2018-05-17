@@ -653,6 +653,28 @@
       (is (= 1 (-> (get-corp) :discard count)) "Contract Killer should be trashed as an ability cost")
       (is (= 3 (-> (get-runner) :discard count)) "Contract Killer should do 2 meat damage"))))
 
+(deftest corporate-town
+  ;; Corporate Town
+  (do-game
+    (new-game (default-corp ["Corporate Town" "Hostile Takeover"])
+              (default-runner ["Data Dealer"]))
+    (core/gain state :corp :click 1)
+    (play-and-score state "Hostile Takeover")
+    (play-from-hand state :corp "Corporate Town" "New remote")
+    (let [ct (get-content state :remote2 0)
+          ht (get-scored state :corp)]
+      (core/rez state :corp ct)
+      (prompt-select :corp ht))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Data Dealer")
+    (take-credits state :runner)
+    (prompt-choice :corp "Yes")
+    (prompt-select :corp (get-resource state 0))
+    (is (= 1 (-> (get-runner) :discard count)) "Corporate Town should trash Data Dealer")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (empty? (get-in @state [:corp :prompt])) "Corporate Town shouldn't activate if there are no resources")))
+
 (deftest daily-business-show
   ;; Daily Business Show
   (testing "Full test"
