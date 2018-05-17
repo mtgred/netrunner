@@ -626,6 +626,33 @@
       (take-credits state :runner)
       (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire when only target is asset"))))
 
+(deftest contract-killer
+  ;; Contract Killer
+  (do-game
+    (new-game (default-corp ["Contract Killer"])
+              (default-runner [(qty "Sure Gamble" 2) "Data Dealer"]))
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Contract Killer" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Data Dealer")
+    (take-credits state :runner)
+    (let [ck (get-content state :remote1 0)]
+      (advance state ck 2)
+      (card-ability state :corp ck 0)
+      (prompt-select :corp (get-resource state 0))
+      (is (= 1 (-> (get-corp) :discard count)) "Contract Killer should be trashed as an ability cost")
+      (is (= 1 (-> (get-runner) :discard count)) "Contract Killer should trash Data Dealer"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (core/gain state :corp :click 1)
+    (core/move state :corp (find-card "Contract Killer" (:discard (get-corp))) :hand)
+    (play-from-hand state :corp "Contract Killer" "New remote")
+    (let [ck (get-content state :remote2 0)]
+      (advance state ck 2)
+      (card-ability state :corp ck 1)
+      (is (= 1 (-> (get-corp) :discard count)) "Contract Killer should be trashed as an ability cost")
+      (is (= 3 (-> (get-runner) :discard count)) "Contract Killer should do 2 meat damage"))))
+
 (deftest daily-business-show
   ;; Daily Business Show
   (testing "Full test"

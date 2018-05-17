@@ -397,13 +397,21 @@
 
    "Contract Killer"
    {:advanceable :always
-    :abilities [{:label "Trash a connection" :cost [:click 1] :req (req (>= (:advance-counter card) 2))
-                 :choices {:req #(has-subtype? % "Connection")}
-                 :msg (msg "trash " (:title target)) :effect (effect (trash card) (trash target))}
-                {:cost [:click 1] :req (req (>= (:advance-counter card) 2))
+    :abilities [{:label "Trash a connection"
                  :delayed-completion true
+                 :cost [:click 1]
+                 :req (req (>= (:advance-counter card) 2))
+                 :choices {:req #(has-subtype? % "Connection")}
+                 :msg (msg "trash " (:title target))
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (trash eid target nil))}
+                {:label "Do 2 meat damage"
+                 :delayed-completion true
+                 :cost [:click 1]
+                 :req (req (>= (:advance-counter card) 2))
                  :msg "do 2 meat damage"
-                 :effect (effect (trash card) (damage eid :meat 2 {:card card}))}]}
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (damage eid :meat 2 {:card card}))}]}
 
    "Corporate Town"
    {:additional-cost [:forfeit]
