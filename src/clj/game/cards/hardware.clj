@@ -552,10 +552,10 @@
     :abilities [{:once :per-turn
                  :delayed-completion true
                  :label "Move this accessed card to bottom of R&D"
-                 :req (req (when-let [accessed-card (:card (first (get-in @state [:runner :prompt])))]
+                 :req (req (when-let [accessed-card (-> @state :runner :prompt first :card)]
                              (in-deck? accessed-card)))
                  :msg "move the card just accessed to the bottom of R&D"
-                 :effect (req (let [accessed-card (:card (first (get-in @state [:runner :prompt])))]
+                 :effect (req (let [accessed-card (-> @state :runner :prompt first :card)]
                                 (move state :corp accessed-card :deck)
                                 (when-completed (tag-runner state :runner (make-eid state) 1)
                                                 (close-access-prompt state side))))}
