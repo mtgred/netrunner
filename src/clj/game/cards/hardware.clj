@@ -375,7 +375,7 @@
              :run-ends nil}}
 
    "Feedback Filter"
-   {:interactions {:prevent [{:type [:net :brain]
+   {:interactions {:prevent [{:type #{:net :brain}
                               :req (req true)}]}
     :abilities [{:cost [:credit 3]
                  :msg "prevent 1 net damage"
@@ -386,7 +386,7 @@
                                  (damage-prevent :brain 2))}]}
 
    "Forger"
-   {:interactions {:prevent [{:type [:tag]
+   {:interactions {:prevent [{:type #{:tag}
                               :req (req true)}]}
     :in-play [:link 1]
     :abilities [{:msg "avoid 1 tag" :label "[Trash]: Avoid 1 tag"
@@ -457,7 +457,7 @@
 
    "Heartbeat"
    {:in-play [:memory 1]
-    :interactions {:prevent [{:type [:net :brain :meat]
+    :interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
     :abilities [{:msg (msg "prevent 1 damage, trashing a facedown " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
@@ -597,7 +597,7 @@
                                           (runner-install state side target nil)
                                             (when (< n 3)
                                               (resolve-ability state side (mh (inc n)) card nil)))})]
-     {:interactions {:prevent [{:type [:net :brain]
+     {:interactions {:prevent [{:type #{:net :brain}
                                 :req (req true)}]}
       :in-play [:memory 3]
       :effect (effect (resolve-ability (mhelper 1) card nil))
@@ -710,7 +710,7 @@
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
-    :interactions {:prevent [{:type [:meat]
+    :interactions {:prevent [{:type #{:meat}
                               :req (req true)}]}
     :abilities [{:counter-cost [:power 1]
                  :msg "prevent 1 meat damage"
@@ -782,7 +782,7 @@
                                                      (runner-install state side c)))}}} card nil))}
 
    "Ramujan-reliant 550 BMI"
-   {:interactions {:prevent [{:type [:net :brain]
+   {:interactions {:prevent [{:type #{:net :brain}
                               :req (req true)}]}
     :abilities [{:req (req (not-empty (:deck runner)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
@@ -800,7 +800,7 @@
    "Recon Drone"
    ; eventmap uses reverse so we get the most recent event of each kind into map
    (let [eventmap (fn [s] (into {} (reverse (get s :turn-events))))]
-     {:interactions {:prevent [{:type [:net :brain :meat]
+     {:interactions {:prevent [{:type #{:net :brain :meat}
                                 :req (req (:access @state))}]}
       :abilities [{:req (req (= (:cid (second (:pre-damage (eventmap @state))))
                                 (:cid (first (:pre-access-card (eventmap @state))))))

@@ -1310,7 +1310,7 @@
                          (installed? %))}
     :effect (effect (host target (assoc card :zone [:discard]))
                     (system-msg (str "hosts On the Lam on " (:title target))))
-    :interactions {:prevent [{:type [:net :brain :meat :tag]
+    :interactions {:prevent [{:type #{:net :brain :meat :tag}
                               :req (req true)}]}
     :abilities [{:label "[Trash]: Avoid 3 tags"
                  :msg "avoid up to 3 tags"

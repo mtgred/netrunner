@@ -449,7 +449,7 @@
   "Returns card prevent abilities for a given type"
   [card type]
   (->> (-> card card-def :interactions :prevent)
-       (filter #(some #{type} (:type %)))))
+       (filter #(contains? (:type %) type))))
 
 (defn card-can-prevent?
   "Checks if a cards req (truthy test) can be met for this type"
