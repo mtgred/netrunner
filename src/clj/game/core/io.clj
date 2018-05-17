@@ -259,7 +259,9 @@
           "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
           "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
-          "/memory"     #(swap! %1 assoc-in [%2 :memory] value)
+          "/memory"     #(swap! %1 assoc-in [%2 :memory :used] (- (+ (get-in @%1 [:runner :memory :base])
+                                                                     (get-in @%1 [:runner :memory :mod]))
+                                                                  value))
           "/move-bottom"  #(resolve-ability %1 %2
                                             {:prompt "Select a card in hand to put on the bottom of your deck"
                                              :effect (effect (move target :deck))

@@ -173,7 +173,7 @@
     (take-credits state :corp)
     (let [cort (get-ice state :hq 0)]
       (play-from-hand state :runner "Corroder")
-      (is (= 3 (:memory (get-runner))))
+      (is (= 3 (core/available-mu state)))
       (run-on state "HQ")
       (core/rez state :corp cort)
       (card-subroutine state :corp cort 0)

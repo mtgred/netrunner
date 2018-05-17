@@ -216,10 +216,10 @@
   (trigger-event state side :pre-steal-cost c)
   (let [cost (steal-cost state side c)
         card-name (:title c)
-        cost-strs (map costs-to-symbol (partition 2 cost))
+        cost-strs (map costs->symbol (partition 2 cost))
         n (count cost-strs)
         can-pay-costs? (can-pay? state side card-name cost)
-        cost-as-symbol (when (= 1 (count cost-strs)) (costs-to-symbol cost))
+        cost-as-symbol (when (= 1 (count cost-strs)) (costs->symbol cost))
         ;; any trash abilities
         can-steal-this? (can-steal? state side c)
         trash-ab-cards (when (not= (:zone c) [:discard])

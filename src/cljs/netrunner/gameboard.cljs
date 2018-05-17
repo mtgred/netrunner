@@ -1005,7 +1005,11 @@
                   (when (pos? run-credit)
                     (str " (" run-credit " for run)")))
         (when me? (controls :credit))]
-       [:div (str memory " Memory Unit" (if (not= memory 1) "s" "")) (when (neg? memory) [:div.warning "!"]) (when me? (controls :memory))]
+       (let [{:keys [base mod used]} memory
+             max-mu (+ base mod)
+             unused (- max-mu used)]
+         [:div (str unused " of " max-mu " MU unused")
+          (when (neg? unused) [:div.warning "!"]) (when me? (controls :memory))])
        [:div (str link " Link Strength") (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
@@ -1014,7 +1018,7 @@
         (when me? (controls :brain-damage))]
        (let [{:keys [base mod]} hand-size]
          [:div (str (+ base mod) " Max hand size")
-          (when me? (controls :hand-size {:mod 1} {:mod -1}))])]))))
+          (when me? (controls :hand-size))])]))))
 
 (defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub hand-size active]} owner]
   (om/component
@@ -1030,7 +1034,7 @@
         (when me? (controls :bad-publicity))]
        (let [{:keys [base mod]} hand-size]
          [:div (str (+ base mod) " Max hand size")
-          (when me? (controls :hand-size {:mod 1} {:mod -1}))])]))))
+          (when me? (controls :hand-size))])]))))
 
 (defn server-view [{:keys [server central-view run] :as cursor} owner opts]
   (om/component
@@ -1119,7 +1123,8 @@
 
 (defn handle-end-turn []
   (let [me ((:side @game-state) @game-state)
-        max-size (max (+ (get-in me [:hand-size :base]) (get-in me [:hand-size :mod])) 0)]
+        {:keys [base mod]} (:hand-size me)
+        max-size (max (+ base mod) 0)]
     (if (> (count (:hand me)) max-size)
       (toast (str "Discard to " max-size " card" (when (not= 1 max-size) "s")) "warning" nil)
       (send-command "end-turn"))))
