@@ -372,9 +372,7 @@
   ([state side eid {:keys [zone type disabled] :as card} oid
    {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args}]
   (let [cdef (card-def card)
-        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})
-        card-prompts (filter #(= (get-in % [:card :title]) (get moved-card :title)) (get-in @state [side :prompt]))]
-
+        moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (when-let [trash-effect (:trash-effect cdef)]
       (when (and (not disabled)
                  (or (and (= (:side card) "Runner")

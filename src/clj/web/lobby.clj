@@ -265,6 +265,12 @@
                         :games/diff
                         {:diff {:update {gameid (game-public-view (game-for-id gameid))}}}))))
 
+(defn already-in-game?
+  "Checks if a user with the given database id (:_id) is already in the game"
+  [{:keys [_id] :as user} {:keys [players spectators] :as game}]
+  (or (some #(= _id (:_id %)) (map :user players))
+      (some #(= _id (:_id %)) (map :user spectators))))
+
 (defn handle-lobby-join
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
@@ -273,8 +279,9 @@
     :as                                 msg}]
   (if-let [{game-password :password :as game} (@all-games gameid)]
     (when (and user game (allowed-in-game game user))
-      (if (or (empty? game-password)
-              (bcrypt/check password game-password))
+      (if (and (not (already-in-game? user game))
+               (or (empty? game-password)
+                   (bcrypt/check password game-password)))
         (do (join-game user client-id gameid)
             (ws/broadcast-to! (lobby-clients gameid)
                               :lobby/message
@@ -297,8 +304,9 @@
     (when (and user game (allowed-in-game game user))
       (if started
         false                                               ; don't handle this message, let game/handle-game-watch.
-        (if (or (empty? game-password)
-                (bcrypt/check password game-password))
+        (if (and (not (already-in-game? user game))
+                 (or (empty? game-password)
+                     (bcrypt/check password game-password)))
           (do (spectate-game user client-id gameid)
 
               (ws/broadcast-to! (lobby-clients gameid)

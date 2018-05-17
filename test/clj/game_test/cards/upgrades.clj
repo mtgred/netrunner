@@ -112,6 +112,7 @@
         ;; prompt should be asking for the net damage costs
         (is (= "Obokata Protocol" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
+        (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "2 net damage")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
@@ -134,6 +135,7 @@
         ;; prompt should be asking for the net damage costs
         (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
+        (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "2 [Credits]")
         (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
         (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
@@ -814,7 +816,45 @@
         (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp")
         ;; Trash Imp to reset :slow-trash flag
         (core/move state :runner (refresh imp) :discard)
-        (is (not (core/any-flag-fn? state :runner :slow-trash true)))))))
+        (is (not (core/any-flag-fn? state :runner :slow-trash true))))))
+  (testing "interactions with Imp and various amounts of money"
+    (do-game
+      (new-game (default-corp [(qty "Mumbad Virtual Tour" 3)])
+                (default-runner ["Imp"]))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (is (= 3 (:credit (get-runner))) "Runner paid install costs")
+      (core/gain state :runner :credit 2)
+      (run-empty-server state "Server 1")
+      (is (= #{"[Imp]: Trash card" "Pay 5[Credits] to trash"}
+             (->> (get-runner) :prompt first :choices (into #{}))) "Should have Imp and MVT options")
+      (prompt-choice-partial :runner "Imp")
+      (take-credits state :runner)
+      (core/lose state :runner :credit (:credit (get-runner)))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 2")
+      (is (= ["[Imp]: Trash card"] (->> (get-runner) :prompt first :choices)) "Should only have Imp option")
+      (prompt-choice-partial :runner "Imp")
+      (take-credits state :runner)
+      (core/lose state :runner :credit (:credit (get-runner)))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 3")
+      (is (= ["No action"] (->> (get-runner) :prompt first :choices)) "Should only have no action option")
+      (prompt-choice :runner "No action")
+      (is (= 2 (->> (get-corp) :discard count)) "Runner was not forced to trash MVT")))
+  (testing "not forced to trash when credits below 5"
+    (do-game
+      (new-game (default-corp [(qty "Mumbad Virtual Tour" 3)])
+                (default-runner ["Cache"]))
+      (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (is (= 4 (:credit (get-runner))) "Runner paid install costs")
+      (run-empty-server state "Server 1")
+      (is (= ["No action"] (->> (get-runner) :prompt first :choices)) "Can't trash"))))
 
 (deftest mwanza-city-grid
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
@@ -853,7 +893,21 @@
           (prompt-choice :runner "Card from hand")
           (prompt-choice :runner "No action"))
         (is (empty? (:prompt (get-runner))) "Prompt closed after accessing cards")
-        (is (= 17 (:credit (get-corp))) "Corp gains 10 credits")))))
+        (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
+  (testing "works well with replacement effects"
+    ;; Regression test for #3456
+    (do-game
+      (new-game (default-corp ["Mwanza City Grid" "Hedge Fund"])
+                (default-runner ["Embezzle"]))
+      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (take-credits state :corp)
+      (core/rez state :corp (get-content state :hq 0))
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+      (play-run-event state (first (:hand (get-runner))) :hq)
+      (prompt-choice :runner "ICE")
+      (is (zero? (count (:discard (get-corp)))) "No cards trashed from HQ")
+      (is (not (:run @state)) "Run ended after Embezzle completed - no accesses from Mwanza")
+      (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza"))))
 
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement

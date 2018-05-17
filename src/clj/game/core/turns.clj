@@ -82,7 +82,8 @@
                 :discard [] :scored [] :rfg [] :play-area []
                 :rig {:program [] :resource [] :hardware []}
                 :toast []
-                :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0
+                :click 0 :credit 5 :run-credit 0 :link 0 :tag 0
+                :memory {:base 4 :mod 0 :used 0}
                 :hand-size {:base 5 :mod 0}
                 :agenda-point 0
                 :hq-access 1 :rd-access 1 :tagged 0

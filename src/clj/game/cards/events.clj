@@ -116,12 +116,13 @@
    {:effect (effect (register-events (:events (card-def card))
                                      (assoc card :zone '(:discard))))
     :events {:runner-turn-ends {:effect (effect (unregister-events card))}
-             :pre-access-card {:req (req (not= [:discard] (:zone target)))
-                               :delayed-completion true
-                               :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
-                               :effect (req (when-completed (trash state side (assoc target :seen true) nil)
-                                                            (do (swap! state assoc-in [:runner :register :trashed-card] true)
-                                                                (damage state :runner eid :meat 1 {:unboostable true}))))}}}
+             :access {:req (req (not= [:discard] (:zone target)))
+                      :interactive (req true)
+                      :delayed-completion true
+                      :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
+                      :effect (req (when-completed (trash state side (assoc target :seen true) nil)
+                                                   (do (swap! state assoc-in [:runner :register :trashed-card] true)
+                                                       (damage state :runner eid :meat 1 {:unboostable true}))))}}}
 
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
@@ -714,7 +715,7 @@
     :effect (effect (run :hq nil card) (register-events (:events (card-def card))
                                                         (assoc card :zone '(:discard))))
     ;; Don't need a msg since game will print that card access is prevented
-    :events {:successful-run {:effect (req (prevent-access))}
+    :events {:successful-run {:effect (effect (prevent-access))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Fisk Investment Seminar"

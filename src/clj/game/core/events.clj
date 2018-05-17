@@ -98,7 +98,8 @@
                                  (next handlers))]
                     (if-let [the-card (get-card state (:card to-resolve))]
                       {:delayed-completion true
-                       :effect (req (when-completed (resolve-ability state side (:ability to-resolve)
+                       :effect (req (when-completed (resolve-ability state (to-keyword (:side the-card))
+                                                                     (:ability to-resolve)
                                                                      the-card event-targets)
                                                     (if (should-continue state handlers)
                                                       (continue-ability state side
@@ -114,7 +115,8 @@
                    :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
                                       the-card (get-card state (:card to-resolve))]
                                   (when-completed
-                                    (resolve-ability state side (:ability to-resolve) the-card event-targets)
+                                    (resolve-ability state (to-keyword (:side the-card))
+                                                     (:ability to-resolve) the-card event-targets)
                                     (if (should-continue state handlers)
                                       (continue-ability state side
                                                         (choose-handler

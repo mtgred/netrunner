@@ -129,7 +129,7 @@
       (prompt-choice :corp "Medical Breakthrough") ;simult. effect resolution
       (prompt-choice :corp "Yes")
       (prompt-choice :corp 0)  ;; Corp doesn't pump trace
-      (is (= 3  (get-in @state [:trace :strength])) "Trace base strength is 3 after stealing first Breakthrough")
+      (is (= 3 (-> (get-runner) :prompt first :strength)) "Trace base strength is 3 after stealing first Breakthrough")
       (prompt-choice :runner 0)
       (let [n (count (get-in @state [:runner :hand]))]
         (is (= 1 (count (get-in @state [:runner :rig :program]))) "There is an Analog Dreamers installed")
@@ -141,7 +141,7 @@
       ;; (prompt-choice :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason
       (prompt-choice :corp "Yes")       ;corp should get to trigger trace even when no runner cards are installed
       (prompt-choice :corp 0)
-      (is (= 2 (get-in @state [:trace :strength])) "Trace base strength is 2 after scoring second Breakthrough"))))
+      (is (= 2 (-> (get-runner) :prompt first :strength)) "Trace base strength is 2 after scoring second Breakthrough"))))
 
 (deftest anson-rose
   ;; Anson Rose
@@ -936,30 +936,52 @@
       (is (= 14 (get-counters (refresh eve) :credit))))))
 
 (deftest executive-boot-camp
-  ;; Executive Boot Camp - suppress the start-of-turn event on a rezzed card. Issue #1346.
-  (do-game
-    (new-game (default-corp [(qty "Eve Campaign" 1) (qty "Executive Boot Camp" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Eve Campaign" "New remote")
-    (play-from-hand state :corp "Executive Boot Camp" "New remote")
-    (take-credits state :corp)
-    (is (= 6 (:credit (get-corp))) "Corp ends turn with 6 credits")
-    (let [eve (get-content state :remote1 0)
-          ebc (get-content state :remote2 0)]
-      (core/rez state :corp ebc)
-      (take-credits state :runner)
-      (is (:corp-phase-12 @state) "Corp in Step 1.2")
-      (card-ability state :corp ebc 0)
-      (prompt-select :corp eve)
-      (is (= 2 (:credit (get-corp))) "EBC saved 1 credit on the rez of Eve")
-      (is (= 16 (get-counters (refresh eve) :credit)))
-      (core/end-phase-12 state :corp nil)
-      (is (= 2 (:credit (get-corp))) "Corp did not gain credits from Eve")
-      (is (= 16 (get-counters (refresh eve) :credit)) "Did not take counters from Eve")
+  (testing "suppress the start-of-turn event on a rezzed card. Issue #1346"
+    (do-game
+      (new-game (default-corp [(qty "Eve Campaign" 1) (qty "Executive Boot Camp" 1)])
+                (default-runner))
+      (play-from-hand state :corp "Eve Campaign" "New remote")
+      (play-from-hand state :corp "Executive Boot Camp" "New remote")
       (take-credits state :corp)
-      (take-credits state :runner)
-      (is (not (:corp-phase-12 @state)) "With nothing to rez, EBC does not trigger Step 1.2")
-      (is (= 14 (get-counters (refresh eve) :credit)) "Took counters from Eve"))))
+      (is (= 6 (:credit (get-corp))) "Corp ends turn with 6 credits")
+      (let [eve (get-content state :remote1 0)
+            ebc (get-content state :remote2 0)]
+        (core/rez state :corp ebc)
+        (take-credits state :runner)
+        (is (:corp-phase-12 @state) "Corp in Step 1.2")
+        (card-ability state :corp ebc 0)
+        (prompt-select :corp eve)
+        (is (= 2 (:credit (get-corp))) "EBC saved 1 credit on the rez of Eve")
+        (is (= 16 (get-counters (refresh eve) :credit)))
+        (core/end-phase-12 state :corp nil)
+        (is (= 2 (:credit (get-corp))) "Corp did not gain credits from Eve")
+        (is (= 16 (get-counters (refresh eve) :credit)) "Did not take counters from Eve")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (not (:corp-phase-12 @state)) "With nothing to rez, EBC does not trigger Step 1.2")
+        (is (= 14 (get-counters (refresh eve) :credit)) "Took counters from Eve"))))
+  (testing "works with Ice that has alternate rez costs"
+    (do-game
+      (new-game (default-corp [(qty "15 Minutes" 1) (qty "Executive Boot Camp" 1)
+                               (qty "Tithonium" 1)])
+                (default-runner))
+      (core/gain state :corp :credit 3)
+      (score-agenda state :corp (find-card "15 Minutes" (:hand (get-corp))))
+      (play-from-hand state :corp "Tithonium" "HQ")
+      (play-from-hand state :corp "Executive Boot Camp" "New remote")
+      (let [ebc (get-content state :remote1 0)
+            tith (get-ice state :hq 0)]
+        (core/rez state :corp ebc)
+        (take-credits state :corp)
+        (is (= 9 (:credit (get-corp))) "Corp ends turn with 9 credits")
+        (take-credits state :runner)
+        (is (not (:rezzed (refresh tith))) "Tithonium not rezzed")
+        (is (:corp-phase-12 @state) "Corp in Step 1.2")
+        (card-ability state :corp ebc 0)
+        (prompt-select :corp tith)
+        (prompt-choice :corp "No")
+        (is (and (:installed (refresh tith)) (:rezzed (refresh tith))) "Rezzed Tithonium")
+        (is (= 1 (:credit (get-corp))) "EBC saved 1 credit on the rez of Tithonium")))))
 
 (deftest false-flag
   (testing "when the corp attempts to score False Flag"
@@ -2203,6 +2225,20 @@
       (card-ability state :corp ron 0)
       (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
       (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
+
+(deftest ronin
+  ;; Ronin - doesn't fire (or crash) if no advance counters
+  (do-game
+    (new-game (default-corp [(qty "Ronin" 1)])
+              (default-runner))
+    (play-from-hand state :corp "Ronin" "New remote")
+    (let [ron (get-content state :remote1 0)]
+      (is (nil? (:advance-counter (refresh ron))) "Ronin starts with no counters")
+      (core/rez state :corp (refresh ron))
+      (card-ability state :corp (refresh ron) 0)
+      (is (nil? (:advance-counter (refresh ron))) "Ronin didn't gain counters")
+      (is (= 3 (count (:hand (get-runner))))
+          "Ronin ability didn't fire with 0 advancements"))))
 
 (deftest sandburg
   ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c

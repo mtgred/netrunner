@@ -390,11 +390,11 @@
     (play-from-hand state :runner "Data Folding")
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (= 4 (:memory (get-runner))) "At least 2 unused MU")
+    (is (= 4 (core/available-mu state)) "At least 2 unused MU")
     (is (= 6 (:credit (get-runner))) "Gained 1c at turn start")
     (play-from-hand state :runner "Hyperdriver")
     (take-credits state :runner)
-    (is (= 1 (:memory (get-runner))) "Only 1 unused MU")
+    (is (= 1 (core/available-mu state)) "Only 1 unused MU")
     (is (= 8 (:credit (get-runner))))
     (take-credits state :corp)
     (is (= 8 (:credit (get-runner))) "No credits gained at turn start")))
@@ -478,12 +478,12 @@
         (is (= chaos (get-in (get-resource state 0) [:hosted 0 :title])) "Chaos Theory hosted on DJ Fenris")
         (is (= sunny (:title (:identity (get-runner)))) "Still Sunny, id not changed")
         (is (= 2 (:link (get-runner))) "2 link from Sunny")
-        (is (= 5 (:memory (get-runner))) "+1 MU from Chaos Theory")
+        (is (= 5 (core/available-mu state)) "+1 MU from Chaos Theory")
         ;; Trash DJ Fenris
         (trash-resource state "DJ Fenris")
         (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
         (is (= 1 (count (:discard (get-runner)))) "1 card in heap: DJ Fenris")
-        (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")
+        (is (= 4 (core/available-mu state)) "+1 MU from Chaos Theory removed")
         ;; Recover DJ Fenris
         (core/move state :runner (get-in (get-runner) [:discard 0]) :hand)
         (core/gain state :runner :credit 3)
@@ -494,7 +494,7 @@
         (game.core/move state :runner (get-in (get-resource state 0) [:hosted 0]) :hand)
         (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
         (is (= 0 (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
-        (is (= 4 (:memory (get-runner))) "+1 MU from Chaos Theory removed")))
+        (is (= 4 (core/available-mu state)) "+1 MU from Chaos Theory removed")))
     (testing "Hosting Geist"
       ;; Ensure Geist effect triggers
       (do-game
@@ -702,6 +702,22 @@
       (is (= 1 (count (:discard (get-corp)))) "Agenda trashed")
       (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
 
+(deftest film-critic-mca-informant
+  ;; Film Critic - required hosted cards to be an agenda before firing ability
+  (do-game
+    (new-game (default-corp [(qty "MCA Informant" 1)])
+              (default-runner [(qty "Film Critic" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (let [fc (first (get-in @state [:runner :rig :resource]))]
+      (take-credits state :runner)
+      (play-from-hand state :corp "MCA Informant")
+      (prompt-select :corp fc)
+      (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant hosted on FC")
+      (take-credits state :corp)
+      (card-ability state :runner fc 0)
+      (is (= 1 (count (:hosted (refresh fc)))) "MCA Informant still hosted on FC"))))
+
 (deftest find-the-truth
   ;; Find the Truth
   (testing "Basic test - On successful run see the top card from R&D before access"
@@ -786,6 +802,21 @@
       (prompt-choice :runner "Steal")
       (prompt-choice :runner "Card from hand")
       (prompt-choice :runner "Steal"))))
+
+(deftest gang-sign-correct-prompts
+  ;; Gang Sign - accessing from HQ, not including root. Issue #2113.
+  (do-game
+    (new-game (default-corp ["Hostile Takeover" "Snare!"])
+              (default-runner ["Gang Sign"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gang Sign")
+    (take-credits state :runner)
+    (play-and-score state "Hostile Takeover")
+    (prompt-choice :runner "Card from hand")
+    ;; Runner has "wait for Snare, wait for on-access" prompts.
+    (is (= 2 (count (:prompt (get-runner)))) "Runner only has the Waiting prompt, not Snare!'s pay-prompt")
+    ;; Core has "pay for Snare, wait for agenda-scored" prompts.
+    (is (= 2 (count (:prompt (get-corp)))) "Corp has the prompt to use Snare!")))
 
 (deftest gene-conditioning-shoppe
   ;; Gene Conditioning Shoppe - set :genetics-trigger-twice flag
@@ -953,6 +984,29 @@
       (is (= 14 (:credit (get-runner))) "Runner gains 2 credits")
       (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
 
+(deftest jackpot-film-critic
+  ;; Jackpot! should fire when moving agendas from Film Critic to scored area
+  (do-game
+    (new-game (default-corp [(qty "Project Vitruvius" 1)])
+              (default-runner [(qty "Jackpot!" 1) (qty "Film Critic" 1)]))
+    (play-from-hand state :corp "Project Vitruvius" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Film Critic")
+    (play-from-hand state :runner "Jackpot!")
+    (let [fc (get-resource state 0)
+          jak (get-resource state 1)]
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "Yes")
+      (is (= 1 (count (:hosted (refresh fc)))) "Agenda hosted on FC")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner fc 0)
+      (prompt-choice :runner "Yes")
+      (prompt-choice :runner 1)
+      (is (= 1 (count (:scored (get-runner)))) "Moved agenda to scored area")
+      (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed")
+      (is (empty? (:hosted (refresh fc))) "Removed agenda hosted on FC"))))
+
 (deftest jackpot-hiro
   ;; Jackpot! - should fire when trashing Chairman Hiro
   (do-game
@@ -1004,7 +1058,7 @@
     (play-from-hand state :corp "Crisium Grid" "HQ")
     (core/rez state :corp (get-content state :hq 0))
     (take-credits state :corp)
-    (core/gain state :runner :click 2)
+    (core/gain state :runner :click 2 :credit 2)
     (play-from-hand state :runner "John Masanori")
     (is (= 4 (count (:hand (get-runner)))))
     (run-empty-server state "HQ")
@@ -1753,7 +1807,7 @@
       (prompt-card :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
       (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0])))
           "Gordian Blade was installed")
-      (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
+      (is (= 3 (core/available-mu state)) "Gordian cost 1 mu"))))
 
 (deftest street-peddler-cant-afford
   ;; Street Peddler - Can't afford install
@@ -1793,7 +1847,7 @@
       (prompt-card :runner (find-card "Gordian Blade" (:hosted sp))) ; choose to install Gordian
       (is (= "Gordian Blade" (:title (get-in @state [:runner :rig :program 0])))
           "Gordian Blade was installed")
-      (is (= 3 (:memory (get-runner))) "Gordian cost 1 mu"))))
+      (is (= 3 (core/available-mu state)) "Gordian cost 1 mu"))))
 
 (deftest street-peddler-memory-units
   ;; Street Peddler - Programs Should Cost Memory. Issue #708
@@ -1803,14 +1857,14 @@
     (take-credits state :corp)
     (starting-hand state :runner ["Street Peddler"])
     (play-from-hand state :runner "Street Peddler")
-    (is (= 4 (:memory (get-runner))) "No memory cost for hosting on Street Peddler")
+    (is (= 4 (core/available-mu state)) "No memory cost for hosting on Street Peddler")
     (let [sp (get-in @state [:runner :rig :resource 0])]
       (is (= "Corroder" (:title (first (:hosted sp)))) "Street Peddler is hosting Corroder")
       (card-ability state :runner sp 0)
       (prompt-card :runner (first (:hosted sp))) ; choose to install Gordian
       (is (= "Corroder" (:title (get-in @state [:runner :rig :program 0])))
           "Corroder was installed")
-      (is (= 3 (:memory (get-runner))) "Corroder cost 1 mu"))))
+      (is (= 3 (core/available-mu state)) "Corroder cost 1 mu"))))
 
 (deftest street-peddler-muertos-brain-chip
   ;; Muertos/Brain Chip uninstall effect not fired when removed off peddler/hosting Issue #2294+#2358
@@ -1830,7 +1884,7 @@
       (card-ability state :runner sp 0)
       (prompt-card :runner (find-card "Street Peddler" (:hosted sp))) ; choose to another Peddler
       (is (empty? (:prompt (get-corp))) "Corp not prompted to rez Jackson")
-      (is (= 4 (:memory (get-runner))) "Runner has 4 MU"))))
+      (is (= 4 (core/available-mu state)) "Runner has 4 MU"))))
 
 (deftest street-peddler-in-play-effects
   ;; Street Peddler - Trashing hardware should not reduce :in-play values
@@ -2111,12 +2165,12 @@
                                (qty "Brain Chip" 1)]))
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (take-credits state :corp)
-    (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
+    (is (= 4 (core/available-mu state)) "Runner has 4 MU")
     (play-from-hand state :runner "The Supplier")
     (let [ts (get-resource state 0)]
       (card-ability state :runner ts 0)
       (prompt-select :runner (find-card "Brain Chip" (:hand (get-runner))))
-      (is (= 4 (:memory (get-runner))) "Runner has 4 MU")
+      (is (= 4 (core/available-mu state)) "Runner has 4 MU")
       (run-empty-server state "Server 1")
       (prompt-choice :runner "Steal")
       (take-credits state :runner)
@@ -2124,7 +2178,7 @@
       (core/trash-resource state :corp nil)
       (prompt-select :corp (get-resource state 0))
       (is (= 2 (count (:discard (get-runner)))))
-      (is (= 4 (:memory (get-runner))) "Runner has 4 MU"))))
+      (is (= 4 (core/available-mu state)) "Runner has 4 MU"))))
 
 (deftest tech-trader
   ;; Basic test

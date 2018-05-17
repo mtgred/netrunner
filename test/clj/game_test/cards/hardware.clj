@@ -32,7 +32,7 @@
               (default-runner [(qty "Akamatsu Mem Chip" 3)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Akamatsu Mem Chip")
-    (is (= 5 (:memory (get-runner))) "Gain 1 memory")))
+    (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
 (deftest archives-interface
   ;; Archives Interface - Remove 1 card in Archives from the game instead of accessing it
@@ -56,7 +56,7 @@
               (default-runner [(qty "Astrolabe" 3)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Astrolabe")
-    (is (= 5 (:memory (get-runner))) "Gain 1 memory")))
+    (is (= 5 (core/available-mu state)) "Gain 1 memory")))
 
 (deftest astrolabe-draw
   ;; Astrolabe - Draw on new server install
@@ -84,7 +84,7 @@
    (take-credits state :corp)
    (core/gain state :runner :credit 100)
    (play-from-hand state :runner "Blackguard")
-   (is (= 6 (:memory (get-runner))) "Runner has 6 MU")
+   (is (= 6 (core/available-mu state)) "Runner has 6 MU")
    (play-from-hand state :runner "Snitch")
    (let [snitch (get-in @state [:runner :rig :program 0])
          iwall (get-ice state :archives 0)]
@@ -99,7 +99,7 @@
              (default-runner [(qty "Box-E" 1)]))
    (take-credits state :corp)
    (play-from-hand state :runner "Box-E")
-   (is (= 6 (:memory (get-runner))))
+   (is (= 6 (core/available-mu state)))
    (is (= 7 (core/hand-size state :runner)))))
 
 (deftest brain-chip
@@ -110,14 +110,14 @@
    (take-credits state :corp)
    (play-from-hand state :runner "Brain Chip")
    (swap! state assoc-in [:runner :agenda-point] -2) ; hard set ap
-   (is (= (core/hand-size state :runner) 5) "Hand size unaffected")
-   (is (= (get-in @state [:runner :memory]) 4) "Memory limit unaffected")
+   (is (= 5 (core/hand-size state :runner)) "Hand size unaffected")
+   (is (= 4 (core/available-mu state)) "Memory limit unaffected")
    (swap! state assoc-in [:runner :agenda-point] 2)
-   (is (= (core/hand-size state :runner) 7) "Hand size increased by 2")
-   (is (= (get-in @state [:runner :memory]) 6) "Memory limit increased by 2")
+   (is (= 7 (core/hand-size state :runner)) "Hand size increased by 2")
+   (is (= 6 (core/available-mu state)) "Memory limit increased by 2")
    (core/move state :runner (get-in @state [:runner :rig :hardware 0]) :discard)
-   (is (= (core/hand-size state :runner) 5) "Hand size reset")
-   (is (= (get-in @state [:runner :memory]) 4) "Memory limit reset")))
+   (is (= 5 (core/hand-size state :runner)) "Hand size reset")
+   (is (= 4 (core/available-mu state)) "Memory limit reset")))
 
 (deftest clone-chip
   ;; Test clone chip usage- outside and during run
@@ -198,7 +198,7 @@
               (default-runner [(qty "CyberSolutions Mem Chip" 3)]))
     (take-credits state :corp)
     (play-from-hand state :runner "CyberSolutions Mem Chip")
-    (is (= 6 (:memory (get-runner))) "Gain 2 memory")))
+    (is (= 6 (core/available-mu state)) "Gain 2 memory")))
 
 (deftest daredevil
   ;; Daredevil
@@ -210,7 +210,7 @@
     (play-from-hand state :corp "Ice Wall" "Archives")
     (take-credits state :corp)
     (play-from-hand state :runner "Daredevil")
-    (is (= 6 (:memory (get-runner))) "Gained 2 MU")
+    (is (= 6 (core/available-mu state)) "Gained 2 MU")
     (run-on state "HQ")
     (is (empty? (:hand (get-runner))) "No cards drawn")
     (run-jack-out state)
@@ -228,49 +228,47 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Desperado")
     (run-empty-server state :archives)
-    (is (= 5 (:memory (get-runner))) "Gain 1 memory")
+    (is (= 5 (core/available-mu state)) "Gain 1 memory")
     (is (= 3 (:credit (get-runner))) "Got 1c for successful run on Desperado")))
 
-(deftest dinosaurus-adept
-  ;; Dinosaurus - hosting a breaker with strength based on unused MU should calculate correctly
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Adept" 1)
-                               (qty "Dinosaurus" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :credit 5)
-    (play-from-hand state :runner "Dinosaurus")
-    (play-from-hand state :runner "Adept")
-    (is (= 2 (:memory (get-runner))) "2 MU used")
-    (let [dino (get-hardware state 0)
-          adpt (get-program state 0)]
-      (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
-      (card-ability state :runner dino 1)
-      (prompt-select :runner (refresh adpt))
-      (let [hosted-adpt (first (:hosted (refresh dino)))]
-        (is (= 4 (:memory (get-runner))) "0 MU used")
-        (is (= 8 (:current-strength (refresh hosted-adpt))) "Adept at 8 strength hosted")))))
-
-(deftest dinosaurus-strength-boost-mu-savings
-  ;; Dinosaurus - Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Dinosaurus" 1) (qty "Battering Ram" 1)]))
-    (take-credits state :corp)
-    (core/gain state :runner :credit 5)
-    (play-from-hand state :runner "Dinosaurus")
-    (let [dino (get-in @state [:runner :rig :hardware 0])]
-      (card-ability state :runner dino 0)
-      (prompt-select :runner (find-card "Battering Ram" (:hand (get-runner))))
-      (is (= 2 (:click (get-runner))))
-      (is (= 0 (:credit (get-runner))))
-      (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not deducted from available MU")
-      (let [ram (first (:hosted (refresh dino)))]
-        (is (= 5 (:current-strength (refresh ram)))
-            "Dinosaurus giving +2 strength to Battering Ram")
-        ;; Trash Battering Ram
-        (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
-        (is (= 4 (:memory (get-runner))) "Battering Ram 2 MU not added to available MU")))))
+(deftest dinosaurus
+  (testing "Hosting a breaker with strength based on unused MU should calculate correctly"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Adept" "Dinosaurus"]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 5)
+      (play-from-hand state :runner "Dinosaurus")
+      (play-from-hand state :runner "Adept")
+      (is (= 2 (core/available-mu state)) "2 MU used")
+      (let [dino (get-hardware state 0)
+            adpt (get-program state 0)]
+        (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
+        (card-ability state :runner dino 1)
+        (prompt-select :runner (refresh adpt))
+        (let [hosted-adpt (first (:hosted (refresh dino)))]
+          (is (= 4 (core/available-mu state)) "0 MU used")
+          (is (= 8 (:current-strength (refresh hosted-adpt))) "Adept at 8 strength hosted")))))
+  (testing "Boost strength of hosted icebreaker; keep MU the same when hosting or trashing hosted breaker"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Dinosaurus" "Battering Ram"]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 5)
+      (play-from-hand state :runner "Dinosaurus")
+      (let [dino (get-in @state [:runner :rig :hardware 0])]
+        (card-ability state :runner dino 0)
+        (prompt-select :runner (find-card "Battering Ram" (:hand (get-runner))))
+        (is (= 2 (:click (get-runner))))
+        (is (= 0 (:credit (get-runner))))
+        (is (= 4 (core/available-mu state)) "Battering Ram 2 MU not deducted from available MU")
+        (let [ram (first (:hosted (refresh dino)))]
+          (is (= 5 (:current-strength (refresh ram)))
+              "Dinosaurus giving +2 strength to Battering Ram")
+          ;; Trash Battering Ram
+          (core/move state :runner (find-card "Battering Ram" (:hosted (refresh dino))) :discard)
+          (is (= 4 (core/available-mu state))
+              "Battering Ram 2 MU not added to available MU when Battering Ram was trashed"))))))
 
 (deftest doppelganger
   ;; Doppelgänger - run again when successful
@@ -381,7 +379,7 @@
               (default-runner [(qty "Grimoire" 1) (qty "Imp" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Grimoire")
-    (is (= 6 (:memory (get-runner))) "Gained 2 MU")
+    (is (= 6 (core/available-mu state)) "Gained 2 MU")
     (play-from-hand state :runner "Imp")
     (let [imp (get-in @state [:runner :rig :program 0])]
       (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter on install"))))
@@ -397,7 +395,7 @@
     (core/end-phase-12 state :runner nil)
     (prompt-select :runner (find-card "Heartbeat" (:hand (get-runner))))
     (play-from-hand state :runner "Heartbeat")
-    (is (= 5 (:memory (get-runner))) "Gained 1 MU")
+    (is (= 5 (core/available-mu state)) "Gained 1 MU")
     (play-from-hand state :runner "Cache")
     (let [hb (get-hardware state 0)
           cache (get-program state 0)
@@ -499,11 +497,11 @@
       (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
-      ;; (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
+      (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
       (prompt-choice :runner "No action")
       (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw now")
       (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
-  (testing "with Hiro in hand - Hiro not moved to runner scored area on trash decline #2638"
+  (testing "with Hiro in hand - Hiro not moved to runner scored area on trash decline. #2638"
     (do-game
       (new-game (default-corp [(qty "Chairman Hiro" 1)])
                 (default-runner [(qty "Maw" 1)]))
@@ -512,8 +510,20 @@
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
       (prompt-choice :runner "No action")
-      (is (= 0 (count (:scored (get-corp)))) "Hiro not scored")
-      (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw"))))
+      (is (= 0 (count (:scored (get-runner)))) "Hiro not scored")
+      (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw")))
+  (testing "Maw shouldn't trigger on stolen agenda. #3433"
+    (do-game
+      (new-game (default-corp [(qty "Hostile Takeover" 1)
+                               (qty "Ice Wall" 5)])
+                (default-runner [(qty "Maw" 1)]))
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 20)
+      (play-from-hand state :runner "Maw")
+      (run-empty-server state :remote1)
+      (prompt-choice :runner "Steal")
+      (is (= 0 (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
@@ -626,6 +636,29 @@
       (prompt-choice :runner "No action")
       (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards"))))
 
+(deftest obelus-crisium
+  ;; Obelus - running and trashing Crisium Grid makes run neither successful/unsuccessful
+  (do-game
+    (new-game (default-corp [(qty "Hedge Fund" 1) (qty "Crisium Grid" 1)])
+              (default-runner [(qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :corp ["Crisium Grid"])
+    (play-from-hand state :corp "Crisium Grid" "R&D")
+    (core/rez state :corp (get-content state :rd 0))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Obelus"])
+    (core/gain state :runner :credit 5)
+    (play-from-hand state :runner "Obelus")
+    (is (empty? (:hand (get-runner))) "No cards in hand")
+    (run-empty-server state "R&D")
+    (prompt-choice :runner "Crisium Grid")
+    (prompt-choice-partial :runner "Pay")
+    (prompt-choice-partial :runner "Card")
+    (prompt-choice-partial :runner "No")
+    (is (empty? (:hand (get-runner))) "Crisium Grid blocked successful run")
+    (run-empty-server state "R&D")
+    (prompt-choice-partial :runner "No")
+    (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))
+
 (deftest obelus-hades-shard
   ;; Obelus - using Hades Shard during run to increase draw
   (do-game
@@ -644,6 +677,25 @@
     (card-ability state :runner (get-resource state 0) 0)
     (prompt-choice :runner "No action")
     (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards")))
+
+(deftest obelus-remote-server
+  ;; Obelus - running a remote server first doesn't block card draw
+  (do-game
+    (new-game (default-corp [(qty "Urban Renewal" 1) (qty "Hedge Fund" 1)])
+              (default-runner [(qty "Obelus" 1) (qty "Sure Gamble" 3)]))
+    (starting-hand state :corp ["Urban Renewal"])
+    (play-from-hand state :corp "Urban Renewal" "New remote")
+    (take-credits state :corp)
+
+    (starting-hand state :runner ["Obelus"])
+    (play-from-hand state :runner "Obelus")
+    (is (empty? (:hand (get-runner))) "No cards in hand")
+    (run-empty-server state "Server 1")
+    (prompt-choice-partial :runner "No")
+
+    (run-empty-server state "R&D")
+    (prompt-choice-partial :runner "No")
+    (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))
 
 (deftest plascrete
   ;; Plascrete Carapace - Prevent meat damage
@@ -947,7 +999,7 @@
     (play-from-hand state :runner "Spinal Modem")
     (let [cad (get-ice state :hq 0)
           sm (get-hardware state 0)]
-      (is (= 5 (:memory (get-runner))))
+      (is (= 5 (core/available-mu state)))
       (is (= 2 (:rec-counter (refresh sm))))
       (run-on state :hq)
       (core/rez state :corp cad)
@@ -1141,7 +1193,7 @@
               (default-runner [(qty "Vigil" 1) (qty "Sure Gamble" 2)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Vigil")
-    (is (= 5 (:memory (get-runner))))
+    (is (= 5 (core/available-mu state)))
     (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
     (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
     (is (empty? (:hand (get-runner))))
@@ -1163,7 +1215,7 @@
    (play-from-hand state :corp "Ice Wall" "Archives")
    (take-credits state :corp)
    (play-from-hand state :runner "Zamba")
-   (is (= 6 (:memory (get-runner))) "Gain 2 memory")
+   (is (= 6 (core/available-mu state)) "Gain 2 memory")
    (is (= 1 (:credit (get-runner))) "At 1 credit")
    (play-from-hand state :runner "Infiltration")
    (prompt-choice :runner "Expose a card")

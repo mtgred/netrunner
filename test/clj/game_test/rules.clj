@@ -31,6 +31,7 @@
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (run-empty-server state :remote1)
+    (prompt-choice-partial :runner "Pay")
     (prompt-choice :runner "[Click]")
     (prompt-choice :runner "2 [Credits]")
     (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
@@ -69,7 +70,7 @@
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-in @state [:runner :rig :program 0])]
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
-      (is (= (- 4 (:memoryunits gord)) (:memory (get-runner))) "Program MU was applied"))))
+      (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
 (deftest runner-installing-uniques
   ;; Installing a copy of an active unique Runner card is prevented
@@ -111,7 +112,7 @@
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-in @state [:runner :rig :program 0])]
       (core/trash state :runner gord)
-      (is (= 4 (:memory (get-runner))) "Trashing the program restored MU"))))
+      (is (= 4 (core/available-mu state)) "Trashing the program restored MU"))))
 
 (deftest agenda-forfeit-runner
   ;; forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda
@@ -454,6 +455,29 @@
     (testing "Turn 4 Corp"
       (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
       (is (= 12 (:credit (get-corp))))))))
+
+(deftest counter-manipulation-commands-smart
+  ;; Test interactions of smart counter advancement command
+  (do-game
+    (new-game (default-corp [(qty "House of Knives" 1)])
+              (default-runner))
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (let [hok (get-content state :remote1 0)]
+      (core/command-counter state :corp [3])
+      (prompt-select :corp (refresh hok))
+      (is (= 3 (:advance-counter (refresh hok))))
+      (core/score state :corp (refresh hok)))
+    (let [hok-scored (get-scored state :corp)]
+      (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
+      (core/command-counter state :corp ["virus" 2])
+      (prompt-select :corp (refresh hok-scored))
+      (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should stay at 3 counters")
+      (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters")
+      (core/command-counter state :corp [4])
+      (prompt-select :corp (refresh hok-scored)) ;; doesn't crash with unknown counter type
+      (is (empty? (:prompt (get-corp))) "Counter prompt closed")
+      (is (= 4 (get-counters (refresh hok-scored) :agenda)) "House of Knives should have 4 agenda counters")
+      (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters"))))
 
 (deftest run-bad-publicity-credits
   ;; Should not lose BP credits until a run is completely over. Issue #1721.

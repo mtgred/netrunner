@@ -173,7 +173,7 @@
     (take-credits state :corp)
     (let [cort (get-ice state :hq 0)]
       (play-from-hand state :runner "Corroder")
-      (is (= 3 (:memory (get-runner))))
+      (is (= 3 (core/available-mu state)))
       (run-on state "HQ")
       (core/rez state :corp cort)
       (card-subroutine state :corp cort 0)
@@ -400,7 +400,7 @@
       (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
       (is (= 4 (:credit (get-runner))) "Runner lost 1 credit"))))
 
-(deftest gemini-kicker
+(deftest gemini
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success
   (do-game
     (new-game (default-corp [(qty "Gemini" 1) (qty "Hedge Fund" 2)])

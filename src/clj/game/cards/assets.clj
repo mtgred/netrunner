@@ -241,8 +241,8 @@
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
-   {:effect (effect (lose :runner :hand-size {:mod 2}))
-    :leave-play (effect (gain :runner :hand-size {:mod 2}))
+   {:effect (effect (lose :runner :hand-size 2))
+    :leave-play (effect (gain :runner :hand-size 2))
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
@@ -435,7 +435,7 @@
                                    :effect (effect (gain :corp :credit 1))}}}
 
    "Cybernetics Court"
-   {:in-play [:hand-size {:mod 4}]}
+   {:in-play [:hand-size 4]}
 
    "Daily Business Show"
    {:events {:pre-corp-draw
@@ -564,9 +564,10 @@
     :abilities [{:choices {:req (complement rezzed?)}
                  :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
-                 :effect (effect (rez-cost-bonus -1)
-                                 (rez target {:no-warning true})
-                                 (update! (assoc card :ebc-rezzed (:cid target))))}
+                 :delayed-completion true
+                 :effect (req (rez-cost-bonus state side -1)
+                              (when-completed (rez state side target {:no-warning true})
+                                              (update! state side (assoc card :ebc-rezzed (:cid target)))))}
                 {:prompt "Choose an asset to add to HQ"
                  :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
@@ -996,8 +997,8 @@
                   :label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
                   :effect (effect (gain :credit 1))}]
-     {:effect (effect (gain :runner :hand-size {:mod 1}))
-      :leave-play (effect (lose :runner :hand-size {:mod 1}))
+     {:effect (effect (gain :runner :hand-size 1))
+      :leave-play (effect (lose :runner :hand-size 1))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -1403,7 +1404,7 @@
 
    "Ronin"
    {:advanceable :always
-    :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
+    :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card 0) 4))
                  :msg "do 3 net damage"
                  :delayed-completion true
                  :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}

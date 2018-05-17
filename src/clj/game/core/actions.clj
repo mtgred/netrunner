@@ -2,7 +2,7 @@
 
 ;; These functions are called by main.clj in response to commands sent by users.
 
-(declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
+(declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size)
@@ -11,7 +11,7 @@
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card server]}]
-  (let [card (get-card state card)]
+  (when-let [card (get-card state card)]
     (case (:type card)
       ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
@@ -58,18 +58,34 @@
 (defn- change-map
   "Change a player's property using the :mod system"
   [state side key delta]
-  (gain state side key delta)
-  (change-msg state side key (base-mod-size state side key) (:mod delta)))
+  (gain state side key {:mod delta})
+  (change-msg state side key (base-mod-size state side key) delta))
+
+(defn- change-mu
+  "Send a system message indicating how mu was changed"
+  [state side delta]
+  (free-mu state delta)
+  (system-msg state side
+              (str "sets unused MU to " (available-mu state)
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (if (map? delta)
+  (cond
+    ;; Memory needs special treatment and message
+    (= :memory key)
+    (change-mu state side delta)
+
+    ;; Hand size needs special treatment as it expects a map
+    (= :hand-size key)
     (change-map state side key delta)
+
+    :else
     (do (if (neg? delta)
           (deduct state side [key (- delta)])
           (swap! state update-in [side key] (partial + delta)))
-      (change-msg state side key (get-in @state [side key]) delta))))
+        (change-msg state side key (get-in @state [side key]) delta))))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."
@@ -160,7 +176,8 @@
               ;; :Counter prompts deduct counters from the card
               (add-counter state side (:card prompt) (:counter choices) (- choice)))
             ;; trigger the prompt's effect function
-            ((:effect prompt) (or choice card))
+            (when-let [effect-prompt (:effect prompt)]
+              (effect-prompt (or choice card)))
             (finish-prompt state side prompt card)))
       (do (if-let [cancel-effect (:cancel-effect prompt)]
             ;; trigger the cancel effect
@@ -310,12 +327,13 @@
   ([state side card] (rez state side (make-eid state) card nil))
   ([state side card args]
    (rez state side (make-eid state) card args))
-  ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt] :as args}]
+  ([state side eid {:keys [disabled] :as card} {:keys [ignore-cost no-warning force no-get-card paid-alt cached-bonus] :as args}]
    (let [card (if no-get-card
                 card
                 (get-card state card))
          altcost (when-not no-get-card
                    (:alternative-cost (card-def card)))]
+     (when cached-bonus (rez-cost-bonus state side cached-bonus))
      (if (or force (can-rez? state side card))
        (do
          (trigger-event state side :pre-rez card)
@@ -323,17 +341,19 @@
                    (:install-rezzed (card-def card)))
            (do (trigger-event state side :pre-rez-cost card)
                (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
-                 (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
-                          {:delayed-completion true
-                           :effect (req (if (and (= target "Yes")
-                                                 (can-pay? state side (:title card) altcost))
-                                          (do (pay state side card altcost)
-                                              (rez state side (-> card (dissoc :alternative-cost))
-                                                   {:ignore-cost true
-                                                    :no-get-card true
-                                                    :paid-alt true}))
-                                          (rez state side (-> card (dissoc :alternative-cost))
-                                               {:no-get-card true})))})
+                 (let [curr-bonus (get-rez-cost-bonus state side)]
+                   (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
+                            {:delayed-completion true
+                             :effect (req (if (and (= target "Yes")
+                                                   (can-pay? state side (:title card) altcost))
+                                            (do (pay state side card altcost)
+                                              (rez state side eid (-> card (dissoc :alternative-cost))
+                                                   (merge args {:ignore-cost true
+                                                                :no-get-card true
+                                                                :paid-alt true})))
+                                            (do (rez state side eid (-> card (dissoc :alternative-cost))
+                                                     (merge args {:no-get-card true
+                                                                  :cached-bonus curr-bonus})))))}))
                  (let [cdef (card-def card)
                        cost (rez-cost state side card)
                        costs (concat (when-not ignore-cost [:credit cost])
@@ -489,7 +509,7 @@
       (when-completed (trigger-event-sync state side :pass-ice cur-ice)
                       (do (update-ice-in-server
                             state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-                          (swap! state update-in [:run :position] dec)
+                          (swap! state update-in [:run :position] (fnil dec 1))
                           (swap! state assoc-in [:run :no-action] false)
                           (system-msg state side "continues the run")
                           (when cur-ice
