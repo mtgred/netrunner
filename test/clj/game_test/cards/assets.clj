@@ -802,6 +802,32 @@
       (run-empty-server state :rd)
       (is (= 2 (count (:discard (get-runner)))) "Suffered 2 damage for successful run w/ tag"))))
 
+(deftest director-haas
+  ;; Director Haas
+  (do-game
+    (new-game (default-corp [(qty "Director Haas" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Director Haas" "New remote")
+    (play-from-hand state :corp "Director Haas" "Server 1")
+    (prompt-choice :corp "OK")
+    (is (= 1 (count (:discard (get-corp)))) "First Haas trashed")
+    (is (= 0 (:agenda-point (get-runner))) "No points for Runner if trashed by Corp")
+    (let [dh (get-content state :remote1 0)]
+      (core/rez state :corp dh))
+    (is (= 2 (:click (get-corp))) "Corp should immediately gain a click")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (= 4 (:click (get-corp))) "Corp should have an extra click each turn")
+    (take-credits state :corp)
+    (take-credits state :runner 3)
+    (run-empty-server state "Server 1")
+    (prompt-choice-partial :runner "Pay") ; trash Haas
+    (take-credits state :runner)
+    (is (= 3 (:click (get-corp))) "Corp should be back to 3 clicks")
+    (is (= 1 (count (-> @state :runner :scored)))
+        "Director Haas added to Runner score area")
+    (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points")))
+
 (deftest early-premiere
   ;; Early Premiere - Pay 1c at start of turn to place an advancement on a card in a server
   (do-game
