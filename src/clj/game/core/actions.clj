@@ -11,7 +11,7 @@
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card server]}]
-  (let [card (get-card state card)]
+  (when-let [card (get-card state card)]
     (case (:type card)
       ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
