@@ -493,7 +493,7 @@
       (when-completed (trigger-event-sync state side :pass-ice cur-ice)
                       (do (update-ice-in-server
                             state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-                          (swap! state update-in [:run :position] dec)
+                          (swap! state update-in [:run :position] (fnil dec 1))
                           (swap! state assoc-in [:run :no-action] false)
                           (system-msg state side "continues the run")
                           (when cur-ice
