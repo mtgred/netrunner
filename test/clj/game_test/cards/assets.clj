@@ -675,6 +675,21 @@
     (take-credits state :runner)
     (is (empty? (get-in @state [:corp :prompt])) "Corporate Town shouldn't activate if there are no resources")))
 
+(deftest cpc-generator
+  ;; CPC Generator
+  (do-game
+    (new-game (default-corp ["CPC Generator"])
+              (default-runner))
+    (play-from-hand state :corp "CPC Generator" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (let [credits (:credit (get-corp))]
+      (core/click-credit state :runner nil)
+      (is (= 1 (- (:credit (get-corp)) credits)) "Should gain one from CPC Generator"))
+    (let [credits (:credit (get-corp))]
+      (core/click-credit state :runner nil)
+      (is (= 0 (- (:credit (get-corp)) credits)) "Shouldn't gain another credit from CPC Generator"))))
+
 (deftest daily-business-show
   ;; Daily Business Show
   (testing "Full test"
