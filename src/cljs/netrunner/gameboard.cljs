@@ -42,6 +42,9 @@
       (= (get-in state [:corp :user :_id]) user-id) :corp
       :else :spectator)))
 
+(defn not-spectator? []
+  (not= :spectator (get-side @game-state)))
+
 (defn init-game [state]
   (let [side (get-side state)]
     (.setItem js/localStorage "gameid" (:gameid @app-state))
@@ -115,8 +118,6 @@
                 "[Trash]" "trash"
                 "[t]" "trash"})
 
-(defn not-spectator? [game-state app-state]
-  (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state)))
 
 (defn send-command
   ([command] (send-command command nil))
@@ -219,7 +220,7 @@
 
 (defn handle-card-click [{:keys [type zone root] :as card} owner]
   (let [side (:side @game-state)]
-    (when (not-spectator? game-state app-state)
+    (when (not-spectator?)
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
@@ -303,7 +304,7 @@
   "Checks if spectators are allowed to see hidden information, such as hands and face-down cards"
   []
   (and (get-in @game-state [:options :spectatorhands])
-       (not (not-spectator? game-state app-state))))
+       (not (not-spectator?))))
 
 (def ci-open "\u2664")
 (def ci-seperator "\u2665")
@@ -441,7 +442,7 @@
         (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing cursor))))
           [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])
         (if-let [game (some #(when (= (:gameid cursor) (str (:gameid %))) %) (:games @app-state))]
-          (when (or (not-spectator? game-state app-state)
+          (when (or (not-spectator?)
                     (not (:mutespectators game)))
             [:form {:on-submit #(send-msg % owner)
                     :on-input #(send-typing % owner)}
@@ -658,7 +659,7 @@
    (sab/html
     [:div.card-frame
      [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
-                            :draggable (when (not-spectator? game-state app-state) true)
+                            :draggable (when (not-spectator?) true)
                             :on-touch-start #(handle-touchstart % cursor)
                             :on-touch-end   #(handle-touchend %)
                             :on-touch-move  #(handle-touchmove %)
@@ -799,6 +800,10 @@
       [:div.header {:class (when (> (count cursor) 0) "darkbg")}
        (str (:name opts) " (" (fn cursor) ")")]))))
 
+(defn- this-user?
+  [player]
+  (= (-> player :user :_id) (-> @app-state :user :_id)))
+
 (defn build-hand-card-view
   [player remotes wrapper-class]
   (let [side (get-in player [:identity :side])
@@ -808,13 +813,13 @@
         (fn [i card]
           [:div {:class (str
                           (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
-                                   (= (:user player) (:user @app-state))
+                                   (this-user? player)
                                    (not (:selected card)) (playable? card))
                             "playable" "")
                           " "
                           wrapper-class)
                  :style {:left (* (/ 320 (dec size)) i)}}
-           (if (or (= (:user player) (:user @app-state))
+           (if (or (this-user? player)
                    (:openhand player)
                    (spectator-view-hidden?))
              (om/build card-view (assoc card :remotes remotes))
@@ -960,7 +965,7 @@
         [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
          (map-indexed (fn [i card]
                         [:div.card-wrapper {:style {:left (* (/ 128 size) i)}}
-                         (if (= (:user player) (:user @app-state))
+                         (if (this-user? player)
                            (om/build card-view card)
                            (facedown-card side))])
                       cards)

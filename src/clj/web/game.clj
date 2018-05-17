@@ -1,6 +1,6 @@
 (ns web.game
   (:require [web.ws :as ws]
-            [web.lobby :refer [all-games old-states] :as lobby]
+            [web.lobby :refer [all-games old-states already-in-game?] :as lobby]
             [web.utils :refer [response]]
             [web.stats :as stats]
             [game.main :as main]
@@ -63,12 +63,14 @@
 
 (defn- active-game?
   [gameid-str client-id]
-  (let [gameid (java.util.UUID/fromString gameid-str)
-        game-from-gameid (lobby/game-for-id gameid)
-        game-from-clientid (lobby/game-for-client client-id)]
-    (and game-from-clientid
-         game-from-gameid
-         (= (:gameid game-from-clientid) (:gameid game-from-gameid)))))
+  (if (nil? gameid-str)
+    false
+    (let [gameid (java.util.UUID/fromString gameid-str)
+          game-from-gameid (lobby/game-for-id gameid)
+          game-from-clientid (lobby/game-for-client client-id)]
+      (and game-from-clientid
+           game-from-gameid
+           (= (:gameid game-from-clientid) (:gameid game-from-gameid))))))
 
 (defn handle-game-start
   [{{{:keys [username] :as user} :user} :ring-req
@@ -187,8 +189,9 @@
     (when (and user game (lobby/allowed-in-game game user) state @state)
       (if-not started
         false ; don't handle this message, let lobby/handle-game-watch.
-        (if (or (empty? game-password)
-                (bcrypt/check password game-password))
+        (if (and (not (already-in-game? user game))
+                 (or (empty? game-password)
+                     (bcrypt/check password game-password)))
           (let [{:keys [spect-state]} (main/public-states state)]
             ;; Add as a spectator, inform the client that this is the active game,
             ;; add a chat message, then send full states to all players.

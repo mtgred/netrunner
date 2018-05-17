@@ -334,62 +334,39 @@
                               :effect (req (draw state side eid 1 nil))}}}
 
    "Freedom Khumalo: Crypto-Anarchist"
-   (letfn [(fkca [accessed-card play-or-rez selected-cards]
-             (if (not= 0 play-or-rez)
-               {:delayed-completion true
-                :prompt "Select a card with at least 1 virus counter"
-                :choices {:req #(and (installed? %)
-                                     (> (get-in % [:counter :virus] 0) 0))}
-                :effect (req (when (not= (:cid target) (:cid card))
-                               (add-counter state :runner card :virus 1)
-                               (add-counter state :runner target :virus -1)
-                               (let [card (get-card state card)
-                                     selected-cards (merge-with + selected-cards {(:cid target) 1})]
-                                 (if (< (get-in card [:counter :virus] 0) play-or-rez)
-                                   (continue-ability state side (fkca accessed-card play-or-rez selected-cards) card nil)
-                                   (let [counters (get-in (get-card state card) [:counter :virus] 0)]
-                                     (add-counter state :runner card :virus (- counters))
-                                     (system-msg state :runner
-                                       (str "trash " (:title accessed-card) " at no cost"
-                                         (when (> play-or-rez 0)
-                                           (str " spending "
-                                             (clojure.string/join ", "
-                                               (map #(str (quantify (get selected-cards (:cid %)) "virus counter")
-                                                       " from " (:title %))
-                                                    (map #(find-cid % (all-installed state :runner))
-                                                         (keys selected-cards))))))))
-                                     (clear-wait-prompt state :corp)
-                                     (trash-no-cost state side eid accessed-card))))))
-                :cancel-effect (req (doseq [c (all-installed state :runner)]
-                                      (let [cid (:cid c)]
-                                        (when (contains? selected-cards cid)
-                                          (add-counter state :runner c :virus (get selected-cards cid)))))
-                                    (let [counters (get-in (get-card state card) [:counter :virus] 0)]
-                                      (add-counter state :runner card :virus (- counters)))
-                                    (clear-wait-prompt state :corp)
-                                    (swap! state dissoc-in [:per-turn (:cid card)])
-                                    (access-non-agenda state side eid accessed-card))}
-               {:delayed-completion true
-                :msg (msg "trash " (:title accessed-card) " at no cost")
-                :effect (effect (clear-wait-prompt :corp)
-                                (trash-no-cost eid accessed-card))}))]
-     {:flags {:slow-trash (req true)}
-      :interactions
-      {:trash-ability
-       {:interactive (req true)
-        :delayed-completion true
-        :label "[Freedom]: Trash card"
-        :req (req (and (not (get-in @state [:per-turn (:cid card)]))
-                       (not (is-type? target "Agenda"))
-                       (<= (:cost target)
-                           (reduce + (map #(get-in % [:counter :virus])
-                                          (filter #(> (get-in % [:counter :virus] 0) 0)
-                                                  (all-installed state :runner)))))))
-        :once :per-turn
-        :effect (req (let [accessed-card target
-                           play-or-rez (:cost target)]
-                       (show-wait-prompt state :corp "Runner to use Freedom Khumalo's ability")
-                       (continue-ability state side (fkca accessed-card play-or-rez (hash-map)) card nil)))}}})
+   {:flags {:slow-trash (req true)}
+    :interactions
+    {:trash-ability
+     {:interactive (req true)
+      :delayed-completion true
+      :label "[Freedom]: Trash card"
+      :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                     (not (is-type? target "Agenda"))
+                     (<= (:cost target)
+                         (reduce + (map #(get-in % [:counter :virus] 0)
+                                        (all-installed state :runner))))))
+      :once :per-turn
+      :effect (req (let [accessed-card target
+                         play-or-rez (:cost target)]
+                     (show-wait-prompt state :corp "Runner to use Freedom Khumalo's ability")
+                     (if (zero? play-or-rez)
+                       (continue-ability state side
+                                         {:delayed-completion true
+                                          :msg (msg "trash " (:title accessed-card) " at no cost")
+                                          :effect (effect (clear-wait-prompt :corp)
+                                                          (trash-no-cost eid accessed-card))}
+                                         card nil)
+                       (when-completed (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
+                                       (do (clear-wait-prompt state :corp)
+                                           (if-let [msg (:msg async-result)]
+                                             (do (system-msg state :runner
+                                                             (str "uses Freedom Khumalo: Crypto-Anarchist to"
+                                                                  " trash " (:title accessed-card)
+                                                                  " at no cost, spending " msg))
+                                                 (trash-no-cost state side eid accessed-card))
+                                             ;; Player cancelled ability
+                                             (do (swap! state dissoc-in [:per-turn (:cid card)])
+                                                 (access-non-agenda state side eid accessed-card))))))))}}}
 
    "Fringe Applications: Tomorrow, Today"
    {:events
@@ -594,8 +571,9 @@
                               :prompt "Choose a copy of Jinteki Biotech to use this game"
                               :choices ["The Brewery" "The Tank" "The Greenhouse"]
                               :effect (effect (update! (assoc card :biotech-target target))
-                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
+                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game")))}}
     :abilities [{:label "Check chosen flip identity"
+                 :req (req (:biotech-target card))
                  :effect (req (case (:biotech-target card)
                                 "The Brewery"
                                 (toast state :corp "Flip to: The Brewery (Do 2 net damage)" "info")
