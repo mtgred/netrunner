@@ -571,8 +571,9 @@
                               :prompt "Choose a copy of Jinteki Biotech to use this game"
                               :choices ["The Brewery" "The Tank" "The Greenhouse"]
                               :effect (effect (update! (assoc card :biotech-target target))
-                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
+                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game")))}}
     :abilities [{:label "Check chosen flip identity"
+                 :req (req (:biotech-target card))
                  :effect (req (case (:biotech-target card)
                                 "The Brewery"
                                 (toast state :corp "Flip to: The Brewery (Do 2 net damage)" "info")
