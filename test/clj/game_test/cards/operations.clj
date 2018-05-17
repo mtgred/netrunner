@@ -1871,12 +1871,12 @@
     (do-game
       (new-game (default-corp ["Restructured Datapool" "Surveillance Sweep" "Data Raven"])
                 (default-runner ["Scrubbed"]))
-      (is (= 0 (:tag (get-runner))) "Runner should start with no tags")
+      (is (zero? (:tag (get-runner))) "Runner should start with no tags")
       (play-from-hand state :corp "Surveillance Sweep")
       (play-and-score state "Restructured Datapool")
       (let [rd-scored (get-scored state :corp)]
         (card-ability state :corp rd-scored 0)
-        (is (not (= :waiting (->> (get-corp) :prompt first :prompt-type))) "Surveillance Sweep on works during a run")
+        (is (not= :waiting (->> (get-corp) :prompt first :prompt-type)) "Surveillance Sweep only works during a run")
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
         (is (= 1 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability"))
@@ -1891,15 +1891,15 @@
         (is (= :waiting (->> (get-corp) :prompt first :prompt-type)) "During a run, Corp should wait on Runner first")
         (prompt-choice :runner 0)
         (prompt-choice :corp 0)
-        (is (= 1 (->> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (is (= 1 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
         (run-successful state)
         (play-from-hand state :runner "Scrubbed")
         (run-on state :hq)
         (card-subroutine state :corp dr 0)
-        (is (not (= :waiting (->> (get-corp) :prompt first :prompt-type))) "Runner should now be waiting on Corp")
+        (is (not= :waiting (->> (get-corp) :prompt first :prompt-type)) "Runner should now be waiting on Corp")
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (= 2 (->> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (is (= 2 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
         (run-successful state))))
   (testing "trace during run after stealing an agenda"
     (do-game
@@ -1921,12 +1921,12 @@
         (is (= :waiting (->> (get-corp) :prompt first :prompt-type)) "During a run, Corp should wait on Runner first")
         (prompt-choice :runner 0)
         (prompt-choice :corp 0)
-        (is (= 1 (->> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (is (= 1 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
         (run-successful state)
         (prompt-select :runner bn)
         (prompt-choice :runner "Steal")
         (prompt-select :runner fc)
-        (is (not (= :waiting (->> (get-corp) :prompt first :prompt-type))) "After steal, Surveillance Sweep leaves play and Runner waits on Corp")))))
+        (is (not= :waiting (-> (get-corp) :prompt first :prompt-type)) "After steal, Surveillance Sweep leaves play and Runner waits on Corp")))))
 
 (deftest the-all-seeing-i-prevent-trash
   ;; Counts number of cards if one card is prevented trashed with fall guy
