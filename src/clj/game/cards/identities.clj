@@ -32,6 +32,7 @@
    {:events {:corp-install
              {:delayed-completion true
               :req (req (and (first-event? state :corp :corp-install)
+                             (pos? (:turn @state))
                              (not (rezzed? target))))
               :effect
               (req (show-wait-prompt state :corp "Runner to use 419: Amoral Scammer")
@@ -47,7 +48,7 @@
                             :effect (req (clear-wait-prompt state :corp)
                                          (if (not (can-pay? state :corp nil :credit 1))
                                            (do
-                                             (toast state :corp "Cannot afford to pay 1 [Credits] to block card exposure" "info")
+                                             (toast state :corp "Cannot afford to pay 1 credit to block card exposure" "info")
                                              (expose state side eid itarget))
                                            (do
                                              (show-wait-prompt state :runner "Corp decision")
@@ -61,7 +62,7 @@
                                                   :effect (req (expose state side eid itarget)
                                                                (clear-wait-prompt state :runner))}
                                                  :yes-ability
-                                                 {:effect (req (lose state :corp :credit 1)
+                                                 {:effect (req (pay state :corp card [:credit 1])
                                                                (system-msg state :corp (str "spends 1 [Credits] to prevent "
                                                                                             " card from being exposed"))
                                                                (clear-wait-prompt state :runner))}}}
@@ -251,14 +252,14 @@
 
    "Cerebral Imaging: Infinite Frontiers"
    {:effect (req (when (> (:turn @state) 1)
-                   (swap! state assoc-in [:corp :hand-size-base] (:credit corp)))
+                   (swap! state assoc-in [:corp :hand-size :base] (:credit corp)))
                  (add-watch state :cerebral-imaging
                             (fn [k ref old new]
                               (let [credit (get-in new [:corp :credit])]
                                 (when (not= (get-in old [:corp :credit]) credit)
-                                  (swap! ref assoc-in [:corp :hand-size-base] credit))))))
+                                  (swap! ref assoc-in [:corp :hand-size :base] credit))))))
     :leave-play (req (remove-watch state :cerebral-imaging)
-                     (swap! state assoc-in [:corp :hand-size-base] 5))}
+                     (swap! state assoc-in [:corp :hand-size :base] 5))}
 
    "Chaos Theory: Wünderkind"
    {:effect (effect (gain :memory 1))
@@ -307,10 +308,10 @@
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
-   {:effect (effect (lose :hand-size-modification 1)
-                    (lose :runner :hand-size-modification 1))
-    :leave-play (effect (gain :hand-size-modification 1)
-                        (gain :runner :hand-size-modification 1))}
+   {:effect (effect (lose :hand-size 1)
+                    (lose :runner :hand-size 1))
+    :leave-play (effect (gain :hand-size 1)
+                        (gain :runner :hand-size 1))}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
@@ -339,6 +340,41 @@
                                              (some #{:discard} (:previous-zone target))))
                               :msg (msg "draw a card")
                               :effect (req (draw state side eid 1 nil))}}}
+
+   "Freedom Khumalo: Crypto-Anarchist"
+   {:flags {:slow-trash (req true)}
+    :interactions
+    {:trash-ability
+     {:interactive (req true)
+      :delayed-completion true
+      :label "[Freedom]: Trash card"
+      :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                     (not (is-type? target "Agenda"))
+                     (<= (:cost target)
+                         (reduce + (map #(get-in % [:counter :virus] 0)
+                                        (all-installed state :runner))))))
+      :once :per-turn
+      :effect (req (let [accessed-card target
+                         play-or-rez (:cost target)]
+                     (show-wait-prompt state :corp "Runner to use Freedom Khumalo's ability")
+                     (if (zero? play-or-rez)
+                       (continue-ability state side
+                                         {:delayed-completion true
+                                          :msg (msg "trash " (:title accessed-card) " at no cost")
+                                          :effect (effect (clear-wait-prompt :corp)
+                                                          (trash-no-cost eid accessed-card))}
+                                         card nil)
+                       (when-completed (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
+                                       (do (clear-wait-prompt state :corp)
+                                           (if-let [msg (:msg async-result)]
+                                             (do (system-msg state :runner
+                                                             (str "uses Freedom Khumalo: Crypto-Anarchist to"
+                                                                  " trash " (:title accessed-card)
+                                                                  " at no cost, spending " msg))
+                                                 (trash-no-cost state side eid accessed-card))
+                                             ;; Player cancelled ability
+                                             (do (swap! state dissoc-in [:per-turn (:cid card)])
+                                                 (access-non-agenda state side eid accessed-card))))))))}}}
 
    "Fringe Applications: Tomorrow, Today"
    {:events
@@ -543,8 +579,9 @@
                               :prompt "Choose a copy of Jinteki Biotech to use this game"
                               :choices ["The Brewery" "The Tank" "The Greenhouse"]
                               :effect (effect (update! (assoc card :biotech-target target))
-                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
+                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game")))}}
     :abilities [{:label "Check chosen flip identity"
+                 :req (req (:biotech-target card))
                  :effect (req (case (:biotech-target card)
                                 "The Brewery"
                                 (toast state :corp "Flip to: The Brewery (Do 2 net damage)" "info")
@@ -641,7 +678,8 @@
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
                           :yes-ability {:msg "force the Corp to draw 1 card"
-                                        :effect (effect (draw :corp))}
+                                        :delayed-completion true
+                                        :effect (effect (draw :corp eid 1 nil))}
                           :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
                         card nil))}}}
 
@@ -719,8 +757,8 @@
    {:recurring 2}
 
    "NBN: The World is Yours*"
-   {:effect (effect (gain :hand-size-modification 1))
-    :leave-play (effect (lose :hand-size-modification 1))}
+   {:effect (effect (gain :hand-size 1))
+    :leave-play (effect (lose :hand-size 1))}
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:req (req (first-event? state :corp :server-created))
@@ -763,8 +801,9 @@
                                                 (update! (assoc card :fill-hq true)))}}
       :abilities [{:req (req (:fill-hq card))
                    :msg (msg "draw " (- 5 (count (:hand corp))) " cards")
-                   :effect (effect (draw (- 5 (count (:hand corp))))
-                                   (update! (dissoc card :fill-hq)))}]})
+                   :effect (req (draw state side (- 5 (count (:hand corp))))
+                                (update! state side (dissoc card :fill-hq))
+                                (swap! state dissoc :turn-events))}]})
 
    "Nisei Division: The Next Generation"
    {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}

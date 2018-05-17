@@ -15,10 +15,10 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Adept")
     (let [ad (get-program state 0)]
-      (is (= 2 (:memory (get-runner))))
+      (is (= 2 (core/available-mu state)))
       (is (= 4 (:current-strength (refresh ad))) "+2 strength for 2 unused MU")
       (play-from-hand state :runner "Box-E")
-      (is (= 4 (:memory (get-runner))))
+      (is (= 4 (core/available-mu state)))
       (is (= 6 (:current-strength (refresh ad))) "+4 strength for 4 unused MU"))))
 
 (deftest atman-install-0
@@ -28,7 +28,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Atman")
     (prompt-choice :runner 0)
-    (is (= 3 (:memory (get-runner))))
+    (is (= 3 (core/available-mu state)))
     (let [atman (get-in @state [:runner :rig :program 0])]
       (is (= 0 (get-counters atman :power)) "0 power counters")
       (is (= 0 (:current-strength atman)) "0 current strength"))))
@@ -41,39 +41,47 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Atman")
     (prompt-choice :runner 2)
-    (is (= 3 (:memory (get-runner))))
+    (is (= 3 (core/available-mu state)))
     (let [atman (get-in @state [:runner :rig :program 0])]
       (is (= 2 (get-counters atman :power)) "2 power counters")
       (is (= 2 (:current-strength atman)) "2 current strength"))))
 
 (deftest aumakua
   ;; Aumakua - Gain credit on no-trash
-  (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 3)])
-              (default-runner [(qty "Aumakua" 1)]))
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Aumakua")
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "No")
-    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
-    (core/gain state :runner :credit 5)
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
-    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
+  (testing "Gain counter on no trash"
+    (do-game
+      (new-game (default-corp [(qty "PAD Campaign" 3)])
+                (default-runner [(qty "Aumakua" 1)]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state "Server 1")
+      (prompt-choice :runner "No action")
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
+      (core/gain state :runner :credit 5)
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay")
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
+  (testing "Gain counters on empty archives"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Aumakua"])
+                {:start-as :runner})
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state :archives)
+      (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from accessing empty Archives")))
 
-(deftest aumakua-neutralize-all-threats
-  ;; Aumakua - Neutralize All Threats interaction
-  (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 3)])
-              (default-runner [(qty "Aumakua" 1) (qty "Neutralize All Threats" 1)]))
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Aumakua")
-    (play-from-hand state :runner "Neutralize All Threats")
-    (core/gain state :runner :credit 5)
-    (run-empty-server state "Server 1")
-    (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash")))
+  (testing "Neutralize All Threats interaction"
+    (do-game
+      (new-game (default-corp [(qty "PAD Campaign" 3)])
+                (default-runner [(qty "Aumakua" 1) (qty "Neutralize All Threats" 1)]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Aumakua")
+      (play-from-hand state :runner "Neutralize All Threats")
+      (core/gain state :runner :credit 5)
+      (run-empty-server state "Server 1")
+      (is (zero? (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from ABT-forced trash"))))
 
 (deftest baba-yaga
   (do-game
@@ -97,7 +105,7 @@
       (card-ability state :runner baba 1)
       (prompt-select :runner (find-card "Sharpshooter" (:program (:rig (get-runner)))))
       (is (= 2 (count (:hosted (refresh baba)))) "Faerie and Sharpshooter hosted on Baba Yaga")
-      (is (= 1 (:memory (get-runner))) "1 MU left with 2 breakers on Baba Yaga")
+      (is (= 1 (core/available-mu state)) "1 MU left with 2 breakers on Baba Yaga")
       (is (= 4 (:credit (get-runner))) "-5 from Baba, -1 from Sharpshooter played into Rig, -5 from Yog"))))
 
 (deftest cerberus-rex
@@ -213,6 +221,22 @@
       (is (= "Crypsis" (:title (first (:discard (get-runner)))))
           "Crypsis was trashed"))))
 
+(deftest darwin
+  ;; Darwin - starts at 0 strength
+  (do-game
+    (new-game (default-corp)
+              (default-runner [(qty "Darwin" 1)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Darwin")
+    (let [darwin (get-program state 0)]
+      (is (zero? (get-counters (refresh darwin) :virus)) "Darwin starts with 0 virus counters")
+      (is (= 0 (:current-strength (refresh darwin ))) "Darwin starts at 0 strength")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (card-ability state :runner (refresh darwin) 1) ; add counter
+      (is (= 1 (get-counters (refresh darwin) :virus)) "Darwin gains 1 virus counter")
+      (is (= 1 (:current-strength (refresh darwin ))) "Darwin is at 1 strength"))))
+
 (deftest deus-x-multiple-hostile-infrastructure
   ;; Multiple Hostile Infrastructure vs. Deus X
   (do-game
@@ -230,7 +254,7 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Deus X")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
@@ -247,11 +271,10 @@
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Deus X")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Access")
     (let [dx (get-program state 0)]
       (card-ability state :runner dx 1)
       (prompt-choice :runner "Done")
-      (prompt-choice :runner "Yes")
+      (prompt-choice-partial :runner "Pay")
       (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
       (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
 
@@ -272,45 +295,43 @@
       (run-continue state)
       (is (find-card "Faerie" (:discard (get-runner))) "Faerie trashed"))))
 
-(deftest faust-pump
-  ;; Faust - Pump by discarding
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Faust" 1) (qty "Sure Gamble" 3)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Faust")
-    (let [faust (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner faust 1)
-      (prompt-card :runner (first (:hand (get-runner))))
-      (is (= 4 (:current-strength (refresh faust))) "4 current strength")
-      (is (= 1 (count (:discard (get-runner)))) "1 card trashed"))))
-
-(deftest faust-pump
-  ;; Faust - Pump does not trigger trash prevention. #760
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Faust" 1)
-                               (qty "Sacrificial Construct" 1)
-                               (qty "Fall Guy" 1)
-                               (qty "Astrolabe" 1)
-                               (qty "Gordian Blade" 1 )
-                               (qty "Armitage Codebusting" 1)]))
-    (take-credits state :corp)
-    (core/draw state :runner 1)
-    (play-from-hand state :runner "Faust")
-    (play-from-hand state :runner "Fall Guy")
-    (play-from-hand state :runner "Sacrificial Construct")
-    (is (= 2 (count (get-in @state [:runner :rig :resource]))) "Resources installed")
-    (let [faust (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner faust 1)
-      (prompt-card :runner (find-card "Astrolabe" (:hand (get-runner))))
-      (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for hardware")
-      (card-ability state :runner faust 1)
-      (prompt-card :runner (find-card "Gordian Blade" (:hand (get-runner))))
-      (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for program")
-      (card-ability state :runner faust 1)
-      (prompt-card :runner (find-card "Armitage Codebusting" (:hand (get-runner))))
-      (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for resource"))))
+(deftest faust
+  (testing "Basic test: Pump by discarding"
+    (do-game
+      (new-game (default-corp)
+                (default-runner [(qty "Faust" 1) (qty "Sure Gamble" 3)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Faust")
+      (let [faust (get-program state 0)]
+        (card-ability state :runner faust 1)
+        (prompt-select :runner (find-card "Sure Gamble" (:hand (get-runner))))
+        (is (= 4 (:current-strength (refresh faust))) "4 current strength")
+        (is (= 1 (count (:discard (get-runner)))) "1 card trashed"))))
+  (testing "Pump does not trigger trash prevention. #760"
+    (do-game
+      (new-game (default-corp)
+                (default-runner [(qty "Faust" 1)
+                                 (qty "Sacrificial Construct" 1)
+                                 (qty "Fall Guy" 1)
+                                 (qty "Astrolabe" 1)
+                                 (qty "Gordian Blade" 1 )
+                                 (qty "Armitage Codebusting" 1)]))
+      (take-credits state :corp)
+      (core/draw state :runner 1)
+      (play-from-hand state :runner "Faust")
+      (play-from-hand state :runner "Fall Guy")
+      (play-from-hand state :runner "Sacrificial Construct")
+      (is (= 2 (count (get-in @state [:runner :rig :resource]))) "Resources installed")
+      (let [faust (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner faust 1)
+        (prompt-select :runner (find-card "Astrolabe" (:hand (get-runner))))
+        (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for hardware")
+        (card-ability state :runner faust 1)
+        (prompt-select :runner (find-card "Gordian Blade" (:hand (get-runner))))
+        (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for program")
+        (card-ability state :runner faust 1)
+        (prompt-select :runner (find-card "Armitage Codebusting" (:hand (get-runner))))
+        (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for resource")))))
 
 (deftest femme-counter
   ;; Femme Fatale counter test
@@ -345,6 +366,33 @@
      (card-ability state :runner gow 2)
      (is (= 1 (:tag (get-runner))))
      (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
+
+(deftest inversificator
+  ;; Inversificator shouldn't hook up events for unrezzed ice
+  (do-game
+    (new-game (default-corp [(qty "Turing" 1) (qty "Kakugo" 1)])
+              (default-runner [(qty "Inversificator" 1) (qty "Sure Gamble" 1)]))
+    (play-from-hand state :corp "Kakugo" "HQ")
+    (play-from-hand state :corp "Turing" "HQ")
+    (take-credits state :corp)
+
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Inversificator")
+    (let [inv (get-program state 0)
+          tur (get-ice state :hq 1)]
+      (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 card in hand")
+      (run-on state :hq)
+      (core/rez state :corp (refresh tur))
+      (run-continue state)
+      (card-ability state :runner (refresh inv) 0)
+      (prompt-select :runner (get-ice state :hq 1))
+      (prompt-select :runner (get-ice state :hq 0))
+      (run-jack-out state)
+      (is (= 1 (count (:hand (get-runner)))) "Runner still has 1 card in hand")
+
+      (run-on state :hq)
+      (run-continue state)
+      (is (= 1 (count (:hand (get-runner)))) "Kakugo doesn't fire when unrezzed"))))
 
 (deftest mammon
   ;; Mammon - Pay to add X power counters at start of turn, all removed at end of turn
@@ -414,9 +462,9 @@
     (take-credits state :runner 1)
     (play-from-hand state :runner "Akamatsu Mem Chip")
     (play-from-hand state :runner "Akamatsu Mem Chip")
-    (is (= 6 (:memory (get-runner))))
+    (is (= 6 (core/available-mu state)))
     (play-from-hand state :runner "Overmind")
-    (is (= 5 (:memory (get-runner))))
+    (is (= 5 (core/available-mu state)))
     (let [ov (get-in @state [:runner :rig :program 0])]
       (is (= 5 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
@@ -437,6 +485,18 @@
     (trash-from-hand state :runner "Paperclip")
     (run-on state "Archives")
     (is (empty? (:prompt (get-runner))) "No prompt to install second Paperclip")))
+
+(deftest paperclip-facedown
+  ;; Paperclip - firing on facedown ice shouldn't crash
+  (do-game
+    (new-game (default-corp [(qty "Vanilla" 1)])
+              (default-runner [(qty "Paperclip" 1)]))
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paperclip")
+    (run-on state "Archives")
+    (card-ability state :runner (get-program state 0) 0)
+    (prompt-choice :runner 0)))
 
 (deftest paperclip-multiple
   ;; Paperclip - do not show a second install prompt if user said No to first, when multiple are in heap
@@ -539,10 +599,10 @@
       (is (= 2 (:current-strength (refresh shiv))) "2 installed breakers; 2 strength")
       (play-from-hand state :runner "Inti")
       (is (= 3 (:current-strength (refresh shiv))) "3 installed breakers; 3 strength")
-      (is (= 1 (:memory (get-runner))) "3 MU consumed")
+      (is (= 1 (core/available-mu state)) "3 MU consumed")
       (play-from-hand state :runner "Access to Globalsec")
       (is (= 2 (:link (get-runner))) "2 link")
-      (is (= 2 (:memory (get-runner))) "Shiv stops using MU when 2+ link"))))
+      (is (= 2 (core/available-mu state)) "Shiv stops using MU when 2+ link"))))
 
 (deftest snowball
   ;; Snowball - Strength boost until end of run when used to break a subroutine

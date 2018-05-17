@@ -141,7 +141,8 @@
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Award Bait"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :req (req (not-empty (filter #(can-be-advanced? %) (all-installed state :corp))))
              :effect (effect (show-wait-prompt :runner "Corp to place advancement tokens with Award Bait")
                              (continue-ability
@@ -170,7 +171,10 @@
                                  (trash state :corp t {:unpreventable true}))
                                (doseq [h to-hq]
                                  (move state :corp h :hand))
-                               (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
+                               (if (not-empty remaining)
+                                 (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
+                                 (do (clear-wait-prompt state :runner)
+                                     (effect-completed state :corp eid)))
                                (system-msg state :corp (str "uses Bacterial Programming to add " (count to-hq)
                                                             " cards to HQ, discard " (count to-trash)
                                                             ", and arrange the top cards of R&D")))
@@ -429,7 +433,8 @@
                  :effect (effect (draw 5))}]}
 
    "Explode-a-palooza"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :effect (effect (show-wait-prompt :runner "Corp to use Explode-a-palooza")
                              (continue-ability
                                {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
@@ -446,7 +451,8 @@
                                  (lose :runner :click 2))}]}
 
    "Fetal AI"
-   {:access {:delayed-completion true
+   {:flags {:rd-reveal (req true)}
+    :access {:delayed-completion true
              :req (req (not= (first (:zone card)) :discard)) :msg "do 2 net damage"
              :effect (effect (damage eid :net 2 {:card card}))}
     :steal-cost-bonus (req [:credit 2])}
@@ -603,8 +609,7 @@
                      {:optional
                       {:prompt "Take 1 bad publicity from Illicit Sales?"
                        :yes-ability {:msg "take 1 bad publicity"
-                                     :effect (effect (gain-bad-publicity :corp 1))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}}
+                                     :effect (effect (gain-bad-publicity :corp 1))}}}
                      card nil)
                    (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
                          (gain state side :credit n)
@@ -759,20 +764,14 @@
              :unsuccessful-trace nq}})
 
    "NEXT Wave 2"
-   {:delayed-completion true
-    :not-when-scored true
-    :effect (req (if (some #(and (rezzed? %)
-                                 (ice? %)
-                                 (has-subtype? % "NEXT"))
-                           (all-installed state :corp))
-                   (continue-ability state side
-                     {:optional
-                      {:prompt "Do 1 brain damage with NEXT Wave 2?"
-                       :yes-ability {:msg "do 1 brain damage"
-                                     :effect (effect (damage eid :brain 1 {:card card}))}
-                       :no-ability {:effect (req (effect-completed state side eid))}}}
-                    card nil)
-                   (effect-completed state side eid)))}
+   {:not-when-scored true
+    :req (req (some #(and (rezzed? %)
+                          (ice? %)
+                          (has-subtype? % "NEXT"))
+                    (all-installed state :corp)))
+    :optional {:prompt "Do 1 brain damage with NEXT Wave 2?"
+               :yes-ability {:msg "do 1 brain damage"
+                             :effect (effect (damage eid :brain 1 {:card card}))}}}
 
    "Nisei MK II"
    {:silent (req true)
@@ -935,9 +934,13 @@
                                                     (clear-wait-prompt :runner))} card nil))}}}
 
    "Quantum Predictive Model"
-   {:steal-req (req (not tagged))
+   {:flags {:rd-reveal (req true)}
     :access {:req (req tagged)
-             :effect (effect (as-agenda card 1))
+             :delayed-completion true
+             :effect (req (when-completed (as-agenda state side card 1)
+                                          (continue-ability state :runner {:prompt "Quantum Predictive Model was added to the corp's score area"
+                                                                     :choices ["OK"]}
+                                                            card nil)))
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
@@ -1004,10 +1007,27 @@
    "Remote Data Farm"
    {:silent (req true)
     :msg "increase their maximum hand size by 2"
-    :effect (effect (gain :hand-size-modification 2))
+    :effect (effect (gain :hand-size 2))
     :swapped {:msg "increase their maximum hand size by 2"
-              :effect (effect (gain :hand-size-modification 2))}
-    :leave-play (effect (lose :hand-size-modification 2))}
+              :effect (effect (gain :hand-size 2))}
+    :leave-play (effect (lose :hand-size 2))}
+
+   "Remote Enforcement"
+   {:interactive (req true)
+    :optional {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
+               :yes-ability {:delayed-completion true
+                             :prompt "Choose a piece of ice"
+                             :choices (req (filter ice? (:deck corp)))
+                             :effect (req (let [chosen-ice target]
+                                            (continue-ability state side
+                                                              {:delayed-completion true
+                                                               :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                                               :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
+                                                                                (corp-install-list state chosen-ice))
+                                                               :effect (effect
+                                                                        (shuffle! :deck)
+                                                                        (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
+                                                              card nil)))}}}
 
    "Research Grant"
    {:interactive (req true)
@@ -1033,10 +1053,10 @@
    "Self-Destruct Chips"
    {:silent (req true)
     :msg "decrease the Runner's maximum hand size by 1"
-    :effect (effect (lose :runner :hand-size-modification 1))
+    :effect (effect (lose :runner :hand-size 1))
     :swapped {:msg "decrease the Runner's maximum hand size by 1"
-              :effect (effect (lose :runner :hand-size-modification 1))}
-    :leave-play (effect (gain :runner :hand-size-modification 1))}
+              :effect (effect (lose :runner :hand-size 1))}
+    :leave-play (effect (gain :runner :hand-size 1))}
 
    "Sensor Net Activation"
    {:effect (effect (add-counter card :agenda 1))
@@ -1127,7 +1147,8 @@
    (ice-boost-agenda "Barrier")
 
    "TGTBT"
-   {:access {:msg "give the Runner 1 tag"
+   {:flags {:rd-reveal (req true)}
+    :access {:msg "give the Runner 1 tag"
              :delayed-completion true
              :effect (effect (tag-runner :runner eid 1))}}
 
@@ -1142,11 +1163,13 @@
     :prompt "Choose a card to add to HQ"
     :choices (req (:deck corp))
     :msg (msg "add a card from R&D to HQ and shuffle R&D")
+    :req (req (pos? (count (:deck corp))))
     :effect (effect (shuffle! :deck)
                     (move target :hand))}
 
    "The Future Perfect"
-   {:access
+   {:flags {:rd-reveal (req true)}
+    :access
     {:psi {:req (req (not installed))
            :not-equal {:msg (msg "prevent it from being stolen")
                        :effect (final-effect (register-run-flag! card :can-steal
@@ -1171,7 +1194,7 @@
     :msg (msg "prevent subroutines on " target " ICE from being broken until next turn.")}
 
    "Utopia Fragment"
-   {:events {:pre-steal-cost {:req (req (pos? (or (:advance-counter target) 0)))
+   {:events {:pre-steal-cost {:req (req (pos? (:advance-counter target 0)))
                               :effect (req (let [counter (:advance-counter target)]
                                              (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 
@@ -1182,6 +1205,17 @@
    {:interactive (req true)
     :msg "lose 2 bad publicity"
     :effect (effect (lose :bad-publicity 2))}
+
+   "Viral Weaponization"
+   {:effect (effect (register-events
+                      {:corp-turn-ends
+                       {:msg "do 1 net damage for each card in the grip"
+                        :delayed-completion true
+                        :effect (req (let [cnt (count (:hand runner))]
+                                       (unregister-events state side card)
+                                       (damage state side eid :net cnt {:card card})))}}
+                      card))
+    :events {:corp-turn-ends nil}}
 
    "Voting Machine Initiative"
    {:silent (req true)

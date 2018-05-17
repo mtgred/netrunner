@@ -54,14 +54,14 @@
        (unregister-events state side target))
      (doseq [s [:runner :corp]]
        (if host
-         (when-let [host-card (some #(when (= (:cid host) (:cid %)) %)
-                                    (get-in @state (cons s (vec (map to-keyword (:zone host))))))]
+         (when-let [host-card (get-card state host)]
            (update! state side (update-in host-card [:hosted]
                                           (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
          (swap! state update-in (cons s (vec zone))
                 (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
      (swap! state update-in (cons side (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))
-     (let [card (assoc-host-zones card)
+     (let [card (get-card state card)
+           card (assoc-host-zones card)
            c (assoc target :host (dissoc card :hosted)
                            :facedown facedown
                            :zone '(:onhost) ;; hosted cards should not be in :discard or :hand etc

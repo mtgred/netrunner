@@ -7,7 +7,7 @@
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
-            [netrunner.deckbuilder :refer [influence-dot]]
+            [netrunner.utils :refer [toastr-options influence-dot]]
             [differ.core :as differ]
             [om.dom :as dom]
             [netrunner.ws :as ws]
@@ -17,10 +17,6 @@
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
 (defonce lock (atom false))
-
-
-(defn parse-state [state]
-  (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (defn image-url [{:keys [side code] :as card}]
   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
@@ -39,46 +35,25 @@
                        (:code card))]
     (str "/img/cards/" version-path ".png")))
 
-(defn toastr-options
-  "Function that generates the correct toastr options for specified settings"
-  [options]
-  (js-obj "closeButton" (:close-button options false)
-          "debug" false
-          "newestOnTop" false
-          "progressBar" false
-          "positionClass" "toast-card"
-          ;; preventDuplicates - identical toasts don't stack when the property is set to true.
-          ;; Duplicates are matched to the previous toast based on their message content.
-          "preventDuplicates" (:prevent-duplicates options true)
-          "onclick" nil
-          "showDuration" 300
-          "hideDuration" 1000
-          ;; timeOut - how long the toast will display without user interaction
-          "timeOut" (:time-out options 3000)
-          ;; extendedTimeOut - how long the toast will display after a user hovers over it
-          "extendedTimeOut" (:time-out options 1000)
-          "showEasing" "swing"
-          "hideEasing" "linear"
-          "showMethod" "fadeIn"
-          "hideMethod" "fadeOut"
-          "tapToDismiss" (:tap-to-dismiss options true)))
+(defn get-side [state]
+  (let [user-id (:_id (:user @app-state))]
+    (cond
+      (= (get-in state [:runner :user :_id]) user-id) :runner
+      (= (get-in state [:corp :user :_id]) user-id) :corp
+      :else :spectator)))
 
-(defn init-game [game side]
-  (.setItem js/localStorage "gameid" (:gameid @app-state))
-  (swap! game-state merge game)
-  (swap! game-state assoc :side side)
-  (reset! last-state @game-state))
+(defn not-spectator? []
+  (not= :spectator (get-side @game-state)))
 
+(defn init-game [state]
+  (let [side (get-side state)]
+    (.setItem js/localStorage "gameid" (:gameid @app-state))
+    (reset! game-state state)
+    (swap! game-state assoc :side side)
+    (reset! last-state @game-state)))
 
-(defn launch-game [game]
-  (let [user (:user @app-state)
-        side (if (= (get-in game [:runner :user :_id]) (:_id user))
-               :runner
-               (if (= (get-in game [:corp :user :_id]) (:_id user))
-                 :corp
-                 :spectator))]
-    (swap! app-state assoc :side side)
-    (init-game game side))
+(defn launch-game [{:keys [state]}]
+  (init-game state)
   (set! (.-onbeforeunload js/window) #(clj->js "Leaving this page will disconnect you from the game."))
   (-> "#gamelobby" js/$ .fadeOut)
   (-> "#gameboard" js/$ .fadeIn))
@@ -92,25 +67,36 @@
   (toast text severity nil))
 
 (def zoom-channel (chan))
-;(def socket (.connect js/io (str js/iourl "/lobby")))
 
+(defn check-lock?
+  "Check if we can clear client lock based on action-id"
+  []
+  (let [aid [(:side @game-state) :aid]]
+    (when (not= (get-in @game-state aid)
+                (get-in @last-state aid))
+      (reset! lock false))))
 
-(defn handle-state [state]
-  (swap! game-state #(assoc state :side (:side @game-state)))
-  (reset! last-state @game-state)
+(defn handle-state [{:keys [state]}]
+  (init-game state)
   (reset! lock false))
 
-(defn handle-diff [diff]
+(defn handle-diff [{:keys [gameid diff]}]
+  (when (= gameid (:gameid @game-state))
+    (swap! game-state #(differ/patch @last-state diff))
+    (check-lock?)
+    (reset! last-state @game-state)))
 
-  (swap! game-state #(differ/patch @last-state diff))
-  (swap! last-state #(identity @game-state))
-  (reset! lock false))
+(defn handle-timeout [{:keys [gameid]}]
+  (when (= gameid (:gameid @game-state))
+    (toast "Game closed due to inactivity" "error" {:time-out 0 :close-button true})))
 
+(defn parse-state [state]
+  (js->clj (.parse js/JSON state) :keywordize-keys true))
 
 (ws/register-ws-handler! :netrunner/state #(handle-state (parse-state %)))
 (ws/register-ws-handler! :netrunner/start #(launch-game (parse-state %)))
 (ws/register-ws-handler! :netrunner/diff #(handle-diff (parse-state %)))
-(ws/register-ws-handler! :netrunner/rejoin #(handle-state (parse-state %)))
+(ws/register-ws-handler! :netrunner/timeout #(handle-timeout (parse-state %)))
 
 (def anr-icons {"[Credits]" "credit"
                 "[$]" "credit"
@@ -132,11 +118,6 @@
                 "[Trash]" "trash"
                 "[t]" "trash"})
 
-(defn send [msg]
-  (ws/ws-send! [:netrunner/action msg]))
-
-(defn not-spectator? [game-state app-state]
-  (#{(get-in @game-state [:corp :user]) (get-in @game-state [:runner :user])} (:user @app-state)))
 
 (defn send-command
   ([command] (send-command command nil))
@@ -144,7 +125,7 @@
    (when (or (not @lock) no-lock)
      (try (js/ga "send" "event" "game" command) (catch js/Error e))
      (when-not no-lock (reset! lock true))
-     (ws/ws-send! [:netrunner/action {:command command :args args}]))))
+     (ws/ws-send! [:netrunner/action {:gameid-str (:gameid @game-state) :command command :args args}]))))
 
 (defn send-msg [event owner]
   (.preventDefault event)
@@ -152,7 +133,7 @@
         text (.-value input)
         $div (js/$ ".gameboard .messages")]
     (when-not (empty? text)
-      (ws/ws-send! [:netrunner/say text])
+      (ws/ws-send! [:netrunner/say {:gameid-str (:gameid @game-state) :msg text}])
       (.scrollTop $div (+ (.prop $div "scrollHeight") 500))
       (aset input "value" "")
       (.focus input))))
@@ -163,12 +144,15 @@
   (let [input (om/get-node owner "msg-input")
         text (.-value input)]
     (if (empty? text)
-      (ws/ws-send! [:netrunner/typing false])
+      (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state) :typing false}])
       (when (not-any? #{(get-in @app-state [:user :username])} (:typing @game-state))
-        (ws/ws-send! [:netrunner/typing true])))))
+        (ws/ws-send! [:netrunner/typing {:gameid-str (:gameid @game-state) :typing true}])))))
 
 (defn mute-spectators [mute-state]
-  (ws/ws-send! [:netrunner/mute-spectators mute-state]))
+  (ws/ws-send! [:netrunner/mute-spectators {:gameid-str (:gameid @game-state) :mute-state mute-state}]))
+
+(defn concede []
+  (ws/ws-send! [:netrunner/concede {:gameid-str (:gameid @game-state)}]))
 
 (defn build-exception-msg [msg error]
   (letfn [(build-report-url [error]
@@ -236,7 +220,7 @@
 
 (defn handle-card-click [{:keys [type zone root] :as card} owner]
   (let [side (:side @game-state)]
-    (when (not-spectator? game-state app-state)
+    (when (not-spectator?)
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt 0 :prompt-type]) "select")
@@ -320,7 +304,7 @@
   "Checks if spectators are allowed to see hidden information, such as hands and face-down cards"
   []
   (and (get-in @game-state [:options :spectatorhands])
-       (not (not-spectator? game-state app-state))))
+       (not (not-spectator?))))
 
 (def ci-open "\u2664")
 (def ci-seperator "\u2665")
@@ -458,7 +442,7 @@
         (when (seq (remove nil? (remove #{(get-in @app-state [:user :username])} (:typing cursor))))
           [:div [:p.typing (for [i (range 10)] [:span " " influence-dot " "])]])
         (if-let [game (some #(when (= (:gameid cursor) (str (:gameid %))) %) (:games @app-state))]
-          (when (or (not-spectator? game-state app-state)
+          (when (or (not-spectator?)
                     (not (:mutespectators game)))
             [:form {:on-submit #(send-msg % owner)
                     :on-input #(send-typing % owner)}
@@ -675,7 +659,7 @@
    (sab/html
     [:div.card-frame
      [:div.blue-shade.card {:class (str (when selected "selected") (when new " new"))
-                            :draggable (when (not-spectator? game-state app-state) true)
+                            :draggable (when (not-spectator?) true)
                             :on-touch-start #(handle-touchstart % cursor)
                             :on-touch-end   #(handle-touchend %)
                             :on-touch-move  #(handle-touchmove %)
@@ -708,6 +692,8 @@
        (when (pos? advance-counter) [:div.darkbg.advance-counter.counter advance-counter])]
       (when (and current-strength (not= strength current-strength))
         current-strength [:div.darkbg.strength current-strength])
+      (when (get-in cursor [:special :extra-subs])
+        [:div.darkbg.extra-subs \+])
       (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
       (when server-target [:div.darkbg.server-target server-target])
       (when subtype-target
@@ -754,7 +740,7 @@
       (let [actions (action-list cursor)
             dynabi-count (count (filter :dynamic abilities))]
         (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
-                  (some #{"derez" "advance"} actions)
+                  (some #{"derez" "rez" "advance"} actions)
                   (= type "ICE"))
           [:div.panel.blue-shade.abilities {:ref "abilities"}
            (map (fn [action]
@@ -814,6 +800,10 @@
       [:div.header {:class (when (> (count cursor) 0) "darkbg")}
        (str (:name opts) " (" (fn cursor) ")")]))))
 
+(defn- this-user?
+  [player]
+  (= (-> player :user :_id) (-> @app-state :user :_id)))
+
 (defn build-hand-card-view
   [player remotes wrapper-class]
   (let [side (get-in player [:identity :side])
@@ -823,13 +813,13 @@
         (fn [i card]
           [:div {:class (str
                           (if (and (not= "select" (get-in player [:prompt 0 :prompt-type]))
-                                   (= (:user player) (:user @app-state))
+                                   (this-user? player)
                                    (not (:selected card)) (playable? card))
                             "playable" "")
                           " "
                           wrapper-class)
                  :style {:left (* (/ 320 (dec size)) i)}}
-           (if (or (= (:user player) (:user @app-state))
+           (if (or (this-user? player)
                    (:openhand player)
                    (spectator-view-hidden?))
              (om/build card-view (assoc card :remotes remotes))
@@ -975,7 +965,7 @@
         [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
          (map-indexed (fn [i card]
                         [:div.card-wrapper {:style {:left (* (/ 128 size) i)}}
-                         (if (= (:user player) (:user @app-state))
+                         (if (this-user? player)
                            (om/build card-view card)
                            (facedown-card side))])
                       cards)
@@ -992,17 +982,19 @@
                     scored)
        (om/build label scored {:opts {:name "Scored Area"}})]))))
 
-(defn controls [key]
-  (sab/html
-   [:div.controls
-    [:button.small {:on-click #(send-command "change" {:key key :delta -1}) :type "button"} "-"]
-    [:button.small {:on-click #(send-command "change" {:key key :delta 1}) :type "button"} "+"]]))
+(defn controls
+  "Create the control buttons for the side displays."
+  ([key] (controls key 1 -1))
+  ([key increment decrement]
+   (sab/html
+     [:div.controls
+      [:button.small {:on-click #(send-command "change" {:key key :delta decrement}) :type "button"} "-"]
+      [:button.small {:on-click #(send-command "change" {:key key :delta increment}) :type "button"} "+"]])))
 
 (defmulti stats-view #(get-in % [:identity :side]))
 
 (defmethod stats-view "Runner" [{:keys [user click credit run-credit memory link tag
-                                        brain-damage agenda-point tagged hand-size-base
-                                        hand-size-modification active]} owner]
+                                        brain-damage agenda-point tagged hand-size active]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :runner)]
@@ -1013,18 +1005,22 @@
                   (when (pos? run-credit)
                     (str " (" run-credit " for run)")))
         (when me? (controls :credit))]
-       [:div (str memory " Memory Unit" (if (not= memory 1) "s" "")) (when (neg? memory) [:div.warning "!"]) (when me? (controls :memory))]
+       (let [{:keys [base mod used]} memory
+             max-mu (+ base mod)
+             unused (- max-mu used)]
+         [:div (str unused " of " max-mu " MU unused")
+          (when (neg? unused) [:div.warning "!"]) (when me? (controls :memory))])
        [:div (str link " Link Strength") (when me? (controls :link))]
        [:div (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s"))
         (when me? (controls :agenda-point))]
        [:div (str tag " Tag" (if (not= tag 1) "s" "")) (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
        [:div (str brain-damage " Brain Damage")
         (when me? (controls :brain-damage))]
-       [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
-        (when me? (controls :hand-size-modification))]]))))
+       (let [{:keys [base mod]} hand-size]
+         [:div (str (+ base mod) " Max hand size")
+          (when me? (controls :hand-size))])]))))
 
-(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub
-                                      hand-size-base hand-size-modification active]} owner]
+(defmethod stats-view "Corp" [{:keys [user click credit agenda-point bad-publicity has-bad-pub hand-size active]} owner]
   (om/component
    (sab/html
     (let [me? (= (:side @game-state) :corp)]
@@ -1036,8 +1032,9 @@
         (when me? (controls :agenda-point))]
        [:div (str (+ bad-publicity has-bad-pub) " Bad Publicity")
         (when me? (controls :bad-publicity))]
-       [:div (str (+ hand-size-base hand-size-modification) " Max hand size")
-        (when me? (controls :hand-size-modification))]]))))
+       (let [{:keys [base mod]} hand-size]
+         [:div (str (+ base mod) " Max hand size")
+          (when me? (controls :hand-size))])]))))
 
 (defn server-view [{:keys [server central-view run] :as cursor} owner opts]
   (om/component
@@ -1126,7 +1123,8 @@
 
 (defn handle-end-turn []
   (let [me ((:side @game-state) @game-state)
-        max-size (max (+ (:hand-size-base me) (:hand-size-modification me)) 0)]
+        {:keys [base mod]} (:hand-size me)
+        max-size (max (+ base mod) 0)]
     (if (> (count (:hand me)) max-size)
       (toast (str "Discard to " max-size " card" (when (not= 1 max-size) "s")) "warning" nil)
       (send-command "end-turn"))))
@@ -1298,8 +1296,8 @@
     om/IInitState
     (init-state [this]
       (let [audio-sfx (fn [name] (list (keyword name)
-                                       (new js/Howl (clj->js {:urls [(str "/sound/" name ".ogg")
-                                                                     (str "/sound/" name ".mp3")]}))))]
+                                       (new js/Howl (clj->js {:src [(str "/sound/" name ".ogg")
+                                                                    (str "/sound/" name ".mp3")]}))))]
         {:soundbank
          (apply hash-map (concat
                           (audio-sfx "agenda-score")
@@ -1341,7 +1339,7 @@
     om/IRenderState
     (render-state [this state]
       (sab/html
-       (when side
+       (when (and side corp runner)
          (let [me       (assoc ((if (= side :runner) :runner :corp) cursor) :active (and (pos? turn) (= (keyword active-player) side)))
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard

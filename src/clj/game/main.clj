@@ -13,46 +13,47 @@
    "typingstop" core/typingstop})
 
 (def commands
-  {"typing" core/typing
-   "typingstop" core/typingstop
-   "concede" core/concede
-   "system-msg" #(core/system-msg %1 %2 (:msg %3))
+  {"ability" core/play-ability
+   "access" core/successful-run
+   "advance" core/advance
    "change" core/change
-   "move" core/move-card
-   "mulligan" core/mulligan
-   "keep" core/keep-hand
-   "start-turn" core/start-turn
+   "choice" core/resolve-prompt
+   "close-deck" core/close-deck
+   "concede" core/concede
+   "continue" core/continue
+   "corp-phase-43" core/corp-phase-43
+   "credit" core/click-credit
+   "derez" #(core/derez %1 %2 (:card %3))
+   "draw" core/click-draw
+   "dynamic-ability" core/play-dynamic-ability
    "end-phase-12" core/end-phase-12
    "end-turn" core/end-turn
-   "draw" core/click-draw
-   "credit" core/click-credit
+   "jack-out" core/jack-out
+   "keep" core/keep-hand
+   "move" core/move-card
+   "mulligan" core/mulligan
+   "no-action" core/no-action
+   "play" core/play
    "purge" core/do-purge
    "remove-tag" core/remove-tag
-   "play" core/play
    "rez" #(core/rez %1 %2 (:card %3) nil)
-   "derez" #(core/derez %1 %2 (:card %3))
    "run" core/click-run
-   "no-action" core/no-action
-   "corp-phase-43" core/corp-phase-43
-   "continue" core/continue
-   "access" core/successful-run
-   "jack-out" core/jack-out
-   "advance" core/advance
+   "runner-ability" core/play-runner-ability
    "score" #(core/score %1 %2 (game.core/get-card %1 (:card %3)))
-   "choice" core/resolve-prompt
    "select" core/select
    "shuffle" core/shuffle-deck
-   "ability" core/play-ability
-   "runner-ability" core/play-runner-ability
+   "start-turn" core/start-turn
    "subroutine" core/play-subroutine
-   "trash-resource" core/trash-resource
-   "dynamic-ability" core/play-dynamic-ability
+   "system-msg" #(core/system-msg %1 %2 (:msg %3))
    "toast" core/toast
-   "view-deck" core/view-deck
-   "close-deck" core/close-deck})
+   "trash-resource" core/trash-resource
+   "view-deck" core/view-deck})
 
 (defn strip [state]
-  (dissoc state :events :turn-events :per-turn :prevent :damage :effect-completed))
+  (-> state
+    (dissoc :events :turn-events :per-turn :prevent :damage :effect-completed :click-state :turn-state)
+    (update-in [:corp :register] dissoc :most-recent-drawn)
+    (update-in [:runner :register] dissoc :most-recent-drawn)))
 
 (defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"
@@ -91,9 +92,10 @@
     deck
     (private-card-vector state side deck)))
 
-(defn- private-states [state]
+(defn- private-states
   "Generates privatized states for the Corp, Runner and any spectators from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well."
+  [state]
   ;; corp, runner, spectator
   (let [corp-private (make-private-corp state)
         runner-private (make-private-runner state)
@@ -131,12 +133,17 @@
      :corp-diff   corp-diff
      :spect-diff  spect-diff}))
 
+(defn set-action-id
+  "Creates a unique action id for each server response - used in client lock"
+  [state side]
+  (swap! state update-in [side :aid] (fnil inc 0)))
 
 (defn handle-action
   "Ensures the user is allowed to do command they are trying to do"
   [user command state side args]
   (if (not-spectator? state user)
-    ((commands command) state side args)
+    (do ((commands command) state side args)
+        (set-action-id state side))
     (when-let [cmd (spectator-commands command)]
       (cmd state side args))))
 
@@ -148,9 +155,9 @@
 
 (defn handle-say
   "Adds a message from a user to the chat log."
-  [state side user msg]
+  [state side user message]
   (when (and state side)
-    (core/say state side {:user user :text msg})))
+    (core/say state side {:user (select-keys user [:username :emailhash]) :text message})))
 
 (defn handle-notification
   [state text]

@@ -7,6 +7,48 @@
 
 (use-fixtures :once load-all-cards)
 
+(deftest undo-turn
+  (do-game
+    (new-game (default-corp)
+              (default-runner))
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (is (= 1 (:click (get-corp))) "Corp spent 2 clicks")
+    (is (= 13 (:credit (get-corp))) "Corp has 13 credits")
+    (is (= 1 (count (:hand (get-corp)))) "Corp has 1 card in HQ")
+    (core/command-undo-turn state :runner)
+    (core/command-undo-turn state :corp)
+    (is (= 3 (count (:hand (get-corp)))) "Corp has 3 cards in HQ")
+    (is (= 0 (:click (get-corp))) "Corp has no clicks - turn not yet started")
+    (is (= 5 (:credit (get-corp))) "Corp has 5 credits")))
+
+(deftest undo-click
+  (do-game
+    (new-game (default-corp [(qty "Ikawah Project" 1)])
+              (default-runner [(qty "Day Job" 1)]))
+    (play-from-hand state :corp "Ikawah Project" "New remote")
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
+    (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
+    (run-empty-server state :remote1)
+    (prompt-choice-partial :runner "Pay")
+    (prompt-choice :runner "[Click]")
+    (prompt-choice :runner "2 [Credits]")
+    (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
+    (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
+    (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project")
+    (core/command-undo-click state :corp)
+    (is (= 1 (count (:scored (get-runner)))) "Corp attempt to undo click does nothing")
+    (core/command-undo-click state :runner)
+    (is (= 0 (count (:scored (get-runner)))) "Runner attempt to undo click works ok")
+    (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
+    (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")
+    (play-from-hand state :runner "Day Job")
+    (is (= 0 (:click (get-runner))) "Runner spent 4 clicks")
+    (core/command-undo-click state :runner)
+    (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
+    (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
+
 (deftest corp-rez-unique
   ;; Rezzing a second copy of a unique Corp card
   (do-game
@@ -28,7 +70,7 @@
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-in @state [:runner :rig :program 0])]
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
-      (is (= (- 4 (:memoryunits gord)) (:memory (get-runner))) "Program MU was applied"))))
+      (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
 (deftest runner-installing-uniques
   ;; Installing a copy of an active unique Runner card is prevented
@@ -70,7 +112,7 @@
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-in @state [:runner :rig :program 0])]
       (core/trash state :runner gord)
-      (is (= 4 (:memory (get-runner))) "Trashing the program restored MU"))))
+      (is (= 4 (core/available-mu state)) "Trashing the program restored MU"))))
 
 (deftest agenda-forfeit-runner
   ;; forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda
@@ -206,7 +248,7 @@
           (take-credits state :corp)
           (run-empty-server state "Server 1")
           (prompt-select :runner dh)
-          (prompt-choice :runner "Yes") ; trash Director Haas
+          (prompt-choice-partial :runner "Pay") ; trash Director Haas
           (prompt-choice :runner "Done")
           (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn"))))))
 
@@ -220,19 +262,18 @@
     (play-from-hand state :runner "Imp")
     (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
-      (card-ability state :runner imp 0)
+      (prompt-choice-partial :runner "Imp")
       (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
       (run-empty-server state "HQ")
-      (card-ability state :runner imp 0)
+      (prompt-choice :runner "No action")
       (is (= 1 (count (:discard (get-corp)))) "Card can't be trashed, Imp already used this turn")
-      (prompt-choice :runner "OK")
       (play-from-hand state :runner "Scavenge")
       (prompt-select :runner imp)
       (prompt-select :runner (find-card "Imp" (:discard (get-runner)))))
     (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
       (run-empty-server state "HQ")
-      (card-ability state :runner imp 0))
+      (prompt-choice-partial :runner "Imp"))
     (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
 (deftest trash-seen-and-unseen
@@ -244,10 +285,10 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp 1)
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "No")
+    (prompt-choice :runner "No action")
     ;; run and trash the second asset
     (run-empty-server state "Server 2")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (take-credits state :runner 2)
     (play-from-hand state :corp "PAD Campaign" "Server 1")
     (prompt-choice :corp "OK")
@@ -266,7 +307,7 @@
     (take-credits state :corp 2)
     ;; run and trash the asset
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (is (:seen (first (get-in @state [:corp :discard]))) "Asset trashed by runner is Seen")
     (take-credits state :runner 3)
     (play-from-hand state :corp "Interns")
@@ -413,9 +454,30 @@
       (take-credits state :runner))
     (testing "Turn 4 Corp"
       (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
-      ; (prn "publics2" (refresh publics2))
-      ; (is (= :scored (:zone (refresh publics2))))
       (is (= 12 (:credit (get-corp))))))))
+
+(deftest counter-manipulation-commands-smart
+  ;; Test interactions of smart counter advancement command
+  (do-game
+    (new-game (default-corp [(qty "House of Knives" 1)])
+              (default-runner))
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (let [hok (get-content state :remote1 0)]
+      (core/command-counter state :corp [3])
+      (prompt-select :corp (refresh hok))
+      (is (= 3 (:advance-counter (refresh hok))))
+      (core/score state :corp (refresh hok)))
+    (let [hok-scored (get-scored state :corp)]
+      (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
+      (core/command-counter state :corp ["virus" 2])
+      (prompt-select :corp (refresh hok-scored))
+      (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should stay at 3 counters")
+      (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters")
+      (core/command-counter state :corp [4])
+      (prompt-select :corp (refresh hok-scored)) ;; doesn't crash with unknown counter type
+      (is (empty? (:prompt (get-corp))) "Counter prompt closed")
+      (is (= 4 (get-counters (refresh hok-scored) :agenda)) "House of Knives should have 4 agenda counters")
+      (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters"))))
 
 (deftest run-bad-publicity-credits
   ;; Should not lose BP credits until a run is completely over. Issue #1721.
@@ -429,15 +491,15 @@
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (prompt-choice :corp "No")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :hq)
     (prompt-choice :corp "No")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :rd)
     (prompt-choice :corp "No")
-    (prompt-choice :runner "Yes")
+    (prompt-choice-partial :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))
 
 (deftest run-psi-bad-publicity-credits
@@ -503,19 +565,19 @@
       (prompt-choice :runner 2)
       (prompt-choice :runner "Card from deck")
       (is (= "Hedge Fund" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Unrezzed upgrade in R&D")
       (is (= "Keegan Lane" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Card from deck")
       (is (= "Sweeps Week" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Midway Station Grid")
       (is (= "Midway Station Grid" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Card from deck")
       (is (= "Manhunt" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "OK")
+      (prompt-choice :runner "No action")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest multi-steal-archives

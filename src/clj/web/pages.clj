@@ -29,7 +29,7 @@
      (hiccup/include-js "/lib/moment/min/moment.min.js")
      (hiccup/include-js "/lib/marked/marked.min.js")
      (hiccup/include-js "/lib/toastr/toastr.min.js")
-     (hiccup/include-js "/lib/howler/howler.min.js")
+     (hiccup/include-js "/lib/howler/dist/howler.min.js")
      [:script {:type "text/javascript"}
       (str "var user=" (json/generate-string user))]
 
@@ -37,7 +37,8 @@
        (list (hiccup/include-js "/cljs/goog/base.js")
              (hiccup/include-js (str "cljs/app.js?v=" version))
              [:script
-              (for [req ["netrunner.appstate"
+              (for [req ["netrunner.utils"
+                         "netrunner.appstate"
                          "netrunner.main"
                          "netrunner.ajax"
                          "netrunner.auth"

@@ -35,29 +35,33 @@
       "New remote" [:servers (keyword (str "remote" (make-rid state)))]
       [:servers (->> (split server #" ") last (str "remote") keyword)])))
 
-(defn same-server? [card1 card2]
+(defn same-server?
   "True if the two cards are IN or PROTECTING the same server."
+  [card1 card2]
   (let [zone1 (get-nested-zone card1)
         zone2 (get-nested-zone card2)]
     (= (second zone1) (second zone2))))
 
-(defn protecting-same-server? [card ice]
+(defn protecting-same-server?
   "True if an ice is protecting the server that the card is in or protecting."
+  [card ice]
   (let [zone1 (get-nested-zone card)
         zone2 (get-nested-zone ice)]
     (and (= (second zone1) (second zone2))
          (= :ices (last zone2)))))
 
-(defn in-same-server? [card1 card2]
+(defn in-same-server?
   "True if the two cards are installed IN the same server, or hosted on cards IN the same server."
+  [card1 card2]
   (let [zone1 (get-nested-zone card1)
         zone2 (get-nested-zone card2)]
     (and (= zone1 zone2)
          (is-remote? (second zone1)) ; cards in centrals are in the server's root, not in the server.
          (= :content (last zone1)))))
 
-(defn from-same-server? [upgrade target]
+(defn from-same-server?
   "True if the upgrade is in the root of the server that the target is in."
+  [upgrade target]
   (= (central->zone (:zone target))
      (butlast (get-nested-zone upgrade))))
 
@@ -99,7 +103,7 @@
   [state side]
   (if (= side :runner)
     (cons (get-in @state [:runner :identity]) (concat (get-in @state [:runner :current]) (all-active-installed state side)))
-    (cons (get-in @state [:corp :identity]) (filter #(not (:disabled %))
+    (cons (get-in @state [:corp :identity]) (remove :disabled
                                                     (concat (all-active-installed state side)
                                                             (get-in @state [:corp :current])
                                                             (get-in @state [:corp :scored]))))))
@@ -122,13 +126,43 @@
   [state card]
   (installed-byname state (to-keyword (:side card)) (:title card)))
 
-(defn hand-size
-  "Returns the current maximum handsize of the specified side."
-  [state side]
-  (let [side' (get @state side)
-        base (get side' :hand-size-base 0)
-        mod (get side' :hand-size-modification 0)]
+;;; Stuff for handling {:base x :mod y} data structures
+
+(defn base-mod-size
+  "Returns the value of properties using the `base` and `mod` system"
+  [state side prop]
+  (let [base (get-in @state [side prop :base] 0)
+        mod (get-in @state [side prop :mod] 0)]
     (+ base mod)))
+
+(defn hand-size
+  "Returns the current maximum hand-size of the specified side."
+  [state side]
+  (base-mod-size state side :hand-size))
+
+(defn available-mu
+  "Returns the available MU the runner has"
+  [state]
+  (- (base-mod-size state :runner :memory)
+     (get-in @state [:runner :memory :used] 0)))
+
+(defn toast-check-mu
+  "Check runner has not exceeded, toast if they have"
+  [state]
+  (when (neg? (available-mu state))
+    (toast state :runner "You have exceeded your memory units!")))
+
+(defn free-mu
+  "Frees up specified amount of mu (reduces :used)"
+  ([state _ n] (free-mu state n))
+  ([state n]
+   (deduct state :runner [:memory {:used n}])))
+
+(defn use-mu
+  "Increases amount of mu used (increased :used)"
+  ([state _ n] (use-mu state n))
+  ([state n]
+   (gain state :runner :memory {:used n})))
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
@@ -141,7 +175,7 @@
         runner-ap-change (- runner-ap-scored runner-ap-stolen)]
     ;; Remove end of turn events for swapped out agenda
     (swap! state update-in [:corp :register :end-turn]
-           (fn [events] (filter #(not (= (:cid scored) (get-in % [:card :cid]))) events)))
+           (fn [events] (filter #(not= (:cid scored) (get-in % [:card :cid])) events)))
     ;; Move agendas
     (swap! state update-in [:corp :scored]
            (fn [coll] (conj (remove-once #(= (:cid %) (:cid scored)) coll) stolen)))
@@ -165,6 +199,16 @@
     (when-not (card-flag? scored :has-events-when-stolen true)
       (let [new-stolen (find-cid (:cid scored) (get-in @state [:runner :scored]))]
         (deactivate state :corp new-stolen)))))
+
+(defn remove-old-current
+  "Removes the old current when a new one is played, or an agenda is stolen / scored"
+  [state side current-side]
+  (when-let [current (first (get-in @state [current-side :current]))] ; trash old current
+    (if (get-in current [:special :rfg-when-trashed])
+      (do (system-say state side (str (:title current) " is removed from the game."))
+          (move state (other-side side) current :rfg))
+      (do (system-say state side (str (:title current) " is trashed."))
+          (trash state side current)))))
 
 ;;; Functions for icons associated with special cards - e.g. Femme Fatale
 (defn add-icon

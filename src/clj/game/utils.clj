@@ -10,6 +10,21 @@
 
 (defn abs [n] (max n (- n)))
 
+(defn safe-zero?
+  "`zero?` throws up on non numbers, so this is a safe version."
+  [n]
+  ((fnil zero? 1) n))
+
+(defn safe-inc-n
+  "Helper function to safely update a value by n. Returns a function to use with `update` / `update-in`"
+  [n]
+  #(+ (or % 0) n))
+
+(defn sub->0
+  "Helper function for use in `update` or `update-in` to subtract for a value, to a minimum of 0."
+  [n]
+  #(max 0 (- % n)))
+
 (defn clean-forfeit
   "Takes a flat :forfeit in costs and adds a cost of 1.
   Ignores cost vectors with an even count as these have forfeit value included"
@@ -26,11 +41,12 @@
   [costs]
   (let [fc (partition 2 (flatten (clean-forfeit costs)))
         jc (filter #(not= :net-damage (first %)) fc)
-        dc (filter #(= :net-damage (first %)) fc)]
-    (vec (map vec (concat
-      (reduce #(let [k (first %2) value (last %2)]
-                    (assoc %1 k (+ (or (k %1) 0) value)))
-                 {} jc) dc)))))
+        dc (filter #(= :net-damage (first %)) fc)
+        reduce-fn (fn [cost-map cost]
+                    (let [[cost-type value] cost
+                          old-value (get cost-map cost-type 0)]
+                      (assoc cost-map cost-type (+ old-value value))))]
+    (vec (map vec (concat (reduce reduce-fn {} jc) dc)))))
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with (complement pred) coll)]
@@ -74,7 +90,7 @@
 (defn capitalize [string]
   (str (Character/toUpperCase (first string)) (subs string 1)))
 
-(defn costs-to-symbol
+(defn costs->symbol
   "Used during steal to print runner prompt for payment"
   [costs]
   (join ", " (map #(let [key (first %) value (last %)]
@@ -151,10 +167,11 @@
 (defn cost-names
   "Converts a cost (value attribute pair) to a string for printing"
   [value attr]
-  (when (pos? value)
+  (when (and (number? value)
+             (pos? value))
     (case attr
       :credit (str value " [$]")
-      :click  (->> "[Click]" repeat (take value) (apply str))
+      :click (->> "[Click]" repeat (take value) (apply str))
       :forfeit (str value " Agenda" (when (> value 1) "s"))
       nil)))
 

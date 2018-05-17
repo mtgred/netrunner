@@ -14,12 +14,9 @@
 (defn load-cards []
   (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
         db (mg/get-db conn "netrunner")
-        cards (mc/find-maps db "cards")
-        ret (take 99999 cards)]
-    ;; Doing this to materialize the list. I'm sure there's a better way. The take above might be useless.
-    (count ret)
+        cards (doall (mc/find-maps db "cards"))]
     (mg/disconnect conn)
-    ret))
+    cards))
 
 (defn qty [card amt]
   (let [loaded-card (if (string? card) (@all-cards card) card)]

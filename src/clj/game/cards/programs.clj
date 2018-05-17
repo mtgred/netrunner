@@ -54,7 +54,8 @@
    {:implementation "Can only pay to see last card drawn after multiple draws"
     :req (req (some #{:hq} (:successful-run runner-reg)))
     :events {:corp-draw {:optional
-                         {:prompt (msg "Pay 2 [Credits] to reveal card just drawn?") :player :runner
+                         {:prompt (msg "Pay 2 [Credits] to reveal card just drawn?")
+                          :player :runner
                           :yes-ability {:msg (msg "reveal the card just drawn: " (:title (last (:hand corp))))
                                         :cost [:credit 2]}}}}}
 
@@ -145,12 +146,26 @@
                    :effect (req (when (can-pay? state side nil :credit (:cost target))
                                   (runner-install state side target)))}]})
    "Consume"
-   {:events {:runner-trash {:req (req (= (:side target) "Corp"))
-                            :optional {:prompt "Place a virus counter on Consume?"
-                                       :yes-ability
-                                       {:effect (effect (add-counter :runner card :virus 1)
-                                                (system-msg :runner (str "places 1 virus counter on Consume")))}}}}
-    :abilities [{:cost [:click 1]
+   {:events {:runner-trash {:delayed-completion true
+                            :req (req (some #(card-is? % :side :corp) targets))
+                            :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                                               auto-ab {:effect (effect (add-counter :runner card :virus amt-trashed))
+                                                        :msg "place " (quantify amt-trashed "virus counter") "on Consume"}
+                                               sing-ab {:optional {:prompt "Place a virus counter on Consume?"
+                                                                   :yes-ability {:effect (effect (add-counter :runner card :virus 1))
+                                                                                 :msg "place 1 virus counter on Consume"}}}
+                                               mult-ab {:prompt "Place virus counters on Consume?"
+                                                        :choices {:number (req amt-trashed)
+                                                                  :default (req amt-trashed)}
+                                                        :msg (msg "place " (quantify target "virus counter") " on Consume")
+                                                        :effect (effect (add-counter :runner card :virus target))}
+                                               ab (if (> amt-trashed 1) mult-ab sing-ab)
+                                               ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
+                                           (continue-ability state side ab card targets)))}}
+    :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Consume."))
+    :abilities [{:req (req (pos? (get-virus-counters state side card)))
+                 :cost [:click 1]
+                 :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."
                  :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
                               (update! state side (assoc-in card [:counter :virus] 0))
                               (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
@@ -161,7 +176,12 @@
                                  hivemind-virus (- global-virus local-virus)]
                              (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
                              (when (pos? hivemind-virus)
-                                   (str " (and " hivemind-virus " from Hivemind)")))))}]}
+                                   (str " (and " hivemind-virus " from Hivemind)")))))}
+                {:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
+                                 (toast (str "Consume will now "
+                                             (if (get-in card [:special :auto-accept]) "no longer " "")
+                                             "automatically add counters.") "info"))
+                 :label "Toggle auomatically adding virus counters"}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
@@ -212,7 +232,7 @@
 
    "Dhegdheer"
    {:abilities [{:label "Install a program on Dhegdheer"
-                 :req (req (empty? (:hosted card)))
+                 :req (req (nil? (get-in card [:special :dheg-prog])))
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program in your Grip to install on Dhegdheer"
@@ -220,35 +240,36 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
-                                    :effect (effect (gain :memory (:memoryunits target))
-                                                    (when (-> target :cost pos?)
+                                    :effect (effect (when (-> target :cost pos?)
                                                       (install-cost-bonus state side [:credit -1]))
-                                                    (runner-install target {:host-card card})
-                                                    (update! (assoc (get-card state card) :dheg-prog (:cid target))))}
+                                                    (runner-install target {:host-card card :no-mu true})
+                                                    (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
                                   card nil))}
                 {:label "Host an installed program on Dhegdheer with [Credit] discount"
-                 :req (req (empty? (:hosted card)))
+                 :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer with [Credit] discount"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
-                 :effect (effect (host card target)
-                                 (when (-> target :cost pos?)
-                                   (gain state side :credit 1))
-                                 (gain :memory (:memoryunits target))
-                                 (update! (assoc (get-card state card) :dheg-prog (:cid target))))}
+                 :effect (req (free-mu state (:memoryunits target))
+                              (when (-> target :cost pos?)
+                                (gain state side :credit 1))
+                              (update-breaker-strength state side target)
+                              (host state side card (get-card state target))
+                              (update! state side (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
                 {:label "Host an installed program on Dhegdheer"
-                 :req (req (empty? (:hosted card)))
+                 :req (req (nil? (get-in card [:special :dheg-prog])))
                  :prompt "Choose an installed program to host on Dhegdheer"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target) (when (-> target :cost pos?)))
-                 :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
-                                 (update! (assoc (get-card state card) :dheg-prog (:cid target))))}]
-    :events {:card-moved {:req (req (= (:cid target) (:dheg-prog (get-card state card))))
-                          :effect (effect (update! (dissoc card :dheg-prog))
-                                          (lose :memory (:memoryunits target)))}}}
+                 :effect (effect (free-mu (:memoryunits target))
+                                 (update-breaker-strength target)
+                                 (host card (get-card state target))
+                                 (update! (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}]
+    :events {:card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dheg-prog])))
+                          :effect (effect (update! (dissoc-in card [:special :dheg-prog]))
+                                          (use-mu (:memoryunits target)))}}}
 
    "Diwan"
    {:prompt "Choose the server that this copy of Diwan is targeting:"
@@ -282,8 +303,7 @@
                                                          (not (has-subtype? % "Icebreaker"))
                                                          (in-hand? %))}
                                     :msg (msg "install and host " (:title target))
-                                    :effect (effect (gain :memory (:memoryunits target))
-                                                    (runner-install target {:host-card card})
+                                    :effect (effect (runner-install target {:host-card card :no-mu true})
                                                     (update! (assoc (get-card state card)
                                                                     :hosted-programs
                                                                     (cons (:cid target) (:hosted-programs card)))))}
@@ -295,13 +315,13 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
+                                 (free-mu (:memoryunits target))
                                  (update! (assoc (get-card state card)
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
                           :effect (effect (update! (assoc card
                                                           :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Egret"
    {:implementation "Added subtypes don't get removed when Egret is moved/trashed"
@@ -419,44 +439,59 @@
                                card nil))}]}
 
    "Hivemind"
-   {:data {:counter {:virus 1}}
-    :abilities [{:req (req (> (get-in card [:counter :virus]) 0))
-                 :priority true
-                 :prompt "Move a virus counter to which card?"
-                 :choices {:req #(has-subtype? % "Virus")}
-                 :effect (req (let [abilities (:abilities (card-def target))
-                                    virus target]
-                                (add-counter state :runner virus :virus 1)
-                                (add-counter state :runner card :virus -1)
-                                (if (= (count abilities) 1)
-                                  (do (swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
+   (let [update-programs (req (let [virus-programs (->> (all-installed state :runner)
+                                                  (filter #(and (program? %)
+                                                                (has-subtype? % "Virus")
+                                                                (not (facedown? %)))))]
+                                (doseq [p virus-programs]
+                                  (update-breaker-strength state side p))))]
+     {:data {:counter {:virus 1}}
+      :effect update-programs
+      :trash-effect {:effect update-programs}
+      :events {:counter-added {:req (req (= (:cid target) (:cid card)))
+                               :effect update-programs}}
+      :abilities [{:req (req (> (get-in card [:counter :virus]) 0))
+                   :priority true
+                   :prompt "Move a virus counter to which card?"
+                   :choices {:req #(has-subtype? % "Virus")}
+                   :effect (req (let [abilities (:abilities (card-def target))
+                                      virus target]
+                                  (add-counter state :runner virus :virus 1)
+                                  (add-counter state :runner card :virus -1)
+                                  (if (= (count abilities) 1)
+                                    (do (swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
                                       (resolve-ability state side (first abilities) (get-card state virus) nil))
-                                  (resolve-ability
-                                    state side
-                                    {:prompt "Choose an ability to trigger"
-                                     :choices (vec (map :msg abilities))
-                                     :effect (req (swap! state update-in [side :prompt] rest)
-                                                  (resolve-ability
-                                                    state side
-                                                    (first (filter #(= (:msg %) target) abilities))
-                                                    card nil))}
-                                    (get-card state virus) nil))))
-                 :msg (msg "trigger an ability on " (:title target))}]}
+                                    (resolve-ability
+                                      state side
+                                      {:prompt "Choose an ability to trigger"
+                                       :choices (vec (map :msg abilities))
+                                       :effect (req (swap! state update-in [side :prompt] rest)
+                                                    (resolve-ability
+                                                      state side
+                                                      (first (filter #(= (:msg %) target) abilities))
+                                                      card nil))}
+                                      (get-card state virus) nil))))
+                   :msg (msg "trigger an ability on " (:title target))}]})
 
    "Hyperdriver"
    {:flags {:runner-phase-12 (req true)}
     :abilities [{:label "Remove Hyperdriver from the game to gain [Click] [Click] [Click]"
                  :req (req (:runner-phase-12 @state))
                  :effect (effect (move card :rfg) (gain :click 3))
-                 :msg "gain [Click] [Click] [Click]"}]}
+                 :msg "gain [Click][Click][Click]"}]}
 
    "Imp"
    {:flags {:slow-trash (req (pos? (get-in card [:counter :virus] 0)))}
     :data {:counter {:virus 2}}
-    :abilities [{:counter-cost [:virus 1]
-                 :msg "trash at no cost"
-                 :once :per-turn
-                 :effect (effect (trash-no-cost))}]}
+    :interactions {:trash-ability {:interactive (req true)
+                                   :label "[Imp]: Trash card"
+                                   :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                                                  (pos? (get-in card [:counter :virus] 0))))
+                                   :counter-cost [:virus 1]
+                                   :msg (msg "trash " (:title target) " at no cost")
+                                   :once :per-turn
+                                   :delayed-completion true
+                                   :effect (effect (trash-no-cost eid target))}}}
 
    "Incubator"
    {:events {:runner-turn-begins {:effect (effect (add-counter card :virus 1))}}
@@ -494,7 +529,7 @@
 
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
-                 :req (req (< (count (:hosted card)) 2))
+                 :req (req (< (count (get-in card [:special :hosted-programs])) 2))
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
                                     :prompt "Choose a program in your Grip to install on Leprechaun"
@@ -502,26 +537,32 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
-                                    :effect (effect (gain :memory (:memoryunits target))
-                                                    (runner-install target {:host-card card})
-                                                    (update! (assoc (get-card state card)
-                                                                    :hosted-programs
-                                                                    (cons (:cid target) (:hosted-programs card)))))}
+                                    :effect (effect (runner-install target {:host-card card :no-mu true})
+                                                    (update! (assoc-in (get-card state card)
+                                                                    [:special :hosted-programs]
+                                                                    (cons (:cid target)
+                                                                          (get-in card [:special :hosted-programs])))))}
                                   card nil))}
                 {:label "Host an installed program on Leprechaun"
-                 :req (req (< (count (:hosted card)) 2))
+                 :req (req (< (count (get-in card [:special :hosted-programs])) 2))
                  :prompt "Choose an installed program to host on Leprechaun"
                  :choices {:req #(and (is-type? % "Program")
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
-                                 (update! (assoc (get-card state card)
-                                                 :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
-    :events {:card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
-                          :effect (effect (update! (assoc card
-                                                          :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (lose :memory (:memoryunits target)))}}}
+                 :effect (effect (free-mu (:memoryunits target))
+                                 (update-breaker-strength target)
+                                 (host card (get-card state target))
+                                 (update! (assoc-in (get-card state card)
+                                                    [:special :hosted-programs]
+                                                    (cons (:cid target)
+                                                          (get-in card [:special :hosted-programs])))))}]
+    :events {:card-moved {:req (req (some #{(:cid target)} (get-in card [:special :hosted-programs])))
+                          :effect (effect (update! (assoc-in card
+                                                             [:special :hosted-programs]
+                                                             (remove #(= (:cid target) %)
+                                                                     (get-in card [:special :hosted-programs]))))
+                                          (use-mu (:memoryunits target)))}}}
+
    "LLDS Energy Regulator"
    {:prevent {:trash [:hardware]}
     :abilities [{:cost [:credit 3]
@@ -597,12 +638,12 @@
                                             card nil))}}}
 
    "Origami"
-   {:effect (effect (gain :hand-size-modification
-                          (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                   (all-active-installed state :runner)))))))
-    :leave-play (effect (lose :hand-size-modification
-                              (dec (* 2 (count (filter #(= (:title %) "Origami")
-                                                       (all-active-installed state :runner)))))))}
+   {:effect (effect (gain :hand-size
+                          {:mod (dec (* 2 (count (filter #(= (:title %) "Origami")
+                                                         (all-active-installed state :runner)))))}))
+    :leave-play (effect (lose :hand-size
+                              {:mod (dec (* 2 (count (filter #(= (:title %) "Origami")
+                                                             (all-active-installed state :runner)))))}))}
 
    "Paintbrush"
    {:abilities [{:cost [:click 1]
@@ -718,8 +759,7 @@
                                                          (has-subtype? % "Virus")
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target))
-                                    :effect (effect (gain :memory (:memoryunits target))
-                                                    (runner-install target {:host-card card})
+                                    :effect (effect (runner-install target {:host-card card :no-mu true})
                                                     (update! (assoc (get-card state card)
                                                                     :hosted-programs
                                                                     (cons (:cid target) (:hosted-programs card)))))}
@@ -732,17 +772,17 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
+                                 (free-mu (:memoryunits target))
                                  (update! (assoc (get-card state card)
                                                  :hosted-programs (cons (:cid target) (:hosted-programs card)))))}]
     :events {:pre-purge {:effect (req (when-let [c (first (:hosted card))]
                                         (update! state side (assoc-in card [:special :numpurged] (get-in c [:counter :virus] 0)))))}
-             :purge {:req (req (pos? (or (get-in card [:special :numpurged]) 0)))
+             :purge {:req (req (pos? (get-in card [:special :numpurged] 0)))
                      :effect (req (when-let [c (first (:hosted card))]
                                     (add-counter state side c :virus 1)))}
              :card-moved {:req (req (some #{(:cid target)} (:hosted-programs card)))
                           :effect (effect (update! (assoc card :hosted-programs (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Reaver"
    {:events {:runner-trash {:req (req (and (first-installed-trash? state side)
@@ -955,7 +995,6 @@
                  :label "[Click], remove Trope from the game: Reshuffle cards from Heap back into Stack"
                  :effect (effect
                           (move card :rfg)
-                          (gain :memory 1)
                           (resolve-ability
                            {:show-discard true
                             :choices {:max (min (get-in card [:counter :power] 0) (count (:discard runner)))
@@ -967,16 +1006,39 @@
                             :effect (req (doseq [c targets] (move state side c :deck))
                                          (shuffle! state side :deck))}
                            card nil))}]}
-     "Upya"
-     {:implementation "Power counters added automatically"
-      :events {:successful-run {:silent (req true)
-                                :req (req (= target :rd))
-                                :effect (effect (add-counter card :power 1)) }}
-      :abilities [{:cost [:click 1]
-                   :counter-cost [:power 3]
-                   :once :per-turn
-                   :msg "gain [Click][Click]"
-                   :effect (effect (gain :click 2))}]}
+
+   "Trypano"
+   (let [trash-if-5 (req (when-let [h (get-card state (:host card))]
+                           (if (and (>= (get-virus-counters state side card) 5)
+                                      (not (and (card-flag? h :untrashable-while-rezzed true)
+                                                (rezzed? h))))
+                             (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
+                                 (trash state :runner eid h nil))
+                             (effect-completed state side eid))))]
+       {:hosting {:req #(and (ice? %) (can-host? %))}
+        :effect trash-if-5
+        :events {:runner-turn-begins
+                 {:optional {:prompt (msg "Place a virus counter on Trypano?")
+                             :yes-ability {:msg (msg "place a virus counter on Trypano")
+                                           :effect (req (add-counter state side card :virus 1))}}}
+                 :counter-added {:delayed-completion true
+                                 :req (req (= (:cid card) (:cid target)))
+                                 :effect trash-if-5}
+                 :card-moved {:effect trash-if-5
+                              :delayed-completion true}
+                 :runner-install {:effect trash-if-5
+                                  :delayed-completion true}}})
+
+   "Upya"
+   {:implementation "Power counters added automatically"
+    :events {:successful-run {:silent (req true)
+                              :req (req (= target :rd))
+                              :effect (effect (add-counter card :power 1)) }}
+    :abilities [{:cost [:click 1]
+                 :counter-cost [:power 3]
+                 :once :per-turn
+                 :msg "gain [Click][Click]"
+                 :effect (effect (gain :click 2))}]}
 
    "Wari"
    (letfn [(prompt-for-subtype []

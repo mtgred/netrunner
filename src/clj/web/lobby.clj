@@ -3,13 +3,12 @@
             [web.utils :refer [response tick remove-once]]
             [web.ws :as ws]
             [web.stats :as stats]
-            [game.main]
             [game.core :as core]
             [crypto.password.bcrypt :as bcrypt]
-            [game.main :as main]
             [monger.collection :as mc]
             [jinteki.cards :refer [all-cards]]
             [jinteki.decks :as decks]
+            [cheshire.core :as json]
             [clj-time.core :as t])
   (:import org.bson.types.ObjectId))
 
@@ -31,6 +30,12 @@
   "Returns the game map that the given client-id is playing or spectating."
   [client-id]
   (get @all-games (get @client-gameids client-id)))
+
+(defn lobby-clients
+  "Returns a seq of all client-ids playing or spectating a gameid."
+  [gameid]
+  (let [game (game-for-id gameid)]
+    (map :ws-id (concat (:players game) (:spectators game)))))
 
 (defn user-public-view
   "Strips private server information from a player map."
@@ -112,13 +117,20 @@
   (swap! all-games dissoc gameid)
   (swap! old-states dissoc gameid))
 
-
 (defn clear-inactive-lobbies
   "Called by a background thread to close lobbies that are inactive for some number of seconds."
   [time-inactive]
-  (doseq [{:keys [gameid last-update] :as game} (vals @all-games)]
+  (doseq [{:keys [gameid last-update started] :as game} (vals @all-games)]
     (when (and gameid (t/after? (t/now) (t/plus last-update (t/seconds time-inactive))))
-      (close-lobby game))))
+      (let [clientids (lobby-clients gameid)]
+        (if started
+          (do (stats/game-finished game)
+              (ws/broadcast-to! clientids :netrunner/timeout (json/generate-string
+                                                               {:gameid gameid})))
+          (ws/broadcast-to! clientids :lobby/timeout {:gameid gameid}))
+        (doseq [client-id clientids]
+          (swap! client-gameids dissoc client-id))
+        (close-lobby game)))))
 
 (defn remove-user
   "Removes the given client-id from the given gameid, whether it is a player or a spectator.
@@ -143,14 +155,10 @@
       (swap! client-gameids dissoc client-id)
 
       (if (empty? players)
-        (close-lobby game)
+        (do
+          (stats/game-finished game)
+          (close-lobby game))
         (refresh-lobby :update gameid)))))
-
-(defn lobby-clients
-  "Returns a seq of all client-ids playing or spectating a gameid."
-  [gameid]
-  (let [game (game-for-id gameid)]
-    (map :ws-id (concat (:players game) (:spectators game)))))
 
 (defn join-game
   "Adds the given user as a player in the given gameid."
@@ -257,6 +265,12 @@
                         :games/diff
                         {:diff {:update {gameid (game-public-view (game-for-id gameid))}}}))))
 
+(defn already-in-game?
+  "Checks if a user with the given database id (:_id) is already in the game"
+  [{:keys [_id] :as user} {:keys [players spectators] :as game}]
+  (or (some #(= _id (:_id %)) (map :user players))
+      (some #(= _id (:_id %)) (map :user spectators))))
+
 (defn handle-lobby-join
   [{{{:keys [username] :as user} :user} :ring-req
     client-id                           :client-id
@@ -265,8 +279,9 @@
     :as                                 msg}]
   (if-let [{game-password :password :as game} (@all-games gameid)]
     (when (and user game (allowed-in-game game user))
-      (if (or (empty? game-password)
-              (bcrypt/check password game-password))
+      (if (and (not (already-in-game? user game))
+               (or (empty? game-password)
+                   (bcrypt/check password game-password)))
         (do (join-game user client-id gameid)
             (ws/broadcast-to! (lobby-clients gameid)
                               :lobby/message
@@ -289,8 +304,9 @@
     (when (and user game (allowed-in-game game user))
       (if started
         false                                               ; don't handle this message, let game/handle-game-watch.
-        (if (or (empty? game-password)
-                (bcrypt/check password game-password))
+        (if (and (not (already-in-game? user game))
+                 (or (empty? game-password)
+                     (bcrypt/check password game-password)))
           (do (spectate-game user client-id gameid)
 
               (ws/broadcast-to! (lobby-clients gameid)

@@ -2,6 +2,30 @@
 
 (declare card-flag?)
 
+;;; Ice subroutine functions
+(defn add-extra-sub
+  "Add a run time subroutine to a piece of ice (Warden, Sub Boost, etc). -1 as the idx adds to the end."
+  [state side cid ice idx sub]
+  (let [new-sub (assoc sub :from-cid cid)
+        curr-subs (vec (:subroutines ice))
+        offset (if (= -1 idx) (count curr-subs) idx)
+        new-subs (apply conj (subvec curr-subs 0 offset) new-sub (subvec curr-subs offset))]
+    (update! state :corp
+             (-> ice
+               (assoc :subroutines new-subs)
+               (assoc-in [:special :extra-subs] true)))))
+
+(defn remove-extra-subs
+  "Remove runtime subroutines assigned from the given cid from a piece of ice."
+  [state side cid ice]
+  (let [curr-subs (:subroutines ice)
+        new-subs (remove #(= cid (:from-cid %)) curr-subs)
+        extra-subs (some #(not (nil? (:from-cid %))) new-subs)]
+    (update! state :corp
+             (-> ice
+               (assoc :subroutines new-subs)
+               (assoc-in [:special :extra-subs] extra-subs)))))
+
 ;;; Ice strength functions
 (defn ice-strength-bonus
   "Increase the strength of the given ice by n. Negative values cause a decrease."
@@ -16,7 +40,7 @@
   (+ (if-let [strfun (:strength-bonus (card-def card))]
        (+ strength (strfun state side (make-eid state) card nil))
        strength)
-     (or (get-in @state [:bonus :ice-strength]) 0)))
+     (get-in @state [:bonus :ice-strength] 0)))
 
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."
@@ -59,6 +83,7 @@
          strength)
        (get-in card [:pump :encounter] 0)
        (get-in card [:pump :all-run] 0)
+       (get-in card [:pump :all-turn] 0)
        (get-in @state [:bonus :breaker-strength] 0))))
 
 (defn update-breaker-strength
@@ -72,7 +97,7 @@
     (trigger-event state side :breaker-strength-changed (get-card state breaker) oldstren)))
 
 (defn pump
-  "Increase a breaker's strength by n for the given duration of :encounter or :all-run"
+  "Increase a breaker's strength by n for the given duration of :encounter, :all-run or :all-turn"
   ([state side card n] (pump state side card n :encounter))
   ([state side card n duration]
    (update! state side (update-in card [:pump duration] (fnil #(+ % n) 0)))
