@@ -1008,10 +1008,10 @@
    "Remote Data Farm"
    {:silent (req true)
     :msg "increase their maximum hand size by 2"
-    :effect (effect (gain :hand-size {:mod 2}))
+    :effect (effect (gain :hand-size 2))
     :swapped {:msg "increase their maximum hand size by 2"
-              :effect (effect (gain :hand-size {:mod 2}))}
-    :leave-play (effect (lose :hand-size {:mod 2}))}
+              :effect (effect (gain :hand-size 2))}
+    :leave-play (effect (lose :hand-size 2))}
 
    "Remote Enforcement"
    {:interactive (req true)
@@ -1054,10 +1054,10 @@
    "Self-Destruct Chips"
    {:silent (req true)
     :msg "decrease the Runner's maximum hand size by 1"
-    :effect (effect (lose :runner :hand-size {:mod 1}))
+    :effect (effect (lose :runner :hand-size 1))
     :swapped {:msg "decrease the Runner's maximum hand size by 1"
-              :effect (effect (lose :runner :hand-size {:mod 1}))}
-    :leave-play (effect (gain :runner :hand-size {:mod 1}))}
+              :effect (effect (lose :runner :hand-size 1))}
+    :leave-play (effect (gain :runner :hand-size 1))}
 
    "Sensor Net Activation"
    {:effect (effect (add-counter card :agenda 1))
