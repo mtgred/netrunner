@@ -11,7 +11,7 @@
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card server]}]
-  (let [card (get-card state card)]
+  (when-let [card (get-card state card)]
     (case (:type card)
       ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
@@ -160,7 +160,8 @@
               ;; :Counter prompts deduct counters from the card
               (add-counter state side (:card prompt) (:counter choices) (- choice)))
             ;; trigger the prompt's effect function
-            ((:effect prompt) (or choice card))
+            (when-let [effect-prompt (:effect prompt)]
+              (effect-prompt (or choice card)))
             (finish-prompt state side prompt card)))
       (do (if-let [cancel-effect (:cancel-effect prompt)]
             ;; trigger the cancel effect
@@ -492,7 +493,7 @@
       (when-completed (trigger-event-sync state side :pass-ice cur-ice)
                       (do (update-ice-in-server
                             state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-                          (swap! state update-in [:run :position] dec)
+                          (swap! state update-in [:run :position] (fnil dec 1))
                           (swap! state assoc-in [:run :no-action] false)
                           (system-msg state side "continues the run")
                           (when cur-ice

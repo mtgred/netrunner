@@ -515,9 +515,9 @@
   (clear-wait-prompt state :corp)
   (let [corp-strength (if (corp-start? trace)
                          strength
-                         (+ base bonus boost))
+                         ((fnil + 0 0 0) base bonus boost))
         runner-strength (if (corp-start? trace)
-                         (+ link boost)
+                         ((fnil + 0 0) link boost)
                          strength)]
     (system-msg state other (str " spends " boost
                                  "[Credits] to increase " (if (corp-start? trace) "link" "trace")
@@ -544,8 +544,8 @@
   [state side card {:keys [eid player other base bonus link priority] :as trace} boost]
   (let [other-type (if (corp-start? trace) "link" "trace")
         strength (if (corp-start? trace)
-                   (+ base bonus boost)
-                   (+ link boost))
+                   ((fnil + 0 0 0) base bonus boost)
+                   ((fnil + 0 0) link boost))
         trace (assoc trace :strength strength)]
     (system-msg state player (str " spends " boost
                                   "[Credits] to increase " (if (corp-start? trace) "trace" "link")
@@ -587,14 +587,16 @@
     (trace-start state side card trace)))
 
 (defn rfg-and-shuffle-rd-effect
-  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n))
-  ([state side eid card n]
+  ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))
+  ([state side card n all?] (rfg-and-shuffle-rd-effect state side (make-eid state) card n all?))
+  ([state side eid card n all?]
    (move state side card :rfg)
    (continue-ability state side
                     {:show-discard  true
                      :choices {:max n
                                :req #(and (= (:side %) "Corp")
-                                          (= (:zone %) [:discard]))}
+                                          (= (:zone %) [:discard]))
+                               :all all?}
                      :msg (msg "shuffle "
                                (let [seen (filter :seen targets)
                                      m (count (filter #(not (:seen %)) targets))]

@@ -289,17 +289,14 @@
            (not= (:faction card) "Jinteki"))))
 
 (defn valid-deck? [{:keys [identity cards] :as deck}]
-  (when (not (and cards identity))
-    (println "Valid Deck: Deck" deck))
-  (let [cnt (card-count cards)
-        min-size (min-deck-size identity)]
-    (and (>= (card-count cards) (min-deck-size identity))
-         (<= (influence-count deck) (id-inf-limit identity))
-         (every? #(and (allowed? (:card %) identity)
-                       (legal-num-copies? identity %)) cards)
-         (or (= (:side identity) "Runner")
-             (let [min (min-agenda-points deck)]
-               (<= min (agenda-points deck) (inc min)))))))
+  (and (not (nil? identity))
+       (>= (card-count cards) (min-deck-size identity))
+       (<= (influence-count deck) (id-inf-limit identity))
+       (every? #(and (allowed? (:card %) identity)
+                     (legal-num-copies? identity %)) cards)
+       (or (= (:side identity) "Runner")
+           (let [min (min-agenda-points deck)]
+             (<= min (agenda-points deck) (inc min))))))
 
 (defn mwl-legal?
   "Returns true if the deck does not contain banned cards or more than one type of restricted card"

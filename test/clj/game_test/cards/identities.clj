@@ -350,16 +350,16 @@
   (testing "Only works with Assets, ICE, Operations, and Upgrades"
     (letfn [(fk-test [card]
               (do-game
-                (new-game (default-corp [(qty card 1)])
-                          (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                                     [(qty "Cache" 1)]))
+                (new-game (default-corp [card])
+                          (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache"]))
                 (take-credits state :corp)
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
                 (prompt-choice-partial :runner "Freedom")
                 (prompt-select :runner (get-program state 0))
                 (prompt-select :runner (get-program state 0))
-                (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))]
+                (is (= 1 (count (:discard (get-corp))))
+                    (str "Accessed " card " should have been trashed after selecting two virus counters"))))]
       (doall (map fk-test
                   ["Dedicated Response Team"
                    "Consulting Visit"
@@ -368,9 +368,8 @@
   (testing "Triggers when play/rez cost less than or equal to number of available virus counters"
     (letfn [(fk-test [card]
               (do-game
-                (new-game (default-corp [(qty card 1)])
-                          (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                                     [(qty "Cache" 1)]))
+                (new-game (default-corp [card])
+                          (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache"]))
                 (take-credits state :corp)
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
@@ -378,8 +377,9 @@
                   (prompt-choice-partial :runner "Freedom")
                   (when (< 0 cost)
                     (dotimes [_ cost]
-                      (prompt-select :runner (get-program state 0)))))
-                (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))]
+                      (prompt-select :runner (get-program state 0))))
+                  (is (= 1 (count (:discard (get-corp))))
+                      (str "Accessed " card " should have been trashed after selecting " cost " virus counters")))))]
       (doall (map fk-test
                   ["Beanstalk Royalties"
                    "Aggressive Negotiation"
@@ -388,9 +388,8 @@
   (testing "Doesn't trigger when there aren't enough available virus counters"
     (letfn [(fk-test [card]
               (do-game
-                (new-game (default-corp [(qty card 1)])
-                          (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                                     [(qty "Cache" 1)]))
+                (new-game (default-corp [card])
+                          (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache"]))
                 (take-credits state :corp)
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
@@ -403,9 +402,8 @@
                    "Tyrant"]))))
   (testing "Can use multiple programs for virus counter payment"
     (do-game
-      (new-game (default-corp [(qty "Dedicated Response Team" 1)])
-                (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                           [(qty "Cache" 1) (qty "Virus Breeding Ground" 1)]))
+      (new-game (default-corp ["Dedicated Response Team"])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache" "Virus Breeding Ground"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (play-from-hand state :runner "Virus Breeding Ground")
@@ -415,12 +413,12 @@
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (prompt-select :runner (get-resource state 0))
-      (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))
+      (is (= 1 (count (:discard (get-corp))))
+          (str "Accessed Dedicated Response Team should have been trashed after selecting 2 virus counters"))))
   (testing "Can use viruses on hosted cards"
     (do-game
       (new-game (default-corp [(qty "Ice Wall" 2)])
-                (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                           [(qty "Trypano" 1)]))
+                (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Trypano"]))
       (play-from-hand state :corp "Ice Wall" "R&D")
       (let [iw (get-ice state :rd 0)]
         (take-credits state :corp)
@@ -432,12 +430,11 @@
         (run-empty-server state "HQ")
         (prompt-choice-partial :runner "Freedom")
         (prompt-select :runner (->> (refresh iw) :hosted first)))
-      (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")))
+      (is (= 1 (count (:discard (get-corp)))) "Accessed Ice Wall should be discarded after selecting 1 virus counter")))
   (testing "Doesn't trigger when accessing an Agenda"
     (do-game
-      (new-game (default-corp [(qty "Hostile Takeover" 1)])
-                (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                           [(qty "Cache" 1)]))
+      (new-game (default-corp ["Hostile Takeover"])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (run-empty-server state "HQ")
@@ -445,27 +442,29 @@
       (is (= "Steal" (->> @state :runner :prompt first :choices first)) "Only option should be 'Steal'")))
   (testing "Shows multiple prompts when playing Imp"
     (do-game
-      (new-game (default-corp [(qty "Dedicated Response Team" 1)])
+      (new-game (default-corp ["Dedicated Response Team"])
                 (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                           [(qty "Cache" 1) (qty "Imp" 1)]))
+                           ["Sure Gamble" "Cache" "Imp"]))
       (take-credits state :corp)
+      (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Cache")
       (play-from-hand state :runner "Imp")
       (run-empty-server state "HQ")
       (is (= 4 (->> @state :runner :prompt first :choices count)) "Should have 4 options: Freedom, Imp, Trash, No action")))
   (testing "Should return to access prompts when Done is pressed"
     (do-game
-      (new-game (default-corp [(qty "Dedicated Response Team" 1)])
-                (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                           [(qty "Cache" 1)]))
+      (new-game (default-corp ["Dedicated Response Team"])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (run-empty-server state "HQ")
-      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should have 3 prompts: Freedom, Trash, No action")
+      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should have 3 choices: Freedom, Trash, No action")
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (prompt-choice :runner "Done")
-      (is (= 3 (->> @state :runner :prompt first :choices count)) "Should go back to access prompts")
+      (is (= 3 (->> @state :runner :prompt first :choices count))
+          (str "Should go back to access prompts, with 3 choices: Freedom, Trash, No action. "
+               "Choices seen: " (->> @state :runner :prompt first :choices)))
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (prompt-select :runner (get-program state 0))
@@ -473,14 +472,27 @@
   (testing "Shouldn't grant additional accesses after trashing accessed card. #3423"
     (do-game
       (new-game (default-corp [(qty "Ice Wall" 10)])
-                (make-deck "Freedom Khumalo: Crypto-Anarchist"
-                           [(qty "Cache" 1)]))
+                (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (run-empty-server state "R&D")
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
-      (is (= 1 (count (:discard (get-corp)))) "Card should be discarded now")
+      (is (= 1 (count (:discard (get-corp)))) "Accessed Ice Wall should be discarded now")
+      (is (not (:run @state)) "Run ended")))
+  (testing "Shouldn't give Aumakua additional counters on trash. #3479"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 10)])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Cache" "Aumakua"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Aumakua")
+      (run-empty-server state "R&D")
+      (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakuma shouldn't have any virus counters yet.")
+      (prompt-choice-partial :runner "Freedom")
+      (prompt-select :runner (get-program state 0))
+      (is (= 1 (count (:discard (get-corp)))) "Ice Wall should be discarded now")
+      (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakua doesn't gain any virus counters from trash ability.")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest gabriel-santiago
@@ -1149,6 +1161,7 @@
       (prompt-choice :runner 0)
       (is (empty? (:prompt (get-runner))) "Forger can't avoid the tag")
       (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
+      (core/gain state :runner :credit 2)
       (run-empty-server state "Server 2")
       (prompt-choice-partial :runner "Pay")
       (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))

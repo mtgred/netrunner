@@ -13,11 +13,17 @@
                                                               (not= % "credit"))
                                                         (:cost pumpabi))))
               current-ice (when-not (get-in @state [:run :ending]) (get-card state current-ice))
-              strdif (when current-ice (max 0 (- (or (:current-strength current-ice)
-                                                     (:strength current-ice))
-                                                 (or (:current-strength card)
-                                                     (:strength card)))))
-              pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+              strdif (when (and (or (:current-strength current-ice)
+                                    (:strength current-ice))
+                                (or (:current-strength card)
+                                    (:strength card)))
+                       (max 0 (- (or (:current-strength current-ice)
+                                     (:strength current-ice))
+                                 (or (:current-strength card)
+                                     (:strength card)))))
+              pumpnum (when (and strdif
+                                 (:pump pumpabi))
+                        (int (Math/ceil (/ strdif (:pump pumpabi)))))]
           (update! state side
                    (assoc card :abilities
                           (if (and pumpcst
@@ -25,7 +31,7 @@
                                    (rezzed? current-ice)
                                    (or (some #(has-subtype? current-ice %) (:breaks card))
                                        (= (first (:breaks card)) "All"))
-                                   (pos? strdif))
+                                   (pos? pumpnum))
                             (vec (cons {:dynamic :auto-pump
                                         :cost [:credit (* pumpcst pumpnum)]
                                         :label (str "Match strength of " (:title current-ice))}
@@ -753,7 +759,7 @@
    (conspiracy "Paperclip" "Barrier"
                [{:label (str "X [Credits]: +X strength, break X subroutines")
                  :choices {:number (req (:credit runner))
-                           :default (req (if current-ice
+                           :default (req (if (:current-strength current-ice)
                                            (max (- (:current-strength current-ice)
                                                    (:current-strength card))
                                                 1)
