@@ -582,9 +582,8 @@
         (prompt-select :corp (refresh iw))
         (prompt-select :corp (refresh fw))
         (is (= 0 (:advance-counter (refresh iw))))
-        (is (= 2 (:advance-counter (refresh fw))))
-        )))
-  (testing "Variaable number of advanceable cards"
+        (is (= 2 (:advance-counter (refresh fw)))))))
+  (testing "Variable number of advanceable cards"
     (do-game
       (new-game (default-corp ["Constellation Protocol" "Ice Wall" "Hive"])
                 (default-runner))
@@ -607,7 +606,25 @@
         (core/rez state :corp hive)
         (take-credits state :corp)
         (take-credits state :runner)
-        (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire when the target ice can't be advanced")))))
+        (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire when the target ice can't be advanced"))))
+  (testing "Can't advance assets"
+    (do-game
+      (new-game (default-corp ["Constellation Protocol" "Ice Wall" "Contract Killer"])
+                (default-runner))
+      (core/gain state :corp :credit 100 :click 10)
+      (play-from-hand state :corp "Constellation Protocol" "New remote")
+      (play-from-hand state :corp "Ice Wall" "New remote")
+      (play-from-hand state :corp "Contract Killer" "New remote")
+      (let [cp (get-content state :remote1 0)
+            iw (get-ice state :remote2 0)
+            ck (get-content state :remote3 0)]
+        (core/rez state :corp cp)
+        (core/rez state :corp iw)
+        (core/rez state :corp ck)
+        (advance state iw 1))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (empty? (get-in @state [:corp :prompt])) "Constellation Protocol shouldn't fire when only target is asset"))))
 
 (deftest daily-business-show
   ;; Daily Business Show

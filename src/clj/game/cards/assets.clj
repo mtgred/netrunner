@@ -358,8 +358,8 @@
                                             (filter ice?)
                                             (filter #(pos? (:advance-counter % 0)))
                                             (remove empty?)
-                                            (map :title)
-                                            first)]
+                                            first
+                                            :title)]
                            (as-> (all-installed state :corp) it
                              (filter ice? it)
                              (filter can-be-advanced? it)
