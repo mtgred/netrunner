@@ -501,7 +501,7 @@
   (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
   (let [bonus (get-in @state [:bonus :trace] 0)
         base (if (fn? base) (base state side (make-eid state) card nil) base)
-        total (+ base boost bonus)
+        total ((fnil + 0 0 0) base boost bonus)
         link (get-in @state [:runner :link] 0)]
     (system-msg state :corp (str "uses " (:title card)
                                  " to initiate a trace with strength " total
