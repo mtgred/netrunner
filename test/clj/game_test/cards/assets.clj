@@ -883,7 +883,7 @@
     (is (= 1 (:agendapoints (get-in @state [:corp :scored 0]))) "Echo Chamber added to Corp score area")))
 
 (deftest edge-of-world
-  ;; Edge of World - ability
+  ;; Edge of World
   (do-game
     (new-game (default-corp [(qty "Edge of World" 3) (qty "Ice Wall" 3)])
               (default-runner))
@@ -903,6 +903,32 @@
     (prompt-choice :corp "Yes")
     (prompt-choice :runner "Yes")
     (is (= 2 (:brain-damage (get-runner))) "Runner did not take brain damage when no ICE protected Edge of World")))
+
+(deftest elizas-toybox
+  ;; Eliza's Toybox - Rez a card ignoring all costs
+  (do-game
+    (new-game (default-corp ["Eliza's Toybox" "Wotan" "Archer"])
+              (default-runner))
+    (play-from-hand state :corp "Wotan" "R&D")
+    (play-from-hand state :corp "Archer" "HQ")
+    (play-from-hand state :corp "Eliza's Toybox" "New remote")
+    (let [wotan (get-ice state :rd 0)
+          archer (get-ice state :hq 0)
+          eliza (get-content state :remote1 0)]
+      (core/rez state :corp eliza)
+      (is (= 1 (:credit (get-corp))))
+      (is (= 0 (:click (get-corp))) "3 clicks spent")
+      (core/gain state :corp :click 6)
+      (card-ability state :corp eliza 0)
+      (prompt-select :corp wotan)
+      (is (get-in (refresh wotan) [:rezzed]))
+      (is (= 3 (:click (get-corp))) "3 clicks spent")
+      (is (= 1 (:credit (get-corp))) "No credits spent")
+      (card-ability state :corp eliza 0)
+      (prompt-select :corp archer)
+      (is (get-in (refresh archer) [:rezzed]))
+      (is (= 0 (:click (get-corp))) "3 clicks spent")
+      (is (= 1 (:credit (get-corp))) "No credits or agendas spent"))))
 
 (deftest elizabeth-mills
   ;; Elizabeth Mills - Remove 1 bad publicity when rezzed; click-trash to trash a location
@@ -924,24 +950,6 @@
       (is (= 1 (count (:discard (get-corp)))) "Elizabeth Mills trashed")
       (is (= 1 (:bad-publicity (get-corp))) "1 bad publicity taken from trashing a location"))))
 
-(deftest elizas-toybox
-  ;; Eliza's Toybox - Rez a card ignoring all costs
-  (do-game
-    (new-game (default-corp [(qty "Eliza's Toybox" 1) (qty "Wotan" 1)])
-              (default-runner))
-    (core/gain state :corp :click 2)
-    (play-from-hand state :corp "Wotan" "R&D")
-    (play-from-hand state :corp "Eliza's Toybox" "New remote")
-    (let [wotan (get-ice state :rd 0)
-          eliza (get-content state :remote1 0)]
-      (core/rez state :corp eliza)
-      (is (= 1 (:credit (get-corp))))
-      (card-ability state :corp eliza 0)
-      (prompt-select :corp wotan)
-      (is (get-in (refresh wotan) [:rezzed]))
-      (is (= 0 (:click (get-corp))) "3 clicks spent")
-      (is (= 1 (:credit (get-corp))) "No credits spent"))))
-
 (deftest encryption-protocol
   ;; Encryption Protocol - Trash cost of installed cards increased by 1
   (do-game
@@ -961,6 +969,28 @@
       (run-empty-server state "Server 2")
       (is (= 3 (core/trash-cost state :runner (refresh ep2)))
           "Trash cost increased to 3 by one active Encryption Protocol"))))
+
+(deftest estelle-moon
+  ;; Estelle Moon
+  (letfn [(estelle-test [number]
+            (do-game
+              (new-game (default-corp ["Estelle Moon" (qty "Encryption Protocol" 20)])
+                        (default-runner))
+              (starting-hand state :corp (repeat 9 "Encryption Protocol"))
+              (core/move state :corp (find-card "Estelle Moon" (:deck (get-corp))) :hand)
+              (play-from-hand state :corp "Estelle Moon" "New remote")
+              (let [em (get-content state :remote1 0)]
+                (core/rez state :corp (refresh em))
+                (core/gain state :corp :click 10)
+                (dotimes [_ number]
+                  (play-from-hand state :corp "Encryption Protocol" "New remote"))
+                (let [credits (:credit (get-corp))
+                      hand (count (:hand (get-corp)))]
+                  (card-ability state :corp (refresh em) 0)
+                  (is (= (* 2 number) (- (:credit (get-corp)) credits)) (str "Should gain " (* 2 number) " credits"))
+                  (is (= number (- (count (:hand (get-corp))) hand)) (str "Should draw " number " cards"))
+                  (is (= 1 (:discard (get-corp))) "Estelle Moon should be trashed")))))]
+    (doall (map estelle-test (range 10)))))
 
 (deftest eve-campaign
   (do-game

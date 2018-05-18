@@ -515,7 +515,7 @@
                  :cost [:click 3]
                  :msg "add it to their score area as an agenda worth 1 agenda point"
                  :delayed-completion true
-                 :effect (req (as-agenda state :corp eid card 1)) }]}
+                 :effect (req (as-agenda state :corp eid card 1))}]}
 
    "Edge of World"
    (letfn [(ice-count [state]
