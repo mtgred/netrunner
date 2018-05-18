@@ -860,7 +860,7 @@
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Mwanza City Grid" 1) (qty "Hedge Fund" 5)])
+      (new-game (default-corp ["Mwanza City Grid" (qty "Hedge Fund" 5)])
                 (default-runner))
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
       (take-credits state :corp)
@@ -907,7 +907,44 @@
       (prompt-choice :runner "ICE")
       (is (zero? (count (:discard (get-corp)))) "No cards trashed from HQ")
       (is (not (:run @state)) "Run ended after Embezzle completed - no accesses from Mwanza")
-      (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza"))))
+      (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza")))
+  (testing "interaction with Kitsune"
+    ;; Regression test for #3469
+    (do-game
+      (new-game (default-corp ["Mwanza City Grid" (qty "Kitsune" 2) (qty "Hedge Fund" 3) "Breached Dome"])
+                (default-runner))
+      (core/draw state :corp 1)                             ; Draw last card of deck
+      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (play-from-hand state :corp "Kitsune" "HQ")
+      (play-from-hand state :corp "Kitsune" "R&D")
+      (take-credits state :corp)
+      (let [mwanza (get-content state :hq 0)
+            k-hq (get-ice state :hq 0)
+            k-rd (get-ice state :rd 0)]
+        (core/rez state :corp mwanza)
+        (core/rez state :corp k-hq)
+        (core/rez state :corp k-rd)
+        (run-on state "HQ")
+        (card-subroutine state :corp k-hq 0)
+        (prompt-select :corp (find-card "Breached Dome" (:hand (get-corp))))
+        (is (= 2 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
+        (prompt-choice :runner "No action")
+        ;; Access 3 more cards from HQ
+        (dotimes [c 3]
+          (prompt-choice :runner "Card from hand")
+          (prompt-choice :runner "No action"))
+        (run-jack-out state)
+        (run-on state "R&D")
+        (card-subroutine state :corp k-rd 0)
+        (prompt-select :corp (find-card "Breached Dome" (:hand (get-corp))))
+        (is (= 1 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
+        (prompt-choice :runner "No action")
+        ;; Access 3 more cards from HQ
+        (dotimes [c 3]
+          (prompt-choice :runner "Card from hand")
+          (prompt-choice :runner "No action"))
+        (run-jack-out state)
+        (is (= 2 (-> (get-corp) :discard count)) "Two Kitsunes trashed after resolving their subroutines")))))
 
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement

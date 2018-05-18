@@ -41,17 +41,13 @@
 
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]
-  (let [e (first handlers)
-        ability (:ability e)]
-    (if e
-      (if-let [card (get-card state (:card e))]
-        (if (and (not (apply trigger-suppress state side event (cons card targets)))
-                 (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
-          (when-completed (resolve-ability state side ability card targets)
-                          (apply trigger-event-sync-next state side eid (next handlers) event targets))
-          (apply trigger-event-sync-next state side eid (next handlers) event targets))
-        (apply trigger-event-sync-next state side eid (next handlers) event targets))
-      (effect-completed state side eid nil))))
+  (if-let [e (first handlers)]
+    (if-let [card (get-card state (:card e))]
+      (let [ability (dissoc (:ability e) :req)]
+        (when-completed (resolve-ability state side ability card targets)
+                        (apply trigger-event-sync-next state side eid (next handlers) event targets)))
+      (apply trigger-event-sync-next state side eid (next handlers) event targets))
+    (effect-completed state side eid nil)))
 
 (defn trigger-event-sync
   "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler. Does not
@@ -62,7 +58,9 @@
         is-active-player #(= (:active-player @state) (get-side %))]
 
     (let [handlers (sort-by (complement is-active-player) (get-in @state [:events event]))
-          card nil]
+          handlers (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
+                                 (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
+                           handlers)]
       (when-completed (apply trigger-event-sync-next state side handlers event targets)
                       (effect-completed state side eid nil)))))
 

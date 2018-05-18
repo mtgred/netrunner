@@ -146,8 +146,10 @@
     :req (req tagged)
     :msg "force the Runner to lose 2[mu] until the end of the turn"
     :effect (req (lose state :runner :memory 2)
-                 (when (< (:memory runner) 0)
-                  (system-msg state :runner "must trash programs to free up [mu]")))
+                 (when (neg? (available-mu state))
+                   ;; Give runner a toast as well
+                   (toast-check-mu state)
+                   (system-msg state :runner "must trash programs to free up [mu]")))
     :end-turn {:effect (req (gain state :runner :memory 2)
                             (system-msg state :runner "regains 2[mu]"))}}
 
@@ -386,8 +388,8 @@
 
    "Enforced Curfew"
    {:msg "reduce the Runner's maximum hand size by 1"
-    :effect (effect (lose :runner :hand-size {:mod 1}))
-    :leave-play (effect (gain :runner :hand-size {:mod 1}))}
+    :effect (effect (lose :runner :hand-size 1))
+    :leave-play (effect (gain :runner :hand-size 1))}
 
    "Enforcing Loyalty"
    {:trace {:base 3
@@ -1459,6 +1461,11 @@
       :msg (msg "rearrange ICE protecting " target)
       :effect (req (let [serv (next (server->zone state target))]
                      (continue-ability state side (sun serv) card nil)))})
+
+   "Surveillance Sweep"
+   {:events {:run {:effect (req (swap! state assoc-in [:trace :player] :runner))}
+             :run-end {:effect (req (swap! state dissoc-in [:trace :player]))}}
+    :leave-play (req (swap! state dissoc-in [:trace :player]))}
 
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))

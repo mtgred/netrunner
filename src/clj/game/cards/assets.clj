@@ -233,8 +233,8 @@
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
-   {:effect (effect (lose :runner :hand-size {:mod 2}))
-    :leave-play (effect (gain :runner :hand-size {:mod 2}))
+   {:effect (effect (lose :runner :hand-size 2))
+    :leave-play (effect (gain :runner :hand-size 2))
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
@@ -387,7 +387,7 @@
                                    :effect (effect (gain :corp :credit 1))}}}
 
    "Cybernetics Court"
-   {:in-play [:hand-size {:mod 4}]}
+   {:in-play [:hand-size 4]}
 
    "Daily Business Show"
    {:events {:pre-corp-draw
@@ -947,8 +947,8 @@
                   :label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
                   :effect (effect (gain :credit 1))}]
-     {:effect (effect (gain :runner :hand-size {:mod 1}))
-      :leave-play (effect (lose :runner :hand-size {:mod 1}))
+     {:effect (effect (gain :runner :hand-size 1))
+      :leave-play (effect (lose :runner :hand-size 1))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -1354,7 +1354,7 @@
 
    "Ronin"
    {:advanceable :always
-    :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
+    :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card 0) 4))
                  :msg "do 3 net damage"
                  :delayed-completion true
                  :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}

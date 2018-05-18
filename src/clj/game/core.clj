@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid
+                                costs->symbol vdissoc distinct-by abs string->num safe-split get-cid
                                 dissoc-in cancellable card-is? side-str build-cost-str build-spend-msg cost-names
                                 zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
                                 is-remote? is-central? get-server-type other-side same-card? same-side?
