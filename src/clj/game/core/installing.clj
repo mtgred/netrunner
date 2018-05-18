@@ -34,7 +34,6 @@
   ([state side card keep-counter]
    (unregister-events state side card)
    (trigger-leave-effect state side card)
-   (handle-prevent-effect state card)
    (when-let [mu (:memoryunits card)]
      (when (and (:installed card)
                 (not (:facedown card)))
