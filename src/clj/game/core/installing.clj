@@ -279,8 +279,8 @@
                           (when-completed (trigger-event-sync state side :server-created card)
                                           (corp-install-continue state side eid card server args slot cost-str))
                           (corp-install-continue state side eid card server args slot cost-str))
-                        end-fn))
-      end-fn)))
+                        (end-fn)))
+      (end-fn))))
 
 (defn corp-install
   "Installs a card in the chosen server. If server is nil, asks for server to install in.
