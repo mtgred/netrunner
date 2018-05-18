@@ -989,7 +989,7 @@
                   (card-ability state :corp (refresh em) 0)
                   (is (= (* 2 number) (- (:credit (get-corp)) credits)) (str "Should gain " (* 2 number) " credits"))
                   (is (= number (- (count (:hand (get-corp))) hand)) (str "Should draw " number " cards"))
-                  (is (= 1 (:discard (get-corp))) "Estelle Moon should be trashed")))))]
+                  (is (= 1 (-> (get-corp) :discard count)) "Estelle Moon should be trashed")))))]
     (doall (map estelle-test (range 10)))))
 
 (deftest eve-campaign
