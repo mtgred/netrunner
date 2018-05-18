@@ -1490,8 +1490,7 @@
 
    "Safety First"
    {:in-play [:hand-size {:mod -2}]
-    :events {:runner-turn-ends {:msg (msg "draw a card")
-                                :delayed-completion true
+    :events {:runner-turn-ends {:delayed-completion true
                                 :effect (req (if (< (count (:hand runner)) (hand-size state :runner)) 
                                                (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
                                                    (draw state :runner eid 1 nil))
