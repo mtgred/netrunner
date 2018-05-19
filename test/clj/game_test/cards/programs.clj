@@ -877,7 +877,8 @@
         (prompt-choice :runner "Yes")
         (prompt-choice :runner 2)
         (prompt-choice :runner "Unrezzed upgrade in HQ")
-        (is (= "You accessed Hokusai Grid." (:msg (:prompt (get-runner)))) "No RNG Key prompt, straight to access prompt")
+        (is (= "You accessed Hokusai Grid." (-> (get-runner) :prompt first :msg))
+            "No RNG Key prompt, straight to access prompt")
         (is (= 5 (:credit (get-runner))) "Gained no credits")))))
 
 (deftest scheherazade
