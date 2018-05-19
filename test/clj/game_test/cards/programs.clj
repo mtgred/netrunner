@@ -877,7 +877,6 @@
         (prompt-choice :runner "Yes")
         (prompt-choice :runner 2)
         (prompt-choice :runner "Unrezzed upgrade in HQ")
-        (clojure.pprint/pprint (:prompt (get-runner)))
         (is (= "You accessed Hokusai Grid." (:msg (:prompt (get-runner)))) "No RNG Key prompt, straight to access prompt")
         (is (= 5 (:credit (get-runner))) "Gained no credits")))))
 
