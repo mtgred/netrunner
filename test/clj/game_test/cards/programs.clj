@@ -801,59 +801,85 @@
 
 (deftest rng-key
   ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
-  (do-game
-    (new-game (default-corp [(qty "Enigma" 5) (qty "Hedge Fund" 1)])
-              (default-runner [(qty "RNG Key" 1) (qty "Paperclip" 2)]))
-    (starting-hand state :corp ["Hedge Fund"])
-    (starting-hand state :runner ["RNG Key"])
-    (take-credits state :corp)
+  (testing "Basic behaviour - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost"
+    (do-game
+      (new-game (default-corp [(qty "Enigma" 5) (qty "Hedge Fund" 1)])
+                (default-runner [(qty "RNG Key" 1) (qty "Paperclip" 2)]))
+      (starting-hand state :corp ["Hedge Fund"])
+      (starting-hand state :runner ["RNG Key"])
+      (take-credits state :corp)
 
-    (play-from-hand state :runner "RNG Key")
-    (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
-    (run-on state "HQ")
-    (run-successful state)
-    (prompt-choice :runner "Yes")
-    (prompt-choice :runner 5)
-    (prompt-choice :runner "Gain 3 [Credits]")
-    (is (= 8 (:credit (get-runner))) "Gained 3 credits")
-    (prompt-choice :runner "No action")
+      (testing "Gain 3 credits"
+        (play-from-hand state :runner "RNG Key")
+        (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
+        (run-on state "HQ")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner 5)
+        (prompt-choice :runner "Gain 3 [Credits]")
+        (is (= 8 (:credit (get-runner))) "Gained 3 credits")
+        (prompt-choice :runner "No action"))
 
-    (run-on state "R&D")
-    (run-successful state)
-    (prompt-choice :runner "No action")
-    (take-credits state :runner)
-    (take-credits state :corp)
+      (testing "Do not trigger on second successful run"
+        (run-on state "R&D")
+        (run-successful state)
+        (prompt-choice :runner "No action")
+        (take-credits state :runner)
+        (take-credits state :corp))
 
-    (run-on state "Archives")
-    (run-successful state)
-    (run-on state "R&D")
-    (run-successful state)
-    (prompt-choice :runner "No")
-    (prompt-choice :runner "No action")
-    (run-on state "HQ")
-    (run-successful state)
-    (prompt-choice :runner "No action")
-    (take-credits state :runner)
-    (take-credits state :corp)
+      (testing "Do not trigger on archives"
+        (run-on state "Archives")
+        (run-successful state))
+      (testing "Do not get choice if trigger declined"
+        (run-on state "R&D")
+        (run-successful state)
+        (prompt-choice :runner "No")
+        (prompt-choice :runner "No action"))
+      (run-on state "HQ")
+      (run-successful state)
+      (prompt-choice :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
 
-    (run-on state "R&D")
-    (run-successful state)
-    (prompt-choice :runner "Yes")
-    (prompt-choice :runner 2)
-    (prompt-choice :runner "No action")
+      (testing "Do not gain credits / cards if guess incorrect"
+        (run-on state "R&D")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner 2)
+        (prompt-choice :runner "No action"))
 
-    (take-credits state :runner)
-    (take-credits state :corp)
+      (take-credits state :runner)
+      (take-credits state :corp)
 
-    (is (= 0 (count (:hand (get-runner)))) "Started with 0 cards")
-    (run-on state "R&D")
-    (run-successful state)
-    (prompt-choice :runner "Yes")
-    (prompt-choice :runner 3)
-    (prompt-choice :runner "Draw 2 cards")
-    (prompt-choice :runner "No action")
-    (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
-    (is (= 0 (count (:deck (get-runner)))) "Cards came from deck")))
+      (testing "Gain 2 cards"
+        (is (= 0 (count (:hand (get-runner)))) "Started with 0 cards")
+        (run-on state "R&D")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner 3)
+        (prompt-choice :runner "Draw 2 cards")
+        (prompt-choice :runner "No action")
+        (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
+        (is (= 0 (count (:deck (get-runner)))) "Cards came from stack"))))
+
+  (testing "Do not pay out if accessing an upgrade first -- regression test for #3150"
+    (do-game
+      (new-game (default-corp ["Hokusai Grid" "Hedge Fund"])
+                (default-runner ["RNG Key"]))
+      (play-from-hand state :corp "Hokusai Grid" "HQ")
+      (take-credits state :corp)
+
+      (testing "Gain 3 credits"
+        (play-from-hand state :runner "RNG Key")
+        (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
+        (run-on state "HQ")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner 2)
+        (prompt-choice :runner "Unrezzed upgrade in HQ")
+        (clojure.pprint/pprint (:prompt (get-runner)))
+        (is (= "You accessed Hokusai Grid." (:msg (:prompt (get-runner)))) "No RNG Key prompt, straight to access prompt")
+        (is (= 5 (:credit (get-runner))) "Gained no credits")))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
