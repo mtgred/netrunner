@@ -1057,21 +1057,20 @@
 (deftest executive-search-firm
   ;; Executive Search Firm
   (do-game
-    (new-game (default-corp (concat ["Executive Search Firm" "Elizabeth Mills"
-                                     "Midori" "Shannon Claire"]
-                                    (repeat 100 "Ice Wall")))
+    (new-game (default-corp ["Executive Search Firm" "Elizabeth Mills"
+                             "Midori" "Shannon Claire"])
               (default-runner))
     (starting-hand state :corp ["Executive Search Firm"])
     (core/gain state :corp :click 4)
     (play-from-hand state :corp "Executive Search Firm" "New remote")
     (doseq [card ["Elizabeth Mills" "Midori" "Shannon Claire"]]
       (let [esf (get-content state :remote1 0)
-            order (->> (get-corp) :deck (map :title))]
+            number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
         (card-ability state :corp esf 0)
         (prompt-choice :corp (find-card card (:deck (get-corp))))
         (is (= card (->> (get-corp) :hand (map :title) first)) (str card " should be in hand"))
         (core/move state :corp (find-card card (:hand (get-corp))) :deck)
-        (is (not= order (->> (get-corp) :deck (map :title))) "Should be shuffled")))))
+        (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Should be shuffled")))))
 
 (deftest false-flag
   (testing "when the corp attempts to score False Flag"
