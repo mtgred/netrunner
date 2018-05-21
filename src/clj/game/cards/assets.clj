@@ -725,11 +725,12 @@
                             :effect (effect (gain :corp :credit target))}}}
 
    "Ibrahim Salem"
-   (let [trash-ability (fn [type] {:req (req (seq (filter #(is-type? % type) (:hand runner))))
-                                   :prompt (str "Choose a " type " to trash")
-                                   :choices (req (filter #(is-type? % type) (:hand runner)))
-                                   :effect (effect (trash target))
-                                   :msg (msg " trash " (:title target) " from the Runner's Grip")})
+   (let [trash-ability (fn [card-type]
+                         {:req (req (seq (filter #(is-type? % card-type) (:hand runner))))
+                          :prompt (str "Choose a " card-type " to trash")
+                          :choices (req (filter #(is-type? % card-type) (:hand runner)))
+                          :effect (effect (trash target))
+                          :msg (msg " trash " (:title target) " from the Runner's Grip")})
          choose-ability {:label "Trash 1 card in the Runner's Grip of a named type"
                          :once :per-turn
                          :req (req (seq (:hand runner)))

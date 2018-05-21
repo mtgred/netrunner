@@ -8,6 +8,7 @@
 (use-fixtures :once load-all-cards)
 
 (deftest adonis-campaign
+  ;; Adonis Campaign
   (do-game
     (new-game (default-corp [(qty "Adonis Campaign" 1)])
               (default-runner))
@@ -24,6 +25,7 @@
         (is (= (get-counters (refresh ac) :credit) (- counters 3)) "9 counter remaining on Adonis")))))
 
 (deftest advanced-assembly-lines
+  ;; Advanced Assembly Lines
   (do-game
     (new-game (default-corp [(qty "Advanced Assembly Lines" 1)
                              (qty "PAD Campaign" 1)])
@@ -40,6 +42,7 @@
       (is (= (- hq 1) (count (:hand (get-corp)))) "Installed 1 card, hq is empty"))))
 
 (deftest aggressive-secretary
+  ;; Aggressive Secretary
   (do-game
     (new-game
       (default-corp [(qty "Aggressive Secretary" 1)])
@@ -63,6 +66,7 @@
       (is (= 2 (count (get-in @state [:runner :rig :program])))))))
 
 (deftest alexa-belsky
+  ;; Alexa Belsky
   (do-game
     (new-game
       (default-corp [(qty "Alexa Belsky" 1) (qty "Hedge Fund" 1) (qty "Breaking News" 1)
@@ -81,6 +85,7 @@
       (is (= 0 (:credit (get-runner)))))))
 
 (deftest alix-t4lb07
+  ;; Alix T4LB07
   (do-game
     (new-game
       (default-corp [(qty "Alix T4LB07" 1) (qty "PAD Campaign" 3)])
@@ -993,6 +998,7 @@
     (doall (map estelle-test (range 10)))))
 
 (deftest eve-campaign
+  ;; Eve Campaign
   (do-game
     (new-game (default-corp [(qty "Eve Campaign" 1)])
               (default-runner))
@@ -1007,6 +1013,7 @@
       (is (= 14 (get-counters (refresh eve) :credit))))))
 
 (deftest executive-boot-camp
+  ;; Executive Boot Camp
   (testing "suppress the start-of-turn event on a rezzed card. Issue #1346"
     (do-game
       (new-game (default-corp [(qty "Eve Campaign" 1) (qty "Executive Boot Camp" 1)])
@@ -1094,6 +1101,7 @@
         (core/move state :corp (find-card "Exposé" (:discard (get-corp))) :hand)))))
 
 (deftest false-flag
+  ;; False Flag
   (testing "when the corp attempts to score False Flag"
     (testing "and False Flag has 7 advancements"
       (do-game
@@ -1151,6 +1159,7 @@
                    [10 5]])))))
 
 (deftest franchise-city
+  ;; Franchise City
   (do-game
     (new-game (default-corp [(qty "Franchise City" 1) (qty "Accelerated Beta Test" 1)])
               (default-runner))
@@ -1476,7 +1485,7 @@
       (is (= 2 (:click (get-corp))) "Didn't spend a click"))))
 
 (deftest honeyfarm
-  ;; lose one credit on access
+  ;; Honeyfarm - lose one credit on access
   (do-game
     (new-game (default-corp [(qty "Honeyfarm" 3)])
               (default-runner))
@@ -1507,6 +1516,7 @@
     (is (= 2 (count (:discard (get-runner)))) "Took 1 net damage")))
 
 (deftest hyoubu-research-facility
+  ;; Hyoubu Research Facility
   (do-game
     (new-game (default-corp [(qty "Hyoubu Research Facility" 1) (qty "Snowflake" 1)])
               (default-runner))
@@ -1527,6 +1537,30 @@
       (prompt-choice :corp "2 [Credits]")
       (prompt-choice :runner "0 [Credits]")
       (is (= 3 (:credit (get-corp))) "No credits gained from Hyoubu"))))
+
+(deftest ibrahim-salem
+  ;; Ibrahim Salem
+  (do-game
+    (new-game (default-corp ["Hostile Takeover" "Ibrahim Salem"])
+              (default-runner ["Sure Gamble" "Astrolabe" "Paperclip" "Daily Casts"]))
+    (play-and-score state "Hostile Takeover")
+    (play-from-hand state :corp "Ibrahim Salem" "New remote")
+    (let [is (get-content state :remote2 0)]
+      (core/rez state :corp (refresh is))
+      (prompt-select :corp (-> (get-corp) :scored first))
+      (doseq [[i [card-type card-name]]
+              (map-indexed vector ['("Event" "Sure Gamble")
+                                   '("Hardware" "Astrolabe")
+                                   '("Program" "Paperclip")
+                                   '("Resource" "Daily Casts")])]
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+        (card-ability state :corp is 0)
+        (prompt-choice :corp card-type)
+        (prompt-choice :corp (find-card card-name (:hand (get-runner))))
+        (core/end-phase-12 state :corp nil)
+        (is (= (inc i) (-> (get-runner) :discard count)))))))
 
 (deftest illegal-arms-factory
   ;; Illegal Arms Factory; draw a card, gain a credit, bad pub when trashed while rezzed
@@ -1555,7 +1589,6 @@
       (run-empty-server state :remote2)
       (prompt-choice-partial :runner "Pay")
       (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash"))))
-
 (deftest it-department
   ;; IT Department - Add strength to rezzed ICE until end of turn
   (do-game
