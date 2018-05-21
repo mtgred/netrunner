@@ -416,6 +416,25 @@
       (prompt-choice :runner "Done")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card"))))
 
+(deftest hippo
+  ;; Hippo - remove from game to trash outermost piece of ice when all subs broken
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Hippo"]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hippo")
+    (run-on state "HQ")
+    (is (not-empty (get-in @state [:runner :rig :hardware])) "Hippo installed")
+    (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Ice Wall installed")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (prompt-select :runner (get-ice state :hq 0))
+    (is (empty? (get-in @state [:corp :servers :hq :ices])) "Ice Wall removed")
+    (is (= 1 (count (:discard (get-corp)))) "Ice Wall trashed")
+    (is (= 1 (count (:rfg (get-runner)))) "Hippo RFGed")
+    (is (empty? (get-in @state [:runner :rig :hardware])) "Hippo removed")))
+
 (deftest knobkierie
   ;; Knobkierie - first successful run, place a virus counter on a virus program
   (do-game
