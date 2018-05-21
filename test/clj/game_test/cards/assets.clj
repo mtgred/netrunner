@@ -1755,6 +1755,49 @@
       (is (last-log-contains? state "Sure Gamble")
           "Kala Ghoda did log trashed card names"))))
 
+(deftest kuwinda-k4h1u3
+  ;; Kuwinda K4H1U3
+  (do-game
+    (new-game (default-corp ["Kuwinda K4H1U3"])
+              (default-runner))
+    (core/gain state :corp :credit 100)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :corp "Kuwinda K4H1U3" "New remote")
+    (let [kuwinda (get-content state :remote1 0)]
+      (core/rez state :corp kuwinda)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+      (card-ability state :corp (refresh kuwinda) 0)
+      (is (zero? (-> (get-corp) :prompt first :base)) "Base Trace should start at 0")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (zero? (-> (get-runner) :discard count)) "Runner shouldn't take any damage")
+      (is (= 1 (-> (refresh kuwinda) :counter :power)) "Kuwinda should gain 1 power counter")
+      (core/end-phase-12 state :corp nil)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+      (card-ability state :corp (refresh kuwinda) 0)
+      (is (= 1 (-> (get-corp) :prompt first :base)) "Base Trace should now start at 1")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 1)
+      (is (zero? (-> (get-runner) :discard count)) "Runner shouldn't take any damage")
+      (is (= 2 (-> (refresh kuwinda) :counter :power)) "Kuwinda should gain another power counter")
+      (core/end-phase-12 state :corp nil)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
+      (card-ability state :corp (refresh kuwinda) 0)
+      (is (= 2 (-> (get-corp) :prompt first :base)) "Base Trace should be up to 2")
+      (prompt-choice :corp 1)
+      (prompt-choice :runner 0)
+      (is (= 1 (-> (get-runner) :brain-damage)) "Trace succeeded so runner should take 1 brain damage")
+      (is (= 1 (-> (get-runner) :discard count)) "Trace succeeded so runner should discard card from damage")
+      (is (= 1 (-> (get-corp) :discard count)) "Kuwinda should be in Archives")
+      (is (= "Kuwinda K4H1U3" (-> (get-corp) :discard first :title)) "Kuwinda should be in Archives")
+      (core/end-phase-12 state :corp nil))))
+
 (deftest lakshmi-smartfabrics
   ;; Lakshmi Smartfabrics - Gain power counter when rezzing a card; use counters to protect agenda in HQ
   (do-game
