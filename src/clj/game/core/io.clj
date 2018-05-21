@@ -132,7 +132,7 @@
                         value (if-let [n (string->num (first args))] n 0)
                         counter-type (cond (= 1 (count existing)) (first (keys existing))
                                      (can-be-advanced? target) :advance-counter
-                                     (and (is-type? target "Agenda") (is-scored? target)) :agenda
+                                     (and (is-type? target "Agenda") (is-scored? state side target)) :agenda
                                      (and (card-is? target :side :runner) (has-subtype? target "Virus")) :virus)
                         advance (= :advance-counter counter-type)]
                     (cond
@@ -161,10 +161,16 @@
                    {:title "/faceup command"} nil))
 
 (defn command-counter [state side args]
-  (if (= 1 (count args))
+  (cond
+    (empty? args)
+    (command-counter-smart state side `("1"))
+
+    (= 1 (count args))
     (command-counter-smart state side args)
+
+    :else
     (let [typestr (.toLowerCase (first args))
-          value (if-let [n (string->num (second args))] n 0)
+          value (if-let [n (string->num (second args))] n 1)
           one-letter (if (<= 1 (.length typestr)) (.substring typestr 0 1) "")
           two-letter (if (<= 2 (.length typestr)) (.substring typestr 0 2) one-letter)
           counter-type (cond (= "v" one-letter) :virus
@@ -253,7 +259,9 @@
           "/handsize"   #(swap! %1 assoc-in [%2 :hand-size :mod] (- value (get-in @%1 [%2 :hand-size :base])))
           "/jack-out"   #(when (= %2 :runner) (jack-out %1 %2 nil))
           "/link"       #(swap! %1 assoc-in [%2 :link] (max 0 value))
-          "/memory"     #(swap! %1 assoc-in [%2 :memory] value)
+          "/memory"     #(swap! %1 assoc-in [%2 :memory :used] (- (+ (get-in @%1 [:runner :memory :base])
+                                                                     (get-in @%1 [:runner :memory :mod]))
+                                                                  value))
           "/move-bottom"  #(resolve-ability %1 %2
                                             {:prompt "Select a card in hand to put on the bottom of your deck"
                                              :effect (effect (move target :deck))
@@ -294,10 +302,10 @@
           "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
           "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
           "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
-          "/trace"      #(when (= %2 :corp) (corp-trace-prompt %1
-                                                               {:title "/trace command" :side %2}
-                                                               {:base (max 0 value)
-                                                                :msg "resolve successful trace effect"}))
+          "/trace"      #(when (= %2 :corp) (init-trace %1 %2
+                                                        {:title "/trace command" :side %2}
+                                                        {:base (max 0 value)
+                                                         :msg "resolve successful trace effect"}))
           "/undo-click" #(command-undo-click %1 %2)
           "/undo-turn"  #(command-undo-turn %1 %2)
           nil)))))

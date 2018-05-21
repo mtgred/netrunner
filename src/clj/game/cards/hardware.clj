@@ -112,28 +112,28 @@
                               (trash state side (get-card state card) {:cause :ability-cost}))}]}
 
    "Box-E"
-   {:in-play [:memory 2 :hand-size {:mod 2}]}
+   {:in-play [:memory 2 :hand-size 2]}
 
    "Brain Cage"
-   {:in-play [:hand-size {:mod 3}]
+   {:in-play [:hand-size 3]
     :effect (effect (damage eid :brain 1 {:card card}))}
 
    "Brain Chip"
    (let [runner-points (fn [s] (max (get-in s [:runner :agenda-point] 0) 0))]
      {:effect (req (gain state :runner
                          :memory (runner-points @state)
-                         :hand-size {:mod (runner-points @state)})
+                         :hand-size (runner-points @state))
                    (add-watch state (keyword (str "brainchip" (:cid card)))
-                          (fn [k ref old new]
-                            (let [bonus (- (runner-points new) (runner-points old))]
-                              (when (not= 0 bonus)
-                               (gain state :runner
-                                     :memory bonus
-                                     :hand-size {:mod bonus}))))))
+                              (fn [k ref old new]
+                                (let [bonus (- (runner-points new) (runner-points old))]
+                                  (when-not (zero? bonus)
+                                    (gain state :runner
+                                          :memory bonus
+                                          :hand-size bonus))))))
       :leave-play (req (remove-watch state (keyword (str "brainchip" (:cid card))))
                        (lose state :runner
                              :memory (runner-points @state)
-                             :hand-size {:mod (runner-points @state)}))})
+                             :hand-size (runner-points @state)))})
 
    "Capstone"
    {:abilities [{:req (req (> (count (:hand runner)) 0))
@@ -278,8 +278,7 @@
                  :choices {:req #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (in-hand? %))}
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card})
+                 :effect (effect (runner-install target {:host-card card :no-mu true})
                                  (update! (assoc-in (get-card state card) [:special :dino-breaker] (:cid target))))}
                 {:label "Host an installed non-AI icebreaker on Dinosaurus"
                  :req (req (empty? (:hosted card)))
@@ -288,7 +287,7 @@
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
                  :msg (msg "host " (:title target))
-                 :effect (req (gain state side :memory (:memoryunits target))
+                 :effect (req (free-mu state (:memoryunits target))
                               (->> target
                                 (get-card state)
                                 (host state side card)
@@ -298,7 +297,7 @@
                                     :effect (effect (breaker-strength-bonus 2))}
              :card-moved {:req (req (= (:cid target) (get-in (get-card state card) [:special :dino-breaker])))
                           :effect (effect (update! (dissoc-in card [:special :dino-breaker]))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Doppelgänger"
    {:in-play [:memory 1]
@@ -350,12 +349,13 @@
     :abilities [{:cost [:credit 1] :msg "break 1 additional subroutine"}]}
 
    "Ekomind"
-   {:effect (req (swap! state assoc-in [:runner :memory] (count (get-in @state [:runner :hand])))
-                 (add-watch state :ekomind (fn [k ref old new]
-                                             (let [hand-size (count (get-in new [:runner :hand]))]
-                                               (when (not= (count (get-in old [:runner :hand])) hand-size)
-                                                 (swap! ref assoc-in [:runner :memory] hand-size))))))
-    :leave-play (req (remove-watch state :ekomind))}
+   (let [update-base-mu (fn [state n] (swap! state assoc-in [:runner :memory :base] n))]
+     {:effect (req (update-base-mu state (count (get-in @state [:runner :hand])))
+                   (add-watch state :ekomind (fn [k ref old new]
+                                               (let [hand-size (count (get-in new [:runner :hand]))]
+                                                 (when (not= (count (get-in old [:runner :hand])) hand-size)
+                                                   (update-base-mu ref hand-size))))))
+      :leave-play (req (remove-watch state :ekomind))})
 
    "EMP Device"
    {:abilities [{:req (req (:run @state))
@@ -394,17 +394,58 @@
    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
                   :req (req (and (pos? (get-in card [:counter :virus] 0))
                                  (pos? (count-virus-programs state))))
-                  :choices {:req #(and (has-subtype? % "Virus")
-                                       (is-type? % "Program"))}
+                  :choices {:req is-virus-program?}
                   :effect (req (add-counter state :runner card :virus -1)
                                (add-counter state :runner target :virus 1))}]
-     {:events {:runner-turn-begins ability
-               :runner-trash {:req (req (= (:side target) "Corp"))
-                              :optional
-                              {:prompt "Gain a virus counter on Friday Chip?"
-                               :yes-ability
-                               {:effect (effect (add-counter :runner card :virus 1)
-                                                (system-msg :runner (str "places 1 virus counter on Friday Chip")))}}}}})
+     {:abilities [{:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
+                                   (toast (str "Friday Chip will now "
+                                               (if (get-in card [:special :auto-accept]) "no longer " "")
+                                               "automatically add counters.") "info"))
+                   :label "Toggle auomatically adding virus counters"}]
+      :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
+      :events {:runner-turn-begins ability
+               :runner-trash {:delayed-completion true
+                              :req (req (some #(card-is? % :side :corp) targets))
+                              :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
+                                                 auto-ab {:effect (effect (system-msg :runner
+                                                                                      (str "places "
+                                                                                           (quantify amt-trashed "virus counter")
+                                                                                           " on Friday Chip"))
+                                                                    (add-counter :runner card :virus amt-trashed))}
+                                                 sing-ab {:optional {:prompt "Place a virus counter on Friday Chip?"
+                                                                     :yes-ability {:effect (effect (system-msg
+                                                                                                     :runner
+                                                                                                     "places 1 virus counter on Friday Chip")
+                                                                                                   (add-counter :runner card :virus 1))}}}
+                                                 mult-ab {:prompt "Place virus counters on Friday Chip?"
+                                                          :choices {:number (req amt-trashed)
+                                                                    :default (req amt-trashed)}
+                                                          :effect (effect (system-msg :runner
+                                                                                      (str "places "
+                                                                                           (quantify target "virus counter")
+                                                                                           " on Friday Chip"))
+                                                                          (add-counter :runner card :virus target))}
+                                                 ab (if (> amt-trashed 1) mult-ab sing-ab)
+                                                 ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
+                                             (continue-ability state side ab card targets)))}}})
+
+   "Gebrselassie"
+   {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
+                 :cost [:click 1]
+                 :choices {:req #(and (installed? %)
+                                      (has-subtype? % "Icebreaker")
+                                      (not (has-subtype? % "AI")))}
+                 :effect (req (when-let [host (get-card state (:host card))]
+                                (update! state side (dissoc-in host [:pump :all-turn]))
+                                (update-breaker-strength state side host))
+                              (host state side target card))}]
+    :events {:pump-breaker {:silent (req true)
+                            :req (req (= (:cid (second targets)) (:cid (:host card))))
+                            :effect (effect (update! (update-in (second targets) [:pump :all-turn] (fnil #(+ % (first targets)) 0)))
+                                            (update-breaker-strength (second targets)))}}
+    :leave-play (req (when-let [host (get-card state (:host card))]
+                       (update! state side (dissoc-in host [:pump :all-turn]))
+                       (update-breaker-strength state side host)))}
 
    "GPI Net Tap"
    {:implementation "Trash and jack out effect is manual"
@@ -453,7 +494,7 @@
                  :msg "expose 1 card"}]}
 
    "LLDS Memory Diamond"
-   {:in-play [:link 1 :memory 1 :hand-size {:mod 1}]}
+   {:in-play [:link 1 :memory 1 :hand-size 1]}
 
    "LLDS Processor"
    {:events
@@ -474,7 +515,7 @@
    {:recurring 1}
 
    "Logos"
-   {:in-play [:memory 1 :hand-size {:mod 1}]
+   {:in-play [:memory 1 :hand-size 1]
     :events {:agenda-scored
              {:player :runner :prompt "Choose a card" :msg (msg "add 1 card to their Grip from their Stack")
               :choices (req (cancellable (:deck runner)))
@@ -489,8 +530,7 @@
 
    "Maw"
    (let [ability {:label "Trash a card from HQ"
-                  :req (req (and (first-event? state side :no-trash)
-                                 (first-event? state side :no-steal)
+                  :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
                                  (pos? (count (:hand corp)))
                                  (not= (first (:zone target)) :discard)))
                   :once :per-turn
@@ -499,11 +539,13 @@
                                      card-seen? (= (:cid target) (:cid card-to-trash))
                                      card-to-trash (if card-seen? (assoc card-to-trash :seen true)
                                                                   card-to-trash)]
-                                 (trash state :corp card-to-trash)))}]
+                                 ;; toggle access flag to prevent Hiro issue #2638
+                                 (swap! state dissoc :access)
+                                 (trash state :corp card-to-trash)
+                                 (swap! state assoc :access true)))}]
      {:in-play [:memory 2]
       :abilities [ability]
-      :events {:no-trash ability
-               :no-steal ability}})
+      :events {:post-access-card ability}})
 
    "Maya"
    {:in-play [:memory 2]
@@ -595,8 +637,7 @@
                                                         (<= (:memoryunits %) n)
                                                         (in-hand? %))}
                                    :msg (msg "host " (:title target))
-                                   :effect (effect (gain :memory (:memoryunits target))
-                                                   (runner-install target {:host-card card})
+                                   :effect (effect (runner-install target {:host-card card :no-mu true})
                                                    (update! (assoc (get-card state card)
                                                                    :hosted-programs
                                                                    (cons (:cid target) (:hosted-programs card)))))}
@@ -611,7 +652,7 @@
                                                         (installed? %))}
                                    :msg (msg "host " (:title target))
                                    :effect (effect (host card target)
-                                                   (gain :memory (:memoryunits target))
+                                                   (free-mu (:memoryunits target))
                                                    (update! (assoc (get-card state card)
                                                                    :hosted-programs
                                                                    (cons (:cid target) (:hosted-programs card)))))}
@@ -620,7 +661,7 @@
                           :effect (effect (update! (assoc card
                                                           :hosted-programs
                                                           (remove #(= (:cid target) %) (:hosted-programs card))))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Obelus"
    {:in-play [:memory 1]
@@ -636,9 +677,9 @@
     :leave-play (req (remove-watch state :obelus)
                      (lose state :runner :hand-size {:mod (:tag runner)}))
     :events {:successful-run-ends {:once :per-turn
-                                   :req (req (let [successes (rest (turn-events state side :successful-run))]
+                                   :req (req (let [successes (turn-events state side :successful-run-ends)]
                                                (and (#{[:rd] [:hq]} (:server target))
-                                                    (empty? (filter #(#{'(:rd) '(:hq)} %) successes)))))
+                                                    (not-any? #(some #{:rd :hq} (:server (first %))) successes))))
                                    :msg (msg "draw " (:cards-accessed target 0) " cards")
                                    :effect (effect (draw (:cards-accessed target 0)))}}}
 
@@ -652,8 +693,7 @@
                                       (<= (:memoryunits %) 1)
                                       (in-hand? %))}
                  :msg (msg "host " (:title target))
-                 :effect (effect (gain :memory (:memoryunits target))
-                                 (runner-install target {:host-card card})
+                 :effect (effect (runner-install target {:host-card card :no-mu true})
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}
                 {:label "Host an installed program of 1[Memory Unit] or less on Omni-drive"
                  :prompt "Select an installed program of 1[Memory Unit] or less to host on Omni-drive"
@@ -662,11 +702,11 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target))
                  :effect (effect (host card target)
-                                 (gain :memory (:memoryunits target))
+                                 (free-mu (:memoryunits target))
                                  (update! (assoc (get-card state card) :Omnidrive-prog (:cid target))))}]
    :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
-                                          (lose :memory (:memoryunits target)))}}}
+                                          (use-mu (:memoryunits target)))}}}
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
@@ -902,11 +942,11 @@
     :abilities [{:once :per-turn
                  :req (req (rezzed? current-ice))
                  :msg (msg "lower their maximum hand size by 1 and lower the strength of " (:title current-ice) " to 0")
-                 :effect (effect (lose :runner :hand-size {:mod 1})
+                 :effect (effect (lose :runner :hand-size 1)
                                  (update! (assoc card :sifr-target current-ice :sifr-used true))
                                  (update-ice-strength current-ice))}]
     :events {:runner-turn-begins {:req (req (:sifr-used card))
-                                  :effect (effect (gain :runner :hand-size {:mod 1})
+                                  :effect (effect (gain :runner :hand-size 1)
                                                   (update! (dissoc card :sifr-used)))}
              :pre-ice-strength {:req (req (= (:cid target) (get-in card [:sifr-target :cid])))
                                 :effect (req (let [ice-str (:current-strength target)]

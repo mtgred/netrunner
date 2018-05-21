@@ -9,14 +9,18 @@
     ;; value is a map, should be :base, :mod, etc.
     (map? value)
     (doseq [[subattr value] value]
-      (swap! state update-in [side attr subattr] (if (= subattr :mod)
-                                                   ;; Modifications may be negative
+      (swap! state update-in [side attr subattr] (if (#{:mod :used} subattr)
+                                                   ;; Modifications and mu used may be negative
+                                                   ;; mu used is for easier implementation of the 0-mu hosting things
                                                    #(- % value)
                                                    (sub->0 value))))
+    ;; values that expect map, if passed a number use default subattr of :mod
+    (#{:hand-size :memory} attr)
+    (deduct state side [attr {:mod value}])
+
     :else
-    (do (swap! state update-in [side attr] (if (or (= attr :memory)
-                                                   (= attr :agenda-point))
-                                             ;; Memory or agenda points may be negative
+    (do (swap! state update-in [side attr] (if (= attr :agenda-point)
+                                             ;; Agenda points may be negative
                                              #(- % value)
                                              (sub->0 value)))
         (when (and (= attr :credit)
@@ -44,7 +48,7 @@
       (flag-stops-pay? state side cost-type)
       computer-says-no
 
-      (not (or (some #(= cost-type %) [:memory :net-damage])
+      (not (or (#{:memory :net-damage} cost-type)
                (and (= cost-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
                (and (= cost-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
                (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
@@ -214,6 +218,10 @@
       (map? amount)
       (doseq [[subtype amount] amount]
         (swap! state update-in [side type subtype] (safe-inc-n amount)))
+      ;; Default cases for the types that expect a map
+      (#{:hand-size :memory} type)
+      (gain state side type {:mod amount})
+
       ;; Else assume amount is a number and try to increment type by it.
       :else
       (swap! state update-in [side type] (safe-inc-n amount)))))
@@ -238,12 +246,15 @@
 (defn rez-cost-bonus [state side n]
   (swap! state update-in [:bonus :cost] (fnil #(+ % n) 0)))
 
+(defn get-rez-cost-bonus [state side]
+  (get-in @state [:bonus :cost] 0))
+
 (defn rez-cost [state side {:keys [cost] :as card}]
   (when-not (nil? cost)
     (-> (if-let [rezfun (:rez-cost-bonus (card-def card))]
           (+ cost (rezfun state side (make-eid state) card nil))
           cost)
-        (+ (get-in @state [:bonus :cost] 0))
+        (+ (get-rez-cost-bonus state side))
         (max 0))))
 
 (defn run-cost-bonus [state side n]

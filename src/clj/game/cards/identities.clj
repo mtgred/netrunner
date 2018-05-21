@@ -300,10 +300,10 @@
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
-   {:effect (effect (lose :hand-size {:mod 1})
-                    (lose :runner :hand-size {:mod 1}))
-    :leave-play (effect (gain :hand-size {:mod 1})
-                        (gain :runner :hand-size {:mod 1}))}
+   {:effect (effect (lose :hand-size 1)
+                    (lose :runner :hand-size 1))
+    :leave-play (effect (gain :hand-size 1)
+                        (gain :runner :hand-size 1))}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
@@ -332,6 +332,41 @@
                                              (some #{:discard} (:previous-zone target))))
                               :msg (msg "draw a card")
                               :effect (req (draw state side eid 1 nil))}}}
+
+   "Freedom Khumalo: Crypto-Anarchist"
+   {:flags {:slow-trash (req true)}
+    :interactions
+    {:trash-ability
+     {:interactive (req true)
+      :delayed-completion true
+      :label "[Freedom]: Trash card"
+      :req (req (and (not (get-in @state [:per-turn (:cid card)]))
+                     (not (is-type? target "Agenda"))
+                     (<= (:cost target)
+                         (reduce + (map #(get-in % [:counter :virus] 0)
+                                        (all-installed state :runner))))))
+      :once :per-turn
+      :effect (req (let [accessed-card target
+                         play-or-rez (:cost target)]
+                     (show-wait-prompt state :corp "Runner to use Freedom Khumalo's ability")
+                     (if (zero? play-or-rez)
+                       (continue-ability state side
+                                         {:delayed-completion true
+                                          :msg (msg "trash " (:title accessed-card) " at no cost")
+                                          :effect (effect (clear-wait-prompt :corp)
+                                                          (trash-no-cost eid accessed-card))}
+                                         card nil)
+                       (when-completed (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
+                                       (do (clear-wait-prompt state :corp)
+                                           (if-let [msg (:msg async-result)]
+                                             (do (system-msg state :runner
+                                                             (str "uses Freedom Khumalo: Crypto-Anarchist to"
+                                                                  " trash " (:title accessed-card)
+                                                                  " at no cost, spending " msg))
+                                                 (trash-no-cost state side eid accessed-card))
+                                             ;; Player cancelled ability
+                                             (do (swap! state dissoc-in [:per-turn (:cid card)])
+                                                 (access-non-agenda state side eid accessed-card))))))))}}}
 
    "Fringe Applications: Tomorrow, Today"
    {:events
@@ -536,8 +571,9 @@
                               :prompt "Choose a copy of Jinteki Biotech to use this game"
                               :choices ["The Brewery" "The Tank" "The Greenhouse"]
                               :effect (effect (update! (assoc card :biotech-target target))
-                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game ")))}}
+                                              (system-msg (str "has chosen a copy of Jinteki Biotech for this game")))}}
     :abilities [{:label "Check chosen flip identity"
+                 :req (req (:biotech-target card))
                  :effect (req (case (:biotech-target card)
                                 "The Brewery"
                                 (toast state :corp "Flip to: The Brewery (Do 2 net damage)" "info")
@@ -634,7 +670,8 @@
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
                           :yes-ability {:msg "force the Corp to draw 1 card"
-                                        :effect (effect (draw :corp))}
+                                        :delayed-completion true
+                                        :effect (effect (draw :corp eid 1 nil))}
                           :no-ability {:effect (effect (system-msg "declines to use Laramy Fisk: Savvy Investor"))}}}
                         card nil))}}}
 
@@ -712,8 +749,8 @@
    {:recurring 2}
 
    "NBN: The World is Yours*"
-   {:effect (effect (gain :hand-size {:mod 1}))
-    :leave-play (effect (lose :hand-size {:mod 1}))}
+   {:effect (effect (gain :hand-size 1))
+    :leave-play (effect (lose :hand-size 1))}
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:req (req (first-event? state :corp :server-created))

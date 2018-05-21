@@ -82,7 +82,8 @@
                 :discard [] :scored [] :rfg [] :play-area []
                 :rig {:program [] :resource [] :hardware []}
                 :toast []
-                :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0
+                :click 0 :credit 5 :run-credit 0 :link 0 :tag 0
+                :memory {:base 4 :mod 0 :used 0}
                 :hand-size {:base 5 :mod 0}
                 :agenda-point 0
                 :hq-access 1 :rd-access 1 :tagged 0
@@ -249,14 +250,16 @@
              (doseq [a (get-in @state [side :register :end-turn])]
                (resolve-ability state side (:ability a) (:card a) (:targets a)))
              (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
-             (let [rig-cards (apply concat (vals (get-in @state [:runner :rig])))
-                   hosted-cards (filter :installed (mapcat :hosted rig-cards))
-                   hosted-on-ice (->> (get-in @state [:corp :servers]) seq flatten (mapcat :ices) (mapcat :hosted))]
-               (doseq [card (concat rig-cards hosted-cards hosted-on-ice)]
-                 ;; Clear the added-virus-counter flag for each virus in play.
-                 ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
-                 (when (has-subtype? card "Virus")
-                   (set-prop state :runner card :added-virus-counter false))))
+             (doseq [card (all-active-installed state :runner)]
+               ;; Clear the added-virus-counter flag for each virus in play.
+               ;; We do this even on the corp's turn to prevent shenanigans with something like Gorman Drip and Surge
+               (when (has-subtype? card "Virus")
+                 (set-prop state :runner card :added-virus-counter false))
+               ;; Remove all-turn strength from icebreakers.
+               ;; We do this even on the corp's turn in case the breaker is boosted due to Offer You Can't Refuse
+               (when (has-subtype? card "Icebreaker")
+                 (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
+                 (update-breaker-strength state :runner card)))
              (swap! state assoc :end-turn true)
              (swap! state update-in [side :register] dissoc :cannot-draw)
              (swap! state update-in [side :register] dissoc :drawn-this-turn)

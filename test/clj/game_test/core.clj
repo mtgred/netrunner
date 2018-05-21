@@ -1,6 +1,6 @@
 (ns game-test.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by]]
+                                costs->symbol vdissoc distinct-by]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [game.core :as core]
@@ -142,8 +142,8 @@
   the server to install into with a string."
   ([state side title] (play-from-hand state side title nil))
   ([state side title server]
-    (core/play state side {:card (find-card title (get-in @state [side :hand]))
-                           :server server})))
+   (core/play state side {:card (find-card title (get-in @state [side :hand]))
+                          :server server})))
 
 
 ;;; Run functions
@@ -158,7 +158,7 @@
      (is (get-in @state [:run :run-effect]) "There is a run-effect")
      (core/no-action state :corp nil)
      (core/successful-run state :runner nil)
-     (if show-prompt 
+     (if show-prompt
        (is (get-in @state [:runner :prompt]) "A prompt is shown")
        (is (not (get-in @state [:runner :prompt])) "A prompt is not shown"))
      (is (get-in @state [:run :successful]) "Run is marked successful"))))
@@ -256,6 +256,6 @@
 
 (defn play-and-score
   "Play an agenda from the hand into a new server and score it. Unlike score-agenda, spends a click."
-  ([state title]
-   (play-from-hand state :corp title "New remote")
-   (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0))))
+  [state title]
+  (play-from-hand state :corp title "New remote")
+  (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0)))

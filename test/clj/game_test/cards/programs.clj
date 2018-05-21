@@ -106,7 +106,7 @@
     (play-from-hand state :runner "Dhegdheer")
     (play-from-hand state :runner "Adept")
     (is (= 3 (:credit (get-runner))) "3 credits left after individual installs")
-    (is (= 2 (:memory (get-runner))) "2 MU used")
+    (is (= 2 (core/available-mu state)) "2 MU used")
     (let [dheg (get-program state 0)
           adpt (get-program state 1)]
       (is (= 4 (:current-strength (refresh adpt))) "Adept at 4 strength individually")
@@ -114,7 +114,7 @@
       (prompt-select :runner (refresh adpt))
       (let [hosted-adpt (first (:hosted (refresh dheg)))]
         (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
-        (is (= 4 (:memory (get-runner))) "0 MU used")
+        (is (= 4 (core/available-mu state)) "0 MU used")
         (is (= 6 (:current-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
 
 (deftest diwan
@@ -171,11 +171,11 @@
               (default-runner [(qty "Djinn" 1) (qty "Chakana" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Djinn")
-    (is (= 3 (:memory (get-runner))))
+    (is (= 3 (core/available-mu state)))
     (let [djinn (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner djinn 1)
       (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
-      (is (= 3 (:memory (get-runner))) "No memory used to host on Djinn")
+      (is (= 3 (core/available-mu state)) "No memory used to host on Djinn")
       (is (= "Chakana" (:title (first (:hosted (refresh djinn))))) "Djinn has a hosted Chakana")
       (is (= 1 (:credit (get-runner))) "Full cost to host on Djinn"))))
 
@@ -213,7 +213,7 @@
     (prompt-choice :runner "Yes") ; force the draw
     (is (= 1 (:credit (get-runner))) "Runner gained 1cr from Desperado")
     (is (= 3 (count (:hand (get-corp)))) "Corp forced to draw by Equivocation")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
 (deftest false-echo
@@ -283,7 +283,7 @@
               (default-runner [(qty "Hyperdriver" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Hyperdriver")
-    (is (= 1 (:memory (get-runner))) "3 MU used")
+    (is (= 1 (core/available-mu state)) "3 MU used")
     (take-credits state :runner)
     (take-credits state :corp)
     (is (:runner-phase-12 @state) "Runner in Step 1.2")
@@ -304,45 +304,91 @@
     (let [dheg (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner dheg 0)
       (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
-      (is (= 4 (:memory (get-runner))) "0 MU used")
+      (is (= 4 (core/available-mu state)) "0 MU used by Hyperdriver hosted on Dhegdheer")
       (is (= 2 (:click (get-runner))) "2 clicks used")
       (is (= 3 (:credit (get-runner))) "2 credits used")
       (take-credits state :runner)
       (take-credits state :corp)
       (is (:runner-phase-12 @state) "Runner in Step 1.2")
-      (let [hyp (first (:hosted (refresh dheg)))]        
+      (let [hyp (first (:hosted (refresh dheg)))]
         (card-ability state :runner hyp 0)
         (core/end-phase-12 state :runner nil)
         (is (= 7 (:click (get-runner))) "Used Hyperdriver")
-        (is (= 4 (:memory (get-runner))) "Still 0 MU used")))))
+        (is (= 4 (core/available-mu state)) "Still 0 MU used after Hyperdriver removed from game")))))
 
-(deftest imp-the-future-perfect
-  ;; Trashing TFP with Imp should not trigger psi-game -- Issue #1844
-  (do-game
-    (new-game (default-corp [(qty "The Future Perfect" 1)])
-              (default-runner [(qty "Imp" 1)]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Imp")
-    (testing "Trash before access click"
-      (run-empty-server state "HQ")
-      ;; Should access TFP at this point
-      (card-ability state :runner (get-program state 0) 0)
-      (is (empty? (get-in @state [:runner :prompt])) "Should be no psi-game prompt for TFP")
-      (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
-      (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")
-      (core/move state :corp (find-card "The Future Perfect" (:discard (get-corp))) :hand))
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (testing "Trashing after lose psi game"
-      (run-empty-server state "HQ")
-      ;; Access prompt for TFP
-      (prompt-choice :corp "0 [Credit]")
-      (prompt-choice :runner "1 [Credit]")
-      ;; Fail psi game
-      (card-ability state :runner (get-program state 0) 0)
-      (is (empty? (get-in @state [:runner :prompt])) "Should be no steal prompt for TFP")
-      (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
-      (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))))
+(deftest imp
+  ;; Imp
+  (testing "Full test"
+    (letfn [(imp-test [card]
+              (do-game
+                (new-game (default-corp [(qty card 1)])
+                          (default-runner [(qty "Imp" 1)]))
+                (take-credits state :corp)
+                (play-from-hand state :runner "Imp")
+                (run-empty-server state "HQ")
+                (prompt-choice-partial :runner "Imp")
+                (is (= 1 (count (:discard (get-corp)))))))]
+      (doall (map imp-test
+                  ["Hostile Takeover"
+                   "Dedicated Response Team"
+                   "Beanstalk Royalties"
+                   "Ice Wall"
+                   "Oberth Protocol"]))))
+  (testing "vs an ambush"
+    (do-game
+      (new-game (default-corp [(qty "Prisec" 1)])
+                (default-runner [(qty "Imp" 1) (qty "Sure Gamble" 3)]))
+      (play-from-hand state :corp "Prisec" "New remote")
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))
+            tags (:tag (get-runner))
+            grip (count (:hand (get-runner)))
+            archives (count (:discard (get-corp)))]
+        (play-from-hand state :runner "Imp")
+        (run-empty-server state :remote1)
+        (prompt-choice :corp "Yes")
+        (prompt-choice-partial :runner "Imp")
+        (is (= 2 (- credits (:credit (get-corp)))) "Corp paid 2 for Prisec")
+        (is (= 1 (- (:tag (get-runner)) tags)) "Runner has 1 tag")
+        (is (= 2 (- grip (count (:hand (get-runner))))) "Runner took 1 meat damage")
+        (is (= 1 (- (count (:discard (get-corp))) archives)) "Used Imp to trash Prisec"))))
+  (testing "vs The Future Perfect"
+    ;; Psi-game happens on access [5.5.1], Imp is a trash ability [5.5.2]
+    (do-game
+      (new-game (default-corp [(qty "The Future Perfect" 1)])
+                (default-runner [(qty "Imp" 1)]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (testing "Access, corp wins psi-game"
+        (run-empty-server state "HQ")
+        ;; Should access TFP at this point
+        (prompt-choice :corp "1 [Credits]")
+        (prompt-choice :runner "0 [Credits]")
+        (prompt-choice-partial :runner "Imp")
+        (take-credits state :runner)
+        (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
+        (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")
+        (core/move state :corp (find-card "The Future Perfect" (:discard (get-corp))) :hand))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (testing "Access, runner wins psi-game"
+        (run-empty-server state "HQ")
+        ;; Access prompt for TFP
+        (prompt-choice :corp "0 [Credits]")
+        (prompt-choice :runner "0 [Credits]")
+        ;; Fail psi game
+        (prompt-choice-partial :runner "Imp")
+        (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
+        (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))))
+  (testing "vs cards in Archives"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover"])
+                (default-runner ["Imp"]))
+      (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :discard)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Imp")
+      (run-empty-server state "Archives")
+      (is (= ["Steal"] (->> (get-runner) :prompt first :choices)) "Should only get the option to steal Hostile on access in Archives"))))
 
 (deftest incubator-transfer-virus-counters
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program
@@ -422,14 +468,14 @@
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Leprechaun")
     (play-from-hand state :runner "Adept")
-    (is (= 1 (:memory (get-runner))) "3 MU used")
+    (is (= 1 (core/available-mu state)) "3 MU used")
     (let [lep (get-program state 0)
           adpt (get-program state 1)]
       (is (= 3 (:current-strength (refresh adpt))) "Adept at 3 strength individually")
       (card-ability state :runner lep 1)
       (prompt-select :runner (refresh adpt))
       (let [hosted-adpt (first (:hosted (refresh lep)))]
-        (is (= 3 (:memory (get-runner))) "1 MU used")
+        (is (= 3 (core/available-mu state)) "1 MU used")
         (is (= 5 (:current-strength (refresh hosted-adpt))) "Adept at 5 strength hosted")))))
 
 (deftest leprechaun-mu-savings
@@ -444,17 +490,17 @@
       (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (= 2 (:credit (get-runner))))
-      (is (= 3 (:memory (get-runner))) "Hyperdriver 3 MU not deducted from available MU")
+      (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not deducted from available MU")
       (card-ability state :runner lep 0)
       (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
       (is (= 1 (:click (get-runner))))
       (is (= 0 (:credit (get-runner))))
-      (is (= 3 (:memory (get-runner))) "Imp 1 MU not deducted from available MU")
+      (is (= 3 (core/available-mu state)) "Imp 1 MU not deducted from available MU")
       ;; Trash Hyperdriver
       (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard)
-      (is (= 3 (:memory (get-runner))) "Hyperdriver 3 MU not added to available MU")
+      (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not added to available MU")
       (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
-      (is (= 3 (:memory (get-runner))) "Imp 1 MU not added to available MU"))))
+      (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU"))))
 
 (deftest magnum-opus-click
   ;; Magnum Opus - Gain 2 cr
@@ -463,7 +509,7 @@
               (default-runner [(qty "Magnum Opus" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Magnum Opus")
-    (is (= 2 (:memory (get-runner))))
+    (is (= 2 (core/available-mu state)))
     (is (= 0 (:credit (get-runner))))
     (let [mopus (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner mopus 0)
@@ -500,7 +546,7 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Paintbrush")
-    (is (= 2 (:memory (get-runner))))
+    (is (= 2 (core/available-mu state)))
     (let [iwall (get-ice state :hq 0)
           pb (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner pb 0)
@@ -527,7 +573,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Parasite")
         (prompt-select :runner wrap)
-        (is (= 3 (:memory (get-runner))) "Parasite consumes 1 MU")
+        (is (= 3 (core/available-mu state)) "Parasite consumes 1 MU")
         (let [psite (first (:hosted (refresh wrap)))]
           (is (= 0 (get-counters psite :virus)) "Parasite has no counters yet")
           (take-credits state :runner)
@@ -614,7 +660,7 @@
           (play-from-hand state :runner "Parasite")
           (prompt-select :runner enig)
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed instantly")
-          (is (= 4 (:memory (get-runner))))
+          (is (= 4 (core/available-mu state)))
           (is (= 2 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed")))))
   (testing "Trashed along with host ICE when its strength has been reduced to 0"
     (do-game
@@ -647,7 +693,7 @@
       (card-ability state :runner (refresh ph) 0)
       (run-on state "HQ")
       (run-successful state)
-      (prompt-choice :runner "Ok")
+      (prompt-choice :runner "No action")
       (is (= 1 (get-counters (refresh ph) :virus)) "Pheromones gained 1 counter")
       (card-ability state :runner (refresh ph) 0)))) ; this doesn't do anything, but shouldn't crash
 
@@ -676,12 +722,12 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Progenitor")
     (play-from-hand state :runner "Virus Breeding Ground")
-    (is (= 4 (:memory (get-runner))))
+    (is (= 4 (core/available-mu state)))
     (let [prog (get-in @state [:runner :rig :program 0])
           vbg (get-in @state [:runner :rig :resource 0])]
       (card-ability state :runner prog 0)
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
-      (is (= 4 (:memory (get-runner))) "No memory used to host on Progenitor")
+      (is (= 4 (core/available-mu state)) "No memory used to host on Progenitor")
       (let [hive (first (:hosted (refresh prog)))]
         (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
         (is (= 1 (get-counters hive :virus)) "Hivemind has 1 counter")
@@ -705,10 +751,10 @@
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 2 (:click (get-runner))))
       (is (= 2 (:credit (get-runner))))
-      (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not deducted from available MU")
+      (is (= 4 (core/available-mu state)) "Hivemind 2 MU not deducted from available MU")
       ;; Trash Hivemind
       (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
-      (is (= 4 (:memory (get-runner))) "Hivemind 2 MU not added to available MU"))))
+      (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU"))))
 
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
@@ -723,7 +769,7 @@
     (play-from-hand state :runner "Reaver")
     (is (= 1 (count (:hand (get-runner)))) "One card in hand")
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "Yes") ; Trash PAD campaign
+    (prompt-choice-partial :runner "Pay") ; Trash PAD campaign
     (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
@@ -770,11 +816,11 @@
     (prompt-choice :runner 5)
     (prompt-choice :runner "Gain 3 [Credits]")
     (is (= 8 (:credit (get-runner))) "Gained 3 credits")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
 
     (run-on state "R&D")
     (run-successful state)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (take-credits state :runner)
     (take-credits state :corp)
 
@@ -783,9 +829,10 @@
     (run-on state "R&D")
     (run-successful state)
     (prompt-choice :runner "No")
+    (prompt-choice :runner "No action")
     (run-on state "HQ")
     (run-successful state)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (take-credits state :runner)
     (take-credits state :corp)
 
@@ -793,7 +840,7 @@
     (run-successful state)
     (prompt-choice :runner "Yes")
     (prompt-choice :runner 2)
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
 
     (take-credits state :runner)
     (take-credits state :corp)
@@ -804,7 +851,7 @@
     (prompt-choice :runner "Yes")
     (prompt-choice :runner 3)
     (prompt-choice :runner "Draw 2 cards")
-    (prompt-choice :runner "OK")
+    (prompt-choice :runner "No action")
     (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
     (is (= 0 (count (:deck (get-runner)))) "Cards came from deck")))
 
@@ -822,7 +869,7 @@
       (is (= 1 (count (:hosted (refresh sch)))))
       (is (= 2 (:click (get-runner))) "Spent 1 click to install and host")
       (is (= 6 (:credit (get-runner))) "Gained 1 credit")
-      (is (= 3 (:memory (get-runner))) "Programs hosted on Scheh consume MU")
+      (is (= 3 (core/available-mu state)) "Programs hosted on Scheh consume MU")
       (card-ability state :runner sch 0)
       (prompt-select :runner (find-card "Cache" (:hand (get-runner))))
       (is (= 2 (count (:hosted (refresh sch)))))
@@ -847,7 +894,7 @@
       (card-ability state :runner smc1 0)
       (prompt-card :runner (find-card "Reaver" (:deck (get-runner))))
       (is (= 6 (:credit (get-runner))) "Paid 2 for SMC, 2 for install - 6 credits left")
-      (is (= 1 (:memory (get-runner))) "SMC MU refunded")
+      (is (= 1 (core/available-mu state)) "SMC MU refunded")
       (take-credits state :runner)
       (take-credits state :corp)
       (card-ability state :runner smc2 0)
@@ -1001,6 +1048,36 @@
       (core/no-action state :corp nil)
       (run-continue state)
       (is (= 2 (:current-strength (refresh corr))) "Corroder returned to normal strength"))))
+
+(deftest trypano
+  (testing "Hivemind and Architect interactions"
+    (do-game
+      (new-game (default-corp [(qty "Architect" 2)])
+                (default-runner [(qty "Trypano" 2) (qty "Hivemind" 1)]))
+      (play-from-hand state :corp "Architect" "HQ")
+      (play-from-hand state :corp "Architect" "R&D")
+      (let [architect-rezzed (get-ice state :hq 0)
+            architect-unrezzed (get-ice state :rd 0)]
+        (core/rez state :corp architect-rezzed)
+        (take-credits state :corp)
+        (play-from-hand state :runner "Trypano")
+        (prompt-select :runner (game.core/get-card state architect-rezzed))
+        (play-from-hand state :runner "Trypano")
+        (prompt-select :runner architect-unrezzed)
+        (is (= 2 (core/available-mu state)) "Trypano consumes 1 MU"))
+      ;; wait 4 turns to make both Trypanos have 4 counters on them
+      (dotimes [n 4]
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner "Yes"))
+      (is (= 0 (count (:discard (get-runner)))) "Trypano not in discard yet")
+      (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect is not trashed")
+      (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect is not trashed")
+      (play-from-hand state :runner "Hivemind") ; now Hivemind makes both Trypanos have 5 counters
+      (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect was trashed")
+      (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect was not trashed")
+      (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard"))))
 
 (deftest upya
   (do-game

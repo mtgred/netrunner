@@ -5,14 +5,24 @@
 ;;;; Helper functions specific for ICE
 
 ;;; Runner abilites for breaking subs
-(defn runner-break
-  "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, Turing etc)"
-  [cost subs]
+(defn runner-pay-or-break
+  "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
+  [cost subs label]
   (let [cost-str (build-cost-str [cost])
         subs-str (quantify subs "subroutine")]
     {:cost cost
-     :label (str "break " subs-str)
-     :effect (req (system-msg state :runner (str "spends " cost-str " to break " subs-str " on " (:title card))))}))
+     :label (str label " " subs-str)
+     :effect (req (system-msg state :runner (str "spends " cost-str " to " label " " subs-str " on " (:title card))))}))
+
+(defn runner-break
+  "Ability to break a subroutine by spending a resource (Bioroids, Negotiator, etc)"
+  [cost subs]
+  (runner-pay-or-break cost subs "break"))
+
+(defn runner-pay
+  "Ability to pay to avoid a subroutine by spending a resource (Popup Window, Turing, etc)"
+  [cost subs]
+  (runner-pay-or-break cost subs "pay for"))
 
 ;;; General subroutines
 (def end-the-run
@@ -234,14 +244,21 @@
                                :yes-ability {:delayed-completion true
                                              :msg "draw 1 card"
                                              :effect (effect (draw eid 1 nil))}}}
-         runner-draw {:player :runner
-                      :optional {:prompt "Pay 2[Credits] to draw 1 card?"
-                                 :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}
-                                 :yes-ability {:delayed-completion true
-                                               :effect (effect
-                                                         (system-msg :runner "pays 2[Credits] to draw 1 card")
-                                                         (lose :credit 2)
-                                                         (draw eid 1 nil))}}}]
+         runner-draw {:delayed-completion true
+                      :effect (req (show-wait-prompt state :corp "Runner to decide on card draw")
+                                   (continue-ability state side
+                                                     {:player :runner
+                                                      :optional
+                                                      {:prompt "Pay 2[Credits] to draw 1 card?"
+                                                       :no-ability {:effect (effect (system-msg :runner "does not draw 1 card")
+                                                                                    (clear-wait-prompt :corp))}
+                                                       :yes-ability {:delayed-completion true
+                                                                     :effect (effect
+                                                                               (system-msg :runner "pays 2[Credits] to draw 1 card")
+                                                                               (lose :credit 2)
+                                                                               (clear-wait-prompt :corp)
+                                                                               (draw eid 1 nil))}}}
+                                                     card nil))}]
      {:implementation "Encounter-ends effect is manually triggered."
       :subroutines [{:msg "rearrange the top 5 cards of R&D"
                      :delayed-completion true
@@ -606,8 +623,8 @@
 
    "Cortex Lock"
    {:subroutines [{:label "Do 1 net damage for each unused memory unit the Runner has"
-                   :msg (msg "do " (:memory runner) " net damage")
-                   :effect (effect (damage eid :net (:memory runner) {:card card}))}]}
+                   :msg (msg "do " (available-mu state) " net damage")
+                   :effect (effect (damage eid :net (available-mu state) {:card card}))}]}
 
    "Crick"
    {:subroutines [{:label "install a card from Archives"
@@ -737,11 +754,11 @@
    {:subroutines [{:msg "draw 1 card" :effect (effect (draw))}
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
-   
+
    "Endless EULA"
    {:subroutines [end-the-run]
-    :runner-abilities [(runner-break [:credit 1] 1)
-                       (runner-break [:credit 6] 6)]}
+    :runner-abilities [(runner-pay [:credit 1] 1)
+                       (runner-pay [:credit 6] 6)]}
 
    "Enforcer 1.0"
    {:additional-cost [:forfeit]
@@ -756,6 +773,10 @@
                    :effect (req (doseq [c (filter #(has-subtype? % "Virtual") (all-active-installed state :runner))]
                                   (trash state side c)))}]
     :runner-abilities [(runner-break [:click 1] 1)]}
+
+   "Envelope"
+   {:subroutines [(do-net-damage 1)
+                  end-the-run]}
 
    "Enigma"
    {:subroutines [{:msg "force the Runner to lose 1 [Click] if able"
@@ -880,10 +901,10 @@
     :subroutines [{:req (req (:run @state))
                    :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
                    :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
-                   :effect (effect (lose :runner :hand-size {:mod 2})
+                   :effect (effect (lose :runner :hand-size 2)
                                    (register-events {:corp-turn-begins
                                                      {:msg "increase the Runner's maximum hand size by 2"
-                                                      :effect (effect (gain :runner :hand-size {:mod 2})
+                                                      :effect (effect (gain :runner :hand-size 2)
                                                                       (unregister-events card))}} card))}]
     :events {:corp-turn-begins nil}}
 
@@ -1151,6 +1172,39 @@
                         :effect (effect (damage eid :net 1 {:card card}))}}
     :subroutines [end-the-run]}
 
+   "Kamali 1.0"
+   (letfn [(better-name [kind] (if (= "hardware" kind) "piece of hardware" kind))
+           (runner-trash [kind]
+             {:prompt (str "Select an installed " (better-name kind) " to trash")
+              :label (str "Trash an installed " (better-name kind))
+              :msg (msg "trash " (:title target))
+              :delayed-completion true
+              :choices {:req #(and (installed? %)
+                                   (is-type? % (capitalize kind)))}
+              :cancel-effect (effect (system-msg (str "fails to trash an installed " (better-name kind)))
+                                     (effect-completed eid))
+              :effect (effect (trash eid target {:cause :subroutine}))})
+           (sub-map [kind]
+             {:player :runner
+              :delayed-completion true
+              :prompt "Choose one"
+              :choices ["Take 1 brain damage" (str "Trash an installed " (better-name kind))]
+              :effect (req (if (= target "Take 1 brain damage")
+                             (do (system-msg state :corp "uses Kamali 1.0 to give the Runner 1 brain damage")
+                                 (damage state :runner eid :brain 1 {:card card}))
+                             (continue-ability state :runner (runner-trash kind) card nil)))})
+           (brain-trash [kind]
+             {:label (str "Force the Runner to take 1 brain damage or trash an installed " (better-name kind))
+              :msg (str "force the Runner to take 1 brain damage or trash an installed " (better-name kind))
+              :delayed-completion true
+              :effect (req (show-wait-prompt state :corp "Runner to decide on Kamali 1.0 action")
+                           (when-completed (resolve-ability state side (sub-map kind) card nil)
+                                           (clear-wait-prompt state :corp)))})]
+     {:subroutines [(brain-trash "resource")
+                    (brain-trash "hardware")
+                    (brain-trash "program")]
+      :runner-abilities [(runner-break [:click 1] 1)]})
+
    "Kitsune"
    {:subroutines [{:prompt "Select a card in HQ to force access"
                    :choices {:req in-hand?}
@@ -1164,9 +1218,9 @@
                                         state :runner
                                         (access-helper-hq
                                           state from-hq
-                                          ; access-helper-hq uses a set to keep track of which cards have already
-                                          ; been accessed. by adding HQ root's contents to this set, we make the runner
-                                          ; unable to access those cards, as Kitsune intends.
+                                          ;; access-helper-hq uses a set to keep track of which cards have already
+                                          ;; been accessed. by adding HQ root's contents to this set, we make the runner
+                                          ;; unable to access those cards, as Kitsune intends.
                                           (conj (set (get-in @state [:corp :servers :hq :content])) target))
                                        card nil)))))}]}
 
@@ -1301,6 +1355,14 @@
                    :effect (req (tag-runner state :runner eid 1)
                                 (when (<= 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0)))
                                   (end-run state side)))}]}
+
+   "Masvingo"
+   {:implementation "Number of subs is manual"
+    :advanceable :always
+    :abilities [{:label "Gain subroutines"
+                 :msg (msg "gain " (:advance-counter card 0) " subroutines")}]
+    :effect (effect (add-prop card :advance-counter 1))
+    :subroutines [end-the-run]}
 
    "Merlin"
    (grail-ice (do-net-damage 2))
@@ -1549,11 +1611,11 @@
    {:implementation "Encounter effect is manual. Runner choice is not implemented"
     :abilities [(gain-credits 1)]
     :subroutines [end-the-run]
-    :runner-abilities [(runner-break [:credit 1] 1)]}
+    :runner-abilities [(runner-pay [:credit 1] 1)]}
 
    "Pup"
    {:subroutines [(do-net-damage 1)]
-    :runner-abilities [(runner-break [:credit 1] 1)]}
+    :runner-abilities [(runner-pay [:credit 1] 1)]}
 
    "Quandary"
    {:subroutines [end-the-run]}
@@ -1849,7 +1911,7 @@
     :abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (:advance-counter card 0) " subroutines")}]
     :subroutines [trash-program]
-    :runner-abilities [(runner-break [:credit 3] 1)]}
+    :runner-abilities [(runner-pay [:credit 3] 1)]}
 
    "Swordsman"
    {:implementation "AI restriction not implemented"
@@ -1959,7 +2021,7 @@
    {:implementation "AI restriction not implemented"
     :subroutines [end-the-run]
     :strength-bonus (req (if (is-remote? (second (:zone card))) 3 0))
-    :runner-abilities [(runner-break [:click 3] 1)]}
+    :runner-abilities [(runner-pay [:click 3] 1)]}
 
    "Turnpike"
    {:implementation "Encounter effect is manual"
@@ -2110,8 +2172,8 @@
    "Wotan"
    {:subroutines [end-the-run
                   (do-brain-damage 1)]
-    :runner-abilities [(runner-break [:click 2] 1)
-                       (runner-break [:credit 3] 1)]}
+    :runner-abilities [(runner-pay [:click 2] 1)
+                       (runner-pay [:credit 3] 1)]}
 
    "Wraparound"
    {:subroutines [end-the-run]

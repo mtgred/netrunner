@@ -126,12 +126,43 @@
   [state card]
   (installed-byname state (to-keyword (:side card)) (:title card)))
 
+;;; Stuff for handling {:base x :mod y} data structures
+
+(defn base-mod-size
+  "Returns the value of properties using the `base` and `mod` system"
+  [state side prop]
+  (let [base (get-in @state [side prop :base] 0)
+        mod (get-in @state [side prop :mod] 0)]
+    (+ base mod)))
+
 (defn hand-size
   "Returns the current maximum hand-size of the specified side."
   [state side]
-  (let [base (get-in @state [side :hand-size :base] 0)
-        mod (get-in @state [side :hand-size :mod] 0)]
-    (+ base mod)))
+  (base-mod-size state side :hand-size))
+
+(defn available-mu
+  "Returns the available MU the runner has"
+  [state]
+  (- (base-mod-size state :runner :memory)
+     (get-in @state [:runner :memory :used] 0)))
+
+(defn toast-check-mu
+  "Check runner has not exceeded, toast if they have"
+  [state]
+  (when (neg? (available-mu state))
+    (toast state :runner "You have exceeded your memory units!")))
+
+(defn free-mu
+  "Frees up specified amount of mu (reduces :used)"
+  ([state _ n] (free-mu state n))
+  ([state n]
+   (deduct state :runner [:memory {:used n}])))
+
+(defn use-mu
+  "Increases amount of mu used (increased :used)"
+  ([state _ n] (use-mu state n))
+  ([state n]
+   (gain state :runner :memory {:used n})))
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
