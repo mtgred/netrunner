@@ -1589,6 +1589,28 @@
       (run-empty-server state :remote2)
       (prompt-choice-partial :runner "Pay")
       (is (= 1 (:bad-publicity (get-corp))) "Took a bad pub on rezzed trash"))))
+
+(deftest indian-union-stock-exchange
+  ;; Indian Union Stock Exchange
+  (do-game
+    (new-game (make-deck "Argus Security: Protection Guaranteed"
+                         ["Indian Union Stock Exchange" "Beanstalk Royalties"
+                          "Kill Switch" "Net Police"])
+              (default-runner))
+    (core/gain state :corp :click 3)
+    (play-from-hand state :corp "Indian Union Stock Exchange" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (let [credits (:credit (get-corp))]
+      (play-from-hand state :corp "Beanstalk Royalties")
+      (is (= (+ 3 credits) (:credit (get-corp))) "Corp should only gain 3 credits"))
+    (let [credits (:credit (get-corp))]
+      (play-from-hand state :corp "Kill Switch")
+      (is (= credits (:credit (get-corp))) "Corp should neither gain nor lose any credits"))
+    (let [credits (:credit (get-corp))]
+      (play-from-hand state :corp "Net Police" "New remote")
+      (core/rez state :corp (get-content state :remote2 0))
+      (is (= credits (:credit (get-corp))) "Corp should neither gain nor lose any credits"))))
+
 (deftest it-department
   ;; IT Department - Add strength to rezzed ICE until end of turn
   (do-game
