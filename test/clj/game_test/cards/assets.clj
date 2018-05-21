@@ -1215,7 +1215,25 @@
         (core/advance state :corp {:card (last (:hosted (refresh fir)))})
         (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown")))))
 
+(deftest fumiko-yamamori
+  ;; Fumiko Yamamori
+  (do-game
+    (new-game
+      (default-corp ["Fumiko Yamamori"])
+      (default-runner))
+    (core/gain state :corp :credit 10)
+    (play-from-hand state :corp "Fumiko Yamamori" "New remote")
+    (let [fumiko (get-content state :remote1 0)]
+      (core/rez state :corp (refresh fumiko))
+      (core/psi-game state :corp (refresh fumiko)
+                     {:equal  {:msg "resolve equal bets effect"}
+                      :not-equal {:msg "resolve unequal bets effect"}})
+      (prompt-choice :corp "2 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should discard a card to meat damage"))))
+
 (deftest gene-splicer
+  ;; Gene Splicer
   (testing "Runner accesses an unadvanced Gene Splicer and doesn't trash
            ;; No net damage is dealt and Gene Splicer remains installed"
     (do-game
