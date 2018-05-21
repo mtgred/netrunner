@@ -1611,6 +1611,21 @@
       (core/rez state :corp (get-content state :remote2 0))
       (is (= credits (:credit (get-corp))) "Corp should neither gain nor lose any credits"))))
 
+(deftest isabel-mcguire
+  ;; Isabel McGuire
+  (do-game
+    (new-game (default-corp ["Ice Wall" "Isabel McGuire"])
+              (default-runner))
+    (play-from-hand state :corp "Isabel McGuire" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (is (zero? (-> (get-corp) :hand count)))
+    (let [isabel (get-content state :remote1 0)
+          iw (get-ice state :hq 0)]
+      (core/rez state :corp isabel)
+      (card-ability state :corp isabel 0)
+      (prompt-select :corp (refresh iw))
+      (is (= 1 (-> (get-corp) :hand count))))))
+
 (deftest it-department
   ;; IT Department - Add strength to rezzed ICE until end of turn
   (do-game
@@ -1665,6 +1680,7 @@
       (is (= 1 (:click (get-corp)))))))
 
 (deftest jeeves-model-bioroids
+  ;; Jeeves Model Bioroids
   (do-game
     (new-game (default-corp [(qty "Jeeves Model Bioroids" 1) (qty "TGTBT" 1)
                              (qty "Melange Mining Corp." 2)])
@@ -1719,8 +1735,8 @@
     (is (= 3 (count (:discard (get-runner)))))
     (is (= 1 (:click (get-corp))))))
 
-(deftest kala-ghoda
-  ; Kala Ghoda Real TV
+(deftest kala-ghoda-real-tv
+  ;; Kala Ghoda Real TV
   (do-game
     (new-game (default-corp [(qty "Kala Ghoda Real TV" 1)])
               (default-runner) [(qty "Sure Gamble" 3)])
@@ -1770,6 +1786,7 @@
       (is (= 3 (:agenda-point (get-runner))) "Runner could steal on later turn"))))
 
 (deftest launch-campaign
+  ;; Launch Campaign
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 1)])
               (default-runner))

@@ -504,13 +504,17 @@
 
    "Early Premiere"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :flags {:corp-phase-12 (req (some #(and (can-be-advanced? %) (in-server? %)) (all-installed state :corp)))}
-    :abilities [{:cost [:credit 1] :label "Place 1 advancement token on a card that can be advanced in a server"
+    :flags {:corp-phase-12 (req (some #(and (can-be-advanced? %)
+                                            (in-server? %))
+                                      (all-installed state :corp)))}
+    :abilities [{:cost [:credit 1]
+                 :label "Place 1 advancement token on a card that can be advanced in a server"
                  :choices {:req #(and (can-be-advanced? %)
                                       (installed? %)
                                       (in-server? %))} ; should be *in* a server
-                 :effect (effect (add-prop target :advance-counter 1 {:placed true})) :once :per-turn
-                 :msg (msg "place 1 advancement token on " (card-str state target))}]}
+                 :once :per-turn
+                 :msg (msg "place 1 advancement token on " (card-str state target))
+                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
    "Echo Chamber"
    {:abilities [{:label "Add Echo Chamber to your score area as an agenda worth 1 agenda point"
@@ -767,7 +771,8 @@
                :rez iuse}})
 
    "Isabel McGuire"
-   {:abilities [{:cost [:click 1] :label "Add an installed card to HQ"
+   {:abilities [{:label "Add an installed card to HQ"
+                 :cost [:click 1]
                  :choices {:req installed?}
                  :msg (msg "move " (card-str state target) " to HQ")
                  :effect (effect (move target :hand))}]}
