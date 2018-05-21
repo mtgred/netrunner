@@ -605,9 +605,9 @@
    "Exposé"
    {:advanceable :always
     :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
-                 :msg (msg "remove " (:advance-counter card) " bad publicity")
+                 :msg (msg "remove " (:advance-counter card 0) " bad publicity")
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (lose :bad-publicity (:advance-counter card)))}]}
+                                 (lose :bad-publicity (:advance-counter card 0)))}]}
 
    "False Flag"
    (letfn [(tag-count [false-flag]
