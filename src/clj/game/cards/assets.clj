@@ -880,8 +880,8 @@
                  :choices (req (cancellable (filter ice? (:deck corp)) :sorted))
                  :label "Search R&D for a piece of ICE"
                  :cost [:click 1 :credit 1]
-                 :effect (effect (shuffle! :deck)
-                                 (move target :hand))}]}
+                 :effect (effect (move target :hand)
+                                 (shuffle! :deck))}]}
 
    "Lily Lockwell"
    {:delayed-completion true
@@ -890,17 +890,16 @@
     :abilities [{:label "Remove a tag to search R&D for an operation"
                  :prompt "Choose an operation to put on top of R&D"
                  :cost [:click 1]
-                 :choices (req (let [ops (filter #(is-type? % "Operation") (:deck corp))]
-                                 (if (empty? ops) ["No Operation in R&D"] ops)))
+                 :choices (req (cancellable (filter #(is-type? % "Operation") (:deck corp)) :sorted))
                  :req (req (pos? (get-in @state [:runner :tag])))
-                 :effect (req (if (not= target "No Operation found")
-                                (let [c (move state :corp target :play-area)]
-                                  (shuffle! state :corp :deck)
-                                  (move state :corp c :deck {:front true})
-                                  (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D")))
-                                (do (shuffle! state :corp :deck)
-                                    (system-msg state side (str "uses Lily Lockwell, but did not find an Operation in R&D"))))
-                              (lose state :runner :tag 1))}]}
+                 :effect (req (lose state :runner :tag 1)
+                              (let [c (move state :corp target :play-area)]
+                                (shuffle! state :corp :deck)
+                                (move state :corp c :deck {:front true})
+                                (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D"))))
+                 :cancel-effect (effect (lose :runner :tag 1)
+                                        (shuffle! :corp :deck)
+                                        (system-msg (str "uses Lily Lockwell, but did not find an Operation in R&D")))}]}
 
    "Long-Term Investment"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}

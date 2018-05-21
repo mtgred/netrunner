@@ -1864,6 +1864,34 @@
       (is (= "Ice Wall" (-> (get-corp) :hand first :title)) "HQ should contain Ice Wall")
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle deck"))))
 
+(deftest lily-lockwell
+  ;; Lily Lockwell
+  (do-game
+    (new-game (default-corp ["Lily Lockwell" "Beanstalk Royalties" (qty "Fire Wall" 10)])
+              (default-runner))
+    (core/gain state :corp :click 10)
+    (starting-hand state :corp ["Lily Lockwell" "Beanstalk Royalties"])
+    (play-from-hand state :corp "Lily Lockwell" "New remote")
+    (core/gain state :runner :tag 2)
+    (let [lily (get-content state :remote1 0)
+          clicks (:click (get-corp))
+          number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
+          hand (-> (get-corp) :hand count)]
+      (core/rez state :corp lily)
+      (is (= (+ 3 hand) (-> (get-corp) :hand count)) "Rezzing Lily Lockwell should draw 3 cards")
+      (core/move state :corp (find-card "Beanstalk Royalties" (:hand (get-corp))) :deck)
+      (card-ability state :corp (refresh lily) 0)
+      (prompt-card :corp (find-card "Beanstalk Royalties" (-> (get-corp) :prompt first :choices)))
+      (is (= "Beanstalk Royalties" (-> (get-corp) :deck first :title)) "Beanstalk Royalties should be moved to top of R&D")
+      (is (= 1 (-> (get-runner) :tag)) "Runner should have 1 tag from Lily Lockwell ability")
+      (is (= (- clicks 1) (:click (get-corp))) "Lily Lockwell ability should cost 1 click")
+      (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle deck")
+      (core/draw state :corp)
+      (card-ability state :corp (refresh lily) 0)
+      (prompt-choice :corp "Cancel")
+      (is (last-log-contains? state "did not find") "Lily Lockwell's ability didn't find an operation")
+      (is (= 0 (-> (get-runner) :tag)) "Runner should have 0 tags from Lily Lockwell ability even when no operation found"))))
+
 (deftest malia-z0l0ka
   ;; Malia Z0L0K4 - blank an installed non-virtual runner resource
   (do-game
