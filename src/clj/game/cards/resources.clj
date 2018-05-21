@@ -1417,6 +1417,30 @@
                  :delayed-completion true
                  :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
 
+   "Reclaim"
+   {:abilities
+    [{:label "[Click],[Trash],trash a card from your Grip: install a program, piece of hardware, or virtual resource from your Heap"
+      :cost [:click 1]
+      :req (req (not-empty (:hand runner)))
+      :prompt "Choose a card to trash"
+      :choices (req (cancellable (:hand runner) :sorted))
+      :delayed-completion true
+      :effect (req (when-completed (trash state :runner card {:cause :ability-cost})
+                                   (when-completed (trash state :runner target {:cause :ability-cost})
+                                                   (resolve-ability
+                                                     state :runner
+                                                     {:prompt "Choose a card to install"
+                                                      :choices (req (cancellable (filter #(and (or (is-type? % "Program")
+                                                                                                   (is-type? % "Hardware")
+                                                                                                   (and (is-type? % "Resource")
+                                                                                                        (has-subtype? % "Virtual")))
+                                                                                               (can-pay? state :runner nil (:cost %)))
+                                                                                         (:discard runner)) :sorted))
+                                                      :msg (msg "install " (:title target) " from the Heap")
+                                                      :delayed-completion true
+                                                      :effect (req (runner-install state :runner eid target nil))}
+                                                     card nil))))}]}
+
    "Rolodex"
    {:delayed-completion true
     :msg "look at the top 5 cards of their Stack"

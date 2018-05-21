@@ -1568,6 +1568,58 @@
       (is (= 2 (:credit (get-runner))) "Gained 1 credit")
       (is (= 6 (count (:hand (get-runner)))) "Drew 1 card"))))
 
+(deftest reclaim
+  ;; Reclaim - trash Reclaim, trash card from grip, install program, hardware, or virtual resource from heap
+  (testing "Basic behavior"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Reclaim" "Mimic" "Clone Chip"]))
+      (take-credits state :corp)
+      (core/move state :runner (find-card "Mimic" (:hand (get-runner))) :discard)
+      (play-from-hand state :runner "Reclaim")
+      (is (empty? (get-in @state [:runner :rig :program])) "No programs installed")
+      (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
+      (card-ability state :runner (get-resource state 0) 0)
+      (prompt-card :runner (find-card "Clone Chip" (:hand (get-runner))))
+      (prompt-card :runner (find-card "Mimic" (:discard (get-runner))))
+      (is (= 1 (count (get-in @state [:runner :rig :program]))) "1 Program installed")
+      (is (= 2 (:credit (get-runner))) "Runner paid install cost")))
+  (testing "No cards in hand"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Reclaim"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Reclaim")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (:prompt (get-runner))) "No Reclaim prompt")))
+  (testing "Can install trashed card"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Reclaim" "Mimic"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Reclaim")
+      (is (empty? (get-in @state [:runner :rig :program])) "No programs installed")
+      (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
+      (card-ability state :runner (get-resource state 0) 0)
+      (prompt-card :runner (find-card "Mimic" (:hand (get-runner))))
+      (prompt-card :runner (find-card "Mimic" (:discard (get-runner))))
+      (is (= 1 (count (get-in @state [:runner :rig :program]))) "1 Program installed")
+      (is (= 2 (:credit (get-runner))) "Runner paid install cost")))
+  (testing "Can't afford to install card"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Reclaim" "Alpha"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Reclaim")
+      (card-ability state :runner (get-resource state 0) 0)
+      (is (empty? (get-in @state [:runner :rig :program])) "No programs installed")
+      (is (= 5 (:credit (get-runner))) "Runner starts with 5c.")
+      (card-ability state :runner (get-resource state 0) 0)
+      (prompt-card :runner (find-card "Alpha" (:hand (get-runner))))
+      (prompt-card :runner (find-card "Alpha" (:discard (get-runner))))
+      (is (empty? (get-in @state [:runner :rig :program])) "Did not install program")
+      (is (= 5 (:credit (get-runner))) "Runner did not spend credits"))))
+
 (deftest rolodex
   ;; Rolodex - Full test
   (do-game
