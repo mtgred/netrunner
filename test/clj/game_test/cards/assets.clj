@@ -2108,6 +2108,16 @@
       (core/tag-runner state :runner 5)
       (is (= 2 (-> (get-runner) :discard count)) "Runner should take 1 meat damage from gaining 5 tags"))))
 
+(deftest mumba-temple
+  ;; Mumba Temple
+  (do-game
+    (new-game (default-corp ["Mumba Temple"])
+              (default-runner))
+    (play-from-hand state :corp "Mumba Temple" "New remote")
+    (let [mumba (get-content state :remote1 0)]
+      (core/rez state :corp mumba)
+      (is (= 2 (:rec-counter (refresh mumba))) "Should have 2 recurring credits"))))
+
 (deftest net-analytics
   ;; Draw a card when runner avoids or removes 1 or more tags
   (do-game
