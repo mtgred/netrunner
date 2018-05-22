@@ -2139,6 +2139,29 @@
       (prompt-choice :corp "Sure Gamble")
       (is (= 3 (-> (get-runner) :discard count)) "Runner should have discarded all cards from Salem's Hospitality"))))
 
+(deftest mumbad-construction-co
+  ;; Mumbad Construction Co.
+  (do-game
+    (new-game (default-corp ["Mumbad Construction Co."
+                             "Oaktown Renovation"])
+              (default-runner))
+    (play-from-hand state :corp "Mumbad Construction Co." "New remote")
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
+    (let [mcc (get-content state :remote1 0)
+          oak (get-content state :remote2 0)]
+      (core/rez state :corp mcc)
+      (is (zero? (:advance-counter (refresh mcc) 0)) "Mumbad Construction Co should start with 0 counters")
+      (is (zero? (:advance-counter (refresh oak) 0)) "Oaktown Renovation should start with 0 counters")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 1 (:advance-counter (refresh mcc) 0)) "Mumbad Construction Co should gain 1 counter at start of turn")
+      (let [credits (:credit (get-corp))]
+        (card-ability state :corp mcc 0)
+        (prompt-select :corp (refresh oak))
+        (is (zero? (:advance-counter (refresh mcc) 0)) "Mumbad Construction Co should lose 1 counter when using ability")
+        (is (= 1 (:advance-counter (refresh oak) 0)) "Oaktown Renovation should gain 1 counter from MCC ability")
+        (is (= (- credits 2) (:credit (get-corp))) "Mumbad Construction Co ability should cost 2[Credits]")))))
+
 (deftest net-analytics
   ;; Draw a card when runner avoids or removes 1 or more tags
   (do-game
