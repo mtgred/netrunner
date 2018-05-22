@@ -60,7 +60,7 @@
          {:first-ability {:effect (req (system-msg state :runner (str "steals " (:title c) " and gains "
                                                                       (quantify points "agenda point")))
                                        (swap! state update-in [:runner :register :stole-agenda]
-                                              #(+ (or % 0) (:agendapoints c)))
+                                              #(+ (or % 0) (:agendapoints c 0)))
                                        (gain-agenda-point state :runner points)
                                        (play-sfx state side "agenda-steal")
                                        (when (:run @state)
