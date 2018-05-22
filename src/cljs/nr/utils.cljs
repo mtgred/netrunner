@@ -38,6 +38,7 @@
   "Make a hiccup-ready vector for the specified dot and cost-map (influence or mwl)"
   [dot cost-map]
   (for [factionkey (sort (keys cost-map))]
+    ^{:key factionkey}
     [:span.influence {:class (name factionkey)} (make-dots dot (factionkey cost-map))]))
 
 ;; Shared function options
