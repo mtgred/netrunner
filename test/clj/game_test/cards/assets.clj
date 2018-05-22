@@ -2095,6 +2095,19 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
+(deftest mr-stone
+  ;; Mr Stone
+  (do-game
+    (new-game (default-corp ["Mr. Stone"])
+              (default-runner))
+    (play-from-hand state :corp "Mr. Stone" "New remote")
+    (let [stone (get-content state :remote1 0)]
+      (core/rez state :corp stone)
+      (core/tag-runner state :runner 1)
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 meat damage from gaining 1 tag")
+      (core/tag-runner state :runner 5)
+      (is (= 2 (-> (get-runner) :discard count)) "Runner should take 1 meat damage from gaining 5 tags"))))
+
 (deftest net-analytics
   ;; Draw a card when runner avoids or removes 1 or more tags
   (do-game
