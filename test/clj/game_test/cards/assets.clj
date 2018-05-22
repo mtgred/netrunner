@@ -2021,6 +2021,23 @@
       (card-ability state :corp mark 0)
       (is (= (+ credits 6) (:credit (get-corp))) "Mark Yale trashing itself should gain 2 credits"))))
 
+(deftest marked-accounts
+  ;; Marked Accounts
+  (do-game
+    (new-game
+      (default-corp ["Marked Accounts"])
+      (default-runner))
+    (play-from-hand state :corp "Marked Accounts" "New remote")
+    (let [ma (get-content state :remote1 0)]
+      (core/rez state :corp ma)
+      (is (zero? (get-counters (refresh ma) :credit)) "Marked Accounts should start with 0 credits on it")
+      (card-ability state :corp ma 1)
+      (is (= 3 (get-counters (refresh ma) :credit)) "Marked Accounts should gain 3 credits when ability is used")
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (+ credits 1) (:credit (get-corp))) "Should gain 1 credit at beginning of turn from Marked Accounts")))))
+
 (deftest mca-austerity-policy
   (do-game
     (new-game
