@@ -2066,6 +2066,22 @@
       (card-ability state :corp (refresh mca) 1)
       (is (= 5 (:click (get-corp)))))))
 
+(deftest melange-mining-corp
+  ;; Melange Mining Corp.
+  (do-game
+    (new-game (default-corp ["Melange Mining Corp."])
+              (default-runner))
+    (play-from-hand state :corp "Melange Mining Corp." "New remote")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (core/rez state :corp (get-content state :remote1 0))
+    (let [mmc (get-content state :remote1 0)
+          credits (:credit (get-corp))]
+      (is (= 3 (:click (get-corp))) "Corp should have 3 clicks")
+      (card-ability state :corp mmc 0)
+      (is (zero? (:click (get-corp))) "Corp should have 0 clicks after using Melange Mining Corp ability")
+      (is (= (+ credits 7) (:credit (get-corp))) "Corp should gain 7 credits from Melange Mining Corp ability"))))
+
 (deftest mental-health-clinic
   ;; Mental Health Clinic - Gain 1 credit when turn begins; Runner max hand size increased by 1
   (do-game
