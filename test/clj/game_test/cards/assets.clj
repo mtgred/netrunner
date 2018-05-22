@@ -2162,6 +2162,25 @@
         (is (= 1 (:advance-counter (refresh oak) 0)) "Oaktown Renovation should gain 1 counter from MCC ability")
         (is (= (- credits 2) (:credit (get-corp))) "Mumbad Construction Co ability should cost 2[Credits]")))))
 
+(deftest museum-of-history
+  ;; Museum of History
+  (do-game
+    (new-game (default-corp ["Museum of History" "Beanstalk Royalties"
+                             (qty "Ice Wall" 10)])
+              (default-runner))
+    (starting-hand state :corp ["Beanstalk Royalties" "Museum of History"])
+    (play-from-hand state :corp "Beanstalk Royalties")
+    (play-from-hand state :corp "Museum of History" "New remote")
+    (let [museum (get-content state :remote1 0)
+          number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
+      (core/rez state :corp museum)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp museum 0)
+      (prompt-select :corp (find-card "Beanstalk Royalties" (:discard (get-corp))))
+      (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle deck")
+      (is (zero? (-> (get-corp) :discard count)) "Archives should be empty after shuffling Beanstalk into R&D"))))
+
 (deftest net-analytics
   ;; Draw a card when runner avoids or removes 1 or more tags
   (do-game
