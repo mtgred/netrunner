@@ -2118,6 +2118,27 @@
       (core/rez state :corp mumba)
       (is (= 2 (:rec-counter (refresh mumba))) "Should have 2 recurring credits"))))
 
+(deftest mumbad-city-hall
+  ;; Mumbad City Hall
+  (do-game
+    (new-game (default-corp ["Mumbad City Hall"
+                             "PAD Factory"
+                             "Salem's Hospitality"])
+              (default-runner))
+    (core/gain state :corp :click 3 :credit 100)
+    (starting-hand state :corp ["Mumbad City Hall"])
+    (play-from-hand state :corp "Mumbad City Hall" "New remote")
+    (let [mumbad (get-content state :remote1 0)]
+      (core/rez state :corp mumbad)
+      (card-ability state :corp mumbad 0)
+      (prompt-card :corp (find-card "PAD Factory" (:deck (get-corp))))
+      (prompt-choice :corp "New remote")
+      (is (= "PAD Factory" (:title (get-content state :remote2 0))))
+      (card-ability state :corp mumbad 0)
+      (prompt-card :corp (find-card "Salem's Hospitality" (:deck (get-corp))))
+      (prompt-choice :corp "Sure Gamble")
+      (is (= 3 (-> (get-runner) :discard count)) "Runner should have discarded all cards from Salem's Hospitality"))))
+
 (deftest net-analytics
   ;; Draw a card when runner avoids or removes 1 or more tags
   (do-game
