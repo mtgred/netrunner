@@ -1,14 +1,13 @@
 (ns web.pages
-  (:require [web.utils :refer [response]]
-            [web.db :refer [db object-id]]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [monger.operators :refer :all]
-            [clj-time.core :as t]
+  (:require [clj-time.core :as t]
             [clj-time.coerce :as c]
+            [cheshire.core :as json]
             [hiccup.page :as hiccup]
-            [clojure.pprint]
-            [cheshire.core :as json]))
+            [monger.collection :as mc]
+            [monger.operators :refer :all]
+            [monger.result :refer [acknowledged?]]
+            [web.db :refer [db object-id]]
+            [web.utils :refer [response]]))
 
 (defn layout [{:keys [version user] :as req} & content]
   (hiccup/html5
@@ -37,13 +36,7 @@
        (list (hiccup/include-js "/cljs/goog/base.js")
              (hiccup/include-js (str "cljs/app.js?v=" version))
              [:script
-              (for [req ["nr.utils"
-                         "nr.appstate"
-                         "nr.main"
-                         "nr.about"
-                         "nr.auth"
-                         "nr.help"
-                         "dev.figwheel"]]
+              (for [req ["dev.figwheel"]]
                 (str "goog.require(\"" req "\");"))])
        (list (hiccup/include-js (str "js/app.js?v=" version))
              [:script

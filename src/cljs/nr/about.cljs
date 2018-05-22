@@ -1,13 +1,15 @@
 (ns nr.about
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [netrunner.ajax :refer [GET]]
+  (:require [nr.ajax :refer [GET]]
             [reagent.core :as r]))
 
 (def about-state (r/atom {}))
 
 (go (swap! about-state assoc :donators (:json (<! (GET "/data/donors")))))
 
-(defn about [donators]
+(defn about []
+  (let [donators (r/cursor about-state [:donators])]
+    (fn []
    [:div.about.panel.content-page.blue-shade
     [:h3 "About"]
     [:p "This website is created and run by an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."]
@@ -50,4 +52,4 @@
      " from "
      [:a {:href "http://www.flaticon.com" :title "Flaticon" :target "_blank"} "www.flaticon.com"]
      " is licensed under "
-     [:a {:href "http://creativecommons.org/licenses/by/3.0/" :title "Creative Commons BY 3.0" :target "_blank"} "CC BY 3.0"]]])
+     [:a {:href "http://creativecommons.org/licenses/by/3.0/" :title "Creative Commons BY 3.0" :target "_blank"} "CC BY 3.0"]]])))

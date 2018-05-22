@@ -1,6 +1,5 @@
 (ns nr.help
-  (:require [clojure.string :refer [split]]
-            [reagent.core :as r]))
+  (:require [clojure.string :refer [split]]))
 
 (def help-data
   "List of maps with FAQ about jinteki.net. Every section MUST have an :id here, so the links can work."

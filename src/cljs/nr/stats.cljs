@@ -1,11 +1,12 @@
 (ns nr.stats
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
-            [netrunner.ajax :refer [GET DELETE]]
-            [netrunner.appstate :refer [app-state]]
-            [netrunner.auth :refer [authenticated] :as auth]
-            [netrunner.deckbuilder :refer [process-decks num->percent]]
-            [netrunner.ws :as ws]))
+            [nr.ajax :refer [GET DELETE]]
+            [nr.appstate :refer [app-state]]
+            [nr.auth :refer [authenticated] :as auth]
+            [nr.deckbuilder :refer [process-decks num->percent]]
+            [nr.ws :as ws]
+            [reagent.core :as r]))
 
 (defn update-deck-stats
   "Update the local app-state with a new version of deck stats"

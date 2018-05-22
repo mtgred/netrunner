@@ -3,7 +3,7 @@
     [cljs.core.async.macros :as asyncm :refer [go go-loop]])
   (:require
     [cljs.core.async :as async :refer [<! >! put! chan]]
-    [netrunner.cardbrowser :refer [non-game-toast] :as cb]
+    [nr.cardbrowser :refer [non-game-toast] :as cb]
     [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
 
 (let [{:keys [chsk ch-recv send-fn state]}
