@@ -1892,6 +1892,24 @@
       (is (last-log-contains? state "did not find") "Lily Lockwell's ability didn't find an operation")
       (is (= 0 (-> (get-runner) :tag)) "Runner should have 0 tags from Lily Lockwell ability even when no operation found"))))
 
+(deftest long-term-investment
+  ;; Long-Term Investment
+  (do-game
+    (new-game (default-corp ["Long-Term Investment"])
+              (default-runner))
+    (play-from-hand state :corp "Long-Term Investment" "New remote")
+    (let [lti (get-content state :remote1 0)]
+      (core/rez state :corp lti)
+      (dotimes [i 4]
+        (is (= (* i 2) (-> (refresh lti) :counter (:credit 0))) "Long-Term Investement should gain 2 credits at start of turn")
+        (take-credits state :corp)
+        (take-credits state :runner))
+      (is (= 8 (-> (refresh lti) :counter (:credit 0))) "Long-Term Investment should have 8 credit after 4 turns")
+      (let [credits (:credit (get-corp))]
+        (card-ability state :corp (refresh lti) 0)
+        (prompt-choice :corp 8)
+        (is (= (+ credits 8) (:credit (get-corp))) "Corp should gain 8 credits from Long-Term Investment ability")))))
+
 (deftest malia-z0l0ka
   ;; Malia Z0L0K4 - blank an installed non-virtual runner resource
   (do-game
