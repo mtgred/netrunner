@@ -923,7 +923,6 @@
      {:effect (effect (update! (assoc card :malia-target target))
                       (disable-card :runner target))
       :msg (msg (str "blank the text box of " (card-str state target)))
-
       :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
                            (not (has-subtype? % "Virtual")))}
       :leave-play re-enable-target
@@ -958,23 +957,22 @@
                                       card nil))}})
 
    "Mark Yale"
-   {:events {:agenda-counter-spent {:effect (effect (gain :credit 1))
-                                    :msg "gain 1 [Credits]"}}
+   {:events {:agenda-counter-spent {:msg "gain 1 [Credits]"
+                                    :effect (effect (gain :credit 1))}}
     :abilities [{:label "Trash to gain 2 [Credits]"
                  :msg "gain 2 [Credits]"
                  :effect (effect (trash card {:cause :ability-cost})
                                  (gain :credit 2))}
                 {:label "Spend an agenda counter to gain 2 [Credits]"
-                 :effect (req (resolve-ability
-                                state side
-                                {:prompt "Select an agenda with a counter"
-                                 :choices {:req #(and (is-type? % "Agenda")
-                                                      (pos? (get-in % [:counter :agenda] 0)))}
-                                 :effect (req (add-counter state side target :agenda -1)
-                                              (gain state :corp :credit 2)
-                                              (trigger-event state side :agenda-counter-spent card))
-                                 :msg (msg "spend an agenda token on " (:title target) " and gain 2 [Credits]")}
-                                card nil))}]}
+                 :effect (effect (continue-ability
+                                   {:prompt "Select an agenda with a counter"
+                                    :choices {:req #(and (is-type? % "Agenda")
+                                                         (pos? (get-in % [:counter :agenda] 0)))}
+                                    :msg (msg "spend an agenda token on " (:title target) " and gain 2 [Credits]")
+                                    :effect (effect (add-counter target :agenda -1)
+                                                    (gain :credit 2)
+                                                    (trigger-event :agenda-counter-spent card))}
+                                   card nil))}]}
 
    "Marked Accounts"
    (let [ability {:msg "gain 1 [Credits]"
