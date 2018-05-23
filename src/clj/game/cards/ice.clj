@@ -1302,7 +1302,8 @@
                    (continue-ability
                      state side
                      {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                      (remove-once #(= (:cid %) (:cid magnet)) (all-active-installed state corp))))
+                                      (remove-once #(= (:cid %) (:cid magnet))
+                                                   (filter ice? (all-installed state corp)))))
                       :prompt "Select a Program to host on Magnet"
                       :choices {:req #(and (card-is? % :type "Program")
                                            (ice? (:host %))
