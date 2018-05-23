@@ -7,6 +7,42 @@
 
 (use-fixtures :once load-all-cards)
 
+(deftest auto-pump-breakers
+  ;; Breaker get a dynamic ability that matches the strength of the encountered ice
+  (testing "Single pump"
+   (do-game
+     (new-game (default-corp ["Masvingo"])
+               (default-runner ["Laamb"]))
+     (play-from-hand state :corp "Masvingo" "HQ")
+     (core/rez state :corp (get-ice state :hq 0))
+     (take-credits state :corp)
+     (core/gain state :runner :credit 5)
+     (play-from-hand state :runner "Laamb")
+     (run-on state "HQ")
+     (let [laamb (get-program state 0)]
+       (is (= 2 (:current-strength (refresh laamb))) "Laamb starts at 2 strength")
+       (is (= 6 (:credit (get-runner))) "Spent 4 to install")
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh laamb)})
+       (is (= 8 (:current-strength (refresh laamb))) "Laamb is at 8 strength")
+       (is (= 3 (:credit (get-runner))) "Spent 3 to pump"))))
+  (testing "Multi pump"
+   (do-game
+     (new-game (default-corp ["Masvingo"])
+               (default-runner ["Ankusa"]))
+     (play-from-hand state :corp "Masvingo" "HQ")
+     (core/rez state :corp (get-ice state :hq 0))
+     (take-credits state :corp)
+     (core/gain state :runner :credit 5)
+     (play-from-hand state :runner "Ankusa")
+     (run-on state "HQ")
+     (let [ank (get-program state 0)]
+       (is (= 0 (:current-strength (refresh ank))) "Ankusa starts at 1 strength")
+       (is (= 4 (:credit (get-runner))) "Spent 6 to install")
+       (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh ank)})
+       (is (= 3 (:current-strength (refresh ank))) "Ankusa is at 3 strength")
+       (is (= 1 (:credit (get-runner))) "Spent 3 to pump")))))
+
+
 (deftest adept-strength
   ;; Adept - +1 str for each unused MU
   (do-game
