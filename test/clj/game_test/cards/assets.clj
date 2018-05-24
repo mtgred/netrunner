@@ -2334,7 +2334,20 @@
       (is (last-log-contains? state "Fire Wall") "Mandatory Draw was Ice Wall, Open Forum should reveal Fire Wall")
       (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
       (is (= 2 (-> @state :corp :deck count)) "Two cards should remain in R&D")
-      (is (= #{"Ice Wall" "Enigma"} (->> @state :corp :deck (map :title) set)) "Cards in R&D should be Ice Wall and Enigma"))))
+      (is (= "Ice Wall" (-> @state :corp :deck first :title)) "Top card in R&D should be Ice Wall"))))
+
+(deftest pad-campaign
+  ;; PAD Campaign
+  (do-game
+    (new-game (default-corp ["PAD Campaign"])
+              (default-runner))
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (let [pad (get-content state :remote1 0)]
+      (core/rez state :corp pad)
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (+ 1 credits) (:credit (get-corp))) "Should gain 1 credit at start of turn from PAD Campaign")))))
 
 (deftest pad-factory
   ;; PAD Factory - Click to place an advancement, cannot score target until next turn
