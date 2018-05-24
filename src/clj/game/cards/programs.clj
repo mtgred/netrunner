@@ -450,7 +450,7 @@
       :trash-effect {:effect update-programs}
       :events {:counter-added {:req (req (= (:cid target) (:cid card)))
                                :effect update-programs}}
-      :abilities [{:req (req (> (get-in card [:counter :virus]) 0))
+      :abilities [{:req (req (> (get-in card [:counter :virus] 0) 0))
                    :priority true
                    :prompt "Move a virus counter to which card?"
                    :choices {:req #(has-subtype? % "Virus")}
