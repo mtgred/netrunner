@@ -467,7 +467,7 @@
       (prompt-select :corp (refresh hok))
       (is (= 3 (:advance-counter (refresh hok))))
       (core/score state :corp (refresh hok)))
-    (let [hok-scored (get-scored state :corp)]
+    (let [hok-scored (get-scored state :corp 0)]
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
       (core/command-counter state :corp ["virus" 2])
       (prompt-select :corp (refresh hok-scored))

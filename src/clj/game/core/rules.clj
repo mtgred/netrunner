@@ -291,12 +291,14 @@
    (trigger-event state side :pre-tag card)
    (let [n (tag-count state side n args)]
      (let [prevent (get-in @state [:prevent :tag :all])]
-       (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
+       (if (and (pos? n)
+                (not unpreventable)
+                (pos? (count prevent)))
          (do (system-msg state :runner "has the option to avoid tags")
              (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
              (swap! state assoc-in [:prevent :current] :tag)
              (show-prompt
-               state :runner nil (str "Avoid any of the " n " tags?") ["Done"]
+               state :runner nil (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
                (fn [_]
                  (let [prevent (get-in @state [:tag :tag-prevent])]
                    (system-msg state :runner
@@ -332,7 +334,7 @@
     (effect-completed state side eid)))
 
 (defn gain-bad-publicity
-  "Attempts to give the runner n bad-publicity, allowing for boosting/prevention effects."
+  "Attempts to give the runner n bad publicity, allowing for boosting/prevention effects."
   ([state side n] (gain-bad-publicity state side (make-eid state) n nil))
   ([state side eid n] (gain-bad-publicity state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
@@ -340,12 +342,14 @@
    (when-completed (trigger-event-sync state side :pre-bad-publicity card)
      (let [n (bad-publicity-count state side n args)]
        (let [prevent (get-in @state [:prevent :bad-publicity :all])]
-         (if (and (pos? n) (not unpreventable) (pos? (count prevent)))
+         (if (and (pos? n)
+                  (not unpreventable)
+                  (pos? (count prevent)))
            (do (system-msg state :corp "has the option to avoid bad publicity")
                (show-wait-prompt state :runner "Corp to prevent bad publicity" {:priority 10})
                (swap! state assoc-in [:prevent :current] :bad-publicity)
                (show-prompt
-                 state :corp nil (str "Avoid any of the " n " bad publicity?") ["Done"]
+                 state :corp nil (str "Avoid " (when (< 1 n) "any of the ") n " bad publicity?") ["Done"]
                  (fn [_]
                    (let [prevent (get-in @state [:bad-publicity :bad-publicity-prevent])]
                      (system-msg state :corp

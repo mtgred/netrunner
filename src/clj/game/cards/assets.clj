@@ -174,7 +174,7 @@
                                                          (add-prop :corp card :advance-counter (- target) {:placed true})
                                                          (system-msg (str "uses Anson Rose to move " target
                                                                           " advancement tokens to " (card-str state ice))))
-                                         :end-effect {:effect (effect (clear-wait-prompt :runner))}}}}
+                                         :end-effect (effect (clear-wait-prompt :runner))}}}
                                       card nil)))}}
       :abilities [ability]})
 
@@ -318,7 +318,7 @@
                                                 "a facedown card")
                                               " to HQ")
                                     :effect (effect (move target :hand))
-                                    :end-effect {:effect (effect (clear-wait-prompt :runner))}}
+                                    :end-effect (effect (clear-wait-prompt :runner))}
                                    card nil))}]}
 
    "Clyde Van Rite"
@@ -394,7 +394,7 @@
                                                                           " to "
                                                                           (card-str state target))))}
                                                   card nil)))
-                                 :end-effect {:effect (effect (clear-wait-prompt :runner))}}
+                                 :end-effect (effect (clear-wait-prompt :runner))}
                                 card nil))}]}
 
    "Contract Killer"
@@ -694,14 +694,19 @@
    "GRNDL Refinery"
    {:advanceable :always
     :abilities [{:label "Gain 4 [Credits] for each advancement token on GRNDL Refinery"
-                 :cost [:click 1] :msg (msg "gain " (* 4 (get card :advance-counter 0)) " [Credits]")
+                 :cost [:click 1]
+                 :msg (msg "gain " (* 4 (:advance-counter card 0)) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (gain :credit (* 4 (get card :advance-counter 0))))}]}
+                                 (gain :credit (* 4 (:advance-counter card 0))))}]}
 
    "Haas Arcology AI"
    {:advanceable :while-unrezzed
-    :abilities [{:label "Gain [Click][Click]" :once :per-turn :msg "gain [Click][Click]"
-                 :cost [:click 1] :advance-counter-cost 1 :effect (effect (gain :click 2))}]}
+    :abilities [{:label "Gain [Click][Click]"
+                 :once :per-turn
+                 :msg "gain [Click][Click]"
+                 :cost [:click 1]
+                 :advance-counter-cost 1
+                 :effect (effect (gain :click 2))}]}
 
    "Honeyfarm"
    {:flags {:rd-reveal (req true)}
@@ -796,10 +801,13 @@
                                   :effect (effect (ice-strength-bonus
                                                     (* (get-in card [:it-targets (keyword (str (:cid target)))])
                                                        (inc (get-in card [:counter :power]))) target))}
-               :runner-turn-ends it :corp-turn-ends it})}
+               :runner-turn-ends it
+               :corp-turn-ends it})}
 
    "Jackson Howard"
-   {:abilities [{:cost [:click 1] :effect (effect (draw 2)) :msg "draw 2 cards"}
+   {:abilities [{:cost [:click 1]
+                 :msg "draw 2 cards"
+                 :effect (effect (draw 2))}
                 {:label "Shuffle up to 3 cards from Archives into R&D"
                  :activatemsg "removes Jackson Howard from the game"
                  :effect (effect (rfg-and-shuffle-rd-effect card 3))}]}
@@ -1110,16 +1118,15 @@
                                    (gain :credit (* 2 (get-in card [:counter :power]))))}]})
 
    "Net Analytics"
-   (let [ability {:req (req (not (empty? (filter #(some #{:tag} %) targets))))
+   (let [ability {:req (req (seq (filter #(some #{:tag} %) targets)))
                   :effect (effect (show-wait-prompt :runner "Corp to use Net Analytics")
                                   (continue-ability :corp
                                     {:optional
                                      {:prompt "Draw from Net Analytics?"
                                       :yes-ability {:msg (msg "draw a card")
-                                                    :effect (effect (draw :corp)
-                                                                    (clear-wait-prompt :runner))}
-                                      :no-ability {:effect (effect (system-msg :corp "does not draw from Net Analytics")
-                                                                   (clear-wait-prompt :runner))}}} card nil))}]
+                                                    :effect (effect (draw :corp 1))}
+                                      :end-effect (effect (clear-wait-prompt :runner))}}
+                                    card nil))}]
      {:events {:runner-loss ability
                :runner-prevent ability}})
 
@@ -1157,22 +1164,22 @@
                   (builder 2 8)]})
 
    "Open Forum"
-   {:events {:corp-mandatory-draw {:interactive (req true)
-                                   :msg (msg (let [deck (:deck corp)]
-                                               (if (pos? (count deck))
-                                               (str "reveal and draw " (:title (first deck)) " from R&D")
-                                               "reveal & draw from R&D but it is empty")))
-                                   :delayed-completion true
-                                   :effect (effect (draw)
-                                                   (continue-ability
-                                                     {:prompt "Choose a card in HQ to put on top of R&D"
-                                                      :delayed-completion true
-                                                      :choices {:req #(and (in-hand? %)
-                                                                           (= (:side %) "Corp"))}
-                                                      :msg "add 1 card from HQ to the top of R&D"
-                                                      :effect (effect (move target :deck {:front true})
-                                                                      (effect-completed eid))}
-                                                     card nil))}}}
+   {:events {:corp-mandatory-draw
+             {:interactive (req true)
+              :msg (msg (if (-> corp :deck count pos?)
+                          (str "reveal and draw " (-> corp :deck first :title) " from R&D")
+                          "reveal and draw from R&D but it is empty"))
+              :delayed-completion true
+              :effect (effect (draw 1)
+                              (continue-ability
+                                {:prompt "Choose a card in HQ to put on top of R&D"
+                                 :delayed-completion true
+                                 :choices {:req #(and (in-hand? %)
+                                                      (= (:side %) "Corp"))}
+                                 :msg "add 1 card from HQ to the top of R&D"
+                                 :effect (effect (move target :deck {:front true})
+                                                 (effect-completed eid))}
+                                card nil))}}}
 
    "PAD Campaign"
    (let [ability {:msg "gain 1 [Credits]"
@@ -1404,9 +1411,9 @@
    {:advanceable :always
     :abilities [{:cost [:click 1]
                  :label "Force the Runner to lose 4 [Credits] per advancement"
-                 :msg (msg "force the Runner to lose " (min (* 4 (get card :advance-counter 0)) (:credit runner)) " [Credits]")
+                 :msg (msg "force the Runner to lose " (min (* 4 (:advance-counter card 0)) (:credit runner)) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (lose :runner :credit (* 4 (get card :advance-counter 0))))}]}
+                                 (lose :runner :credit (* 4 (:advance-counter card 0))))}]}
 
    "Rex Campaign"
    (let [ability {:once :per-turn
@@ -1713,9 +1720,9 @@
    "Thomas Haas"
    {:advanceable :always
     :abilities [{:label "Gain credits"
-                 :msg (msg "gain " (* 2 (get card :advance-counter 0)) " [Credits]")
+                 :msg (msg "gain " (* 2 (:advance-counter card 0)) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (gain :credit (* 2 (get card :advance-counter 0))))}]}
+                                 (gain :credit (* 2 (:advance-counter card 0))))}]}
 
    "Toshiyuki Sakai"
    (advance-ambush 0

@@ -157,7 +157,7 @@
     (new-game (default-corp [(qty "Armored Servers" 1)])
               (default-runner))
     (play-and-score state "Armored Servers")
-    (let [as-scored (get-scored state :corp)]
+    (let [as-scored (get-scored state :corp 0)]
       (is (= 1 (get-counters (refresh as-scored) :agenda)) "Should start with 1 agenda counters")
       (take-credits state :corp)
       (run-on state "HQ")
@@ -189,7 +189,7 @@
                   (str "Advancement token placed on " (:title to) msg)))]
       (play-and-score state "AstroScript Pilot Program")
       (play-from-hand state :corp "AstroScript Pilot Program" "New remote")
-      (let [scored-astro (get-scored state :corp)
+      (let [scored-astro (get-scored state :corp 0)
             installed-astro (get-content state :remote2 0)
             hand-astro (find-card "AstroScript Pilot Program" (:hand get-corp))]
         (should-not-place scored-astro hand-astro " in hand")
@@ -197,7 +197,7 @@
         (advance state installed-astro 2)
         (core/score state :corp {:card (refresh installed-astro)}))
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (let [no-token-astro (get-scored state :corp)
+      (let [no-token-astro (get-scored state :corp 0)
             token-astro (get-scored state :corp 1)
             hand-ice-wall (find-card "Ice Wall" (:hand get-corp))
             installed-ice-wall (get-ice state :hq 0)]
@@ -278,7 +278,7 @@
     (play-and-score state "Hostile Takeover")
     (is (= 12 (:credit (get-corp))) "Should gain 7 credits from 5 to 12")
     (is (= 1 (:bad-publicity (get-corp))) "Should gain 1 bad publicity")
-    (let [ht-scored (get-scored state :corp)]
+    (let [ht-scored (get-scored state :corp 0)]
       (play-and-score state "Bifrost Array")
       (prompt-choice :corp "Yes")
       (prompt-select :corp (refresh ht-scored))
@@ -305,7 +305,7 @@
     (let [bt (get-content state :remote1 0)]
       (core/add-prop state :corp bt :advance-counter 7)
       (core/score state :corp {:card (refresh bt)})
-      (let [scored-bt (get-scored state :corp)]
+      (let [scored-bt (get-scored state :corp 0)]
         (is (= 2 (get-counters (refresh scored-bt) :agenda))
             "Scored w/ 4 over-advancements; 2 agenda counters")
         (play-from-hand state :corp "Ichi 1.0" "HQ")
@@ -402,7 +402,7 @@
               (default-runner))
     (is (= 5 (:credit (get-corp))))
     (play-and-score state "Corporate Sales Team")
-    (let [scored-cst (get-scored state :corp)]
+    (let [scored-cst (get-scored state :corp 0)]
       (core/end-turn state :corp nil)
       (core/start-turn state :runner nil)
       (is (= 6 (:credit (get-corp))) "Increments at runner's start of turn")
@@ -542,7 +542,7 @@
               (default-runner))
     (play-and-score state "Domestic Sleepers")
     (core/gain state :corp :click 3)
-    (let [ds_scored (get-scored state :corp)]
+    (let [ds_scored (get-scored state :corp 0)]
       (is (= 0 (get-counters (refresh ds_scored) :agenda)) "Should start with 0 agenda counters")
       (is (= 0 (:agenda-point (get-corp))) "Should provide 0 agenda points initially")
       (card-ability state :corp ds_scored 0)
@@ -581,7 +581,7 @@
           ec3 (get-content state :remote3 0)
           iw (get-ice state :hq 0)]
       (score-agenda state :corp ec1)
-      (let [ec1_scored (get-scored state :corp)]
+      (let [ec1_scored (get-scored state :corp 0)]
         (is (= 3 (get-counters (refresh ec1_scored) :agenda)))
         (is (= 2 (:agenda-point (get-corp))))
         ;; use token
@@ -621,7 +621,7 @@
     (new-game (default-corp [(qty "Elective Upgrade" 1)])
               (default-runner))
     (play-and-score state "Elective Upgrade")
-    (let [eu-scored (get-scored state :corp)]
+    (let [eu-scored (get-scored state :corp 0)]
       (is (= 2 (get-counters (refresh eu-scored) :agenda)) "Should start with 2 agenda counters")
       (take-credits state :corp)
       (take-credits state :runner)
@@ -652,7 +652,7 @@
               (default-runner))
     (core/lose state :corp :credit 5)
     (play-and-score state "Escalate Vitriol")
-    (let [ev-scored (get-scored state :corp)]
+    (let [ev-scored (get-scored state :corp 0)]
       (dotimes [tag 10]
         (is (= 0 (:tag (get-runner))) "Should start with 0 tags")
         (is (= 0 (:credit (get-corp))) "Should start with 0 credits")
@@ -674,7 +674,7 @@
     (is (= 2 (count (:hand (get-corp)))) "Corp should start with 1 card in HQ")
     (play-and-score state "Executive Retreat")
     (is (= 0 (count (:hand (get-corp)))) "Corp should have 0 cards in HQ after shuffling HQ back into R&D")
-    (let [er-scored (get-scored state :corp)]
+    (let [er-scored (get-scored state :corp 0)]
       (card-ability state :corp er-scored 0)
       (is (= 5 (count (:hand (get-corp)))) "Corp should have 5 cards in hand")
       (is (= 0 (get-counters (refresh er-scored) :agenda)) "Executive Retreat should have 0 agenda counters")))
@@ -686,7 +686,7 @@
       (is (= 2 (count (:hand (get-corp)))) "Corp should start with 1 card in HQ")
       (play-and-score state "Executive Retreat")
       (is (= 0 (count (:hand (get-corp)))) "Corp should have 0 cards in HQ after shuffling HQ back into R&D")
-      (let [er-scored (get-scored state :corp)]
+      (let [er-scored (get-scored state :corp 0)]
         (card-ability state :corp er-scored 0)
         (is (= 4 (count (:hand (get-corp)))) "Corp should have 5 cards in hand")
         (is (= 0 (get-counters (refresh er-scored) :agenda)) "Executive Retreat should have 0 agenda counters")
@@ -740,7 +740,7 @@
     (is (= 1 (count (:scored (get-corp)))) "Corp should have 1 agenda point")
     (take-credits state :corp)
     (is (= 4 (:click (get-runner))) "Runner should start turn with 4 clicks")
-    (card-ability state :corp (get-scored state :corp) 0)
+    (card-ability state :corp (get-scored state :corp 0) 0)
     (is (= 2 (:click (get-runner))) "Runner should lose 2 clicks from False Lead")))
 
 (deftest fetal-ai-damage
@@ -776,7 +776,7 @@
               (default-runner))
     (play-and-score state "Firmware Updates")
     (play-from-hand state :corp "Ice Wall" "HQ")
-    (let [fu (get-scored state :corp)
+    (let [fu (get-scored state :corp 0)
           iw (get-ice state :hq 0)]
       (is (= 3 (get-counters (refresh fu) :agenda)) "Firmware Updates should start with 3 agenda counters")
       (core/rez state :corp iw)
@@ -796,7 +796,7 @@
       (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
       (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
       (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
-      (let [gf-scored (get-scored state :corp)]
+      (let [gf-scored (get-scored state :corp 0)]
         (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
         (card-ability state :corp gf-scored 0)
         (is (= 1 (:click (get-corp))) "Should have 1 click left")
@@ -811,7 +811,7 @@
       (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
       (is (= 0 (:bad-publicity (get-corp))) "Should start with 0 bad publicity")
       (play-from-hand state :corp "Broadcast Square" "New remote")
-      (let [gf-scored (get-scored state :corp)
+      (let [gf-scored (get-scored state :corp 0)
             bs (get-content state :remote2 0)]
         (core/rez state :corp bs)
         (is (= 2 (get-counters (refresh gf-scored) :agenda)) "Should start with 2 agenda counters")
@@ -834,7 +834,7 @@
           bt2 (get-content state :remote2 0)
           gr (get-content state :remote3 0)]
       (score-agenda state :corp bt1)
-      (let [btscored (get-scored state :corp)]
+      (let [btscored (get-scored state :corp 0)]
         (is (= 0 (get-counters (refresh btscored) :agenda)) "No agenda counters on scored Braintrust")
         (score-agenda state :corp gr)
         (prompt-select :corp bt2)
@@ -853,7 +853,7 @@
     (is (= 2 (:click (get-corp))) "Should have 2 clicks left")
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
     (core/gain state :corp :click 2)
-    (let [gha-scored (get-scored state :corp)]
+    (let [gha-scored (get-scored state :corp 0)]
       (card-ability state :corp gha-scored 0)
       (is (= 2 (:click (get-corp))) "Should spend 2 clicks on Gila Hands")
       (is (= 8 (:credit (get-corp))) "Should gain 3 credits from 5 to 8")
@@ -867,7 +867,7 @@
     (new-game (default-corp [(qty "Glenn Station" 1) (qty "Ice Wall" 1)])
               (default-runner))
     (play-and-score state "Glenn Station")
-    (let [gs-scored (get-scored state :corp)]
+    (let [gs-scored (get-scored state :corp 0)]
       (card-ability state :corp gs-scored 0)
       (prompt-card :corp (find-card "Ice Wall" (:hand (get-corp))))
       (is (= 1 (count (:hosted (refresh gs-scored)))))
@@ -900,7 +900,7 @@
               (default-runner))
     (play-and-score state "Government Contracts")
     (is (= 2 (:click (get-corp))))
-    (card-ability state :corp (get-scored state :corp) 0)
+    (card-ability state :corp (get-scored state :corp 0) 0)
     (is (= 0 (:click (get-corp))) "Spent 2 clicks")
     (is (= 9 (:credit (get-corp))) "Gained 4 credits")))
 
@@ -911,7 +911,7 @@
               (default-runner))
     (play-and-score state "Government Takeover")
     (is (= 5 (:credit (get-corp))) "Should start with 5 credits")
-    (let [gt-scored (get-scored state :corp)]
+    (let [gt-scored (get-scored state :corp 0)]
       (card-ability state :corp gt-scored 0)
       (is (= 8 (:credit (get-corp))) "Should gain 3 credits from 5 to 8"))))
 
@@ -948,7 +948,7 @@
     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :discard)
     (take-credits state :corp)
     (take-credits state :runner)
-    (let [hf-scored (get-scored state :corp)]
+    (let [hf-scored (get-scored state :corp 0)]
       (card-ability state :corp hf-scored 0)
       (prompt-select :corp (find-card "Hedge Fund" (:discard (get-corp))))
       (is (= 2 (count (:deck (get-corp)))) "R&D should have 2 cards in it after Hades Fragment use"))))
@@ -982,7 +982,7 @@
     (new-game (default-corp [(qty "High-Risk Investment" 1)])
               (default-runner))
     (play-and-score state "High-Risk Investment")
-    (let [hri-scored (get-scored state :corp)]
+    (let [hri-scored (get-scored state :corp 0)]
       (is (= 1 (get-counters (refresh hri-scored) :agenda)) "Has 1 agenda counter")
       (take-credits state :corp)
       (is (= 7 (:credit (get-corp))))
@@ -1030,7 +1030,7 @@
     (new-game (default-corp [(qty "House of Knives" 1)])
               (default-runner))
     (play-and-score state "House of Knives")
-    (let [hok-scored (get-scored state :corp)]
+    (let [hok-scored (get-scored state :corp 0)]
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
       (take-credits state :corp)
       (run-empty-server state "R&D")
@@ -1159,7 +1159,7 @@
     (play-and-score state "Labyrinthine Servers")
     (play-and-score state "Labyrinthine Servers")
     (take-credits state :corp)
-    (let [ls1 (get-scored state :corp)
+    (let [ls1 (get-scored state :corp 0)
           ls2 (get-scored state :corp 1)]
       (is (= 2 (get-counters (refresh ls1) :power)))
       (is (= 2 (get-counters (refresh ls2) :power)))
@@ -1294,7 +1294,7 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (let [arc (get-ice state :hq 0)
-            mu (get-scored state :corp)]
+            mu (get-scored state :corp 0)]
         (is (= 4 (:click (get-corp))) "Corp should start turn with 4 clicks")
         (core/rez state :corp arc)
         (prompt-select :corp (refresh mu))
@@ -1500,7 +1500,7 @@
     (new-game (default-corp [(qty "Nisei MK II" 1)])
               (default-runner))
     (play-and-score state "Nisei MK II")
-    (let [scored-nisei (get-scored state :corp)]
+    (let [scored-nisei (get-scored state :corp 0)]
       (is (= 1 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has one counter")
       (take-credits state :corp)
       (run-on state "HQ")
@@ -1679,7 +1679,7 @@
               (default-runner))
     (core/gain state :runner :tag 1)
     (play-and-score state "Private Security Force")
-    (let [psf-scored (get-scored state :corp)]
+    (let [psf-scored (get-scored state :corp 0)]
       (card-ability state :corp psf-scored 0)
       (is (= 1 (count (:discard (get-runner)))))
       (take-credits state :runner)
@@ -1739,7 +1739,7 @@
         (advance state atlas 4)
         (is (= 4 (:advance-counter (refresh atlas))) "Atlas should have 4 advancement tokens")
         (core/score state :corp {:card (refresh atlas)}))
-      (let [atlas-scored (get-scored state :corp)]
+      (let [atlas-scored (get-scored state :corp 0)]
         (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
         (card-ability state :corp atlas-scored 0)
         (prompt-card :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
@@ -1760,7 +1760,7 @@
         (advance state atlas 3)
         (is (= 3 (:advance-counter (refresh atlas))) "Atlas should have 3 advancement tokens")
         (core/score state :corp {:card (refresh atlas)}))
-      (let [atlas-scored (get-scored state :corp)]
+      (let [atlas-scored (get-scored state :corp 0)]
         (is (= 1 (get-counters (refresh atlas-scored) :agenda)) "Atlas should have 1 agenda counter")
         (card-ability state :corp atlas-scored 0)
         (prompt-card :corp (find-card "Beanstalk Royalties" (:deck (get-corp))))
@@ -1837,7 +1837,7 @@
       (advance state vit 4)
       (is (= 4 (:advance-counter (refresh vit))) "Vitruvius should have 4 advancement tokens")
       (core/score state :corp {:card (refresh vit)}))
-    (let [vit-scored (get-scored state :corp)]
+    (let [vit-scored (get-scored state :corp 0)]
       (is (= 1 (get-counters (refresh vit-scored) :agenda)) "Vitruvius should have 1 agenda counter")
       (card-ability state :corp vit-scored 0)
       (prompt-select :corp (find-card "Hedge Fund" (:discard (get-corp))))
@@ -1857,7 +1857,7 @@
       (core/rez state :corp eli))
     (play-and-score state "Project Wotan")
     (take-credits state :corp)
-    (let [wot-scored (get-scored state :corp)]
+    (let [wot-scored (get-scored state :corp 0)]
       (is (= 3 (get-counters (refresh wot-scored) :agenda)) "Wotan should start with 3 agenda counters")
       (run-on state "HQ")
       (card-ability state :corp wot-scored 0)
@@ -2050,7 +2050,7 @@
               (default-runner))
     (is (= 0 (:tag (get-runner))) "Runner should start with no tags")
     (play-and-score state "Restructured Datapool")
-    (let [rd-scored (get-scored state :corp)]
+    (let [rd-scored (get-scored state :corp 0)]
       (card-ability state :corp rd-scored 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
@@ -2197,7 +2197,7 @@
               (default-runner))
     (play-from-hand state :corp "Enforcer 1.0" "HQ")
     (play-and-score state "Sensor Net Activation")
-    (let [sna-scored (get-scored state :corp)
+    (let [sna-scored (get-scored state :corp 0)
           enf (get-ice state :hq 0)]
       (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
       (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should start derezzed")
@@ -2476,7 +2476,7 @@
                   (take-credits state :corp)))]
         (play-and-score state "Voting Machine Initiative")
         (take-credits state :corp)
-        (let [vmi-scored (get-scored state :corp)]
+        (let [vmi-scored (get-scored state :corp 0)]
           (vmi-test vmi-scored "Yes" 3)
           (vmi-test vmi-scored "No" 2)
           (vmi-test vmi-scored "Yes" 2)

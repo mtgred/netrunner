@@ -78,9 +78,10 @@
                                      :subroutine ability :targets targets})))
 
 (defn get-ice
-  "Get installed ice protecting server by position."
-  [state server pos]
-  (get-in @state [:corp :servers server :ices pos]))
+  "Get installed ice protecting server by position. If no pos, get all ice in the server."
+  ([state server] (get-in @state [:corp :servers server :ices]))
+  ([state server pos]
+   (get-in @state [:corp :servers server :ices pos])))
 
 (defn get-content
   "Get card in a server by position. If no pos, get all cards in the server."
@@ -90,40 +91,39 @@
    (get-in @state [:corp :servers server :content pos])))
 
 (defn get-program
-  "Get non-hosted program by position."
+  "Get non-hosted program by position. If no pos, get all installed programs."
   ([state] (get-in @state [:runner :rig :program]))
   ([state pos]
    (get-in @state [:runner :rig :program pos])))
 
 (defn get-hardware
-  "Get hardware by position."
+  "Get hardware by position. If no pos, get all installed hardware."
   ([state] (get-in @state [:runner :rig :hardware]))
   ([state pos]
    (get-in @state [:runner :rig :hardware pos])))
 
 (defn get-resource
-  "Get non-hosted resource by position."
-  [state pos]
-  (get-in @state [:runner :rig :resource pos]))
+  "Get non-hosted resource by position. If no pos, get all installed resources."
+  ([state] (get-in @state [:runner :rig :resource]))
+  ([state pos]
+   (get-in @state [:runner :rig :resource pos])))
 
 (defn get-runner-facedown
-  "Get non-hosted runner facedown by position."
-  [state pos]
-  (get-in @state [:runner :rig :facedown pos]))
+  "Get non-hosted runner facedown by position. If no pos, get all runner facedown installed cards."
+  ([state] (get-in @state [:runner :rig :facedown]))
+  ([state pos]
+   (get-in @state [:runner :rig :facedown pos])))
 
 (defn get-discarded
-  ([state side] (let [l (-> @state
-                            (get-in [side :discard])
-                            count
-                            dec)]
-                  (get-discarded state side l)))
+  "Get discarded card by position. If no pos, selects most recently discarded card."
+  ([state side] (get-discarded state side (-> @state side :discard count dec)))
   ([state side pos]
    (get-in @state [side :discard pos])))
 
 (defn get-scored
   "Get a card from the score area. Can find by name or index.
-  If no index or name provided, get the first scored agenda."
-  ([state side] (get-scored state side 0))
+  If no index or name provided, gets all scored cards."
+  ([state side] (get-in @state [side :scored]))
   ([state side x]
    (if (number? x)
      ;; Find by index

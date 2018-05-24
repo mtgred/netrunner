@@ -60,10 +60,10 @@
       (prompt-choice :corp "Yes")
       (is (= 3 (:credit (get-corp))))
       ;; Corp can trash one program
-      (prompt-select :corp (get-in @state [:runner :rig :program 1]))
+      (prompt-select :corp (get-program state 1))
       ;; There should be two Caches left
       (is (= 3 (:credit (get-corp))))
-      (is (= 2 (count (get-in @state [:runner :rig :program])))))))
+      (is (= 2 (count (get-program state)))))))
 
 (deftest alexa-belsky
   ;; Alexa Belsky
@@ -130,21 +130,21 @@
       (play-from-hand state :runner "Analog Dreamers")
       (run-empty-server state "Server 2")
       (prompt-choice :runner "Steal")
-      (is (zero? (count (get-in @state [:corp :servers :remote2 :content]))) "Agenda was stolen")
-      (prompt-choice :corp "Medical Breakthrough") ;simult. effect resolution
+      (is (zero? (count (get-content state :remote2))) "Agenda was stolen")
+      (prompt-choice :corp "Medical Breakthrough") ; simult. effect resolution
       (prompt-choice :corp "Yes")
-      (prompt-choice :corp 0)  ;; Corp doesn't pump trace
+      (prompt-choice :corp 0) ; Corp doesn't pump trace
       (is (= 3 (-> (get-runner) :prompt first :strength)) "Trace base strength is 3 after stealing first Breakthrough")
       (prompt-choice :runner 0)
-      (let [n (count (get-in @state [:runner :hand]))]
-        (is (= 1 (count (get-in @state [:runner :rig :program]))) "There is an Analog Dreamers installed")
-        (prompt-select :corp (first (get-in @state [:runner :rig :program])))
-        (is (zero? (count (get-in @state [:runner :rig :program]))) "Analog Dreamers was uninstalled")
-        (is (= (+ n 1) (count (get-in @state [:runner :hand]))) "Analog Dreamers was added to hand"))
+      (let [n (-> @state :runner :hand count)]
+        (is (= 1 (count (get-program state))) "There is an Analog Dreamers installed")
+        (prompt-select :corp (get-program state 0))
+        (is (zero? (count (get-program state))) "Analog Dreamers was uninstalled")
+        (is (= (+ n 1) (-> @state :runner :hand count)) "Analog Dreamers was added to hand"))
       (take-credits state :runner)
       (score-agenda state :corp breakthrough)
       ;; (prompt-choice :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason
-      (prompt-choice :corp "Yes")       ;corp should get to trigger trace even when no runner cards are installed
+      (prompt-choice :corp "Yes") ; corp should get to trigger trace even when no runner cards are installed
       (prompt-choice :corp 0)
       (is (= 2 (-> (get-runner) :prompt first :strength)) "Trace base strength is 2 after scoring second Breakthrough"))))
 
@@ -363,7 +363,7 @@
     (let [co (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh co)})
       (core/advance state :corp {:card (refresh co)})
-      (is (= 2 (get-in (refresh co) [:advance-counter])))
+      (is (= 2 (:advance-counter (refresh co))))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes") ; choose to do the optional ability
@@ -551,7 +551,7 @@
       (card-ability state :corp clyde 0)
       (is (zero? (:credit (get-runner))))
       (is (zero? (count (:deck (get-runner)))))
-      (is (empty? (get-in @state [:corp :prompt]))))))
+      (is (empty? (-> @state :corp :prompt))))))
 
 (deftest commercial-bankers-group
   ;; Commercial Bankers Group - Gain 3 credits at turn start if unprotected by ice
@@ -678,7 +678,7 @@
     (play-and-score state "Hostile Takeover")
     (play-from-hand state :corp "Corporate Town" "New remote")
     (let [ct (get-content state :remote2 0)
-          ht (get-scored state :corp)]
+          ht (get-scored state :corp 0)]
       (core/rez state :corp ct)
       (prompt-select :corp ht)
       (take-credits state :corp)
@@ -768,7 +768,7 @@
             "Resistor second last card in deck")
         ;; Try to use first Sensie again
         (card-ability state :corp sensie1 0)
-        (is (empty? (get-in @state [:corp :prompt])) "Sensie didn't activate")
+        (is (empty? (-> @state :corp :prompt)) "Sensie didn't activate")
         (is (= 3 (count (:hand (get-corp)))))
         ;; Use second Sensie
         (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
@@ -885,7 +885,7 @@
     (let [ec (get-content state :remote1 0)]
       (core/rez state :corp ec)
       (card-ability state :corp ec 0))
-    (is (= 1 (:agendapoints (get-in @state [:corp :scored 0]))) "Echo Chamber added to Corp score area")))
+    (is (= 1 (:agendapoints (get-scored state :corp 0))) "Echo Chamber added to Corp score area")))
 
 (deftest edge-of-world
   ;; Edge of World
@@ -926,12 +926,12 @@
       (core/gain state :corp :click 6)
       (card-ability state :corp eliza 0)
       (prompt-select :corp wotan)
-      (is (get-in (refresh wotan) [:rezzed]))
+      (is (:rezzed (refresh wotan)))
       (is (= 3 (:click (get-corp))) "3 clicks spent")
       (is (= 1 (:credit (get-corp))) "No credits spent")
       (card-ability state :corp eliza 0)
       (prompt-select :corp archer)
-      (is (get-in (refresh archer) [:rezzed]))
+      (is (:rezzed (refresh archer)))
       (is (zero? (:click (get-corp))) "3 clicks spent")
       (is (= 1 (:credit (get-corp))) "No credits or agendas spent"))))
 
@@ -946,7 +946,7 @@
     (play-from-hand state :runner "Earthrise Hotel")
     (take-credits state :runner)
     (let [liz (get-content state :remote1 0)
-          hotel (get-in @state [:runner :rig :resource 0])]
+          hotel (get-resource state 0)]
       (core/rez state :corp liz)
       (is (zero? (:bad-publicity (get-corp))) "1 bad publicity removed")
       (card-ability state :corp liz 0)
@@ -1075,7 +1075,7 @@
             number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
         (card-ability state :corp esf 0)
         (prompt-choice :corp (find-card card (:deck (get-corp))))
-        (is (= card (->> (get-corp) :hand first :title)) (str card " should be in hand"))
+        (is (= card (-> (get-corp) :hand first :title)) (str card " should be in hand"))
         (core/move state :corp (find-card card (:hand (get-corp))) :deck)
         (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Should be shuffled")))))
 
@@ -1114,7 +1114,7 @@
          (card-ability state :corp (refresh ff) 0)
          (is (nil? (get-content state :remote1 0))
              "False Flag is no longer in remote")
-         (is (= 3 (:agendapoints (get-in @state [:corp :scored 0])))
+         (is (= 3 (:agendapoints (get-scored state :corp 0)))
              "the corp can score False Flag")
          (is (= 1 (:click (get-corp)))
              "scoring False Flag costs one click"))))
@@ -1129,7 +1129,7 @@
          (card-ability state :corp (refresh ff) 0)
          (is (not (nil? (get-content state :remote1 0)))
              "False Flag remains in the remote")
-         (is (nil? (:agendapoints (get-in @state [:corp :scored 0])))
+         (is (nil? (:agendapoints (get-scored state :corp 0)))
              "the corp cannot score false flag")
          (is (= 2 (:click (get-corp)))
              "the corp does not lose a click")))))
@@ -1169,9 +1169,9 @@
     (take-credits state :corp 1)
     (run-empty-server state "Server 2")
     (prompt-choice :runner "Steal")
-    (is (zero? (count (get-in @state [:corp :servers :server2 :content]))) "Agenda was stolen")
+    (is (zero? (count (get-content state :remote2))) "Agenda was stolen")
     (is (= 2 (:agenda-point (get-runner))) "Runner stole 2 points")
-    (is (zero? (count (get-in @state [:corp :servers :server1 :content])))
+    (is (zero? (count (get-content state :remote2)))
         "Franchise City no longer installed")
     (is (find-card "Franchise City" (:scored (get-corp))) "Franchise City in corp scored area")
     (is (= 1 (:agenda-point (get-corp))) "Corp has 1 point")))
@@ -1341,7 +1341,7 @@
         (core/rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
         (is (= nil (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
-        (is (= 1 (:agendapoints (get-in @state [:corp :scored 0]))) "Gene Splicer added to Corp score area")))))
+        (is (= 1 (:agendapoints (get-scored state :corp 0))) "Gene Splicer added to Corp score area")))))
 
 (deftest genetics-pavilion
   ;; Genetics Pavilion - Limit Runner to 2 draws per turn, but only during Runner's turn
@@ -1362,7 +1362,7 @@
         (take-credits state :runner)
         (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
         (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
-        (let [hopper (get-in @state [:runner :rig :hardware 0])]
+        (let [hopper (get-hardware state 0)]
           (card-ability state :runner hopper 0)
           (is (= 3 (count (:hand (get-runner)))) "Able to draw 3 cards during Corp's turn")
           (core/derez state :corp (refresh gp))
@@ -1407,7 +1407,7 @@
       (core/rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
       (play-from-hand state :runner "Mr. Li")
-      (let [mrli (get-in @state [:runner :rig :resource 0])]
+      (let [mrli (get-resource state 0)]
         (is (zero? (count (:hand (get-runner)))))
         ; use Mr. Li with 2 draws allowed
         (card-ability state :runner mrli 0)
@@ -1440,7 +1440,7 @@
     (let [gb (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh gb)})
       (core/advance state :corp {:card (refresh gb)})
-      (is (= 2 (get-in (refresh gb) [:advance-counter])))
+      (is (= 2 (:advance-counter (refresh gb))))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes") ; choose to do the optional ability
@@ -2221,24 +2221,24 @@
     (take-credits state :runner)
     (let [gb (get-content state :remote1 0)
           net (get-content state :remote2 0)
-          nach (get-in @state [:runner :rig :resource 0])]
+          nach (get-resource state 0)]
       (core/rez state :corp (refresh net))
       (core/advance state :corp {:card (refresh gb)})
-      (is (= 1 (get-in (refresh gb) [:advance-counter])))
+      (is (= 1 (:advance-counter (refresh gb))))
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))) "Corp hand size is 1 before run")
       (run-empty-server state "Server 1")
-      (prompt-choice :corp "Yes") ; choose to do the optional ability
+      (prompt-choice :corp "Yes") ; Ghost Branch ability
       (card-ability state :runner nach 0)
       (prompt-choice :runner "Done")
       (prompt-choice :corp "Yes") ; Draw from Net Analytics
-      (prompt-choice :runner "No")
+      (prompt-choice :runner "No action")
       (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
       (is (zero? (:tag (get-runner))) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
       (core/tag-runner state :runner 1)
-      (prompt-choice :runner "No") ; Don't prevent the tag
+      (prompt-choice :runner "Done") ; Don't prevent the tag
       (core/remove-tag state :runner 1)
       (prompt-choice :corp "Yes") ; Draw from Net Analytics
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
@@ -2496,7 +2496,7 @@
       (take-credits state :corp)
       ;; Runner run on archives to trigger access choice
       (run-empty-server state :archives)
-      (is (not-any? #{"Psychic Field"} (get-in @state [:runner :prompt :choices]))
+      (is (not-any? #{"Psychic Field"} (-> @state :runner :prompt first :choices))
           "Psychic Field is not a choice to access in Archives")))
   (testing "Interaction with Neutralize All Threats and Hostile Infrastructure, #1208"
     (do-game
@@ -2549,7 +2549,7 @@
       ;; Runner turn 3, boring
       (take-credits state :runner)
       ;; Corp turn 4, check the delicious agenda points
-      (let [scored-pub (get-in @state [:corp :scored 0])]
+      (let [scored-pub (get-scored state :corp 0)]
         (is (= 1 (:agenda-point (get-corp))) "Gained 1 agenda point")
         (is (= "Public Support" (:title scored-pub)))
         (is (= 1 (:agendapoints scored-pub)))))))
@@ -2580,7 +2580,7 @@
       ; 1 on rez
       (is (= 101 (:credit (get-corp))) "Corp has 101 creds")
       (card-ability state :corp qs 0)
-      (prompt-select :corp (get-in (get-corp) [:scored 0]))
+      (prompt-select :corp (get-scored state :corp 0))
       (prompt-select :corp ch1)
       (prompt-select :corp ch2)
       (prompt-select :corp ch3)
@@ -3143,7 +3143,7 @@
       (is (= 3 (count (:scored (get-runner)))) "News Team added to Runner score area")
       (is (= -3 (:agenda-point (get-runner))) "Runner has -3 agenda points")
       (card-ability state :runner (get-resource state 0) 0)
-      (prompt-choice :runner (->> @state :runner :prompt first :choices first))
+      (prompt-choice :runner (-> @state :runner :prompt first :choices first))
       (prompt-select :runner (first (:scored (get-runner))))
       (is (= 2 (count (:scored (get-runner)))) "Fan Site removed from Runner score area")
       (is (= -2 (:agenda-point (get-runner))) "Runner has -2 agenda points")

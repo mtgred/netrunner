@@ -219,37 +219,37 @@
   (do-game
     (new-game (default-corp [(qty "Cerebral Cast" 1)])
               (default-runner))
-	    (play-from-hand state :corp "Cerebral Cast")
-	    (is (= 3 (:click (get-corp))) "Cerebral Cast precondition not met; card not played")
-	    (take-credits state :corp)
-	    (run-empty-server state "Archives")
-	    (take-credits state :runner)
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "0 [Credits]")
-	    (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")
-		(is (= 0 (:tag (get-runner))) "Runner took no tags")))
+    (play-from-hand state :corp "Cerebral Cast")
+    (is (= 3 (:click (get-corp))) "Cerebral Cast precondition not met; card not played")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "0 [Credits]")
+    (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")
+    (is (= 0 (:tag (get-runner))) "Runner took no tags")))
 
 (deftest cerebral-cast-corp-wins
   ;; Cerebral Cast: if the runner succefully ran last turn, psi game to give runner choice of tag or BD
   (do-game
     (new-game (default-corp [(qty "Cerebral Cast" 2)])
               (default-runner))
-	    (take-credits state :corp)
-	    (run-empty-server state "Archives")
-	    (take-credits state :runner)
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "1 [Credits]")
-		(prompt-choice :runner "1 brain damage")
-	    (is (= 1 (count (:discard (get-runner)))) "Runner took a brain damage")
-		(is (= 0 (:tag (get-runner))) "Runner took no tags from brain damage choice")
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "1 [Credits]")
-		(prompt-choice :runner "1 tag")
-	    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
-		(is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (prompt-choice :runner "1 brain damage")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took a brain damage")
+    (is (= 0 (:tag (get-runner))) "Runner took no tags from brain damage choice")
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (prompt-choice :runner "1 tag")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
+    (is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))
 
 
 (deftest cerebral-static-chaos-theory
@@ -875,7 +875,7 @@
     (prompt-choice :runner 2) ; Runner matches
     (is (= 1 (:bad-publicity (get-corp))))))
 
-(deftest ipo-terminal
+(deftest ipo
   ;; IPO - credits with Terminal operations
   (do-game
     (new-game
@@ -884,8 +884,8 @@
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "IPO")
-	(is (= 13 (:credit (get-corp))))
-	(is (= 0 (:click (get-corp))) "Terminal ends turns")))
+    (is (= 13 (:credit (get-corp))))
+    (is (= 0 (:click (get-corp))) "Terminal ends turns")))
 
 (deftest lag-time
   (do-game
@@ -899,7 +899,7 @@
     (core/rez state :corp (get-ice state :hq 0))
     (core/rez state :corp (get-ice state :rd 0))
     (is (= 1 (:current-strength (get-ice state :hq 0))) "Vanilla at 1 strength")
-	(is (= 5 (:current-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
+    (is (= 5 (:current-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
 
 (deftest lateral-growth
   (do-game
@@ -1848,7 +1848,7 @@
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Success")
-    (prompt-select :corp (get-scored state :corp))
+    (prompt-select :corp (get-scored state :corp 0))
     (is (= "Vanity Project" (:title (first (:rfg (get-corp))))))
     (let [oaktown (get-content state :remote1 0)]
       (prompt-select :corp (refresh oaktown))
@@ -1903,7 +1903,7 @@
       (is (zero? (:tag (get-runner))) "Runner should start with no tags")
       (play-from-hand state :corp "Surveillance Sweep")
       (play-and-score state "Restructured Datapool")
-      (let [rd-scored (get-scored state :corp)]
+      (let [rd-scored (get-scored state :corp 0)]
         (card-ability state :corp rd-scored 0)
         (is (not= :waiting (->> (get-corp) :prompt first :prompt-type)) "Surveillance Sweep only works during a run")
         (prompt-choice :corp 0)
