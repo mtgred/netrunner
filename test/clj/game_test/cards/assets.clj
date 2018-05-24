@@ -2455,7 +2455,7 @@
       (prompt-choice :corp "New remote")
       (is (= "Oaktown Renovation" (:title (get-content state :remote3 0)))
           "Oaktown Renovation installed by Political Dealings")
-      (is (= true (:rezzed (get-content state :remote3 0)))
+      (is (:rezzed (get-content state :remote3 0))
           "Oaktown Renovation installed face up")))
   (testing "Daily Business Show interaction - Draw 2 agendas, install both of them but return 1 to bottom of R&D"
     (do-game
@@ -2491,6 +2491,16 @@
         (prompt-select :corp (get-content state :remote4 0))
         (is (zero? (count (:hand (get-corp)))))
         (is (= (:cid agenda1) (:cid (last (:deck (get-corp))))))))))
+
+(deftest primary-transmission-dish
+  ;; Primary Transmission Dish
+  (do-game
+    (new-game (default-corp ["Primary Transmission Dish"])
+              (default-runner))
+    (play-from-hand state :corp "Primary Transmission Dish" "New remote")
+    (let [dish (get-content state :remote1 0)]
+      (core/rez state :corp dish)
+      (is (= 3 (:rec-counter (refresh dish))) "Should have 3 recurring credits"))))
 
 (deftest psychic-field
   (testing "Basic test"

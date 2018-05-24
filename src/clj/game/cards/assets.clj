@@ -1201,7 +1201,8 @@
                                   target :can-score
                                   (fn [state side card]
                                     (if (and (= (:cid card) tgtcid)
-                                             (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+                                             (>= (:advance-counter card) (or (:current-cost card)
+                                                                             (:advancementcost card))))
                                       ((constantly false) (toast state :corp "Cannot score due to PAD Factory." "warning"))
                                       true)))))}]}
 
@@ -1246,23 +1247,24 @@
     "Score an Agenda from HQ?")
 
    "Political Dealings"
-   (let [pdhelper (fn pd [agendas n]
-                    {:optional
-                     {:prompt (msg "Reveal and install " (:title (nth agendas n)) "?")
-                      :yes-ability {:delayed-completion true
-                                    :msg (msg "reveal " (:title (nth agendas n)))
-                                    :effect (req (when-completed
-                                                   (corp-install state side (nth agendas n) nil
-                                                                 {:install-state
-                                                                  (:install-state (card-def (nth agendas n))
-                                                                    :unrezzed)})
-                                                   (if (< (inc n) (count agendas))
-                                                     (continue-ability state side (pd agendas (inc n)) card nil)
-                                                     (effect-completed state side eid))))}
-                      :no-ability {:delayed-completion true
-                                   :effect (req (if (< (inc n) (count agendas))
-                                                  (continue-ability state side (pd agendas (inc n)) card nil)
-                                                  (effect-completed state side eid)))}}})]
+   (letfn [(pdhelper [agendas n]
+             {:optional
+              {:prompt (msg "Reveal and install " (:title (nth agendas n)) "?")
+               :yes-ability {:delayed-completion true
+                             :msg (msg "reveal " (:title (nth agendas n)))
+                             :effect (req (when-completed (corp-install
+                                                            state side (nth agendas n) nil
+                                                            {:install-state
+                                                             (:install-state
+                                                               (card-def (nth agendas n))
+                                                               :unrezzed)})
+                                            (if (< (inc n) (count agendas))
+                                              (continue-ability state side (pdhelper agendas (inc n)) card nil)
+                                              (effect-completed state side eid))))}
+               :no-ability {:delayed-completion true
+                            :effect (req (if (< (inc n) (count agendas))
+                                           (continue-ability state side (pdhelper agendas (inc n)) card nil)
+                                           (effect-completed state side eid)))}}})]
      {:events
       {:corp-draw
        {:delayed-completion true
@@ -1404,8 +1406,7 @@
                                                                     (pluralize " advancement token" target) " to "
                                                                     (card-str state move-to))))}
 
-                                  card nil)
-                                ))}]}
+                                  card nil)))}]}
 
    "Reversed Accounts"
    {:advanceable :always
