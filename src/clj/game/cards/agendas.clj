@@ -739,9 +739,9 @@
                                                   (not (is-type? % "ICE"))
                                                   (= (:side %) "Corp")
                                                   (in-hand? %))}
-                             :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card)) 5)
+                             :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card) 0) 5)
                                        " and rez it, ignoring all costs"))
-                             :effect (req (if (>= (:advance-counter (get-card state card)) 5)
+                             :effect (req (if (>= (:advance-counter (get-card state card) 0) 5)
                                             (do (corp-install state side target "New remote"
                                                               {:install-state :rezzed-no-cost})
                                                 (trigger-event state side :rez target))
