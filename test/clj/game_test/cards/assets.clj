@@ -2628,6 +2628,23 @@
       (is (= 77 (:credit (get-corp))) "Corp has 77 creds")
       (is (empty? (:prompt (get-corp))) "No prompt to rez ICE"))))
 
+(deftest raman-rai
+  ;; Raman Rai
+  (do-game
+    (new-game (default-corp ["Raman Rai" "Ice Wall" "Fire Wall"])
+              (default-runner))
+    (play-from-hand state :corp "Raman Rai" "New remote")
+    (let [raman (get-content state :remote1 0)]
+      (core/move state :corp (find-card "Ice Wall" (:hand (get-corp))) :deck)
+      (trash-from-hand state :corp "Fire Wall")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp raman 0)
+      (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (prompt-select :corp (find-card "Fire Wall" (:discard (get-corp))))
+      (is (= "Fire Wall" (-> (get-corp) :hand first :title)))
+      (is (= "Ice Wall" (-> (get-corp) :discard first :title))))))
+
 (deftest rashida-jaheem
   ;; Rashida Jaheem
   (testing "when there are enough cards in R&D"
