@@ -1116,11 +1116,12 @@
                                     (do (system-msg state :corp "declines to trash a card from Standoff")
                                         (clear-wait-prompt state :runner)
                                         (effect-completed state :corp eid))))
-              :effect (req (do (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
-                               (clear-wait-prompt state (other-side side))
-                               (trash state side target {:unpreventable true})
-                               (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
-                               (continue-ability state (other-side side) (stand (other-side side)) card nil)))})]
+              :effect (req (when-completed (trash state side target {:unpreventable true})
+                                           (do
+                                             (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
+                                             (clear-wait-prompt state (other-side side))
+                                             (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
+                                             (continue-ability state (other-side side) (stand (other-side side)) card nil))))})]
      {:interactive (req true)
       :delayed-completion true
       :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
