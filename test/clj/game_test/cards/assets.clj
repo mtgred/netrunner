@@ -2807,38 +2807,35 @@
 
 (deftest ronin
   ;; Ronin - Click-trash to do 3 net damage when it has 4 or more advancements
-  (do-game
-    (new-game (default-corp [(qty "Ronin" 1) (qty "Mushin No Shin" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Mushin No Shin")
-    (prompt-select :corp (find-card "Ronin" (:hand (get-corp))))
-    (let [ron (get-content state :remote1 0)]
-      (is (= 3 (get-counters (refresh ron) :advancement)))
-      (core/rez state :corp (refresh ron))
-      (card-ability state :corp ron 0)
-      (is (= 3 (count (:hand (get-runner))))
-          "Ronin ability didn't fire with only 3 advancements")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (core/advance state :corp {:card (refresh ron)})
-      (is (= 4 (get-counters (refresh ron) :advancement)))
-      (card-ability state :corp ron 0)
-      (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
-      (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
-
-(deftest ronin
-  ;; Ronin - doesn't fire (or crash) if no advance counters
-  (do-game
-    (new-game (default-corp [(qty "Ronin" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Ronin" "New remote")
-    (let [ron (get-content state :remote1 0)]
-      (is (zero? (get-counters (refresh ron) :advancement)) "Ronin starts with no counters")
-      (core/rez state :corp (refresh ron))
-      (card-ability state :corp (refresh ron) 0)
-      (is (zero? (get-counters (refresh ron) :advancement)) "Ronin didn't gain counters")
-      (is (= 3 (count (:hand (get-runner))))
-          "Ronin ability didn't fire with 0 advancements"))))
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Ronin" 1) (qty "Mushin No Shin" 1)])
+                (default-runner))
+      (play-from-hand state :corp "Mushin No Shin")
+      (prompt-select :corp (find-card "Ronin" (:hand (get-corp))))
+      (let [ron (get-content state :remote1 0)]
+        (is (= 3 (get-counters (refresh ron) :advancement)))
+        (core/rez state :corp (refresh ron))
+        (card-ability state :corp ron 0)
+        (is (= 3 (count (:hand (get-runner)))) "Ronin ability didn't fire with only 3 advancements")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/advance state :corp {:card (refresh ron)})
+        (is (= 4 (get-counters (refresh ron) :advancement)))
+        (card-ability state :corp ron 0)
+        (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
+        (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
+  (testing "doesn't fire (or crash) if no advance counters"
+    (do-game
+      (new-game (default-corp [(qty "Ronin" 1)])
+                (default-runner))
+      (play-from-hand state :corp "Ronin" "New remote")
+      (let [ron (get-content state :remote1 0)]
+        (is (zero? (get-counters (refresh ron) :advancement)) "Ronin starts with no counters")
+        (core/rez state :corp (refresh ron))
+        (card-ability state :corp (refresh ron) 0)
+        (is (zero? (get-counters (refresh ron) :advancement)) "Ronin didn't gain counters")
+        (is (= 3 (count (:hand (get-runner)))) "Ronin ability didn't fire with 0 advancements")))))
 
 (deftest sandburg
   ;; Sandburg - +1 strength to all ICE for every 5c when Corp has over 10c
@@ -2897,6 +2894,25 @@
       (prompt-choice :corp 7)
       (is (= 7 (:credit (get-corp))))
       (is (= 2 (count (:discard (get-corp)))) "Sealed Vault trashed"))))
+
+(deftest security-subcontract
+  ;; Security Subcontract
+  (do-game
+    (new-game (default-corp ["Security Subcontract" "Ice Wall"])
+              (default-runner))
+    (play-from-hand state :corp "Security Subcontract" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [ss (get-content state :remote1 0)
+          iw (get-ice state :hq 0)]
+      (core/rez state :corp ss)
+      (core/rez state :corp iw)
+      (card-ability state :corp ss 0)
+      (let [credits (:credit (get-corp))
+            clicks (:click (get-corp))]
+        (prompt-select :corp iw)
+        (is (= (+ credits 4) (:credit (get-corp))) "Corp should gain 4 from Security Subcontract ability")
+        (is (= "Ice Wall" (-> (get-corp) :discard first :title)) "Ice Wall should be in Archives from Security Subcontract ability")
+        (is (= (- clicks 1) (:click (get-corp))) "Corp should lose 1 click from Security Subcontract ability")))))
 
 (deftest server-diagnostics
   ;; Server Diagnostics - Gain 2c when turn begins; trashed when ICE is installed
