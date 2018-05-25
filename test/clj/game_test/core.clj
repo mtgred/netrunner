@@ -1,15 +1,9 @@
 (ns game-test.core
-  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs->symbol vdissoc distinct-by]]
-            [game.macros :refer [effect req msg]]
-            [clojure.string :refer [split-lines split join]]
-            [game.core :as core]
+  (:require [game.core :as core]
+            [game.utils :as utils :refer [make-cid]]
             [jinteki.cards :refer [all-cards]]
-            [game-test.utils :refer [load-card load-cards qty default-corp default-runner
-                                make-deck]]
-            [game-test.macros :refer [do-game]]
+            [game-test.utils :refer [load-cards]]
             [clojure.test :refer :all]))
-
 
 
 ;;; Click action functions
@@ -132,10 +126,7 @@
      (when (string? x)
        (find-card x (get-in @state [side :scored]))))))
 
-(defn get-counters
-  "Get number of counters of specified type."
-  [card type]
-  (get-in card [:counter type] 0))
+(def get-counters utils/get-counters)
 
 (defn play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
@@ -207,7 +198,7 @@
      (core/gain state :corp :click advancementcost :credit advancementcost)
      (dotimes [n advancementcost]
        (core/advance state :corp {:card (core/get-card state card)}))
-     (is (= advancementcost (get-in (core/get-card state card) [:advance-counter])))
+     (is (= advancementcost (get-counters (core/get-card state card) :advancement)))
      (core/score state :corp {:card (core/get-card state card)})
      (is (find-card title (get-in @state [:corp :scored]))))))
 

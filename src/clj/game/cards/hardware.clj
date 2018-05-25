@@ -6,18 +6,20 @@
                                         (update! state side (assoc-in (get-card state card) [:special :numpurged] counters))))}
              :purge {:delayed-completion true
                      :effect (effect (show-wait-prompt  :corp "Runner to decide if they will use Acacia")
-                                  (continue-ability {:optional
-                                                     {:player :runner
-                                                      :prompt "Use Acacia?"
-                                                      :yes-ability {:effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
-                                                                                                   (number-of-virus-counters state))]
-                                                                                   (gain state side :credit counters)
-                                                                                   (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
-                                                                                   (trash state side card)
-                                                                                   (clear-wait-prompt state :corp)
-                                                                                   (effect-completed state side eid)))}
-                                                      :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                                   (effect-completed eid))}}} card nil))}}}
+                                  (continue-ability
+                                    {:optional
+                                     {:player :runner
+                                      :prompt "Use Acacia?"
+                                      :yes-ability {:effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
+                                                                                   (number-of-virus-counters state))]
+                                                                   (gain state side :credit counters)
+                                                                   (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
+                                                                   (trash state side card)
+                                                                   (clear-wait-prompt state :corp)
+                                                                   (effect-completed state side eid)))}
+                                      :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                   (effect-completed eid))}}}
+                                    card nil))}}}
 
    "Adjusted Matrix"
    {:implementation "Click Adjusted Matrix to use ability."
@@ -136,7 +138,7 @@
                              :hand-size (runner-points @state)))})
 
    "Capstone"
-   {:abilities [{:req (req (> (count (:hand runner)) 0))
+   {:abilities [{:req (req (pos? (count (:hand runner))))
                  :cost [:click 1]
                  :effect (req (let [handsize (count (:hand runner))]
                                 (resolve-ability state side
@@ -392,7 +394,7 @@
 
    "Friday Chip"
    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
-                  :req (req (and (pos? (get-in card [:counter :virus] 0))
+                  :req (req (and (pos? (get-counters card :virus))
                                  (pos? (count-virus-programs state))))
                   :choices {:req is-virus-program?}
                   :effect (req (add-counter state :runner card :virus -1)
@@ -714,7 +716,7 @@
     :abilities [{:counter-cost [:power 1]
                  :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
-                              (when (= (get-in card [:counter :power]) 0)
+                              (when (zero? (get-counters (get-card state card) :power))
                                 (trash state side card {:unpreventable true})))}]}
 
    "Polyhistor"
@@ -726,12 +728,14 @@
                :no-ability {:effect (req (system-msg state side (str "does not use Polyhistor"))
                                          (effect-completed state side eid))}}}]
      {:in-play [:link 1 :memory 1]
-      :events {:pass-ice {:req (req (and (= (:server run) [:hq]) (= (:position run) 1) ; trigger when last ICE passed
+      :events {:pass-ice {:req (req (and (= (:server run) [:hq])
+                                         (= (:position run) 1) ; trigger when last ICE passed
                                          (pos? (count (:deck runner)))))
                           :delayed-completion true
                           :once :per-turn
                           :effect (req (continue-ability state :runner abi card nil))}
-               :run {:req (req (and (= (:server run) [:hq]) (= (:position run) 0) ; trigger on unprotected HQ
+               :run {:req (req (and (= (:server run) [:hq])
+                                    (zero? (:position run)) ; trigger on unprotected HQ
                                     (pos? (count (:deck runner)))))
                      :delayed-completion true
                      :once :per-turn
@@ -850,7 +854,7 @@
                   :msg "draw 1 card and add a power counter to itself"
                   :effect (req (draw state :runner)
                                (add-counter state side (get-card state card) :power 1)
-                               (when (= (get-in (get-card state card) [:counter :power]) 3)
+                               (when (= (get-counters (get-card state card) :power) 3)
                                  (system-msg state :runner "trashes Respirocytes as it reached 3 power counters")
                                  (trash state side card {:unpreventable true})))}]
    {:effect (req (let [watch-id (keyword "respirocytes" (str (:cid card)))]

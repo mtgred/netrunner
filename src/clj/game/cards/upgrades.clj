@@ -37,7 +37,8 @@
                                       (in-hand? %))}
                  :msg "host a piece of Bioroid ICE"
                  :effect (req (corp-install state side target card {:no-install-cost true}))}
-                {:req (req (and this-server (= (get-in @state [:run :position]) 0)))
+                {:req (req (and this-server
+                                (zero? (get-in @state [:run :position]))))
                  :label "Rez a hosted piece of Bioroid ICE"
                  :prompt "Choose a piece of Bioroid ICE to rez" :choices (req (:hosted card))
                  :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
@@ -144,7 +145,7 @@
    "Bryan Stinson"
    {:abilities [{:cost [:click 1]
                  :req (req (and (< (:credit runner) 6)
-                                (< 0 (count (filter #(and (is-type? % "Operation")
+                                (pos? (count (filter #(and (is-type? % "Operation")
                                                           (has-subtype? % "Transaction")) (:discard corp))))))
                  :label "Play a transaction operation from Archives, ignoring all costs, and remove it from the game"
                  :prompt "Choose a transaction operation to play"
@@ -173,7 +174,7 @@
                         :msg "start a Psi game"
                         :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}
              :run {:req (req (and this-server
-                                  (= (:position run) 0))) ; trigger on unprotected server
+                                  (zero? (:position run)))) ; trigger on unprotected server
                    :msg "start a Psi game"
                    :psi {:not-equal {:msg "end the run" :effect (effect (end-run))}}}}
     :abilities [{:msg "start a Psi game"
@@ -497,7 +498,8 @@
      {:events {:pass-ice {:req (req (and this-server (= (:position run) 1))) ; trigger when last ice passed
                           :delayed-completion true
                           :effect (req (continue-ability state :runner abi card nil))}
-               :run {:req (req (and this-server (= (:position run) 0))) ; trigger on unprotected server
+               :run {:req (req (and this-server
+                                    (zero? (:position run)))) ; trigger on unprotected server
                      :delayed-completion true
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
@@ -845,12 +847,14 @@
    "Shell Corporation"
    {:abilities
     [{:cost [:click 1]
-      :msg "store 3 [Credits]" :once :per-turn
+      :msg "store 3 [Credits]"
+      :once :per-turn
       :effect (effect (add-counter card :credit 3))}
      {:cost [:click 1]
-      :msg (msg "gain " (get-in card [:counter :credit] 0) " [Credits]") :once :per-turn
+      :msg (msg "gain " (get-counters card :credit) " [Credits]")
+      :once :per-turn
       :label "Take all credits"
-      :effect (effect (gain :credit (get-in card [:counter :credit] 0))
+      :effect (effect (gain :credit (get-counters card :credit))
                       (set-prop card :counter {:credit 0}))}]}
 
    "Signal Jamming"
@@ -882,7 +886,8 @@
                                                                                     (butlast (:previous-zone card))))))
                                          :run-ends {:effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard))))}
-      :events {:pre-steal-cost ab :run-ends nil}})
+      :events {:pre-steal-cost ab
+               :run-ends nil}})
 
    "Surat City Grid"
    {:events
@@ -959,25 +964,33 @@
     {:pre-resolve-damage
      {:once :per-run
       :delayed-completion true
-      :req (req (and this-server (= target :net) (> (last targets) 0) (can-pay? state :corp nil [:credit 2])))
+      :req (req (and this-server
+                     (= target :net)
+                     (pos? (last targets))
+                     (can-pay? state :corp nil [:credit 2])))
       :effect (req (swap! state assoc-in [:damage :damage-replace] true)
                    (damage-defer state side :net (last targets))
                    (show-wait-prompt state :runner "Corp to use Tori Hanzō")
                    (continue-ability state side
-                     {:optional {:prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?") :player :corp
-                                 :yes-ability {:delayed-completion true
-                                               :msg "do 1 brain damage instead of net damage"
-                                               :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
-                                                            (clear-wait-prompt state :runner)
-                                                            (pay state :corp card :credit 2)
-                                                            (when-completed (damage state side :brain 1 {:card card})
-                                                                            (do (swap! state assoc-in [:damage :damage-replace] true)
-                                                                                (effect-completed state side eid))))}
-                                 :no-ability {:delayed-completion true
-                                              :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
-                                                           (clear-wait-prompt state :runner)
-                                                           (effect-completed state side eid))}}} card nil))}
-     :prevented-damage {:req (req (and this-server (= target :net) (> (last targets) 0)))
+                     {:optional
+                      {:prompt (str "Pay 2 [Credits] to do 1 brain damage with Tori Hanzō?")
+                       :player :corp
+                       :yes-ability {:delayed-completion true
+                                     :msg "do 1 brain damage instead of net damage"
+                                     :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
+                                                  (clear-wait-prompt state :runner)
+                                                  (pay state :corp card :credit 2)
+                                                  (when-completed (damage state side :brain 1 {:card card})
+                                                                  (do (swap! state assoc-in [:damage :damage-replace] true)
+                                                                      (effect-completed state side eid))))}
+                       :no-ability {:delayed-completion true
+                                    :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
+                                                 (clear-wait-prompt state :runner)
+                                                 (effect-completed state side eid))}}}
+                     card nil))}
+     :prevented-damage {:req (req (and this-server
+                                       (= target :net)
+                                       (pos? (last targets))))
                         :effect (req (swap! state assoc-in [:per-run (:cid card)] true))}}}
 
    "Traffic Analyzer"

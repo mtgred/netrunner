@@ -1,6 +1,6 @@
 (ns game-test.cards.programs
   (:require [game.core :as core]
-            [game.utils :refer :all]
+            [game.utils :refer [has?]]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
@@ -162,7 +162,7 @@
         (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
         (take-credits state :runner 2)
         (core/advance state :corp {:card agenda})
-        (is (= 1 (:advance-counter (refresh agenda))) "Agenda was advanced")))))
+        (is (= 1 (get-counters (refresh agenda) :advancement)) "Agenda was advanced")))))
 
 (deftest djinn-host-program
   ;; Djinn - Host a non-icebreaker program
@@ -273,7 +273,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Harbinger")
     (core/trash state :runner (-> (get-runner) :rig :program first))
-    (is (= 0 (count (:discard (get-runner)))) "Harbinger not in heap")
+    (is (zero? (count (:discard (get-runner)))) "Harbinger not in heap")
     (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown")))
 
 (deftest hyperdriver
@@ -367,7 +367,7 @@
         (prompt-choice-partial :runner "Imp")
         (take-credits state :runner)
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
-        (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP")
+        (is (zero? (:agenda-point (get-runner))) "Runner did not steal TFP")
         (core/move state :corp (find-card "The Future Perfect" (:discard (get-corp))) :hand))
       (take-credits state :runner)
       (take-credits state :corp)
@@ -379,7 +379,7 @@
         ;; Fail psi game
         (prompt-choice-partial :runner "Imp")
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
-        (is (= 0 (:agenda-point (get-runner))) "Runner did not steal TFP"))))
+        (is (zero? (:agenda-point (get-runner))) "Runner did not steal TFP"))))
   (testing "vs cards in Archives"
     (do-game
       (new-game (default-corp ["Hostile Takeover"])
@@ -494,7 +494,7 @@
       (card-ability state :runner lep 0)
       (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
       (is (= 1 (:click (get-runner))))
-      (is (= 0 (:credit (get-runner))))
+      (is (zero? (:credit (get-runner))))
       (is (= 3 (core/available-mu state)) "Imp 1 MU not deducted from available MU")
       ;; Trash Hyperdriver
       (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard)
@@ -510,7 +510,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Magnum Opus")
     (is (= 2 (core/available-mu state)))
-    (is (= 0 (:credit (get-runner))))
+    (is (zero? (:credit (get-runner))))
     (let [mopus (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner mopus 0)
       (is (= 2 (:credit (get-runner))) "Gain 2cr"))))
@@ -575,7 +575,7 @@
         (prompt-select :runner wrap)
         (is (= 3 (core/available-mu state)) "Parasite consumes 1 MU")
         (let [psite (first (:hosted (refresh wrap)))]
-          (is (= 0 (get-counters psite :virus)) "Parasite has no counters yet")
+          (is (zero? (get-counters psite :virus)) "Parasite has no counters yet")
           (take-credits state :runner)
           (take-credits state :corp)
           (is (= 1 (get-counters (refresh psite) :virus))
@@ -731,13 +731,13 @@
       (let [hive (first (:hosted (refresh prog)))]
         (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
         (is (= 1 (get-counters hive :virus)) "Hivemind has 1 counter")
-        (is (= 0 (:credit (get-runner))) "Full cost to host on Progenitor")
+        (is (zero? (:credit (get-runner))) "Full cost to host on Progenitor")
         (take-credits state :runner 1)
         (take-credits state :corp)
         (card-ability state :runner vbg 0) ; use VBG to transfer 1 token to Hivemind
         (prompt-select :runner hive)
         (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind gained 1 counter")
-        (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter")))))
+        (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter")))))
 
 (deftest progenitor-mu-savings
   ;; Progenitor - Keep MU the same when hosting or trashing hosted programs
@@ -773,10 +773,10 @@
     (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
-    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+    (is (zero? (count (:hand (get-runner)))) "No cards in hand")
     ; No draw from Fall Guy trash as Reaver already fired this turn
     (card-ability state :runner (get-resource state 0) 1)
-    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+    (is (zero? (count (:hand (get-runner)))) "No cards in hand")
     (take-credits state :runner)
     ; Draw from Fall Guy trash on corp turn
     (card-ability state :runner (get-resource state 0) 1)
@@ -797,7 +797,7 @@
     (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
     (prompt-choice :runner "Done")
     (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
-    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")))
+    (is (zero? (count (:hand (get-runner)))) "No cards in hand")))
 
 (deftest rng-key
   ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
@@ -845,7 +845,7 @@
     (take-credits state :runner)
     (take-credits state :corp)
 
-    (is (= 0 (count (:hand (get-runner)))) "Started with 0 cards")
+    (is (zero? (count (:hand (get-runner)))) "Started with 0 cards")
     (run-on state "R&D")
     (run-successful state)
     (prompt-choice :runner "Yes")
@@ -853,7 +853,7 @@
     (prompt-choice :runner "Draw 2 cards")
     (prompt-choice :runner "No action")
     (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
-    (is (= 0 (count (:deck (get-runner)))) "Cards came from deck")))
+    (is (zero? (count (:deck (get-runner)))) "Cards came from deck")))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
@@ -899,7 +899,7 @@
       (take-credits state :corp)
       (card-ability state :runner smc2 0)
       (is (= 1 (count (:hand (get-runner)))) "1 card drawn due to Reaver before SMC program selection")
-      (is (= 0 (count (:deck (get-runner)))) "Deck empty"))))
+      (is (zero? (count (:deck (get-runner)))) "Deck empty"))))
 
 (deftest sneakdoor-beta
   (testing "Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits. Issue #1138."
@@ -1071,11 +1071,11 @@
         (take-credits state :corp)
         (prompt-choice :runner "Yes")
         (prompt-choice :runner "Yes"))
-      (is (= 0 (count (:discard (get-runner)))) "Trypano not in discard yet")
+      (is (zero? (count (:discard (get-runner)))) "Trypano not in discard yet")
       (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect is not trashed")
       (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect is not trashed")
       (play-from-hand state :runner "Hivemind") ; now Hivemind makes both Trypanos have 5 counters
-      (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect was trashed")
+      (is (zero? (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect was trashed")
       (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect was not trashed")
       (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard"))))
 
@@ -1103,7 +1103,7 @@
     (take-credits state :corp)
     (let [upya (get-program state 0)]
       (card-ability state :runner upya 0)
-      (is (= 0 (get-counters (refresh upya) :power)) "3 counters spent")
+      (is (zero? (get-counters (refresh upya) :power)) "3 counters spent")
       (is (= 5 (:click (get-runner))) "Gained 2 clicks"))))
 
 (deftest wari

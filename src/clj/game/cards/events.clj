@@ -650,7 +650,7 @@
                                                               (= (first (:server run)) (second (:zone %))))}
                                          :msg (msg "remove " (quantify c "advancement token")
                                                    " from " (card-str state target))
-                                         :effect (req (let [to-remove (min c (:advance-counter target 0))]
+                                         :effect (req (let [to-remove (min c (get-counters target :advancement))]
                                                         (add-prop state :corp target :advance-counter (- to-remove))
                                                         (clear-wait-prompt state :corp)
                                                         (effect-completed state side eid)))}
@@ -696,11 +696,11 @@
                                :msg "force the Corp to trash the top card of R&D"
                                :effect (req (mill state :corp)
                                             (let [n (count (filter #(= (:title card) (:title %)) (:hand runner)))]
-                                              (if (> n 0)
+                                              (if (pos? n)
                                                 (continue-ability state side
                                                   {:prompt "Reveal how many copies of Fear the Masses?"
                                                    :choices {:number (req n)}
-                                                   :effect (req (when (> target 0)
+                                                   :effect (req (when (pos? target)
                                                                   (mill state :corp target)
                                                                   (system-msg state side
                                                                               (str "reveals " target " copies of Fear the Masses,"
@@ -856,7 +856,8 @@
 
    "Hacktivist Meeting"
    {:implementation "Does not prevent rez if HQ is empty"
-    :events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
+    :events {:rez {:req (req (and (not (ice? target))
+                                  (pos? (count (:hand corp)))))
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}

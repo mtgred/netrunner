@@ -265,10 +265,10 @@
      {:delayed-completion true
       :req (req (and (= target :net)
                      (corp-can-choose-damage? state)
-                     (> (last targets) 0)
+                     (pos? (last targets))
                      (empty? (filter #(= :net (first %)) (turn-events state :runner :damage)))))
       :effect (req (damage-defer state side :net (last targets))
-                   (if (= 0 (count (:hand runner)))
+                   (if (zero? (count (:hand runner)))
                      (do (swap! state update-in [:damage] dissoc :damage-choose-corp)
                          (damage state side eid :net (get-defer-damage state side :net nil)
                                  {:unpreventable true :card card}))
@@ -343,7 +343,7 @@
       :req (req (and (not (get-in @state [:per-turn (:cid card)]))
                      (not (is-type? target "Agenda"))
                      (<= (:cost target)
-                         (reduce + (map #(get-in % [:counter :virus] 0)
+                         (reduce + (map #(get-counters % :virus)
                                         (all-installed state :runner))))))
       :once :per-turn
       :effect (req (let [accessed-card target
@@ -931,7 +931,7 @@
              (and
                (is-type? card "ICE")
                (installed? card)
-               (zero? (+ (:advance-counter card 0)
+               (zero? (+ (get-counters card :advancement)
                          (:extra-advance-counter card 0)))))
            (ice-with-no-advancement-tokens [state]
              (->> (all-installed state :corp)

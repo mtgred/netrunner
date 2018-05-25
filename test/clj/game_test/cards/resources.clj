@@ -14,10 +14,10 @@
               (default-runner [(qty "Activist Support" 1)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Activist Support")
-    (is (= 0 (:tag (get-runner))))
+    (is (zero? (:tag (get-runner))))
     (take-credits state :runner)
     (is (= 1 (:tag (get-runner))) "Runner took 1 tag; had none")
-    (is (= 0 (:bad-publicity (get-corp))))
+    (is (zero? (:bad-publicity (get-corp))))
     (take-credits state :corp)
     (is (= 1 (:bad-publicity (get-corp))) "Corp took 1 bad pub; had none")
     (take-credits state :runner)
@@ -230,7 +230,7 @@
     (is (= 3 (count (:hand (get-runner)))))
     (play-from-hand state :runner "Brain Cage")
     (is (= 2 (count (:hand (get-runner)))) "No cards lost")
-    (is (= 0 (:brain-damage (get-runner))))
+    (is (zero? (:brain-damage (get-runner))))
     (is (= 8 (core/hand-size state :runner)) "Runner hand size boosted by Brain Cage")
     (take-credits state :runner)
     (core/gain state :runner :tag 2)
@@ -249,7 +249,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Compromised Employee")
     (let [ce (get-resource state 0)]
-      (is (= 1 (:rec-counter (refresh ce))) "Has 1 recurring credit")
+      (is (= 1 (get-counters (refresh ce) :rec-counter)) "Has 1 recurring credit")
       (core/rez state :corp (get-ice state :hq 0))
       (is (= 4 (:credit (get-runner))) "Gained 1c from ICE rez")
       (core/rez state :corp (get-ice state :rd 0))
@@ -441,7 +441,7 @@
     (is (= 1 (count (:prompt (get-runner)))) "Runner prompted to avoid tag")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
-    (is (= 0 (:tag (get-runner))) "Tag avoided")))
+    (is (zero? (:tag (get-runner))) "Tag avoided")))
 
 (let [choose-runner
       (fn [name state prompt-map]
@@ -493,7 +493,7 @@
         ;; Try moving CT to hand
         (game.core/move state :runner (get-in (get-resource state 0) [:hosted 0]) :hand)
         (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
-        (is (= 0 (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
+        (is (zero? (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
         (is (= 4 (core/available-mu state)) "+1 MU from Chaos Theory removed")))
     (testing "Hosting Geist"
       ;; Ensure Geist effect triggers
@@ -580,7 +580,7 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
-    (is (= 0 (:agenda-point (get-runner))))
+    (is (zero? (:agenda-point (get-runner))))
     (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")))
 
 (deftest fan-site-eoi
@@ -601,7 +601,7 @@
     (prompt-select :corp (find-card "Hostile Takeover" (:scored (get-corp))))
 
     (is (= 1 (:agenda-point (get-runner))))
-    (is (= 0 (:agenda-point (get-corp))))
+    (is (zero? (:agenda-point (get-corp))))
 
     (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site swapped into Corp score area")
     (play-from-hand state :corp "Hostile Takeover" "New remote")
@@ -618,14 +618,14 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
-    (is (= 0 (:agenda-point (get-runner))))
+    (is (zero? (:agenda-point (get-runner))))
     (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")
     (take-credits state :corp)
     (play-from-hand state :runner "Data Dealer")
     (let [credits (:credit (get-runner))]
       (card-ability state :runner (get-resource state 0) 0)
       (prompt-select :runner (get-scored state :runner 0))
-      (is (= 0 (count (:scored (get-runner)))) "Fan Site successfully forfeit to Data Dealer")
+      (is (zero? (count (:scored (get-runner)))) "Fan Site successfully forfeit to Data Dealer")
       (is (= (+ credits 9) (:credit (get-runner))) "Gained 9 credits from Data Dealer"))))
 
 (deftest fester
@@ -659,7 +659,7 @@
       (take-credits state :runner)
       (trash-from-hand state :corp "Director Haas")
       (is (= 1 (count (:discard (get-corp)))) "Director Haas stayed in Archives")
-      (is (= 0 (:agenda-point (get-runner))) "No points gained by Runner")
+      (is (zero? (:agenda-point (get-runner))) "No points gained by Runner")
       (is (empty? (:scored (get-runner))) "Nothing in Runner scored"))))
 
 (deftest film-critic-fetal-ai
@@ -913,7 +913,7 @@
     (play-from-hand state :runner "Guru Davinder")
     (run-empty-server state "Server 1")
     (prompt-choice :runner "No action")
-    (is (= 0 (count (:discard (get-runner)))) "Runner did not pay damage")
+    (is (zero? (count (:discard (get-runner)))) "Runner did not pay damage")
     (is (not= :runner (:winner @state)) "Runner has not won")))
 
 (deftest hard-at-work
@@ -939,7 +939,7 @@
       (core/rez state :corp iwall)
       (play-from-hand state :runner "Ice Carver")
       (run-on state "Archives")
-      (is (= 0 (:current-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
+      (is (zero? (:current-strength (refresh iwall))) "Ice Wall strength at 0 for encounter")
       (run-jack-out state)
       (is (= 1 (:current-strength (refresh iwall))) "Ice Wall strength at 1 after encounter"))))
 
@@ -956,7 +956,7 @@
     (take-credits state :runner)
     (take-credits state :corp)
     (card-ability state :runner (get-resource state 0) 0)
-    (is (= 0 (:click (get-runner))) "Spent 4 clicks")
+    (is (zero? (:click (get-runner))) "Spent 4 clicks")
     (is (= 1 (count (:discard (get-runner)))) "IJ is trashed")
     (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
 
@@ -1083,7 +1083,7 @@
     (play-from-hand state :runner "Joshua B.")
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (= 0 (:click (get-runner))) "Runner has 0 clicks")
+    (is (zero? (:click (get-runner))) "Runner has 0 clicks")
     (is (:runner-phase-12 @state) "Runner is in Step 1.2")
     (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
     (is (= 1 (:click (get-runner))) "Gained extra click from Joshua")
@@ -1137,11 +1137,11 @@
     (take-credits state :corp)
     (prompt-choice :runner "No")
     (is (= 1 (count (:discard (get-runner)))) "First Lewi trashed")
-    (is (= 0 (get-in (get-corp) [:hand-size :mod])) "Corp hand size normal again")
+    (is (zero? (get-in (get-corp) [:hand-size :mod])) "Corp hand size normal again")
     (play-from-hand state :runner "Lewi Guilherme")
     (take-credits state :runner)
     (core/lose state :runner :credit 8)
-    (is (= 0 (:credit (get-runner))) "Credits are 0")
+    (is (zero? (:credit (get-runner))) "Credits are 0")
     (take-credits state :corp)
     (prompt-choice :runner "Yes")
     (is (= 2 (count (:discard (get-runner)))) "Second Lewi trashed due to no credits")))
@@ -1159,7 +1159,7 @@
       (run-on state :hq)
       (is (= 2 (:click (get-runner))) "Should still have 2 clicks")
       (card-ability state :runner (get-resource state 0) 0)
-      (is (= 0 (:click (get-runner))) "Should now have 0 clicks")
+      (is (zero? (:click (get-runner))) "Should now have 0 clicks")
       (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
       (is (last-log-contains? state "uses Logic Bomb"))
       (is (last-log-contains? state "\\[Click\\]\\[Click\\]") "Log should mention 2 clicks")))
@@ -1174,9 +1174,9 @@
       (core/click-credit state :runner nil)
       (core/click-credit state :runner nil)
       (run-on state :hq)
-      (is (= 0 (:click (get-runner))) "Should have 0 clicks")
+      (is (zero? (:click (get-runner))) "Should have 0 clicks")
       (card-ability state :runner (get-resource state 0) 0)
-      (is (= 0 (:click (get-runner))) "Should still have 0 clicks")
+      (is (zero? (:click (get-runner))) "Should still have 0 clicks")
       (is (= 1 (count (:discard (get-runner)))) "Logic Bomb should be discarded")
       (is (last-log-contains? state "uses Logic Bomb"))
       (is (not (last-log-contains? state "\\[Click\\]")) "Log shouldn't mention any clicks"))))
@@ -1191,7 +1191,7 @@
     (core/gain state :runner :click 2)
     (play-from-hand state :runner "London Library")
     (let [lib (get-in @state [:runner :rig :resource 0])]
-      (is (= 0 (count (:hosted (refresh lib)))) "0 programs hosted")
+      (is (zero? (count (:hosted (refresh lib)))) "0 programs hosted")
       (card-ability state :runner lib 0) ; Install a non-virus program on London Library
       (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
       (prompt-choice :runner "Done") ; Cancel out of Femme's bypass
@@ -1200,7 +1200,7 @@
       (prompt-select :runner (find-card "Study Guide" (:hand (get-runner))))
       (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
       (let [sg (second (:hosted (refresh lib)))]
-        (is (= 0 (:current-strength (refresh sg))) "Study Guide at 0 strength")
+        (is (zero? (:current-strength (refresh sg))) "Study Guide at 0 strength")
         (card-ability state :runner sg 1) ; Place 1 power counter
         (is (= 1 (:current-strength (refresh sg))) "Study Guide at 1 strength"))
       (card-ability state :runner lib 0)
@@ -1221,9 +1221,9 @@
       (card-ability state :runner lib 0)
       (prompt-select :runner (find-card "Study Guide" (:hand (get-runner))))
       (is (= 3 (count (:hosted (refresh lib)))) "3 programs hosted")
-      (is (= 0 (count (:discard (get-runner)))) "Nothing in archives yet")
+      (is (zero? (count (:discard (get-runner)))) "Nothing in archives yet")
       (take-credits state :runner)
-      (is (= 0 (count (:hosted (refresh lib)))) "All programs trashed when turn ends")
+      (is (zero? (count (:hosted (refresh lib)))) "All programs trashed when turn ends")
       (is (= 2 (count (:hand (get-runner)))) "Darwin never got played, Chameleon returned to hand")
       (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))
 
@@ -1274,7 +1274,7 @@
         (is (= 3 (count (:hand (get-runner)))) "Runner drew a card from Muertos")
         (prompt-select :corp toll)
         (is (:rezzed (refresh toll)) "Tollbooth was rezzed")
-        (is (= 0 (:credit (get-corp))) "Corp has 0 credits")))))
+        (is (zero? (:credit (get-corp))) "Corp has 0 credits")))))
 
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used
@@ -1375,7 +1375,7 @@
       (prompt-choice :runner 0) ; Runner won't match
       (card-ability state :runner nach 0)
       (prompt-choice :runner "Done")
-      (is (= 0 (:tag (get-runner))) "Avoided SEA Source tag")
+      (is (zero? (:tag (get-runner))) "Avoided SEA Source tag")
       (is (= 4 (:credit (get-runner))) "Paid 2 credits")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
@@ -1397,7 +1397,7 @@
       (card-ability state :runner nach 0)
       (card-ability state :runner nach 0)
       (prompt-choice :runner "Done")
-      (is (= 0 (:tag (get-runner))) "Tags avoided")
+      (is (zero? (:tag (get-runner))) "Tags avoided")
       (is (= 10 (:credit (get-runner))) "10 credits siphoned")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
@@ -1455,11 +1455,11 @@
    (starting-hand state :runner ["Officer Frank" "Skulljack" "Respirocytes" "Respirocytes" "Respirocytes" "Respirocytes"])
    (play-from-hand state :runner "Officer Frank")
    (card-ability state :runner (get-resource state 0) 0)
-   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
    (play-from-hand state :runner "Skulljack")
    (is (= 3 (count (:hand (get-runner)))) "Took 1 brain damage")
    (card-ability state :runner (get-resource state 0) 0)
-   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
    (let [sm (get-ice state :archives 0)]
      (run-on state :archives)
      (core/rez state :corp sm)
@@ -1467,9 +1467,9 @@
      (run-jack-out state))
    (is (= 2 (count (:hand (get-runner)))) "Took 1 net damage")
    (card-ability state :runner (get-resource state 0) 0)
-   (is (= 0 (count (:discard (get-corp)))) "Nothing discarded from HQ")
+   (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
    (play-from-hand state :runner "Respirocytes")
-   (is (= 0 (count (:hand (get-runner)))) "Took 1 meat damage")
+   (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")
    (card-ability state :runner (get-resource state 0) 0)
    (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
 
@@ -1763,7 +1763,7 @@
     (let [ht (get-content state :remote1 0)]
       (score-agenda state :corp ht)
       (is (= 1 (count (:discard (get-corp)))))
-      (is (= 0 (count (:deck (get-corp)))) "Last card from R&D milled"))))
+      (is (zero? (count (:deck (get-corp)))) "Last card from R&D milled"))))
 
 (deftest stim-dealer
   ;; Stim Dealer - Take 1 brain damage when it accumulates 2 power counters
@@ -1785,7 +1785,7 @@
       (is (= 5 (:click (get-runner))) "Gained 1 click")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= 0 (get-counters (refresh sd) :power)) "Lost all counters")
+      (is (zero? (get-counters (refresh sd) :power)) "Lost all counters")
       (is (empty? (:prompt (get-runner))) "No Feedback Filter brain dmg prevention possible")
       (is (= 1 (:brain-damage (get-runner))) "Took 1 brain damage")
       (is (= 4 (:click (get-runner))) "Didn't gain extra click"))))
@@ -2061,7 +2061,7 @@
       (is (= 3 (get-counters (refresh tw) :credit)) "No credit gained for resource install")
       (card-ability state :runner tw 0)
       (is (= 6 (:credit (get-runner))) "Gained 3 credits")
-      (is (= 0 (:click (get-runner))) "Spent 1 click")
+      (is (zero? (:click (get-runner))) "Spent 1 click")
       (is (= 1 (count (:discard (get-runner)))) "Technical Writer trashed"))))
 
 (deftest the-helpful-ai
@@ -2078,7 +2078,7 @@
       (prompt-select :runner corr)
       (is (= 4 (:current-strength (refresh corr))) "Corroder has +2 strength")
       (is (= 1 (count (:discard (get-runner)))) "Helpful AI trashed")
-      (is (= 0 (:link (get-runner))))
+      (is (zero? (:link (get-runner))))
       (take-credits state :runner)
       (is (= 2 (:current-strength (refresh corr))) "Corroder back to default strength"))))
 
@@ -2154,7 +2154,7 @@
       (core/end-turn state :runner nil)
       (take-credits state :corp)
       (prompt-select :runner (find-card "Plascrete Carapace" (:hosted (refresh ts))))
-      (is (= 0 (:credit (get-runner))) "Kate discount applied")
+      (is (zero? (:credit (get-runner))) "Kate discount applied")
       (is (= 1 (count (get-in @state [:runner :rig :resource]))) "Plascrete installed"))))
 
 (deftest the-supplier-trashed
@@ -2379,12 +2379,12 @@
     (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
     (run-empty-server state "Server 1")
     (prompt-choice-partial :runner "Pay") ; Trash PAD campaign
-    (is (= 0 (:credit (get-runner))) "Gained nothing from Wasteland on corp trash")
+    (is (zero? (:credit (get-runner))) "Gained nothing from Wasteland on corp trash")
     ; trash from hand first which should not trigger #2291
     (let [faust (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner faust 1)
       (prompt-card :runner (first (:hand (get-runner)))))
-    (is (= 0 (:credit (get-runner))) "Gained nothing from Wasteland")
+    (is (zero? (:credit (get-runner))) "Gained nothing from Wasteland")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")

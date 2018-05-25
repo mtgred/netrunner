@@ -159,23 +159,23 @@
     (let [ar (get-content state :remote1 0)
           iw (get-ice state :hq 0)]
       (core/rez state :corp (refresh ar))
-      (is (nil? (:advance-counter (refresh ar))) "Anson Rose should start with 0 advancement counters")
-      (is (nil? (:advance-counter (refresh iw))) "Ice Wall should start with 0 advancement counters")
+      (is (zero? (get-counters (refresh ar) :advancement)) "Anson Rose should start with 0 advancement counters")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should start with 0 advancement counters")
       (take-credits state :corp)
       (take-credits state :runner)
       (core/end-phase-12 state :corp nil)
-      (is (= 1 (:advance-counter (refresh ar))) "Anson Rose should gain 1 advancement counter at start of turn")
-      (is (nil? (:advance-counter (refresh iw))) "Ice Wall should still have 0 counters so far")
+      (is (= 1 (get-counters (refresh ar) :advancement)) "Anson Rose should gain 1 advancement counter at start of turn")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should still have 0 counters so far")
       (take-credits state :corp)
       (take-credits state :runner)
       (core/end-phase-12 state :corp nil)
-      (is (= 2 (:advance-counter (refresh ar))) "Anson Rose should gain 1 advancement counter at start of turn")
-      (is (nil? (:advance-counter (refresh iw))) "Ice Wall should still have 0 counters so far")
+      (is (= 2 (get-counters (refresh ar) :advancement)) "Anson Rose should gain 1 advancement counter at start of turn")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall should still have 0 counters so far")
       (core/rez state :corp (refresh iw))
       (prompt-choice :corp "Yes")
       (prompt-choice :corp 2)
-      (is (zero? (:advance-counter (refresh ar))) "Anson Rose should lose all advancement counters")
-      (is (= 2 (:advance-counter (refresh iw))) "Ice Wall should gain 2 advancement counter"))))
+      (is (zero? (get-counters (refresh ar) :advancement)) "Anson Rose should lose all advancement counters")
+      (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement counter"))))
 
 (deftest aryabhata-tech
   ;; Aryabhata Tech
@@ -363,7 +363,7 @@
     (let [co (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh co)})
       (core/advance state :corp {:card (refresh co)})
-      (is (= 2 (:advance-counter (refresh co))))
+      (is (= 2 (get-counters (refresh co) :advancement)))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes") ; choose to do the optional ability
@@ -592,12 +592,12 @@
         (take-credits state :runner)
         (is (:corp-phase-12 @state) "Should be waiting for Constellation Protocol to be fired")
         (card-ability state :corp cp 0)
-        (is (= 1 (:advance-counter (refresh iw))))
-        (is (= 1 (:advance-counter (refresh fw))))
+        (is (= 1 (get-counters (refresh iw) :advancement)))
+        (is (= 1 (get-counters (refresh fw) :advancement)))
         (prompt-select :corp (refresh iw))
         (prompt-select :corp (refresh fw))
-        (is (zero? (:advance-counter (refresh iw))))
-        (is (= 2 (:advance-counter (refresh fw))))
+        (is (zero? (get-counters (refresh iw) :advancement)))
+        (is (= 2 (get-counters (refresh fw) :advancement)))
         (core/end-phase-12 state :corp nil))))
   (testing "Variable number of advanceable cards"
     (do-game
@@ -868,11 +868,11 @@
       (take-credits state :runner)
       (card-ability state :corp ep 0)
       (prompt-select :corp iw)
-      (is (nil? (:advance-counter (refresh iw))) "Ice Wall can't targeted, not in server")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall can't targeted, not in server")
       (prompt-select :corp bl)
-      (is (nil? (:advance-counter (refresh bl))) "Blacklist can't targeted, can't be advanced")
+      (is (zero? (get-counters (refresh bl) :advancement)) "Blacklist can't targeted, can't be advanced")
       (prompt-select :corp gb)
-      (is (= 1 (:advance-counter (refresh gb))) "1 advancement on Ghost Branch")
+      (is (= 1 (get-counters (refresh gb) :advancement)) "1 advancement on Ghost Branch")
       (is (= 4 (:credit (get-corp)))))))
 
 (deftest echo-chamber
@@ -1141,11 +1141,9 @@
                  (new-game (default-corp [(qty "False Flag" 1)])
                            (default-runner))
                  (play-from-hand state :corp "False Flag" "New remote")
-                 (core/add-prop state
-                                :corp
-                                (get-content state :remote1 0)
-                                :advance-counter
-                                advancements)
+                 (core/add-counter state :corp
+                                   (get-content state :remote1 0)
+                                   :advancement advancements)
                  (take-credits state :corp)
                  (run-empty-server state "Server 1")
                  (prompt-choice :runner "No")
@@ -1440,7 +1438,7 @@
     (let [gb (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh gb)})
       (core/advance state :corp {:card (refresh gb)})
-      (is (= 2 (:advance-counter (refresh gb))))
+      (is (= 2 (get-counters (refresh gb) :advancement)))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (prompt-choice :corp "Yes") ; choose to do the optional ability
@@ -1458,7 +1456,7 @@
             credits (- (:credit (get-corp)) i)]
         (when (pos? i)
           (advance state (refresh grndl) i)
-          (is (= i (:advance-counter (refresh grndl))) (str "GRNDL Refinery should have " i " advancement counters on it")))
+          (is (= i (get-counters (refresh grndl) :advancement)) (str "GRNDL Refinery should have " i " advancement counters on it")))
         (card-ability state :corp (refresh grndl) 0)
         (is (= (+ credits (* i 4)) (:credit (get-corp))) (str "Corp should gain " (* i 4) " credits"))
         (is (= 1 (-> (get-corp) :discard count)) "Archives should have 1 card in it")
@@ -1476,12 +1474,12 @@
       (advance state haa 2)
       (core/rez state :corp (refresh haa))
       (is (= 1 (:click (get-corp))))
-      (is (= 2 (:advance-counter (refresh haa))))
+      (is (= 2 (get-counters (refresh haa) :advancement)))
       (card-ability state :corp (refresh haa) 0)
-      (is (= 1 (:advance-counter (refresh haa))) "Spent 1 advancement")
+      (is (= 1 (get-counters (refresh haa) :advancement)) "Spent 1 advancement")
       (is (= 2 (:click (get-corp))) "Spent last click to gain 2 clicks")
       (card-ability state :corp (refresh haa) 0)
-      (is (= 1 (:advance-counter (refresh haa))) "Can't use twice in a turn")
+      (is (= 1 (get-counters (refresh haa) :advancement)) "Can't use twice in a turn")
       (is (= 2 (:click (get-corp))) "Didn't spend a click"))))
 
 (deftest honeyfarm
@@ -2116,7 +2114,7 @@
     (play-from-hand state :corp "Mumba Temple" "New remote")
     (let [mumba (get-content state :remote1 0)]
       (core/rez state :corp mumba)
-      (is (= 2 (:rec-counter (refresh mumba))) "Should have 2 recurring credits"))))
+      (is (= 2 (get-counters (refresh mumba) :rec-counter)) "Should have 2 recurring credits"))))
 
 (deftest mumbad-city-hall
   ;; Mumbad City Hall
@@ -2150,16 +2148,16 @@
     (let [mcc (get-content state :remote1 0)
           oak (get-content state :remote2 0)]
       (core/rez state :corp mcc)
-      (is (zero? (:advance-counter (refresh mcc) 0)) "Mumbad Construction Co should start with 0 counters")
-      (is (zero? (:advance-counter (refresh oak) 0)) "Oaktown Renovation should start with 0 counters")
+      (is (zero? (get-counters (refresh mcc) :advancement)) "Mumbad Construction Co should start with 0 counters")
+      (is (zero? (get-counters (refresh oak) :advancement)) "Oaktown Renovation should start with 0 counters")
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (= 1 (:advance-counter (refresh mcc) 0)) "Mumbad Construction Co should gain 1 counter at start of turn")
+      (is (= 1 (get-counters (refresh mcc) :advancement)) "Mumbad Construction Co should gain 1 counter at start of turn")
       (let [credits (:credit (get-corp))]
         (card-ability state :corp mcc 0)
         (prompt-select :corp (refresh oak))
-        (is (zero? (:advance-counter (refresh mcc) 0)) "Mumbad Construction Co should lose 1 counter when using ability")
-        (is (= 1 (:advance-counter (refresh oak) 0)) "Oaktown Renovation should gain 1 counter from MCC ability")
+        (is (zero? (get-counters (refresh mcc) :advancement)) "Mumbad Construction Co should lose 1 counter when using ability")
+        (is (= 1 (get-counters (refresh oak) :advancement)) "Oaktown Renovation should gain 1 counter from MCC ability")
         (is (= (- credits 2) (:credit (get-corp))) "Mumbad Construction Co ability should cost 2[Credits]")))))
 
 (deftest museum-of-history
@@ -2224,7 +2222,7 @@
           nach (get-resource state 0)]
       (core/rez state :corp (refresh net))
       (core/advance state :corp {:card (refresh gb)})
-      (is (= 1 (:advance-counter (refresh gb))))
+      (is (= 1 (get-counters (refresh gb) :advancement)))
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))) "Corp hand size is 1 before run")
       (run-empty-server state "Server 1")
@@ -2254,15 +2252,15 @@
     (is (= 2 (:link (get-runner))))
     (let [netpol (get-content state :remote1 0)]
       (core/rez state :corp netpol)
-      (is (= 2 (:rec-counter (refresh netpol))) "2 recurring for Runner's 2 link")
+      (is (= 2 (get-counters (refresh netpol) :rec-counter)) "2 recurring for Runner's 2 link")
       (take-credits state :corp)
       (play-from-hand state :runner "Dyson Mem Chip")
       (take-credits state :runner)
-      (is (= 3 (:rec-counter (refresh netpol))) "3 recurring for Runner's 3 link")
+      (is (= 3 (get-counters (refresh netpol) :rec-counter)) "3 recurring for Runner's 3 link")
       (take-credits state :corp)
       (play-from-hand state :runner "Access to Globalsec")
       (take-credits state :runner)
-      (is (= 4 (:rec-counter (refresh netpol))) "4 recurring for Runner's 4 link"))))
+      (is (= 4 (get-counters (refresh netpol) :rec-counter)) "4 recurring for Runner's 4 link"))))
 
 (deftest news-team
   ;; News Team - on access take 2 tags or take as agenda worth -1
@@ -2365,7 +2363,7 @@
       (card-ability state :corp (refresh pf) 0)
       (prompt-select :corp (refresh fif))
       (is (zero? (:click (get-corp))) "Spent 2 clicks using PAD Factory twice")
-      (is (= 2 (:advance-counter (refresh fif))) "Agenda has 2 advancements")
+      (is (= 2 (get-counters (refresh fif) :advancement)) "Agenda has 2 advancements")
       (core/score state :corp {:card (refresh fif)})
       (is (empty? (:scored (get-corp))) "Prevented from scoring this turn")
       (take-credits state :corp)
@@ -2500,7 +2498,7 @@
     (play-from-hand state :corp "Primary Transmission Dish" "New remote")
     (let [dish (get-content state :remote1 0)]
       (core/rez state :corp dish)
-      (is (= 3 (:rec-counter (refresh dish))) "Should have 3 recurring credits"))))
+      (is (= 3 (get-counters (refresh dish) :rec-counter)) "Should have 3 recurring credits"))))
 
 (deftest psychic-field
   (testing "Basic test"
@@ -2698,13 +2696,13 @@
       (core/rez state :corp (refresh rc))
       (play-from-hand state :corp "Scorched Earth")
       (is (= 4 (count (:discard (get-runner)))))
-      (is (= 1 (:advance-counter (refresh rc))) "Reconstruction Contract has 1 advancement token")
+      (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract has 1 advancement token")
       (starting-hand state :runner ["Imp" "Imp"])
       (play-from-hand state :corp "Pup" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (card-subroutine state :corp (get-ice state :hq 0) 0)
       (is (= 5 (count (:discard (get-runner)))))
-      (is (= 1 (:advance-counter (refresh rc))) "Reconstruction Contract doesn't get advancement token for net damage"))))
+      (is (= 1 (get-counters (refresh rc) :advancement)) "Reconstruction Contract doesn't get advancement token for net damage"))))
 
 (deftest reversed-accounts
   ;; Reversed Accounts - Trash to make Runner lose 4 credits per advancement
@@ -2723,7 +2721,7 @@
       (is (= 18 (:credit (get-runner))))
       (core/advance state :corp {:card (refresh rev)})
       (core/advance state :corp {:card (refresh rev)})
-      (is (= 4 (:advance-counter (refresh rev))))
+      (is (= 4 (get-counters (refresh rev) :advancement)))
       (core/rez state :corp (refresh rev))
       (card-ability state :corp rev 0)
       (is (= 1 (count (:discard (get-corp)))) "Reversed Accounts trashed")
@@ -2753,7 +2751,7 @@
     (play-from-hand state :corp "Mushin No Shin")
     (prompt-select :corp (find-card "Ronin" (:hand (get-corp))))
     (let [ron (get-content state :remote1 0)]
-      (is (= 3 (:advance-counter (refresh ron))))
+      (is (= 3 (get-counters (refresh ron) :advancement)))
       (core/rez state :corp (refresh ron))
       (card-ability state :corp ron 0)
       (is (= 3 (count (:hand (get-runner))))
@@ -2761,7 +2759,7 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (core/advance state :corp {:card (refresh ron)})
-      (is (= 4 (:advance-counter (refresh ron))))
+      (is (= 4 (get-counters (refresh ron) :advancement)))
       (card-ability state :corp ron 0)
       (is (= 3 (count (:discard (get-runner)))) "Ronin did 3 net damage")
       (is (= 2 (count (:discard (get-corp)))) "Ronin trashed"))))
@@ -2773,10 +2771,10 @@
               (default-runner))
     (play-from-hand state :corp "Ronin" "New remote")
     (let [ron (get-content state :remote1 0)]
-      (is (nil? (:advance-counter (refresh ron))) "Ronin starts with no counters")
+      (is (zero? (get-counters (refresh ron) :advancement)) "Ronin starts with no counters")
       (core/rez state :corp (refresh ron))
       (card-ability state :corp (refresh ron) 0)
-      (is (nil? (:advance-counter (refresh ron))) "Ronin didn't gain counters")
+      (is (zero? (get-counters (refresh ron) :advancement)) "Ronin didn't gain counters")
       (is (= 3 (count (:hand (get-runner))))
           "Ronin ability didn't fire with 0 advancements"))))
 
@@ -2853,6 +2851,35 @@
     (is (= 5 (:credit (get-corp))) "Gained 2c at start of turn")
     (play-from-hand state :corp "Pup" "HQ")
     (is (= 1 (count (:discard (get-corp)))) "Server Diagnostics trashed by ICE install")))
+
+(deftest shattered-remains
+  ;; Shattered Remains
+  (do-game
+    (new-game (default-corp [(qty "Shattered Remains" 2)])
+              (default-runner ["Cyberfeeder" "Lemuria Codecracker"]))
+    (play-from-hand state :corp "Shattered Remains" "New remote")
+    (play-from-hand state :corp "Shattered Remains" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cyberfeeder")
+    (play-from-hand state :runner "Lemuria Codecracker")
+    (take-credits state :runner)
+    (let [remains1 (get-content state :remote1 0)
+          remains2 (get-content state :remote2 0)
+          cyber (get-hardware state 0)
+          lemuria (get-hardware state 1)]
+      (core/rez state :corp remains1)
+      (advance state remains2 1)
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (prompt-choice :corp "Yes")
+      (is (empty? (-> (get-corp) :prompt)) "Corp shouldn't get Shattered Remains ability prompt when no counters")
+      (prompt-choice :runner "No action")
+      (run-empty-server state :remote2)
+      (let [credits (:credit (get-corp))]
+        (prompt-choice :corp "Yes")
+        (prompt-select :corp cyber)
+        (is (= (- credits 1) (:credit (get-corp))) "Shattered Remains ability should cost 1")
+        (is (count (:discard (get-runner))) "Cyberfeeder should be in discard from Shattered Remains")))))
 
 (deftest shock
   ;; Shock! - do 1 net damage on access
@@ -2945,7 +2972,7 @@
       (prompt-choice :runner "Space Camp")
       (prompt-choice :corp "Yes")
       (prompt-select :corp (get-content state :remote1 0))
-      (is (= 1 (:advance-counter (get-content state :remote1 0))) "Agenda advanced once from Space Camp")
+      (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "Agenda advanced once from Space Camp")
       (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
       (is (not (:run @state)) "Run completed"))))
 
@@ -3266,13 +3293,13 @@
     (let [root (get-content state :remote1 0)]
       (core/rez state :corp root)
       (card-ability state :corp (refresh root) 0)
-      (is (= 2 (:rec-counter (refresh root))) "Took 1 credit from The Root")
+      (is (= 2 (get-counters (refresh root) :rec-counter)) "Took 1 credit from The Root")
        (is (= 6 (:credit (get-corp))) "Corp took Root credit into credit pool")
       (take-credits state :corp)
       (take-credits state :runner)
       ;; we expect Step 1.2 to have triggered because of Blue Sun
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-      (is (= 3 (:rec-counter (refresh root))) "Recurring credits were refilled before Step 1.2 window"))))
+      (is (= 3 (get-counters (refresh root) :rec-counter)) "Recurring credits were refilled before Step 1.2 window"))))
 
 (deftest toshiyuki-sakai
   ;; Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not
@@ -3284,7 +3311,7 @@
       (core/advance state :corp {:card (refresh toshi)})
       (core/advance state :corp {:card (refresh toshi)})
       (take-credits state :corp)
-      (is (= 2 (:advance-counter (refresh toshi))) "Toshiyuki has 2 advancements")
+      (is (= 2 (get-counters (refresh toshi) :advancement)) "Toshiyuki has 2 advancements")
       (run-empty-server state "Server 1")
       (is (= :waiting (-> @state :runner :prompt first :prompt-type))
           "Runner has prompt to wait for Toshiyuki")
@@ -3294,7 +3321,7 @@
       (prompt-select :corp (find-card "Project Junebug" (:hand (get-corp))))
       (let [june (get-content state :remote1 0)]
         (is (= "Project Junebug" (:title (refresh june))) "Project Junebug swapped into Server 1")
-        (is (= 2 (:advance-counter (refresh june))) "Project Junebug has 2 advancements")
+        (is (= 2 (get-counters (refresh june) :advancement)) "Project Junebug has 2 advancements")
         (prompt-choice :runner "Yes") ; choose to access new card
         (prompt-choice :corp "Yes") ; pay 1c to fire Junebug
         (is (= 4 (count (:discard (get-runner)))) "Runner took 4 net damage")))))

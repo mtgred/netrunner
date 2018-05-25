@@ -260,7 +260,7 @@
         (card-ability state :runner dino 0)
         (prompt-select :runner (find-card "Battering Ram" (:hand (get-runner))))
         (is (= 2 (:click (get-runner))))
-        (is (= 0 (:credit (get-runner))))
+        (is (zero? (:credit (get-runner))))
         (is (= 4 (core/available-mu state)) "Battering Ram 2 MU not deducted from available MU")
         (let [ram (first (:hosted (refresh dino)))]
           (is (= 5 (:current-strength (refresh ram)))
@@ -280,7 +280,7 @@
     (play-from-hand state :runner "Doppelgänger")
     (run-empty-server state :hq)
     (prompt-choice :runner "No action")
-    (is (= 0 (:run-credit (get-runner))) "Runner lost BP credits")
+    (is (zero? (:run-credit (get-runner))) "Runner lost BP credits")
     (prompt-choice :runner "Yes")
     (prompt-choice :runner "R&D")
     (is (:run @state) "New run started")
@@ -303,7 +303,7 @@
       (is (= :waiting (-> @state :runner :prompt first :prompt-type))
           "Runner has prompt to wait for Snare!")
       (prompt-choice :corp "Yes")
-      (is (= 0 (:tag (get-runner))) "Runner has 0 tags")
+      (is (zero? (:tag (get-runner))) "Runner has 0 tags")
       (is (= 3 (get-counters (refresh dorm) :power))))
       ))
 
@@ -319,7 +319,7 @@
     (play-from-hand state :corp "Data Mine" "Server 1")
     (let [co (get-content state :remote1 0)
           dm (get-ice state :remote1 0)]
-      (is (= 3 (:advance-counter (refresh co))) "3 advancements on Overwriter")
+      (is (= 3 (get-counters (refresh co) :advancement)) "3 advancements on Overwriter")
       (take-credits state :corp)
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Feedback Filter")
@@ -370,7 +370,7 @@
       (take-credits state :corp)
       (prompt-select :runner aum)
       (is (= 2 (get-counters (refresh aum) :virus)) "Aumakua gained 1 counter")
-      (is (= 0 (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))
+      (is (zero? (get-counters (refresh fc) :virus)) "Friday Chip lost 1 counter"))))
 
 (deftest grimoire
   ;; Grimoire - Gain 2 MU, add a free virus counter to installed virus programs
@@ -475,11 +475,11 @@
       (core/gain state :runner :credit 20)
       (run-empty-server state :hq)
       (prompt-choice :runner "No action")
-      (is (= 0 (count (:discard (get-corp)))) "No HQ card in discard before Maw installed")
+      (is (zero? (count (:discard (get-corp)))) "No HQ card in discard before Maw installed")
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
       (prompt-choice :runner "No action")
-      (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw as first decline already happened")
+      (is (zero? (count (:discard (get-corp)))) "HQ card not trashed by Maw as first decline already happened")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state :hq)
@@ -497,7 +497,7 @@
       (core/gain state :runner :credit 20)
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
-      (is (= 0 (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
+      (is (zero? (count (:discard (get-corp)))) "HQ card not trashed by Maw yet")
       (prompt-choice :runner "No action")
       (is (= 1 (count (:discard (get-corp)))) "HQ card trashed by Maw now")
       (is (:seen (first (:discard (get-corp)))) "Trashed card is registered as seen since it was accessed")))
@@ -510,7 +510,7 @@
       (play-from-hand state :runner "Maw")
       (run-empty-server state :hq)
       (prompt-choice :runner "No action")
-      (is (= 0 (count (:scored (get-runner)))) "Hiro not scored")
+      (is (zero? (count (:scored (get-runner)))) "Hiro not scored")
       (is (= 1 (count (:discard (get-corp)))) "Hiro trashed by Maw")))
   (testing "Maw shouldn't trigger on stolen agenda. #3433"
     (do-game
@@ -523,7 +523,7 @@
       (play-from-hand state :runner "Maw")
       (run-empty-server state :remote1)
       (prompt-choice :runner "Steal")
-      (is (= 0 (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen"))))
+      (is (zero? (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
@@ -550,7 +550,7 @@
       (let [accessed (first (:deck (get-corp)))]
         (run-empty-server state :rd)
         (prompt-choice :corp "Yes")
-        (is (= 0 (count (:hand (get-runner)))) "Runner took Snare! net damage")
+        (is (zero? (count (:hand (get-runner)))) "Runner took Snare! net damage")
         (is (= (:cid accessed) (:cid (:card (first (:prompt (get-runner)))))) "Accessing the top card of R&D")
         (card-ability state :runner maya 0)
         (is (empty? (:prompt (get-runner))) "No more prompts for runner")
@@ -789,7 +789,7 @@
         (card-subroutine state :corp dm 0)
         (card-ability state :runner rr1 0)
         (prompt-choice :runner 1)
-        (is (= 0 (count (:hand (get-runner)))) "Not enough cards in Stack for Ramujan to work")))))
+        (is (zero? (count (:hand (get-runner)))) "Not enough cards in Stack for Ramujan to work")))))
 
 (deftest recon-drone
   ;; trash and pay X to prevent that much damage from a card you are accessing
@@ -959,7 +959,7 @@
       (run-on state :hq)
       (is (= 2 (:position (:run @state))))
       (card-ability state :runner sifr 0)
-      (is (= 0 (:current-strength (refresh ip))))
+      (is (zero? (:current-strength (refresh ip))))
       (run-continue state)
       (is (= 1 (:position (:run @state))))
       (is (= 2 (count (:hand (get-runner))))) ; pre archangel
@@ -981,12 +981,12 @@
       (take-credits state :corp 4)
       (let [chip (get-hardware state 1)]
         (is (nil? (:sifr-target (refresh sifr))) "Sifr cleaned up on leave play")
-        (is (= 0 (count (:discard (get-corp)))) "No Corp cards trashed")
+        (is (zero? (count (:discard (get-corp)))) "No Corp cards trashed")
         (card-ability state :runner chip 0)
         (prompt-select :runner (find-card "Parasite" (:discard (get-runner))))
         (let [para (get-program state 0)]
           (prompt-select :runner ip)
-          (is (= 0 (count (:discard (get-corp)))) "IP Block Not Trashed")
+          (is (zero? (count (:discard (get-corp)))) "IP Block Not Trashed")
           (is (= 1 (count (:hosted (refresh ip)))) "Parasite is hosted"))))))
 
 (deftest spinal-modem
@@ -1000,7 +1000,7 @@
     (let [cad (get-ice state :hq 0)
           sm (get-hardware state 0)]
       (is (= 5 (core/available-mu state)))
-      (is (= 2 (:rec-counter (refresh sm))))
+      (is (= 2 (get-counters (refresh sm) :rec-counter)))
       (run-on state :hq)
       (core/rez state :corp cad)
       (card-subroutine state :corp cad 0)
@@ -1022,7 +1022,7 @@
     (card-ability state :runner (get-hardware state 0) 0)
     (is (= 1 (count (:discard (get-runner)))))
     (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards")
-    (is (= 0 (:link (get-runner))) "Lost link")))
+    (is (zero? (:link (get-runner))) "Lost link")))
 
 (deftest spy-camera
   ;; Spy Camera - Full test
@@ -1154,12 +1154,12 @@
       (let [tt (get-in @state [:runner :rig :hardware 0])]
         (run-empty-server state "HQ")
         (prompt-choice :runner "Steal")
-        (is (= 0 (:agenda-point (get-runner))) "Stole Domestic Sleepers")
+        (is (zero? (:agenda-point (get-runner))) "Stole Domestic Sleepers")
         (is (prompt-is-card? :runner tt))
         (prompt-choice :runner "Yes")
         (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
         (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")
-        (is (= 0 (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")))))
+        (is (zero? (:agenda-point (get-corp))) "Swapped Domestic Sleepers to Corp")))))
 
 (deftest turntable-mandatory-upgrades
   ;; Turntable - Swap a Mandatory Upgrades away from the Corp reduces Corp clicks per turn
@@ -1183,7 +1183,7 @@
       (is (prompt-is-card? :runner tt))
       (prompt-choice :runner "Yes")
       (prompt-select :runner (find-card "Project Vitruvius" (:scored (get-corp))))
-      (is (= 0 (:click (get-corp))) "Corp doesn't gain a click on Runner's turn")
+      (is (zero? (:click (get-corp))) "Corp doesn't gain a click on Runner's turn")
       (is (= 4 (:click-per-turn (get-corp)))))))
 
 (deftest vigil

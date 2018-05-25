@@ -281,9 +281,9 @@
     :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
-   {:msg (msg "gain " (:advance-counter target 0) " [Credits]")
+   {:msg (msg "gain " (get-counters target :advancement) " [Credits]")
     :choices {:req ice?}
-    :effect (final-effect (gain :credit (:advance-counter target 0)))}
+    :effect (final-effect (gain :credit (get-counters target :advancement)))}
 
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
@@ -768,9 +768,9 @@
                      (gain state :corp :credit c)))})
 
    "Mass Commercialization"
-   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (get-counters % :advancement) (:extra-advance-counter % 0)))
                                           (get-all-installed state)))) " [Credits]")
-    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (get-counters % :advancement) (:extra-advance-counter % 0)))
                                                       (get-all-installed state))))))}
 
    "MCA Informant"
@@ -1079,10 +1079,10 @@
     :prompt "Select an installed card that can be advanced"
     :choices {:req can-be-advanced?}
     :effect (req (let [installed (get-all-installed state)
-                       total-adv (reduce + (map :advance-counter
-                                                (filter #(:advance-counter %) installed)))]
+                       total-adv (reduce + (map #(get-counters % :advancement) installed))]
                    (doseq [c installed]
-                     (update! state side (dissoc c :advance-counter)))
+                     (set-prop state side c :advance-counter 0))
+                     ; (update! state side (dissoc c :advance-counter)))
                    (set-prop state side target :advance-counter total-adv)
                    (update-all-ice state side)
                    (system-msg state side (str "uses Red Planet Couriers to move " total-adv
@@ -1196,7 +1196,7 @@
     :events {:pass-ice {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (add-counter card :power 1))}
              :pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
-                                :effect (effect (ice-strength-bonus (get-in card [:counter :power] 0) target))}}}
+                                :effect (effect (ice-strength-bonus (get-counters card :power) target))}}}
 
    "Sacrifice"
    {:req (req (pos? (:bad-publicity corp)))
@@ -1562,7 +1562,7 @@
                       target))}
 
    "Trick of Light"
-   {:choices {:req #(and (contains? % :advance-counter) (> (:advance-counter %) 0))}
+   {:choices {:req #(pos? (get-counters % :advancement))}
     :delayed-completion true
     :effect (req (let [fr target tol card]
                    (continue-ability

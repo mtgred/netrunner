@@ -19,7 +19,7 @@
     (core/command-undo-turn state :runner)
     (core/command-undo-turn state :corp)
     (is (= 3 (count (:hand (get-corp)))) "Corp has 3 cards in HQ")
-    (is (= 0 (:click (get-corp))) "Corp has no clicks - turn not yet started")
+    (is (zero? (:click (get-corp))) "Corp has no clicks - turn not yet started")
     (is (= 5 (:credit (get-corp))) "Corp has 5 credits")))
 
 (deftest undo-click
@@ -40,11 +40,11 @@
     (core/command-undo-click state :corp)
     (is (= 1 (count (:scored (get-runner)))) "Corp attempt to undo click does nothing")
     (core/command-undo-click state :runner)
-    (is (= 0 (count (:scored (get-runner)))) "Runner attempt to undo click works ok")
+    (is (zero? (count (:scored (get-runner)))) "Runner attempt to undo click works ok")
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")
     (play-from-hand state :runner "Day Job")
-    (is (= 0 (:click (get-runner))) "Runner spent 4 clicks")
+    (is (zero? (:click (get-runner))) "Runner spent 4 clicks")
     (core/command-undo-click state :runner)
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
@@ -160,7 +160,7 @@
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
-        (is (= 0 (:rec-counter (refresh cehosted))))
+        (is (zero? (:rec-counter (refresh cehosted))))
         (core/rez state :corp iwall)
         (is (= 5 (:credit (get-runner))) "Compromised Employee gave 1 credit from ice rez")
         (take-credits state :runner)
@@ -242,7 +242,7 @@
         (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
         (let [dh (first (:hosted (refresh wp)))]
           (is (:rezzed dh) "Director Haas was rezzed")
-          (is (= 0 (:credit (get-corp))) "Corp has 0 credits")
+          (is (zero? (:credit (get-corp))) "Corp has 0 credits")
           (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
           (is (= 3 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
           (take-credits state :corp)
@@ -417,15 +417,15 @@
       (prompt-select :corp (refresh publics2))
       (is (= 2 (get-counters (refresh publics2) :power)))
       ;; Oaktown checks and manipulation
-      (is (= 3 (:advance-counter (refresh oaktown))))
+      (is (= 3 (get-counters (refresh oaktown) :advancement)))
       (core/command-adv-counter state :corp 2)
       (prompt-select :corp (refresh oaktown))
       ;; score should fail, shouldn't be able to score with 2 advancement tokens
       (core/score state :corp (refresh oaktown))
-      (is (= 0 (:agenda-point (get-corp))))
+      (is (zero? (:agenda-point (get-corp))))
       (core/command-adv-counter state :corp 4)
       (prompt-select :corp (refresh oaktown))
-      (is (= 4 (:advance-counter (refresh oaktown))))
+      (is (= 4 (get-counters (refresh oaktown) :advancement)))
       (is (= 3 (:credit (get-corp))))
       (is (= 3 (:click (get-corp))))
       (core/score state :corp (refresh oaktown)) ; now the score should go through
@@ -465,7 +465,7 @@
     (let [hok (get-content state :remote1 0)]
       (core/command-counter state :corp [3])
       (prompt-select :corp (refresh hok))
-      (is (= 3 (:advance-counter (refresh hok))))
+      (is (= 3 (get-counters (refresh hok) :advancement)))
       (core/score state :corp (refresh hok)))
     (let [hok-scored (get-scored state :corp 0)]
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
@@ -538,7 +538,7 @@
           (is (= 2 (get-counters imp :virus)) "Imp has 2 virus counters")
           (take-credits state :runner)
           (play-from-hand state :corp "Cyberdex Trial")
-          (is (= 0 (get-counters (refresh imp) :virus)) "Imp counters purged"))))))
+          (is (zero? (get-counters (refresh imp) :virus)) "Imp counters purged"))))))
 
 (deftest multi-access-rd
   ;; multi-access of R&D sees all cards and upgrades

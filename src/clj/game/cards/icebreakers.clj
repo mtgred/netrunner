@@ -262,7 +262,7 @@
     :msg (msg "add " target " power counters")
     :effect (effect (add-counter card :power target))
     :abilities [(break-sub 1 1)]
-    :strength-bonus (req (get-in card [:counter :power] 0))
+    :strength-bonus (req (get-counters card :power))
     :events {:counter-added {:req (req (= :cid target) (:cid card))
                              :effect (effect (update-breaker-strength card))}}}
 
@@ -402,12 +402,13 @@
                                  {:cost [:click 1]
                                   :msg "place 1 virus counter"
                                   :effect (effect (add-counter card :virus 1))}]
-                     :events (let [encounter-ends-effect {:req (req (:crypsis-broke card))
-                                                          :effect (req ((:effect breaker-auto-pump) state side eid card targets)
-                                                                       (if (pos? (get-in card [:counter :virus] 0))
-                                                                         (add-counter state side card :virus -1)
-                                                                         (trash state side card {:cause :self-trash}))
-                                                                       (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
+                     :events (let [encounter-ends-effect
+                                   {:req (req (:crypsis-broke card))
+                                    :effect (req ((:effect breaker-auto-pump) state side eid card targets)
+                                                 (if (pos? (get-counters card :virus))
+                                                   (add-counter state side card :virus -1)
+                                                   (trash state side card {:cause :self-trash}))
+                                                 (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
                                {:pass-ice encounter-ends-effect
                                 :run-ends encounter-ends-effect})
                      :move-zone (req (when (= [:discard] (:zone card))
@@ -680,7 +681,7 @@
 
    "Mammon"
    (auto-icebreaker ["All"]
-                    {:flags {:runner-phase-12 (req (> (:credit runner) 0))}
+                    {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
                      :abilities [{:label "X [Credits]: Place X power counters"
                                   :prompt "How many power counters to place on Mammon?" :once :per-turn
                                   :choices {:number (req (:credit runner))}
@@ -752,7 +753,7 @@
                  :effect (effect (add-counter card :power 1)
                                  (update-breaker-strength card))}
                 (break-sub 1 1 "Barrier")]
-    :strength-bonus (req (get-in card [:counter :power] 0))}
+    :strength-bonus (req (get-counters card :power))}
 
    "Ninja"
    (auto-icebreaker ["Sentry"]
@@ -841,7 +842,7 @@
                                   :label "Remove 1 power counter"
                                   :effect (effect (add-counter card :power -1)
                                                   (update-breaker-strength card))}]
-                     :strength-bonus (req (get-in card [:counter :power] 0))})
+                     :strength-bonus (req (get-counters card :power))})
 
    "Refractor"
    (auto-icebreaker ["Code Gate"]
@@ -897,7 +898,7 @@
                 {:cost [:credit 2] :msg "place 1 power counter"
                  :effect (effect (add-counter card :power 1)
                                  (update-breaker-strength card))}]
-    :strength-bonus (req (get-in card [:counter :power] 0))}
+    :strength-bonus (req (get-counters card :power))}
 
    "Sūnya"
    {:implementation "Adding power counter is manual"
@@ -907,7 +908,7 @@
                                  (system-msg (str "places 1 power counter on Sūnya"))
                                  (update-breaker-strength card))}
                 (break-sub 2 1 "Sentry")]
-    :strength-bonus (req (get-in card [:counter :power] 0))}
+    :strength-bonus (req (get-counters card :power))}
 
    "Switchblade"
    (auto-icebreaker ["Sentry"]
@@ -952,10 +953,10 @@
                                               (add-counter card :virus 1))}}
     :abilities [{:label "Add strength"
                  :prompt "Choose a card with virus counters"
-                 :choices {:req #(pos? (get-in % [:counter :virus] 0))}
+                 :choices {:req #(pos? (get-counters % :virus))}
                  :effect (req (let [selected-virus target
                                     yusuf card
-                                    counters (get-in selected-virus [:counter :virus] 0)]
+                                    counters (get-counters selected-virus :virus)]
                                 (resolve-ability state side
                                                  {:prompt "Spend how many counters?"
                                                   :choices {:number (req counters)
@@ -971,10 +972,10 @@
                                                  yusuf nil)))}
                 {:label "Break barrier subroutine(s)"
                  :prompt "Choose a card with virus counters"
-                 :choices {:req #(pos? (get-in % [:counter :virus] 0))}
+                 :choices {:req #(pos? (get-counters % :virus))}
                  :effect (req (let [selected-virus target
                                     yusuf card
-                                    counters (get-in selected-virus [:counter :virus] 0)]
+                                    counters (get-counters selected-virus :virus)]
                                 (resolve-ability state side
                                                  {:prompt "Spend how many counters?"
                                                   :choices {:number (req counters)

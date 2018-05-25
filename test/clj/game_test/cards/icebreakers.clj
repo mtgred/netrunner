@@ -30,8 +30,8 @@
     (prompt-choice :runner 0)
     (is (= 3 (core/available-mu state)))
     (let [atman (get-in @state [:runner :rig :program 0])]
-      (is (= 0 (get-counters atman :power)) "0 power counters")
-      (is (= 0 (:current-strength atman)) "0 current strength"))))
+      (is (zero? (get-counters atman :power)) "0 power counters")
+      (is (zero? (:current-strength atman)) "0 current strength"))))
 
 (deftest atman-install-2
   ;; Atman - Installing with 2 power counters
@@ -135,7 +135,7 @@
     (play-from-hand state :runner "Clone Chip")
     (core/move state :runner (find-card "Chameleon" (:hand (get-runner))) :discard)
     (take-credits state :runner)
-    (is (= 0 (count (:hand (get-runner)))))
+    (is (zero? (count (:hand (get-runner)))))
     ;; Install Chameleon on corp turn
     (take-credits state :corp 1)
     (let [chip (get-in @state [:runner :rig :hardware 0])]
@@ -143,7 +143,7 @@
       (prompt-select :runner (find-card "Chameleon" (:discard (get-runner))))
       (prompt-choice :runner "Sentry"))
     (take-credits state :corp)
-    (is (= 0 (count (:hand (get-runner)))) "Chameleon not returned to hand at end of corp turn")
+    (is (zero? (count (:hand (get-runner)))) "Chameleon not returned to hand at end of corp turn")
     (take-credits state :runner)
     (is (= 1 (count (:hand (get-runner)))) "Chameleon returned to hand at end of runner's turn")))
 
@@ -167,7 +167,7 @@
       (prompt-choice :runner "Code Gate")
       (is (= 2 (count (:hosted (refresh scheherazade)))) "2 Chameleons hosted on Scheherazade")
       (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon, +1 from installing onto Scheherazade"))
-    (is (= 0 (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
+    (is (zero? (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
     (take-credits state :runner)
     (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2")))
 
@@ -192,16 +192,16 @@
       (is (= 1 (get-in (refresh crypsis) [:counter :virus]))
           "Crypsis has 1 virus counter")
       (run-continue state)
-      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+      (is (zero? (get-in (refresh crypsis) [:counter :virus]))
           "Crypsis has 0 virus counters")
       (run-jack-out state)
-      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+      (is (zero? (get-in (refresh crypsis) [:counter :virus]))
           "Crypsis has 0 virus counters")
 
       (run-on state "Archives")
       (card-ability state :runner (refresh crypsis) 0) ; Match strength
       (card-ability state :runner (refresh crypsis) 1) ; Break
-      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+      (is (zero? (get-in (refresh crypsis) [:counter :virus]))
           "Crypsis has 0 virus counters")
       (run-jack-out state)
       (is (= "Crypsis" (:title (first (:discard (get-runner)))))
@@ -230,7 +230,7 @@
     (play-from-hand state :runner "Darwin")
     (let [darwin (get-program state 0)]
       (is (zero? (get-counters (refresh darwin) :virus)) "Darwin starts with 0 virus counters")
-      (is (= 0 (:current-strength (refresh darwin ))) "Darwin starts at 0 strength")
+      (is (zero? (:current-strength (refresh darwin ))) "Darwin starts at 0 strength")
       (take-credits state :runner)
       (take-credits state :corp)
       (card-ability state :runner (refresh darwin) 1) ; add counter
@@ -409,7 +409,7 @@
      (is (= 2 (:credit (get-runner))) "Spent 3 credits")
      (is (= 3 (get-counters (refresh mam) :power)) "Mammon has 3 power counters")
      (take-credits state :runner)
-     (is (= 0 (get-counters (refresh mam) :power)) "All power counters removed"))))
+     (is (zero? (get-counters (refresh mam) :power)) "All power counters removed"))))
 
 (deftest nanotk-install-ice-during-run
   ;; Na'Not'K - Strength adjusts accordingly when ice installed during run
@@ -548,7 +548,7 @@
       (is (and (= 2 (:credit (get-runner))) (empty? (:hand (get-runner)))) "Can't use Peregrine on unrezzed code gate")
       (run-continue state)
       (card-ability state :runner per 2)
-      (is (= 0 (:credit (get-runner))) "Spent 2 credits")
+      (is (zero? (:credit (get-runner))) "Spent 2 credits")
       (is (= 1 (count (:hand (get-runner)))) "Peregrine returned to grip")
       (is (not (get-in (refresh bw1) [:rezzed])) "Bandwidth derezzed"))))
 
@@ -669,7 +669,7 @@
          wyrm (get-in @state [:runner :rig :program 0])]
      (core/rez state :corp ice-wall)
      (card-ability state :runner wyrm 1)
-     (is (= 0 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to 0")
+     (is (zero? (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to 0")
      (card-ability state :runner wyrm 1)
      (is (= -1 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to -1"))))
 
@@ -697,7 +697,7 @@
       (prompt-select :runner yusuf)
       (prompt-choice :runner 1)
       (is (= 5 (:current-strength (refresh yusuf))) "Yusuf strength 5")
-      (is (= 0 (get-in (refresh yusuf) [:counter :virus])) "Yusuf lost a virus counter")
+      (is (zero? (get-in (refresh yusuf) [:counter :virus])) "Yusuf lost a virus counter")
       (card-ability state :runner yusuf 1)
       (prompt-select :runner cache)
       (prompt-choice :runner 1)
