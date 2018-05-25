@@ -302,7 +302,7 @@
               (default-runner))
     (play-from-hand state :corp "Braintrust" "New remote")
     (let [bt (get-content state :remote1 0)]
-      (core/add-counter state :corp bt :advancement 7)
+      (core/add-prop state :corp bt :advance-counter 7)
       (core/score state :corp {:card (refresh bt)})
       (let [scored-bt (get-scored state :corp 0)]
         (is (= 2 (get-counters (refresh scored-bt) :agenda))

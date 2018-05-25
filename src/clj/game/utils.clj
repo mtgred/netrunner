@@ -345,7 +345,5 @@
     (:advance-counter card 0)
     (= counter :rec-counter)
     (:rec-counter card 0)
-    ; (= counter :agenda)
-    ; (:agenda card 0)
     :else
     (get-in card [:counter counter] 0)))

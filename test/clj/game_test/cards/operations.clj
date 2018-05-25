@@ -1290,9 +1290,9 @@
           gr (get-content state :remote2 0)
           iw1 (get-ice state :hq 0)
           iw2 (get-ice state :rd 0)]
-      (core/add-counter state :corp gr :advancement 3)
-      (core/add-counter state :corp iw1 :advancement 2)
-      (core/add-counter state :corp iw2 :advancement 1)
+      (core/add-prop state :corp gr :advance-counter 3)
+      (core/add-prop state :corp iw1 :advance-counter 2)
+      (core/add-prop state :corp iw2 :advance-counter 1)
       (play-from-hand state :corp "Red Planet Couriers")
       (prompt-select :corp gt)
       (is (zero? (get-counters (refresh gr) :advancement)) "Advancements removed")

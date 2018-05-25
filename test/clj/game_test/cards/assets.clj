@@ -1141,9 +1141,9 @@
                  (new-game (default-corp [(qty "False Flag" 1)])
                            (default-runner))
                  (play-from-hand state :corp "False Flag" "New remote")
-                 (core/add-counter state :corp
-                                   (get-content state :remote1 0)
-                                   :advancement advancements)
+                 (core/add-prop state :corp
+                                (get-content state :remote1 0)
+                                :advance-counter advancements)
                  (take-credits state :corp)
                  (run-empty-server state "Server 1")
                  (prompt-choice :runner "No")
