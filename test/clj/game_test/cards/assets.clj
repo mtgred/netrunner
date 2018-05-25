@@ -2744,6 +2744,51 @@
       (is (= 1 (count (:discard (get-corp)))) "Reversed Accounts trashed")
       (is (= 2 (:credit (get-runner))) "Runner lost 16 credits"))))
 
+(deftest rex-campaign
+  ;; Rex Campaign
+  (testing "Gain 5 credits"
+    (do-game
+      (new-game (default-corp ["Rex Campaign"])
+                (default-runner))
+      (play-from-hand state :corp "Rex Campaign" "New remote")
+      (let [rex (get-content state :remote1 0)]
+        (core/rez state :corp rex)
+        (is (= 3 (get-counters (refresh rex) :power)))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 2 (get-counters (refresh rex) :power)))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 1 (get-counters (refresh rex) :power)))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (let [credits (:credit (get-corp))]
+          (is (zero? (get-counters (refresh rex) :power)))
+          (prompt-choice-partial :corp "Gain")
+          (is (= (+ 5 credits) (:credit (get-corp))))
+          (is (= "Rex Campaign" (-> (get-corp) :discard first :title)))))))
+  (testing "Lose 1 bad publicity"
+    (do-game
+      (new-game (default-corp ["Rex Campaign"])
+                (default-runner))
+      (core/gain-bad-publicity state :corp 1)
+      (play-from-hand state :corp "Rex Campaign" "New remote")
+      (let [rex (get-content state :remote1 0)]
+        (core/rez state :corp rex)
+        (is (= 3 (get-counters (refresh rex) :power)))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 2 (get-counters (refresh rex) :power)))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (= 1 (get-counters (refresh rex) :power)))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (is (zero? (get-counters (refresh rex) :power)))
+        (prompt-choice-partial :corp "Remove")
+        (is (zero? (:bad-publicity (get-corp))) "Should not have the same amount of bad publicity")
+        (is (= "Rex Campaign" (-> (get-corp) :discard first :title)))))))
+
 (deftest ronald-five
   ;; Ronald Five - Runner loses a click every time they trash a Corp card
   (do-game

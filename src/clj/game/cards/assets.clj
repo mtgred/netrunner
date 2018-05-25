@@ -1405,7 +1405,6 @@
                                                    (system-msg (str "trashes Reconstruction Contract to move " target
                                                                     (pluralize " advancement token" target) " to "
                                                                     (card-str state move-to))))}
-
                                   card nil)))}]}
 
    "Reversed Accounts"
