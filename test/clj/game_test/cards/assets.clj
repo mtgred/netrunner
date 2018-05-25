@@ -3194,6 +3194,26 @@
   ;       (is (= 5 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew"))))
   )
 
+(deftest synth-dna-modification
+  ;; Synth DNA Modification
+  (do-game
+    (new-game (default-corp ["Synth DNA Modification" "Data Mine"])
+              (default-runner))
+    (play-from-hand state :corp "Synth DNA Modification" "New remote")
+    (play-from-hand state :corp "Data Mine" "HQ")
+    (let [dna (get-content state :remote1 0)
+          data (get-ice state :hq 0)]
+      (core/rez state :corp dna)
+      (core/rez state :corp data)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (card-subroutine state :corp data 0)
+      (is (= 1 (count (:discard (get-runner)))) "Runner should take 1 net damage from Data Mine")
+      (is (= 1 (count (:discard (get-corp)))) "Data Mine should trash self after subroutine fires")
+      (card-ability state :corp dna 0)
+      (is (= 2 (count (:discard (get-runner))))
+          "Runner should take 1 net damage from Synth DNA Modification after Data Mine subroutine"))))
+
 (deftest team-sponsorship
   ;; Team Sponsorship
   (testing "Install from HQ"
