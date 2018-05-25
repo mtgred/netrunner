@@ -225,7 +225,10 @@
           (when (and user (not mute-spectators))
             (main/handle-say state :spectator user msg)
             (swap! all-games assoc-in [gameid :last-update] (t/now))
-            (swap-and-send-diffs! game)))))))
+            (try
+              (swap-and-send-diffs! game)
+              (catch Exception ex
+                (println (str "handle-game-say exception:" (.getMessage ex) "\n"))))))))))
 
 (defn handle-game-typing
   [{{{:keys [username] :as user} :user} :ring-req
@@ -237,7 +240,10 @@
           {:keys [side user]} (lobby/player? client-id gameid)]
       (when (and state side user)
         (main/handle-typing state (jinteki.utils/side-from-str side) user typing)
-        (swap-and-send-diffs! game)))))
+        (try
+          (swap-and-send-diffs! game)
+          (catch Exception ex
+            (println (str "handle-game-typing exception:" (.getMessage ex) "\n"))))))))
 
 (defn handle-ws-close [{{{:keys [username] :as user} :user} :ring-req
                         client-id                           :client-id}]
