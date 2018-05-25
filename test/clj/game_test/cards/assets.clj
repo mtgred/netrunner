@@ -3016,6 +3016,28 @@
         (is (= (- credits 1) (:credit (get-corp))) "Shattered Remains ability should cost 1")
         (is (count (:discard (get-runner))) "Cyberfeeder should be in discard from Shattered Remains")))))
 
+(deftest shi-kyu
+  ;; Shi.Kyū
+  (do-game
+    (new-game (default-corp ["Shi.Kyū"])
+              (default-runner [(qty "Sure Gamble" 5)]))
+    (play-from-hand state :corp "Shi.Kyū" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp 5)
+    (is (= "Take 5 net damage" (-> (get-runner) :prompt first :choices first)))
+    (prompt-choice-partial :runner "net damage")
+    (prompt-choice :runner "No action")
+    (is (zero? (count (:hand (get-runner)))) "Runner took 5 net damage from Shi.Kyū")
+    (run-empty-server state "Server 1")
+    (prompt-choice :corp "Yes")
+    (prompt-choice :corp 2)
+    (is (= "Take 2 net damage" (-> (get-runner) :prompt first :choices first)))
+    (prompt-choice-partial :runner "Add")
+    (is (empty? (-> (get-runner) :prompt)) "Runner shouldn't get the option to trash Shi.Kyū as it was added to agenda area")
+    (is (= -1 (:agenda-point (get-runner))) "Runner should be at -1 agenda points after adding Shi.Kyū to agenda area")))
+
 (deftest shock
   ;; Shock! - do 1 net damage on access
   (testing "Basic test"

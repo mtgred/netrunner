@@ -49,8 +49,11 @@
   "Adds the given card to the given side's :scored area as an agenda worth n points after resolving the trash prompt."
   ([state side eid card n] (as-trashed-agenda state side eid card n nil))
   ([state side eid card n options]
-  (or (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored options) ; if the runner did not trash the card on access, then this will work
-      (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options)) ; allow force option in case of Blacklist/News Team
+  (or
+    ; if the runner did not trash the card on access, then this will work
+    (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored options)
+    ; allow force option in case of Blacklist/News Team
+    (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options))
    (when-completed (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
                    (do (gain-agenda-point state side n)
                        (effect-completed state side eid)))))
@@ -1147,8 +1150,7 @@
                                                    (trigger-event state side :no-trash card)
                                                    (as-trashed-agenda state :runner eid card -1 {:force true}))
                                                (do (system-msg state :runner (str "takes 2 tags from News Team"))
-                                                   (tag-runner state :runner eid 2)
-                                                   (trigger-event state side :no-trash card))))}
+                                                   (tag-runner state :runner eid 2))))}
                                card targets))}}
 
    "NGO Front"
@@ -1560,26 +1562,28 @@
                      (continue-ability
                        {:optional
                         {:prompt "Pay [Credits] to use Shi.Kyū?"
-                         :yes-ability {:prompt "How many [Credits] for Shi.Kyū?" :choices :credit
-                                       :msg (msg "attempt to do " target " net damage")
-                                       :delayed-completion true
-                                       :effect (effect (clear-wait-prompt :runner)
-                                                       (continue-ability
-                                                         {:player :runner
-                                                          :prompt (str "Take " target " net damage or add Shi.Kyū to your score area as an agenda worth -1 agenda point?")
-                                                          :choices [(str "Take " target " net damage") "Add Shi.Kyū to score area"]
-                                                          :delayed-completion true
-                                                          :effect (let [dmg target]
-                                                                    (req (if (= target "Add Shi.Kyū to score area")
-                                                                           (do (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
-                                                                               (trigger-event state side :no-trash card)
-                                                                               (as-trashed-agenda state :runner eid card -1))
-                                                                           (do (damage state :corp eid :net dmg {:card card})
-                                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū"))
-                                                                               (trigger-event state side :no-trash card)))))}
-                                                        card targets))}
+                         :yes-ability
+                         {:prompt "How many [Credits] for Shi.Kyū?"
+                          :choices :credit
+                          :msg (msg "attempt to do " target " net damage")
+                          :delayed-completion true
+                          :effect (req (let [dmg target]
+                                         (clear-wait-prompt state :runner)
+                                         (continue-ability
+                                           state :corp
+                                           {:player :runner
+                                            :prompt (str "Take " dmg " net damage or add Shi.Kyū to your score area as an agenda worth -1 agenda point?")
+                                            :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
+                                            :delayed-completion true
+                                            :effect (req (if (= target "Add Shi.Kyū to score area")
+                                                           (do (system-msg state :runner (str "adds Shi.Kyū to their score area as as an agenda worth -1 agenda point"))
+                                                               (trigger-event state side :no-trash card)
+                                                               (as-trashed-agenda state :runner eid card -1 {:force true}))
+                                                           (do (damage state :corp eid :net dmg {:card card})
+                                                               (system-msg state :runner (str "takes " dmg " net damage from Shi.Kyū")))))}
+                                           card targets)))}
                          :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
-                      card targets))}}
+                       card targets))}}
 
    "Shock!"
    {:flags {:rd-reveal (req true)}
