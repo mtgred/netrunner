@@ -548,7 +548,10 @@
                                        (move state side c :hand)))} card nil)))}]}
 
    "Mumbad City Grid"
-   {:abilities [{:req (req this-server)
+   {:abilities [{:req (req (let [num-ice (count run-ices)]
+                             (and this-server
+                                  (>= num-ice 2)
+                                  (< (:position run 0) num-ice))))
                  :label "Swap the ICE just passed with another piece of ICE protecting this server"
                  :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
                                                                                 (:position run))
@@ -565,9 +568,11 @@
                                                    (swap! state update-in (cons :corp ice-zone)
                                                           #(assoc % sndx fnew))
                                                    (update-ice-strength state side fnew)
-                                                   (update-ice-strength state side snew)))} card nil)
-                                 (system-msg state side (str "uses Mumbad City Grid to swap " (card-str state passed-ice)
-                                                             " with " (card-str state target)))))}]}
+                                                   (update-ice-strength state side snew)
+                                                   (system-msg state side (str "uses Mumbad City Grid to swap "
+                                                                               (card-str state passed-ice)
+                                                                               " with " (card-str state target)))))}
+                                                  card nil)))}]}
 
    "Mumbad Virtual Tour"
    {:implementation "Only forces trash if runner has no Imps and enough credits in the credit pool"
