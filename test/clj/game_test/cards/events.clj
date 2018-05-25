@@ -2592,7 +2592,7 @@
   ;; Black Hat
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Hedge Fund" 3)])
+      (new-game (default-corp [(qty "Hedge Fund" 10)])
                 (default-runner [(qty "Black Hat" 3)]))
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
@@ -2602,16 +2602,16 @@
       (run-on state :rd)
       (run-successful state)
       (prompt-choice :runner "Card from deck")
+      (prompt-choice :runner "No action")
       (prompt-choice :runner "Card from deck")
-      (is (:prompt (get-runner)) "Accessing 3 cards total")
-      (prompt-choice :runner "Card from deck")
-      (is (not (:prompt (get-runner))) "Stop after 3 cards")))
+      (prompt-choice :runner "No action")
+      (prompt-choice :runner "Card from deck")))
   
   (testing "Kitsune interaction"
     (do-game
      (new-game (default-corp [(qty "Kitsune" 10)])
                (default-runner [(qty "Black Hat" 3)]))
-      (starting-hand state :corp ["Kitsune" "Kitsune" "Kitsune" "Shiro" "Shiro"])
+      (starting-hand state :corp ["Kitsune" "Kitsune" "Kitsune" "Kitsune" "Kitsune"])
       (play-from-hand state :corp "Kitsune" "R&D")
       (let [kitsune (get-ice state :rd 0)]
         (core/rez state :corp kitsune)
@@ -2623,7 +2623,8 @@
         (run-on state :rd)
         (card-subroutine state :corp kitsune 0)
         (prompt-select :corp (find-card "Kitsune" (:hand (get-corp))))
+        (prompt-choice :runner "No action")
         (prompt-choice :runner "Card from hand")
-        (is (:prompt (get-runner)) "Accessing 3 cards total")
+        (prompt-choice :runner "No action")
         (prompt-choice :runner "Card from hand")
-        (is (not (:prompt (get-runner))) "Stop after 3 cards")))))
+        (prompt-choice :runner "No action")))))
