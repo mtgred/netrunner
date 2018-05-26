@@ -1022,7 +1022,6 @@
                              :yes-ability {:msg (msg "place a virus counter on Trypano")
                                            :effect (req (add-counter state side card :virus 1))}}}
                  :counter-added {:delayed-completion true
-                                 :req (req (= (:cid card) (:cid target)))
                                  :effect trash-if-5}
                  :card-moved {:effect trash-if-5
                               :delayed-completion true}

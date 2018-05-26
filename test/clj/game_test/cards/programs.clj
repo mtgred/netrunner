@@ -1138,7 +1138,29 @@
       (play-from-hand state :runner "Hivemind") ; now Hivemind makes both Trypanos have 5 counters
       (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect was trashed")
       (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect was not trashed")
-      (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard"))))
+      (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard")))
+  (testing "Fire when Hivemind gains counters"
+    (do-game
+      (new-game (default-corp ["Architect"])
+                (default-runner ["Trypano" "Hivemind" (qty "Surge" 2)]))
+      (play-from-hand state :corp "Architect" "R&D")
+      (let [architect-unrezzed (get-ice state :rd 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Trypano")
+        (prompt-select :runner architect-unrezzed)
+        (is (= 0 (count (:discard (get-runner)))) "Trypano not in discard yet")
+        (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Architect is not trashed")
+        (play-from-hand state :runner "Hivemind")
+        (let [hive (get-program state 0)]
+          (is (= 1 (get-counters (refresh hive) :virus)) "Hivemind starts with 1 virus counter")
+          (play-from-hand state :runner "Surge")
+          (prompt-select :runner (refresh hive))
+          (is (= 3 (get-counters (refresh hive) :virus)) "Hivemind gains 2 virus counters")
+          (play-from-hand state :runner "Surge")
+          (prompt-select :runner (refresh hive))
+          (is (= 5 (get-counters (refresh hive) :virus)) "Hivemind gains 2 virus counters (now at 5)")
+          (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Architect was trashed")
+          (is (= 3 (count (:discard (get-runner)))) "Trypano went to discard"))))))
 
 (deftest upya
   (do-game
