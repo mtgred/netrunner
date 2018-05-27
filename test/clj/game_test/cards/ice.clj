@@ -1062,22 +1062,41 @@
       (take-credits state :corp 2)
       (is (= 2 (:current-strength (refresh sacw))) "Self-Adapting Code Wall strength increased"))))
 
-(deftest sherlock
+(deftest sherlock-1-0
   ;; Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack
   (do-game
     (new-game (default-corp [(qty "Sherlock 1.0" 1)])
               (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Sherlock 1.0" "HQ")
     (take-credits state :corp)
-    (play-from-hand state :runner "Gordian Blade")
-    (run-on state :hq)
-    (core/rez state :corp (get-ice state :hq 0))
-    (card-subroutine state :corp (get-ice state :hq 0) 0)
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 0)
-    (prompt-select :corp (get-in @state [:runner :rig :program 0]))
-    (is (empty? (get-in @state [:runner :rig :program])) "Gordian uninstalled")
-    (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack")))
+    (let [sherlock (get-ice state :hq 0)]
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state :hq)
+      (core/rez state :corp sherlock)
+      (card-subroutine state :corp sherlock 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-program state 0))
+      (is (empty? (get-program state)) "Gordian uninstalled")
+      (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack"))))
+
+(deftest sherlock-2.0
+  ;; Sherlock 2.0 - Trace to add an installed program to the bottom of Runner's Stack
+  (do-game
+    (new-game (default-corp [(qty "Sherlock 2.0" 1)])
+              (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Sherlock 2.0" "HQ")
+    (take-credits state :corp)
+    (let [sherlock (get-ice state :hq 0)]
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state :hq)
+      (core/rez state :corp sherlock)
+      (card-subroutine state :corp sherlock 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-program state 0))
+      (is (empty? (get-program state)) "Gordian uninstalled")
+      (is (= "Gordian Blade" (:title (last (:deck (get-runner))))) "Gordian on bottom of Stack"))))
 
 (deftest shiro
   ;; Shiro - Full test

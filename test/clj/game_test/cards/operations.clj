@@ -219,38 +219,37 @@
   (do-game
     (new-game (default-corp [(qty "Cerebral Cast" 1)])
               (default-runner))
-	    (play-from-hand state :corp "Cerebral Cast")
-	    (is (= 3 (:click (get-corp))) "Cerebral Cast precondition not met; card not played")
-	    (take-credits state :corp)
-	    (run-empty-server state "Archives")
-	    (take-credits state :runner)
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "0 [Credits]")
-	    (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")
-		(is (= 0 (:tag (get-runner))) "Runner took no tags")))
+    (play-from-hand state :corp "Cerebral Cast")
+    (is (= 3 (:click (get-corp))) "Cerebral Cast precondition not met; card not played")
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "0 [Credits]")
+    (is (= 0 (count (:discard (get-runner)))) "Runner took no damage")
+    (is (= 0 (:tag (get-runner))) "Runner took no tags")))
 
 (deftest cerebral-cast-corp-wins
   ;; Cerebral Cast: if the runner succefully ran last turn, psi game to give runner choice of tag or BD
   (do-game
     (new-game (default-corp [(qty "Cerebral Cast" 2)])
               (default-runner))
-	    (take-credits state :corp)
-	    (run-empty-server state "Archives")
-	    (take-credits state :runner)
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "1 [Credits]")
-		(prompt-choice :runner "1 brain damage")
-	    (is (= 1 (count (:discard (get-runner)))) "Runner took a brain damage")
-		(is (= 0 (:tag (get-runner))) "Runner took no tags from brain damage choice")
-	    (play-from-hand state :corp "Cerebral Cast")
-        (prompt-choice :corp "0 [Credits]")
-        (prompt-choice :runner "1 [Credits]")
-		(prompt-choice :runner "1 tag")
-	    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
-		(is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))
-
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (prompt-choice :runner "1 brain damage")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took a brain damage")
+    (is (= 0 (:tag (get-runner))) "Runner took no tags from brain damage choice")
+    (play-from-hand state :corp "Cerebral Cast")
+    (prompt-choice :corp "0 [Credits]")
+    (prompt-choice :runner "1 [Credits]")
+    (prompt-choice :runner "1 tag")
+    (is (= 1 (count (:discard (get-runner)))) "Runner took no additional damage")
+    (is (= 1 (:tag (get-runner))) "Runner took a tag from Cerebral Cast choice")))
 
 (deftest cerebral-static-chaos-theory
   ;; Cerebral Static - vs Chaos Theory
@@ -427,6 +426,26 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
+
+(deftest door-to-door
+  ;; Door to Door
+  (do-game
+    (new-game (default-corp ["Door to Door"])
+              (default-runner))
+    (play-from-hand state :corp "Door to Door")
+    (take-credits state :corp)
+    (is (zero? (:tag (get-runner))) "Runner should start with 0 tags")
+    (is (= 3 (-> (get-runner) :hand count)) "Runner should start with 3 cards in hand")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner should gain 1 tag from Door to Door")
+    (is (= 3 (-> (get-runner) :hand count)) "Runner should start with 3 cards in hand")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner should still have 1 tag")
+    (is (= 2 (-> (get-runner) :hand count)) "Runner should take 1 meat damage from Door to Door")))
 
 (deftest economic-warfare
   ;; Economic Warfare - If successful run last turn, make the runner lose 4 credits if able
@@ -623,26 +642,20 @@
                              (qty "Project Beale" 1)
                              (qty "Explode-a-palooza" 1)])
               (default-runner))
-
       (score-agenda state :corp (find-card "Market Research" (:hand (get-corp))))
       (score-agenda state :corp (find-card "Breaking News" (:hand (get-corp))))
       (is (= 2 (:tag (get-runner))) "Runner gained 2 tags")
       (take-credits state :corp)
       (is (= 0 (:tag (get-runner))) "Runner lost 2 tags")
-
       (core/steal state :runner (find-card "Project Beale" (:hand (get-corp))))
       (core/steal state :runner (find-card "Explode-a-palooza" (:hand (get-corp))))
       (take-credits state :runner)
-
       (is (= 4 (:agenda-point (get-runner))))
       (is (= 3 (:agenda-point (get-corp))))
-
       (core/gain state :runner :tag 1)
       (play-from-hand state :corp "Exchange of Information")
-
       (prompt-select :corp (find-card "Project Beale" (:scored (get-runner))))
       (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
-
       (is (= 3 (:agenda-point (get-runner))))
       (is (= 4 (:agenda-point (get-corp))))))
 
@@ -655,21 +668,16 @@
                              (qty "Project Beale" 1)
                              (qty "Explode-a-palooza" 1)])
               (default-runner))
-
       (take-credits state :corp)
-
       (core/steal state :runner (find-card "Project Beale" (:hand (get-corp))))
       (core/steal state :runner (find-card "Explode-a-palooza" (:hand (get-corp))))
       (take-credits state :runner)
-
       (score-agenda state :corp (find-card "Breaking News" (:hand (get-corp))))
       (is (= 2 (:tag (get-runner))) "Runner gained 2 tags")
       (play-from-hand state :corp "Exchange of Information")
-
       (prompt-select :corp (find-card "Project Beale" (:scored (get-runner))))
       (prompt-select :corp (find-card "Breaking News" (:scored (get-corp))))
       (is (= 2 (:tag (get-runner))) "Still has tags after swap and before end of turn")
-
       (take-credits state :corp)
       (is (= 3 (:agenda-point (get-runner))))
       (is (= 2 (:agenda-point (get-corp))))
@@ -753,6 +761,43 @@
     (is (= 3 (:click (get-corp))))
     (is (= 3 (:click-per-turn (get-corp))))))
 
+(deftest foxfire
+  ;; Foxfire
+  (do-game
+    (new-game (default-corp [(qty "Foxfire" 2)])
+              (default-runner ["Dyson Mem Chip" "Ice Carver"]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :runner "Dyson Mem Chip")
+    (play-from-hand state :runner "Ice Carver")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Foxfire")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-hardware state 0))
+    (is (= 1 (-> (get-runner) :discard count)) "Corp should trash Dyson Mem Chip from winning Foxfire trace")
+    (play-from-hand state :corp "Foxfire")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (is (= 2 (-> (get-runner) :discard count)) "Corp should trash Ice Carver from winning Foxfire trace")))
+
+(deftest hard-hitting-news
+  ;; Hard-Hitting News
+  (do-game
+    (new-game (default-corp ["Hard-Hitting News"])
+              (default-runner))
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (take-credits state :runner)
+    (is (= 3 (:click (get-corp))) "Corp should start with 3 clicks")
+    (play-from-hand state :corp "Hard-Hitting News")
+    (is (zero? (:click (get-corp))) "Playing Hard-Hitting News should lose all remaining clicks")
+    (is (zero? (:tag (get-runner))) "Runner should start with 0 tags")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 4 (:tag (get-runner))) "Runner should gain 4 tags from losing Hard-Hitting News trace")))
+
 (deftest hatchet-job
   ;; Hatchet Job - Win trace to add installed non-virtual to grip
   (do-game
@@ -786,7 +831,6 @@
      (play-from-hand state :corp "High-Profile Target")
      (is (= 3 (:click (get-corp))) "Corp not charged a click")
      (is (= 5 (count (:hand (get-runner)))) "Runner did not take damage")))
-
   (testing "when the runner has one tag"
     (do-game
      (new-game (default-corp [(qty "High-Profile Target" 6)])
@@ -794,7 +838,6 @@
      (core/gain state :runner :tag 1)
      (play-from-hand state :corp "High-Profile Target")
      (is (= 3 (count (:hand (get-runner)))) "Runner has 3 cards in hand")))
-
   (testing "when the runner has two tags"
     (do-game
      (new-game (default-corp [(qty "High-Profile Target" 6)])
@@ -802,7 +845,6 @@
      (core/gain state :runner :tag 2)
      (play-from-hand state :corp "High-Profile Target")
      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")))
-
   (testing "when the runner has enough tags to die"
     (do-game
      (new-game (default-corp [(qty "High-Profile Target" 6)])
@@ -884,8 +926,8 @@
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "IPO")
-	(is (= 13 (:credit (get-corp))))
-	(is (= 0 (:click (get-corp))) "Terminal ends turns")))
+    (is (= 13 (:credit (get-corp))))
+    (is (= 0 (:click (get-corp))) "Terminal ends turns")))
 
 (deftest lag-time
   (do-game
@@ -899,7 +941,7 @@
     (core/rez state :corp (get-ice state :hq 0))
     (core/rez state :corp (get-ice state :rd 0))
     (is (= 1 (:current-strength (get-ice state :hq 0))) "Vanilla at 1 strength")
-	(is (= 5 (:current-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
+    (is (= 5 (:current-strength (get-ice state :rd 0))) "Lotus Field at 5 strength")))
 
 (deftest lateral-growth
   (do-game
