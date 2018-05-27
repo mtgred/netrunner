@@ -2586,3 +2586,44 @@
       (take-credits state :corp 1)
       (is (not (get-in (refresh crypsis) [:added-virus-counter]))
           "Counter flag was cleared on Crypsis"))))
+
+(deftest black-hat
+  ;; Black Hat
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Hedge Fund" 10)])
+                (default-runner [(qty "Black Hat" 3)]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Black Hat")
+      (prompt-choice  :corp 0)
+      (prompt-choice  :runner 4)
+      (run-on state :rd)
+      (run-successful state)
+      (prompt-choice :runner "Card from deck")
+      (prompt-choice :runner "No action")
+      (prompt-choice :runner "Card from deck")
+      (prompt-choice :runner "No action")
+      (prompt-choice :runner "Card from deck")))
+  
+  (testing "Kitsune interaction"
+    (do-game
+     (new-game (default-corp [(qty "Kitsune" 10)])
+               (default-runner [(qty "Black Hat" 3)]))
+      (starting-hand state :corp ["Kitsune" "Kitsune" "Kitsune" "Kitsune" "Kitsune"])
+      (play-from-hand state :corp "Kitsune" "R&D")
+      (let [kitsune (get-ice state :rd 0)]
+        (core/rez state :corp kitsune)
+        (take-credits state :corp)
+        (core/gain state :runner :credit 10)
+        (play-from-hand state :runner "Black Hat")
+        (prompt-choice  :corp 0)
+        (prompt-choice :runner 4)
+        (run-on state :rd)
+        (card-subroutine state :corp kitsune 0)
+        (prompt-select :corp (find-card "Kitsune" (:hand (get-corp))))
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Card from hand")
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Card from hand")
+        (prompt-choice :runner "No action")))))
