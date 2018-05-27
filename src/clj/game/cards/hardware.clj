@@ -471,24 +471,17 @@
                                  (damage-prevent :net 1))}]}
 
    "Hippo"
-   {:implementation "Subroutine and position requirements not enforced"
-    :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE on which all subroutines were broken"
-                 :req (req (:run @state))
-                 :effect (req (show-wait-prompt state :corp "Runner to use Hippo")
-                              (resolve-ability
-                                state :runner
-                                {:player :runner
-                                 :prompt "Select ICE to trash"
-                                 :choices {:req #(and (ice? %) (rezzed? %))}
-                                 :delayed-completion true
-                                 :effect (req (system-msg
-                                                state :runner
-                                                (str "removes Hippo from the game to trash " (:title target)))
-                                              (move state :runner card :rfg)
-                                              (clear-wait-prompt state :corp)
-                                              (trash state :corp eid target nil))
-                                 :cancel-effect (effect (clear-wait-prompt :corp))}
-                                card nil))}]}
+   {:implementation "Subroutine and first encounter requirements not enforced"
+    :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
+                 :req (req (and run
+                                (pos? (count run-ices))))
+                 :delayed-completion true
+                 :effect (req (let [ice (last run-ices)]
+                                (system-msg
+                                  state :runner
+                                  (str "removes Hippo from the game to trash " (card-str state ice)))
+                                (move state :runner card :rfg)
+                                (trash state :corp eid ice nil)))}]}
 
    "HQ Interface"
    {:in-play [:hq-access 1]}
