@@ -11,9 +11,9 @@
   (testing "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
     (do-game
       (new-game
-        (default-corp [(qty "Neural EMP" 1) (qty "Hedge Fund" 3) (qty "SEA Source" 1)])
-        (default-runner [(qty "Fall Guy" 1) (qty "Off-Campus Apartment" 1) (qty "Net Shield" 1)
-                         (qty "Wireless Net Pavilion" 1) (qty "Sure Gamble" 1)]))
+        (default-corp ["Neural EMP" (qty "Hedge Fund" 3) "SEA Source"])
+        (default-runner ["Fall Guy" "Off-Campus Apartment" "Net Shield"
+                         "Wireless Net Pavilion" "Sure Gamble"]))
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
       (take-credits state :corp 1)
@@ -52,19 +52,19 @@
   (testing "HB Glacier econ and server protection with upgrades - Ash, Caprice, Breaker Bay Grid, positional ice strength boost"
     (do-game
       (new-game (make-deck "Haas-Bioroid: Engineering the Future"
-                           [(qty "Adonis Campaign" 1)
-                            (qty "Global Food Initiative" 1)
-                            (qty "Breaker Bay Grid" 1)
-                            (qty "Caprice Nisei" 1)
-                            (qty "Ash 2X3ZB9CY" 1)
-                            (qty "Turing" 1)
-                            (qty "Hedge Fund" 1)])
-                (default-runner [(qty "Desperado" 1)
-                                 (qty "Dirty Laundry" 1)
-                                 (qty "Emergency Shutdown" 1)
-                                 (qty "Lamprey" 1)
-                                 (qty "Data Folding" 1)
-                                 (qty "Career Fair" 1)]))
+                           ["Adonis Campaign"
+                            "Global Food Initiative"
+                            "Breaker Bay Grid"
+                            "Caprice Nisei"
+                            "Ash 2X3ZB9CY"
+                            "Turing"
+                            "Hedge Fund"])
+                (default-runner ["Desperado"
+                                 "Dirty Laundry"
+                                 "Emergency Shutdown"
+                                 "Lamprey"
+                                 "Data Folding"
+                                 "Career Fair"]))
       (core/draw state :corp 1)
       (core/gain state :corp :click 1)
       (play-from-hand state :corp "Hedge Fund")

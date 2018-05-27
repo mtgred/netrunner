@@ -1,12 +1,6 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
-            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
-                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
-                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
-                                is-remote? is-central? get-server-type other-side same-card? same-side?
-                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
-                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.utils :refer :all]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
@@ -618,8 +612,8 @@
 
    "Cortex Lock"
    {:subroutines [{:label "Do 1 net damage for each unused memory unit the Runner has"
-                   :msg (msg "do " (:memory runner) " net damage")
-                   :effect (effect (damage eid :net (:memory runner) {:card card}))}]}
+                   :msg (msg "do " (available-mu state) " net damage")
+                   :effect (effect (damage eid :net (available-mu state) {:card card}))}]}
 
    "Crick"
    {:subroutines [{:label "install a card from Archives"
@@ -749,7 +743,7 @@
    {:subroutines [{:msg "draw 1 card" :effect (effect (draw))}
                   end-the-run]
     :runner-abilities [(runner-break [:click 2] 2)]}
-   
+
    "Endless EULA"
    {:subroutines [end-the-run]
     :runner-abilities [(runner-pay [:credit 1] 1)
@@ -896,10 +890,10 @@
     :subroutines [{:req (req (:run @state))
                    :label "Reduce Runner's maximum hand size by 2 until start of next Corp turn"
                    :msg "reduce the Runner's maximum hand size by 2 until the start of the next Corp turn"
-                   :effect (effect (lose :runner :hand-size {:mod 2})
+                   :effect (effect (lose :runner :hand-size 2)
                                    (register-events {:corp-turn-begins
                                                      {:msg "increase the Runner's maximum hand size by 2"
-                                                      :effect (effect (gain :runner :hand-size {:mod 2})
+                                                      :effect (effect (gain :runner :hand-size 2)
                                                                       (unregister-events card))}} card))}]
     :events {:corp-turn-begins nil}}
 
@@ -1213,9 +1207,9 @@
                                         state :runner
                                         (access-helper-hq
                                           state from-hq
-                                          ; access-helper-hq uses a set to keep track of which cards have already
-                                          ; been accessed. by adding HQ root's contents to this set, we make the runner
-                                          ; unable to access those cards, as Kitsune intends.
+                                          ;; access-helper-hq uses a set to keep track of which cards have already
+                                          ;; been accessed. by adding HQ root's contents to this set, we make the runner
+                                          ;; unable to access those cards, as Kitsune intends.
                                           (conj (set (get-in @state [:corp :servers :hq :content])) target))
                                        card nil)))))}]}
 
@@ -1292,26 +1286,31 @@
                   (trace-ability 1 end-the-run)]}
 
    "Magnet"
-   {:delayed-completion true
-    :effect (req (let [magnet card]
-                   (continue-ability
-                     state side
-                     {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                      (remove-once #(= (:cid %) (:cid magnet)) (all-active-installed state corp))))
-                      :prompt "Select a Program to host on Magnet"
-                      :choices {:req #(and (card-is? % :type "Program")
-                                           (ice? (:host %))
-                                           (not= (:cid (:host %)) (:cid magnet)))}
-                      :effect (req (let [hosted (host state side card target)]
-                                     (unregister-events state side hosted)
-                                     (update! state side (dissoc hosted :abilities))))}
-                     card nil)))
-    :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
-                              :effect (req (doseq [c (get-in card [:hosted])]
-                                             (unregister-events state side c)
-                                             (update! state side (dissoc c :abilities)))
-                                           (update-ice-strength state side card))}}
-    :subroutines [end-the-run]}
+   (letfn [(disable-hosted [state side c]
+             (doseq [hc (:hosted (get-card state c))]
+               (unregister-events state side hc)
+               (update! state side (dissoc hc :abilities))))]
+     {:delayed-completion true
+      :effect (req (let [magnet card]
+                     (when-completed (resolve-ability
+                                       state side
+                                       {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                                        (remove-once #(= (:cid %) (:cid magnet))
+                                                                     (filter ice? (all-installed state corp)))))
+                                        :prompt "Select a Program to host on Magnet"
+                                        :choices {:req #(and (card-is? % :type "Program")
+                                                             (ice? (:host %))
+                                                             (not= (:cid (:host %)) (:cid magnet)))}
+                                        :effect (effect (host card target))}
+                                       card nil)
+                                     (disable-hosted state side card))))
+      :derez-effect {:req (req (not-empty (:hosted card)))
+                     :effect (req (doseq [c (get-in card [:hosted])]
+                                    (card-init state side c {:resolve-effect false})))}
+      :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
+                                :effect (req (disable-hosted state side card)
+                                          (update-ice-strength state side card))}}
+      :subroutines [end-the-run]})
 
    "Mamba"
    {:abilities [(power-counter-ability (do-net-damage 1))]

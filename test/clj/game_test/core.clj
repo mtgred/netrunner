@@ -1,6 +1,6 @@
 (ns game-test.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by]]
+                                costs->symbol vdissoc distinct-by]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [game.core :as core]

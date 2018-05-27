@@ -1,12 +1,6 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
-            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
-                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
-                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
-                                is-remote? is-central? get-server-type other-side same-card? same-side?
-                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
-                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.utils :refer :all]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
@@ -184,7 +178,6 @@
                                                "non-agenda"
                                                "piece of ice")
                                              " in HQ to install with Asa Group: Security Through Vigilance (optional)")
-                                :delayed-completion true
                                 :choices {:req #(and (in-hand? %)
                                                      (= (:side %) "Corp")
                                                      (corp-installable-type? %)
@@ -313,10 +306,10 @@
     :leave-play (req (swap! state update-in [:damage] dissoc :damage-choose-corp))}
 
    "Cybernetics Division: Humanity Upgraded"
-   {:effect (effect (lose :hand-size {:mod 1})
-                    (lose :runner :hand-size {:mod 1}))
-    :leave-play (effect (gain :hand-size {:mod 1})
-                        (gain :runner :hand-size {:mod 1}))}
+   {:effect (effect (lose :hand-size 1)
+                    (lose :runner :hand-size 1))
+    :leave-play (effect (gain :hand-size 1)
+                        (gain :runner :hand-size 1))}
 
    "Edward Kim: Humanitys Hammer"
    {:events {:access {:once :per-turn
@@ -649,10 +642,7 @@
 
    "Ken \"Express\" Tenma: Disappeared Clone"
    {:events {:play-event {:req (req (and (has-subtype? target "Run")
-                                         (empty? (filter #(has-subtype? % "Run")
-                                                         ;; have to flatten because each element is a list containing
-                                                         ;; the Event card that was played
-                                                         (flatten (turn-events state :runner :play-event))))))
+                                         (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
                           :msg "gain 1 [Credits]"
                           :effect (effect (gain :credit 1))}}}
 
@@ -677,8 +667,7 @@
      {:delayed-completion true
       :interactive (req true)
       :req (req (and (is-central? (:server run))
-                     (empty? (let [successes (turn-events state side :successful-run)]
-                               (filter #(is-central? %) successes)))))
+                     (first-event? state side :successful-run #(is-central? %))))
       :effect (effect (continue-ability
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
@@ -762,13 +751,14 @@
    {:recurring 2}
 
    "NBN: The World is Yours*"
-   {:effect (effect (gain :hand-size {:mod 1}))
-    :leave-play (effect (lose :hand-size {:mod 1}))}
+   {:effect (effect (gain :hand-size 1))
+    :leave-play (effect (lose :hand-size 1))}
 
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:req (req (first-event? state :corp :server-created))
                               :msg "draw 1 card"
-                              :effect (effect (draw 1))}}}
+                              :delayed-completion true
+                              :effect (effect (draw :corp eid 1 nil))}}}
 
    "Nero Severn: Information Broker"
    {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
@@ -930,8 +920,7 @@
    "Spark Agency: Worldswide Reach"
    {:events
     {:rez {:req (req (and (has-subtype? target "Advertisement")
-                          (empty? (filter #(has-subtype? % "Advertisement")
-                                          (flatten (turn-events state :corp :rez))))))
+                          (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
 

@@ -2,7 +2,7 @@
 
 ;; These functions are called by main.clj in response to commands sent by users.
 
-(declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
+(declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?
          can-run-server? can-score? say play-sfx base-mod-size)
@@ -58,18 +58,34 @@
 (defn- change-map
   "Change a player's property using the :mod system"
   [state side key delta]
-  (gain state side key delta)
-  (change-msg state side key (base-mod-size state side key) (:mod delta)))
+  (gain state side key {:mod delta})
+  (change-msg state side key (base-mod-size state side key) delta))
+
+(defn- change-mu
+  "Send a system message indicating how mu was changed"
+  [state side delta]
+  (free-mu state delta)
+  (system-msg state side
+              (str "sets unused MU to " (available-mu state)
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (if (map? delta)
+  (cond
+    ;; Memory needs special treatment and message
+    (= :memory key)
+    (change-mu state side delta)
+
+    ;; Hand size needs special treatment as it expects a map
+    (= :hand-size key)
     (change-map state side key delta)
+
+    :else
     (do (if (neg? delta)
           (deduct state side [key (- delta)])
           (swap! state update-in [side key] (partial + delta)))
-      (change-msg state side key (get-in @state [side key]) delta))))
+        (change-msg state side key (get-in @state [side key]) delta))))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."
@@ -218,13 +234,18 @@
 (defn play-auto-pump
   "Use the 'match strength with ice' function of icebreakers."
   [state side args]
-  (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (pos? (:position run 0))) (get-card state ((get-run-ices state) (dec (:position run)))))
+  (let [run (:run @state)
+        card (get-card state (:card args))
+        run-ice (get-run-ices state)
+        ice-cnt (count run-ice)
+        ice-idx (dec (:position run 0))
+        in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
+        current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
         pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
                                            (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))]
     (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
       (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
       (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "

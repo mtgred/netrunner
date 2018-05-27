@@ -1,12 +1,6 @@
 (ns game.cards.agendas
   (:require [game.core :refer :all]
-            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
-                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
-                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
-                                is-remote? is-central? get-server-type other-side same-card? same-side?
-                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
-                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.utils :refer :all]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
@@ -644,7 +638,8 @@
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
-   {:prevent {:jack-out [:all]}
+   {:interactions {:prevent [{:type #{:jack-out}
+                              :req (req (-> card :counter :power pos?))}]}
     :silent (req true)
     :effect (effect (add-counter card :power 2))
     :abilities [{:req (req (:run @state))
@@ -750,9 +745,9 @@
                                                   (not (is-type? % "ICE"))
                                                   (= (:side %) "Corp")
                                                   (in-hand? %))}
-                             :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card)) 5)
+                             :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card) 0) 5)
                                        " and rez it, ignoring all costs"))
-                             :effect (req (if (>= (:advance-counter (get-card state card)) 5)
+                             :effect (req (if (>= (:advance-counter (get-card state card) 0) 5)
                                             (do (corp-install state side target "New remote"
                                                               {:install-state :rezzed-no-cost})
                                                 (trigger-event state side :rez target))
@@ -1019,10 +1014,10 @@
    "Remote Data Farm"
    {:silent (req true)
     :msg "increase their maximum hand size by 2"
-    :effect (effect (gain :hand-size {:mod 2}))
+    :effect (effect (gain :hand-size 2))
     :swapped {:msg "increase their maximum hand size by 2"
-              :effect (effect (gain :hand-size {:mod 2}))}
-    :leave-play (effect (lose :hand-size {:mod 2}))}
+              :effect (effect (gain :hand-size 2))}
+    :leave-play (effect (lose :hand-size 2))}
 
    "Remote Enforcement"
    {:interactive (req true)
@@ -1064,10 +1059,10 @@
    "Self-Destruct Chips"
    {:silent (req true)
     :msg "decrease the Runner's maximum hand size by 1"
-    :effect (effect (lose :runner :hand-size {:mod 1}))
+    :effect (effect (lose :runner :hand-size 1))
     :swapped {:msg "decrease the Runner's maximum hand size by 1"
-              :effect (effect (lose :runner :hand-size {:mod 1}))}
-    :leave-play (effect (gain :runner :hand-size {:mod 1}))}
+              :effect (effect (lose :runner :hand-size 1))}
+    :leave-play (effect (gain :runner :hand-size 1))}
 
    "Sensor Net Activation"
    {:effect (effect (add-counter card :agenda 1))
@@ -1127,11 +1122,12 @@
                                     (do (system-msg state :corp "declines to trash a card from Standoff")
                                         (clear-wait-prompt state :runner)
                                         (effect-completed state :corp eid))))
-              :effect (req (do (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
-                               (clear-wait-prompt state (other-side side))
-                               (trash state side target {:unpreventable true})
-                               (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
-                               (continue-ability state (other-side side) (stand (other-side side)) card nil)))})]
+              :effect (req (when-completed (trash state side target {:unpreventable true})
+                                           (do
+                                             (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
+                                             (clear-wait-prompt state (other-side side))
+                                             (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
+                                             (continue-ability state (other-side side) (stand (other-side side)) card nil))))})]
      {:interactive (req true)
       :delayed-completion true
       :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
@@ -1218,15 +1214,17 @@
     :effect (effect (lose :bad-publicity 2))}
 
    "Viral Weaponization"
-   {:effect (effect (register-events
-                      {:corp-turn-ends
-                       {:msg "do 1 net damage for each card in the grip"
-                        :delayed-completion true
-                        :effect (req (let [cnt (count (:hand runner))]
-                                       (unregister-events state side card)
-                                       (damage state side eid :net cnt {:card card})))}}
-                      card))
-    :events {:corp-turn-ends nil}}
+   (let [dmg {:msg "do 1 net damage for each card in the grip"
+              :delayed-completion true
+              :effect (req (let [cnt (count (:hand runner))]
+                             (unregister-events state side card)
+                             (damage state side eid :net cnt {:card card})))}]
+     {:effect (effect (register-events
+                        {:corp-turn-ends dmg
+                         :runner-turn-ends dmg}
+                        card))
+      :events {:corp-turn-ends nil
+               :runner-turn-ends nil}})
 
    "Voting Machine Initiative"
    {:silent (req true)

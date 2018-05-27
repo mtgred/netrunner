@@ -14,7 +14,7 @@
 (defn load-alt-arts []
   (go (let [alt_info (->> (<! (GET "/data/cards/altarts"))
                        (:json)
-                       (map #(select-keys % [:version :name])))
+                       (map #(select-keys % [:version :name :description :position])))
             cards (->> @all-cards
                     (filter #(not (:replaced_by %)))
                     (map #(select-keys % [:title :setname :code :alt_art :replaces :replaced_by]))

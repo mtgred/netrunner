@@ -1,12 +1,6 @@
 (ns game.cards.assets
   (:require [game.core :refer :all]
-            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
-                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
-                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
-                                is-remote? is-central? get-server-type other-side same-card? same-side?
-                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
-                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.utils :refer :all]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
@@ -242,8 +236,8 @@
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
-   {:effect (effect (lose :runner :hand-size {:mod 2}))
-    :leave-play (effect (gain :runner :hand-size {:mod 2}))
+   {:effect (effect (lose :runner :hand-size 2))
+    :leave-play (effect (gain :runner :hand-size 2))
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
@@ -396,7 +390,7 @@
                                    :effect (effect (gain :corp :credit 1))}}}
 
    "Cybernetics Court"
-   {:in-play [:hand-size {:mod 4}]}
+   {:in-play [:hand-size 4]}
 
    "Daily Business Show"
    {:events {:pre-corp-draw
@@ -882,9 +876,11 @@
                   :once :per-turn
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
+                  :delayed-completion true
                   :effect (req (gain state :corp :credit 2)
-                               (when (zero? (get-in card [:counter :credit]))
-                                 (trash state :corp card)))}]
+                               (if (zero? (get-in card [:counter :credit]))
+                                 (trash state :corp eid card)
+                                 (effect-completed state :corp eid)))}]
      {:effect (effect (add-counter card :credit 8))
       :flags {:corp-phase-12 (req (= 2 (get-in card [:counter :credit])))}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -896,6 +892,7 @@
                                      (continue-ability :corp
                                        {:optional
                                         {:prompt "Shuffle Marilyn Campaign into R&D?"
+                                         :priority 1
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"
                                                        :effect (req (move state :corp card :deck)
@@ -956,8 +953,8 @@
                   :label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
                   :effect (effect (gain :credit 1))}]
-     {:effect (effect (gain :runner :hand-size {:mod 1}))
-      :leave-play (effect (lose :runner :hand-size {:mod 1}))
+     {:effect (effect (gain :runner :hand-size 1))
+      :leave-play (effect (lose :runner :hand-size 1))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -1431,8 +1428,10 @@
     :abilities [ability]
     :events {:corp-turn-begins ability
              :corp-install {:req (req (ice? target))
-                            :effect (effect (trash card)
-                                            (system-msg "trashes Server Diagnostics"))}}})
+                            :delayed-completion true
+                            :effect (req (when-completed (trash state side card nil)
+                                                         (do (system-msg state :runner "trashes Server Diagnostics")
+                                                             (effect-completed state side eid card))))}}})
 
    "Shannon Claire"
    {:abilities [{:cost [:click 1]
@@ -1761,7 +1760,8 @@
                               (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card)))))}]}
 
    "Zaibatsu Loyalty"
-   {:prevent {:expose [:all]}
+   {:interactions {:prevent [{:type #{:expose}
+                              :req (req true)}]}
     :derezzed-events
     {:pre-expose
      {:delayed-completion true

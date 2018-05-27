@@ -1,12 +1,6 @@
 (ns game.cards.resources
   (:require [game.core :refer :all]
-            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
-                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
-                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
-                                is-remote? is-central? get-server-type other-side same-card? same-side?
-                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
-                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.utils :refer :all]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
@@ -54,26 +48,31 @@
 
    "Activist Support"
    {:events
-    {:corp-turn-begins {:req (req (= 0 (:tag runner)))
-                        :msg "take 1 tag"
-                        :delayed-completion true
-                        :effect (effect (tag-runner :runner eid 1))}
-     :runner-turn-begins {:req (req (not has-bad-pub))
-                          :msg "give the Corp 1 bad publicity"
-                          :effect (effect (gain-bad-publicity :corp 1))}}}
+    {:corp-turn-begins {:delayed-completion true
+                        :effect (req (if (= 0 (:tag runner))
+                                       (do (tag-runner state :runner eid 1)
+                                           (system-msg state :runner (str "uses " (:title card) " to take 1 tag")))
+                                       (effect-completed state :runner eid card)))}
+     :runner-turn-begins {:delayed-completion true
+                          :effect (req (if (not has-bad-pub)
+                                         (do (gain-bad-publicity state :corp eid 1)
+                                             (system-msg state :runner (str "uses " (:title card) " to give the corp 1 bad publicity")))
+                                         (effect-completed state :runner eid card)))}}}
 
    "Adjusted Chronotype"
    {:events {:runner-loss {:req (req (and (some #{:click} target)
-                                          (let [click-losses (filter #(= :click %) (mapcat first (turn-events state side :runner-loss)))]
-                                            (or (empty? click-losses)
-                                                (and (= (count click-losses) 1)
+                                          (let [click-losses (count (filter #(= :click %) (mapcat first (turn-events state side :runner-loss))))]
+                                            (or (= 1 click-losses)
+                                                (and (= 2 click-losses)
                                                      (has-flag? state side :persistent :genetics-trigger-twice))))))
                            :msg "gain [Click]" :effect (effect (gain :runner :click 1))}}}
 
    "Aeneas Informant"
    {:events {:no-trash {:req (req (and (:trash target) (not= (first (:zone target)) :discard)))
                         :optional {:prompt (msg "Use Aeneas Informant?")
-                                   :yes-ability {:msg (msg (str "gain 1 [Credits] and reveal " (:title target)))
+                                   :yes-ability {:msg (msg (str "gain 1 [Credits]"
+                                                                (when-not (installed? target)
+                                                                  (str " and reveal "  (:title target)))))
                                                  :effect (effect (gain :credit 1))}}}}}
 
    "Aesops Pawnshop"
@@ -230,7 +229,7 @@
                                                                                   (runner-install state side eid c nil)))}}} card nil)))}}})
 
    "Beach Party"
-   {:in-play [:hand-size {:mod 5}]
+   {:in-play [:hand-size 5]
     :events {:runner-turn-begins {:msg "lose [Click]"
                                   :effect (effect (lose :click 1))}}}
 
@@ -258,7 +257,8 @@
       :events {:runner-turn-begins ability}})
 
    "Biometric Spoofing"
-   {:prevent {:damage [:net :meat :brain]}
+   {:interactions {:prevent [{:type #{:net :brain :meat}
+                              :req (req true)}]}
     :abilities [{:label "[Trash]: Prevent 2 damage"
                  :msg "prevent 2 damage"
                  :effect (effect (trash card {:cause :ability-cost})
@@ -267,7 +267,8 @@
                                  (damage-prevent :meat 2))}]}
 
    "Bio-Modeled Network"
-   {:prevent {:damage [:net]}
+   {:interactions {:prevent [{:type #{:net}
+                              :req (req true)}]}
     :events {:pre-damage {:req (req (= target :net))
                           :effect (effect (update! (assoc card :dmg-amount (nth targets 2))))}}
     :abilities [{:msg (msg "prevent " (dec (:dmg-amount card)) " net damage")
@@ -299,7 +300,7 @@
                                  (move target :rfg))}]}
 
    "Borrowed Satellite"
-   {:in-play [:hand-size {:mod 1} :link 1]}
+   {:in-play [:hand-size 1 :link 1]}
 
    "Bug Out Bag"
    {:prompt "How many power counters?"
@@ -312,7 +313,8 @@
                                                 (trash card))}}}
 
    "Caldera"
-   {:prevent {:damage [:net :brain]}
+   {:interactions {:prevent [{:type #{:net :brain}
+                              :req (req true)}]}
     :abilities [{:cost [:credit 3]
                  :msg "prevent 1 net damage"
                  :effect (effect (damage-prevent :net 1))}
@@ -354,7 +356,8 @@
                   :effect (effect (damage-prevent target Integer/MAX_VALUE))}}}
 
    "Citadel Sanctuary"
-   {:prevent {:damage [:meat]}
+   {:interactions {:prevent [{:type #{:meat}
+                              :req (req true)}]}
     :abilities [{:label "[Trash] and trash all cards in Grip to prevent all meat damage"
                  :msg "trash all cards in their Grip and prevent all meat damage"
                  :effect (req (trash state side card {:cause :ability-cost})
@@ -444,7 +447,8 @@
     :events {:successful-run nil :run-ends nil}}
 
    "Crash Space"
-   {:prevent {:damage [:meat]}
+   {:interactions {:prevent [{:type #{:meat}
+                              :req (req true)}]}
     :recurring 2
     :abilities [{:label "Trash to prevent up to 3 meat damage"
                  :msg "prevent up to 3 meat damage"
@@ -514,7 +518,7 @@
    (let [ability {:label "Gain 1 [Credits] (start of turn)"
                   :msg "gain 1 [Credits]"
                   :once :per-turn
-                  :req (req (and (>= (:memory runner) 2) (:runner-phase-12 @state)))
+                  :req (req (and (>= (available-mu state) 2) (:runner-phase-12 @state)))
                   :effect (effect (gain :credit 1))}]
     {:flags {:drip-economy true}
     :abilities [ability]
@@ -557,7 +561,8 @@
                                                        :effect (effect (breaker-strength-bonus (count (:hand runner))))}}) card))}}
 
    "Decoy"
-   {:prevent {:tag [:all]}
+   {:interactions {:prevent [{:type #{:tag}
+                              :req (req true)}]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
    "DJ Fenris"
@@ -640,7 +645,8 @@
                                                        (in-hand? %))}
                                   :effect (effect (move target :discard)
                                                   (trash-prevent (keyword type) 1))})]
-     {:prevent {:trash [:hardware :resource :program]}
+     {:interactions {:prevent [{:type #{:trash-hardware :trash-resource :trash-program}
+                                :req (req (not= :purge (:cause target)))}]}
       :abilities [(dummy-prevent "hardware")
                   (dummy-prevent "resource")
                   (dummy-prevent "program")]})
@@ -679,7 +685,8 @@
                               :req (req (genetics-trigger? state side :successful-run))}}}
 
    "Fall Guy"
-   {:prevent {:trash [:resource]}
+   {:interactions {:prevent [{:type #{:trash-resource}
+                              :req (req true)}]}
     :abilities [{:label "[Trash]: Prevent another installed resource from being trashed"
                  :effect (effect (trash-prevent :resource 1) (trash card {:unpreventable true :cause :ability-cost}))}
                 {:label "[Trash]: Gain 2 [Credits]"
@@ -920,7 +927,8 @@
    {:effect (effect (tag-runner :runner eid 1)
                     (add-counter card :power (-> @state :runner :tag (+ 3))))
     :flags {:untrashable-while-resources true}
-    :prevent {:damage [:meat]}
+    :interactions {:prevent [{:type #{:meat}
+                              :req (req true)}]}
     :abilities [{:label "Prevent 1 meat damage"
                  :counter-cost [:power 1]
                  :effect (req (damage-prevent state side :meat 1)
@@ -999,8 +1007,8 @@
                                                       (all-active-installed state :runner)))))}
 
     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
-    :effect (effect (lose :corp :hand-size {:mod 1}))
-    :leave-play (effect (gain :corp :hand-size {:mod 1}))
+    :effect (effect (lose :corp :hand-size 1))
+    :leave-play (effect (gain :corp :hand-size 1))
     :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
     :events {:runner-turn-begins ability}})
 
@@ -1190,34 +1198,32 @@
                          :effect (req (swap! state assoc-in [:runner :register :force-trash] true))}}}
 
    "New Angeles City Hall"
-   {:prevent {:tag [:all]}
+   {:interactions {:prevent [{:type #{:tag}
+                              :req (req true)}]}
     :events {:agenda-stolen {:msg "trash itself" :effect (effect (trash card))}}
     :abilities [{:cost [:credit 2] :msg "avoid 1 tag" :effect (effect (tag-prevent 1))}]}
 
    "No One Home"
-   (letfn [(start-trace [type]
+   (letfn [(first-chance? [state side] (< (+ (event-count state side :pre-tag)
+                                             (event-count state side :pre-damage)) 2))
+           (start-trace [type]
              (let [message (str "avoid any " (if (= type :net) "amount of net damage" "number of tags"))]
-             {:player :corp
-              :label (str "Trace 0 - if unsuccessful, " message)
-              :trace {:base 0
-                      :priority 11
-                      :unsuccessful {:msg message
-                                     :effect (req (if (= type :net)
-                                                    (damage-prevent state side :net Integer/MAX_VALUE)
-                                                    (tag-prevent state side Integer/MAX_VALUE)))}}}))]
-   {:prevent {:tag [:all]
-              :damage [:net]}
-    :abilities [{:msg "force the Corp to trace"
-                 :delayed-completion true
-                 :once :per-turn
-                 :effect (req (let [type (get-in @state [:prevent :current])]
-                                (when-completed (trash state side card {:unpreventable true})
-                                                (continue-ability state side (start-trace type)
-                                                                  card nil))))}]
-    :events {:pre-resolve-damage {:silent (req true)
-                                  :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
-             :pre-resolve-tag {:silent (req true)
-                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}})
+               {:player :corp
+                :label (str "Trace 0 - if unsuccessful, " message)
+                :trace {:base 0
+                        :priority 11
+                        :unsuccessful {:msg message
+                                       :effect (req (if (= type :net)
+                                                      (damage-prevent state side :net Integer/MAX_VALUE)
+                                                      (tag-prevent state side Integer/MAX_VALUE)))}}}))]
+     {:interactions {:prevent [{:type #{:net :tag}
+                                :req (req (first-chance? state side))}]}
+      :abilities [{:msg "force the Corp to trace"
+                   :delayed-completion true
+                   :effect (req (let [type (get-in @state [:prevent :current])]
+                                  (when-completed (trash state side card {:unpreventable true})
+                                                  (continue-ability state side (start-trace type)
+                                                                    card nil))))}]})
    "Off-Campus Apartment"
    {:flags {:runner-install-draw true}
     :abilities [{:label "Install and host a connection on Off-Campus Apartment"
@@ -1396,7 +1402,7 @@
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Public Sympathy"
-   {:in-play [:hand-size {:mod 2}]}
+   {:in-play [:hand-size 2]}
 
    "Rachel Beckman"
    {:in-play [:click 1 :click-per-turn 1]
@@ -1452,7 +1458,7 @@
                  :effect (req (let [n (:cost target)
                                     t (:title target)]
                                 (move state side target :rfg)
-                                (gain state side :memory (:memoryunits target))
+                                (free-mu state (:memoryunits target))
                                 (resolve-ability state side
                                   {:prompt "Choose a non-virus program to install"
                                    :msg (req (if (not= target "No install")
@@ -1480,7 +1486,8 @@
                               (tag-runner state :runner eid 1))}]}
 
    "Sacrificial Clone"
-   {:prevent {:damage [:meat :net :brain]}
+   {:interactions {:prevent [{:type #{:net :brain :meat}
+                              :req (req true)}]}
     :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has-subtype? % "Virtual"))
                                                         (get-in runner [:rig :resource]))
@@ -1492,15 +1499,18 @@
                               (damage-prevent state side :brain Integer/MAX_VALUE))}]}
 
    "Sacrificial Construct"
-   {:prevent {:trash [:program :hardware]}
+   {:interactions {:prevent [{:type #{:trash-program :trash-hardware}
+                              :req (req true)}]}
     :abilities [{:effect (effect (trash-prevent :program 1) (trash-prevent :hardware 1)
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
    {:in-play [:hand-size {:mod -2}]
-    :events {:runner-turn-ends {:req (req (< (count (:hand runner)) (hand-size state :runner)))
-                                :msg (msg "draw a card")
-                                :effect (effect (draw 1))}}}
+    :events {:runner-turn-ends {:delayed-completion true
+                                :effect (req (if (< (count (:hand runner)) (hand-size state :runner)) 
+                                               (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
+                                                   (draw state :runner eid 1 nil))
+                                               (effect-completed state :runner eid card)))}}}
 
    "Salvaged Vanadis Armory"
    {:events {:damage
@@ -1878,10 +1888,10 @@
 
    "Underworld Contact"
    (let [ability {:label "Gain 1 [Credits] (start of turn)"
-                  :msg "gain 1 [Credits]"
                   :once :per-turn
-                  :req (req (and (>= (:link runner) 2) (:runner-phase-12 @state)))
-                  :effect (effect (gain :credit 1))}]
+                  :effect (req (when (and (>= (:link runner) 2) (:runner-phase-12 @state))
+                                 (system-msg state :runner (str "uses " (:title card) " to gain 1 [Credits]"))
+                                 (gain state :runner :credit 1)))}]
    {:flags {:drip-economy true}
     :abilities [ability]
     :events {:runner-turn-begins ability}})

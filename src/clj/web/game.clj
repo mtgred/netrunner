@@ -169,14 +169,15 @@
           (swap! all-games assoc-in [gameid :last-update] (t/now))
           (swap-and-send-diffs! game))
         (do
-          (println "HandleGameAction: unknown state or side")
+          (println "handle-game-action unknown state or side")
           (println "\tGameID:" gameid)
           (println "\tGameID by ClientID:" (:gameid (lobby/game-for-client client-id)))
           (println "\tClientID:" client-id)
           (println "\tSide:" side)
-          (println "\tPlayers:" players)
+          (println "\tPlayers:" (map #(select-keys % [:ws-id :side]) players))
+          (println "\tSpectators" (map #(select-keys % [:ws-id]) (:spectators game)))
           (println "\tCommand:" command)
-          (println "\tArgs:" args))))))
+          (println "\tArgs:" args "\n"))))))
 
 (defn handle-game-watch
   "Handles a watch command when a game has started."
@@ -225,7 +226,10 @@
           (when (and user (not mute-spectators))
             (main/handle-say state :spectator user msg)
             (swap! all-games assoc-in [gameid :last-update] (t/now))
-            (swap-and-send-diffs! game)))))))
+            (try
+              (swap-and-send-diffs! game)
+              (catch Exception ex
+                (println (str "handle-game-say exception:" (.getMessage ex) "\n"))))))))))
 
 (defn handle-game-typing
   [{{{:keys [username] :as user} :user} :ring-req
@@ -237,7 +241,10 @@
           {:keys [side user]} (lobby/player? client-id gameid)]
       (when (and state side user)
         (main/handle-typing state (jinteki.utils/side-from-str side) user typing)
-        (swap-and-send-diffs! game)))))
+        (try
+          (swap-and-send-diffs! game)
+          (catch Exception ex
+            (println (str "handle-game-typing exception:" (.getMessage ex) "\n"))))))))
 
 (defn handle-ws-close [{{{:keys [username] :as user} :user} :ring-req
                         client-id                           :client-id}]

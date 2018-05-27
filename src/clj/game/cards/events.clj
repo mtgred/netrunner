@@ -1,12 +1,6 @@
 (ns game.cards.events
   (:require [game.core :refer :all]
-            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
-                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
-                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
-                                is-remote? is-central? get-server-type other-side same-card? same-side?
-                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
-                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.utils :refer :all]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
@@ -350,7 +344,7 @@
     :effect (effect (run :rd nil card)
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
-                              :effect (effect (access-bonus (max 0 (min 4 (:memory runner))))) }
+                              :effect (effect (access-bonus (max 0 (min 4 (available-mu state))))) }
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Demolition Run"
@@ -1324,7 +1318,8 @@
                          (installed? %))}
     :effect (effect (host target (assoc card :zone [:discard]))
                     (system-msg (str "hosts On the Lam on " (:title target))))
-    :prevent {:tag [:all] :damage [:meat :net :brain]}
+    :interactions {:prevent [{:type #{:net :brain :meat :tag}
+                              :req (req true)}]}
     :abilities [{:label "[Trash]: Avoid 3 tags"
                  :msg "avoid up to 3 tags"
                  :effect (effect (tag-prevent 3) (trash card {:cause :ability-cost}))}
@@ -1394,7 +1389,7 @@
                                (set-prop state side (get-card state target) :agendapoints (+ amount (:agendapoints (get-card state target))))
                                (gain-agenda-point state side amount))]
      {:req (req archives-runnable)
-      :events {:purge {:effect (effect (trash card))}}
+      :events {:purge {:effect (effect (trash card {:cause :purge}))}}
       :trash-effect {:effect (req (let [current-side (get-scoring-owner state {:cid (:agenda-cid card)})]
                                     (update-agenda-points state current-side (find-cid (:agenda-cid card) (get-in @state [current-side :scored])) 1)))}
       :effect (effect (run :archives

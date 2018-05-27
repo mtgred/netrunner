@@ -1,12 +1,6 @@
 (ns game.cards.upgrades
   (:require [game.core :refer :all]
-            [game.utils :refer [remove-once has? merge-costs zone make-cid make-label to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by abs string->num safe-split get-cid dissoc-in
-                                cancellable card-is? side-str build-cost-str build-spend-msg cost-names
-                                zones->sorted-names remote->name remote-num->name central->name zone->name central->zone
-                                is-remote? is-central? get-server-type other-side same-card? same-side?
-                                combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
-                                pluralize quantify type->rig-zone safe-zero?]]
+            [game.utils :refer :all]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
@@ -560,7 +554,10 @@
                                        (move state side c :hand)))} card nil)))}]}
 
    "Mumbad City Grid"
-   {:abilities [{:req (req this-server)
+   {:abilities [{:req (req (let [num-ice (count run-ices)]
+                             (and this-server
+                                  (>= num-ice 2)
+                                  (< (:position run 0) num-ice))))
                  :label "Swap the ICE just passed with another piece of ICE protecting this server"
                  :effect (req (let [passed-ice (nth (get-in @state (vec (concat [:corp :servers] (:server run) [:ices])))
                                                                                 (:position run))
@@ -577,9 +574,11 @@
                                                    (swap! state update-in (cons :corp ice-zone)
                                                           #(assoc % sndx fnew))
                                                    (update-ice-strength state side fnew)
-                                                   (update-ice-strength state side snew)))} card nil)
-                                 (system-msg state side (str "uses Mumbad City Grid to swap " (card-str state passed-ice)
-                                                             " with " (card-str state target)))))}]}
+                                                   (update-ice-strength state side snew)
+                                                   (system-msg state side (str "uses Mumbad City Grid to swap "
+                                                                               (card-str state passed-ice)
+                                                                               " with " (card-str state target)))))}
+                                                  card nil)))}]}
 
    "Mumbad Virtual Tour"
    {:implementation "Only forces trash if runner has no Imps and enough credits in the credit pool"
@@ -610,7 +609,9 @@
                                     (gain state :corp :credit total)
                                     (system-msg state :corp
                                                 (str "gains " total " [Credits] from Mwanza City Grid"))))}]
-     {:events {:pre-access {:req (req (and installed this-server))
+     {:events {:pre-access {:req (req (and installed
+                                           ;; Pre-access server is same server as that Mwanza is in the root of
+                                           (= target (second  (:zone card)))))
                             :msg "force the Runner to access 3 additional cards"
                             :effect (effect (access-bonus 3))}
                :run-ends gain-creds}
@@ -796,7 +797,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
-    :in-play [:hand-size {:mod 2}]}
+    :in-play [:hand-size 2]}
 
    "Ruhr Valley"
    {:events {:run {:req (req this-server)
@@ -1017,7 +1018,7 @@
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
                  :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
-                              (lose state :runner :hand-size {:mod 1}))}]
+                              (lose state :runner :hand-size 1))}]
     :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events state side
