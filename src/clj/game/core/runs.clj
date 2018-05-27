@@ -803,8 +803,8 @@
   ([state side eid]
   (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
   (when-completed (trigger-event-sync state side :pre-jack-out)
-                  (let [prevent (get-in @state [:prevent :jack-out])]
-                    (if (pos? (count prevent))
+                  (let [prevent (get-prevent-list state :corp :jack-out)]
+                    (if (cards-can-prevent? state :corp prevent :jack-out)
                       (do (system-msg state :corp "has the option to prevent the Runner from jacking out")
                           (show-wait-prompt state :runner "Corp to prevent the jack out" {:priority 10})
                           (show-prompt state :corp nil

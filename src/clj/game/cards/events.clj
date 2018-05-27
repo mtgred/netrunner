@@ -1310,7 +1310,8 @@
                          (installed? %))}
     :effect (effect (host target (assoc card :zone [:discard]))
                     (system-msg (str "hosts On the Lam on " (:title target))))
-    :prevent {:tag [:all] :damage [:meat :net :brain]}
+    :interactions {:prevent [{:type #{:net :brain :meat :tag}
+                              :req (req true)}]}
     :abilities [{:label "[Trash]: Avoid 3 tags"
                  :msg "avoid up to 3 tags"
                  :effect (effect (tag-prevent 3) (trash card {:cause :ability-cost}))}
@@ -1380,7 +1381,7 @@
                                (set-prop state side (get-card state target) :agendapoints (+ amount (:agendapoints (get-card state target))))
                                (gain-agenda-point state side amount))]
      {:req (req archives-runnable)
-      :events {:purge {:effect (effect (trash card))}}
+      :events {:purge {:effect (effect (trash card {:cause :purge}))}}
       :trash-effect {:effect (req (let [current-side (get-scoring-owner state {:cid (:agenda-cid card)})]
                                     (update-agenda-points state current-side (find-cid (:agenda-cid card) (get-in @state [current-side :scored])) 1)))}
       :effect (effect (run :archives

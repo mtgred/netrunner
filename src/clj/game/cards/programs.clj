@@ -85,7 +85,7 @@
                                                   (turn-events state :corp :corp-install)))]
                    (swap! state assoc-in [:corp :register :cannot-score] agendas)))
     :events {:purge {:effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
-                                  (trash state side card))}
+                                  (trash state side card {:cause :purge}))}
              :corp-install {:req (req (is-type? target "Agenda"))
                             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons target %)))}}
     :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))}
@@ -275,7 +275,7 @@
    {:prompt "Choose the server that this copy of Diwan is targeting:"
     :choices (req servers)
     :effect (effect (update! (assoc card :server-target target)))
-    :events {:purge {:effect (effect (trash card))}
+    :events {:purge {:effect (effect (trash card {:cause :purge}))}
              :pre-corp-install {:req (req (let [c target
                                                 serv (:server (second targets))]
                                             (and (= serv (:server-target card))
@@ -362,7 +362,7 @@
 
    "eXer"
    {:in-play [:rd-access 1]
-    :events {:purge {:effect (effect (trash card))}} }
+    :events {:purge {:effect (effect (trash card {:cause :purge}))}}}
 
    "Expert Schedule Analyzer"
    {:abilities [{:cost [:click 1]
@@ -505,7 +505,7 @@
    "Ixodidae"
    {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "gain 1 [Credits]"
                          :effect (effect (gain :runner :credit 1))}
-             :purge {:effect (effect (trash card))}}}
+             :purge {:effect (effect (trash card {:cause :purge}))}}}
 
    "Keyhole"
    {:abilities [{:cost [:click 1]
@@ -525,7 +525,7 @@
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "force the Corp to lose 1 [Credits]"
                               :effect (effect (lose :corp :credit 1))}
-             :purge {:effect (effect (trash card))}}}
+             :purge {:effect (effect (trash card {:cause :purge}))}}}
 
    "Leprechaun"
    {:abilities [{:label "Install a program on Leprechaun"
@@ -564,7 +564,8 @@
                                           (use-mu (:memoryunits target)))}}}
 
    "LLDS Energy Regulator"
-   {:prevent {:trash [:hardware]}
+   {:interactions {:prevent [{:type #{:trash-hardware}
+                              :req (req true)}]}
     :abilities [{:cost [:credit 3]
                  :msg "prevent a hardware from being trashed"
                  :effect (effect (trash-prevent :hardware 1))}
@@ -617,7 +618,8 @@
                                     card nil))}}}
 
    "Net Shield"
-   {:prevent {:damage [:net]}
+   {:interactions {:prevent [{:type #{:net}
+                              :req (req true)}]}
     :abilities [{:cost [:credit 1] :once :per-turn :msg "prevent the first net damage this turn"
                  :effect (effect (damage-prevent :net 1))}]}
 
@@ -975,7 +977,7 @@
       :flags {:drip-economy true}
       :abilities [ability]
       :events {:runner-turn-begins ability
-               :purge {:effect (effect (trash card))}}})
+               :purge {:effect (effect (trash card {:cause :purge}))}}})
 
    "Tracker"
    (let [ability {:prompt "Choose a server for Tracker" :choices (req servers)

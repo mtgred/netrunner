@@ -375,15 +375,19 @@
              :run-ends nil}}
 
    "Feedback Filter"
-   {:prevent {:damage [:net :brain]}
-    :abilities [{:cost [:credit 3] :msg "prevent 1 net damage" :effect (effect (damage-prevent :net 1))}
+   {:interactions {:prevent [{:type #{:net :brain}
+                              :req (req true)}]}
+    :abilities [{:cost [:credit 3]
+                 :msg "prevent 1 net damage"
+                 :effect (effect (damage-prevent :net 1))}
                 {:label "[Trash]: Prevent up to 2 brain damage"
                  :msg "prevent up to 2 brain damage"
                  :effect (effect (trash card {:cause :ability-cost})
                                  (damage-prevent :brain 2))}]}
 
    "Forger"
-   {:prevent {:tag [:all]}
+   {:interactions {:prevent [{:type #{:tag}
+                              :req (req true)}]}
     :in-play [:link 1]
     :abilities [{:msg "avoid 1 tag" :label "[Trash]: Avoid 1 tag"
                  :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}
@@ -461,7 +465,8 @@
 
    "Heartbeat"
    {:in-play [:memory 1]
-    :prevent {:damage [:meat :net :brain]}
+    :interactions {:prevent [{:type #{:net :brain :meat}
+                              :req (req true)}]}
     :abilities [{:msg (msg "prevent 1 damage, trashing a facedown " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))}
                  :priority 50
@@ -600,7 +605,8 @@
                                           (runner-install state side target nil)
                                             (when (< n 3)
                                               (resolve-ability state side (mh (inc n)) card nil)))})]
-     {:prevent {:damage [:net :brain]}
+     {:interactions {:prevent [{:type #{:net :brain}
+                                :req (req true)}]}
       :in-play [:memory 3]
       :effect (effect (resolve-ability (mhelper 1) card nil))
       :abilities [{:msg (msg "prevent 1 brain or net damage by trashing " (:title target))
@@ -710,7 +716,8 @@
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
-    :prevent {:damage [:meat]}
+    :interactions {:prevent [{:type #{:meat}
+                              :req (req true)}]}
     :abilities [{:counter-cost [:power 1]
                  :msg "prevent 1 meat damage"
                  :effect (req (damage-prevent state side :meat 1)
@@ -781,7 +788,8 @@
                                                      (runner-install state side c)))}}} card nil))}
 
    "Ramujan-reliant 550 BMI"
-   {:prevent {:damage [:net :brain]}
+   {:interactions {:prevent [{:type #{:net :brain}
+                              :req (req true)}]}
     :abilities [{:req (req (not-empty (:deck runner)))
                  :effect (req (let [n (count (filter #(= (:title %) (:title card)) (all-active-installed state :runner)))]
                                 (resolve-ability state side
@@ -798,8 +806,10 @@
    "Recon Drone"
    ; eventmap uses reverse so we get the most recent event of each kind into map
    (let [eventmap (fn [s] (into {} (reverse (get s :turn-events))))]
-     {:abilities [{:req (req (and (true? (:access @state)) (= (:cid (second (:pre-damage (eventmap @state))))
-                                                              (:cid (first (:pre-access-card (eventmap @state)))))))
+     {:interactions {:prevent [{:type #{:net :brain :meat}
+                                :req (req (:access @state))}]}
+      :abilities [{:req (req (= (:cid (second (:pre-damage (eventmap @state))))
+                                (:cid (first (:pre-access-card (eventmap @state))))))
                 :effect (effect (resolve-ability
                                   {:prompt "Choose how much damage to prevent"
                                    :priority 50
@@ -808,9 +818,7 @@
                                    :msg (msg "prevent " target " damage")
                                    :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) target)
                                                    (lose :credit target)
-                                                   (trash card {:cause :ability-cost}))} card nil))}]
-     :events    {:pre-access {:effect (req (doseq [dtype [:net :brain :meat]] (swap! state update-in [:prevent :damage dtype] #(conj % card))))}
-                 :run-ends   {:effect (req (doseq [dtype [:net :brain :meat]] (swap! state update-in [:prevent :damage dtype] #(drop 1 %))))}}})
+                                                   (trash card {:cause :ability-cost}))} card nil))}]})
 
    "Record Reconstructor"
    {:events
