@@ -477,17 +477,22 @@
 (defn deck-collection
   [{:keys [sets decks decks-loaded active-deck]}]
   (cond
-    (not decks-loaded) [:h4 "Loading deck collection..."]
-    (empty? decks) [:h4 "No decks"]
+
+    (not @decks-loaded)
+    [:h4 "Loading deck collection..."]
+
+    (empty? @decks)
+    [:h4 "No decks"]
+
     :else [:div
            (doall
-             (for [deck (sort-by :date > decks)]
+             (for [deck (sort-by :date > @decks)]
                ^{:key (:_id deck)}
                [:div.deckline {:class (when (= active-deck deck) "active")
                                :on-click #(put! select-channel deck)}
                 [:img {:src (image-url (:identity deck))
                        :alt (get-in deck [:identity :title] "")}]
-                [:div.float-right (deck-status-span sets deck)]
+                [:div.float-right [deck-status-span @sets deck]]
                 [:h4 (:name deck)]
                 [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                 [:p (get-in deck [:identity :title]) [:br]
@@ -521,7 +526,7 @@
                          (and valid released (not banned)) "fake-link"
                          valid "casual"
                          :else "invalid")
-                :on-mouse-enter #(put! zoom-channel line)
+                :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                 :on-mouse-leave #(put! zoom-channel false)} name]
         (card-influence-html card modqty infaction allied)])
      card)])
@@ -547,7 +552,7 @@
                                (and valid released (not banned)) "fake-link"
                                valid "casual"
                                :else "invalid")
-                      :on-mouse-enter #(put! zoom-channel line)
+                      :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                       :on-mouse-leave #(put! zoom-channel false)} name]
               (card-influence-html card modqty infaction allied)])
            card)])
@@ -565,13 +570,14 @@
 
 (defn deck-builder
   "Make the deckbuilder view"
-  [{:keys [sets]}]
+  []
   (let [s (r/atom {:edit false
                    :old-deck nil
                    :edit-channel (chan)
                    :deck nil})
+        decks (r/cursor app-state [:decks])
         decks-loaded (r/cursor app-state [:decks-loaded])
-        decks (r/cursor app-state [:decks])]
+        card-sets (r/cursor app-state [:sets])]
 
     (r/create-class
       {:display-name "deck-builder"
@@ -616,7 +622,7 @@
               [:button {:on-click #(new-deck "Runner" s)} "New Runner deck"]]
              [:div.deck-collection
               (when-not (:edit @s)
-                [deck-collection {:sets sets :decks decks :decks-loaded decks-loaded :active-deck (:deck @s)}])
+                [deck-collection {:sets card-sets :decks decks :decks-loaded decks-loaded :active-deck (:deck @s)}])
               ]
              [:div {:class (when (:edit @s) "edit")}
               (when-let [line (:zoom @s)]
@@ -648,7 +654,7 @@
                   [:div.header
                    [:img {:src (image-url identity)
                           :alt (:title identity)}]
-                   [:h4 {:class (if (decks/released? (:sets @app-state) identity) "fake-link" "casual")
+                   [:h4 {:class (if (decks/released? @card-sets identity) "fake-link" "casual")
                          :on-mouse-enter #(put! zoom-channel {:card identity :art (:art identity) :id (:id identity)})
                          :on-mouse-leave #(put! zoom-channel false)}
                     (:title identity)
@@ -677,27 +683,27 @@
                           [:span.invalid " (minimum " min-point ")"])
                         (when (> points (inc min-point))
                           [:span.invalid " (maximum " (inc min-point) ")"])]))
-                   [:div [deck-status-span sets deck true true false]]]
+                   [:div [deck-status-span @card-sets deck true true false]]]
                   [:div.cards
                    (doall
                      (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
-                       ^{:key (first group)}
+                       ^{:key (or (first group) "Unknown")}
                        [:div.group
                         [:h4 (str (or (first group) "Unknown") " (" (decks/card-count (last group)) ")") ]
                         (doall
                           (for [line (sort-by #(get-in % [:card :title]) (last group))]
-                            ^{:key (get-in line [:card :code])}
+                            ^{:key (or (get-in line [:card :code]) line)}
                             [:div.line
                              (if (:edit @s)
                                (let [ch (:edit-channel @s)]
                                  [:span
                                   [:button.small {:on-click #(put! ch {:qty -1 :card (:card line)})
                                                   :type "button"} "-"]
-                                  [line-qty-span sets deck line]
+                                  [line-qty-span @card-sets deck line]
                                   [:button.small {:on-click #(put! ch {:qty 1 :card (:card line)})
                                                   :type "button"} "+"]
-                                  [line-name-span sets deck line]])
-                               [line-span sets deck line])]))]))]]))]
+                                  [line-name-span @card-sets deck line]])
+                               [line-span @card-sets deck line])]))]))]]))]
 
             [:div.deckedit
              [:div
@@ -733,7 +739,6 @@
       (load-alt-arts)
       (>! cards-channel cards)))
 
-;; TODO deck collection loading never goes away
-;; delete does not clear deck off screen
-;; when adding card -  Every element in a seq should have a unique :key but we don't have a code uet...
-;; in div group and div line
+;; TODO
+;
+; :key inn card view for id on left

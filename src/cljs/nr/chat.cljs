@@ -13,7 +13,7 @@
 
 (declare fetch-messages)
 
-(def chat-state (atom {}))
+(defonce chat-state (atom {}))
 
 (def chat-channel (chan))
 
@@ -69,7 +69,7 @@
 (defn send-msg [s channel]
   (authenticated
     (fn [user]
-      (let [input (:msg-input @s)
+      (let [input (:msg-input @chat-state)
             text (:msg @s)]
         (when-not (empty? text)
           (ws/ws-send! [:chat/say {:channel   (name channel)
@@ -86,8 +86,8 @@
     (fn [channel]
       [:form.msg-box {:on-submit #(do (.preventDefault %)
                                       (send-msg s channel))}
-       [:input {:type "text" :ref #(swap! s assoc :msg-input %)
-                :placeholder "Say something..." :accessKey "l" :value (:msg @s)
+       [:input {:type "text" :ref #(swap! chat-state assoc :msg-input %)
+                :placeholder "Say something...." :accessKey "l" :value (:msg @s)
                 :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
        [:button "Send"]])))
 
@@ -98,36 +98,34 @@
                                           (keyword (s/replace (-> % .-target .-innerHTML) #"#" ""))))}
    (str "#" (name channel))])
 
-(defn- hide-block-menu [s]
-  (-> (:msg-buttons @s) js/$ .hide))
+(defn- hide-block-menu []
+  (-> (:msg-buttons @chat-state) js/$ .hide))
 
-(defn message-view [message]
+(defn message-view [message s]
   (let [user (:user @app-state)
-        my-msg (= (:username message) (:username user))
-        s (r/atom {})]
-    (fn []
+        my-msg (= (:username message) (:username user))]
+    (fn [message]
       [:div.message
       [avatar user {:opts {:size 38}}]
       [:div.content
        [:div.name-menu
         [:span.username
-         {:on-click #(-> (:msg-buttons @s) js/$ .toggle)
+         {:on-click #(-> (:msg-buttons @chat-state) js/$ .toggle)
           :class (if my-msg "" "clickable")}
          (:username message)]
         (when user
           (when (not my-msg)
             [:div.panel.blue-shade.block-menu
-             {:ref #(swap! s assoc :msg-buttons %)}
+             {:ref #(swap! chat-state assoc :msg-buttons %)}
              [:div {:on-click #(do
                                  (block-user (:username message))
-                                 (hide-block-menu s))} "Block User"]
-             [:div {:on-click #(hide-block-menu s)} "Cancel"]]))
+                                 (hide-block-menu))} "Block User"]
+             [:div {:on-click #(hide-block-menu)} "Cancel"]]))
         [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
        [:div
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
          :on-mouse-out  #(card-preview-mouse-out % (:zoom-ch @s))}
         (doall (for [item (get-message-parts (:msg message))]
-                 ;; TODO check why with no game-id msg has an error till refresh,  ONe game-state added
                  [:div {:key (:_id message)}
                   (create-span item)]))]]])))
 
@@ -139,15 +137,14 @@
                 data (:json x)]
             (update-message-channel channel data))))))
 
-;; TODO clean up cursors here so not watching entire app state
-
 (defn chat []
   (let [s (r/atom {:channel :general
                    :zoom false
                    :zoom-ch (chan)
                    :scrolling false})
         old (atom {:prev-msg-count 0}) ; old is not a r/atom so we don't render when this is updated
-        cards-loaded (r/cursor app-state [:cards-loaded])]
+        cards-loaded (r/cursor app-state [:cards-loaded])
+        user (r/cursor app-state [:useer])]
 
     (r/create-class
       {:display-name "chat"
@@ -210,7 +207,7 @@
                (doall
                  (for [message (get-in @app-state [:channels (:channel @s)])]
                    ^{:key (:_id message)}
-                   [message-view message])))]
-            (when (:user @app-state)
+                   [message-view message s])))]
+            (when @user
               [:div
                [msg-input-view (:channel @s)]])]]])})))

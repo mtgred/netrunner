@@ -32,9 +32,10 @@
                  [com.draines/postal "2.0.2"]
                  [throttler "1.0.0"]
                  [clj-http "3.7.0"]
-                 [reagent "0.8.0"]
-                 [cljsjs/react "16.3.0-1"]
-                 [cljsjs/react-dom "16.3.0-1"]]
+                 [reagent "0.8.1"]
+                 [cljsjs/react "16.3.2-0"]
+                 [cljsjs/react-dom "16.3.2-0"]
+                 [org.clojars.frozenlock/reagent-modals "0.2.8"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]
