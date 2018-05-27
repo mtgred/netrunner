@@ -107,6 +107,13 @@
                        card nil)
      cost-name)))
 
+(defn pay-damage
+  "Suffer a damage as part of paying for a card or ability"
+  [state side eid type amount]
+  (let [cost-name (cost-names amount type)]
+    (damage state side eid type amount {:unpreventable true})
+    cost-name))
+
 (defn pay-shuffle-installed-to-stack
   "Shuffle installed runner card(s) into the stack as part of paying for a card or ability"
   [state side eid card amount]
@@ -160,7 +167,7 @@
      :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
 
      :tag (complete-with-result state side eid (deduct state :runner cost))
-     :net-damage (damage state side eid :net (second cost) {:unpreventable true})
+     :net-damage (pay-damage state side eid :net (second cost))
      :mill (complete-with-result state side eid (mill state side (second cost)))
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
