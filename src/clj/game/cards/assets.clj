@@ -1422,8 +1422,10 @@
     :abilities [ability]
     :events {:corp-turn-begins ability
              :corp-install {:req (req (ice? target))
-                            :effect (effect (trash card)
-                                            (system-msg "trashes Server Diagnostics"))}}})
+                            :delayed-completion true
+                            :effect (req (when-completed (trash state side card nil)
+                                                         (do (system-msg state :runner "trashes Server Diagnostics")
+                                                             (effect-completed state side eid card))))}}})
 
    "Shannon Claire"
    {:abilities [{:cost [:click 1]

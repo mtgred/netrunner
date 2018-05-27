@@ -55,7 +55,8 @@
    "Astrolabe"
    {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
-                              :effect (effect (draw :runner))}}}
+                              :delayed-completion true
+                              :effect (effect (draw :runner eid 1 nil))}}}
 
    "Autoscripter"
    {:events {:runner-install {:silent (req true)
@@ -684,9 +685,9 @@
     :leave-play (req (remove-watch state :obelus)
                      (lose state :runner :hand-size {:mod (:tag runner)}))
     :events {:successful-run-ends {:once :per-turn
-                                   :req (req (let [successes (turn-events state side :successful-run-ends)]
-                                               (and (#{[:rd] [:hq]} (:server target))
-                                                    (not-any? #(some #{:rd :hq} (:server (first %))) successes))))
+                                   :req (req (and (#{:rd :hq} (first (:server target)))
+                                                  (first-event? state side :successful-run-ends
+                                                                #(#{:rd :hq} (first (:server (first %)))))))
                                    :msg (msg "draw " (:cards-accessed target 0) " cards")
                                    :effect (effect (draw (:cards-accessed target 0)))}}}
 
