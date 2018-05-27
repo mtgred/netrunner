@@ -1,4 +1,11 @@
-(in-ns 'game.core)
+(ns game.cards.events
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (defn- run-event
   ([] (run-event nil))
@@ -14,7 +21,7 @@
                            ((or post-run-effect (effect)) eid card targets))}
           cdef)))
 
-(def cards-events
+(def card-definitions
   {"Account Siphon"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))
@@ -92,6 +99,14 @@
                   ((constantly false)
                     (toast state :corp "Cannot rez ICE on this run due to Blackmail"))
                   true)))))
+
+   "Black Hat"
+   {:trace {:base 4
+            :unsuccessful {:effect (effect (register-events (:events (card-def card))
+                                                            (assoc card :zone '(:discard))))}}
+    :events {:pre-access {:req (req (#{:hq :rd} target))
+                          :effect (effect (access-bonus 2))}
+             :runner-turn-ends {:effect (effect (unregister-events card))}}}
 
    "Bribery"
    {:prompt "How many credits?"
@@ -510,7 +525,8 @@
    {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
 
    "Embezzle"
-   (letfn [(name-string [cards] (join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
+   (letfn [(name-string [cards]
+             (join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
     {:req (req hq-runnable)
      :effect (effect
               (run :hq {:req (req (= target :hq))
@@ -1312,7 +1328,8 @@
                          (installed? %))}
     :effect (effect (host target (assoc card :zone [:discard]))
                     (system-msg (str "hosts On the Lam on " (:title target))))
-    :prevent {:tag [:all] :damage [:meat :net :brain]}
+    :interactions {:prevent [{:type #{:net :brain :meat :tag}
+                              :req (req true)}]}
     :abilities [{:label "[Trash]: Avoid 3 tags"
                  :msg "avoid up to 3 tags"
                  :effect (effect (tag-prevent 3) (trash card {:cause :ability-cost}))}
@@ -1382,7 +1399,7 @@
                                (set-prop state side (get-card state target) :agendapoints (+ amount (:agendapoints (get-card state target))))
                                (gain-agenda-point state side amount))]
      {:req (req archives-runnable)
-      :events {:purge {:effect (effect (trash card))}}
+      :events {:purge {:effect (effect (trash card {:cause :purge}))}}
       :trash-effect {:effect (req (let [current-side (get-scoring-owner state {:cid (:agenda-cid card)})]
                                     (update-agenda-points state current-side (find-cid (:agenda-cid card) (get-in @state [current-side :scored])) 1)))}
       :effect (effect (run :archives
@@ -1780,9 +1797,9 @@
    "System Seizure"
   {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
    :events {:pump-breaker {:silent (req true)
-                           :req (req (or
-                                       (and (has-flag? state side :current-run :system-seizure) (run-flag? state side (second targets) :system-seizure))
-                                       (not (get-in @state [:per-turn (:cid card)]))))
+                           :req (req (or (and (has-flag? state side :current-run :system-seizure)
+                                              (run-flag? state side (second targets) :system-seizure))
+                                         (not (get-in @state [:per-turn (:cid card)]))))
                            :effect (req (update! state side (update-in (second targets) [:pump :all-run] (fnil #(+ % (first targets)) 0)))
                                         (register-run-flag! state side card :system-seizure (fn [_ _ c] (= (:cid c) (:cid (second targets)))))
                                         (update-breaker-strength state side (second targets))

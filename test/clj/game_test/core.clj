@@ -49,12 +49,17 @@
         (when (= start-as :runner) (take-credits state :corp)))
       state)))
 
-
 (defn load-all-cards [tests]
   (when (empty? @all-cards)
+    (core/reset-card-defs)
     (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
   (tests))
 (use-fixtures :once load-all-cards)
+
+(defn reset-card-defs [card-type tests]
+  (core/reset-card-defs card-type)
+  (tests))
+
 
 ;;; Card related functions
 (defn find-card

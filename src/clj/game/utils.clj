@@ -173,6 +173,8 @@
       :credit (str value " [$]")
       :click (->> "[Click]" repeat (take value) (apply str))
       :forfeit (str value " Agenda" (when (> value 1) "s"))
+      :net (str value " net damage")
+      :meat (str value " meat damage")
       nil)))
 
 (defn build-cost-str

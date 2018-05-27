@@ -1,6 +1,11 @@
-(in-ns 'game.core)
-
-(declare trash-program trash-hardware trash-resource-sub trash-installed)
+(ns game.cards.ice
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 ;;;; Helper functions specific for ICE
 
@@ -69,22 +74,6 @@
   "Trace ability for giving a tag, at specified base strength"
   [base]
   (trace-ability base give-tag))
-
-(defn do-net-damage
-  "Do specified amount of net-damage."
-  [dmg]
-  {:label (str "Do " dmg " net damage")
-   :delayed-completion true
-   :msg (str "do " dmg " net damage")
-   :effect (effect (damage eid :net dmg {:card card}))})
-
-(defn do-brain-damage
-  "Do specified amount of brain damage."
-  [dmg]
-  {:label (str "Do " dmg " brain damage")
-   :delayed-completion true
-   :msg (str "do " dmg " brain damage")
-   :effect (effect (damage eid :brain dmg {:card card}))})
 
 (defn gain-credits
   "Gain specified amount of credits"
@@ -224,7 +213,7 @@
 
 
 ;;;; Card definitions
-(def cards-ice
+(def card-definitions
   {"Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
                            :msg "make the Runner draw 2 cards"
@@ -1304,26 +1293,31 @@
                   (trace-ability 1 end-the-run)]}
 
    "Magnet"
-   {:delayed-completion true
-    :effect (req (let [magnet card]
-                   (continue-ability
-                     state side
-                     {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                      (remove-once #(= (:cid %) (:cid magnet)) (all-active-installed state corp))))
-                      :prompt "Select a Program to host on Magnet"
-                      :choices {:req #(and (card-is? % :type "Program")
-                                           (ice? (:host %))
-                                           (not= (:cid (:host %)) (:cid magnet)))}
-                      :effect (req (let [hosted (host state side card target)]
-                                     (unregister-events state side hosted)
-                                     (update! state side (dissoc hosted :abilities))))}
-                     card nil)))
-    :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
-                              :effect (req (doseq [c (get-in card [:hosted])]
-                                             (unregister-events state side c)
-                                             (update! state side (dissoc c :abilities)))
-                                           (update-ice-strength state side card))}}
-    :subroutines [end-the-run]}
+   (letfn [(disable-hosted [state side c]
+             (doseq [hc (:hosted (get-card state c))]
+               (unregister-events state side hc)
+               (update! state side (dissoc hc :abilities))))]
+     {:delayed-completion true
+      :effect (req (let [magnet card]
+                     (when-completed (resolve-ability
+                                       state side
+                                       {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                                        (remove-once #(= (:cid %) (:cid magnet))
+                                                                     (filter ice? (all-installed state corp)))))
+                                        :prompt "Select a Program to host on Magnet"
+                                        :choices {:req #(and (card-is? % :type "Program")
+                                                             (ice? (:host %))
+                                                             (not= (:cid (:host %)) (:cid magnet)))}
+                                        :effect (effect (host card target))}
+                                       card nil)
+                                     (disable-hosted state side card))))
+      :derez-effect {:req (req (not-empty (:hosted card)))
+                     :effect (req (doseq [c (get-in card [:hosted])]
+                                    (card-init state side c {:resolve-effect false})))}
+      :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
+                                :effect (req (disable-hosted state side card)
+                                          (update-ice-strength state side card))}}
+      :subroutines [end-the-run]})
 
    "Mamba"
    {:abilities [(power-counter-ability (do-net-damage 1))]
@@ -1522,6 +1516,11 @@
                                      (has-subtype? target "NEXT")))
                       :effect (effect (update-ice-strength card))}]
               {:rez nb :derez nb :trash nb :card-moved nb})}
+
+   "NEXT Diamond"
+   {:rez-cost-bonus (req (- (next-ice-count corp)))
+    :subroutines [(do-brain-damage 1)
+                  trash-installed]}
 
    "NEXT Gold"
    {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"

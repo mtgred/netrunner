@@ -1,6 +1,14 @@
-(in-ns 'game.core)
+(ns game.cards.operations
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.cards.ice :refer [end-the-run]]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
-(def cards-operations
+(def card-definitions
   {"24/7 News Cycle"
    {:req (req (pos? (count (:scored corp))))
     :delayed-completion true
@@ -1305,7 +1313,6 @@
 
    "Shipment from MirrorMorph"
    (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph"
-                             :priority -1
                              :delayed-completion true
                              :choices {:req #(and (= (:side %) "Corp")
                                                   (not (is-type? % "Operation"))

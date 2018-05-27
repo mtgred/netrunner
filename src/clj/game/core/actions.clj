@@ -234,13 +234,18 @@
 (defn play-auto-pump
   "Use the 'match strength with ice' function of icebreakers."
   [state side args]
-  (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (pos? (:position run 0))) (get-card state ((get-run-ices state) (dec (:position run)))))
+  (let [run (:run @state)
+        card (get-card state (:card args))
+        run-ice (get-run-ices state)
+        ice-cnt (count run-ice)
+        ice-idx (dec (:position run 0))
+        in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
+        current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
         pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
                                            (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))]
     (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
       (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
       (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
