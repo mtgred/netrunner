@@ -1265,7 +1265,6 @@
         (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Runner waits for Runner to choose option")
         (prompt-choice :runner "End the run")
         (is (not (:run @state)) "Run is ended")))))
 
