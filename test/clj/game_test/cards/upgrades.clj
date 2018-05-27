@@ -10,7 +10,7 @@
 (deftest amazon-industrial-zone
   ;; Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount
   (do-game
-    (new-game (default-corp [(qty "Spiderweb" 1) (qty "Amazon Industrial Zone" 1)])
+    (new-game (default-corp ["Spiderweb" "Amazon Industrial Zone"])
               (default-runner))
     (take-credits state :corp 1)
     (play-from-hand state :corp "Amazon Industrial Zone" "New remote")
@@ -27,7 +27,7 @@
   ;; Ben Musashi
   (testing "Basic test - pay 2 net damage to steal from this server"
     (do-game
-      (new-game (default-corp [(qty "Ben Musashi" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Ben Musashi" "House of Knives"])
                 (default-runner))
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
@@ -53,7 +53,7 @@
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "on R&D access"
     (do-game
-      (new-game (default-corp [(qty "Ben Musashi" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Ben Musashi" "House of Knives"])
                 (default-runner))
       (starting-hand state :corp ["Ben Musashi"])
       (play-from-hand state :corp "Ben Musashi" "R&D")
@@ -98,7 +98,7 @@
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Check runner chooses order of payment"
     (do-game
-      (new-game (default-corp [(qty "Ben Musashi" 1) (qty "Obokata Protocol" 1)])
+      (new-game (default-corp ["Ben Musashi" "Obokata Protocol"])
                 (default-runner [(qty "Sure Gamble" 6)]))
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "Obokata Protocol" "Server 1")
@@ -121,7 +121,7 @@
         (is (= 1 (count (:scored (get-runner)))) "Scored agenda"))))
   (testing "Check Fetal AI can be stolen, #2586"
     (do-game
-      (new-game (default-corp [(qty "Ben Musashi" 1) (qty "Fetal AI" 1)])
+      (new-game (default-corp ["Ben Musashi" "Fetal AI"])
                 (default-runner [(qty "Sure Gamble" 5)]))
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "Fetal AI" "Server 1")
@@ -175,7 +175,7 @@
       (is (:card (first (:prompt (get-runner)))) "Accessing a card from R&D; not showing Bernice Mai as possible access")))
   (testing "interaction with Dedicated Response Team"
     (do-game
-      (new-game (default-corp [(qty "Bernice Mai" 3) (qty "Dedicated Response Team" 1)])
+      (new-game (default-corp [(qty "Bernice Mai" 3) "Dedicated Response Team"])
                 (default-runner))
       (play-from-hand state :corp "Bernice Mai" "New remote")
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
@@ -193,7 +193,7 @@
 (deftest bio-vault
   ;; Bio Vault - 2 advancement tokens + trash to end the run
   (do-game
-    (new-game (default-corp [(qty "Bio Vault" 1)])
+    (new-game (default-corp ["Bio Vault"])
               (default-runner))
     (play-from-hand state :corp "Bio Vault" "New remote")
     (take-credits state :corp)
@@ -218,7 +218,7 @@
 (deftest breaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
-   (new-game (default-corp [(qty "Breaker Bay Grid" 2) (qty "The Root" 1) (qty "Strongbox" 1)])
+   (new-game (default-corp [(qty "Breaker Bay Grid" 2) "The Root" "Strongbox"])
              (default-runner))
    (core/gain state :corp :click 1)
    (play-from-hand state :corp "Breaker Bay Grid" "New remote")
@@ -239,10 +239,10 @@
 (deftest bryan-stinson-current
   ;; Bryan Stinson - play a transaction from archives and remove from game. Ensure Currents are RFG and not trashed.
   (do-game
-   (new-game (default-corp [(qty "Bryan Stinson" 1) (qty "Death and Taxes" 1)
-                            (qty "Paywall Implementation" 1) (qty "Global Food Initiative" 1)
-                            (qty "IPO" 1)])
-             (default-runner [(qty "Interdiction" 1)]))
+   (new-game (default-corp ["Bryan Stinson" "Death and Taxes"
+                            "Paywall Implementation" "Global Food Initiative"
+                            "IPO"])
+             (default-runner ["Interdiction"]))
     (trash-from-hand state :corp "Death and Taxes")
     (play-from-hand state :corp "Bryan Stinson" "New remote")
     (let [bs (get-content state :remote1 0)]
@@ -280,7 +280,7 @@
 (deftest calibration-testing
   ;; Calibration Testing - advanceable / non-advanceable
   (do-game
-    (new-game (default-corp [(qty "Calibration Testing" 2) (qty "Project Junebug" 1) (qty "PAD Campaign" 1)])
+    (new-game (default-corp [(qty "Calibration Testing" 2) "Project Junebug" "PAD Campaign"])
               (default-runner))
     (core/gain state :corp :credit 10)
     (core/gain state :corp :click 1)
@@ -342,7 +342,7 @@
 (deftest chilo-city-grid
   ;; ChiLo City Grid - Give 1 tag for successful traces during runs on its server
   (do-game
-    (new-game (default-corp [(qty "Caduceus" 2) (qty "ChiLo City Grid" 1)])
+    (new-game (default-corp [(qty "Caduceus" 2) "ChiLo City Grid"])
               (default-runner))
     (play-from-hand state :corp "ChiLo City Grid" "New remote")
     (play-from-hand state :corp "Caduceus" "Server 1")
@@ -369,7 +369,7 @@
 (deftest code-replicator
   ;; Code Replicator - trash to make runner approach passed (rezzed) ice again
   (do-game
-    (new-game (default-corp [(qty "Ice Wall" 3) (qty "Code Replicator" 1)])
+    (new-game (default-corp [(qty "Ice Wall" 3) "Code Replicator"])
               (default-runner))
     (core/gain state :corp :click 1)
     (core/gain state :corp :credit 5)
@@ -397,7 +397,7 @@
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE
   (do-game
-    (new-game (default-corp [(qty "Quandary" 2) (qty "Corporate Troubleshooter" 1)])
+    (new-game (default-corp [(qty "Quandary" 2) "Corporate Troubleshooter"])
               (default-runner))
     (core/gain state :corp :credit 5)
     (play-from-hand state :corp "Corporate Troubleshooter" "HQ")
@@ -426,7 +426,7 @@
   (testing "Basic test"
     (do-game
       (new-game (default-corp [(qty "Crisium Grid" 2)])
-                (default-runner [(qty "Desperado" 1) (qty "Temüjin Contract" 1)]))
+                (default-runner ["Desperado" "Temüjin Contract"]))
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (core/rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
@@ -441,7 +441,7 @@
   (testing "with Gauntlet, #3082"
     (do-game
       (new-game (default-corp [(qty "Crisium Grid" 2)(qty "Vanilla" 2)])
-                (default-runner [(qty "The Gauntlet" 1) (qty "Temüjin Contract" 1)]))
+                (default-runner ["The Gauntlet" "Temüjin Contract"]))
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (play-from-hand state :corp "Vanilla" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
@@ -458,7 +458,7 @@
   (testing "Purge ability"
     (do-game
       (new-game (default-corp [(qty "Cyberdex Virus Suite" 3)])
-                (default-runner [(qty "Cache" 1) (qty "Medium" 1)]))
+                (default-runner ["Cache" "Medium"]))
       (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
       (take-credits state :corp 2)
       ;; runner's turn
@@ -482,7 +482,7 @@
   (testing "Purge on access"
     (do-game
       (new-game (default-corp [(qty "Cyberdex Virus Suite" 3)])
-                (default-runner [(qty "Cache" 1) (qty "Medium" 1)]))
+                (default-runner ["Cache" "Medium"]))
       (play-from-hand state :corp "Cyberdex Virus Suite" "New remote")
       (take-credits state :corp 2)
       ;; runner's turn
@@ -505,8 +505,8 @@
             "Medium has no counters"))))
   (testing "Don't interrupt archives access, #1647"
     (do-game
-      (new-game (default-corp [(qty "Cyberdex Virus Suite" 1) (qty "Braintrust" 1)])
-                (default-runner [(qty "Cache" 1)]))
+      (new-game (default-corp ["Cyberdex Virus Suite" "Braintrust"])
+                (default-runner ["Cache"]))
       (trash-from-hand state :corp "Cyberdex Virus Suite")
       (trash-from-hand state :corp "Braintrust")
       (take-credits state :corp)
@@ -548,7 +548,7 @@
 (deftest ghost-branch-dedicated-response-team
   ;; Ghost Branch - with Dedicated Response Team
   (do-game
-    (new-game (default-corp [(qty "Ghost Branch" 1) (qty "Dedicated Response Team" 1)])
+    (new-game (default-corp ["Ghost Branch" "Dedicated Response Team"])
               (default-runner))
     (play-from-hand state :corp "Ghost Branch" "New remote")
     (play-from-hand state :corp "Dedicated Response Team" "New remote")
@@ -571,7 +571,7 @@
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game
-    (new-game (default-corp [(qty "Georgia Emelyov" 1)])
+    (new-game (default-corp ["Georgia Emelyov"])
               (default-runner))
     (play-from-hand state :corp "Georgia Emelyov" "New remote")
     (let [geo (get-content state :remote1 0)]
@@ -594,8 +594,8 @@
 (deftest helheim-servers
   ;; Helheim Servers - Full test
   (do-game
-    (new-game (default-corp [(qty "Helheim Servers" 1) (qty "Gutenberg" 1) (qty "Vanilla" 1)
-                             (qty "Jackson Howard" 1) (qty "Hedge Fund" 1)])
+    (new-game (default-corp ["Helheim Servers" "Gutenberg" "Vanilla"
+                             "Jackson Howard" "Hedge Fund"])
               (default-runner))
     (play-from-hand state :corp "Helheim Servers" "R&D")
     (play-from-hand state :corp "Gutenberg" "R&D")
@@ -629,7 +629,7 @@
 (deftest hokusai-grid
   ;; Hokusai Grid - Do 1 net damage when run successful on its server
   (do-game
-    (new-game (default-corp [(qty "Hokusai Grid" 1)])
+    (new-game (default-corp ["Hokusai Grid"])
               (default-runner))
     (play-from-hand state :corp "Hokusai Grid" "HQ")
     (take-credits state :corp)
@@ -643,7 +643,7 @@
   ;; Intake - Trace4, add an installed program or virtual resource to the grip
   (do-game
     (new-game (default-corp [(qty "Intake" 3)])
-              (default-runner [(qty "Corroder" 1) (qty "Fester" 1) (qty "Daily Casts" 1)]))
+              (default-runner ["Corroder" "Fester" "Daily Casts"]))
     (starting-hand state :corp ["Intake" "Intake"])
     (play-from-hand state :corp "Intake" "New remote")
     (take-credits state :corp)
@@ -688,7 +688,7 @@
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
   (do-game
-    (new-game (default-corp [(qty "Jinja City Grid" 1) (qty "Vanilla" 3) (qty "Ice Wall" 3)])
+    (new-game (default-corp ["Jinja City Grid" (qty "Vanilla" 3) (qty "Ice Wall" 3)])
               (default-runner))
     (starting-hand state :corp ["Jinja City Grid"])
     (core/gain state :corp :click 6)
@@ -707,8 +707,8 @@
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program
   (do-game
-    (new-game (default-corp [(qty "Keegan Lane" 1)])
-              (default-runner [(qty "Corroder" 1)]))
+    (new-game (default-corp ["Keegan Lane"])
+              (default-runner ["Corroder"]))
     (play-from-hand state :corp "Keegan Lane" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
@@ -727,7 +727,7 @@
 (deftest manta-grid
   ;; If the Runner has fewer than 6 or no unspent clicks on successful run, corp gains a click next turn.
   (do-game
-    (new-game (default-corp [(qty "Manta Grid" 1)])
+    (new-game (default-corp ["Manta Grid"])
               (default-runner))
     (starting-hand state :runner [])
     (is (= 3 (:click (get-corp))) "Corp has 3 clicks")
@@ -756,8 +756,8 @@
 (deftest marcus-batty-security-nexus
   ;; Marcus Batty - Simultaneous Interaction with Security Nexus
   (do-game
-    (new-game (default-corp [(qty "Marcus Batty" 1) (qty "Enigma" 1)])
-              (default-runner [(qty "Security Nexus" 1)]))
+    (new-game (default-corp ["Marcus Batty" "Enigma"])
+              (default-runner ["Security Nexus"]))
     (play-from-hand state :corp "Marcus Batty" "HQ")
     (play-from-hand state :corp "Enigma" "HQ")
     (take-credits state :corp)
@@ -846,7 +846,7 @@
   (testing "interaction with Imp"
     (do-game
       (new-game (default-corp [(qty "Mumbad Virtual Tour" 2)])
-                (default-runner [(qty "Imp" 1)]))
+                (default-runner ["Imp"]))
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
@@ -925,7 +925,7 @@
         (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
   (testing "effect persists through current run after trash"
     (do-game
-      (new-game (default-corp [(qty "Mwanza City Grid" 1) (qty "Hedge Fund" 5)])
+      (new-game (default-corp ["Mwanza City Grid" (qty "Hedge Fund" 5)])
                 (default-runner))
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
       (take-credits state :corp)
@@ -996,8 +996,8 @@
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement
   (do-game
-    (new-game (default-corp [(qty "NeoTokyo Grid" 1) (qty "Nisei MK II" 1)
-                             (qty "Shipment from SanSan" 1) (qty "Ice Wall" 1)])
+    (new-game (default-corp ["NeoTokyo Grid" "Nisei MK II"
+                             "Shipment from SanSan" "Ice Wall"])
               (default-runner))
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "NeoTokyo Grid" "New remote")
@@ -1044,7 +1044,7 @@
   ;; Old Hollywood Grid
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "House of Knives" 3)])
+      (new-game (default-corp ["Old Hollywood Grid" (qty "House of Knives" 3)])
                 (default-runner))
       (play-from-hand state :corp "Old Hollywood Grid" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
@@ -1067,7 +1067,7 @@
         (is (= 2 (count (:scored (get-runner)))) "2 stolen agendas"))))
   (testing "Central server"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "House of Knives" 3)])
+      (new-game (default-corp ["Old Hollywood Grid" (qty "House of Knives" 3)])
                 (default-runner))
       (play-from-hand state :corp "Old Hollywood Grid" "HQ")
       (take-credits state :corp 2)
@@ -1086,8 +1086,8 @@
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
   (testing "Gang Sign interaction. Prevent the steal outside of a run. #2169"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 2)])
-                (default-runner [(qty "Gang Sign" 1)]))
+      (new-game (default-corp ["Old Hollywood Grid" (qty "Project Beale" 2)])
+                (default-runner ["Gang Sign"]))
       (play-from-hand state :corp "Old Hollywood Grid" "HQ")
       (play-from-hand state :corp "Project Beale" "New remote")
       (take-credits state :corp)
@@ -1101,7 +1101,7 @@
       (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")))
   (testing "Trash order"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 1)])
+      (new-game (default-corp ["Old Hollywood Grid" "Project Beale"])
                 (default-runner))
       (play-from-hand state :corp "Old Hollywood Grid" "New remote")
       (play-from-hand state :corp "Project Beale" "Server 1")
@@ -1124,7 +1124,7 @@
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
   (testing "Steal other agendas"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 2)])
+      (new-game (default-corp ["Old Hollywood Grid" (qty "Project Beale" 2)])
                 (default-runner))
       (play-from-hand state :corp "Old Hollywood Grid" "New remote")
       (play-from-hand state :corp "Project Beale" "Server 1")
@@ -1141,7 +1141,7 @@
   ;; Overseer Matrix - corp takes a tag when trashing a card in this server
   (testing "Basic functionality"
     (do-game
-      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 1)])
+      (new-game (default-corp ["Overseer Matrix" "Red Herrings"])
                 (default-runner))
       (play-from-hand state :corp "Overseer Matrix" "New remote")
       (play-from-hand state :corp "Red Herrings" "Server 1")
@@ -1162,7 +1162,7 @@
         (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
   (testing "Effect persists after trash"
     (do-game
-      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 3)])
+      (new-game (default-corp ["Overseer Matrix" (qty "Red Herrings" 3)])
                 (default-runner))
       (play-from-hand state :corp "Overseer Matrix" "New remote")
       (play-from-hand state :corp "Red Herrings" "Server 1")
@@ -1183,7 +1183,7 @@
         (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
   (testing "Effect ends after current run"
     (do-game
-      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 3)])
+      (new-game (default-corp ["Overseer Matrix" (qty "Red Herrings" 3)])
                 (default-runner))
       (play-from-hand state :corp "Overseer Matrix" "New remote")
       (play-from-hand state :corp "Red Herrings" "Server 1")
@@ -1210,8 +1210,8 @@
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game
-    (new-game (default-corp [(qty "Port Anson Grid" 1) (qty "Data Raven" 1)])
-              (default-runner [(qty "Faerie" 1) (qty "Technical Writer" 1)]))
+    (new-game (default-corp ["Port Anson Grid" "Data Raven"])
+              (default-runner ["Faerie" "Technical Writer"]))
     (play-from-hand state :corp "Port Anson Grid" "New remote")
     (play-from-hand state :corp "Data Raven" "Server 1")
     (take-credits state :corp)
@@ -1250,7 +1250,7 @@
       (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
   (testing "Multiple unrezzed upgrades in Archives interaction with DRT"
     (do-game
-      (new-game (default-corp [(qty "Prisec" 2) (qty "Dedicated Response Team" 1)])
+      (new-game (default-corp [(qty "Prisec" 2) "Dedicated Response Team"])
                 (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
       (play-from-hand state :corp "Prisec" "Archives")
@@ -1274,7 +1274,7 @@
 (deftest product-placement
   ;; Product Placement - Gain 2 credits when Runner accesses it
   (do-game
-    (new-game (default-corp [(qty "Product Placement" 1)])
+    (new-game (default-corp ["Product Placement"])
               (default-runner))
     (play-from-hand state :corp "Product Placement" "New remote")
     (take-credits state :corp)
@@ -1291,7 +1291,7 @@
   ;; Red Herrings
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Red Herrings" "House of Knives"])
                 (default-runner))
       (play-from-hand state :corp "Red Herrings" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
@@ -1337,7 +1337,7 @@
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Trashed from HQ"
     (do-game
-      (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Red Herrings" "House of Knives"])
                 (default-runner))
       (trash-from-hand state :corp "Red Herrings")
       (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
@@ -1348,7 +1348,7 @@
           "Runner being asked to Steal")))
   (testing "Don't affect runs on other servers"
     (do-game
-      (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Red Herrings" "House of Knives"])
                 (default-runner))
       (play-from-hand state :corp "Red Herrings" "New remote")
       (play-from-hand state :corp "House of Knives" "New remote")
@@ -1365,7 +1365,7 @@
   ;; Ruhr Valley
   (testing "Basic test - As an additional cost to make a run on this server, the Runner must spend a click."
     (do-game
-      (new-game (default-corp [(qty "Ruhr Valley" 1)])
+      (new-game (default-corp ["Ruhr Valley"])
                 (default-runner))
       (play-from-hand state :corp "Ruhr Valley" "HQ")
       (take-credits state :corp)
@@ -1392,7 +1392,7 @@
         (is (= 1 (:click (get-runner)))))))
   (testing "If the runner trashes with one click left, the ability to run is enabled"
     (do-game
-      (new-game (default-corp [(qty "Ruhr Valley" 1)])
+      (new-game (default-corp ["Ruhr Valley"])
                 (default-runner))
       (play-from-hand state :corp "Ruhr Valley" "HQ")
       (take-credits state :corp)
@@ -1411,7 +1411,7 @@
 (deftest ryon-knight
   ;; Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining
   (do-game
-    (new-game (default-corp [(qty "Ryon Knight" 1)])
+    (new-game (default-corp ["Ryon Knight"])
               (default-runner))
     (play-from-hand state :corp "Ryon Knight" "HQ")
     (take-credits state :corp)
@@ -1433,7 +1433,7 @@
 (deftest satellite-grid
   ;; Satellite Grid - Add 1 fake advancement on all ICE protecting server
   (do-game
-    (new-game (default-corp [(qty "Satellite Grid" 1) (qty "Ice Wall" 2)])
+    (new-game (default-corp ["Satellite Grid" (qty "Ice Wall" 2)])
               (default-runner))
     (play-from-hand state :corp "Satellite Grid" "HQ")
     (play-from-hand state :corp "Ice Wall" "HQ")
@@ -1457,7 +1457,7 @@
   ;; Trash to stop installs for the rest of the run
   (do-game
     (new-game (default-corp [(qty "Signal Jamming" 3)])
-              (default-runner [(qty "Self-modifying Code" 3) (qty "Reaver" 1)]))
+              (default-runner [(qty "Self-modifying Code" 3) "Reaver"]))
     (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
     (play-from-hand state :corp "Signal Jamming" "HQ")
     (take-credits state :corp)
@@ -1480,7 +1480,7 @@
   ;; Strongbox
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Strongbox" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Strongbox" "House of Knives"])
                 (default-runner))
       (play-from-hand state :corp "Strongbox" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
@@ -1525,7 +1525,7 @@
   ;; Surat City Grid - Trigger on rez of a card in/protecting same server to rez another card at 2c discount
   (do-game
     (new-game (default-corp [(qty "Surat City Grid" 2) (qty "Cyberdex Virus Suite" 2)
-                             (qty "Enigma" 1) (qty "Wraparound" 1)])
+                             "Enigma" "Wraparound"])
               (default-runner))
     (core/gain state :corp :credit 15 :click 8)
     (play-from-hand state :corp "Surat City Grid" "New remote")
@@ -1601,8 +1601,8 @@
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
   (do-game
-    (new-game (default-corp [(qty "Pup" 1) (qty "Tori Hanzō" 1)])
-              (default-runner [(qty "Sure Gamble" 3) (qty "Net Shield" 1)]))
+    (new-game (default-corp ["Pup" "Tori Hanzō"])
+              (default-runner [(qty "Sure Gamble" 3) "Net Shield"]))
     (core/gain state :corp :credit 10)
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Tori Hanzō" "HQ")
@@ -1632,7 +1632,7 @@
 (deftest tori-hanzo-hokusai
   ;; Tori Hanzō + Hokusai Grid: Issue #2702
   (do-game
-    (new-game (default-corp [(qty "Tori Hanzō" 1) (qty "Hokusai Grid" 1)])
+    (new-game (default-corp ["Tori Hanzō" "Hokusai Grid"])
               (default-runner))
     (core/gain state :corp :credit 5)
     (play-from-hand state :corp "Hokusai Grid" "Archives")
@@ -1664,7 +1664,7 @@
 (deftest tori-hanzo-net
   ;; Tori Hanzō breaking subsequent net damage: Issue #3176
   (do-game
-    (new-game (default-corp [(qty "Tori Hanzō" 1) (qty "Pup" 2) (qty "Neural EMP" 2)])
+    (new-game (default-corp ["Tori Hanzō" (qty "Pup" 2) (qty "Neural EMP" 2)])
               (default-runner))
     (core/gain state :corp :credit 8)
     (play-from-hand state :corp "Tori Hanzō" "New remote")
@@ -1687,9 +1687,9 @@
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game
-    (new-game (default-corp [(qty "Eve Campaign" 1)
-                             (qty "Underway Grid" 1)])
-              (default-runner [(qty "Drive By" 1)]))
+    (new-game (default-corp ["Eve Campaign"
+                             "Underway Grid"])
+              (default-runner ["Drive By"]))
     (play-from-hand state :corp "Underway Grid" "New remote")
     (play-from-hand state :corp "Eve Campaign" "Server 1")
     (take-credits state :corp)

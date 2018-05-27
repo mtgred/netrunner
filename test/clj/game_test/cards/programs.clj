@@ -88,8 +88,8 @@
 (deftest crescentus
   ;; Crescentus should only work on rezzed ice
   (do-game
-    (new-game (default-corp [(qty "Quandary" 1)])
-              (default-runner [(qty "Crescentus" 1)]))
+    (new-game (default-corp ["Quandary"])
+              (default-runner ["Crescentus"]))
     (play-from-hand state :corp "Quandary" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Crescentus")
@@ -107,8 +107,8 @@
 (deftest datasucker
   ;; Datasucker - Reduce strength of encountered ICE
   (do-game
-    (new-game (default-corp [(qty "Fire Wall" 1)])
-              (default-runner [(qty "Datasucker" 1)]))
+    (new-game (default-corp ["Fire Wall"])
+              (default-runner ["Datasucker"]))
     (play-from-hand state :corp "Fire Wall" "New remote")
     (take-credits state :corp)
     (core/gain state :runner :click 3)
@@ -134,8 +134,8 @@
   ;; Datasucker - does not affect next ice when current is trashed. Issue #1788.
   (do-game
     (new-game
-      (default-corp [(qty "Wraparound" 1) (qty "Spiderweb" 1)])
-      (default-corp [(qty "Datasucker" 1) (qty "Parasite" 1)]))
+      (default-corp ["Wraparound" "Spiderweb"])
+      (default-corp ["Datasucker" "Parasite"]))
     (play-from-hand state :corp "Spiderweb" "HQ")
     (play-from-hand state :corp "Wraparound" "HQ")
     (take-credits state :corp)
@@ -160,8 +160,8 @@
   ;; Dheghdheer - hosting a breaker with strength based on unused MU should calculate correctly
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Adept" 1)
-                               (qty "Dhegdheer" 1)]))
+              (default-runner ["Adept"
+                               "Dhegdheer"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Dhegdheer")
@@ -182,7 +182,7 @@
   ;; Diwan - Full test
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Fire Wall" 3) (qty "Crisium Grid" 2)])
-              (default-runner [(qty "Diwan" 1)]))
+              (default-runner ["Diwan"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Diwan")
     (prompt-choice :runner "HQ")
@@ -207,8 +207,8 @@
 (deftest djinn-host-chakana
   ;; Djinn - Hosted Chakana does not disable advancing agendas. Issue #750
   (do-game
-    (new-game (default-corp [(qty "Priority Requisition" 1)])
-              (default-runner [(qty "Djinn" 1) (qty "Chakana" 1)]))
+    (new-game (default-corp ["Priority Requisition"])
+              (default-runner ["Djinn" "Chakana"]))
     (play-from-hand state :corp "Priority Requisition" "New remote")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Djinn")
@@ -229,7 +229,7 @@
   ;; Djinn - Host a non-icebreaker program
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Djinn" 1) (qty "Chakana" 1)]))
+              (default-runner ["Djinn" "Chakana"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Djinn")
     (is (= 3 (core/available-mu state)))
@@ -244,7 +244,7 @@
   ;; Djinn - Tutor a virus program
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Djinn" 1) (qty "Parasite" 1)]))
+              (default-runner ["Djinn" "Parasite"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Djinn")
     (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
@@ -261,7 +261,7 @@
   (do-game
     (new-game
       (default-corp [(qty "Restructure" 3) (qty "Hedge Fund" 3)])
-      (make-deck "Laramy Fisk: Savvy Investor" [(qty "Equivocation" 1) (qty "Desperado" 1)]))
+      (make-deck "Laramy Fisk: Savvy Investor" ["Equivocation" "Desperado"]))
     (starting-hand state :corp ["Hedge Fund"])
     (take-credits state :corp)
     (play-from-hand state :runner "Equivocation")
@@ -305,7 +305,7 @@
   ;; Gravedigger - Gain counters when Corp cards are trashed, spend click-counter to mill Corp
   (do-game
     (new-game (default-corp [(qty "Launch Campaign" 2) (qty "Enigma" 2)])
-              (default-runner [(qty "Gravedigger" 1)]))
+              (default-runner ["Gravedigger"]))
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (play-from-hand state :corp "Launch Campaign" "New remote")
     (take-credits state :corp)
@@ -327,8 +327,8 @@
 (deftest harbinger-blacklist
   ;; Harbinger - install facedown when Blacklist installed
   (do-game
-    (new-game (default-corp [(qty "Blacklist" 1)])
-              (default-runner [(qty "Harbinger" 1)]))
+    (new-game (default-corp ["Blacklist"])
+              (default-runner ["Harbinger"]))
     (play-from-hand state :corp "Blacklist" "New remote")
     (core/rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
@@ -341,7 +341,7 @@
   ;; Hyperdriver - Remove from game to gain 3 clicks
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Hyperdriver" 1)]))
+              (default-runner ["Hyperdriver"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Hyperdriver")
     (is (= 1 (core/available-mu state)) "3 MU used")
@@ -358,8 +358,8 @@
   ;; triggering a Dhegdeered Hyperdriver should not grant +3 MU
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Hyperdriver" 1)
-                               (qty "Dhegdheer" 1)]))
+              (default-runner ["Hyperdriver"
+                               "Dhegdheer"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Dhegdheer")
     (let [dheg (get-in @state [:runner :rig :program 0])]
@@ -383,7 +383,7 @@
     (letfn [(imp-test [card]
               (do-game
                 (new-game (default-corp [(qty card 1)])
-                          (default-runner [(qty "Imp" 1)]))
+                          (default-runner ["Imp"]))
                 (take-credits state :corp)
                 (play-from-hand state :runner "Imp")
                 (run-empty-server state "HQ")
@@ -397,8 +397,8 @@
                    "Oberth Protocol"]))))
   (testing "vs an ambush"
     (do-game
-      (new-game (default-corp [(qty "Prisec" 1)])
-                (default-runner [(qty "Imp" 1) (qty "Sure Gamble" 3)]))
+      (new-game (default-corp ["Prisec"])
+                (default-runner ["Imp" (qty "Sure Gamble" 3)]))
       (play-from-hand state :corp "Prisec" "New remote")
       (take-credits state :corp)
       (let [credits (:credit (get-corp))
@@ -416,8 +416,8 @@
   (testing "vs The Future Perfect"
     ;; Psi-game happens on access [5.5.1], Imp is a trash ability [5.5.2]
     (do-game
-      (new-game (default-corp [(qty "The Future Perfect" 1)])
-                (default-runner [(qty "Imp" 1)]))
+      (new-game (default-corp ["The Future Perfect"])
+                (default-runner ["Imp"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Imp")
       (testing "Access, corp wins psi-game"
@@ -455,7 +455,7 @@
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Incubator" 1) (qty "Datasucker" 1)]))
+              (default-runner ["Incubator" "Datasucker"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Datasucker")
     (play-from-hand state :runner "Incubator")
@@ -477,8 +477,8 @@
 (deftest ixodidae
   ;; Ixodidae should not trigger on psi-games
   (do-game
-    (new-game (default-corp [(qty "Snowflake" 1)])
-              (default-runner [(qty "Ixodidae" 1) (qty "Lamprey" 1)]))
+    (new-game (default-corp ["Snowflake"])
+              (default-runner ["Ixodidae" "Lamprey"]))
     (play-from-hand state :corp "Snowflake" "HQ")
     (take-credits state :corp)
     (is (= 7 (:credit (get-corp))) "Corp at 7 credits")
@@ -505,7 +505,7 @@
   ;; Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Lamprey" 1)]))
+              (default-runner ["Lamprey"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Lamprey")
     (let [lamp (get-in @state [:runner :rig :program 0])]
@@ -523,8 +523,8 @@
   ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Adept" 1)
-                               (qty "Leprechaun" 1)]))
+              (default-runner ["Adept"
+                               "Leprechaun"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Leprechaun")
@@ -543,7 +543,7 @@
   ;; Leprechaun - Keep MU the same when hosting or trashing hosted programs
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Leprechaun" 1) (qty "Hyperdriver" 1) (qty "Imp" 1)]))
+              (default-runner ["Leprechaun" "Hyperdriver" "Imp"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Leprechaun")
     (let [lep (get-in @state [:runner :rig :program 0])]
@@ -567,7 +567,7 @@
   ;; Magnum Opus - Gain 2 cr
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Magnum Opus" 1)]))
+              (default-runner ["Magnum Opus"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Magnum Opus")
     (is (= 2 (core/available-mu state)))
@@ -580,7 +580,7 @@
   ;; Nyashia
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 10)])
-              (default-runner [(qty "Nyashia" 1)]))
+              (default-runner ["Nyashia"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Nyashia")
     (run-on state "R&D")
@@ -602,8 +602,8 @@
 (deftest paintbrush
   ;; Paintbrush - Give rezzed ICE a chosen subtype until the end of the next run
   (do-game
-    (new-game (default-corp [(qty "Ice Wall" 1)])
-              (default-runner [(qty "Paintbrush" 1)]))
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Paintbrush"]))
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Paintbrush")
@@ -645,7 +645,7 @@
   (testing "Installed facedown w/ Apex"
     (do-game
       (new-game (default-corp)
-                (make-deck "Apex: Invasive Predator" [(qty "Parasite" 1)]))
+                (make-deck "Apex: Invasive Predator" ["Parasite"]))
       (take-credits state :corp)
       (core/end-phase-12 state :runner nil)
       (prompt-select :runner (find-card "Parasite" (:hand (get-runner))))
@@ -654,7 +654,7 @@
   (testing "Installed on untrashable Architect should keep gaining counters past 3 and make strength go negative"
     (do-game
       (new-game (default-corp [(qty "Architect" 3) (qty "Hedge Fund" 3)])
-                (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
+                (default-runner [(qty "Parasite" 3) "Grimoire"]))
       (play-from-hand state :corp "Architect" "HQ")
       (let [arch (get-ice state :hq 0)]
         (core/rez state :corp arch)
@@ -674,7 +674,7 @@
           (is (= -1 (:current-strength (refresh arch))) "Architect at -1 strength")))))
   (testing "Should stay on hosted card moved by Builder"
     (do-game
-      (new-game (default-corp [(qty "Builder" 3) (qty "Ice Wall" 1)])
+      (new-game (default-corp [(qty "Builder" 3) "Ice Wall"])
                 (default-runner [(qty "Parasite" 3)]))
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Builder" "Archives")
@@ -705,10 +705,10 @@
   (testing "Use Hivemind counters when installed; instantly trash ICE if counters >= ICE strength"
     (do-game
       (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
-                (default-runner [(qty "Parasite" 1)
-                                 (qty "Grimoire" 1)
-                                 (qty "Hivemind" 1)
-                                 (qty "Sure Gamble" 1)]))
+                (default-runner ["Parasite"
+                                 "Grimoire"
+                                 "Hivemind"
+                                 "Sure Gamble"]))
       (play-from-hand state :corp "Enigma" "HQ")
       (let [enig (get-ice state :hq 0)]
         (core/rez state :corp enig)
@@ -726,7 +726,7 @@
   (testing "Trashed along with host ICE when its strength has been reduced to 0"
     (do-game
       (new-game (default-corp [(qty "Enigma" 3) (qty "Hedge Fund" 3)])
-                (default-runner [(qty "Parasite" 3) (qty "Grimoire" 1)]))
+                (default-runner [(qty "Parasite" 3) "Grimoire"]))
       (play-from-hand state :corp "Enigma" "HQ")
       (let [enig (get-ice state :hq 0)]
         (core/rez state :corp enig)
@@ -746,7 +746,7 @@
   ;; Pheromones ability shouldn't have a NullPointerException when fired with 0 virus counter
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Pheromones" 1)]))
+              (default-runner ["Pheromones"]))
     (take-credits state :corp)
 
     (play-from-hand state :runner "Pheromones")
@@ -761,8 +761,8 @@
 (deftest plague
   ;; Plague
   (do-game
-    (new-game (default-corp [(qty "Mark Yale" 1)])
-              (default-runner [(qty "Plague" 1)]))
+    (new-game (default-corp ["Mark Yale"])
+              (default-runner ["Plague"]))
     (play-from-hand state :corp "Mark Yale" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Plague")
@@ -779,7 +779,7 @@
   ;; Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Progenitor" 1) (qty "Virus Breeding Ground" 1) (qty "Hivemind" 1)]))
+              (default-runner ["Progenitor" "Virus Breeding Ground" "Hivemind"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Progenitor")
     (play-from-hand state :runner "Virus Breeding Ground")
@@ -804,7 +804,7 @@
   ;; Progenitor - Keep MU the same when hosting or trashing hosted programs
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Progenitor" 1) (qty "Hivemind" 1)]))
+              (default-runner ["Progenitor" "Hivemind"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Progenitor")
     (let [pro (get-in @state [:runner :rig :program 0])]
@@ -820,8 +820,8 @@
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
   (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 1)])
-              (default-runner [(qty "Reaver" 1) (qty "Fall Guy" 5)]))
+    (new-game (default-corp ["PAD Campaign"])
+              (default-runner ["Reaver" (qty "Fall Guy" 5)]))
     (starting-hand state :runner ["Reaver" "Fall Guy"])
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
@@ -847,7 +847,7 @@
   ;; Reaver / Freelance Coding Construct - should not draw when trash from hand #2671
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Reaver" 9) (qty "Imp" 1) (qty "Snitch" 1) (qty "Freelance Coding Contract" 1)]))
+              (default-runner [(qty "Reaver" 9) "Imp" "Snitch" "Freelance Coding Contract"]))
     (starting-hand state :runner ["Reaver" "Imp" "Snitch" "Freelance Coding Contract"])
     (take-credits state :corp)
     (play-from-hand state :runner "Reaver")
@@ -864,12 +864,11 @@
   ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
   (testing "Basic behaviour - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost"
     (do-game
-      (new-game (default-corp [(qty "Enigma" 5) (qty "Hedge Fund" 1)])
-                (default-runner [(qty "RNG Key" 1) (qty "Paperclip" 2)]))
+      (new-game (default-corp [(qty "Enigma" 5) "Hedge Fund"])
+                (default-runner ["RNG Key" (qty "Paperclip" 2)]))
       (starting-hand state :corp ["Hedge Fund"])
       (starting-hand state :runner ["RNG Key"])
       (take-credits state :corp)
-
       (testing "Gain 3 credits"
         (play-from-hand state :runner "RNG Key")
         (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
@@ -946,8 +945,8 @@
   ;; Scheherazade - Gain 1 credit when it hosts a program
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Scheherazade" 1) (qty "Cache" 1)
-                               (qty "Inti" 1) (qty "Fall Guy" 1)]))
+              (default-runner ["Scheherazade" "Cache"
+                               "Inti" "Fall Guy"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Scheherazade")
     (let [sch (get-in @state [:runner :rig :program 0])]
@@ -970,7 +969,7 @@
   ;; Trash & pay 2 to search deck for a program and install it. Shuffle.
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Self-modifying Code" 3) (qty "Reaver" 1)]))
+              (default-runner [(qty "Self-modifying Code" 3) "Reaver"]))
     (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
     (core/gain state :runner :credit 5)
     (take-credits state :corp)
@@ -991,8 +990,8 @@
 (deftest sneakdoor-beta
   (testing "Gabriel Santiago, Ash on HQ should prevent Sneakdoor HQ access but still give Gabe credits. Issue #1138."
     (do-game
-      (new-game (default-corp [(qty "Ash 2X3ZB9CY" 1)])
-                (make-deck "Gabriel Santiago: Consummate Professional" [(qty "Sneakdoor Beta" 1)]))
+      (new-game (default-corp ["Ash 2X3ZB9CY"])
+                (make-deck "Gabriel Santiago: Consummate Professional" ["Sneakdoor Beta"]))
       (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Sneakdoor Beta")
@@ -1009,8 +1008,8 @@
         (is (= :hq (-> (get-runner) :register :successful-run first)) "Successful Run on HQ recorded"))))
   (testing "do not switch to HQ if Archives has Crisium Grid. Issue #1229."
     (do-game
-      (new-game (default-corp [(qty "Crisium Grid" 1) (qty "Priority Requisition" 1) (qty "Private Security Force" 1)])
-                (default-runner [(qty "Sneakdoor Beta" 1)]))
+      (new-game (default-corp ["Crisium Grid" "Priority Requisition" "Private Security Force"])
+                (default-runner ["Sneakdoor Beta"]))
       (play-from-hand state :corp "Crisium Grid" "Archives")
       (trash-from-hand state :corp "Priority Requisition")
       (take-credits state :corp)
@@ -1024,7 +1023,7 @@
   (testing "Allow Nerve Agent to gain counters. Issue #1158/#955"
     (do-game
       (new-game (default-corp)
-                (default-runner [(qty "Sneakdoor Beta" 1) (qty "Nerve Agent" 1)]))
+                (default-runner ["Sneakdoor Beta" "Nerve Agent"]))
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Nerve Agent")
@@ -1040,7 +1039,7 @@
   (testing "Grant Security Testing credits on HQ."
     (do-game
       (new-game (default-corp)
-                (default-runner [(qty "Security Testing" 1) (qty "Sneakdoor Beta" 1)]))
+                (default-runner ["Security Testing" "Sneakdoor Beta"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Sneakdoor Beta")
       (play-from-hand state :runner "Security Testing")
@@ -1058,7 +1057,7 @@
   ;; Snitch - Only works on unrezzed ice
   (do-game
     (new-game (default-corp [(qty "Quandary" 2)])
-              (default-runner [(qty "Snitch" 1)]))
+              (default-runner ["Snitch"]))
     (play-from-hand state :corp "Quandary" "R&D")
     (play-from-hand state :corp "Quandary" "HQ")
     (let [hqice (get-ice state :hq 0)]
@@ -1083,8 +1082,8 @@
 (deftest surfer
   ;; Surfer - Swap position with ice before or after when encountering a Barrier ICE
   (do-game
-   (new-game (default-corp [(qty "Ice Wall" 1) (qty "Quandary" 1)])
-             (default-runner [(qty "Surfer" 1)]))
+   (new-game (default-corp ["Ice Wall" "Quandary"])
+             (default-runner ["Surfer"]))
    (play-from-hand state :corp "Quandary" "HQ")
    (play-from-hand state :corp "Ice Wall" "HQ")
    (take-credits state :corp)
@@ -1103,8 +1102,8 @@
 (deftest takobi
   ;; Takobi - 2 power counter to add +3 strength to a non-AI icebreaker for encounter
   (do-game
-    (new-game (default-corp [(qty "Enigma" 1)])
-              (default-runner [(qty "Takobi" 1) (qty "Corroder" 1) (qty "Faust" 1)]))
+    (new-game (default-corp ["Enigma"])
+              (default-runner ["Takobi" "Corroder" "Faust"]))
     (play-from-hand state :corp "Enigma" "HQ")
     (take-credits state :corp)
 
@@ -1140,7 +1139,7 @@
   (testing "Hivemind and Architect interactions"
     (do-game
       (new-game (default-corp [(qty "Architect" 2)])
-                (default-runner [(qty "Trypano" 2) (qty "Hivemind" 1)]))
+                (default-runner [(qty "Trypano" 2) "Hivemind"]))
       (play-from-hand state :corp "Architect" "HQ")
       (play-from-hand state :corp "Architect" "R&D")
       (let [architect-rezzed (get-ice state :hq 0)
@@ -1191,7 +1190,7 @@
 (deftest upya
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Upya" 1)]))
+              (default-runner ["Upya"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Upya")
     (dotimes [_ 3]
@@ -1217,8 +1216,8 @@
 
 (deftest wari
   (do-game
-    (new-game (default-corp [(qty "Ice Wall" 1)])
-              (default-runner [(qty "Wari" 1)]))
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Wari"]))
     (play-from-hand state :corp "Ice Wall" "R&D")
     (take-credits state :corp)
     (play-from-hand state :runner "Wari")
