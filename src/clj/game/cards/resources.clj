@@ -1419,7 +1419,7 @@
 
    "Reclaim"
    {:abilities
-    [{:label "[Click],[Trash],trash a card from your Grip: install a program, piece of hardware, or virtual resource from your Heap"
+    [{:label "Install a program, piece of hardware, or virtual resource from your Heap"
       :cost [:click 1]
       :req (req (not-empty (:hand runner)))
       :prompt "Choose a card to trash"
@@ -1427,7 +1427,7 @@
       :delayed-completion true
       :effect (req (when-completed (trash state :runner card {:cause :ability-cost})
                                    (when-completed (trash state :runner target {:cause :ability-cost})
-                                                   (resolve-ability
+                                                   (continue-ability
                                                      state :runner
                                                      {:prompt "Choose a card to install"
                                                       :choices (req (cancellable (filter #(and (or (is-type? % "Program")
