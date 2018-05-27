@@ -1,6 +1,11 @@
-(in-ns 'game.core)
-
-(declare is-scored?)
+(ns game.cards.agendas
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (defn ice-boost-agenda [subtype]
   (letfn [(count-ice [corp]
@@ -17,7 +22,7 @@
      :events {:pre-ice-strength {:req (req (has-subtype? target subtype))
                                  :effect (effect (ice-strength-bonus 1 target))}}}))
 
-(def cards-agendas
+(def card-definitions
   {"15 Minutes"
    {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
                  :label "Shuffle 15 Minutes into R&D"
@@ -939,9 +944,10 @@
     :access {:req (req tagged)
              :delayed-completion true
              :effect (req (when-completed (as-agenda state side card 1)
-                                          (continue-ability state :runner {:prompt "Quantum Predictive Model was added to the corp's score area"
-                                                                     :choices ["OK"]}
-                                                            card nil)))
+                                          (continue-ability state :runner
+                                            {:prompt "Quantum Predictive Model was added to the corp's score area"
+                                             :choices ["OK"]}
+                                            card nil)))
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
@@ -1021,14 +1027,13 @@
                              :choices (req (filter ice? (:deck corp)))
                              :effect (req (let [chosen-ice target]
                                             (continue-ability state side
-                                                              {:delayed-completion true
-                                                               :prompt (str "Select a server to install " (:title chosen-ice) " on")
-                                                               :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
-                                                                                (corp-install-list state chosen-ice))
-                                                               :effect (effect
-                                                                        (shuffle! :deck)
-                                                                        (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
-                                                              card nil)))}}}
+                                              {:delayed-completion true
+                                               :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                               :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
+                                                                (corp-install-list state chosen-ice))
+                                               :effect (effect (shuffle! :deck)
+                                                               (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
+                                              card nil)))}}}
 
    "Research Grant"
    {:interactive (req true)

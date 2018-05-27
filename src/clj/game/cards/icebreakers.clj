@@ -1,6 +1,11 @@
-(in-ns 'game.core)
-
-(declare add-icon remove-icon can-host?)
+(ns game.cards.icebreakers
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
@@ -216,7 +221,7 @@
    :strength-bonus (req (available-mu state))})
 
 ;;; Icebreaker definitions
-(def cards-icebreakers
+(def card-definitions
   {"Abagnale"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "Code Gate")

@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs "operations"))
 
 (deftest twenty-four-seven-news-cycle-breaking-news
   ;; 24/7 News Cycle - Breaking News interaction

@@ -1,7 +1,13 @@
-(in-ns 'game.core)
-(declare expose-prevent)
+(ns game.cards.upgrades
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
-(def cards-upgrades
+(def card-definitions
   {"Akitaro Watanabe"
    {:events {:pre-rez-cost {:req (req (and (ice? target)
                                            (= (card->server state card) (card->server state target))))

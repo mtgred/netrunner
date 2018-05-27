@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs "resources"))
 
 (deftest activist-support
   ;; Activist Support - Take tag if you have none; Corp gains bad pub if they have none

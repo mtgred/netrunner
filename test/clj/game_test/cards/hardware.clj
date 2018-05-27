@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs "hardware"))
 
 (deftest acacia
   ;; Acacia - Optionally gain credits for number of virus tokens then trash

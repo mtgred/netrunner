@@ -6,7 +6,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs "programs"))
 
 (deftest au-revoir
   ;; Au Revoir - Gain 1 credit every time you jack out

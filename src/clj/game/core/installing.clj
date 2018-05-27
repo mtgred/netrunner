@@ -334,7 +334,7 @@
       ;; Nothing preventing install
       :default true)))
 
-(defn- runner-can-install?
+(defn runner-can-install?
   "Checks `runner-can-install-reason` if not true, toasts reason and returns false"
   [state side card facedown]
   (let [reason (runner-can-install-reason state side card facedown)

@@ -6,7 +6,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs "ice"))
 
 (deftest end-the-run
   ;; Since all ETR ice share a common ability, we only need one test

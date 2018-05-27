@@ -142,6 +142,30 @@
           (unregister-events state side h)
           (register-events state side (:events (card-def newh)) newh))))))
 
+(defn do-net-damage
+  "Do specified amount of net-damage."
+  [dmg]
+  {:label (str "Do " dmg " net damage")
+   :delayed-completion true
+   :msg (str "do " dmg " net damage")
+   :effect (effect (damage eid :net dmg {:card card}))})
+
+(defn do-meat-damage
+  "Do specified amount of meat damage."
+  [dmg]
+  {:label (str "Do " dmg " meat damage")
+   :delayed-completion true
+   :msg (str "do " dmg " meat damage")
+   :effect (effect (damage eid :meat dmg {:card card}))})
+
+(defn do-brain-damage
+  "Do specified amount of brain damage."
+  [dmg]
+  {:label (str "Do " dmg " brain damage")
+   :delayed-completion true
+   :msg (str "do " dmg " brain damage")
+   :effect (effect (damage eid :brain dmg {:card card}))})
+
 (defn pick-virus-counters-to-spend
   "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
   This function returns a map for use with resolve-ability or continue-ability.
@@ -177,17 +201,34 @@
                         (effect-completed state side (make-result eid :cancel)))}))
 
 ;; Load all card definitions into the current namespace.
-(load "cards/agendas")
-(load "cards/assets")
-(load "cards/events")
-(load "cards/hardware")
-(load "cards/ice")
-(load "cards/icebreakers")
-(load "cards/identities")
-(load "cards/operations")
-(load "cards/programs")
-(load "cards/resources")
-(load "cards/upgrades")
+(defn load-all-cards
+  "Load all card definitions into their own namespaces"
+  ([] (load-all-cards nil))
+  ([path]
+   (doall (pmap load-file
+                (->> (io/file (str "src/clj/game/cards" (when path (str "/" path))))
+                     (file-seq)
+                     (filter #(.isFile %))
+                     (map str))))))
 
-(def cards (merge cards-agendas cards-assets cards-events cards-hardware cards-ice cards-icebreakers cards-identities
-                  cards-operations cards-programs cards-resources cards-upgrades))
+(defn get-card-defs
+  ([] (get-card-defs nil))
+  ([path]
+   (->> (all-ns)
+        (filter #(starts-with? % (str "game.cards" (when path (str "." path)))))
+        (map #(ns-resolve % 'card-definitions))
+        (map var-get)
+        (apply merge))))
+
+(def cards {})
+
+(defn reset-card-defs
+  "Performs any once only initialization that should be performed on startup"
+  ([] (reset-card-defs nil))
+  ([path]
+   (let [cards-var #'game.core/cards]
+     (alter-var-root cards-var
+                     (constantly
+                       (merge cards
+                              (do (load-all-cards path)
+                                  (get-card-defs path))))))))

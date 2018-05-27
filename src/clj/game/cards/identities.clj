@@ -1,4 +1,11 @@
-(in-ns 'game.core)
+(ns game.cards.identities
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -26,7 +33,7 @@
     (= fc best-faction)))
 
 ;;; Card definitions
-(def cards-identities
+(def card-definitions
   {
    "419: Amoral Scammer"
    {:events {:corp-install

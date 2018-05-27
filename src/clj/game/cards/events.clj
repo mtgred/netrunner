@@ -1,4 +1,11 @@
-(in-ns 'game.core)
+(ns game.cards.events
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (defn- run-event
   ([] (run-event nil))
@@ -14,7 +21,7 @@
                            ((or post-run-effect (effect)) eid card targets))}
           cdef)))
 
-(def cards-events
+(def card-definitions
   {"Account Siphon"
    {:req (req hq-runnable)
     :effect (effect (run :hq {:req (req (= target :hq))
@@ -517,7 +524,8 @@
    {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
 
    "Embezzle"
-   (letfn [(name-string [cards] (join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
+   (letfn [(name-string [cards]
+             (join " and " (map :title cards)))] ; either 'card' or 'card1 and card2'
     {:req (req hq-runnable)
      :effect (effect
               (run :hq {:req (req (= target :hq))
@@ -1787,9 +1795,9 @@
    "System Seizure"
   {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
    :events {:pump-breaker {:silent (req true)
-                           :req (req (or
-                                       (and (has-flag? state side :current-run :system-seizure) (run-flag? state side (second targets) :system-seizure))
-                                       (not (get-in @state [:per-turn (:cid card)]))))
+                           :req (req (or (and (has-flag? state side :current-run :system-seizure)
+                                              (run-flag? state side (second targets) :system-seizure))
+                                         (not (get-in @state [:per-turn (:cid card)]))))
                            :effect (req (update! state side (update-in (second targets) [:pump :all-run] (fnil #(+ % (first targets)) 0)))
                                         (register-run-flag! state side card :system-seizure (fn [_ _ c] (= (:cid c) (:cid (second targets)))))
                                         (update-breaker-strength state side (second targets))

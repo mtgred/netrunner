@@ -110,7 +110,7 @@
       (concat (get-in @state [:bonus :access-cost]))
       merge-costs flatten vec))
 
-(defn- access-non-agenda
+(defn access-non-agenda
   "Access a non-agenda. Show a prompt to trash for trashable cards."
   [state side eid c]
   (trigger-event state side :pre-trash c)

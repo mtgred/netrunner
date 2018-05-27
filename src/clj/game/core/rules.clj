@@ -465,7 +465,7 @@
                                  (trashrec trashlist)))))]
      (preventrec cards))))
 
-(defn- trash-no-cost
+(defn trash-no-cost
   [state side eid card & {:keys [seen unpreventable]
                           :or {seen true}}]
   (swap! state assoc-in [side :register :trashed-card] true)
