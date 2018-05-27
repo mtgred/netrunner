@@ -706,7 +706,7 @@
 
    "Mti Mwekundu: Life Improved"
    {:abilities [{:once :per-turn
-                 :label "Install a piece of ice from HQ at the innermost position, ignoring all costs. Runner is approaching that ice."
+                 :label "Install a piece of ice from HQ at the innermost position"
                  :req (req (and (:run @state)
                                 (zero? (:position run))
                                 (not (contains? run :corp-phase-43))
