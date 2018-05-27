@@ -946,6 +946,32 @@
       (is (= 3 (:current-strength (refresh nb2)))
           "NEXT Bronze at 3 strength: 3 rezzed NEXT ice"))))
 
+(deftest next-diamond
+  ;; NEXT Diamond - Rez cost is lowered by 1 for each rezzed NEXT ice
+  (testing "Base rez cost"
+    (do-game
+      (new-game (default-corp ["NEXT Diamond"])
+                (default-runner))
+      (core/gain state :corp :credit 5)
+      (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
+      (play-from-hand state :corp "NEXT Diamond" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (is (zero? (:credit (get-corp))) "Corp spends 10 credits to rez")))
+  (testing "Lowered rez cost"
+    (do-game
+      (new-game (default-corp ["NEXT Diamond" "NEXT Opal" "NEXT Bronze" "Kakugo"])
+                (default-runner))
+      (core/gain state :corp :credit 13 :click 1)
+      (play-from-hand state :corp "NEXT Diamond" "HQ")
+      (play-from-hand state :corp "NEXT Opal" "HQ")
+      (play-from-hand state :corp "NEXT Bronze" "R&D")
+      (play-from-hand state :corp "Kakugo" "Archives")
+      (core/rez state :corp (get-ice state :hq 1))
+      (core/rez state :corp (get-ice state :archives 0))
+      (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
+      (core/rez state :corp (get-ice state :hq 0))
+      (is (= 0 (:credit (get-corp))) "Corp spends 9 credits to rez"))))
+
 (deftest nightdancer
   ;; Nightdancer - Runner loses a click if able, corp gains a click on next turn
   (do-game

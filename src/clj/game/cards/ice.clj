@@ -1521,6 +1521,11 @@
                       :effect (effect (update-ice-strength card))}]
               {:rez nb :derez nb :trash nb :card-moved nb})}
 
+   "NEXT Diamond"
+   {:rez-cost-bonus (req (- (next-ice-count corp)))
+    :subroutines [(do-brain-damage 1)
+                  trash-installed]}
+
    "NEXT Gold"
    {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
                    :msg (msg "do " (next-ice-count corp) " net damage")
