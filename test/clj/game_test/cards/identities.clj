@@ -1159,6 +1159,37 @@
       (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
       (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
 
+(deftest mti
+  ;; Mti Mwekundu: Life Improved - when server is approached, install ice from HQ at the innermost position
+  (testing "No ice"
+    (do-game
+      (new-game (make-deck "Mti Mwekundu: Life Improved" ["Enigma"])
+                (default-runner))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (prompt-select :corp (find-card "Enigma" (:hand (get-corp))))
+      (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
+      (is (= "Enigma" (:title (get-ice state :hq 0))) "Enigma was installed")
+      (is (empty? (:hand (get-corp))) "Enigma removed from HQ")))
+  (testing "Multiple ice"
+    (do-game
+      (new-game (make-deck "Mti Mwekundu: Life Improved" ["Enigma" "Ice Wall" "Bloom"])
+                (default-runner))
+      (play-from-hand state :corp "Ice Wall" "R&D")
+      (play-from-hand state :corp "Bloom" "R&D")
+      (take-credits state :corp)
+      (run-on state "R&D")
+      (run-continue state)
+      (run-continue state)
+      (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (prompt-select :corp (find-card "Enigma" (:hand (get-corp))))
+      (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
+      (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
+      (is (empty? (:hand (get-corp))) "Enigma removed from HQ"))))
+
 (deftest nasir-ability-basic
   ;; Nasir Ability - Basic
   (do-game
