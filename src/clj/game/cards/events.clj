@@ -516,7 +516,8 @@
               (run :hq {:req (req (= target :hq))
                         :replace-access
                         {:mandatory true
-                         :msg (msg "reveal 2 cards from HQ and trash all " target "s") ;should maybe lower-case target
+                         :msg (msg "reveal 2 cards from HQ and trash all "
+                                   target (when (not= "ICE" (:type target)) "s"))
                          :prompt "Choose a card type"
                          :choices ["Asset" "Upgrade" "Operation" "ICE"]
                          :effect (req (let [chosen-type target
