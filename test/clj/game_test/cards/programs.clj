@@ -24,6 +24,67 @@
     (core/jack-out state :runner nil)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
+(deftest consume
+  ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
+  (testing "Trash and cash out"
+    (do-game
+      (new-game (default-corp ["Adonis Campaign"])
+                (default-runner ["Consume"]))
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Consume")
+      (let [c (get-in @state [:runner :rig :program 0])]
+        (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
+        (run-empty-server state "Server 1")
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice-partial :runner "Yes")
+        (is (= 1 (count (:discard (get-corp)))) "Adonis Campaign trashed")
+        (is (= 1 (get-counters (refresh c) :virus)) "Consume gains a counter")
+        (is (zero? (:credit (get-runner))) "Runner starts with no credits")
+        (card-ability state :runner c 0)
+        (is (= 2 (:credit (get-runner))) "Runner gains 2 credits")
+        (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters"))))
+  (testing "Hivemind interaction"
+    (do-game
+      (new-game (default-corp ["Adonis Campaign"])
+                (default-runner ["Consume" "Hivemind"]))
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 3)
+      (play-from-hand state :runner "Consume")
+      (play-from-hand state :runner "Hivemind")
+      (let [c (get-in @state [:runner :rig :program 0])
+            h (get-in @state [:runner :rig :program 1])]
+        (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
+        (is (= 1 (get-counters (refresh h) :virus)) "Hivemind starts with a counter")
+        (run-empty-server state "Server 1")
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice-partial :runner "Yes")
+        (is (= 1 (count (:discard (get-corp)))) "Adonis Campaign trashed")
+        (is (= 1 (get-counters (refresh c) :virus)) "Consume gains a counter")
+        (is (= 1 (get-counters (refresh h) :virus)) "Hivemind retains counter")
+        (is (zero? (:credit (get-runner))) "Runner starts with no credits")
+        (card-ability state :runner c 0)
+        (is (= 4 (:credit (get-runner))) "Runner gains 4 credits")
+        (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters")
+        (is (zero? (get-counters (refresh h) :virus)) "Hivemind loses counters"))))
+  (testing "Hivemind counters only"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Consume" "Hivemind"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Consume")
+      (play-from-hand state :runner "Hivemind")
+      (let [c (get-in @state [:runner :rig :program 0])
+            h (get-in @state [:runner :rig :program 1])]
+        (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
+        (is (= 1 (get-counters (refresh h) :virus)) "Hivemind starts with a counter")
+        (is (zero? (:credit (get-runner))) "Runner starts with no credits")
+        (card-ability state :runner c 0)
+        (is (= 2 (:credit (get-runner))) "Runner gains 2 credits")
+        (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters")
+        (is (zero? (get-counters (refresh h) :virus)) "Hivemind loses counters")))))
+
 (deftest crescentus
   ;; Crescentus should only work on rezzed ice
   (do-game
@@ -1103,7 +1164,29 @@
       (play-from-hand state :runner "Hivemind") ; now Hivemind makes both Trypanos have 5 counters
       (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect was trashed")
       (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect was not trashed")
-      (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard"))))
+      (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard")))
+  (testing "Fire when Hivemind gains counters"
+    (do-game
+      (new-game (default-corp ["Architect"])
+                (default-runner ["Trypano" "Hivemind" (qty "Surge" 2)]))
+      (play-from-hand state :corp "Architect" "R&D")
+      (let [architect-unrezzed (get-ice state :rd 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Trypano")
+        (prompt-select :runner architect-unrezzed)
+        (is (= 0 (count (:discard (get-runner)))) "Trypano not in discard yet")
+        (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Architect is not trashed")
+        (play-from-hand state :runner "Hivemind")
+        (let [hive (get-program state 0)]
+          (is (= 1 (get-counters (refresh hive) :virus)) "Hivemind starts with 1 virus counter")
+          (play-from-hand state :runner "Surge")
+          (prompt-select :runner (refresh hive))
+          (is (= 3 (get-counters (refresh hive) :virus)) "Hivemind gains 2 virus counters")
+          (play-from-hand state :runner "Surge")
+          (prompt-select :runner (refresh hive))
+          (is (= 5 (get-counters (refresh hive) :virus)) "Hivemind gains 2 virus counters (now at 5)")
+          (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Architect was trashed")
+          (is (= 3 (count (:discard (get-runner)))) "Trypano went to discard"))))))
 
 (deftest upya
   (do-game

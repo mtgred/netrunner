@@ -150,7 +150,7 @@
                             :req (req (some #(card-is? % :side :corp) targets))
                             :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
                                                auto-ab {:effect (effect (add-counter :runner card :virus amt-trashed))
-                                                        :msg "place " (quantify amt-trashed "virus counter") "on Consume"}
+                                                        :msg (str "place " (quantify amt-trashed "virus counter") " on Consume")}
                                                sing-ab {:optional {:prompt "Place a virus counter on Consume?"
                                                                    :yes-ability {:effect (effect (add-counter :runner card :virus 1))
                                                                                  :msg "place 1 virus counter on Consume"}}}
@@ -171,17 +171,17 @@
                               (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
                                         (doseq [h hiveminds]
                                                (update! state side (assoc-in h [:counter :virus] 0)))))
-                 :msg (msg (let [local-virus (get-in card [:counter :virus])
+                 :msg (msg (let [local-virus (get-in card [:counter :virus] 0)
                                  global-virus (get-virus-counters state side card)
                                  hivemind-virus (- global-virus local-virus)]
-                             (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
+                             (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
                              (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
                 {:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
                                  (toast (str "Consume will now "
                                              (if (get-in card [:special :auto-accept]) "no longer " "")
                                              "automatically add counters.") "info"))
-                 :label "Toggle auomatically adding virus counters"}]}
+                 :label "Toggle automatically adding virus counters"}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
@@ -1027,7 +1027,6 @@
                              :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
                                                         (add-counter state side card :virus 1))}}}
                  :counter-added {:delayed-completion true
-                                 :req (req (= (:cid card) (:cid target)))
                                  :effect trash-if-5}
                  :card-moved {:effect trash-if-5
                               :delayed-completion true}
