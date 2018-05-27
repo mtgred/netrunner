@@ -299,7 +299,7 @@
 
 (defn card-view [card s]
   (let [cv (r/atom {:showText false})]
-    (fn []
+    (fn [card s]
       [:div.card-preview.blue-shade
        ;; TODO highlight if selected ?
        (when (:decorate-card @s)
@@ -344,7 +344,7 @@
                     (take (* (:page @s) 28)))]
      (doall
        (for [card cards]
-         ^{:key (:name card)}
+         ^{:key (:code card)}
          [card-view card s])))])
 
 ;; TODO filtering not working
@@ -372,7 +372,7 @@
                  (swap! s assoc-in [(:filter f)] (:value f))))))
 
        :reagent-render
-       (fn []
+       (fn [{:keys [sets cycles]}]
          ; TODO check this still works
          (.focus (js/$ ".search"))
          [:div.cardbrowser [:div.blue-shade.panel.filters
@@ -437,3 +437,13 @@
                             ]
 
           [card-list-view s]])})))
+
+; TODO key error
+;Warning: Each child in an array or iterator should have a unique "key" prop.;
+;
+;Check the render method of `nr.cardbrowser.card_list_view`. See https://fb.me/react-warning-keys for more information.
+;in nr.cardbrowser.card_view (created by nr.cardbrowser.card_list_view)
+;in nr.cardbrowser.card_list_view (created by card-browser)
+;in div (created by card-browser)
+;in card-browser (created by nr.cardbrowser.card_browser)
+;in nr.cardbrowser.card_browser

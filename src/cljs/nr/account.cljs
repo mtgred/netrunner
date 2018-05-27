@@ -150,7 +150,7 @@
                    (get-in @app-state [:options :alt-arts (keyword (:code first-alt))]
                          "default")))))
 
-    (fn []
+    (fn [user]
       [:div.account
        [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"} 
         [:h2 "Settings"]
@@ -303,6 +303,3 @@
 (defn account [user]
   (when @user
     [account-view user]))
-
-
-; fix avatar
