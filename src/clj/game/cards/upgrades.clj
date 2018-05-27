@@ -598,7 +598,9 @@
                                     (gain state :corp :credit total)
                                     (system-msg state :corp
                                                 (str "gains " total " [Credits] from Mwanza City Grid"))))}]
-     {:events {:pre-access {:req (req (and installed this-server))
+     {:events {:pre-access {:req (req (and installed
+                                           ;; Pre-access server is same server as that Mwanza is in the root of
+                                           (= target (second  (:zone card)))))
                             :msg "force the Runner to access 3 additional cards"
                             :effect (effect (access-bonus 3))}
                :run-ends gain-creds}
@@ -784,7 +786,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
-    :in-play [:hand-size {:mod 2}]}
+    :in-play [:hand-size 2]}
 
    "Ruhr Valley"
    {:events {:run {:req (req this-server)
@@ -1005,7 +1007,7 @@
                  :label "Reduce Runner's maximum hand size by 1 until start of next Corp turn"
                  :msg "reduce the Runner's maximum hand size by 1 until the start of the next Corp turn"
                  :effect (req (update! state side (assoc card :times-used (inc (get card :times-used 0))))
-                              (lose state :runner :hand-size {:mod 1}))}]
+                              (lose state :runner :hand-size 1))}]
     :trash-effect {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
                    :effect (req (when-let [n (:times-used card)]
                                   (register-events state side

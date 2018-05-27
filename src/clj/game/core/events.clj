@@ -41,18 +41,19 @@
 
 (defn- trigger-event-sync-next
   [state side eid handlers event & targets]
-  (let [e (first handlers)
-        ability (:ability e)]
-    (if e
-      (if-let [card (get-card state (:card e))]
+  (if-let [e (first handlers)]
+    (if-let [card (get-card state (:card e))]
+      (let [ability (:ability e)
+            req-function (:req ability)]
         (if (and (not (apply trigger-suppress state side event (cons card targets)))
-                 (or (not (:req ability)) ((:req ability) state side (make-eid state) card targets)))
+                 (or (not req-function)
+                     (req-function state side (make-eid state) card targets)))
           (when-completed (resolve-ability state side ability card targets)
                           (apply trigger-event-sync-next state side eid (next handlers) event targets))
-          (apply trigger-event-sync-next state side eid (next handlers) event targets))
-        (apply trigger-event-sync-next state side eid (next handlers) event targets))
-      (do (swap! state update-in [:turn-events] #(cons [event targets] %))
-          (effect-completed state side eid nil)))))
+          (apply trigger-event-sync-next state side eid (next handlers) event targets)))
+      (apply trigger-event-sync-next state side eid (next handlers) event targets))
+    (do (swap! state update-in [:turn-events] #(cons [event targets] %))
+        (effect-completed state side eid nil))))
 
 (defn trigger-event-sync
   "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler. Does not
@@ -253,6 +254,11 @@
   "Returns true if the given event has occurred exactly once this turn."
   [state side ev]
   (= (count (turn-events state side ev)) 1))
+
+(defn event-count
+  "Returns the number of an event this turn."
+  [state side ev]
+  (count (turn-events state side ev)))
 
 (defn first-successful-run-on-server?
   "Returns true if the active run is the first succesful run on the given server"

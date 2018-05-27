@@ -113,9 +113,9 @@
     (let [scheherazade (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner scheherazade 0)
       (prompt-select :runner (find-card "Corroder" (:hand (get-runner))))
-      (is (= 3 (:memory (get-runner))) "Memory at 3 (-1 from Corroder)"))
+      (is (= 3 (core/available-mu state)) "Memory at 3 (-1 from Corroder)"))
     (play-from-hand state :runner "Hivemind")
-    (is (= 1 (:memory (get-runner))) "Memory at 1 (-1 from Corroder, -2 from Hivemind)")
+    (is (= 1 (core/available-mu state)) "Memory at 1 (-1 from Corroder, -2 from Hivemind)")
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
     (run-empty-server state "HQ")
@@ -135,7 +135,7 @@
       (is (= 1 (get-in hivemind [:counter :virus])) "Hivemind still has a virus counters"))
     (is (find-card "Apocalypse" (:discard (get-runner))) "Apocalypse is in the heap")
     (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
-    (is (= 4 (:memory (get-runner))) "Memory back to 4")))
+    (is (= 4 (core/available-mu state)) "Memory back to 4")))
 
 (deftest apocalype-full-immersion-recstudio
   ;; Apocalypse with Full Immersion - no duplicate cards in heap #2606
@@ -196,11 +196,11 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Logos")
     (is (= 1 (get-in (get-runner) [:hand-size :mod])) "Hand-size increased from Logos")
-    (is (= 5 (:memory (get-runner))) "Memory increased from Logos")
+    (is (= 5 (core/available-mu state)) "Memory increased from Logos")
     (play-from-hand state :runner "Origami")
     (play-from-hand state :runner "Origami")
     (is (= 5 (get-in (get-runner) [:hand-size :mod])) "Hand-size increased from Logos and Origami")
-    (is (= 3 (:memory (get-runner))) "Memory decreased from Origamis")
+    (is (= 3 (core/available-mu state)) "Memory decreased from Origamis")
     (core/gain state :runner :click 3 :credit 2)
     (run-empty-server state "Archives")
     (run-empty-server state "R&D")
@@ -211,7 +211,7 @@
     (let [logos (find-card "Logos" (get-in (get-runner) [:rig :facedown]))]
       (is (:facedown (refresh logos)) "Logos is facedown")
       (is (= 0 (get-in (get-runner) [:hand-size :mod])) "Hand-size reset with Logos and Origami facedown")
-      (is (= 4 (:memory (get-runner))) "Memory reset with Logos and Origami facedown"))))
+      (is (= 4 (core/available-mu state)) "Memory reset with Logos and Origami facedown"))))
 
 (deftest apocalypse-turn-facedown
   ;; Apocalypse - Turn Runner cards facedown without firing their trash effects
@@ -2010,7 +2010,7 @@
       (is (= "Morning Star" (:title (first (get-in @state [:runner :rig :program]))))
           "Morning Star installed")
       (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
-      (is (= 2 (:memory (get-runner))) "Morning Star uses 2 memory"))))
+      (is (= 2 (core/available-mu state)) "Morning Star uses 2 memory"))))
 
 (deftest rigged-results
   ;; Rigged Results - success and failure

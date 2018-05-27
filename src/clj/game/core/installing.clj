@@ -1,7 +1,7 @@
 (in-ns 'game.core)
 
-(declare host in-play? install-locked? make-rid rez run-flag? server-list server->zone set-prop system-msg
-         turn-flag? update-breaker-strength update-ice-strength update-run-ice)
+(declare available-mu free-mu host in-play? install-locked? make-rid rez run-flag? server-list server->zone set-prop system-msg
+         turn-flag? update-breaker-strength update-ice-strength update-run-ice use-mu)
 
 ;;;; Functions for the installation and deactivation of cards.
 
@@ -27,15 +27,6 @@
                    (= (first zone) :scored)))
       (leave-effect state side (make-eid state) card nil))))
 
-(defn- handle-prevent-effect
-  "Handles prevent effects on the card"
-  [state card]
-  (when-let [prevent (:prevent (card-def card))]
-     (doseq [[ptype pvec] prevent]
-       (doseq [psub pvec]
-         (swap! state update-in [:prevent ptype psub]
-                (fn [pv] (remove #(= (:cid %) (:cid card)) pv)))))))
-
 (defn deactivate
   "Deactivates a card, unregistering its events, removing certain attribute keys, and triggering
   some events."
@@ -43,12 +34,14 @@
   ([state side card keep-counter]
    (unregister-events state side card)
    (trigger-leave-effect state side card)
-   (handle-prevent-effect state card)
-   (when (and (:memoryunits card) (:installed card) (not (:facedown card)))
-     (gain state :runner :memory (:memoryunits card)))
+   (when-let [mu (:memoryunits card)]
+     (when (and (:installed card)
+                (not (:facedown card)))
+       (free-mu state mu)))
    (when (and (find-cid (:cid card) (all-active-installed state side))
               (not (:disabled card))
-              (or (:rezzed card) (:installed card)))
+              (or (:rezzed card)
+                  (:installed card)))
      (when-let [in-play (:in-play (card-def card))]
        (apply lose state side in-play)))
    (dissoc-card card keep-counter)))
@@ -101,10 +94,6 @@
          (register-events state side
                           {(if (= side :corp) :corp-phase-12 :runner-phase-12)
                            {:effect r}} c)))
-     (when-let [prevent (:prevent cdef)]
-       (doseq [[ptype pvec] prevent]
-         (doseq [psub pvec]
-           (swap! state update-in [:prevent ptype psub] #(conj % card)))))
      (update! state side c)
      (when-let [events (:events cdef)]
        (register-events state side events c))
@@ -339,12 +328,10 @@
 
 (defn- runner-get-cost
   "Get the total install cost for specified card"
-  [state side {:keys [cost memoryunits] :as card}
+  [state side {:keys [cost] :as card}
    {:keys [extra-cost no-cost facedown] :as params}]
   (install-cost state side card
-                (concat extra-cost
-                        (when (and (not no-cost) (not facedown)) [:credit cost])
-                        (when (and memoryunits (not facedown)) [:memory memoryunits]))))
+                (concat extra-cost (when (and (not no-cost) (not facedown)) [:credit cost]))))
 
 (defn- runner-install-message
   "Prints the correct msg for the card install"
@@ -371,7 +358,7 @@
   Params include extra-cost, no-cost, host-card, facedown and custom-message."
   ([state side card] (runner-install state side (make-eid state) card nil))
   ([state side card params] (runner-install state side (make-eid state) card params))
-  ([state side eid card {:keys [host-card facedown] :as params}]
+  ([state side eid card {:keys [host-card facedown no-mu] :as params}]
    (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
             (not (seq (get-in @state [:runner :lock-install]))))
      (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
@@ -396,8 +383,12 @@
                                                                  :init-data true}))]
                    (runner-install-message state side (:title card) cost-str params)
                    (play-sfx state side "install-runner")
-                   (when (and (is-type? card "Program") (neg? (get-in @state [:runner :memory])))
-                     (toast state :runner "You have run out of memory units!"))
+                   (when (and (is-type? card "Program")
+                              (not facedown)
+                              (not no-mu))
+                     ;; Use up mu from program not installed facedown
+                     (use-mu state (:memoryunits card))
+                     (toast-check-mu state))
                    (handle-virus-counter-flag state side installed-card)
                    (when (and (not facedown) (is-type? card "Resource"))
                      (swap! state assoc-in [:runner :register :installed-resource] true))

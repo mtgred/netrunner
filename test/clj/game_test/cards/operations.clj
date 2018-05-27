@@ -257,11 +257,11 @@
   (do-game
     (new-game (default-corp ["Cerebral Static" "Lag Time"])
               (make-deck "Chaos Theory: Wünderkind" [(qty "Sure Gamble" 3)]))
-    (is (= 5 (:memory (get-runner))) "CT starts with 5 memory")
+    (is (= 5 (core/available-mu state)) "CT starts with 5 memory")
     (play-from-hand state :corp "Cerebral Static")
-    (is (= 4 (:memory (get-runner))) "Cerebral Static causes CT to have 4 memory")
+    (is (= 4 (core/available-mu state)) "Cerebral Static causes CT to have 4 memory")
     (play-from-hand state :corp "Lag Time")
-    (is (= 5 (:memory (get-runner))) "CT 5 memory restored")))
+    (is (= 5 (core/available-mu state)) "CT 5 memory restored")))
 
 (deftest closed-accounts
   ;; Closed Accounts - Play if Runner is tagged to make Runner lose all credits
@@ -1894,6 +1894,69 @@
     (play-from-hand state :corp "Successful Demonstration")
     (is (= 13 (:credit (get-corp))) "Paid 2 to play event; gained 7 credits")))
 
+(deftest surveillance-sweep
+  ;; Surveillance Sweep
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Restructured Datapool" "Surveillance Sweep" "Data Raven"])
+                (default-runner ["Scrubbed"]))
+      (is (zero? (:tag (get-runner))) "Runner should start with no tags")
+      (play-from-hand state :corp "Surveillance Sweep")
+      (play-and-score state "Restructured Datapool")
+      (let [rd-scored (get-scored state :corp)]
+        (card-ability state :corp rd-scored 0)
+        (is (not= :waiting (->> (get-corp) :prompt first :prompt-type)) "Surveillance Sweep only works during a run")
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (= 1 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability"))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Data Raven" "HQ")
+      (take-credits state :corp)
+      (let [dr (get-ice state :hq 0)]
+        (core/rez state :corp (refresh dr))
+        (run-on state :hq)
+        (card-subroutine state :corp dr 0)
+        (is (= :waiting (->> (get-corp) :prompt first :prompt-type)) "During a run, Corp should wait on Runner first")
+        (prompt-choice :runner 0)
+        (prompt-choice :corp 0)
+        (is (= 1 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (run-successful state)
+        (play-from-hand state :runner "Scrubbed")
+        (run-on state :hq)
+        (card-subroutine state :corp dr 0)
+        (is (not= :waiting (->> (get-corp) :prompt first :prompt-type)) "Runner should now be waiting on Corp")
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (= 2 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (run-successful state))))
+  (testing "trace during run after stealing an agenda"
+    (do-game
+      (new-game (default-corp ["Surveillance Sweep" "Breaking News" "Forced Connection" "Data Raven"])
+                (default-runner))
+      (core/gain state :corp :click 4)
+      (core/gain state :corp :credit 20)
+      (play-from-hand state :corp "Surveillance Sweep")
+      (play-from-hand state :corp "Breaking News" "New remote")
+      (play-from-hand state :corp "Forced Connection" "Server 1")
+      (play-from-hand state :corp "Data Raven" "Server 1")
+      (take-credits state :corp)
+      (let [dr (get-ice state :remote1 0)
+            bn (get-content state :remote1 0)
+            fc (get-content state :remote1 1)]
+        (core/rez state :corp (refresh dr))
+        (run-on state :remote1)
+        (card-subroutine state :corp dr 0)
+        (is (= :waiting (->> (get-corp) :prompt first :prompt-type)) "During a run, Corp should wait on Runner first")
+        (prompt-choice :runner 0)
+        (prompt-choice :corp 0)
+        (is (= 1 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (run-successful state)
+        (prompt-select :runner bn)
+        (prompt-choice :runner "Steal")
+        (prompt-select :runner fc)
+        (is (not= :waiting (-> (get-corp) :prompt first :prompt-type)) "After steal, Surveillance Sweep leaves play and Runner waits on Corp")))))
+
 (deftest the-all-seeing-i-prevent-trash
   ;; Counts number of cards if one card is prevented trashed with fall guy
   (do-game
@@ -1938,9 +2001,7 @@
       (card-ability state :runner fall-guy 0))
     (prompt-choice :runner "Done") ;; This assumes hosted cards get put in trash-list before host
     (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
-    (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")
-    )
-  )
+    (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")))
 
 (deftest the-all-seeing-i-jarogniew-mercs
   ;; The All-Seeing I should not trash Jarogniew Mercs if there are other installed resources
