@@ -24,6 +24,67 @@
     (core/jack-out state :runner nil)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
+(deftest consume
+  ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
+  (testing "Trash and cash out"
+    (do-game
+      (new-game (default-corp ["Adonis Campaign"])
+                (default-runner ["Consume"]))
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Consume")
+      (let [c (get-in @state [:runner :rig :program 0])]
+        (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
+        (run-empty-server state "Server 1")
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice-partial :runner "Yes")
+        (is (= 1 (count (:discard (get-corp)))) "Adonis Campaign trashed")
+        (is (= 1 (get-counters (refresh c) :virus)) "Consume gains a counter")
+        (is (zero? (:credit (get-runner))) "Runner starts with no credits")
+        (card-ability state :runner c 0)
+        (is (= 2 (:credit (get-runner))) "Runner gains 2 credits")
+        (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters"))))
+  (testing "Hivemind interaction"
+    (do-game
+      (new-game (default-corp ["Adonis Campaign"])
+                (default-runner ["Consume" "Hivemind"]))
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 3)
+      (play-from-hand state :runner "Consume")
+      (play-from-hand state :runner "Hivemind")
+      (let [c (get-in @state [:runner :rig :program 0])
+            h (get-in @state [:runner :rig :program 1])]
+        (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
+        (is (= 1 (get-counters (refresh h) :virus)) "Hivemind starts with a counter")
+        (run-empty-server state "Server 1")
+        (prompt-choice-partial :runner "Pay")
+        (prompt-choice-partial :runner "Yes")
+        (is (= 1 (count (:discard (get-corp)))) "Adonis Campaign trashed")
+        (is (= 1 (get-counters (refresh c) :virus)) "Consume gains a counter")
+        (is (= 1 (get-counters (refresh h) :virus)) "Hivemind retains counter")
+        (is (zero? (:credit (get-runner))) "Runner starts with no credits")
+        (card-ability state :runner c 0)
+        (is (= 4 (:credit (get-runner))) "Runner gains 4 credits")
+        (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters")
+        (is (zero? (get-counters (refresh h) :virus)) "Hivemind loses counters"))))
+  (testing "Hivemind counters only"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Consume" "Hivemind"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Consume")
+      (play-from-hand state :runner "Hivemind")
+      (let [c (get-in @state [:runner :rig :program 0])
+            h (get-in @state [:runner :rig :program 1])]
+        (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
+        (is (= 1 (get-counters (refresh h) :virus)) "Hivemind starts with a counter")
+        (is (zero? (:credit (get-runner))) "Runner starts with no credits")
+        (card-ability state :runner c 0)
+        (is (= 2 (:credit (get-runner))) "Runner gains 2 credits")
+        (is (zero? (get-counters (refresh c) :virus)) "Consume loses counters")
+        (is (zero? (get-counters (refresh h) :virus)) "Hivemind loses counters")))))
+
 (deftest crescentus
   ;; Crescentus should only work on rezzed ice
   (do-game
@@ -801,59 +862,84 @@
 
 (deftest rng-key
   ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
-  (do-game
-    (new-game (default-corp [(qty "Enigma" 5) "Hedge Fund"])
-              (default-runner ["RNG Key" (qty "Paperclip" 2)]))
-    (starting-hand state :corp ["Hedge Fund"])
-    (starting-hand state :runner ["RNG Key"])
-    (take-credits state :corp)
+  (testing "Basic behaviour - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost"
+    (do-game
+      (new-game (default-corp [(qty "Enigma" 5) "Hedge Fund"])
+                (default-runner ["RNG Key" (qty "Paperclip" 2)]))
+      (starting-hand state :corp ["Hedge Fund"])
+      (starting-hand state :runner ["RNG Key"])
+      (take-credits state :corp)
+      (testing "Gain 3 credits"
+        (play-from-hand state :runner "RNG Key")
+        (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
+        (run-on state "HQ")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner 5)
+        (prompt-choice :runner "Gain 3 [Credits]")
+        (is (= 8 (:credit (get-runner))) "Gained 3 credits")
+        (prompt-choice :runner "No action"))
 
-    (play-from-hand state :runner "RNG Key")
-    (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
-    (run-on state "HQ")
-    (run-successful state)
-    (prompt-choice :runner "Yes")
-    (prompt-choice :runner 5)
-    (prompt-choice :runner "Gain 3 [Credits]")
-    (is (= 8 (:credit (get-runner))) "Gained 3 credits")
-    (prompt-choice :runner "No action")
+      (testing "Do not trigger on second successful run"
+        (run-on state "R&D")
+        (run-successful state)
+        (prompt-choice :runner "No action")
+        (take-credits state :runner)
+        (take-credits state :corp))
 
-    (run-on state "R&D")
-    (run-successful state)
-    (prompt-choice :runner "No action")
-    (take-credits state :runner)
-    (take-credits state :corp)
+      (testing "Do not trigger on archives"
+        (run-on state "Archives")
+        (run-successful state))
+      (testing "Do not get choice if trigger declined"
+        (run-on state "R&D")
+        (run-successful state)
+        (prompt-choice :runner "No")
+        (prompt-choice :runner "No action"))
+      (run-on state "HQ")
+      (run-successful state)
+      (prompt-choice :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
 
-    (run-on state "Archives")
-    (run-successful state)
-    (run-on state "R&D")
-    (run-successful state)
-    (prompt-choice :runner "No")
-    (prompt-choice :runner "No action")
-    (run-on state "HQ")
-    (run-successful state)
-    (prompt-choice :runner "No action")
-    (take-credits state :runner)
-    (take-credits state :corp)
+      (testing "Do not gain credits / cards if guess incorrect"
+        (run-on state "R&D")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner 2)
+        (prompt-choice :runner "No action"))
 
-    (run-on state "R&D")
-    (run-successful state)
-    (prompt-choice :runner "Yes")
-    (prompt-choice :runner 2)
-    (prompt-choice :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
 
-    (take-credits state :runner)
-    (take-credits state :corp)
+      (testing "Gain 2 cards"
+        (is (= 0 (count (:hand (get-runner)))) "Started with 0 cards")
+        (run-on state "R&D")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner 3)
+        (prompt-choice :runner "Draw 2 cards")
+        (prompt-choice :runner "No action")
+        (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
+        (is (= 0 (count (:deck (get-runner)))) "Cards came from stack"))))
 
-    (is (= 0 (count (:hand (get-runner)))) "Started with 0 cards")
-    (run-on state "R&D")
-    (run-successful state)
-    (prompt-choice :runner "Yes")
-    (prompt-choice :runner 3)
-    (prompt-choice :runner "Draw 2 cards")
-    (prompt-choice :runner "No action")
-    (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
-    (is (= 0 (count (:deck (get-runner)))) "Cards came from deck")))
+  (testing "Do not pay out if accessing an upgrade first -- regression test for #3150"
+    (do-game
+      (new-game (default-corp ["Hokusai Grid" "Hedge Fund"])
+                (default-runner ["RNG Key"]))
+      (play-from-hand state :corp "Hokusai Grid" "HQ")
+      (take-credits state :corp)
+
+      (testing "Gain 3 credits"
+        (play-from-hand state :runner "RNG Key")
+        (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
+        (run-on state "HQ")
+        (run-successful state)
+        (prompt-choice :runner "Yes")
+        (prompt-choice :runner 2)
+        (prompt-choice :runner "Unrezzed upgrade in HQ")
+        (is (= "You accessed Hokusai Grid." (-> (get-runner) :prompt first :msg))
+            "No RNG Key prompt, straight to access prompt")
+        (is (= 5 (:credit (get-runner))) "Gained no credits")))))
 
 (deftest scheherazade
   ;; Scheherazade - Gain 1 credit when it hosts a program
@@ -1077,7 +1163,29 @@
       (play-from-hand state :runner "Hivemind") ; now Hivemind makes both Trypanos have 5 counters
       (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Archiect was trashed")
       (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Rezzed Archiect was not trashed")
-      (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard"))))
+      (is (= 1 (count (:discard (get-runner)))) "Trypano went to discard")))
+  (testing "Fire when Hivemind gains counters"
+    (do-game
+      (new-game (default-corp ["Architect"])
+                (default-runner ["Trypano" "Hivemind" (qty "Surge" 2)]))
+      (play-from-hand state :corp "Architect" "R&D")
+      (let [architect-unrezzed (get-ice state :rd 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Trypano")
+        (prompt-select :runner architect-unrezzed)
+        (is (= 0 (count (:discard (get-runner)))) "Trypano not in discard yet")
+        (is (= 1 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Architect is not trashed")
+        (play-from-hand state :runner "Hivemind")
+        (let [hive (get-program state 0)]
+          (is (= 1 (get-counters (refresh hive) :virus)) "Hivemind starts with 1 virus counter")
+          (play-from-hand state :runner "Surge")
+          (prompt-select :runner (refresh hive))
+          (is (= 3 (get-counters (refresh hive) :virus)) "Hivemind gains 2 virus counters")
+          (play-from-hand state :runner "Surge")
+          (prompt-select :runner (refresh hive))
+          (is (= 5 (get-counters (refresh hive) :virus)) "Hivemind gains 2 virus counters (now at 5)")
+          (is (= 0 (count (get-in @state [:corp :servers :rd :ices]))) "Unrezzed Architect was trashed")
+          (is (= 3 (count (:discard (get-runner)))) "Trypano went to discard"))))))
 
 (deftest upya
   (do-game

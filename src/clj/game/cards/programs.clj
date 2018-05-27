@@ -150,7 +150,7 @@
                             :req (req (some #(card-is? % :side :corp) targets))
                             :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
                                                auto-ab {:effect (effect (add-counter :runner card :virus amt-trashed))
-                                                        :msg "place " (quantify amt-trashed "virus counter") "on Consume"}
+                                                        :msg (str "place " (quantify amt-trashed "virus counter") " on Consume")}
                                                sing-ab {:optional {:prompt "Place a virus counter on Consume?"
                                                                    :yes-ability {:effect (effect (add-counter :runner card :virus 1))
                                                                                  :msg "place 1 virus counter on Consume"}}}
@@ -171,17 +171,17 @@
                               (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
                                         (doseq [h hiveminds]
                                                (update! state side (assoc-in h [:counter :virus] 0)))))
-                 :msg (msg (let [local-virus (get-in card [:counter :virus])
+                 :msg (msg (let [local-virus (get-in card [:counter :virus] 0)
                                  global-virus (get-virus-counters state side card)
                                  hivemind-virus (- global-virus local-virus)]
-                             (str "gain " (* 2 global-virus) " [Credits], removing " local-virus " virus counter(s) from Consume"
+                             (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
                              (when (pos? hivemind-virus)
                                    (str " (and " hivemind-virus " from Hivemind)")))))}
                 {:effect (effect (update! (update-in card [:special :auto-accept] #(not %)))
                                  (toast (str "Consume will now "
                                              (if (get-in card [:special :auto-accept]) "no longer " "")
                                              "automatically add counters.") "info"))
-                 :label "Toggle auomatically adding virus counters"}]}
+                 :label "Toggle automatically adding virus counters"}]}
 
    "D4v1d"
    {:implementation "Does not check that ICE strength is 5 or greater"
@@ -450,7 +450,7 @@
       :trash-effect {:effect update-programs}
       :events {:counter-added {:req (req (= (:cid target) (:cid card)))
                                :effect update-programs}}
-      :abilities [{:req (req (> (get-in card [:counter :virus]) 0))
+      :abilities [{:req (req (pos? (get-in card [:counter :virus] 0)))
                    :priority true
                    :prompt "Move a virus counter to which card?"
                    :choices {:req #(has-subtype? % "Virus")}
@@ -797,23 +797,26 @@
                                :delayed-completion true
                                :msg (msg "to reveal " (:title target))
                                :effect (req (if-let [guess (get-in card [:special :rng-guess])]
-                                              (if (or (= guess (:cost target))
-                                                      (= guess (:advancementcost target)))
-                                                (continue-ability state side
-                                                                  {:prompt "Choose RNG Key award"
-                                                                   :choices ["Gain 3 [Credits]" "Draw 2 cards"]
-                                                                   :effect (req (if (= target "Draw 2 cards")
-                                                                                  (do (draw state :runner 2)
-                                                                                      (system-msg state :runner "uses RNG Key to draw 2 cards"))
-                                                                                  (do (gain state :runner :credit 3)
-                                                                                      (system-msg state :runner "uses RNG Key to gain 3 [Credits]"))))}
-                                                                  card nil)
-                                                (effect-completed state side eid))
+                                              (if (installed? target)
+                                                ;; Do not trigger on installed cards (can't "reveal" an installed card per UFAQ)
+                                                (do (toast state :runner "Installed cards cannot be revealed, so RNG Key does not pay out." "info")
+                                                    (effect-completed state side eid))
+                                                (if (or (= guess (:cost target))
+                                                        (= guess (:advancementcost target)))
+                                                  (continue-ability state side
+                                                                    {:prompt "Choose RNG Key award"
+                                                                     :choices ["Gain 3 [Credits]" "Draw 2 cards"]
+                                                                     :effect (req (if (= target "Draw 2 cards")
+                                                                                    (do (draw state :runner 2)
+                                                                                        (system-msg state :runner "uses RNG Key to draw 2 cards"))
+                                                                                    (do (gain state :runner :credit 3)
+                                                                                        (system-msg state :runner "uses RNG Key to gain 3 [Credits]"))))}
+                                                                    card nil)
+                                                  (effect-completed state side eid)))
                                               (effect-completed state side eid)))}
              :post-access-card {:effect (effect (update! (assoc-in card [:special :rng-guess] nil)))}
-             :successful-run {:req (req (let [first-hq (first-successful-run-on-server? state :hq)
-                                              first-rd (first-successful-run-on-server? state :rd)]
-                                          (and first-hq first-rd (or (= target :hq) (= target :rd)))))
+             :successful-run {:req (req (and (#{:hq :rd} target)
+                                             (first-event? state :runner :successful-run #{[:hq] [:rd]})))
                               :optional {:prompt "Fire RNG Key?"
                                          :yes-ability {:prompt "Guess a number"
                                                        :choices {:number (req 20)}
@@ -1021,10 +1024,9 @@
         :effect trash-if-5
         :events {:runner-turn-begins
                  {:optional {:prompt (msg "Place a virus counter on Trypano?")
-                             :yes-ability {:msg (msg "place a virus counter on Trypano")
-                                           :effect (req (add-counter state side card :virus 1))}}}
+                             :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
+                                                        (add-counter state side card :virus 1))}}}
                  :counter-added {:delayed-completion true
-                                 :req (req (= (:cid card) (:cid target)))
                                  :effect trash-if-5}
                  :card-moved {:effect trash-if-5
                               :delayed-completion true}

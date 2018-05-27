@@ -50,7 +50,8 @@
     (.setItem js/localStorage "gameid" (:gameid @app-state))
     (reset! game-state state)
     (swap! game-state assoc :side side)
-    (reset! last-state @game-state)))
+    (reset! last-state @game-state)
+    (reset! lock false)))
 
 (defn launch-game [{:keys [state]}]
   (init-game state)
@@ -76,9 +77,7 @@
                 (get-in @last-state aid))
       (reset! lock false))))
 
-(defn handle-state [{:keys [state]}]
-  (init-game state)
-  (reset! lock false))
+(defn handle-state [{:keys [state]}] (init-game state))
 
 (defn handle-diff [{:keys [gameid diff]}]
   (when (= gameid (:gameid @game-state))

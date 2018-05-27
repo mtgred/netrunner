@@ -740,9 +740,9 @@
                                                   (not (is-type? % "ICE"))
                                                   (= (:side %) "Corp")
                                                   (in-hand? %))}
-                             :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card)) 5)
+                             :msg (msg "install a card from HQ" (when (>= (:advance-counter (get-card state card) 0) 5)
                                        " and rez it, ignoring all costs"))
-                             :effect (req (if (>= (:advance-counter (get-card state card)) 5)
+                             :effect (req (if (>= (:advance-counter (get-card state card) 0) 5)
                                             (do (corp-install state side target "New remote"
                                                               {:install-state :rezzed-no-cost})
                                                 (trigger-event state side :rez target))
@@ -1117,11 +1117,12 @@
                                     (do (system-msg state :corp "declines to trash a card from Standoff")
                                         (clear-wait-prompt state :runner)
                                         (effect-completed state :corp eid))))
-              :effect (req (do (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
-                               (clear-wait-prompt state (other-side side))
-                               (trash state side target {:unpreventable true})
-                               (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
-                               (continue-ability state (other-side side) (stand (other-side side)) card nil)))})]
+              :effect (req (when-completed (trash state side target {:unpreventable true})
+                                           (do
+                                             (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
+                                             (clear-wait-prompt state (other-side side))
+                                             (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
+                                             (continue-ability state (other-side side) (stand (other-side side)) card nil))))})]
      {:interactive (req true)
       :delayed-completion true
       :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
@@ -1208,15 +1209,17 @@
     :effect (effect (lose :bad-publicity 2))}
 
    "Viral Weaponization"
-   {:effect (effect (register-events
-                      {:corp-turn-ends
-                       {:msg "do 1 net damage for each card in the grip"
-                        :delayed-completion true
-                        :effect (req (let [cnt (count (:hand runner))]
-                                       (unregister-events state side card)
-                                       (damage state side eid :net cnt {:card card})))}}
-                      card))
-    :events {:corp-turn-ends nil}}
+   (let [dmg {:msg "do 1 net damage for each card in the grip"
+              :delayed-completion true
+              :effect (req (let [cnt (count (:hand runner))]
+                             (unregister-events state side card)
+                             (damage state side eid :net cnt {:card card})))}]
+     {:effect (effect (register-events
+                        {:corp-turn-ends dmg
+                         :runner-turn-ends dmg}
+                        card))
+      :events {:corp-turn-ends nil
+               :runner-turn-ends nil}})
 
    "Voting Machine Initiative"
    {:silent (req true)

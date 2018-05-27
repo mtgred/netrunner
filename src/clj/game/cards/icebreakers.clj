@@ -55,13 +55,13 @@
                              (:events cdef))))
 
 (defn cloud-icebreaker [cdef]
-  (assoc cdef :effect (req (let [link (get-in @state [:runner :link])]
+  (assoc cdef :effect (req (let [link (get-in @state [:runner :link] 0)]
                              (when (>= link 2)
                                (free-mu state (:memoryunits card))))
                            (add-watch state (keyword (str "cloud" (:cid card)))
                                       (fn [k ref old new]
-                                        (let [old-link (get-in old [:runner :link])
-                                              new-link (get-in new [:runner :link])
+                                        (let [old-link (get-in old [:runner :link] 0)
+                                              new-link (get-in new [:runner :link] 0)
                                               cloud-turned-on (and (< old-link 2)
                                                                    (>= new-link 2))
                                               cloud-turned-off (and (>= old-link 2)
@@ -73,7 +73,7 @@
                                             cloud-turned-off
                                             (use-mu state (:memoryunits card)))))))
               :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
-                               (let [link (get-in @state [:runner :link])]
+                               (let [link (get-in @state [:runner :link] 0)]
                                  (when (>= link 2)
                                    ;; To counteract the normal freeing of MU on program `:leave-play`
                                    (use-mu state (:memoryunits card)))))))
@@ -167,16 +167,19 @@
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
-                                       (not (install-locked? state side))
-                                       (not (some #(= title (:title %)) (all-active-installed state :runner)))
-                                       (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
-                        :optional {:player :runner
-                                   :prompt (str "Install " title "?")
-                                   :yes-ability {:effect (effect (unregister-events card)
-                                                                 (runner-install :runner card))}
-                                   :no-ability {:effect (req  ;; Add a register to note that the player was already asked about installing,
-                                                              ;; to prevent multiple copies from prompting multiple times.
-                                                              (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                                       (not (install-locked? state side))))
+                        :delayed-completion true
+                        :effect (effect (continue-ability
+                                          {:optional {:req (req (and (not-any? #(= title (:title %)) (all-active-installed state :runner))
+                                                                     (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
+                                                      :player :runner
+                                                      :prompt (str "Install " title "?")
+                                                      :yes-ability {:effect (effect (unregister-events card)
+                                                                                    (runner-install :runner card))}
+                                                      :no-ability {:effect (req  ;; Add a register to note that the player was already asked about installing,
+                                                                                ;; to prevent multiple copies from prompting multiple times.
+                                                                                (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                                          card targets))}
         heap-event (req (when (= (:zone card) [:discard])
                           (unregister-events state side card)
                           (register-events state side

@@ -10,7 +10,7 @@
             [netrunner.ws :as ws]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
-            [netrunner.gameboard :refer [init-game game-state toast launch-game parse-state]]
+            [netrunner.gameboard :refer [game-state toast launch-game parse-state]]
             [netrunner.cardbrowser :refer [image-url non-game-toast] :as cb]
             [netrunner.stats :refer [notnum->zero]]
             [netrunner.deckbuilder :refer [format-deck-status-span deck-status-span process-decks load-decks num->percent]]))

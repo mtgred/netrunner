@@ -873,9 +873,11 @@
                   :once :per-turn
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
+                  :delayed-completion true
                   :effect (req (gain state :corp :credit 2)
-                               (when (zero? (get-in card [:counter :credit]))
-                                 (trash state :corp card)))}]
+                               (if (zero? (get-in card [:counter :credit]))
+                                 (trash state :corp eid card)
+                                 (effect-completed state :corp eid)))}]
      {:effect (effect (add-counter card :credit 8))
       :flags {:corp-phase-12 (req (= 2 (get-in card [:counter :credit])))}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -887,6 +889,7 @@
                                      (continue-ability :corp
                                        {:optional
                                         {:prompt "Shuffle Marilyn Campaign into R&D?"
+                                         :priority 1
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"
                                                        :effect (req (move state :corp card :deck)
@@ -1422,8 +1425,10 @@
     :abilities [ability]
     :events {:corp-turn-begins ability
              :corp-install {:req (req (ice? target))
-                            :effect (effect (trash card)
-                                            (system-msg "trashes Server Diagnostics"))}}})
+                            :delayed-completion true
+                            :effect (req (when-completed (trash state side card nil)
+                                                         (do (system-msg state :runner "trashes Server Diagnostics")
+                                                             (effect-completed state side eid card))))}}})
 
    "Shannon Claire"
    {:abilities [{:cost [:click 1]

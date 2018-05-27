@@ -2439,25 +2439,41 @@
 
 (deftest viral-weaponization
   ;; Viral Weaponization - at the end of turn scored, do 1 net damage for each card in grip
-  (do-game
-    (new-game (default-corp [(qty "Viral Weaponization" 2)])
-              (default-runner [(qty "Sure Gamble" 3)]))
-    (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
-    (play-and-score state "Viral Weaponization")
-    (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
-    (take-credits state :corp)
-    (is (= 0 (count (:hand (get-runner)))) "Runner takes damage at end of turn")
-    (core/click-draw state :runner 1)
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (is (= 1 (count (:hand (get-runner)))) "Runner doesn't take damage in future turns")
-    (play-from-hand state :runner "Sure Gamble")
-    (take-credits state :runner)
-    (is (= 0 (count (:hand (get-runner)))) "Runner's hand is empty")
-    (play-and-score state "Viral Weaponization")
-    (take-credits state :corp)
-    (is (= 0 (count (:hand (get-runner)))) "Runner's hand is empty")))
-
+  (testing "Score on corp turn"
+    (do-game
+      (new-game (default-corp [(qty "Viral Weaponization" 2)])
+                (default-runner [(qty "Sure Gamble" 3)]))
+      (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
+      (play-and-score state "Viral Weaponization")
+      (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
+      (take-credits state :corp)
+      (is (= 0 (count (:hand (get-runner)))) "Runner takes damage at end of turn")
+      (core/click-draw state :runner 1)
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 1 (count (:hand (get-runner)))) "Runner doesn't take damage in future turns")
+      (play-from-hand state :runner "Sure Gamble")
+      (take-credits state :runner)
+      (is (= 0 (count (:hand (get-runner)))) "Runner's hand is empty")
+      (play-and-score state "Viral Weaponization")
+      (take-credits state :corp)
+      (is (= 0 (count (:hand (get-runner)))) "Runner's hand is empty")))
+  (testing "Score on runners turn"
+    (do-game
+      (new-game (default-corp ["Viral Weaponization" "Plan B"])
+                (default-runner [(qty "Sure Gamble" 3)]))
+      (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
+      (play-from-hand state :corp "Plan B" "New remote")
+      (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-successful state)
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (find-card "Viral Weaponization" (:hand (get-corp))))
+      (prompt-choice-partial :runner "No")
+      (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
+      (take-credits state :runner)
+      (is (= 0 (count (:hand (get-runner)))) "Runner takes damage at end of turn"))))
 
 (deftest voting-machine-initiative
   ;; Voting Machine Initiative
