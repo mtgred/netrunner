@@ -910,7 +910,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Sneakdoor Beta")
       (is (= 1 (:credit (get-runner))) "Sneakdoor cost 4 credits")
-      (let [sb (get-in @state [:runner :rig :program 0])
+      (let [sb (get-program state 0)
             ash (get-content state :hq 0)]
         (core/rez state :corp ash)
         (card-ability state :runner sb 0)

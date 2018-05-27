@@ -1014,11 +1014,11 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
-      (core/advance state :corp {:card (refresh searchlight)})
+      (advance state searchlight 1)
       (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (= 1 (:tag (get-runner))) "Trace succeeds with 0 advancements"))))
+      (is (= 1 (:tag (get-runner))) "Trace succeeds with 1 advancements"))))
 
 (deftest seidr-adaptive-barrier
   ;; Seidr Adaptive Barrier - +1 strength for every ice protecting its server
@@ -1249,6 +1249,25 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (not (get-in (refresh tmi) [:rezzed]))))))
+
+(deftest troll
+  ;; Troll
+  (testing "Giving the runner a choice on successful trace shouldn't make runner pay trace first. #5335"
+    (do-game
+      (new-game (default-corp ["Troll"])
+                (default-runner))
+      (play-from-hand state :corp "Troll" "HQ")
+      (take-credits state :corp)
+      (let [troll (get-ice state :hq 0)]
+        (core/rez state :corp troll)
+        (run-on state "HQ")
+        (card-ability state :corp troll 0)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "Runner waits for Runner to choose option")
+        (prompt-choice :runner "End the run")
+        (is (not (:run @state)) "Run is ended")))))
 
 (deftest turing-positional-strength
   ;; Turing - Strength boosted when protecting a remote server

@@ -98,7 +98,7 @@
       (is (= 0 (count (get-in @state [:corp :servers :remote2 :content]))) "Agenda was stolen")
       (prompt-choice :corp "Medical Breakthrough") ;simult. effect resolution
       (prompt-choice :corp "Yes")
-      (prompt-choice :corp 0)  ;; Corp doesn't pump trace
+      (prompt-choice :corp 0)
       (is (= 3 (-> (get-runner) :prompt first :strength)) "Trace base strength is 3 after stealing first Breakthrough")
       (prompt-choice :runner 0)
       (let [n (count (get-in @state [:runner :hand]))]

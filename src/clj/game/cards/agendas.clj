@@ -793,11 +793,11 @@
 
    "Paper Trail"
    {:trace {:base 6
-            :msg "trash all connection and job resources"
-            :effect (req (doseq [resource (filter #(or (has-subtype? % "Job")
-                                                       (has-subtype? % "Connection"))
-                                                  (all-active-installed state :runner))]
-                                   (trash state side resource)))}}
+            :successful {:msg "trash all connection and job resources"
+                         :effect (req (doseq [resource (filter #(or (has-subtype? % "Job")
+                                                                    (has-subtype? % "Connection"))
+                                                               (all-active-installed state :runner))]
+                                        (trash state side resource)))}}}
 
    "Personality Profiles"
    (let [pp {:req (req (pos? (count (:hand runner))))
@@ -1046,9 +1046,9 @@
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]
                  :trace {:base 2
-                         :msg "give the Runner 1 tag"
-                         :delayed-completion true
-                         :effect (effect (tag-runner :runner eid 1))}}]}
+                         :successful {:msg "give the Runner 1 tag"
+                                      :delayed-completion true
+                                      :effect (effect (tag-runner :runner eid 1))}}}]}
 
    "Self-Destruct Chips"
    {:silent (req true)

@@ -2587,3 +2587,7 @@
       (take-credits state :corp 1)
       (is (not (get-in (refresh crypsis) [:added-virus-counter]))
           "Counter flag was cleared on Crypsis"))))
+
+(deftest white-hat
+  ;; White Hat
+  )

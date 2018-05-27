@@ -737,12 +737,11 @@
                              {:optional
                               {:prompt "Trace the Runner with NBN: Controlling the Message?"
                                :yes-ability {:trace {:base 4
-                                                     :msg "give the Runner 1 tag"
-                                                     :delayed-completion true
-                                                     :effect (effect (tag-runner :runner eid 1 {:unpreventable true})
-                                                                     (clear-wait-prompt :runner))
-                                                     :unsuccessful {:effect (effect (clear-wait-prompt :runner))}}}
-                               :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
+                                                     :successful
+                                                     {:msg "give the Runner 1 tag"
+                                                      :delayed-completion true
+                                                      :effect (effect (tag-runner :runner eid 1 {:unpreventable true}))}}}
+                               :end-effect (effect (clear-wait-prompt :runner))}}
                              card nil))}}})
 
    "NBN: Making News"

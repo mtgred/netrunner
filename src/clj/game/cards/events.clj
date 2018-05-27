@@ -35,9 +35,10 @@
    "Another Day, Another Paycheck"
    {:events {:agenda-stolen
              {:trace {:base 0
-                      :unsuccessful {:effect (effect (gain :runner :credit
-                                                           (+ (:agenda-point runner) (:agenda-point corp))))
-                                     :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
+                      :unsuccessful
+                      {:effect (effect (gain :runner :credit
+                                             (+ (:agenda-point runner) (:agenda-point corp))))
+                       :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
    (let [corp-trash {:delayed-completion true
@@ -1952,9 +1953,10 @@
                              (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :trace {:base 3
-            :unsuccessful {:delayed-completion true
-                           :msg "reveal all cards in HQ"
-                           :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
+            :unsuccessful
+            {:delayed-completion true
+             :msg "reveal all cards in HQ"
+             :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
 
    "Windfall"
    {:effect (effect (shuffle! :deck)
