@@ -823,6 +823,71 @@
     (play-from-hand state :corp "Hedge Fund")
     (is (= 9 (:credit (get-corp))))))
 
+(deftest hellion-alpha-test
+  ;; Hellion Alpha Test
+  (do-game
+    (new-game (default-corp [(qty "Hellion Alpha Test" 2)])
+              (default-runner ["Daily Casts"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Daily Casts")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hellion Alpha Test")
+    (is (zero? (-> (get-runner) :deck count)) "Runner should have no cards in Stack")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (is (= 1 (-> (get-runner) :deck count)) "Runner should have 1 card in Stack from losing Hellion Alpha Test trace")
+    (is (= "Daily Casts" (-> (get-runner) :deck first :title))
+        "Runner should have Daily Casts on top of Stack from losing Hellion Alpha Test trace")
+    (take-credits state :corp)
+    (core/draw state :runner)
+    (play-from-hand state :runner "Daily Casts")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hellion Alpha Test")
+    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 2)
+    (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from losing Hellion Alpha Test trace")))
+
+(deftest hellion-beta-test
+  ;; Hellion Beta Test
+  (testing "Winning Trace - Trashing 2 cards"
+    (do-game
+      (new-game (default-corp ["Dedicated Response Team" "Hellion Beta Test"])
+                (default-runner ["Daily Casts" "Dyson Mem Chip"]))
+      (play-from-hand state :corp "Dedicated Response Team" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "Dyson Mem Chip")
+      (run-empty-server state :remote1)
+      (prompt-choice-partial :runner "Pay")
+      (take-credits state :runner)
+      (is (zero? (-> (get-runner) :discard count)) "Runner's heap should be empty")
+      (play-from-hand state :corp "Hellion Beta Test")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-resource state 0))
+      (prompt-select :corp (get-hardware state 0))
+      (is (= 2 (-> (get-runner) :discard count)) "Runner should have 2 cards in heap after losing Hellion Beta Test trace")))
+  (testing "Losing trace - Gaining bad publicity"
+    (do-game
+      (new-game (default-corp ["Dedicated Response Team" "Hellion Beta Test"])
+                (default-runner ["Daily Casts" "Dyson Mem Chip"]))
+      (play-from-hand state :corp "Dedicated Response Team" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "Dyson Mem Chip")
+      (run-empty-server state :remote1)
+      (prompt-choice-partial :runner "Pay")
+      (take-credits state :runner)
+      (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+      (play-from-hand state :corp "Hellion Beta Test")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 2)
+      (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from losing Hellion Beta Test trace"))))
+
 (deftest high-profile-target
   (testing "when the runner has no tags"
     (do-game
@@ -928,6 +993,25 @@
     (play-from-hand state :corp "IPO")
     (is (= 13 (:credit (get-corp))))
     (is (= 0 (:click (get-corp))) "Terminal ends turns")))
+
+(deftest kill-switch
+  ;; Kill Switch
+  (do-game
+    (new-game (default-corp ["Kill Switch" (qty "Hostile Takeover" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Kill Switch")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
+    (play-and-score state "Hostile Takeover")
+    (prompt-choice :corp "Hostile Takeover")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Kill Switch after Corp scores an agenda")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 2 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Kill Switch after accecssing an agenda")))
 
 (deftest lag-time
   (do-game
@@ -1179,6 +1263,21 @@
     (is (empty? (:discard (get-runner))) "Grimoire too expensive to be targeted")
     (prompt-select :runner (get-in @state [:runner :rig :program 0]))
     (is (= 1 (count (:discard (get-runner)))) "Cache trashed")))
+
+(deftest power-grid-overload
+  ;; Power Grid Overload
+  (do-game
+    (new-game (default-corp ["Power Grid Overload"])
+              (default-runner ["Dyson Mem Chip"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dyson Mem Chip")
+    (run-empty-server state :rd)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Power Grid Overload")
+    (prompt-choice :corp 3)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-hardware state 0))
+    (is (= 1 (-> (get-runner) :discard count)) "Dyson Mem Chip should be in heap after Runner loses Power Grid Overload trace")))
 
 (deftest precognition
   ;; Precognition - Full test
@@ -1443,6 +1542,20 @@
     (is (= :corp (:winner @state)) "Corp wins")
     (is (= "Flatline" (:reason @state)) "Win condition reports flatline")))
 
+(deftest sea-source
+  ;; SEA Source
+  (do-game
+    (new-game (default-corp ["SEA Source"])
+              (default-runner))
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (take-credits state :runner)
+    (is (zero? (:tag (get-runner))) "Runner should start with 0 tags")
+    (play-from-hand state :corp "SEA Source")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner should get 1 tag from losing SEA Source trace")))
+
 (deftest self-growth-program
   ;; Self-Growth Program - Add 2 installed cards to grip if runner is tagged
   (do-game
@@ -1472,21 +1585,17 @@
               (default-runner ["Employee Strike"]))
     (play-from-hand state :corp "Service Outage")
     (take-credits state :corp)
-
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
     (run-on state :archives)
     (is (= 4 (:credit (get-runner)))
         "Runner spends 1 credit to make the first run")
     (run-successful state)
-
     (run-on state :archives)
     (is (= 4 (:credit (get-runner)))
         "Runner doesn't spend 1 credit to make the second run")
     (run-successful state)
-
     (take-credits state :runner)
     (take-credits state :corp)
-
     (core/lose state :runner :credit 6)
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
@@ -1494,14 +1603,11 @@
     (is (not (:run @state)) "No run was initiated")
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
-
     (take-credits state :runner)
     (take-credits state :corp)
-
     (core/lose state :runner :credit 2)
     (play-from-hand state :runner "Employee Strike")
     (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
-
     (run-on state :archives)
     (is (= 1 (:credit (get-runner)))
         "Runner doesn't spend 1 credit to make a run")))
@@ -1515,22 +1621,18 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Sneakdoor Beta")
     (take-credits state :runner 1)
-
     (is (= 2 (:credit (get-runner))) "Runner has 2 credits")
     (let [sneakdoor (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner sneakdoor 0)
       (is (= 1 (:credit (get-runner)))
           "Runner spends 1 additional credit to run with a card ability")
       (run-successful state)
-
       (run-on state :archives)
       (is (= 1 (:credit (get-runner)))
           "Runner doesn't spend 1 credit to make a run")
       (run-successful state)
-
       (take-credits state :runner)
       (take-credits state :corp)
-
       (core/lose state :runner :credit 1)
       (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
       (is (= 0 (:credit (get-runner))) "Runner has 0 credits")
@@ -1546,23 +1648,19 @@
               (default-runner [(qty "Out of the Ashes" 2)]))
     (play-from-hand state :corp "Service Outage")
     (take-credits state :corp)
-
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
     (play-from-hand state :runner "Out of the Ashes")
     (is (= 3 (:credit (get-runner)))
         "Runner spends 1 additional credit to run with a run event")
     (prompt-choice :runner "Archives")
     (run-successful state)
-
     (run-on state :archives)
     (is (= 3 (:credit (get-runner)))
         "Runner doesn't spend 1 credit to make a run")
     (run-successful state)
-
     (take-credits state :runner)
     (take-credits state :corp)
     (prompt-choice :runner "No") ; Out of the Ashes prompt
-
     (core/lose state :runner :credit 4)
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
@@ -1580,7 +1678,6 @@
               (default-runner ["Hades Shard"]))
     (trash-from-hand state :corp "Breaking News")
     (take-credits state :corp)
-
     (core/gain state :runner :credit 3)
     (play-from-hand state :runner "Hades Shard")
     (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
@@ -1589,7 +1686,6 @@
     (prompt-select :corp (find-card "Service Outage" (:hand (get-corp))))
     (is (find-card "Service Outage" (:current (get-corp)))
         "Service Outage is in play")
-
     (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
     (run-on state :archives)
     (is (= 0 (:credit (get-runner)))
@@ -1603,11 +1699,9 @@
               (default-runner ["Hades Shard"]))
     (trash-from-hand state :corp "Breaking News")
     (take-credits state :corp)
-
     (run-on state :hq)
     (run-successful state)
     (prompt-choice :runner "No action")
-
     (core/gain state :runner :credit 3)
     (play-from-hand state :runner "Hades Shard")
     (card-ability state :runner (get-in @state [:runner :rig :resource 0]) 0)
@@ -1616,7 +1710,6 @@
     (prompt-select :corp (find-card "Service Outage" (:hand (get-corp))))
     (is (find-card "Service Outage" (:current (get-corp)))
         "Service Outage is in play")
-
     (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
     (run-on state :archives)
     (is (= 1 (:credit (get-runner)))
@@ -1632,23 +1725,16 @@
     (play-from-hand state :corp "Breaking News" "New remote")
     (play-from-hand state :corp "Service Outage")
     (take-credits state :corp)
-
     (run-on state :remote1)
     (run-successful state)
     (prompt-choice :runner "Steal")
-
     (prompt-choice :corp "Yes")
-    (prompt-select :corp (find-card "Service Outage"
-                                    (:discard (get-corp))))
-
+    (prompt-select :corp (find-card "Service Outage" (:discard (get-corp))))
     (take-credits state :runner)
-
     (take-credits state :corp)
-
     (is (= 7 (:credit (get-runner))) "Runner has 7 credits")
     (run-on state :archives)
-    (is (= 6 (:credit (get-runner)))
-        "Runner spends 1 credit to make a run")))
+    (is (= 6 (:credit (get-runner))) "Runner spends 1 credit to make a run")))
 
 (deftest shipment-from-sansan
   ;; Shipment from SanSan - placing advancements
@@ -1662,6 +1748,29 @@
       (prompt-select :corp iwall)
       (is (= 5 (:credit (get-corp))))
       (is (= 2 (:advance-counter (refresh iwall)))))))
+
+(deftest snatch-and-grab
+  ;; Snatch and Grab
+  (do-game
+    (new-game (default-corp [(qty "Snatch and Grab" 2)])
+              (default-runner ["Scrubber"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Scrubber")
+    (take-credits state :runner)
+    (is (zero? (:tag (get-runner))) "Runner should start with 0 tags")
+    (play-from-hand state :corp "Snatch and Grab")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (prompt-choice :runner "Yes")
+    (is (= 1 (:tag (get-runner))) "Runner should get 1 tag from losing Snatch and Grab trace and opting to take the tag")
+    (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
+    (play-from-hand state :corp "Snatch and Grab")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (prompt-choice :runner "No")
+    (is (= 1 (-> (get-runner) :discard count)) "Scrubber should be in Runner's heap after losing Snatch and Grab trace")))
 
 (deftest stock-buy-back
   ;; Stock Buy-Back - Gain 3c for every agenda in Runner's area
@@ -2156,6 +2265,23 @@
       (is (= 6 (:credit (get-corp))) "Transparency initiative didn't fire")
       (core/advance state :corp {:card (refresh atlas)})
       (is (= 5 (:credit (get-corp))) "Transparency initiative didn't fire"))))
+
+(deftest trojan-horse
+  ;; Trojan Horse
+  (do-game
+    (new-game (default-corp ["Trojan Horse" "Dedicated Response Team"])
+              (default-runner ["Wyrm"]))
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Wyrm")
+    (run-empty-server state :remote1)
+    (take-credits state :runner)
+    (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
+    (play-from-hand state :corp "Trojan Horse")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-program state 0))
+    (is (= 1 (-> (get-runner) :discard count)) "Wyrm should be in heap after Runner loses Trojan Horse trace")))
 
 (deftest wake-up-call-en-passant
   ;; Wake Up Call - should fire after using En Passant to trash ice
