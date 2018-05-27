@@ -55,13 +55,13 @@
                              (:events cdef))))
 
 (defn cloud-icebreaker [cdef]
-  (assoc cdef :effect (req (let [link (get-in @state [:runner :link])]
+  (assoc cdef :effect (req (let [link (get-in @state [:runner :link] 0)]
                              (when (>= link 2)
                                (free-mu state (:memoryunits card))))
                            (add-watch state (keyword (str "cloud" (:cid card)))
                                       (fn [k ref old new]
-                                        (let [old-link (get-in old [:runner :link])
-                                              new-link (get-in new [:runner :link])
+                                        (let [old-link (get-in old [:runner :link] 0)
+                                              new-link (get-in new [:runner :link] 0)
                                               cloud-turned-on (and (< old-link 2)
                                                                    (>= new-link 2))
                                               cloud-turned-off (and (>= old-link 2)
@@ -73,7 +73,7 @@
                                             cloud-turned-off
                                             (use-mu state (:memoryunits card)))))))
               :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
-                               (let [link (get-in @state [:runner :link])]
+                               (let [link (get-in @state [:runner :link] 0)]
                                  (when (>= link 2)
                                    ;; To counteract the normal freeing of MU on program `:leave-play`
                                    (use-mu state (:memoryunits card)))))))
