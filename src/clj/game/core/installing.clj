@@ -214,7 +214,8 @@
 
       ;; Check to see if a second agenda/asset was installed.
       (when-completed (corp-install-asset-agenda state side moved-card dest-zone server)
-                      (letfn [(event [state side eid _] (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
+                      (letfn [(event [state side eid _]
+                                (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
                         (case install-state
                           ;; Ignore all costs. Pass eid to rez.
                           :rezzed-no-cost

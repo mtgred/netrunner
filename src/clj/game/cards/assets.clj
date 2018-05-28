@@ -1890,7 +1890,8 @@
     {:pre-expose
      {:delayed-completion true
       :effect (req (let [etarget target]
-                     (continue-ability state side
+                     (continue-ability
+                       state side
                        {:optional {:req (req (not (rezzed? card)))
                                    :player :corp
                                    :prompt (msg "The Runner is about to expose " (:title etarget) ". Rez Zaibatsu Loyalty?")

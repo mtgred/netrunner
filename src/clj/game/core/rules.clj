@@ -616,7 +616,8 @@
       (effect-completed state side eid) ; cannot expose faceup cards
       (when-completed (trigger-event-sync state side :pre-expose target)
                       (let [prevent (get-prevent-list state :corp :expose)]
-                        (if (and (not unpreventable) (cards-can-prevent? state :corp prevent :expose))
+                        (if (and (not unpreventable)
+                                 (cards-can-prevent? state :corp prevent :expose))
                           (do (system-msg state :corp "has the option to prevent a card from being exposed")
                               (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
                               (show-prompt state :corp nil

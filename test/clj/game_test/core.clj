@@ -217,15 +217,13 @@
 
 (defn last-log-contains?
   [state content]
-  (not (nil?
-         (re-find (re-pattern content)
-                  (get (last (get @state :log)) :text)))))
+  (some? (re-find (re-pattern content)
+                  (-> @state :log last :text))))
 
 (defn second-last-log-contains?
   [state content]
-  (not (nil?
-         (re-find (re-pattern content)
-                  (get (last (butlast (get @state :log))) :text)))))
+  (some? (re-find (re-pattern content)
+                  (-> @state :log butlast last :text))))
 
 (defn trash-from-hand
   "Trash specified card from hand of specified side"

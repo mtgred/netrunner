@@ -573,8 +573,10 @@
                                   :effect (effect (add-counter target :virus 1))}}}}}
 
    "Lemuria Codecracker"
-   {:abilities [{:cost [:click 1 :credit 1] :req (req (some #{:hq} (:successful-run runner-reg)))
-                 :choices {:req installed?} :effect (effect (expose eid target))
+   {:abilities [{:cost [:click 1 :credit 1]
+                 :req (req (some #{:hq} (:successful-run runner-reg)))
+                 :choices {:req installed?}
+                 :effect (effect (expose eid target))
                  :msg "expose 1 card"}]}
 
    "LLDS Memory Diamond"
