@@ -118,6 +118,7 @@
          (swap! state update-in [side :deck] (partial drop draws-after-prevent))
          (swap! state assoc-in [side :register :most-recent-drawn] drawn)
          (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % draws-after-prevent) 0))
+         (swap! state update-in [:stats side :gain :card] (fnil + 0) n)
          (swap! state update-in [:bonus] dissoc :draw)
          (if (and (not suppress-event) (pos? deck-count))
            (when-completed
@@ -214,9 +215,13 @@
                               (if (< (count hand) n)
                                 (do (flatline state)
                                     (trash-cards state side (make-eid state) cards-trashed
-                                                 {:unpreventable true}))
+                                                 {:unpreventable true})
+                                    (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                                    (swap! state update-in [:stats :corp :damage type] (fnil + 0) n))
                                 (do (trash-cards state side (make-eid state) cards-trashed
                                                  {:unpreventable true :cause type})
+                                    (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
+                                    (swap! state update-in [:stats :corp :damage type] (fnil + 0) n)
                                     (trigger-event state side :damage type card n)))))))
                       (swap! state update-in [:damage :defer-damage] dissoc type)
                       (swap! state update-in [:damage] dissoc :damage-replace)
@@ -635,16 +640,20 @@
   "Records a win reason for statistics."
   [state side reason]
   (when-not (:winner @state)
-    (system-msg state side "wins the game")
-    (play-sfx state side "game-end")
-    (swap! state assoc
-           :winner side
-           :loser (other-side side)
-           :winning-user (get-in @state [side :user :username])
-           :losing-user (get-in @state [(other-side side) :user :username])
-           :reason reason :end-time (java.util.Date.)
-           :winning-deck-id (get-in @state [side :deck-id])
-           :losing-deck-id (get-in @state [(other-side side) :deck-id]))))
+    (let [started (get-in @state [:stats :time :started])
+          now (t/now)]
+      (system-msg state side "wins the game")
+      (play-sfx state side "game-end")
+      (swap! state assoc-in [:stats :time :ended] now)
+      (swap! state assoc-in [:stats :time :elapsed] (t/in-minutes (t/interval started now)))
+      (swap! state assoc
+             :winner side
+             :loser (other-side side)
+             :winning-user (get-in @state [side :user :username])
+             :losing-user (get-in @state [(other-side side) :user :username])
+             :reason reason :end-time (java.util.Date.)
+             :winning-deck-id (get-in @state [side :deck-id])
+             :losing-deck-id (get-in @state [(other-side side) :deck-id])))))
 
 (defn win-decked
   "Records a win via decking the corp."
