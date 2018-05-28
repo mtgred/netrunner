@@ -3628,7 +3628,7 @@
       (prompt-choice-partial :runner "Pay")
       (is (= 3 (:click (get-runner))) "Runner should have 3 clicks again after trashing Victoria Jenkins")
       (is (= 2 (:agenda-point (get-runner))) "Runner should gain 2 agenda points from trashing Victoria Jenkins")
-      (is (= 1 (get-scored state :runner)) "Runner should have 1 card in score area")
+      (is (= 1 (count (get-scored state :runner))) "Runner should have 1 card in score area")
       (is (zero? (-> (get-corp) :discard count)) "Victoria Jenkins shouldn't go to Archives when trashed"))))
 
 (deftest warden-fatuma
@@ -3707,7 +3707,29 @@
 
 (deftest worlds-plaza
   ;; Worlds Plaza
-  )
+  (do-game
+    (new-game (default-corp ["Worlds Plaza"
+                             "Personalized Portal"
+                             "Dedicated Response Team"
+                             "Honeyfarm"])
+              (default-runner))
+    (core/gain state :corp :credit 10 :click 10)
+    (play-from-hand state :corp "Worlds Plaza" "New remote")
+    (let [plaza (get-content state :remote1 0)]
+      (core/rez state :corp plaza)
+      (card-ability state :corp plaza 0)
+      (let [credits (:credit (get-corp))]
+        (card-ability state :corp plaza 0)
+        (prompt-select :corp (find-card "Personalized Portal" (:hand (get-corp))))
+        (is (= (- credits 1) (:credit (get-corp))) "Corp should only spend 1 credit to rez Personalized Portal"))
+      (let [credits (:credit (get-corp))]
+        (card-ability state :corp plaza 0)
+        (prompt-select :corp (find-card "Dedicated Response Team" (:hand (get-corp))))
+        (is (= credits (:credit (get-corp))) "Corp should spend 0 credit to rez Dedicated Response Team"))
+      (let [credits (:credit (get-corp))]
+        (card-ability state :corp plaza 0)
+        (prompt-select :corp (find-card "Honeyfarm" (:hand (get-corp))))
+        (is (= credits (:credit (get-corp))) "Corp should spend 0 credit to rez Honeyfarm")))))
 
 (deftest zaibatsu-loyalty
   ;; Zaibatsu Loyalty
