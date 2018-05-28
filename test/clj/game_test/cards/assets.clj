@@ -270,29 +270,6 @@
       (is (= 2 (:agenda-point (get-runner))) "Runner has 2 agenda points")
       (is (= 1 (count (:scored (get-runner))))))))
 
-(deftest breached-dome
-  ;; Breached Dome
-  (do-game
-    (new-game (default-corp [(qty "Breached Dome" 10)])
-              (default-runner [(qty "Sure Gamble" 10)]))
-    (trash-from-hand state :corp "Breached Dome")
-    (play-from-hand state :corp "Breached Dome" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state "R&D")
-    (prompt-choice :runner "No action")
-    (is (= 4 (count (:hand (get-runner)))) "Runner took 1 meat damage")
-    (is (= 4 (count (:deck (get-runner)))) "Runner milled 1 card")
-    (is (= 2 (count (:discard (get-runner)))) "Runner's discard grew by 2")
-    (run-empty-server state "Server 1")
-    (prompt-choice :runner "No action")
-    (is (= 3 (count (:hand (get-runner)))) "Runner took 1 meat damage")
-    (is (= 3 (count (:deck (get-runner)))) "Runner milled 1 card")
-    (is (= 4 (count (:discard (get-runner)))) "Runner's discard grew by 2")
-    (run-empty-server state "Archives")
-    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 meat damage")
-    (is (= 2 (count (:deck (get-runner)))) "Runner milled 1 card")
-    (is (= 6 (count (:discard (get-runner)))) "Runner's discard grew by 2")))
-
 (deftest brain-taping-warehouse
   ;; Brain-Taping Warehouse - Lower rez cost of Bioroid ICE by 1 for each unspent Runner click
   (do-game
@@ -315,6 +292,29 @@
       (is (= 2 (:click (get-runner))))
       (core/rez state :corp eli)
       (is (= 1 (:credit (get-corp))) "Paid only 1c to rez Eli; reduction of 2c"))))
+
+(deftest breached-dome
+  ;; Breached Dome
+  (do-game
+    (new-game (default-corp [(qty "Breached Dome" 10)])
+              (default-runner [(qty "Sure Gamble" 10)]))
+    (trash-from-hand state :corp "Breached Dome")
+    (play-from-hand state :corp "Breached Dome" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state "R&D")
+    (prompt-choice :runner "No action")
+    (is (= 4 (count (:hand (get-runner)))) "Runner took 1 meat damage")
+    (is (= 4 (count (:deck (get-runner)))) "Runner milled 1 card")
+    (is (= 2 (count (:discard (get-runner)))) "Runner's discard grew by 2")
+    (run-empty-server state "Server 1")
+    (prompt-choice :runner "No action")
+    (is (= 3 (count (:hand (get-runner)))) "Runner took 1 meat damage")
+    (is (= 3 (count (:deck (get-runner)))) "Runner milled 1 card")
+    (is (= 4 (count (:discard (get-runner)))) "Runner's discard grew by 2")
+    (run-empty-server state "Archives")
+    (is (= 2 (count (:hand (get-runner)))) "Runner took 1 meat damage")
+    (is (= 2 (count (:deck (get-runner)))) "Runner milled 1 card")
+    (is (= 6 (count (:discard (get-runner)))) "Runner's discard grew by 2")))
 
 (deftest broadcast-square
   ;; Broadcast Square - Trace 3: Prevent all bad publicity
@@ -705,6 +705,15 @@
     (let [credits (:credit (get-corp))]
       (core/click-credit state :runner nil)
       (is (zero? (- (:credit (get-corp)) credits)) "Shouldn't gain another credit from CPC Generator"))))
+
+(deftest cybernetics-court
+  ;; Cybernetics Court
+  (do-game
+    (new-game (default-corp ["Cybernetics Court"])
+              (default-runner))
+    (play-from-hand state :corp "Cybernetics Court" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (is (= 9 (get-hand-size :corp)) "Corp should have hand size of 9")))
 
 (deftest daily-business-show
   ;; Daily Business Show
@@ -3757,7 +3766,7 @@
       (card-ability state :runner code 0)
       (prompt-select :runner (refresh iw))
       (is (some? (-> (get-corp) :prompt first)) "Corp should get the option to rez Zaibatsu Loyalty before expose")
-      (card-ability state :runner code 1)
+      (card-ability state :runner zai 1)
       (is (= 1 (-> (get-corp) :discard count)) "Zaibatsu Loyalty should be in discard after using ability"))))
 
 (deftest zealous-judge
