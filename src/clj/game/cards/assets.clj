@@ -1710,7 +1710,7 @@
                                    (rezzed? %))}
               :effect (req (derez state side target)
                            (if (pos? (dec advancements))
-                             (continue-ability state side (derez-card advancements) card nil)
+                             (continue-ability state side (derez-card (dec advancements)) card nil)
                              (effect-completed state side eid)))})]
      {:advanceable :always
       :abilities [{:label "Derez 1 card for each advancement token"

@@ -387,7 +387,7 @@
       (prompt-choice-partial :runner "Pay") ; trash Hiro
       (is (= 2 (:credit (get-runner))) "Runner paid 6 credits to trash")
       (is (= 5 (core/hand-size state :runner)) "Runner max hand size restored to 5")
-      (is (= 1 (count (get-in @state [:runner :scored])))
+      (is (= 1 (count (get-scored state :runner)))
           "Chairman Hiro added to Runner score area")
       (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points"))))
 
@@ -828,8 +828,7 @@
     (prompt-choice-partial :runner "Pay") ; trash Haas
     (take-credits state :runner)
     (is (= 3 (:click (get-corp))) "Corp should be back to 3 clicks")
-    (is (= 1 (count (-> @state :runner :scored)))
-        "Director Haas added to Runner score area")
+    (is (= 1 (count (get-scored state :runner))) "Director Haas added to Runner score area")
     (is (= 2 (:agenda-point (get-runner))) "Runner gained 2 agenda points")))
 
 (deftest docklands-crackdown
@@ -3614,6 +3613,24 @@
       (is (= 1 (count (:discard (get-corp)))) "Urban Renewal got trashed")
       (is (= 4 (count (:discard (get-runner)))) "Urban Renewal did 4 meat damage"))))
 
+(deftest victoria-jenkins
+  ;; Victoria Jenkins
+  (do-game
+    (new-game (default-corp ["Victoria Jenkins"])
+              (default-runner))
+    (play-from-hand state :corp "Victoria Jenkins" "New remote")
+    (take-credits state :corp)
+    (is (= 4 (:click (get-runner))) "Runner should have 4 clicks by default")
+    (let [victoria (get-content state :remote1 0)]
+      (core/rez state :corp victoria)
+      (is (= 3 (:click (get-runner))) "Runner should have 3 clicks when Victoria Jenkins is rezzed")
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay")
+      (is (= 3 (:click (get-runner))) "Runner should have 3 clicks again after trashing Victoria Jenkins")
+      (is (= 2 (:agenda-point (get-runner))) "Runner should gain 2 agenda points from trashing Victoria Jenkins")
+      (is (= 1 (get-scored state :runner)) "Runner should have 1 card in score area")
+      (is (zero? (-> (get-corp) :discard count)) "Victoria Jenkins shouldn't go to Archives when trashed"))))
+
 (deftest warden-fatuma
   ;; Warden Fatuma - rezzed bioroid ice gains an additional sub
   (do-game
@@ -3687,3 +3704,15 @@
         (prompt-select :corp (first (:discard (get-corp)))) ;; into R&D
         (is (zero? (count (:discard (get-corp)))) "Only card in discard placed in bottom of R&D")
         (is (= "Global Food Initiative" (-> (get-corp) :deck last :title)) "GFI last card in deck")))))
+
+(deftest worlds-plaza
+  ;; Worlds Plaza
+  )
+
+(deftest zaibatsu-loyalty
+  ;; Zaibatsu Loyalty
+  )
+
+(deftest zealous-judge
+  ;; Zealous Judge
+  )
