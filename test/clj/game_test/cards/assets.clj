@@ -2536,6 +2536,23 @@
       (core/rez state :corp dish)
       (is (= 3 (get-counters (refresh dish) :rec-counter)) "Should have 3 recurring credits"))))
 
+(deftest private-contracts
+  ;; Private Contracts
+  (do-game
+    (new-game (default-corp ["Private Contracts"])
+              (default-runner))
+    (play-from-hand state :corp "Private Contracts" "New remote")
+    (let [pri (get-content state :remote1 0)]
+      (core/rez state :corp pri)
+      (is (= 14 (get-counters (refresh pri) :credit)) "Should start with 14 credits")
+      (is (zero? (-> (get-corp) :discard count)) "Corp should have 0 cards in Archives")
+      (core/gain state :corp :click 7)
+      (core/lose state :corp :credit 2)
+      (dotimes [_ 7]
+        (card-ability state :corp pri 0))
+      (is (= 1 (-> (get-corp) :discard count)) "Private Contracts should be in discard")
+      (is (= 14 (:credit (get-corp))) "Corp should now have 14 credits"))))
+
 (deftest psychic-field
   (testing "Basic test"
     ;; Psychic Field - Do 1 net damage for every card in Runner's hand when accessed/exposed
