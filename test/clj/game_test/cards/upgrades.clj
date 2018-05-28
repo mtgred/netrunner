@@ -1794,7 +1794,7 @@
               (default-runner ["Corroder" "Dyson Mem Chip"]))
     (play-from-hand state :corp "Warroid Tracker" "New remote")
     (take-credits state :corp)
-    (core/gain state :runner :credit 100)
+    (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Dyson Mem Chip")
     (let [war (get-content state :remote1 0)
