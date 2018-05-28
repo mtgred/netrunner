@@ -2553,6 +2553,20 @@
       (is (= 1 (-> (get-corp) :discard count)) "Private Contracts should be in discard")
       (is (= 14 (:credit (get-corp))) "Corp should now have 14 credits"))))
 
+(deftest project-junebug
+  ;; Project Junebug
+  (do-game
+    (new-game (default-corp ["Project Junebug"])
+              (default-runner [(qty "Sure Gamble" 100)]))
+    (play-from-hand state :corp "Project Junebug" "New remote")
+    (advance state (get-content state :remote1 0) 2)
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (let [credits (:credit (get-corp))]
+      (prompt-choice :corp "Yes")
+      (is (= (- credits 1) (:credit (get-corp))) "Corp should pay 1 for Project Junebug ability")
+      (is (= 4 (-> (get-runner) :discard count)) "Project Junebug should do 4 net damage"))))
+
 (deftest psychic-field
   (testing "Basic test"
     ;; Psychic Field - Do 1 net damage for every card in Runner's hand when accessed/exposed
