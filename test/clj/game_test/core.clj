@@ -43,12 +43,17 @@
         (when (= start-as :runner) (take-credits state :corp)))
       state)))
 
-
 (defn load-all-cards [tests]
   (when (empty? @all-cards)
+    (core/reset-card-defs)
     (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
   (tests))
 (use-fixtures :once load-all-cards)
+
+(defn reset-card-defs [card-type tests]
+  (core/reset-card-defs card-type)
+  (tests))
+
 
 ;;; Card related functions
 (defn find-card
@@ -72,8 +77,9 @@
                                      :subroutine ability :targets targets})))
 
 (defn get-ice
-  "Get installed ice protecting server by position. If no pos, get all ice in the server."
-  ([state server] (get-in @state [:corp :servers server :ices]))
+  "Get installed ice protecting server by position. If no pos, get all ice on the server."
+  ([state server]
+   (get-in @state [:corp :servers server :ices]))
   ([state server pos]
    (get-in @state [:corp :servers server :ices pos])))
 

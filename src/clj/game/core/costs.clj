@@ -107,6 +107,13 @@
                        card nil)
      cost-name)))
 
+(defn pay-damage
+  "Suffer a damage as part of paying for a card or ability"
+  [state side eid type amount]
+  (let [cost-name (cost-names amount type)]
+    (damage state side eid type amount {:unpreventable true})
+    cost-name))
+
 (defn pay-shuffle-installed-to-stack
   "Shuffle installed runner card(s) into the stack as part of paying for a card or ability"
   [state side eid card amount]
@@ -160,7 +167,7 @@
      :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
 
      :tag (complete-with-result state side eid (deduct state :runner cost))
-     :net-damage (damage state side eid :net (second cost) {:unpreventable true})
+     :net-damage (pay-damage state side eid :net (second cost))
      :mill (complete-with-result state side eid (mill state side (second cost)))
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
@@ -210,21 +217,27 @@
       ;; amount is a map, merge-update map
       (map? amount)
       (doseq [[subtype amount] amount]
-        (swap! state update-in [side type subtype] (safe-inc-n amount)))
+        (swap! state update-in [side type subtype] (safe-inc-n amount))
+        (swap! state update-in [:stats side :gain type subtype] (fnil + 0) amount))
+
       ;; Default cases for the types that expect a map
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})
 
       ;; Else assume amount is a number and try to increment type by it.
       :else
-      (swap! state update-in [side type] (safe-inc-n amount)))))
+      (do (swap! state update-in [side type] (safe-inc-n amount))
+          (swap! state update-in [:stats side :gain type] (fnil + 0) amount)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
     (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
     (if (= (last r) :all)
-      (swap! state assoc-in [side (first r)] 0)
-      (deduct state side r))))
+      (do (swap! state assoc-in [side (first r)] 0)
+          (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (get-in @state [side (first r)])))
+      (do (when (number? (second r))
+            (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (second r)))
+          (deduct state side r)))))
 
 (defn play-cost-bonus [state side costs]
   (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))

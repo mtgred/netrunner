@@ -1,6 +1,11 @@
-(in-ns 'game.core)
-
-(declare is-scored?)
+(ns game.cards.agendas
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (defn ice-boost-agenda [subtype]
   (letfn [(count-ice [corp]
@@ -17,7 +22,7 @@
      :events {:pre-ice-strength {:req (req (has-subtype? target subtype))
                                  :effect (effect (ice-strength-bonus 1 target))}}}))
 
-(def cards-agendas
+(def card-definitions
   {"15 Minutes"
    {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
                  :label "Shuffle 15 Minutes into R&D"
@@ -633,7 +638,8 @@
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Labyrinthine Servers"
-   {:prevent {:jack-out [:all]}
+   {:interactions {:prevent [{:type #{:jack-out}
+                              :req (req (-> card :counter :power pos?))}]}
     :silent (req true)
     :effect (effect (add-counter card :power 2))
     :abilities [{:req (req (:run @state))
@@ -739,8 +745,9 @@
                                                   (not (is-type? % "ICE"))
                                                   (= (:side %) "Corp")
                                                   (in-hand? %))}
-                             :msg (msg "install a card from HQ" (when (>= (get-counters (get-card state card) :advancement) 5)
-                                       " and rez it, ignoring all costs"))
+                             :msg (msg "install a card from HQ"
+                                       (when (>= (get-counters (get-card state card) :advancement) 5)
+                                         " and rez it, ignoring all costs"))
                              :effect (req (if (>= (get-counters (get-card state card) :advancement) 5)
                                             (do (corp-install state side target "New remote"
                                                               {:install-state :rezzed-no-cost})
@@ -938,9 +945,10 @@
     :access {:req (req tagged)
              :delayed-completion true
              :effect (req (when-completed (as-agenda state side card 1)
-                                          (continue-ability state :runner {:prompt "Quantum Predictive Model was added to the corp's score area"
-                                                                     :choices ["OK"]}
-                                                            card nil)))
+                                          (continue-ability state :runner
+                                            {:prompt "Quantum Predictive Model was added to the corp's score area"
+                                             :choices ["OK"]}
+                                            card nil)))
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
@@ -1020,14 +1028,13 @@
                              :choices (req (filter ice? (:deck corp)))
                              :effect (req (let [chosen-ice target]
                                             (continue-ability state side
-                                                              {:delayed-completion true
-                                                               :prompt (str "Select a server to install " (:title chosen-ice) " on")
-                                                               :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
-                                                                                (corp-install-list state chosen-ice))
-                                                               :effect (effect
-                                                                        (shuffle! :deck)
-                                                                        (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
-                                                              card nil)))}}}
+                                              {:delayed-completion true
+                                               :prompt (str "Select a server to install " (:title chosen-ice) " on")
+                                               :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
+                                                                (corp-install-list state chosen-ice))
+                                               :effect (effect (shuffle! :deck)
+                                                               (corp-install eid chosen-ice target {:install-state :rezzed-no-rez-cost}))}
+                                              card nil)))}}}
 
    "Research Grant"
    {:interactive (req true)
@@ -1117,11 +1124,12 @@
                                     (do (system-msg state :corp "declines to trash a card from Standoff")
                                         (clear-wait-prompt state :runner)
                                         (effect-completed state :corp eid))))
-              :effect (req (do (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
-                               (clear-wait-prompt state (other-side side))
-                               (trash state side target {:unpreventable true})
-                               (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
-                               (continue-ability state (other-side side) (stand (other-side side)) card nil)))})]
+              :effect (req (when-completed (trash state side target {:unpreventable true})
+                                           (do
+                                             (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
+                                             (clear-wait-prompt state (other-side side))
+                                             (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
+                                             (continue-ability state (other-side side) (stand (other-side side)) card nil))))})]
      {:interactive (req true)
       :delayed-completion true
       :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
@@ -1208,15 +1216,17 @@
     :effect (effect (lose :bad-publicity 2))}
 
    "Viral Weaponization"
-   {:effect (effect (register-events
-                      {:corp-turn-ends
-                       {:msg "do 1 net damage for each card in the grip"
-                        :delayed-completion true
-                        :effect (req (let [cnt (count (:hand runner))]
-                                       (unregister-events state side card)
-                                       (damage state side eid :net cnt {:card card})))}}
-                      card))
-    :events {:corp-turn-ends nil}}
+   (let [dmg {:msg "do 1 net damage for each card in the grip"
+              :delayed-completion true
+              :effect (req (let [cnt (count (:hand runner))]
+                             (unregister-events state side card)
+                             (damage state side eid :net cnt {:card card})))}]
+     {:effect (effect (register-events
+                        {:corp-turn-ends dmg
+                         :runner-turn-ends dmg}
+                        card))
+      :events {:corp-turn-ends nil
+               :runner-turn-ends nil}})
 
    "Voting Machine Initiative"
    {:silent (req true)

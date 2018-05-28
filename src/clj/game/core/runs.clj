@@ -25,6 +25,7 @@
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
+       (swap! state update-in [:stats side :runs :started] (fnil inc 0))
        (trigger-event-sync state :runner (make-eid state) :run s)
        (when (>= n 2) (trigger-event state :runner :run-big s n))))))
 
@@ -60,7 +61,7 @@
          {:first-ability {:effect (req (system-msg state :runner (str "steals " (:title c) " and gains "
                                                                       (quantify points "agenda point")))
                                        (swap! state update-in [:runner :register :stole-agenda]
-                                              #(+ (or % 0) (:agendapoints c)))
+                                              #(+ (or % 0) (:agendapoints c 0)))
                                        (gain-agenda-point state :runner points)
                                        (play-sfx state side "agenda-steal")
                                        (when (:run @state)
@@ -110,10 +111,11 @@
       (concat (get-in @state [:bonus :access-cost]))
       merge-costs flatten vec))
 
-(defn- access-non-agenda
+(defn access-non-agenda
   "Access a non-agenda. Show a prompt to trash for trashable cards."
   [state side eid c]
   (trigger-event state side :pre-trash c)
+  (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (if (not= (:zone c) [:discard]) ; if not accessing in Archives
     ;; The card has a trash cost (Asset, Upgrade)
     (let [card (assoc c :seen true)
@@ -212,6 +214,7 @@
   "Rules interactions for a runner that has accessed an agenda and may be able to steal it."
   [state side eid c]
   (trigger-event state side :pre-steal-cost c)
+  (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [cost (steal-cost state side c)
         card-name (:title c)
         cost-strs (map costs->symbol (partition 2 cost))
@@ -804,8 +807,8 @@
   ([state side eid]
   (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
   (when-completed (trigger-event-sync state side :pre-jack-out)
-                  (let [prevent (get-in @state [:prevent :jack-out])]
-                    (if (pos? (count prevent))
+                  (let [prevent (get-prevent-list state :corp :jack-out)]
+                    (if (cards-can-prevent? state :corp prevent :jack-out)
                       (do (system-msg state :corp "has the option to prevent the Runner from jacking out")
                           (show-wait-prompt state :runner "Corp to prevent the jack out" {:priority 10})
                           (show-prompt state :corp nil

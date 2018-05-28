@@ -1,4 +1,11 @@
-(in-ns 'game.core)
+(ns game.cards.identities
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 ;;; Helper functions for Draft cards
 (def draft-points-target
@@ -26,7 +33,7 @@
     (= fc best-faction)))
 
 ;;; Card definitions
-(def cards-identities
+(def card-definitions
   {
    "419: Amoral Scammer"
    {:events {:corp-install
@@ -171,7 +178,6 @@
                                                "non-agenda"
                                                "piece of ice")
                                              " in HQ to install with Asa Group: Security Through Vigilance (optional)")
-                                :delayed-completion true
                                 :choices {:req #(and (in-hand? %)
                                                      (= (:side %) "Corp")
                                                      (corp-installable-type? %)
@@ -397,7 +403,7 @@
    "GRNDL: Power Unleashed"
    {:events {:pre-start-game {:req (req (= :corp side))
                               :effect (req (gain state :corp :credit 5)
-                                           (when (= 0 (:bad-publicity corp))
+                                           (when (zero? (:bad-publicity corp))
                                              (gain-bad-publicity state :corp 1)))}}}
 
    "Haarpsichord Studios: Entertainment Unleashed"
@@ -636,10 +642,7 @@
 
    "Ken \"Express\" Tenma: Disappeared Clone"
    {:events {:play-event {:req (req (and (has-subtype? target "Run")
-                                         (empty? (filter #(has-subtype? % "Run")
-                                                         ;; have to flatten because each element is a list containing
-                                                         ;; the Event card that was played
-                                                         (flatten (turn-events state :runner :play-event))))))
+                                         (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
                           :msg "gain 1 [Credits]"
                           :effect (effect (gain :credit 1))}}}
 
@@ -664,8 +667,7 @@
      {:delayed-completion true
       :interactive (req true)
       :req (req (and (is-central? (:server run))
-                     (empty? (let [successes (turn-events state side :successful-run)]
-                               (filter #(is-central? %) successes)))))
+                     (first-event? state side :successful-run #(is-central? %))))
       :effect (effect (continue-ability
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
@@ -703,6 +705,27 @@
                                          (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
       :events {:runner-turn-begins ability}
       :abilities [ability]})
+
+   "Mti Mwekundu: Life Improved"
+   {:abilities [{:once :per-turn
+                 :label "Install a piece of ice from HQ at the innermost position"
+                 :req (req (and (:run @state)
+                                (zero? (:position run))
+                                (not (contains? run :corp-phase-43))
+                                (not (contains? run :successful))))
+                 :prompt "Choose ICE to install from HQ"
+                 :msg "install ice at the innermost position of this server. Runner is now approaching that ice"
+                 :choices {:req #(and (ice? %)
+                                      (in-hand? %))}
+                 :effect (req (let [server (first (:server run))
+                                    newice (assoc target :zone [:servers server :ices])
+                                    newices (vec (concat [newice] run-ices))]
+                                (swap! state assoc-in [:corp :servers server :ices] newices)
+                                (swap! state update-in (cons :corp (:zone target))
+                                       (fn [coll] (remove-once #(= (:cid %) (:cid target)) coll)))
+                                (card-init state side newice {:resolve-effect false :init-data true})
+                                (trigger-event state side :corp-install newice)
+                                (swap! state assoc-in [:run :position] 1)))}]}
 
    "Nasir Meidan: Cyber Explorer"
    {:events {:rez {:req (req (and (:run @state)
@@ -755,7 +778,8 @@
    "Near-Earth Hub: Broadcast Center"
    {:events {:server-created {:req (req (first-event? state :corp :server-created))
                               :msg "draw 1 card"
-                              :effect (effect (draw 1))}}}
+                              :delayed-completion true
+                              :effect (effect (draw :corp eid 1 nil))}}}
 
    "Nero Severn: Information Broker"
    {:abilities [{:req (req (has-subtype? current-ice "Sentry"))
@@ -917,8 +941,7 @@
    "Spark Agency: Worldswide Reach"
    {:events
     {:rez {:req (req (and (has-subtype? target "Advertisement")
-                          (empty? (filter #(has-subtype? % "Advertisement")
-                                          (flatten (turn-events state :corp :rez))))))
+                          (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
            :effect (effect (lose :runner :credit 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
 
