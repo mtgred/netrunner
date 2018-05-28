@@ -1,6 +1,6 @@
 (ns game-test.core
   (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by]]
+                                costs->symbol vdissoc distinct-by]]
             [game.macros :refer [effect req msg]]
             [clojure.string :refer [split-lines split join]]
             [game.core :as core]
@@ -49,12 +49,17 @@
         (when (= start-as :runner) (take-credits state :corp)))
       state)))
 
-
 (defn load-all-cards [tests]
   (when (empty? @all-cards)
+    (core/reset-card-defs)
     (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
   (tests))
 (use-fixtures :once load-all-cards)
+
+(defn reset-card-defs [card-type tests]
+  (core/reset-card-defs card-type)
+  (tests))
+
 
 ;;; Card related functions
 (defn find-card
@@ -158,7 +163,7 @@
      (is (get-in @state [:run :run-effect]) "There is a run-effect")
      (core/no-action state :corp nil)
      (core/successful-run state :runner nil)
-     (if show-prompt 
+     (if show-prompt
        (is (get-in @state [:runner :prompt]) "A prompt is shown")
        (is (not (get-in @state [:runner :prompt])) "A prompt is not shown"))
      (is (get-in @state [:run :successful]) "Run is marked successful"))))

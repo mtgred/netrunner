@@ -1,6 +1,11 @@
-(in-ns 'game.core)
-
-(declare expose-prevent runner-loses-click)
+(ns game.cards.assets
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 ;;; Asset-specific helpers
 (defn installed-access-trigger
@@ -57,9 +62,7 @@
                        (effect-completed state side eid)))))
 
 ;;; Card definitions
-(declare in-server?)
-
-(def cards-assets
+(def card-definitions
   {"Adonis Campaign"
    (campaign 12 3)
 
@@ -233,8 +236,8 @@
                       :effect (effect (damage eid :brain (:advance-counter (get-card state card) 0) {:card card}))})
 
    "Chairman Hiro"
-   {:effect (effect (lose :runner :hand-size {:mod 2}))
-    :leave-play (effect (gain :runner :hand-size {:mod 2}))
+   {:effect (effect (lose :runner :hand-size 2))
+    :leave-play (effect (gain :runner :hand-size 2))
     :trash-effect {:when-inactive true
                    :req (req (:access @state))
                    :msg "add it to the Runner's score area as an agenda worth 2 agenda points"
@@ -387,7 +390,7 @@
                                    :effect (effect (gain :corp :credit 1))}}}
 
    "Cybernetics Court"
-   {:in-play [:hand-size {:mod 4}]}
+   {:in-play [:hand-size 4]}
 
    "Daily Business Show"
    {:events {:pre-corp-draw
@@ -463,7 +466,7 @@
                  :cost [:click 3]
                  :msg "add it to their score area as an agenda worth 1 agenda point"
                  :delayed-completion true
-                 :effect (req (as-agenda state :corp eid card 1)) }]}
+                 :effect (req (as-agenda state :corp eid card 1))}]}
 
    "Edge of World"
    (letfn [(ice-count [state]
@@ -873,9 +876,11 @@
                   :once :per-turn
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
+                  :delayed-completion true
                   :effect (req (gain state :corp :credit 2)
-                               (when (zero? (get-in card [:counter :credit]))
-                                 (trash state :corp card)))}]
+                               (if (zero? (get-in card [:counter :credit]))
+                                 (trash state :corp eid card)
+                                 (effect-completed state :corp eid)))}]
      {:effect (effect (add-counter card :credit 8))
       :flags {:corp-phase-12 (req (= 2 (get-in card [:counter :credit])))}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -887,6 +892,7 @@
                                      (continue-ability :corp
                                        {:optional
                                         {:prompt "Shuffle Marilyn Campaign into R&D?"
+                                         :priority 1
                                          :player :corp
                                          :yes-ability {:msg "shuffle it back into R&D"
                                                        :effect (req (move state :corp card :deck)
@@ -947,8 +953,8 @@
                   :label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
                   :effect (effect (gain :credit 1))}]
-     {:effect (effect (gain :runner :hand-size {:mod 1}))
-      :leave-play (effect (lose :runner :hand-size {:mod 1}))
+     {:effect (effect (gain :runner :hand-size 1))
+      :leave-play (effect (lose :runner :hand-size 1))
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :abilities [ability]})
@@ -1222,7 +1228,7 @@
                            (if (<= (get-in card [:counter :power]) 1)
                              (do (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
                                  (as-agenda state :corp eid (dissoc card :counter) 1))
-                             (effect-completed state side eid)))} }}
+                             (effect-completed state side eid)))}}}
 
    "Quarantine System"
    (letfn [(rez-ice [cnt] {:prompt "Select an ICE to rez"
@@ -1354,7 +1360,7 @@
 
    "Ronin"
    {:advanceable :always
-    :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card) 4))
+    :abilities [{:cost [:click 1] :req (req (>= (:advance-counter card 0) 4))
                  :msg "do 3 net damage"
                  :delayed-completion true
                  :effect (effect (trash card) (damage eid :net 3 {:card card}))}]}
@@ -1422,8 +1428,10 @@
     :abilities [ability]
     :events {:corp-turn-begins ability
              :corp-install {:req (req (ice? target))
-                            :effect (effect (trash card)
-                                            (system-msg "trashes Server Diagnostics"))}}})
+                            :delayed-completion true
+                            :effect (req (when-completed (trash state side card nil)
+                                                         (do (system-msg state :runner "trashes Server Diagnostics")
+                                                             (effect-completed state side eid card))))}}})
 
    "Shannon Claire"
    {:abilities [{:cost [:click 1]
@@ -1687,21 +1695,18 @@
 
    "Warden Fatuma"
    (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose 1 [Click], if able"}]
-
      (letfn [(all-rezzed-bios [state]
                (filter #(and (ice? %)
                              (has-subtype? % "Bioroid")
                              (rezzed? %))
                        (all-installed state :corp)))
-
              (remove-one [cid state ice]
                (remove-extra-subs state :corp cid ice))
-
              (add-one [cid state ice]
                (add-extra-sub state :corp cid ice 0 new-sub))
-
-             (update-all [state func] (doseq [i (all-rezzed-bios state)] (func state i)))
-             ]
+             (update-all [state func]
+               (doseq [i (all-rezzed-bios state)]
+                 (func state i)))]
        {:effect (req (system-msg
                        state :corp
                        "uses Warden Fatuma to add \"[Subroutine] The Runner loses [Click], if able\" before all other subroutines")
@@ -1710,7 +1715,8 @@
                       (update-all state (partial remove-one (:cid card))))
         :sub-effect {:msg "force the Runner to lose 1 [Click], if able"
                      :effect (req (lose state :runner :click 1))}
-        :events {:rez {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
+        :events {:rez {:req (req (and (ice? target)
+                                      (has-subtype? target "Bioroid")))
                        :effect (req (add-one (:cid card) state (get-card state target)))}}}))
 
    "Watchdog"
@@ -1754,7 +1760,8 @@
                               (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card)))))}]}
 
    "Zaibatsu Loyalty"
-   {:prevent {:expose [:all]}
+   {:interactions {:prevent [{:type #{:expose}
+                              :req (req true)}]}
     :derezzed-events
     {:pre-expose
      {:delayed-completion true

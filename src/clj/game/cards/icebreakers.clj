@@ -1,6 +1,11 @@
-(in-ns 'game.core)
-
-(declare add-icon remove-icon can-host?)
+(ns game.cards.icebreakers
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
@@ -13,11 +18,17 @@
                                                               (not= % "credit"))
                                                         (:cost pumpabi))))
               current-ice (when-not (get-in @state [:run :ending]) (get-card state current-ice))
-              strdif (when current-ice (max 0 (- (or (:current-strength current-ice)
-                                                     (:strength current-ice))
-                                                 (or (:current-strength card)
-                                                     (:strength card)))))
-              pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+              strdif (when (and (or (:current-strength current-ice)
+                                    (:strength current-ice))
+                                (or (:current-strength card)
+                                    (:strength card)))
+                       (max 0 (- (or (:current-strength current-ice)
+                                     (:strength current-ice))
+                                 (or (:current-strength card)
+                                     (:strength card)))))
+              pumpnum (when (and strdif
+                                 (:pump pumpabi))
+                        (int (Math/ceil (/ strdif (:pump pumpabi)))))]
           (update! state side
                    (assoc card :abilities
                           (if (and pumpcst
@@ -25,7 +36,7 @@
                                    (rezzed? current-ice)
                                    (or (some #(has-subtype? current-ice %) (:breaks card))
                                        (= (first (:breaks card)) "All"))
-                                   (pos? strdif))
+                                   (pos? pumpnum))
                             (vec (cons {:dynamic :auto-pump
                                         :cost [:credit (* pumpcst pumpnum)]
                                         :label (str "Match strength of " (:title current-ice))}
@@ -49,19 +60,28 @@
                              (:events cdef))))
 
 (defn cloud-icebreaker [cdef]
-  (assoc cdef :effect (req (add-watch state (keyword (str "cloud" (:cid card)))
-                        (fn [k ref old new]
-                          (when (and (< (get-in old [:runner :link]) 2)
-                                     (> (get-in new [:runner :link]) 1))
-                            (gain state :runner :memory (:memoryunits card)))
-                          (when (and (> (get-in old [:runner :link]) 1)
-                                     (< (get-in new [:runner :link]) 2))
-                            (lose state :runner :memory (:memoryunits card))))))
+  (assoc cdef :effect (req (let [link (get-in @state [:runner :link] 0)]
+                             (when (>= link 2)
+                               (free-mu state (:memoryunits card))))
+                           (add-watch state (keyword (str "cloud" (:cid card)))
+                                      (fn [k ref old new]
+                                        (let [old-link (get-in old [:runner :link] 0)
+                                              new-link (get-in new [:runner :link] 0)
+                                              cloud-turned-on (and (< old-link 2)
+                                                                   (>= new-link 2))
+                                              cloud-turned-off (and (>= old-link 2)
+                                                                    (< new-link 2))]
+                                          (cond
+                                            cloud-turned-on
+                                            (free-mu state (:memoryunits card))
+
+                                            cloud-turned-off
+                                            (use-mu state (:memoryunits card)))))))
               :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
-                               (when (> (get-in @state [:runner :link]) 1)
-                                 (lose state :runner :memory (:memoryunits card))))
-              :install-cost-bonus (req (when (> (get-in @state [:runner :link]) 1)
-                                         [:memory (* -1 (:memoryunits card))]))))
+                               (let [link (get-in @state [:runner :link] 0)]
+                                 (when (>= link 2)
+                                   ;; To counteract the normal freeing of MU on program `:leave-play`
+                                   (use-mu state (:memoryunits card)))))))
 
 (defn- strength-pump
   "Creates a strength pump ability.
@@ -152,16 +172,19 @@
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice type)
-                                       (not (install-locked? state side))
-                                       (not (some #(= title (:title %)) (all-active-installed state :runner)))
-                                       (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
-                        :optional {:player :runner
-                                   :prompt (str "Install " title "?")
-                                   :yes-ability {:effect (effect (unregister-events card)
-                                                                 (runner-install :runner card))}
-                                   :no-ability {:effect (req  ;; Add a register to note that the player was already asked about installing,
-                                                              ;; to prevent multiple copies from prompting multiple times.
-                                                              (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                                       (not (install-locked? state side))))
+                        :delayed-completion true
+                        :effect (effect (continue-ability
+                                          {:optional {:req (req (and (not-any? #(= title (:title %)) (all-active-installed state :runner))
+                                                                     (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
+                                                      :player :runner
+                                                      :prompt (str "Install " title "?")
+                                                      :yes-ability {:effect (effect (unregister-events card)
+                                                                                    (runner-install :runner card))}
+                                                      :no-ability {:effect (req  ;; Add a register to note that the player was already asked about installing,
+                                                                                ;; to prevent multiple copies from prompting multiple times.
+                                                                                (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                                          card targets))}
         heap-event (req (when (= (:zone card) [:discard])
                           (unregister-events state side card)
                           (register-events state side
@@ -184,8 +207,21 @@
                                   (assoc pump :req central-req)]
                       :effect (effect (update! (assoc card :central-breaker true)))})))
 
+(defn- ancient-greek-breaker
+  "Adept, Sage and Savant. Strength depends on available memory units."
+  [name abilities]
+  {:abilities abilities
+   :effect (req (add-watch state (keyword (str name (:cid card)))
+                           (fn [k ref old new]
+                             (when (not= (available-mu (atom old))
+                                         (available-mu (atom new)))
+                               (update-breaker-strength ref side card))))
+                (update-breaker-strength state side card))
+   :leave-play (req (remove-watch state (keyword (str name (:cid card)))))
+   :strength-bonus (req (available-mu state))})
+
 ;;; Icebreaker definitions
-(def cards-icebreakers
+(def card-definitions
   {"Abagnale"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "Code Gate")
@@ -196,16 +232,10 @@
                                   :effect (effect (trash card {:cause :ability-cost}))}]})
 
    "Adept"
-   {:abilities [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
-                                                 (has-subtype? current-ice "Sentry")))
-                 :msg "break 1 Sentry or Barrier subroutine"}]
-    :effect (req (add-watch state (keyword (str "adept" (:cid card)))
-                            (fn [k ref old new]
-                              (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
-                                (update-breaker-strength ref side card))))
-                 (update-breaker-strength state side card))
-    :leave-play (req (remove-watch state (keyword (str "adept" (:cid card)))))
-    :strength-bonus (req (:memory runner))}
+   (ancient-greek-breaker "adept" [{:cost [:credit 2]
+                                    :req (req (or (has-subtype? current-ice "Barrier")
+                                                  (has-subtype? current-ice "Sentry")))
+                                    :msg "break 1 Sentry or Barrier subroutine"}])
 
    "Aghora"
    (deva "Aghora")
@@ -221,6 +251,16 @@
    (central-breaker "Sentry"
                     (break-sub 1 1 "Sentry")
                     (strength-pump 2 3))
+
+   "Amina"
+   (auto-icebreaker ["Code Gate"]
+                    {:abilities [(break-sub 2 3 "Code Gate")
+                                 (strength-pump 2 3)
+                                 {:label "Corp loses 1 [Credits]"
+                                  :req (req (and (has-subtype? current-ice "Code Gate")
+                                                 (rezzed? current-ice)))
+                                  :msg (msg "make the Corp lose 1 [Credits]")
+                                  :effect (effect (lose :corp :credit 1))}]})
 
    "Ankusa"
    (auto-icebreaker ["Barrier"]
@@ -437,7 +477,8 @@
                                   :effect (effect (trash card {:cause :ability-cost}))}]})
 
    "Deus X"
-   {:prevent {:damage [:net]}
+   {:interactions {:prevent [{:type #{:net}
+                              :req (req true)}]}
     :abilities [{:msg "break any number of AP subroutines"
                  :effect (effect (trash card {:cause :ability-cost}))}
                 {:msg "prevent any amount of net damage"
@@ -745,7 +786,7 @@
 
    "Overmind"
    (auto-icebreaker ["All"]
-                    {:effect (effect (add-counter card :power (:memory runner)))
+                    {:effect (effect (add-counter card :power (available-mu state)))
                      :abilities [{:counter-cost [:power 1]
                                   :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
@@ -753,7 +794,7 @@
    (conspiracy "Paperclip" "Barrier"
                [{:label (str "X [Credits]: +X strength, break X subroutines")
                  :choices {:number (req (:credit runner))
-                           :default (req (if current-ice
+                           :default (req (if (:current-strength current-ice)
                                            (max (- (:current-strength current-ice)
                                                    (:current-strength card))
                                                 1)
@@ -830,16 +871,9 @@
    (deva "Sadyojata")
 
    "Sage"
-   {:abilities [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
-                                                 (has-subtype? current-ice "Code Gate")))
-                 :msg "break 1 Code Gate or Barrier subroutine"}]
-    :effect (req (add-watch state (keyword (str "sage" (:cid card)))
-                            (fn [k ref old new]
-                              (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
-                                (update-breaker-strength ref side card))))
-                 (update-breaker-strength state side card))
-    :leave-play (req (remove-watch state (keyword (str "sage" (:cid card)))))
-    :strength-bonus (req (:memory runner))}
+   (ancient-greek-breaker "sage" [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
+                                                                   (has-subtype? current-ice "Code Gate")))
+                                   :msg "break 1 Code Gate or Barrier subroutine"}])
 
    "Saker"
    (auto-icebreaker ["Barrier"]
@@ -853,17 +887,10 @@
                                                   (move card :hand))}]})
 
    "Savant"
-   {:abilities [{:cost [:credit 2] :req (req (has-subtype? current-ice "Sentry"))
-                 :msg "break 1 Sentry subroutine"}
-                {:cost [:credit 2] :req (req (has-subtype? current-ice "Code Gate"))
-                              :msg "break 2 Code Gate subroutines"}]
-    :effect (req (add-watch state (keyword (str "savant" (:cid card)))
-                            (fn [k ref old new]
-                              (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
-                                (update-breaker-strength ref side card))))
-                 (update-breaker-strength state side card))
-    :leave-play (req (remove-watch state (keyword (str "savant" (:cid card)))))
-    :strength-bonus (req (:memory runner))}
+   (ancient-greek-breaker "savant" [{:cost [:credit 2] :req (req (has-subtype? current-ice "Sentry"))
+                                     :msg "break 1 Sentry subroutine"}
+                                    {:cost [:credit 2] :req (req (has-subtype? current-ice "Code Gate"))
+                                     :msg "break 2 Code Gate subroutines"}])
 
    "Snowball"
    (auto-icebreaker ["Barrier"]

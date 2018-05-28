@@ -5,16 +5,23 @@
             [cljs.core.async :refer [chan put! <!] :as async]
             [taoensso.sente  :as sente]
             [clojure.string :refer [join]]
+            [jinteki.utils :refer [str->int]]
             [netrunner.ajax :refer [GET]]
             [netrunner.ws :as ws]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [authenticated avatar] :as auth]
-            [netrunner.gameboard :refer [init-game game-state toast launch-game parse-state]]
+            [netrunner.gameboard :refer [game-state toast launch-game parse-state]]
             [netrunner.cardbrowser :refer [image-url non-game-toast] :as cb]
             [netrunner.stats :refer [notnum->zero]]
             [netrunner.deckbuilder :refer [format-deck-status-span deck-status-span process-decks load-decks num->percent]]))
 
 (def socket-channel (chan))
+
+(defn- play-sound
+  [element-id]
+  (when (get-in @app-state [:options :sounds])
+    (when-let [element (.getElementById js/document element-id)]
+      (.play element))))
 
 (defn resume-sound
   "Chrome doesn't allow audio until audio context is resumed (or created) after a user interaction."
@@ -46,7 +53,7 @@
                    delete (apply dissoc update (keys (:delete diff)))]
                (sort-games-list (vals delete)))))
     (when (and notification (not (:gameid @app-state)))
-      (.play (.getElementById js/document notification)))))
+      (play-sound notification))))
 
 (ws/register-ws-handler!
   :lobby/select
@@ -55,10 +62,10 @@
 
 (ws/register-ws-handler!
   :lobby/message
-  (fn [{:keys [user text notification] :as msg}]
+  (fn [{:keys [text notification] :as msg}]
     (swap! app-state update-in [:messages] #(conj % msg))
     (when notification
-      (.play (.getElementById js/document notification)))))
+      (play-sound notification))))
 
 (ws/register-ws-handler!
   :lobby/timeout
@@ -84,13 +91,13 @@
                         (swap! app-state assoc :games (sort-games-list (vals (:games msg)))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
-                          (.play (.getElementById js/document sound)))))
+                          (play-sound sound))))
           "say" (do (swap! app-state update-in [:messages]
                            #(conj % {:user (:user msg) :text (:text msg)}))
                     (when-let [sound (:notification msg)]
-                      (.play (.getElementById js/document sound ))))
-          "start" (launch-game (:state msg))
+                      (play-sound sound)))
           "Invalid password" (js/console.log "pwd" (:gameid msg))
+          "start" (launch-game (:state msg))
           "lobby-notification" (toast (:text msg) (:severity msg) nil)
           nil))))
 
@@ -159,16 +166,13 @@
   (swap! app-state dissoc :password-gameid))
 
 (defn leave-game []
-  (ws/ws-send! [:netrunner/leave])
+  (ws/ws-send! [:netrunner/leave {:gameid-str (:gameid @game-state)}])
   (reset! game-state nil)
   (swap! app-state dissoc :gameid :side :password-gameid :win-shown)
   (.removeItem js/localStorage "gameid")
   (set! (.-onbeforeunload js/window) nil)
   (-> "#gameboard" js/$ .fadeOut)
   (-> "#gamelobby" js/$ .fadeIn))
-
-(defn concede []
-  (ws/ws-send! [:netrunner/concede]))
 
 (defn send-msg [event owner]
   (.preventDefault event)
@@ -189,7 +193,7 @@
       [:h3 "Select your deck"]
       [:div.deck-collection
        (let [players (:players (some #(when (= (:gameid %) gameid) %) games))
-             side (:side (some #(when (= (:user %) user) %) players))]
+             side (:side (some #(when (= (-> % :user :_id) (:_id user)) %) players))]
          [:div {:data-dismiss "modal"}
           (for [deck (sort-by :date > (filter #(= (get-in % [:identity :side]) side) decks))]
             [:div.deckline {:on-click #(ws/ws-send! [:lobby/deck (:_id deck)])}
@@ -364,6 +368,11 @@
      room-name " (" open-games open-games-symbol " "
      closed-games closed-games-symbol ")"]))
 
+(defn- first-user?
+  "Is this user the first user in the game?"
+  [players user]
+  (= (-> players first :user :_id) (:_id user)))
+
 (defn game-lobby [{:keys [games gameid messages sets user password-gameid] :as cursor} owner]
   (reify
     om/IInitState
@@ -447,12 +456,12 @@
                (let [players (:players game)]
                  [:div
                   [:div.button-bar
-                   (when (= (-> players first :user) user)
+                   (when (first-user? players user)
                      (if (every? :deck players)
                        [:button {:on-click #(ws/ws-send! [:netrunner/start gameid])} "Start"]
                        [:button {:class "disabled"} "Start"]))
                    [:button {:on-click #(leave-lobby cursor owner)} "Leave"]
-                   (when (= (-> players first :user) user)
+                   (when (first-user? players user)
                      [:button {:on-click #(ws/ws-send! [:lobby/swap gameid])} "Swap sides"])]
                   [:div.content
                    [:h2 (:title game)]
@@ -466,12 +475,12 @@
                        (when-let [{:keys [_id name status] :as deck} (:deck player)]
                          [:span {:class (:status status)}
                           [:span.label
-                           (if (= (:user player) user)
+                           (if (= (-> player :user :_id) (:_id user))
                              name
                              "Deck selected")]])
                        (when-let [deck (:deck player)]
                          [:div.float-right (format-deck-status-span (:status deck) true false)])
-                       (when (= (:user player) user)
+                       (when (= (-> player :user :_id) (:_id user))
                          [:span.fake-link.deck-load
                           {:data-target "#deck-select" :data-toggle "modal"
                            :on-click (fn [] (send {:action "deck" :gameid (:gameid @app-state) :deck nil}))

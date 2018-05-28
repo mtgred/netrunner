@@ -1,8 +1,9 @@
 (in-ns 'game.core)
 
-(declare active? all-installed all-active-installed cards card-init deactivate card-flag? gain get-card-hosted handle-end-run 
-         hardware? has-subtype? ice? is-type? make-eid program? register-events remove-from-host remove-icon reset-card 
-         resource? rezzed? toast trash trigger-event update-breaker-strength update-hosted! update-ice-strength unregister-events)
+(declare active? all-installed all-active-installed cards card-init deactivate card-flag? free-mu gain lose get-card-hosted
+         handle-end-run hardware? has-subtype? ice? is-type? make-eid program? register-events remove-from-host
+         remove-icon reset-card resource? rezzed? toast toast-check-mu trash trigger-event update-breaker-strength
+         update-hosted! update-ice-strength unregister-events use-mu)
 
 ;;; Functions for loading card information.
 (defn card-def
@@ -132,11 +133,11 @@
          (when-let [card-moved (:move-zone (card-def c))]
            (card-moved state side (make-eid state) moved-card card))
          (trigger-event state side :card-moved card (assoc moved-card :move-to-side side))
-         ; Default a card when moved to inactive zones (except :persistent key)
+         ;; Default a card when moved to inactive zones (except :persistent key)
          (when (#{:discard :hand :deck :rfg} to)
            (reset-card state side moved-card)
            (when-let [icon-card (get-in moved-card [:icon :card])]
-             ; Remove icon and icon-card keys
+             ;; Remove icon and icon-card keys
              (remove-icon state side icon-card moved-card)))
          moved-card)))))
 
@@ -275,13 +276,12 @@
   "Flips a runner card facedown, either manually (if it's hosted) or by calling move to correct area.
   Wires events without calling effect/init-data"
   [state side {:keys [host] :as card}]
-  (let [card (if host 
-               (dissoc card :facedown) 
+  (let [card (if host
+               (dissoc card :facedown)
                (move state side card (type->rig-zone (:type card))))]
-   (card-init state side card {:resolve-effect false :init-data false})  
-   (when (:memoryunits card)
-     (gain state :runner :memory (- (:memoryunits card)))
-     (when (neg? (get-in @state [:runner :memory]))
-       (toast state :runner "You have run out of memory units!")))
+   (card-init state side card {:resolve-effect false :init-data false})
+   (when-let [mu (:memoryunits card)]
+     (use-mu state mu)
+     (toast-check-mu state))
    (when (has-subtype? card "Icebreaker")
      (update-breaker-strength state side card))))
