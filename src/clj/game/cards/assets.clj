@@ -1703,11 +1703,25 @@
                            (card-str state (second targets)))}]}
 
    "Test Ground"
-   {:implementation "Derez is manual"
-    :advanceable :always
-    :abilities [{:label "Derez 1 card for each advancement token"
-                 :msg (msg "derez " (get-counters card :advancement))
-                 :effect (effect (trash card {:cause :ability-cost}))}]}
+   (letfn [(derez-card [advancements]
+             {:delayed-completion true
+              :prompt "Derez a card"
+              :choices {:req #(and (installed? %)
+                                   (rezzed? %))}
+              :effect (req (derez state side target)
+                           (if (pos? (dec advancements))
+                             (continue-ability state side (derez-card advancements) card nil)
+                             (effect-completed state side eid)))})]
+     {:advanceable :always
+      :abilities [{:label "Derez 1 card for each advancement token"
+                   :req (req (pos? (get-counters card :advancement)))
+                   :msg (msg "derez " (quantify (get-counters card :advancement) "card"))
+                   :effect (req (let [advancements (get-counters card :advancement)]
+                                  (trash state side card {:cause :ability-cost})
+                                  (show-wait-prompt state :runner (str "Corp to derez "
+                                                                       (quantify advancements "card")))
+                                  (when-completed (resolve-ability state side (derez-card advancements) card nil)
+                                                  (clear-wait-prompt state :runner))))}]})
 
    "The Board"
    (let [the-board {:req (req (and (= :runner (:as-agenda-side target))
@@ -1866,7 +1880,8 @@
                                       (= (:side %) "Corp"))}
                  :msg (msg "host " (:title target))
                  :effect (req (corp-install state side target card) ;; install target onto card
-                              (rez-cost-bonus state side -2) (rez state side (last (:hosted (get-card state card)))))}]}
+                              (rez-cost-bonus state side -2)
+                              (rez state side (last (:hosted (get-card state card)))))}]}
 
    "Zaibatsu Loyalty"
    {:interactions {:prevent [{:type #{:expose}

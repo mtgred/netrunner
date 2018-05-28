@@ -2004,7 +2004,6 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-      (prn (-> (get-corp) :prompt first))
       (core/end-phase-12 state :corp nil)
       (is (zero? (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should lose 2 credits start of turn")
       (prompt-choice :corp "Yes")
@@ -3203,13 +3202,6 @@
   ;       (play-from-hand state :runner "Dirty Laundry")
   ;       (prompt-choice :runner "Server 1")
   ;       ;; spend a click on a run through a card, not through click-run
-  ;       ; (prn (-> (refresh sund) :zone rest butlast first))
-  ;       ; (prn (-> @state :run :server first))
-  ;       (prn "let")
-  ;       (let [s (-> (refresh sund) :zone rest butlast)
-  ;             r (-> @state :run :server)]
-  ;         (prn (and (= (first r) (first s))
-  ;                   (= (last r) (last s)))))
   ;       (is (= 5 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew"))))
   )
 
@@ -3375,6 +3367,32 @@
     (is (zero? (:click (get-corp))) "Spent 1 click")
     (is (= "Aimor" (:title (get-ice state :rd 0))) "Aimor swapped to R&D")
     (is (= "Lockdown" (:title (get-ice state :hq 1))) "Lockdown swapped to HQ outer position")))
+
+(deftest test-ground
+  ;; Test Ground
+  (do-game
+    (new-game (default-corp ["Test Ground" "Ice Wall" "News Team"])
+              (default-runner))
+    (core/gain state :corp :credit 100 :click 100)
+    (play-from-hand state :corp "Test Ground" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "News Team" "New remote")
+    (let [ground (get-content state :remote1 0)
+          iw (get-ice state :remote2 0)
+          news (get-content state :remote3 0)]
+      (core/rez state :corp ground)
+      (core/rez state :corp iw)
+      (core/rez state :corp news)
+      (advance state ground 2)
+      (is (:rezzed (refresh iw)) "Ice Wall should be rezzed")
+      (is (:rezzed (refresh news)) "News Team should be rezzed")
+      (is (zero? (-> (get-corp) :discard count)) "Corp should start with 0 cards in Archives")
+      (card-ability state :corp ground 0)
+      (prompt-select :corp iw)
+      (prompt-select :corp news)
+      (is (not (:rezzed (refresh iw))) "Ice Wall should be rezzed")
+      (is (not (:rezzed (refresh news))) "News Team should be rezzed")
+      (is (= 1 (-> (get-corp) :discard count)) "Corp should now have 1 card in discard"))))
 
 (deftest the-board
   ;; The Board
