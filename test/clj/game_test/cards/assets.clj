@@ -815,6 +815,16 @@
       (run-empty-server state :rd)
       (is (= 2 (count (:discard (get-runner)))) "Suffered 2 damage for successful run w/ tag"))))
 
+(deftest dedicated-server
+  ;; Dedicated Servers
+  (do-game
+    (new-game (default-corp ["Dedicated Server"])
+              (default-runner))
+    (play-from-hand state :corp "Dedicated Server" "New remote")
+    (let [servers (get-content state :remote1 0)]
+      (core/rez state :corp servers)
+      (is (= 2 (get-counters (refresh servers) :rec-counter)) "Should have 2 recurring credits"))))
+
 (deftest director-haas
   ;; Director Haas
   (do-game
