@@ -3492,6 +3492,17 @@
       (is (= 4 (:agenda-point (get-runner))) "Runner has 4 agenda points")
       (is (= 2 (count (:scored (get-runner)))) "Runner has 2 agendas in scored area"))))
 
+(deftest the-news-now-hour
+  ;; The News Now Hour
+  (do-game
+    (new-game (default-corp ["The News Now Hour"])
+              (default-runner ["Rumor Mill"]))
+    (play-from-hand state :corp "The News Now Hour" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rumor Mill")
+    (is (= 1 (-> (get-runner) :hand count)) "Rumor Mill should still be in hand after trying to play it")))
+
 (deftest the-root
   ;; The Root - recurring credits refill at Step 1.2
   (do-game
