@@ -3521,6 +3521,28 @@
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
       (is (= 3 (get-counters (refresh root) :rec-counter)) "Recurring credits were refilled before Step 1.2 window"))))
 
+(deftest thomas-haas
+  ;; Thomas Haas
+  (letfn [(haas-test [number]
+            (do-game
+              (new-game (default-corp ["Thomas Haas"])
+                        (default-runner))
+              (core/gain state :corp :credit 10 :click 10)
+              (play-from-hand state :corp "Thomas Haas" "New remote")
+              (let [haas (get-content state :remote1 0)]
+                (core/rez state :corp haas)
+                (advance state (refresh haas) number)
+                (core/lose state :corp :credit (:credit (get-corp)))
+                (is (zero? (-> (get-corp) :discard count)) "Corp should start with 0 cards in Archives")
+                (is (zero? (:credit (get-corp))) "Corp should fire ability with 0 credits")
+                (is (= number (get-counters (refresh haas) :advancement))
+                    (str "Thomas Haas should have " number " advancement tokens"))
+                (card-ability state :corp (refresh haas) 0)
+                (is (= (* 2 number) (:credit (get-corp)))
+                    (str "Corp should gain " (* 2 number) " credits from Thomas Haas' ability"))
+                (is (= 1 (-> (get-corp) :discard count)) "Thomas Haas should be in Archives after ability"))))]
+    (doall (map haas-test [1 2 3 4 5]))))
+
 (deftest toshiyuki-sakai
   ;; Toshiyuki Sakai - Swap with an asset/agenda from HQ; Runner can choose to access new card or not
   (do-game
