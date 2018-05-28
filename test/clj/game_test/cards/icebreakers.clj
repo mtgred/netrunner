@@ -106,7 +106,6 @@
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state :archives)
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from accessing empty Archives")))
-
   (testing "Neutralize All Threats interaction"
     (do-game
       (new-game (default-corp [(qty "PAD Campaign" 3)])

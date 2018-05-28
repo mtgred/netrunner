@@ -1370,28 +1370,27 @@
           "Tithonium hosting OAI as a condition"))))
 
 (deftest tmi
-  ;; TMI ICE test
-  (do-game
-    (new-game (default-corp [(qty "TMI" 3)])
-              (default-runner))
-    (play-from-hand state :corp "TMI" "HQ")
-    (let [tmi (get-ice state :hq 0)]
-      (core/rez state :corp tmi)
-      (prompt-choice :corp 0)
-      (prompt-choice :runner 0)
-      (is (get-in (refresh tmi) [:rezzed])))))
-
-(deftest tmi-derez
-  ;; TMI ICE trace derez
-  (do-game
-    (new-game (default-corp [(qty "TMI" 3)])
-              (make-deck "Sunny Lebeau: Security Specialist" [(qty "Blackmail" 3)]))
-    (play-from-hand state :corp "TMI" "HQ")
-    (let [tmi (get-ice state :hq 0)]
-      (core/rez state :corp tmi)
-      (prompt-choice :corp 0)
-      (prompt-choice :runner 0)
-      (is (not (get-in (refresh tmi) [:rezzed]))))))
+  ;; TMI
+  (testing "basic test"
+    (do-game
+      (new-game (default-corp ["TMI"])
+                (default-runner))
+      (play-from-hand state :corp "TMI" "HQ")
+      (let [tmi (get-ice state :hq 0)]
+        (core/rez state :corp tmi)
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (:rezzed (refresh tmi))))))
+  (testing "trace derez"
+    (do-game
+      (new-game (default-corp ["TMI"])
+                (make-deck "Sunny Lebeau: Security Specialist" [(qty "Blackmail" 3)]))
+      (play-from-hand state :corp "TMI" "HQ")
+      (let [tmi (get-ice state :hq 0)]
+        (core/rez state :corp tmi)
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (is (not (:rezzed (refresh tmi))))))))
 
 (deftest troll
   ;; Troll
@@ -1411,7 +1410,7 @@
         (prompt-choice :runner "End the run")
         (is (not (:run @state)) "Run is ended")))))
 
-(deftest turing-positional-strength
+(deftest turing
   ;; Turing - Strength boosted when protecting a remote server
   (do-game
     (new-game (default-corp [(qty "Turing" 2) "Hedge Fund"])

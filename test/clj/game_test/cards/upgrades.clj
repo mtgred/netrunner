@@ -23,6 +23,23 @@
         (is (get-in (refresh spid) [:rezzed]) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest ash-2x3zb9cy
+  ;; Ash 2X3ZB9CY
+  (do-game
+    (new-game (default-corp ["Ash 2X3ZB9CY" (qty "Ice Wall" 10)])
+              (default-runner))
+    (starting-hand state :corp ["Ash 2X3ZB9CY" "Ice Wall"])
+    (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+    (take-credits state :corp)
+    (let [ash (get-content state :hq 0)]
+      (core/rez state :corp ash)
+      (run-empty-server state "HQ")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= "Ash 2X3ZB9CY" (-> (get-runner) :prompt first :card :title)) "Should access Ash")
+      (prompt-choice-partial :runner "Pay")
+      (is (not (:run @state)) "Accessing Ash then ends the run"))))
+
 (deftest ben-musashi
   ;; Ben Musashi
   (testing "Basic test - pay 2 net damage to steal from this server"
@@ -197,7 +214,6 @@
               (default-runner))
     (play-from-hand state :corp "Bio Vault" "New remote")
     (take-credits state :corp)
-
     (let [bv (get-content state :remote1 0)]
       (run-on state "Server 1")
       (core/rez state :corp (refresh bv))
@@ -206,10 +222,8 @@
       (run-successful state)
       (prompt-choice :runner "No action")
       (take-credits state :runner)
-
       (advance state (refresh bv) 2)
       (take-credits state :corp)
-
       (run-on state "Server 1")
       (card-ability state :corp (refresh bv) 0)
       (is (not (:run @state)) "Bio Vault fires with 2 advancement tokens")
@@ -236,7 +250,7 @@
        (core/rez state :corp sbox)
        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
 
-(deftest bryan-stinson-current
+(deftest bryan-stinson
   ;; Bryan Stinson - play a transaction from archives and remove from game. Ensure Currents are RFG and not trashed.
   (do-game
    (new-game (default-corp ["Bryan Stinson" "Death and Taxes"
@@ -256,7 +270,6 @@
       (is (find-card "Death and Taxes" (:rfg (get-corp))) "Death and Taxes removed from game")
       (is (not= "Death and Taxes" (:title (first (:discard (get-corp))))) "Death and Taxes not moved to trash")
       (take-credits state :runner)
-
       (core/lose state :runner :credit 3)
       (trash-from-hand state :corp "Paywall Implementation")
       (card-ability state :corp (refresh bs) 0)
@@ -271,7 +284,6 @@
       (is (find-card "Paywall Implementation" (:rfg (get-corp))) "Paywall Implementation removed from game")
       (is (not= "Paywall Implementation" (:title (first (:discard (get-corp))))) "Paywall Implementation not moved to trash")
       (take-credits state :runner)
-
       (core/lose state :runner :credit 3)
       (card-ability state :corp (refresh bs) 0)
       (prompt-card :corp (find-card "IPO" (:discard (get-corp))))
@@ -356,7 +368,7 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 3 (:credit (get-corp))) "Trace was successful")
-      (is (= 0 (:tag (get-runner))) "No tags given for run on different server")
+      (is (zero? (:tag (get-runner))) "No tags given for run on different server")
       (run-successful state)
       (run-on state "Server 1")
       (card-subroutine state :corp cad 0)
@@ -523,6 +535,22 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
 
+(deftest drone-screen
+  ;; Drone Screen
+  (do-game
+    (new-game (default-corp ["Drone Screen"])
+              (default-runner))
+    (play-from-hand state :corp "Drone Screen" "New remote")
+    (let [drone (get-content state :remote1 0)]
+      (core/rez state :corp drone)
+      (core/gain state :runner :tag 1)
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (is (zero? (-> (get-runner) :discard count)) "Heap should start empty")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should discard 1 card from meat damage from losing Drone Screen trace"))))
+
 (deftest forced-connection
   ;; Forced Connection - ambush, trace(3) give the runner 2 tags
   (do-game
@@ -545,28 +573,29 @@
     (prompt-choice-partial :runner "Pay") ; trash
     (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
 
-(deftest ghost-branch-dedicated-response-team
-  ;; Ghost Branch - with Dedicated Response Team
-  (do-game
-    (new-game (default-corp ["Ghost Branch" "Dedicated Response Team"])
-              (default-runner))
-    (play-from-hand state :corp "Ghost Branch" "New remote")
-    (play-from-hand state :corp "Dedicated Response Team" "New remote")
-    (core/gain state :corp :click 1)
-    (let [gb (get-content state :remote1 0)
-          drt (get-content state :remote2 0)]
-      (core/advance state :corp {:card gb})
-      (core/advance state :corp {:card (refresh gb)})
-      (is (= 2 (:advance-counter (refresh gb))) "Ghost Branch advanced twice")
-      (take-credits state :corp)
-      (run-on state "Server 1")
-      (core/rez state :corp drt)
-      (run-successful state)
-      (is (prompt-is-type? :runner :waiting) "Runner has prompt to wait for Ghost Branch")
-      (prompt-choice :corp "Yes")
-      (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
-      (prompt-choice-partial :runner "Pay")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
+(deftest ghost-branch
+  ;; Ghost Branch
+  (testing "with Dedicated Response Team"
+    (do-game
+      (new-game (default-corp ["Ghost Branch" "Dedicated Response Team"])
+                (default-runner))
+      (play-from-hand state :corp "Ghost Branch" "New remote")
+      (play-from-hand state :corp "Dedicated Response Team" "New remote")
+      (core/gain state :corp :click 1)
+      (let [gb (get-content state :remote1 0)
+            drt (get-content state :remote2 0)]
+        (core/advance state :corp {:card gb})
+        (core/advance state :corp {:card (refresh gb)})
+        (is (= 2 (:advance-counter (refresh gb))) "Ghost Branch advanced twice")
+        (take-credits state :corp)
+        (run-on state "Server 1")
+        (core/rez state :corp drt)
+        (run-successful state)
+        (is (prompt-is-type? :runner :waiting) "Runner has prompt to wait for Ghost Branch")
+        (prompt-choice :corp "Yes")
+        (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
+        (prompt-choice-partial :runner "Pay")
+        (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage")))))
 
 (deftest georgia-emelyov
   ;; Georgia Emelyov
@@ -1453,6 +1482,26 @@
       (core/derez state :corp sg)
       (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
+(deftest self-destruct
+  ;; Self-destruct
+  (do-game
+    (new-game (default-corp ["Self-destruct" "Dedicated Response Team" "Ice Wall"])
+              (default-runner))
+    (core/gain state :corp :credit 100 :click 4)
+    (play-from-hand state :corp "Self-destruct" "New remote")
+    (play-from-hand state :corp "Dedicated Response Team" "Server 1")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (let [self (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (card-ability state :corp self 0)
+      (is (= 3 (-> (get-corp) :discard count)) "All 3 cards from Server 1 should be in discard")
+      (is (= 2 (-> (get-corp) :prompt first :base)) "Self-destruct base trace should start at 2")
+      (is (zero? (-> (get-runner) :discard count)) "Runner should have no cards in heap")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 3 (-> (get-runner) :discard count)) "Runner should take 3 net damage from losing Self-destruct trace"))))
+
 (deftest signal-jamming
   ;; Trash to stop installs for the rest of the run
   (do-game
@@ -1598,91 +1647,111 @@
     (prompt-choice :runner 4)
     (prompt-choice-partial :runner "Pay")))
 
+(deftest the-twins
+  ;; The Twins
+  (do-game
+    (new-game (default-corp ["The Twins" (qty "Ice Wall" 10)])
+              (default-runner ["Corroder"]))
+    (starting-hand state :corp ["The Twins" "Ice Wall" "Ice Wall"])
+    (play-from-hand state :corp "The Twins" "New remote")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (let [twins (get-content state :remote1 0)
+          iw (get-ice state :remote1 0)]
+      (core/rez state :corp twins)
+      (core/rez state :corp iw)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [cor (get-program state 0)]
+        (run-on state "Server 1")
+        (card-ability state :runner cor 0)
+        (run-continue state)
+        (is (zero? (-> @state :run :position)) "Run should be at position 0")
+        (card-ability state :corp twins 0)
+        (prompt-select :corp (-> (get-corp) :hand first))
+        (is (= 1 (-> @state :run :position)) "Run should be moved back to position 1")))))
+
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
-  (do-game
-    (new-game (default-corp ["Pup" "Tori Hanzō"])
-              (default-runner [(qty "Sure Gamble" 3) "Net Shield"]))
-    (core/gain state :corp :credit 10)
-    (play-from-hand state :corp "Pup" "HQ")
-    (play-from-hand state :corp "Tori Hanzō" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Net Shield")
-    (run-on state "HQ")
-    (let [pup (get-ice state :hq 0)
-          tori (get-content state :hq 0)
-          nshld (get-in @state [:runner :rig :program 0])]
-      (core/rez state :corp pup)
-      (core/rez state :corp tori)
-      (card-subroutine state :corp pup 0)
-      (card-ability state :runner nshld 0)
-      (prompt-choice :runner "Done")
-      (is (empty? (:discard (get-runner))) "1 net damage prevented")
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :runner "Done") ; decline to prevent
-      (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
-      (run-jack-out state)
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Pup" "Tori Hanzō"])
+                (default-runner [(qty "Sure Gamble" 3) "Net Shield"]))
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Pup" "HQ")
+      (play-from-hand state :corp "Tori Hanzō" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Net Shield")
       (run-on state "HQ")
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :runner "Done")
-      (prompt-choice :corp "Yes")
-      (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
-      (is (= 1 (:brain-damage (get-runner)))))))
-
-(deftest tori-hanzo-hokusai
-  ;; Tori Hanzō + Hokusai Grid: Issue #2702
-  (do-game
-    (new-game (default-corp ["Tori Hanzō" "Hokusai Grid"])
-              (default-runner))
-    (core/gain state :corp :credit 5)
-    (play-from-hand state :corp "Hokusai Grid" "Archives")
-    (play-from-hand state :corp "Tori Hanzō" "Archives")
-    (take-credits state :corp)
-    (run-on state "Archives")
-    (let [hg (get-content state :archives 0)
-          tori (get-content state :archives 1)]
-      (core/rez state :corp hg)
-      (core/rez state :corp tori)
-      (run-successful state)
-      (prompt-choice :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
-      (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
-      (prompt-choice :runner "Hokusai Grid")
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Tori Hanzō")
-      (prompt-choice :runner "No action")
-      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
-      (run-empty-server state "Archives")
-      (prompt-choice :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
-      (is (= 2 (count (:discard (get-runner)))))
-      (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
-      (prompt-choice :runner "Hokusai Grid")
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Tori Hanzō")
-      (prompt-choice :runner "No action")
-      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
-
-(deftest tori-hanzo-net
-  ;; Tori Hanzō breaking subsequent net damage: Issue #3176
-  (do-game
-    (new-game (default-corp ["Tori Hanzō" (qty "Pup" 2) (qty "Neural EMP" 2)])
-              (default-runner))
-    (core/gain state :corp :credit 8)
-    (play-from-hand state :corp "Tori Hanzō" "New remote")
-    (play-from-hand state :corp "Pup" "Server 1")
-    (take-credits state :corp)
-    (run-on state "Server 1")
-    (let [tori (get-content state :remote1 0)
-          pup (get-ice state :remote1 0)]
-      (core/rez state :corp pup)
-      (core/rez state :corp tori)
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :corp "Yes") ; pay 2c to replace 1 net with 1 brain
-      (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
-      (is (= 1 (:brain-damage (get-runner))))
-      (run-jack-out state)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Neural EMP")
-      (is (= 2 (count (:discard (get-runner)))) "Net damage processed correctly"))))
+      (let [pup (get-ice state :hq 0)
+            tori (get-content state :hq 0)
+            nshld (get-in @state [:runner :rig :program 0])]
+        (core/rez state :corp pup)
+        (core/rez state :corp tori)
+        (card-subroutine state :corp pup 0)
+        (card-ability state :runner nshld 0)
+        (prompt-choice :runner "Done")
+        (is (empty? (:discard (get-runner))) "1 net damage prevented")
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :runner "Done") ; decline to prevent
+        (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
+        (run-jack-out state)
+        (run-on state "HQ")
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :runner "Done")
+        (prompt-choice :corp "Yes")
+        (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
+        (is (= 1 (:brain-damage (get-runner)))))))
+  (testing "with Hokusai Grid: Issue #2702"
+    (do-game
+      (new-game (default-corp ["Tori Hanzō" "Hokusai Grid"])
+                (default-runner))
+      (core/gain state :corp :credit 5)
+      (play-from-hand state :corp "Hokusai Grid" "Archives")
+      (play-from-hand state :corp "Tori Hanzō" "Archives")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (let [hg (get-content state :archives 0)
+            tori (get-content state :archives 1)]
+        (core/rez state :corp hg)
+        (core/rez state :corp tori)
+        (run-successful state)
+        (prompt-choice :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
+        (prompt-choice :runner "Hokusai Grid")
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Tori Hanzō")
+        (prompt-choice :runner "No action")
+        (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
+        (run-empty-server state "Archives")
+        (prompt-choice :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (is (= 2 (count (:discard (get-runner)))))
+        (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
+        (prompt-choice :runner "Hokusai Grid")
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Tori Hanzō")
+        (prompt-choice :runner "No action")
+        (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
+  (testing "breaking subsequent net damage: Issue #3176"
+    (do-game
+      (new-game (default-corp ["Tori Hanzō" (qty "Pup" 2) (qty "Neural EMP" 2)])
+                (default-runner))
+      (core/gain state :corp :credit 8)
+      (play-from-hand state :corp "Tori Hanzō" "New remote")
+      (play-from-hand state :corp "Pup" "Server 1")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (let [tori (get-content state :remote1 0)
+            pup (get-ice state :remote1 0)]
+        (core/rez state :corp pup)
+        (core/rez state :corp tori)
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :corp "Yes") ; pay 2c to replace 1 net with 1 brain
+        (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
+        (is (= 1 (:brain-damage (get-runner))))
+        (run-jack-out state)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Neural EMP")
+        (is (= 2 (count (:discard (get-runner)))) "Net damage processed correctly")))))
 
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
@@ -1699,7 +1768,7 @@
       (prompt-select :runner eve1)
       (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
 
-(deftest valley-grid-trash
+(deftest valley-grid
   ;; Valley Grid - Reduce Runner max hand size and restore it even if trashed
   (do-game
     (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
@@ -1717,3 +1786,26 @@
       (prompt-choice-partial :runner "Pay") ; pay to trash
       (take-credits state :runner 3)
       (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))
+
+(deftest warroid-tracker
+  ;; Warroid Tracker
+  (do-game
+    (new-game (default-corp ["Warroid Tracker"])
+              (default-runner ["Corroder" "Dyson Mem Chip"]))
+    (play-from-hand state :corp "Warroid Tracker" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Dyson Mem Chip")
+    (let [war (get-content state :remote1 0)
+          cor (get-program state 0)
+          mem (get-hardware state 0)]
+      (core/rez state :corp war)
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
+      (prompt-select :runner cor)
+      (prompt-select :runner mem)
+      (is (= 2 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards"))))

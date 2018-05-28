@@ -403,7 +403,8 @@
                  :effect (effect (gain :credit 2))}]}
 
    "Hokusai Grid"
-   {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
+   {:events {:successful-run {:req (req this-server)
+                              :msg "do 1 net damage"
                               :delayed-completion true
                               :effect (effect (damage eid :net 1 {:card card}))}}}
 
