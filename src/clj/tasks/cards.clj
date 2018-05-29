@@ -4,17 +4,17 @@
             [monger.collection :as mc]
             [clojure.data :refer [diff]]
             [clojure.string :as s]
-            [game-test.cards.agendas :as agendas]
-            [game-test.cards.assets :as assets]
-            [game-test.cards.events :as events]
-            [game-test.cards.hardware :as hardware]
-            [game-test.cards.ice :as ice]
-            [game-test.cards.icebreakers :as icebreakers]
-            [game-test.cards.identities :as identities]
-            [game-test.cards.operations :as operations]
-            [game-test.cards.programs :as programs]
-            [game-test.cards.resources :as resources]
-            [game-test.cards.upgrades :as upgrades]))
+            [game-test.cards.agendas]
+            [game-test.cards.assets]
+            [game-test.cards.events]
+            [game-test.cards.hardware]
+            [game-test.cards.ice]
+            [game-test.cards.icebreakers]
+            [game-test.cards.identities]
+            [game-test.cards.operations]
+            [game-test.cards.programs]
+            [game-test.cards.resources]
+            [game-test.cards.upgrades]))
 
 (defn- get-card-by-type
   "Get the normalized title (as a symbol) for cards of a specific type in the database"
