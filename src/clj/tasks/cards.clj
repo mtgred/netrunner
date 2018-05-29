@@ -19,10 +19,21 @@
 (defn- get-card-by-type
   "Get the normalized title (as a symbol) for cards of a specific type in the database"
   [t]
-  (->> (mc/find-maps db "cards" {:type t} [:normalizedtitle])
-    (map :normalizedtitle)
-    (map #(s/replace % #"\s+" "-"))
-    (map symbol)))
+  (let [card-type (if (= "Icebreaker" t) "Program" t)
+        f (case t
+            "Icebreaker" filter
+            "Program" remove
+            nil)
+        func (fn [coll]
+               (if f
+                 (f #(and (:subtype %)
+                    (> (.indexOf (:subtype %) "Icebreaker") -1)) coll)
+                 coll))]
+    (->> (mc/find-maps db "cards" {:type card-type} [:normalizedtitle :subtype])
+      func
+      (map :normalizedtitle)
+      (map #(s/replace % #"\s+" "-"))
+      (map symbol))))
 
 (defn- get-tests
   "Returns the names of all tests in a namespace"
@@ -83,9 +94,10 @@
                    "Event" '(game-test.cards.events)
                    "Hardware" '(game-test.cards.hardware)
                    "ICE" '(game-test.cards.ice)
+                   "Icebreaker" '(game-test.cards.icebreakers)
                    "Identity" '(game-test.cards.identities)
                    "Operation" '(game-test.cards.operations)
-                   "Program" '(game-test.cards.icebreakers game-test.cards.programs)
+                   "Program"  '(game-test.cards.programs)
                    "Resource" '(game-test.cards.resources)
                    "Upgrade" '(game-test.cards.upgrades)}
           filtered-nspaces (if only
