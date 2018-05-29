@@ -956,8 +956,8 @@
                               (add-counter state side card :credit (- (get-in card [:counter :credit] 0))))}]}
 
  "Kasi String"
- {:events {:run-ends {:once :per-turn
-                      :req (req (and (not (get-in @state [:run :did-steal]))
+ {:events {:run-ends {:req (req (and (first-event? state :runner :run-ends is-remote?)
+                                     (not (get-in @state [:run :did-steal]))
                                      (get-in @state [:run :did-access])
                                      (is-remote? (:server run))))
                       :effect (effect (add-counter card :power 1))
