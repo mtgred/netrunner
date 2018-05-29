@@ -27,7 +27,7 @@
         func (fn [coll]
                (if f
                  (f #(and (:subtype %)
-                    (> (.indexOf (:subtype %) "Icebreaker") -1)) coll)
+                          (> (.indexOf (:subtype %) "Icebreaker") -1)) coll)
                  coll))]
     (->> (mc/find-maps db "cards" {:type card-type} [:normalizedtitle :subtype])
       func

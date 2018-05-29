@@ -1453,7 +1453,7 @@
         (is (= 2 (-> (get-runner) :prompt first :choices count)) "Simultaneous-resolution prompt is showing")
         (prompt-choice :runner "Off-Campus Apartment")
         (is (= 2 (count (:hand (get-runner)))) "Drew a card from OCA"))))
-  (testing"second ability does not break cards that are hosting others, e.g., Street Peddler"
+  (testing "second ability does not break cards that are hosting others, e.g., Street Peddler"
     (do-game
       (new-game (default-corp)
                 (default-runner [(qty "Street Peddler" 2) "Off-Campus Apartment" (qty "Spy Camera" 6)]))
@@ -1938,22 +1938,25 @@
         (prompt-select :runner pu)
         (is (= 4 (count (:discard (get-runner)))) "3 Parasite, 1 Street Peddler in heap")
         (is (= 1 (count (:discard (get-corp)))) "Pop-up Window in archives"))))
-(testing "Tech Trader install"
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Street Peddler"
-                               "Tech Trader"]))
-    (take-credits state :corp)
-    (starting-hand state :runner ["Street Peddler"])
-    (play-from-hand state :runner "Street Peddler")
-    (let [sp (get-in @state [:runner :rig :resource 0])]
-      (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")
-      (card-ability state :runner sp 0)
-      (prompt-card :runner (find-card "Tech Trader" (:hosted sp))) ; choose to install Tech Trader
-      (is (= "Tech Trader" (:title (get-in @state [:runner :rig :resource 0])))
-          "Tech Trader was installed")
-      (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability"))))
-(testing "trashing while choosing which card to discard should dismiss the choice prompt. Issue #587"
+  (testing "Tech Trader install"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Street Peddler"
+                                 "Tech Trader"]))
+      (take-credits state :corp)
+      (starting-hand state :runner ["Street Peddler"])
+      (play-from-hand state :runner "Street Peddler")
+      (let [sp (get-in @state [:runner :rig :resource 0])]
+        (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")
+        (card-ability state :runner sp 0)
+        (prompt-card :runner (find-card "Tech Trader" (:hosted sp))) ; choose to install Tech Trader
+        (is (= "Tech Trader" (:title (get-in @state [:runner :rig :resource 0])))
+            "Tech Trader was installed")
+        (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability")))))
+
+(deftest-pending street-peddler-trash-while-choosing-card
+  ;; Street Peddler - trashing Street Peddler while choosing which card to
+  ;; discard should dismiss the choice prompt. Issue #587.
   (do-game
     (new-game (default-corp)
               (default-runner ["Street Peddler"
@@ -1967,7 +1970,7 @@
       (is (= 3 (count (:hosted street-peddler))) "Street Peddler is hosting 3 cards")
       (card-ability state :runner street-peddler 0)
       (trash-resource state "Street Peddler")
-      (is (zero? (count (get-in @state [:runner :prompt]))))))))
+      (is (zero? (count (get-in @state [:runner :prompt])))))))
 
 (deftest symmetrical-visage
   ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn
