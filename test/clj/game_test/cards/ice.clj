@@ -8,7 +8,7 @@
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "ice"))
 
-(deftest end-the-run-test
+(deftest ^:skip-card-coverage end-the-run-test
   ;; Since all ETR ice share a common ability, we only need one test
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Hedge Fund" 3) (qty "Restructure" 2)])

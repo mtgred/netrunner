@@ -7,7 +7,7 @@
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "agendas"))
 
-(deftest fifteen-minutes
+(deftest ^{:card-title "15-minutes"} fifteen-minutes
   ;; 15 Minutes - check if it works correctly from both sides
   (do-game
     (new-game (default-corp ["15 Minutes"])
@@ -519,7 +519,7 @@
         (is (empty? (get-in (get-runner)  [:rig :facedown])) "Degree Mill didn't remove facedown cards")
         (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck")))))
 
-(deftest director-haas-pet-project
+(deftest ^{:card-title "director-haas'-pet-project"} director-haas-pet-project
   ;; Director Haas' Pet Project
   (do-game
     (new-game (default-corp ["Director Haas' Pet Project"
