@@ -210,11 +210,11 @@
                           :msg "give the Runner a tag for playing a run event"
                           :effect (effect (tag-runner :runner eid 1))}
              :runner-install {:silent (req true)
-                              :req (req (has-subtype? target "Icebreaker"))
+                              :req (req (and (has-subtype? target "Icebreaker")
+                                             (first-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))))
                               :delayed-completion true
                               :msg "give the Runner a tag for installing an icebreaker"
-                              :effect (effect (tag-runner :runner eid 1))
-                              :once :per-turn}}}
+                              :effect (effect (tag-runner :runner eid 1))}}}
 
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %)
