@@ -205,11 +205,10 @@
         :interactive (req true)}))
 
    "Better Citizen Program"
-   {:events {:play-event {:req (req (has-subtype? target "Run"))
+   {:events {:play-event {:req (req (first-event? state :runner :run))
                           :delayed-completion true
                           :msg "give the Runner a tag for playing a run event"
-                          :effect (effect (tag-runner :runner eid 1))
-                          :once :per-turn}
+                          :effect (effect (tag-runner :runner eid 1))}
              :runner-install {:silent (req true)
                               :req (req (has-subtype? target "Icebreaker"))
                               :delayed-completion true
