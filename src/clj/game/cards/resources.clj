@@ -962,7 +962,7 @@
                                      (is-remote? (:server run))))
                       :effect (effect (add-counter card :power 1))
                       :msg "add a power counter to itself"}
-           :counter-added {:req (req (>= (get-in (get-card state card) [:counter :power]) 4))
+           :counter-added {:req (req (>= (get-in (get-card state card) [:counter :power] 0) 4))
                            :effect (effect (as-agenda :runner card 1))
                            :msg "add it to their score area as an agenda worth 1 agenda point"}}}
                     
