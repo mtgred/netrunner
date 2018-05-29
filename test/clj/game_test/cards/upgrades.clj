@@ -197,7 +197,6 @@
               (default-runner))
     (play-from-hand state :corp "Bio Vault" "New remote")
     (take-credits state :corp)
-
     (let [bv (get-content state :remote1 0)]
       (run-on state "Server 1")
       (core/rez state :corp (refresh bv))
@@ -206,10 +205,8 @@
       (run-successful state)
       (prompt-choice :runner "No action")
       (take-credits state :runner)
-
       (advance state (refresh bv) 2)
       (take-credits state :corp)
-
       (run-on state "Server 1")
       (card-ability state :corp (refresh bv) 0)
       (is (not (:run @state)) "Bio Vault fires with 2 advancement tokens")
@@ -236,7 +233,7 @@
        (core/rez state :corp sbox)
        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
 
-(deftest bryan-stinson-current
+(deftest bryan-stinson
   ;; Bryan Stinson - play a transaction from archives and remove from game. Ensure Currents are RFG and not trashed.
   (do-game
    (new-game (default-corp ["Bryan Stinson" "Death and Taxes"
@@ -256,7 +253,6 @@
       (is (find-card "Death and Taxes" (:rfg (get-corp))) "Death and Taxes removed from game")
       (is (not= "Death and Taxes" (:title (first (:discard (get-corp))))) "Death and Taxes not moved to trash")
       (take-credits state :runner)
-
       (core/lose state :runner :credit 3)
       (trash-from-hand state :corp "Paywall Implementation")
       (card-ability state :corp (refresh bs) 0)
@@ -271,7 +267,6 @@
       (is (find-card "Paywall Implementation" (:rfg (get-corp))) "Paywall Implementation removed from game")
       (is (not= "Paywall Implementation" (:title (first (:discard (get-corp))))) "Paywall Implementation not moved to trash")
       (take-credits state :runner)
-
       (core/lose state :runner :credit 3)
       (card-ability state :corp (refresh bs) 0)
       (prompt-card :corp (find-card "IPO" (:discard (get-corp))))
@@ -545,29 +540,6 @@
     (prompt-choice-partial :runner "Pay") ; trash
     (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
 
-(deftest ghost-branch-dedicated-response-team
-  ;; Ghost Branch - with Dedicated Response Team
-  (do-game
-    (new-game (default-corp ["Ghost Branch" "Dedicated Response Team"])
-              (default-runner))
-    (play-from-hand state :corp "Ghost Branch" "New remote")
-    (play-from-hand state :corp "Dedicated Response Team" "New remote")
-    (core/gain state :corp :click 1)
-    (let [gb (get-content state :remote1 0)
-          drt (get-content state :remote2 0)]
-      (core/advance state :corp {:card gb})
-      (core/advance state :corp {:card (refresh gb)})
-      (is (= 2 (:advance-counter (refresh gb))) "Ghost Branch advanced twice")
-      (take-credits state :corp)
-      (run-on state "Server 1")
-      (core/rez state :corp drt)
-      (run-successful state)
-      (is (prompt-is-type? :runner :waiting) "Runner has prompt to wait for Ghost Branch")
-      (prompt-choice :corp "Yes")
-      (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
-      (prompt-choice-partial :runner "Pay")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
-
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game
@@ -753,31 +725,32 @@
     (take-credits state :runner)
     (is (= 4 (:click (get-corp))) "Corp gained a click due to running last click")))
 
-(deftest marcus-batty-security-nexus
-  ;; Marcus Batty - Simultaneous Interaction with Security Nexus
-  (do-game
-    (new-game (default-corp ["Marcus Batty" "Enigma"])
-              (default-runner ["Security Nexus"]))
-    (play-from-hand state :corp "Marcus Batty" "HQ")
-    (play-from-hand state :corp "Enigma" "HQ")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 8)
-    (play-from-hand state :runner "Security Nexus")
-    (let [mb (get-content state :hq 0)
-          en (get-ice state :hq 0)
-          sn (-> @state :runner :rig :hardware first)]
-      (run-on state "HQ")
-      (core/rez state :corp mb)
-      (core/rez state :corp en)
-      (card-ability state :corp mb 0)
-      (card-ability state :runner sn 0)
-      ;; both prompts should be on Batty
-      (is (prompt-is-card? :corp mb) "Corp prompt is on Marcus Batty")
-      (is (prompt-is-card? :runner mb) "Runner prompt is on Marcus Batty")
-      (prompt-choice :corp "0")
-      (prompt-choice :runner "0")
-      (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
-      (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp"))))
+(deftest marcus-batty
+  ;; Marcus Batty
+  (testing "Simultaneous Interaction with Security Nexus"
+    (do-game
+      (new-game (default-corp ["Marcus Batty" "Enigma"])
+                (default-runner ["Security Nexus"]))
+      (play-from-hand state :corp "Marcus Batty" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 8)
+      (play-from-hand state :runner "Security Nexus")
+      (let [mb (get-content state :hq 0)
+            en (get-ice state :hq 0)
+            sn (-> @state :runner :rig :hardware first)]
+        (run-on state "HQ")
+        (core/rez state :corp mb)
+        (core/rez state :corp en)
+        (card-ability state :corp mb 0)
+        (card-ability state :runner sn 0)
+        ;; both prompts should be on Batty
+        (is (prompt-is-card? :corp mb) "Corp prompt is on Marcus Batty")
+        (is (prompt-is-card? :runner mb) "Runner prompt is on Marcus Batty")
+        (prompt-choice :corp "0")
+        (prompt-choice :runner "0")
+        (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
+        (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp")))))
 
 (deftest mumbad-city-grid
   ;; Mumbad City Grid - when runner passes a piece of ice, swap that ice with another from this server
@@ -1118,7 +1091,6 @@
         (prompt-select :runner (refresh pb))
         (prompt-choice-partial :runner "No")
         (is (empty? (:scored (get-runner))) "End with no stolen agendas")
-
         (run-empty-server state "Server 1")
         (prompt-choice-partial :runner "Steal")
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
@@ -1600,89 +1572,86 @@
 
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
-  (do-game
-    (new-game (default-corp ["Pup" "Tori Hanzō"])
-              (default-runner [(qty "Sure Gamble" 3) "Net Shield"]))
-    (core/gain state :corp :credit 10)
-    (play-from-hand state :corp "Pup" "HQ")
-    (play-from-hand state :corp "Tori Hanzō" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Net Shield")
-    (run-on state "HQ")
-    (let [pup (get-ice state :hq 0)
-          tori (get-content state :hq 0)
-          nshld (get-in @state [:runner :rig :program 0])]
-      (core/rez state :corp pup)
-      (core/rez state :corp tori)
-      (card-subroutine state :corp pup 0)
-      (card-ability state :runner nshld 0)
-      (prompt-choice :runner "Done")
-      (is (empty? (:discard (get-runner))) "1 net damage prevented")
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :runner "Done") ; decline to prevent
-      (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
-      (run-jack-out state)
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Pup" "Tori Hanzō"])
+                (default-runner [(qty "Sure Gamble" 3) "Net Shield"]))
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Pup" "HQ")
+      (play-from-hand state :corp "Tori Hanzō" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Net Shield")
       (run-on state "HQ")
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :runner "Done")
-      (prompt-choice :corp "Yes")
-      (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
-      (is (= 1 (:brain-damage (get-runner)))))))
-
-(deftest tori-hanzo-hokusai
-  ;; Tori Hanzō + Hokusai Grid: Issue #2702
-  (do-game
-    (new-game (default-corp ["Tori Hanzō" "Hokusai Grid"])
-              (default-runner))
-    (core/gain state :corp :credit 5)
-    (play-from-hand state :corp "Hokusai Grid" "Archives")
-    (play-from-hand state :corp "Tori Hanzō" "Archives")
-    (take-credits state :corp)
-    (run-on state "Archives")
-    (let [hg (get-content state :archives 0)
-          tori (get-content state :archives 1)]
-      (core/rez state :corp hg)
-      (core/rez state :corp tori)
-      (run-successful state)
-      (prompt-choice :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
-      (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
-      (prompt-choice :runner "Hokusai Grid")
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Tori Hanzō")
-      (prompt-choice :runner "No action")
-      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
-      (run-empty-server state "Archives")
-      (prompt-choice :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
-      (is (= 2 (count (:discard (get-runner)))))
-      (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
-      (prompt-choice :runner "Hokusai Grid")
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Tori Hanzō")
-      (prompt-choice :runner "No action")
-      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
-
-(deftest tori-hanzo-net
-  ;; Tori Hanzō breaking subsequent net damage: Issue #3176
-  (do-game
-    (new-game (default-corp ["Tori Hanzō" (qty "Pup" 2) (qty "Neural EMP" 2)])
-              (default-runner))
-    (core/gain state :corp :credit 8)
-    (play-from-hand state :corp "Tori Hanzō" "New remote")
-    (play-from-hand state :corp "Pup" "Server 1")
-    (take-credits state :corp)
-    (run-on state "Server 1")
-    (let [tori (get-content state :remote1 0)
-          pup (get-ice state :remote1 0)]
-      (core/rez state :corp pup)
-      (core/rez state :corp tori)
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :corp "Yes") ; pay 2c to replace 1 net with 1 brain
-      (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
-      (is (= 1 (:brain-damage (get-runner))))
-      (run-jack-out state)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Neural EMP")
-      (is (= 2 (count (:discard (get-runner)))) "Net damage processed correctly"))))
+      (let [pup (get-ice state :hq 0)
+            tori (get-content state :hq 0)
+            nshld (get-in @state [:runner :rig :program 0])]
+        (core/rez state :corp pup)
+        (core/rez state :corp tori)
+        (card-subroutine state :corp pup 0)
+        (card-ability state :runner nshld 0)
+        (prompt-choice :runner "Done")
+        (is (empty? (:discard (get-runner))) "1 net damage prevented")
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :runner "Done") ; decline to prevent
+        (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
+        (run-jack-out state)
+        (run-on state "HQ")
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :runner "Done")
+        (prompt-choice :corp "Yes")
+        (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
+        (is (= 1 (:brain-damage (get-runner)))))))
+  (testing "with Hokusai Grid: Issue #2702"
+    (do-game
+      (new-game (default-corp ["Tori Hanzō" "Hokusai Grid"])
+                (default-runner))
+      (core/gain state :corp :credit 5)
+      (play-from-hand state :corp "Hokusai Grid" "Archives")
+      (play-from-hand state :corp "Tori Hanzō" "Archives")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (let [hg (get-content state :archives 0)
+            tori (get-content state :archives 1)]
+        (core/rez state :corp hg)
+        (core/rez state :corp tori)
+        (run-successful state)
+        (prompt-choice :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
+        (prompt-choice :runner "Hokusai Grid")
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Tori Hanzō")
+        (prompt-choice :runner "No action")
+        (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
+        (run-empty-server state "Archives")
+        (prompt-choice :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (is (= 2 (count (:discard (get-runner)))))
+        (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
+        (prompt-choice :runner "Hokusai Grid")
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Tori Hanzō")
+        (prompt-choice :runner "No action")
+        (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
+  (testing "breaking subsequent net damage: Issue #3176"
+    (do-game
+      (new-game (default-corp ["Tori Hanzō" (qty "Pup" 2) (qty "Neural EMP" 2)])
+                (default-runner))
+      (core/gain state :corp :credit 8)
+      (play-from-hand state :corp "Tori Hanzō" "New remote")
+      (play-from-hand state :corp "Pup" "Server 1")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (let [tori (get-content state :remote1 0)
+            pup (get-ice state :remote1 0)]
+        (core/rez state :corp pup)
+        (core/rez state :corp tori)
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :corp "Yes") ; pay 2c to replace 1 net with 1 brain
+        (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
+        (is (= 1 (:brain-damage (get-runner))))
+        (run-jack-out state)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Neural EMP")
+        (is (= 2 (count (:discard (get-runner)))) "Net damage processed correctly")))))
 
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
@@ -1699,21 +1668,22 @@
       (prompt-select :runner eve1)
       (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
 
-(deftest valley-grid-trash
-  ;; Valley Grid - Reduce Runner max hand size and restore it even if trashed
-  (do-game
-    (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
-              (default-runner))
-    (play-from-hand state :corp "Valley Grid" "New remote")
-    (take-credits state :corp 2)
-    (run-on state "Server 1")
-    (let [vg (get-content state :remote1 0)]
-      (core/rez state :corp vg)
-      (card-ability state :corp vg 0)
-      (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
-      (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
-      (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
-      (run-successful state)
-      (prompt-choice-partial :runner "Pay") ; pay to trash
-      (take-credits state :runner 3)
-      (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))
+(deftest valley-grid
+  ;; Valley Grid
+  (testing "Reduce Runner max hand size and restore it even if trashed"
+    (do-game
+      (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
+                (default-runner))
+      (play-from-hand state :corp "Valley Grid" "New remote")
+      (take-credits state :corp 2)
+      (run-on state "Server 1")
+      (let [vg (get-content state :remote1 0)]
+        (core/rez state :corp vg)
+        (card-ability state :corp vg 0)
+        (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
+        (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
+        (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
+        (run-successful state)
+        (prompt-choice-partial :runner "Pay") ; pay to trash
+        (take-credits state :runner 3)
+        (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn")))))
