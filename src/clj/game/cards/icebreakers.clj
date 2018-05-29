@@ -462,6 +462,29 @@
                  :msg (msg "trash " (:title target)
                            " and break 1 \"[Subroutine] End the run.\" subroutine")
                  :effect (effect (trash target {:unpreventable true}))}]}
+   "Engolo"
+   (auto-icebreaker
+     ["Code Gate"]
+     {:abilities [(break-sub 1 1 "Code Gate")
+                  (strength-pump 2 4)
+                  {:once :per-turn
+                   :cost [:credit 2]
+                   :label (str "Turn currently encountered ice into Code Gate")
+                   :msg (msg "turn " (:title current-ice) " into Code Gate")
+                   :req (req (and current-ice (rezzed? current-ice) (not (has-subtype? current-ice "Code Gate"))))
+                   :effect (req (let [ice current-ice
+                                      stargets (:subtype-target ice)
+                                      stypes (:subtype ice)
+                                      remove-subtype {:effect (effect
+                                                                (update! (assoc ice :subtype-target stargets :subtype stypes))
+                                                                (unregister-events card)
+                                                                (register-events (:events (card-def card)) card))}]
+                                  (update! state side (assoc ice
+                                                             :subtype-target (combine-subtypes true stargets "Code Gate")
+                                                             :subtype (combine-subtypes true stypes "Code Gate")))
+                                  (update-ice-strength state side (get-card state ice))
+                                  (register-events state side {:pass-ice remove-subtype
+                                                               :run-ends remove-subtype} card)))}]})
 
    "Faerie"
    (auto-icebreaker ["Sentry"]
