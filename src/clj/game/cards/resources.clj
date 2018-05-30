@@ -837,7 +837,7 @@
    "Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"
                   :once :per-turn
-                  :effect (effect (lose-credits :click 1) (gain 2))}]
+                  :effect (effect (lose :click 1) (gain-credits 2))}]
    {:flags {:drip-economy true}
     :events {:runner-turn-begins ability}
     :abilities [ability]})
@@ -1287,8 +1287,18 @@
    "PAD Tap"
    {:events {:corp-credit-gain
              {:req (req (not= target :corp-click-credit))
-              :once :per-turn
-              :effect (effect (gain-credits :runner 1))}}
+              :delayed-completion true
+              :effect
+              (effect (show-wait-prompt :corp "Runner to use PAD Tap")
+                      (continue-ability :runner
+                        {:optional
+                         {:prompt "Gain 1[Credits] from PAD Tap?"
+                          :once :per-turn
+                          :yes-ability {:msg "gain 1[Credits] from PAD Tap"
+                                        :effect (effect (gain-credits :runner 1))}
+                          :end-effect (effect (clear-wait-prompt :corp))}}
+                        card nil))}}
+
     :abilities [{:label "[Corp]: Trash PAD Tap"
                  :cost [:credit 3 :click 1]
                  :req (req (= :corp side))

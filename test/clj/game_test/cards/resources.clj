@@ -1548,12 +1548,18 @@
       (take-credits state :runner)
       (let [credits (:credit (get-runner))]
         (core/click-credit state :corp nil)
+        (is (zero? (-> (get-runner) :prompt count)) "Runner should have no prompts from PAD Tap")
         (is (= credits (:credit (get-runner))) "Runner shouldn't gain PAD Tap credits from clicking for a credit")
         (take-credits state :runner))
       (let [credits (:credit (get-runner))]
         (core/rez state :corp mel)
+        (core/gain state :corp :click 10)
         (card-ability state :corp mel 0)
+        (prompt-choice :runner "Yes")
         (is (= (+ credits 1) (:credit (get-runner))) "Runner should gain 1 credit from PAD Tap triggering from Melange Mining Corp. ability"))
+        ; (card-ability state :corp mel 0) ;; Triggering Melange a second time
+        ; (is (zero? (-> (get-runner) :prompt count)) "Runner should have no prompts from PAD Tap")
+      (take-credits state :corp)
       (take-credits state :runner)
       (is (zero? (-> (get-runner) :discard count)) "Runner should have 0 cards in Heap")
       (let [credits (:credit (get-corp))

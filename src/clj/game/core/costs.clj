@@ -229,15 +229,6 @@
       (do (swap! state update-in [side type] (safe-inc-n amount))
           (swap! state update-in [:stats side :gain type] (fnil + 0) amount)))))
 
-(defn gain-credits
-  "Utility function for triggering events"
-  [state side amount & args]
-  (when (and amount
-             (pos? amount))
-    (gain state side :credit amount)
-    (let [kw (keyword (str (name side) "-credit-gain"))]
-      (apply trigger-event-sync state side (make-eid state) kw args))))
-
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
     (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
@@ -248,12 +239,21 @@
             (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (second r)))
           (deduct state side r)))))
 
+(defn gain-credits
+  "Utility function for triggering events"
+  [state side amount & args]
+  (when (and amount
+             (pos? amount))
+    (gain state side :credit amount)
+    (let [kw (keyword (str (name side) "-credit-gain"))]
+      (apply trigger-event-sync state side (make-eid state) kw args))))
+
 (defn lose-credits
   "Utility function for triggering events"
   [state side amount & args]
   (when (and amount
-             (or (pos? amount)
-                 (= :all amount)))
+             (or (= :all amount)
+                 (pos? amount)))
     (lose state side :credit amount)
     (let [kw (keyword (str (name side) "-credit-loss"))]
       (apply trigger-event-sync state side (make-eid state) kw args))))
