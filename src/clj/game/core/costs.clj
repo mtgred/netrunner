@@ -252,7 +252,8 @@
   "Utility function for triggering events"
   [state side amount & args]
   (when (and amount
-             (pos? amount))
+             (or (pos? amount)
+                 (= :all amount)))
     (lose state side :credit amount)
     (let [kw (keyword (str (name side) "-credit-loss"))]
       (apply trigger-event-sync state side (make-eid state) kw args))))

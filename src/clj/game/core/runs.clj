@@ -33,7 +33,7 @@
   "Add temporary credits that will disappear when the run is over."
   [state side n]
   (swap! state update-in [:runner :run-credit] + n)
-  (gain state :runner :credit n))
+  (gain-credits state :runner n))
 
 (defn access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"

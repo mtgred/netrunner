@@ -171,7 +171,7 @@
     :abilities [{:req (req (pos? (get-virus-counters state side card)))
                  :cost [:click 1]
                  :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."
-                 :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
+                 :effect (req (gain-credits state side (* 2 (get-virus-counters state side card)))
                               (update! state side (assoc-in card [:counter :virus] 0))
                               (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
                                         (doseq [h hiveminds]
@@ -258,7 +258,7 @@
                  :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
                  :effect (req (free-mu state (:memoryunits target))
                               (when (-> target :cost pos?)
-                                (gain state side :credit 1))
+                                (gain-credits state side 1))
                               (update-breaker-strength state side target)
                               (host state side card (get-card state target))
                               (update! state side (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
@@ -508,8 +508,8 @@
                                  (add-counter target :virus (get-in card [:counter :virus] 0)))}]}
 
    "Ixodidae"
-   {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "gain 1 [Credits]"
-                         :effect (effect (gain :runner :credit 1))}
+   {:events {:corp-credit-loss {:msg "gain 1 [Credits]"
+                                :effect (effect (gain-credits :runner 1))}
              :purge {:effect (effect (trash card {:cause :purge}))}}}
 
    "Keyhole"
@@ -529,7 +529,7 @@
 
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "force the Corp to lose 1 [Credits]"
-                              :effect (effect (lose :corp :credit 1))}
+                              :effect (effect (lose-credits :corp 1))}
              :purge {:effect (effect (trash card {:cause :purge}))}}}
 
    "Leprechaun"
@@ -814,7 +814,7 @@
                                                                      :effect (req (if (= target "Draw 2 cards")
                                                                                     (do (draw state :runner 2)
                                                                                         (system-msg state :runner "uses RNG Key to draw 2 cards"))
-                                                                                    (do (gain state :runner :credit 3)
+                                                                                    (do (gain-credits state :runner 3)
                                                                                         (system-msg state :runner "uses RNG Key to gain 3 [Credits]"))))}
                                                                     card nil)
                                                   (effect-completed state side eid)))
@@ -884,7 +884,7 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
                  :effect (req (when (host state side card target)
-                                (gain state side :credit 1)))}]}
+                                (gain-credits state side 1)))}]}
 
    "Self-modifying Code"
    {:abilities [{:req (req (not (install-locked? state side)))

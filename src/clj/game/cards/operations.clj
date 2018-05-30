@@ -193,14 +193,14 @@
                         :cancel-effect (final-effect (clear-wait-prompt :corp))
                         :effect (req (doseq [c targets]
                                        (trash state :runner c {:unpreventable true}))
-                                     (gain state :runner :credit (count targets))
+                                     (gain-credits state :runner (count targets))
                                      (system-msg state :runner (str "trashes " (join ", " (map :title (sort-by :title targets)))
                                                                     " and gains " (count targets) " [Credits]"))
                                      (clear-wait-prompt state :corp))}
                       card nil)
                      (do (let [n (* 2 (count (filter #(is-type? % t) (all-active-installed state :runner))))]
                            (when (pos? n)
-                             (gain state :corp :credit n)
+                             (gain-credits state :corp n)
                              (system-msg state :corp (str "uses Biased Reporting to gain " n " [Credits]")))
                            (effect-completed state side eid))))))}
 
@@ -287,7 +287,7 @@
    "Closed Accounts"
    {:req (req tagged)
     :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]")
-    :effect (effect (lose :runner :credit :all))}
+    :effect (effect (lose-credits :runner :all))}
 
    "Commercialization"
    {:msg (msg "gain " (:advance-counter target 0) " [Credits]")
@@ -318,7 +318,7 @@
 
    "Death and Taxes"
    (let [gain-cred-effect {:msg "gain 1 [Credits]"
-                           :effect (effect (gain :corp :credit 1))}]
+                           :effect (effect (gain-credits :corp 1))}]
      {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
       :events {:runner-install gain-cred-effect
                :runner-trash (assoc gain-cred-effect :req (req (installed? target)))}})
@@ -362,7 +362,7 @@
                         :cancel-effect (req (continue-ability state side shuffle-two card nil))}]
      {:delayed-completion true
       :msg "give The Runner 2 [Credits]"
-      :effect (effect (gain :runner :credit 2)
+      :effect (effect (gain-credits :runner 2)
                       (continue-ability trash-from-hq card nil))})
 
    "Diversified Portfolio"
@@ -383,7 +383,7 @@
    {:req (req (and (last-turn? state :runner :successful-run)
                    (can-pay? state :runner nil :credit 4)))
     :msg "make the runner lose 4 [Credits]"
-    :effect (effect (lose :runner :credit 4))}
+    :effect (effect (lose-credits :runner 4))}
 
    "Election Day"
    {:req (req (->> (get-in @state [:corp :hand])
@@ -490,13 +490,13 @@
                                                                                 (str "trashes " (:title target)
                                                                                      " to prevent Financial Collapse"))
                                                                     (clear-wait-prompt state :corp))}
-                                                      {:effect (effect (lose :runner :credit (* rcount 2))
+                                                      {:effect (effect (lose-credits :runner (* rcount 2))
                                                                        (clear-wait-prompt :corp))
                                                        :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")})
                                                    card nil))} card nil))
                      (continue-ability
                        state side
-                       {:effect (effect (lose :runner :credit (* rcount 2)))
+                       {:effect (effect (lose-credits :runner (* rcount 2)))
                         :msg (msg "make the Runner lose " (* rcount 2) " [Credits]")} card nil))))}
 
    "Foxfire"
@@ -731,7 +731,7 @@
                       :msg (msg "trash " (join ", " (map :title (sort-by :title targets))) " and gain " (* (count targets) 3) " [Credits]")
                       :effect (req (doseq [c targets]
                                      (trash state side c))
-                                   (gain state side :credit (* (count targets) 3)))}
+                                   (gain-credits state side (* (count targets) 3)))}
                     card nil)))}
 
    "Load Testing"
@@ -773,8 +773,8 @@
       :msg (msg (let [c (credit-diff runner)]
                   (str "make the runner lose " c " [Credits], and gain " c " [Credits]")))
       :effect (req (let [c (credit-diff runner)]
-                     (lose state :runner :credit c)
-                     (gain state :corp :credit c)))})
+                     (lose-credits state :runner c)
+                     (gain-credits state :corp c)))})
 
    "Mass Commercialization"
    {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
@@ -795,7 +795,7 @@
 
    "Medical Research Fundraiser"
    {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
-    :effect (effect (gain :credit 8) (gain :runner :credit 3))}
+    :effect (effect (gain-credits :credit 8) (gain :runner 3))}
 
    "Midseason Replacements"
    {:req (req (last-turn? state :runner :stole-agenda))
@@ -907,7 +907,7 @@
                                 :effect (effect (ice-strength-bonus 2 target))}}}
 
    "Paywall Implementation"
-   {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
+   {:events {:successful-run {:msg "gain 1 [Credits]" :effect (effect (gain-credits :corp 1))}}}
 
    "Peak Efficiency"
    {:msg (msg "gain " (reduce (fn [c server]
@@ -987,7 +987,7 @@
                    (trigger-event state side :pre-trash c)
                    (let [tcost (trash-cost state side c)]
                      (trash state side c)
-                     (gain state :corp :credit tcost)
+                     (gain-credits state :corp tcost)
                      (resolve-ability state side
                        {:msg (msg "trash " (card-str state c) " and gain " tcost " [Credits]")}
                       card nil)
@@ -1172,7 +1172,7 @@
     :choices ["Purge virus counters."
               "Gain 2 [Credits]"]
     :effect (req (if (= target "Gain 2 [Credits]")
-                   (do (gain state side :credit 2)
+                   (do (gain-credits state side 2)
                        (system-msg state side "uses Reverse Infection to gain 2 [Credits]"))
                    (let [pre-purge-virus (number-of-virus-counters state)]
                      (purge state side)
@@ -1197,7 +1197,7 @@
    {:msg "increase the play cost of operations and events by 1 [Credits]"
     :events {:play-event {:once :per-turn
                           :msg "gain 1 [Credits]"
-                          :effect (effect (gain :corp :credit 1))}
+                          :effect (effect (gain-credits :corp 1))}
              :pre-play-instant {:effect (effect (play-cost-bonus [:credit 1]))}}}
 
    "Rover Algorithm"
@@ -1218,7 +1218,7 @@
                                      (assoc card :zone '(:discard))))
     :events {:corp-forfeit-agenda {:effect (req (let [bplost (min (:agendapoints (last (:rfg corp))) (:bad-publicity corp))]
                                                   (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
-                                                                              (gain state side :credit bplost)
+                                                                              (gain-credits state side bplost)
                                                                               (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
                                                                           (system-msg state side "uses Sacrifice but gains no credits and loses no bad publicity"))
                                                   (effect-completed state side eid)
@@ -1377,7 +1377,7 @@
     :prompt "Choose a card type"
     :choices ["Event" "Hardware" "Program" "Resource"]
     :effect (req (let [n (* 2 (count (filter #(is-type? % target) (:hand runner))))]
-                   (gain state :corp :credit n)
+                   (gain-credits state :corp n)
                    (system-msg state side (str "uses Standard Procedure to name " target ", reveal "
                                                (join ", " (map :title (:hand runner)))
                                                " in the Runner's Grip, and gain " n " [Credits]"))))}
@@ -1485,7 +1485,7 @@
 
    "Targeted Marketing"
    (let [gaincr {:req (req (= (:title target) (:marketing-target card)))
-                 :effect (effect (gain :corp :credit 10))
+                 :effect (effect (gain-credits :corp 10))
                  :msg (msg "gain 10 [Credits] from " (:marketing-target card))}]
      {:prompt "Name a Runner card"
       :choices {:card-title (req (and (card-is? target :side "Runner")
@@ -1613,7 +1613,7 @@
 
    "Ultraviolet Clearance"
    {:delayed-completion true
-    :effect (req (gain state side :credit 10)
+    :effect (req (gain-credits state side 10)
                  (when-completed (draw state side 4 nil)
                                  (continue-ability state side
                                                    {:prompt "Choose a card in HQ to install"

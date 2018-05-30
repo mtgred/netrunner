@@ -136,7 +136,7 @@
                                                     (swap! state update-in [:runner :prompt] rest)
                                                     (close-access-prompt state side)
                                                     (handle-end-run state side)
-                                                    (gain state :corp :credit 5)
+                                                    (gain-credits state :corp 5)
                                                     (draw state :corp)
                                                     (system-msg state :corp (str "gains 5 [Credits] and draws 1 card. Black Level Clearance is trashed"))
                                                     (trash state side card)
@@ -365,7 +365,8 @@
    {:abilities [{:req (req this-server)
                  :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
                  :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
-                 :effect (effect (lose :runner :credit :all :run-credit :all))}]}
+                 :effect (effect (lose-credits :runner :all)
+                                 (lose :runner :run-credit :all))}]}
 
    "Helheim Servers"
    {:abilities [{:label "Trash 1 card from HQ: All ice protecting this server has +2 strength until the end of the run"
@@ -606,7 +607,7 @@
                      :silent (req true)
                      :effect (req (let [cnt (:cards-accessed run)
                                         total (* 2 cnt)]
-                                    (gain state :corp :credit total)
+                                    (gain-credits state :corp total)
                                     (system-msg state :corp
                                                 (str "gains " total " [Credits] from Mwanza City Grid"))))}]
      {:events {:pre-access {:req (req (and installed
@@ -780,7 +781,7 @@
    "Product Placement"
    {:flags {:rd-reveal (req true)}
     :access {:req (req (not= (first (:zone card)) :discard))
-             :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
+             :msg "gain 2 [Credits]" :effect (effect (gain-credits :corp 2))}}
 
    "Red Herrings"
    (let [ab {:req (req (or (in-same-server? card target)

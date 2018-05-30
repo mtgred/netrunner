@@ -18,7 +18,7 @@
                                                       :prompt "Use Acacia?"
                                                       :yes-ability {:effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
                                                                                                    (number-of-virus-counters state))]
-                                                                                   (gain state side :credit counters)
+                                                                                   (gain-credits state side counters)
                                                                                    (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
                                                                                    (trash state side card)
                                                                                    (clear-wait-prompt state :corp)
@@ -407,7 +407,7 @@
                  :req (req (and (not-empty (:hosted card))
                                 (pos? (get-in card [:counter :credit] 0))))
                  :counter-cost [:credit 1]
-                 :effect (req (gain state :runner :credit 1)
+                 :effect (req (gain-credits state :runner 1)
                               (system-msg state :runner "takes 1[Credits] from Flame-out")
                               (register-events
                                 state :runner
@@ -418,7 +418,7 @@
                  :req (req (and (not-empty (:hosted card))
                                 (pos? (get-in card [:counter :credit] 0))))
                  :effect (req (let [credits (get-in card [:counter :credit] 0)]
-                                (gain state :runner :credit credits)
+                                (gain-credits state :runner credits)
                                 (update! state :runner (dissoc-in card [:counter :credit]))
                                 (system-msg state :runner (str "takes " credits "[Credits] from Flame-out"))
                                 (register-events
@@ -1230,7 +1230,7 @@
    "Zamba"
    {:implementation "Credit gain is automatic"
     :in-play [:memory 2]
-    :events {:expose {:effect (effect (gain :runner :credit 1))
+    :events {:expose {:effect (effect (gain-credits :runner 1))
                       :msg "gain 1 [Credits]"}}}
 
    "Zer0"

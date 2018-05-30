@@ -90,7 +90,7 @@
                          :choices ["Draw 1 card" "Gain 1 [Credits]" "No action"]
                          :effect (req (case target
                                         "Gain 1 [Credits]"
-                                        (do (gain state :corp :credit 1)
+                                        (do (gain-credits state :corp 1)
                                             (system-msg state :corp (str "uses Advanced Concept Hopper to gain 1 [Credits]")))
                                         "Draw 1 card"
                                         (do (draw state :corp)
@@ -269,7 +269,7 @@
    "CFC Excavation Contract"
    {:effect (req (let [bios (count (filter #(has-subtype? % "Bioroid") (all-active-installed state :corp)))
                        bucks (* bios 2)]
-                   (gain state side :credit bucks)
+                   (gain-credits state side bucks)
                    (system-msg state side (str "gains " bucks " [Credits] from CFC Excavation Contract"))))}
 
    "Character Assassination"
@@ -302,7 +302,7 @@
 
    "Corporate Sales Team"
    (let [e {:effect (req (when (pos? (get-in card [:counter :credit] 0))
-                           (gain state :corp :credit 1)
+                           (gain-credits state :corp 1)
                            (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
                            (add-counter state side card :credit -1)))}]
      {:effect (effect (add-counter card :credit 10))
@@ -314,7 +314,7 @@
    {:msg (msg (if (> (:credit corp) 6) "gain 7 [Credits]" "lose all credits"))
     :interactive (req true)
     :effect (req (if (> (:credit corp) 6)
-                   (gain state :corp :credit 7) (lose state :corp :credit :all)))}
+                   (gain-credits state :corp 7) (lose-credits state :corp :all)))}
 
    "Crisis Management"
    (let [ability {:req (req tagged)
@@ -444,7 +444,7 @@
                              (continue-ability
                                {:optional {:prompt "Gain 5 [Credits] with Explode-a-palooza ability?"
                                            :yes-ability {:msg "gain 5 [Credits]"
-                                                         :effect (effect (gain :corp :credit 5)
+                                                         :effect (effect (gain-credits :corp 5)
                                                                          (clear-wait-prompt :runner))}
                                            :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
                                card nil))}}
@@ -617,16 +617,16 @@
                                      :effect (effect (gain-bad-publicity :corp 1))}}}
                      card nil)
                    (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
-                         (gain state side :credit n)
+                         (gain-credits state side n)
                          (system-msg state side (str "gains " n " [Credits] from Illicit Sales"))
                          (effect-completed state side eid)))))}
 
    "Improved Protein Source"
    {:msg "make the Runner gain 4 [Credits]"
-    :effect (effect (gain :runner :credit 4))
+    :effect (effect (gain-credits :runner 4))
     :interactive (req true)
     :stolen {:msg "make the Runner gain 4 [Credits]"
-             :effect (effect (gain :runner :credit 4))}}
+             :effect (effect (gain-credits :runner 4))}}
 
    "Improved Tracers"
    {:silent (req true)
@@ -719,7 +719,7 @@
                     ["Gain 7 [Credits]" "Do 7 meat damage" "No action"]))
     :effect (req (case target
                    "Gain 7 [Credits]"
-                   (do (gain state side :credit 7)
+                   (do (gain-credits state side 7)
                        (system-msg state side "uses Meteor Mining to gain 7 [Credits]")
                        (effect-completed state side eid))
                    "Do 7 meat damage"
@@ -756,7 +756,7 @@
    "Net Quarantine"
    (let [nq {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
                             (when (pos? extra)
-                              (gain state side :credit extra)
+                              (gain-credits state side extra)
                               (system-msg state :corp (str "uses Net Quarantine to gain " extra " [Credits]")))
                             (when (some? (get-in @state [:runner :temp-link]))
                               (swap! state assoc-in [:runner :link] (:temp-link runner))
@@ -847,7 +847,7 @@
     :effect (req (let [bp (:bad-publicity (:corp @state))]
                    (gain-bad-publicity state :corp eid (str->int target))
                    (if (< bp (:bad-publicity (:corp @state)))
-                     (gain state :corp :credit (* 5 (str->int target))))))}
+                     (gain-credits state :corp (* 5 (str->int target))))))}
 
    "Project Ares"
    (letfn [(trash-count-str [card]
@@ -1097,7 +1097,7 @@
                                     :prompt "Gain 3 [Credits] from SSL Endorsement?"
                                     :yes-ability
                                     {:effect (req (when (pos? (get-in card [:counter :credit] -1))
-                                                    (gain state :corp :credit 3)
+                                                    (gain-credits state :corp 3)
                                                     (system-msg state :corp (str "uses SSL Endorsement to gain 3 [Credits]"))
                                                     (add-counter state side card :credit -3)))}}}]
      {:effect add-credits
@@ -1114,7 +1114,7 @@
                                    (same-side? side (:side %)))}
               :cancel-effect (req (if (= side :runner)
                                     (do (draw state :corp)
-                                        (gain state :corp :credit 5)
+                                        (gain-credits state :corp 5)
                                         (clear-wait-prompt state :corp)
                                         (system-msg state :runner "declines to trash a card due to Standoff")
                                         (system-msg state :corp "draws a card and gains 5 [Credits] from Standoff")

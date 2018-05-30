@@ -260,7 +260,7 @@
                                   :req (req (and (has-subtype? current-ice "Code Gate")
                                                  (rezzed? current-ice)))
                                   :msg (msg "make the Corp lose 1 [Credits]")
-                                  :effect (effect (lose :corp :credit 1))}]})
+                                  :effect (effect (lose-credits :corp 1))}]})
 
    "Ankusa"
    (auto-icebreaker ["Barrier"]

@@ -504,8 +504,8 @@
     :events {:successful-run nil :run-ends nil}}
 
    "Chetana"
-   {:subroutines [{:msg "make each player gain 2 [Credits]" :effect (effect (gain :runner :credit 2)
-                                                                            (gain :corp :credit 2))}
+   {:subroutines [{:msg "make each player gain 2 [Credits]" :effect (effect (gain-credits :runner 2)
+                                                                            (gain-credits :corp 2))}
                   (do-psi {:label "Do 1 net damage for each card in the Runner's grip"
                            :effect (effect (damage eid :net (count (get-in @state [:runner :hand])) {:card card}))
                            :msg (msg (str "do " (count (get-in @state [:runner :hand])) " net damage"))})]}
@@ -720,7 +720,7 @@
    "DNA Tracker"
    {:subroutines [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
                    :effect (req (when-completed (damage state side :net 1 {:card card})
-                                                (lose state :runner :credit 2)))}]}
+                                                (lose-credits state :runner 2)))}]}
 
    "Dracō"
    {:prompt "How many power counters?"
@@ -864,7 +864,7 @@
    "Free Lunch"
    {:abilities [(power-counter-ability {:label "Runner loses 1 [Credits]"
                                         :msg "make the Runner lose 1 [Credits]"
-                                        :effect (effect (lose :runner :credit 1))})]
+                                        :effect (effect (lose-credits :runner 1))})]
     :subroutines [add-power-counter]}
 
    "Galahad"
@@ -1001,7 +1001,7 @@
      {:advanceable :always
       :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
                      :msg (msg "gain " (if (> (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 2) "4" "1") " [Credits]")
-                     :effect (effect (gain :corp :credit (if (> (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 2) 4 1)))}
+                     :effect (effect (gain-credits :corp (if (> (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 2) 4 1)))}
                     {:label "End the run (Search R&D for up to 2 cards and add them to HQ, shuffle R&D, end the run)"
                      :delayed-completion true
                      :effect (req (if (> (+ (:advance-counter card 0) (:extra-advance-counter card 0)) 2)
@@ -1113,7 +1113,7 @@
    {:abilities [{:label "Gain subroutines"
                  :msg (msg "gain " (:bad-publicity corp 0) " subroutines")}]
     :subroutines [{:msg "make the Runner lose 1 [Credits]"
-                   :effect (effect (lose :runner :credit 1))}]}
+                   :effect (effect (lose-credits :runner 1))}]}
 
    "Its a Trap!"
    {:expose {:msg "do 2 net damage"
@@ -1233,7 +1233,7 @@
 
    "Little Engine"
    {:subroutines [end-the-run
-                  {:msg "make the Runner gain 5 [Credits]" :effect (effect (gain :runner :credit 5))}]}
+                  {:msg "make the Runner gain 5 [Credits]" :effect (effect (gain-credits :runner 5))}]}
 
    "Lockdown"
    {:subroutines [{:label "The Runner cannot draw cards for the remainder of this turn"
@@ -1913,7 +1913,7 @@
 
    "Special Offer"
    {:subroutines [{:label "Gain 5 [Credits] and trash Special Offer"
-                   :effect (req (gain state :corp :credit 5)
+                   :effect (req (gain-credits state :corp 5)
                                 (when current-ice
                                   (no-action state side nil)
                                   (continue state side nil))
@@ -1984,7 +1984,7 @@
                   (trace-ability 4 {:label "Runner loses 1 [Credits] for each tag"
                                     :delayed-completion true
                                     :msg (msg "force the Runner to lose " (:tag runner) " [Credits]")
-                                    :effect (effect (lose :runner :credit (:tag runner)))})]}
+                                    :effect (effect (lose-credits :runner (:tag runner)))})]}
 
    "Tithonium"
    {:alternative-cost [:forfeit]
@@ -2051,7 +2051,7 @@
    "Turnpike"
    {:implementation "Encounter effect is manual"
     :abilities [{:msg "force the Runner to lose 1 [Credits]"
-                 :effect (effect (lose :runner :credit 1))}]
+                 :effect (effect (lose-credits :runner 1))}]
     :subroutines [(tag-trace 5)]}
 
    "Tyrant"
@@ -2064,18 +2064,19 @@
    {:subroutines [{:label "Force the Runner to lose credits"
                    :msg (msg "force the Runner to lose " (if tagged "all credits" "1 [Credits]"))
                    :effect (req (if tagged
-                                  (do (lose state :runner :credit :all :run-credit :all)
+                                  (do (lose-credits state :runner :all)
+                                      (lose state :runner :run-credit :all)
                                       (when current-ice
                                         (no-action state side nil)
                                         (continue state side nil))
                                       (trash state side card))
-                                  (lose state :runner :credit 1)))}]}
+                                  (lose-credits state :runner 1)))}]}
 
    "Upayoga"
    {:implementation "\"Resolve a subroutine...\" subroutine is not implemented"
     :subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"
                            :msg "make the Runner lose 2 [Credits]"
-                           :effect (effect (lose :runner :credit 2))})
+                           :effect (effect (lose-credits :runner 2))})
                   {:msg "resolve a subroutine on a piece of rezzed psi ICE"}]}
 
    "Uroboros"
@@ -2091,10 +2092,10 @@
    "Veritas"
    {:subroutines [{:label "Corp gains 2 [Credits]"
                    :msg "gain 2 [Credits]"
-                   :effect (effect (gain :corp :credit 2))}
+                   :effect (effect (gain-credits :corp 2))}
                   {:label "Runner loses 2 [Credits]"
                    :msg "force the Runner to lose 2 [Credits]"
-                   :effect (effect (lose :runner :credit 2))}
+                   :effect (effect (lose-credits :runner 2))}
                   (trace-ability 2 give-tag)]}
 
    "Vikram 1.0"
