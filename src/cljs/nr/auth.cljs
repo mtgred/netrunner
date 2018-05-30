@@ -84,65 +84,62 @@
      :else (handle-post event "/register" s)))
 
 (defn register-form []
-  (let [s (r/atom {:flash-message ""})]
-    (fn []
-      [:div#register-form.modal.fade {:ref "register-form"}
-       [:div.modal-dialog
-        [:h3 "Create an account"]
-        [:p.flash-message (:flash-message @s)]
-        [:form {:on-submit #(register % s)}
-         [:p [:input {:type "text" :placeholder "Email" :name "email" :ref "email" :value (:email @s)
-                      :on-change #(swap! s assoc :email (-> % .-target .-value))
-                      :on-blur #(when-not (valid-email? (.. % -target -value))
-                                  (swap! s assoc :flash-message "Please enter a valid email address"))}]]
-         [:p [:input {:type "text" :placeholder "Username" :name "username" :ref "username" :value (:username @s)
-                      :on-change #(swap! s assoc :username (-> % .-target .-value))
-                      :on-blur #(check-username (-> % .-target .-value) s) :maxLength "16"}]]
-         [:p [:input {:type "password" :placeholder "Password" :name "password" :ref "password"
-                      :value (:password @s) :on-change #(swap! s assoc :password (-> % .-target .-value))}]]
-         [:p [:button "Sign up"]
-          [:button {:data-dismiss "modal"} "Cancel"]]]
-        [:p "Already have an account? " \
-         [:span.fake-link {:on-click #(.modal (js/$ "#login-form") "show")
-                           :data-dismiss "modal"} "Log in"]]
-        [:p "Need to reset your password? "
-         [:span.fake-link {:on-click #(.modal (js/$ "#forgot-form") "show")
-                           :data-dismiss "modal"} "Reset"]]]])))
+  (r/with-let [s (r/atom {:flash-message ""})]
+    [:div#register-form.modal.fade {:ref "register-form"}
+     [:div.modal-dialog
+      [:h3 "Create an account"]
+      [:p.flash-message (:flash-message @s)]
+      [:form {:on-submit #(register % s)}
+       [:p [:input {:type "text" :placeholder "Email" :name "email" :ref "email" :value (:email @s)
+                    :on-change #(swap! s assoc :email (-> % .-target .-value))
+                    :on-blur #(when-not (valid-email? (.. % -target -value))
+                                (swap! s assoc :flash-message "Please enter a valid email address"))}]]
+       [:p [:input {:type "text" :placeholder "Username" :name "username" :ref "username" :value (:username @s)
+                    :on-change #(swap! s assoc :username (-> % .-target .-value))
+                    :on-blur #(check-username (-> % .-target .-value) s) :maxLength "16"}]]
+       [:p [:input {:type "password" :placeholder "Password" :name "password" :ref "password"
+                    :value (:password @s) :on-change #(swap! s assoc :password (-> % .-target .-value))}]]
+       [:p [:button "Sign up"]
+        [:button {:data-dismiss "modal"} "Cancel"]]]
+      [:p "Already have an account? " \
+       [:span.fake-link {:on-click #(.modal (js/$ "#login-form") "show")
+                         :data-dismiss "modal"} "Log in"]]
+      [:p "Need to reset your password? "
+       [:span.fake-link {:on-click #(.modal (js/$ "#forgot-form") "show")
+                         :data-dismiss "modal"} "Reset"]]]]))
 
 (defn forgot-form []
-  (let [s (r/atom {:flash-message ""})]
-    (fn []
-      [:div#forgot-form.modal.fade {:ref "forgot-form"}
-       [:div.modal-dialog
-        [:h3 "Reset your Password"]
-        [:p.flash-message (:flash-message @s)]
-        [:form {:on-submit #(handle-post % "/forgot" s)}
-         [:p [:input {:type "text" :placeholder "Email" :name "email"
-                      :on-blur #(check-email (-> % .-target .-value) s)}]]
-         [:p [:button "Submit"]
-          [:button {:data-dismiss "modal"} "Cancel"]]
-         [:p "No account? "
-          [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
-                            :data-dismiss "modal"} "Sign up!"]]]]])))
+  (r/with-let [s (r/atom {:flash-message ""})]
+    [:div#forgot-form.modal.fade {:ref "forgot-form"}
+     [:div.modal-dialog
+      [:h3 "Reset your Password"]
+      [:p.flash-message (:flash-message @s)]
+      [:form {:on-submit #(handle-post % "/forgot" s)}
+       [:p [:input {:type "text" :placeholder "Email" :name "email"
+                    :on-blur #(check-email (-> % .-target .-value) s)}]]
+       [:p [:button "Submit"]
+        [:button {:data-dismiss "modal"} "Cancel"]]
+       [:p "No account? "
+        [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
+                          :data-dismiss "modal"} "Sign up!"]]]]]))
 
 (defn login-form []
-  (let [s (r/atom {:flash-message ""})]
-    (fn []
-      [:div#login-form.modal.fade
-       [:div.modal-dialog
-        [:h3 "Log in"]
-        [:p.flash-message (:flash-message @s)]
-        [:form {:on-submit #(handle-post % "/login" s)}
-         [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
-         [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
-         [:p [:button "Log in"]
-          [:button {:data-dismiss "modal"} "Cancel"]]
-         [:p "No account? "
-          [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
-                            :data-dismiss "modal"} "Sign up!"]]
-         [:p "Forgot your password? "
-          [:span.fake-link {:on-click #(.modal (js/$ "#forgot-form") "show")
-                            :data-dismiss "modal"} "Reset"]]]]])))
+  (r/with-let [s (r/atom {:flash-message ""})]
+    [:div#login-form.modal.fade
+     [:div.modal-dialog
+      [:h3 "Log in"]
+      [:p.flash-message (:flash-message @s)]
+      [:form {:on-submit #(handle-post % "/login" s)}
+       [:p [:input {:type "text" :placeholder "Username" :name "username"}]]
+       [:p [:input {:type "password" :placeholder "Password" :name "password"}]]
+       [:p [:button "Log in"]
+        [:button {:data-dismiss "modal"} "Cancel"]]
+       [:p "No account? "
+        [:span.fake-link {:on-click #(.modal (js/$ "#register-form") "show")
+                          :data-dismiss "modal"} "Sign up!"]]
+       [:p "Forgot your password? "
+        [:span.fake-link {:on-click #(.modal (js/$ "#forgot-form") "show")
+                          :data-dismiss "modal"} "Reset"]]]]]))
 
 (defn auth-menu []
    (if-let [user (:user @app-state)]

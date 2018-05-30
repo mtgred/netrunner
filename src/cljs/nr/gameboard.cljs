@@ -1189,9 +1189,10 @@
       {:display-name "button-pane"
 
        ;;TODO fix... using r/track?
-       ;:component-did-update
-       ;(when-let [autocomp (get-in cursor [side :prompt 0 :choices :autocomplete])]
-       ;  (-> "#card-title" js/$ (.autocomplete (clj->js {"source" autocomp}))))
+       :component-did-update
+       (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
+         (when-let [autocomp (get-in cursor [side :prompt 0 :choices :autocomplete])]
+           (-> "#card-title" js/$ (.autocomplete (clj->js {"source" autocomp})))))
 
        :reagent-render
        (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
@@ -1490,3 +1491,4 @@
 ; 1st card into discard gives key error (corp)
 ; cards installing face up
 ; adv counters not showing on cards
+; aiuto correct in prompt

@@ -208,14 +208,13 @@
 (defn user-status-span
   "Returns a [:span] showing players game completion rate"
   [player]
-  (let [started (get-in player [:user :stats :games-started])
-        completed (get-in player [:user :stats :games-completed])
-        completion-rate (str (notnum->zero (num->percent completed started)) "%")
-        completion-rate (if (< started 10) "Too little data" completion-rate)]
-    (fn [player]
-      [:span.user-status (get-in player [:user :username])
-       [:div.status-tooltip.blue-shade
-        [:div "Game Completion Rate: " completion-rate]]])))
+  (r/with-let [started (get-in player [:user :stats :games-started])
+               completed (get-in player [:user :stats :games-completed])
+               completion-rate (str (notnum->zero (num->percent completed started)) "%")
+               completion-rate (if (< started 10) "Too little data" completion-rate)]
+    [:span.user-status (get-in player [:user :username])
+     [:div.status-tooltip.blue-shade
+      [:div "Game Completion Rate: " completion-rate]]]))
 
 (defn player-view [{:keys [player game] :as args}]
   [:span.player
@@ -277,54 +276,53 @@
             [:button "Send"]]]])})))
 
 (defn game-view [{:keys [title password started players gameid current-game password-game original-players editing] :as game}]
-  (let [s (r/atom {})
-        join (fn [action]
-              (let [password (:password password-game password)]
-                (if (empty? password)
-                  (join-game (if password-game (:gameid password-game) gameid) s action nil)
-                  (if-let [input-password (:password @s)]
-                    (join-game (if password-game (:gameid password-game) gameid) s action input-password)
-                    (do (swap! app-state assoc :password-gameid gameid) (swap! s assoc :prompt action))))))]
-      (fn [{:keys [title password started players gameid current-game password-game original-players editing] :as game}]
-        [:div.gameline {:class (when (= current-game gameid) "active")}
-         (when (and (:allowspectator game) (not (or password-game current-game editing)))
-           [:button {:on-click #(do (join "watch") (resume-sound))} "Watch" editing])
-         (when-not (or current-game editing (= (count players) 2) started password-game)
-           [:button {:on-click #(do (join "join") (resume-sound))} "Join"])
-         (when (and (not current-game) (not editing) started (not password-game)
-                    (some #(= % (get-in @app-state [:user :_id]))
-                          (map #(get-in % [:user :_id]) original-players)))
-           [:button {:on-click #(do (join "rejoin") (resume-sound))} "Rejoin"])
-         (let [c (count (:spectators game))]
-           [:h4 (str (when-not (empty? (:password game))
-                       "[PRIVATE] ")
-                     (:title game)
-                     (when (pos? c)
-                       (str  " (" c " spectator" (when (> c 1) "s") ")")))])
+  (r/with-let [s (r/atom {})
+                join (fn [action]
+                      (let [password (:password password-game password)]
+                        (if (empty? password)
+                          (join-game (if password-game (:gameid password-game) gameid) s action nil)
+                          (if-let [input-password (:password @s)]
+                            (join-game (if password-game (:gameid password-game) gameid) s action input-password)
+                            (do (swap! app-state assoc :password-gameid gameid) (swap! s assoc :prompt action))))))]
+      [:div.gameline {:class (when (= current-game gameid) "active")}
+       (when (and (:allowspectator game) (not (or password-game current-game editing)))
+         [:button {:on-click #(do (join "watch") (resume-sound))} "Watch" editing])
+       (when-not (or current-game editing (= (count players) 2) started password-game)
+         [:button {:on-click #(do (join "join") (resume-sound))} "Join"])
+       (when (and (not current-game) (not editing) started (not password-game)
+                  (some #(= % (get-in @app-state [:user :_id]))
+                        (map #(get-in % [:user :_id]) original-players)))
+         [:button {:on-click #(do (join "rejoin") (resume-sound))} "Rejoin"])
+       (let [c (count (:spectators game))]
+         [:h4 (str (when-not (empty? (:password game))
+                     "[PRIVATE] ")
+                   (:title game)
+                   (when (pos? c)
+                     (str  " (" c " spectator" (when (> c 1) "s") ")")))])
 
-         [:div (doall
-                 (for [player (map (fn [%] {:player % :game game}) (:players game))]
-                   ^{:key (-> player :player :user :_id)}
-                   [player-view player game]))]
+       [:div (doall
+               (for [player (map (fn [%] {:player % :game game}) (:players game))]
+                 ^{:key (-> player :player :user :_id)}
+                 [player-view player game]))]
 
-         (when-let [prompt (:prompt @s)]
-           [:div.password-prompt
-            [:h3 (str "Password for " (if password-game (:title password-game) title))]
-            [:p
-             [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
-                                 :type "password"
-                                 :value (:password @s) :placeholder "Password" :maxLength "30"}]]
-            [:p
-             [:button {:type "button" :on-click #(join prompt)}
-              prompt]
-             [:span.fake-link {:on-click #(do
-                                            (swap! app-state dissoc :password-gameid)
-                                            (swap! s assoc :prompt false)
-                                            (swap! s assoc :error-msg nil)
-                                            (swap! s assoc :password nil))}
-              "Cancel"]]
-            (when-let [error-msg (:error-msg @s)]
-              [:p.flash-message error-msg])])])))
+       (when-let [prompt (:prompt @s)]
+         [:div.password-prompt
+          [:h3 (str "Password for " (if password-game (:title password-game) title))]
+          [:p
+           [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
+                               :type "password"
+                               :value (:password @s) :placeholder "Password" :maxLength "30"}]]
+          [:p
+           [:button {:type "button" :on-click #(join prompt)}
+            prompt]
+           [:span.fake-link {:on-click #(do
+                                          (swap! app-state dissoc :password-gameid)
+                                          (swap! s assoc :prompt false)
+                                          (swap! s assoc :error-msg nil)
+                                          (swap! s assoc :password nil))}
+            "Cancel"]]
+          (when-let [error-msg (:error-msg @s)]
+            [:p.flash-message error-msg])])]))
 
 (defn- blocked-from-game
   "Remove games for which the user is blocked by one of the players"
@@ -365,17 +363,16 @@
 (defn- room-tab
   "Creates the room tab for the specified room"
   [user s games room room-name]
-  (let [room-games (r/track (fn [] (filter #(= room (:room %)) @games)))
-        filtered-games (r/track (fn [] (filter-blocked-games @user @room-games)))
-        closed-games (r/track (fn [] (count (filter #(:started %) @filtered-games))))
-        open-games (r/track (fn [] (- (count @filtered-games) @closed-games)))]
-    (fn [user s games room room-name]
-      [:span.roomtab
-       (if (= room (:current-room @s))
-         {:class "current"}
-         {:on-click #(swap! s assoc :current-room room)})
-       room-name " (" @open-games open-games-symbol " "
-       @closed-games closed-games-symbol ")"])))
+  (r/with-let [room-games (r/track (fn [] (filter #(= room (:room %)) @games)))
+               filtered-games (r/track (fn [] (filter-blocked-games @user @room-games)))
+               closed-games (r/track (fn [] (count (filter #(:started %) @filtered-games))))
+               open-games (r/track (fn [] (- (count @filtered-games) @closed-games)))]
+    [:span.roomtab
+     (if (= room (:current-room @s))
+       {:class "current"}
+       {:on-click #(swap! s assoc :current-room room)})
+     room-name " (" @open-games open-games-symbol " "
+     @closed-games closed-games-symbol ")"]))
 
 (defn- first-user?
   "Is this user the first user in the game?"
@@ -383,130 +380,129 @@
   (= (-> players first :user :_id) (:_id user)))
 
 (defn game-lobby []
-  (let [s (r/atom {:current-room "casual"})
-        decks (r/cursor app-state [:decks])
-        games (r/cursor app-state [:games])
-        gameid (r/cursor app-state [:gameid])
-        password-gameid (r/cursor app-state [:password-gameid])
-        sets (r/cursor app-state [:sets])
-        user (r/cursor app-state [:user])]
-    (fn []
-      [:div
-       [:div.lobby-bg]
-       [:div.container
-        [:div.lobby.panel.blue-shade
-         [:div.games
-          [:div.button-bar
-           (if (or @gameid (:editing @s))
-             [:button.float-left {:class "disabled"} "New game"]
-             [:button.float-left {:on-click #(do (new-game s)
-                                                 (resume-sound))} "New game"])
-           [:div.rooms
-            [room-tab user s games "competitive" "Competitive"]
-            [room-tab user s games "casual" "Casual"]]]
-          (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
-            [game-list user {:password-game password-game :editing (:editing @s)
-                             :games games :gameid gameid :current-room (:current-room @s)}])]
+  (r/with-let [s (r/atom {:current-room "casual"})
+                decks (r/cursor app-state [:decks])
+                games (r/cursor app-state [:games])
+                gameid (r/cursor app-state [:gameid])
+                password-gameid (r/cursor app-state [:password-gameid])
+                sets (r/cursor app-state [:sets])
+                user (r/cursor app-state [:user])]
+    [:div
+     [:div.lobby-bg]
+     [:div.container
+      [:div.lobby.panel.blue-shade
+       [:div.games
+        [:div.button-bar
+         (if (or @gameid (:editing @s))
+           [:button.float-left {:class "disabled"} "New game"]
+           [:button.float-left {:on-click #(do (new-game s)
+                                               (resume-sound))} "New game"])
+         [:div.rooms
+          [room-tab user s games "competitive" "Competitive"]
+          [room-tab user s games "casual" "Casual"]]]
+        (let [password-game (some #(when (= @password-gameid (:gameid %)) %) @games)]
+          [game-list user {:password-game password-game :editing (:editing @s)
+                           :games games :gameid gameid :current-room (:current-room @s)}])]
 
-         [:div.game-panel
-          ; this is the right hand panel in the lobby
-          (if (:editing @s)
-            [:div
-             [:div.button-bar
-              [:button {:type "button" :on-click #(create-game s)} "Create"]
-              [:button {:type "button" :on-click #(swap! s assoc :editing false)} "Cancel"]]
+       [:div.game-panel
+        ; this is the right hand panel in the lobby
+        (if (:editing @s)
+          [:div
+           [:div.button-bar
+            [:button {:type "button" :on-click #(create-game s)} "Create"]
+            [:button {:type "button" :on-click #(swap! s assoc :editing false)} "Cancel"]]
 
-             (when-let [flash-message (:flash-message @s)]
-               [:p.flash-message flash-message])
+           (when-let [flash-message (:flash-message @s)]
+             [:p.flash-message flash-message])
 
-             [:section
-              [:h3 "Title"]
-              [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
-                                  :value (:title @s) :placeholder "Title" :maxLength "100"}]]
+           [:section
+            [:h3 "Title"]
+            [:input.game-title {:on-change #(swap! s assoc :title (.. % -target -value))
+                                :value (:title @s) :placeholder "Title" :maxLength "100"}]]
 
-             [:section
-              [:h3 "Side"]
-              (doall
-                (for [option ["Corp" "Runner"]]
-                  ^{:key option}
-                  [:p
-                   [:label [:input {:type "radio"
-                                    :name "side"
-                                    :value option
-                                    :on-change #(swap! s assoc :side (.. % -target -value))
-                                    :checked (= (:side @s) option)}] option]]))]
-
-             [:section
-              [:h3 "Options"]
-              [:p
-               [:label
-                [:input {:type "checkbox" :checked (:allowspectator @s)
-                         :on-change #(swap! s assoc :allowspectator (.. % -target -checked))}]
-                "Allow spectators"]]
-              [:p
-               [:label
-                [:input {:type "checkbox" :checked (:spectatorhands @s)
-                         :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
-                         :disabled (not (:allowspectator @s))}]
-                "Make players' hidden information visible to spectators"]]
-              [:div {:style {:display (if (:spectatorhands @s) "block" "none")}}
-               [:p "This will reveal both players' hidden information to ALL spectators of your game, "
-                "including hand and face-down cards."]
-               [:p "We recommend using a password to prevent strangers from spoiling the game."]]
-              [:p
-               [:label
-                [:input {:type "checkbox" :checked (:private @s)
-                         :on-change #(let [checked (.. % -target -checked)]
-                                       (swap! s assoc :protected checked)
-                                       (when (not checked) (swap! s assoc :password "")))}]
-                "Password protected"]]
-              (when (:protected @s)
+           [:section
+            [:h3 "Side"]
+            (doall
+              (for [option ["Corp" "Runner"]]
+                ^{:key option}
                 [:p
-                 [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
-                                     :type "password"
-                                     :value (:password @s) :placeholder "Password" :maxLength "30"}]])]]
-            (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
-              (let [players (:players game)]
-                [:div
-                 [:div.button-bar
-                  (when (first-user? players @user)
-                    (if (every? :deck players)
-                      [:button {:on-click #(ws/ws-send! [:netrunner/start @gameid])} "Start"]
-                      [:button {:class "disabled"} "Start"]))
-                  [:button {:on-click #(leave-lobby s)} "Leave"]
-                  (when (first-user? players @user)
-                    [:button {:on-click #(ws/ws-send! [:lobby/swap @gameid])} "Swap sides"])]
-                 [:div.content
-                  [:h2 (:title game)]
-                  (when-not (every? :deck players)
-                    [:div.flash-message "Waiting players deck selection"])
-                  [:h3 "Players"]
-                  [:div.players
-                   (doall
-                     (for [player (:players game)]
-                       ^{:key (-> player :user :_id)}
-                       [:div
-                        [player-view {:player player}]
-                        (when-let [{:keys [_id name status] :as deck} (:deck player)]
-                          [:span {:class (:status status)}
-                           [:span.label
-                            (if (= (-> player :user :_id) (:_id @user))
-                              name
-                              "Deck selected")]])
-                        (when-let [deck (:deck player)]
-                          [:div.float-right [format-deck-status-span (:status deck) true false]])
-                        (when (= (-> player :user :_id) (:_id @user))
-                          [:span.fake-link.deck-load
-                           {:on-click #(reagent-modals/modal!
-                                         [deckselect-modal user {:games games :gameid gameid :sets sets :decks decks}])}
-                           "Select Deck"])
-                        ]))]
-                  (when (:allowspectator game)
-                    [:div.spectators
-                     (let [c (count (:spectators game))]
-                       [:h3 (str c " Spectator" (when (not= c 1) "s"))])
-                     (for [spectator (:spectators game)]
-                       ^{:key (-> spectator :user :_id)}
-                       [player-view {:player spectator}])])]
-                 [chat-view]])))]
-         [reagent-modals/modal-window]]]])))
+                 [:label [:input {:type "radio"
+                                  :name "side"
+                                  :value option
+                                  :on-change #(swap! s assoc :side (.. % -target -value))
+                                  :checked (= (:side @s) option)}] option]]))]
+
+           [:section
+            [:h3 "Options"]
+            [:p
+             [:label
+              [:input {:type "checkbox" :checked (:allowspectator @s)
+                       :on-change #(swap! s assoc :allowspectator (.. % -target -checked))}]
+              "Allow spectators"]]
+            [:p
+             [:label
+              [:input {:type "checkbox" :checked (:spectatorhands @s)
+                       :on-change #(swap! s assoc :spectatorhands (.. % -target -checked))
+                       :disabled (not (:allowspectator @s))}]
+              "Make players' hidden information visible to spectators"]]
+            [:div {:style {:display (if (:spectatorhands @s) "block" "none")}}
+             [:p "This will reveal both players' hidden information to ALL spectators of your game, "
+              "including hand and face-down cards."]
+             [:p "We recommend using a password to prevent strangers from spoiling the game."]]
+            [:p
+             [:label
+              [:input {:type "checkbox" :checked (:private @s)
+                       :on-change #(let [checked (.. % -target -checked)]
+                                     (swap! s assoc :protected checked)
+                                     (when (not checked) (swap! s assoc :password "")))}]
+              "Password protected"]]
+            (when (:protected @s)
+              [:p
+               [:input.game-title {:on-change #(swap! s assoc :password (.. % -target -value))
+                                   :type "password"
+                                   :value (:password @s) :placeholder "Password" :maxLength "30"}]])]]
+          (when-let [game (some #(when (= @gameid (:gameid %)) %) @games)]
+            (let [players (:players game)]
+              [:div
+               [:div.button-bar
+                (when (first-user? players @user)
+                  (if (every? :deck players)
+                    [:button {:on-click #(ws/ws-send! [:netrunner/start @gameid])} "Start"]
+                    [:button {:class "disabled"} "Start"]))
+                [:button {:on-click #(leave-lobby s)} "Leave"]
+                (when (first-user? players @user)
+                  [:button {:on-click #(ws/ws-send! [:lobby/swap @gameid])} "Swap sides"])]
+               [:div.content
+                [:h2 (:title game)]
+                (when-not (every? :deck players)
+                  [:div.flash-message "Waiting players deck selection"])
+                [:h3 "Players"]
+                [:div.players
+                 (doall
+                   (for [player (:players game)]
+                     ^{:key (-> player :user :_id)}
+                     [:div
+                      [player-view {:player player}]
+                      (when-let [{:keys [_id name status] :as deck} (:deck player)]
+                        [:span {:class (:status status)}
+                         [:span.label
+                          (if (= (-> player :user :_id) (:_id @user))
+                            name
+                            "Deck selected")]])
+                      (when-let [deck (:deck player)]
+                        [:div.float-right [format-deck-status-span (:status deck) true false]])
+                      (when (= (-> player :user :_id) (:_id @user))
+                        [:span.fake-link.deck-load
+                         {:on-click #(reagent-modals/modal!
+                                       [deckselect-modal user {:games games :gameid gameid :sets sets :decks decks}])}
+                         "Select Deck"])
+                      ]))]
+                (when (:allowspectator game)
+                  [:div.spectators
+                   (let [c (count (:spectators game))]
+                     [:h3 (str c " Spectator" (when (not= c 1) "s"))])
+                   (for [spectator (:spectators game)]
+                     ^{:key (-> spectator :user :_id)}
+                     [player-view {:player spectator}])])]
+               [chat-view]])))]
+       [reagent-modals/modal-window]]]]))

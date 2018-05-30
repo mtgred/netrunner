@@ -8,9 +8,9 @@
             [jinteki.decks :as decks]
             [jinteki.utils :refer [str->int INFINITY] :as utils]
             [nr.account :refer [load-alt-arts]]
-            [nr.auth :refer [authenticated] :as auth]
             [nr.ajax :refer [DELETE GET POST PUT]]
             [nr.appstate :refer [app-state]]
+            [nr.auth :refer [authenticated] :as auth]
             [nr.cardbrowser :refer [card-view cards-channel expand-alts filter-title image-url show-alt-art? ] :as cb]
             [nr.utils :refer [alliance-dots banned-span dots-html influence-dot influence-dots make-dots restricted-span rotated-span]]
             [reagent.core :as r]))
@@ -262,7 +262,6 @@
   (swap! s assoc :delete false)
   (-> (:viewport @s) js/$ (.removeClass "delete")))
 
-;; TODO wtf is transact!
 (defn handle-delete [s]
   (authenticated
     (fn [user]
@@ -437,7 +436,6 @@
         (swap! s assoc :query "")
         (-> ".deckedit .lookup" js/$ .select)))))
 
-;; TODO what state is passed by parent? have 2x s here.  Do we need first prop at all? not used
 (defn card-lookup []
   (let [s (r/atom {:query ""
                    :matches []
@@ -605,7 +603,6 @@
                                        :else (conj rest (assoc existing-line :qty new-qty)))]
                    (swap! s assoc-in [:deck :cards] new-cards)
                    (deck->str s)))))
-         ;; TODO can replace this with r/track
          (go (while true
                (let [deck (<! select-channel)]
                  (end-delete s)
@@ -739,6 +736,4 @@
       (load-alt-arts)
       (>! cards-channel cards)))
 
-;; TODO
-;
-; :key inn card view for id on left
+; not working - id missing
