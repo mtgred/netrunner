@@ -577,14 +577,20 @@
 
 (defn init-trace
   [state side card {:keys [base priority] :as trace}]
-  (trigger-event state :corp :pre-init-trace card)
-  (let [trace (merge trace {:player (determine-initiator state trace)
-                            :other (if (= :corp (determine-initiator state trace)) :runner :corp)
-                            :base (if (fn? base) (base state :corp (make-eid state) card nil) base)
-                            :bonus (get-in @state [:bonus :trace] 0)
-                            :link (get-in @state [:runner :link] 0)
-                            :priority (or priority 2)})]
-    (trace-start state side card trace)))
+  (when-completed (trigger-event-sync state :corp :pre-init-trace card)
+                  (let [force-base (get-in @state [:trace :force-base])
+                        base (cond force-base force-base
+                                   (fn? base) (base state :corp (make-eid state) card nil)
+                                   :else base)
+                        trace (merge trace {:player (determine-initiator state trace)
+                                            :other (if (= :corp (determine-initiator state trace)) :runner :corp)
+                                            :base base
+                                            :bonus (get-in @state [:bonus :trace] 0)
+                                            :link (get-in @state [:runner :link] 0)
+                                            :priority (or priority 2)})]
+                    (when force-base
+                      (swap! state dissoc-in [:trace :force-base]))
+                    (trace-start state side card trace))))
 
 (defn rfg-and-shuffle-rd-effect
   ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))

@@ -178,6 +178,25 @@
         (is (= 4 (core/available-mu state)) "0 MU used")
         (is (= 6 (:current-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
 
+(deftest disrupter
+  ;; Disrupter
+  (do-game
+    (new-game (default-corp [(qty "SEA Source" 2)])
+              (default-runner ["Disrupter"]))
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (play-from-hand state :runner "Disrupter")
+    (take-credits state :runner)
+    (play-from-hand state :corp "SEA Source")
+    (prompt-choice :runner "Yes")
+    (is (zero? (-> (get-corp) :prompt first :base)) "Base trace should now be 0")
+    (is (= 1 (-> (get-runner) :discard count)) "Disrupter should be in Heap")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (zero? (:tag (get-runner))) "Runner should gain no tag from beating trace")
+    (play-from-hand state :corp "SEA Source")
+    (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be reset to 3")))
+
 (deftest diwan
   ;; Diwan - Full test
   (do-game
