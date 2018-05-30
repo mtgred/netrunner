@@ -410,7 +410,7 @@
       (card-ability state :corp slee 1)
       (is (= 5 (count (:discard (get-runner)))) "Chief Slee should do 5 meat damage"))))
 
-(deftest ci-fund
+(deftest c.i.-fund
   ;; C.I. Fund
   (do-game
     (new-game (default-corp ["C.I. Fund" "Hedge Fund"])
@@ -926,7 +926,7 @@
     (prompt-choice :runner "Yes")
     (is (= 2 (:brain-damage (get-runner))) "Runner did not take brain damage when no ICE protected Edge of World")))
 
-(deftest elizas-toybox
+(deftest eliza's-toybox
   ;; Eliza's Toybox - Rez a card ignoring all costs
   (do-game
     (new-game (default-corp ["Eliza's Toybox" "Wotan" "Archer"])
@@ -971,24 +971,6 @@
       (is (= 1 (count (:discard (get-runner)))) "Earthrise trashed")
       (is (= 1 (count (:discard (get-corp)))) "Elizabeth Mills trashed")
       (is (= 1 (:bad-publicity (get-corp))) "1 bad publicity taken from trashing a location"))))
-
-(deftest elizas-toybox
-  ;; Eliza's Toybox - Rez a card ignoring all costs
-  (do-game
-    (new-game (default-corp ["Eliza's Toybox" "Wotan"])
-              (default-runner))
-    (core/gain state :corp :click 2)
-    (play-from-hand state :corp "Wotan" "R&D")
-    (play-from-hand state :corp "Eliza's Toybox" "New remote")
-    (let [wotan (get-ice state :rd 0)
-          eliza (get-content state :remote1 0)]
-      (core/rez state :corp eliza)
-      (is (= 1 (:credit (get-corp))))
-      (card-ability state :corp eliza 0)
-      (prompt-select :corp wotan)
-      (is (:rezzed (refresh wotan)))
-      (is (zero? (:click (get-corp))) "3 clicks spent")
-      (is (= 1 (:credit (get-corp))) "No credits spent"))))
 
 (deftest encryption-protocol
   ;; Encryption Protocol - Trash cost of installed cards increased by 1
@@ -1943,7 +1925,7 @@
         (prompt-choice :corp 8)
         (is (= (+ credits 8) (:credit (get-corp))) "Corp should gain 8 credits from Long-Term Investment ability")))))
 
-(deftest malia-z0l0ka
+(deftest malia-z0l0k4
   ;; Malia Z0L0K4 - blank an installed non-virtual runner resource
   (do-game
    (new-game (default-corp [(qty "Malia Z0L0K4" 2)
@@ -2100,7 +2082,7 @@
       (card-ability state :corp (refresh mca) 1)
       (is (= 5 (:click (get-corp)))))))
 
-(deftest melange-mining-corp
+(deftest melange-mining-corp.
   ;; Melange Mining Corp.
   (do-game
     (new-game (default-corp ["Melange Mining Corp."])
@@ -2129,7 +2111,7 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit at start of turn"))))
 
-(deftest mr-stone
+(deftest mr.-stone
   ;; Mr Stone
   (do-game
     (new-game (default-corp ["Mr. Stone"])
@@ -2173,7 +2155,7 @@
       (prompt-choice :corp "Sure Gamble")
       (is (= 3 (-> (get-runner) :discard count)) "Runner should have discarded all cards from Salem's Hospitality"))))
 
-(deftest mumbad-construction-co
+(deftest mumbad-construction-co.
   ;; Mumbad Construction Co.
   (do-game
     (new-game (default-corp ["Mumbad Construction Co."
@@ -3083,7 +3065,7 @@
         (is (= (- credits 1) (:credit (get-corp))) "Shattered Remains ability should cost 1")
         (is (count (:discard (get-runner))) "Cyberfeeder should be in discard from Shattered Remains")))))
 
-(deftest shi-kyu
+(deftest shi.kyu
   ;; Shi.Kyū
   (do-game
     (new-game (default-corp ["Shi.Kyū"])
@@ -3105,7 +3087,7 @@
     (is (empty? (-> (get-runner) :prompt)) "Runner shouldn't get the option to trash Shi.Kyū as it was added to agenda area")
     (is (= -1 (:agenda-point (get-runner))) "Runner should be at -1 agenda points after adding Shi.Kyū to agenda area")))
 
-(deftest shock
+(deftest shock!
   ;; Shock! - do 1 net damage on access
   (testing "Basic test"
     (do-game
@@ -3132,7 +3114,7 @@
       (is (= 2 (count (:discard (get-corp)))) "Hiro and Shock still in archives")
       (is (zero? (count (:scored (get-runner)))) "Hiro not scored by Runner"))))
 
-(deftest snare
+(deftest snare!
   (testing "Basic test"
     ;; pay 4 on access, and do 3 net damage and give 1 tag
     (do-game
@@ -3368,6 +3350,25 @@
       (core/score state :corp {:card (get-content state :remote1 1)})
       (prompt-choice :corp "Done")
       (is (= 7 (:agenda-point (get-corp))) "Scored 5 points in one turn"))))
+
+(deftest tech-startup
+  ;; Tech Startup
+  (do-game
+    (new-game (default-corp ["Tech Startup" "TechnoCo" (qty "Ice Wall" 10)])
+              (default-runner))
+    (starting-hand state :corp ["Tech Startup"])
+    (play-from-hand state :corp "Tech Startup" "New remote")
+    (let [tech (get-content state :remote1 0)]
+      (core/rez state :corp (refresh tech))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (zero? (-> (get-corp) :discard count)) "Corp should start with 0 cards in Archives")
+      (card-ability state :corp tech 0)
+      (prompt-card :corp (find-card "TechnoCo" (:deck (get-corp))))
+      (prompt-choice :corp "New remote")
+      (is (= "TechnoCo" (:title (get-content state :remote2 0)))
+          "TechnoCo should be installed in a new remote from Tech Startup's ability")
+      (is (= 1 (-> (get-corp) :discard count)) "Tech Startup should now be in discard"))))
 
 (deftest technoco
   ;; TechnoCo - Increase program / hardware / virtual cost by 1 and gain 1 when they are installed
