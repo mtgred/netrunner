@@ -43,7 +43,7 @@
   (.replace text (js/RegExp. symbol "gi") (str "<span class='anr-icon " class "'></span>")))
 
 (defn show-alt-art?
-  "Is the current user allowed to use alternate art cards and do they want to see them?"
+  "Is the current user allowed to use alternate art cards and do they want to see them? "
   []
   (and
     (get-in @app-state [:options :show-alt-art] true)
@@ -128,7 +128,6 @@
       (non-game-toast "Updated Art" "success" nil))
     (non-game-toast "Failed to Update Art" "error" nil)))
 
-;; TODO selected alts need s
 (defn selected-alt-art [card]
   (let [code (keyword (:code card))
         alt-card (get (:alt-arts @app-state) (name code) nil)
@@ -144,7 +143,6 @@
                 (not (keyword? card-art))) true
            :else false))))
 
-;; TODO what should we send to profile update. do we need s
 (defn select-alt-art [card]
   (when-let [art (:art card)]
     (let [code (keyword (:code card))
@@ -155,7 +153,6 @@
       (swap! app-state assoc-in [:options :alt-arts] new-alts)
       (nr.account/post-options "/profile" (partial post-response)))))
 
-; TODO make this not give react :key error
 (defn- card-text
   "Generate text html representation a card"
   [card]
@@ -301,9 +298,8 @@
   (let [cv (r/atom {:showText false})]
     (fn [card s]
       [:div.card-preview.blue-shade
-       ;; TODO highlight if selected ?
        (when (:decorate-card @s)
-         {:class (cond (:selected card) "selected"
+         {:class (cond (= (:selected-card @s) card) "selected"
                        (selected-alt-art card) "selected-alt")})
        (if (:showText @cv)
          (card-text card)
@@ -315,40 +311,32 @@
                   :onError #(-> (swap! cv assoc :showText true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
-;; TODO look at the other stuff from originl OM build all passing in
-;; TODO search odd.. Biotic labour not found after "Bio"
-;{:key-fn #(str (:setname %) (:code %) (:art %))
-; :fn #(assoc % :selected (and (= (:setname %) (:setname (:selected-card state)))
-;                              (= (:code %) (:code (:selected-card state)))
-;                              (= (:art %) (:art (:selected-card state)))))
-; :state {:cursor cursor :decorate-card true}
-(defn card-list-view [s]
-  [:div.card-list {:on-scroll #(handle-scroll % s)}
-   (let [selected (selected-set-name s)
-         cycle-sets (set (for [x selected :when (= (:cycle x) selected)] (:name x)))
-         cards (cond
-                 (= selected "All") @all-cards
-                 (= selected "Alt Art") (filter-alt-art-cards @all-cards)
-                 :else
-                 (if (= (.indexOf (:set-filter @s) "Cycle") -1)
-                   (filter #(= (:setname %) selected) @all-cards)
-                   (filter #(cycle-sets (:setname %)) @all-cards)))
-         cards (->> cards
-                    (filter-cards (:side-filter @s) :side)
-                    (filter-cards (:faction-filter @s) :faction)
-                    (filter-cards (:type-filter @s) :type)
-                    (filter-rotated (:hide-rotated @s))
-                    (filter-title (:search-query @s))
-                    (insert-alt-arts)
-                    (sort-by (sort-field (:sort-field @s)))
-                    (take (* (:page @s) 28)))]
+(defn card-list-view [s _]
+  (let [selected (selected-set-name s)
+        cycle-sets (set (for [x selected :when (= (:cycle x) selected)] (:name x)))
+        cards (cond
+                (= selected "All") @all-cards
+                (= selected "Alt Art") (filter-alt-art-cards @all-cards)
+                :else
+                (if (= (.indexOf (:set-filter @s) "Cycle") -1)
+                  (filter #(= (:setname %) selected) @all-cards)
+                  (filter #(cycle-sets (:setname %)) @all-cards)))
+        cards (->> cards
+                   (filter-cards (:side-filter @s) :side)
+                   (filter-cards (:faction-filter @s) :faction)
+                   (filter-cards (:type-filter @s) :type)
+                   (filter-rotated (:hide-rotated @s))
+                   (filter-title (:search-query @s))
+                   (insert-alt-arts)
+                   (sort-by (sort-field (:sort-field @s)))
+                   (take (* (:page @s) 28)))]
+    [:div.card-list {:on-scroll #(handle-scroll % s)}
      (doall
        (for [card cards]
-         ^{:key (:code card)}
-         [card-view card s])))])
+         ^{:key (or (:alt-art card) (:code card))}
+         [card-view card s]))]))
 
-;; TODO filtering not working
-(defn card-browser [{:keys [sets cycles]}]
+(defn card-browser []
   (let [s (r/atom {:search-query ""
                    :sort-field "Faction"
                    :sort-filter "All"
@@ -358,22 +346,16 @@
                    :faction-filter "All"
                    :hide-rotated true
                    :page 1
-                   :filter-ch (chan)
-                   :selected-card nil})]
+                   :decorate-card true
+                   :selected-card nil})
+        sets (r/cursor app-state [:sets])
+        cycles (r/cursor app-state [:cycles])]
 
     (r/create-class
       {:display-name "card-browser"
 
-       :component-will-mount
-       (fn []
-         (go (while true
-               (let [f (<! (:filter-ch @s))]
-                 ;; TODO check this does what i think..
-                 (swap! s assoc-in [(:filter f)] (:value f))))))
-
        :reagent-render
-       (fn [{:keys [sets cycles]}]
-         ; TODO check this still works
+       (fn []
          (.focus (js/$ ".search"))
          [:div.cardbrowser [:div.blue-shade.panel.filters
                             (let [query (:search-query @s)]
@@ -394,13 +376,13 @@
                              ]
 
                             (let [hide-rotated (:hide-rotated @s)
-                                  cycles-filtered (filter-rotated hide-rotated cycles)
+                                  cycles-filtered (filter-rotated hide-rotated @cycles)
                                   cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
                                                                  :cycle_position (:position %)
                                                                  :position 0)
                                                        cycles-filtered)
                                   cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
-                                  sets-filtered (filter-rotated hide-rotated sets)
+                                  sets-filtered (filter-rotated hide-rotated @sets)
                                   ;; Draft is specified as a cycle, but contains no set, nor is it marked as a bigbox
                                   ;; so we handled it specifically here for formatting purposes
                                   sets-list (map #(if (not (or (:bigbox %) (= (:name %) "Draft")))
@@ -411,18 +393,18 @@
                                                  (sort-by (juxt :cycle_position :position)
                                                           (concat cycles-list sets-list)))]
                               (doall
-                                (for [filter [["Set" :set-filter (if (show-alt-art?)
-                                                                   (concat set-names (list "Alt Art"))
-                                                                   set-names)]
-                                              ["Side" :side-filter ["Corp" "Runner"]]
-                                              ["Faction" :faction-filter (factions (:side-filter @s))]
-                                              ["Type" :type-filter (types (:side-filter @s))]]]
-                                  ^{:key (second filter)}
+                                (for [[title key f] [["Set" :set-filter (if (show-alt-art?)
+                                                                          (concat set-names (list "Alt Art"))
+                                                                          set-names)]
+                                                     ["Side" :side-filter ["Corp" "Runner"]]
+                                                     ["Faction" :faction-filter (factions (:side-filter @s))]
+                                                     ["Type" :type-filter (types (:side-filter @s))]]]
+                                  ^{:key title}
                                   [:div
-                                   [:h4 (first filter)]
-                                   [:select {:value ((second filter) @s)
-                                             :on-change #(swap! s assoc-in (second filter) (.. % -target -value))}
-                                    (options (last filter))]])))
+                                   [:h4 title]
+                                   [:select {:value (key @s)
+                                             :on-change #(swap! s assoc key (.. % -target -value))}
+                                    (options f)]])))
 
                             [:div.hide-rotated-div
                              [:label [:input.hide-rotated {:type "checkbox"
@@ -436,14 +418,6 @@
                             [card-info-view s]
                             ]
 
-          [card-list-view s]])})))
+          [card-list-view s @all-cards]])})))
 
-; TODO key error
-;Warning: Each child in an array or iterator should have a unique "key" prop.;
-;
-;Check the render method of `nr.cardbrowser.card_list_view`. See https://fb.me/react-warning-keys for more information.
-;in nr.cardbrowser.card_view (created by nr.cardbrowser.card_list_view)
-;in nr.cardbrowser.card_list_view (created by card-browser)
-;in div (created by card-browser)
-;in card-browser (created by nr.cardbrowser.card_browser)
-;in nr.cardbrowser.card_browser
+; alt art not loading

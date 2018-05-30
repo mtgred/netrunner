@@ -35,15 +35,15 @@
               (swap! app-state assoc :stats result)))))))
 
 (defn stat-view [{:keys [start-key complete-key win-key lose-key stats]}]
-  (let [started (notnum->zero (start-key stats))
-        completed (notnum->zero (complete-key stats))
-        pc (notnum->zero (num->percent completed started))
-        win (notnum->zero (win-key stats))
-        lose (notnum->zero (lose-key stats))
-        pw (notnum->zero (num->percent win (+ win lose)))
-        pl (notnum->zero (num->percent lose (+ win lose)))
-        incomplete (notnum->zero (- started completed))
-        pi (notnum->zero (num->percent incomplete started))]
+  (r/with-let [started (notnum->zero (start-key stats))
+               completed (notnum->zero (complete-key stats))
+               pc (notnum->zero (num->percent completed started))
+               win (notnum->zero (win-key stats))
+               lose (notnum->zero (lose-key stats))
+               pw (notnum->zero (num->percent win (+ win lose)))
+               pl (notnum->zero (num->percent lose (+ win lose)))
+               incomplete (notnum->zero (- started completed))
+               pi (notnum->zero (num->percent incomplete started))]
     [:section
      [:div "Started: " started]
      [:div "Completed: " completed " (" pc "%)"]

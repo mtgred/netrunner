@@ -1,6 +1,7 @@
 (ns jinteki.cards)
 
-(defonce all-cards (atom {}))
+(defonce all-cards #?(:clj (atom {})
+                      :cljs (reagent.core/atom {})))
 
 (defonce mwl (atom []))
 

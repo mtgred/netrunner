@@ -8,8 +8,7 @@
             [nr.gameboard :refer [card-preview-mouse-over card-preview-mouse-out get-message-parts create-span card-zoom] :as gameboard]
             [nr.utils :refer [toastr-options]]
             [nr.ws :as ws]
-            [reagent.core :as r]
-            [reagent.impl.component :refer [extract-props]]))
+            [reagent.core :as r]))
 
 (declare fetch-messages)
 
@@ -144,7 +143,7 @@
                    :scrolling false})
         old (atom {:prev-msg-count 0}) ; old is not a r/atom so we don't render when this is updated
         cards-loaded (r/cursor app-state [:cards-loaded])
-        user (r/cursor app-state [:useer])]
+        user (r/cursor app-state [:user])]
 
     (r/create-class
       {:display-name "chat"

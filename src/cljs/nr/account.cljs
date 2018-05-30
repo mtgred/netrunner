@@ -7,6 +7,8 @@
             [nr.auth :refer [avatar] :as auth]
             [nr.appstate :refer [app-state]]
             [nr.ajax :refer [POST GET PUT]]
+            [nr.appstate :refer [app-state]]
+            [nr.auth :refer [avatar] :as auth]
             [reagent.core :as r]))
 
 (def alt-arts-channel (chan))
@@ -137,14 +139,15 @@
                    :background (get-in @app-state [:options :background])
                    :sounds (get-in @app-state [:options :sounds])
                    :show-alt-art (get-in @app-state [:options :show-alt-art])
+                   :all-art-select ""
                    :volume (get-in @app-state [:options :sounds-volume])
                    :gamestats (get-in @app-state [:options :gamestats])
                    :deckstats (get-in @app-state [:options :deckstats])
                    :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
     (go (while true 
           (let [cards (<! alt-arts-channel) 
-                first-alt (first (sort-by :title (vals cards)))] 
-            (swap! s assoc-in [:alt-arts] (get-in @app-state [:options :alt-arts])) 
+                first-alt (first (sort-by :title (vals cards)))]
+            (swap! s assoc-in [:alt-arts] (get-in @app-state [:options :alt-arts]))
             (swap! s assoc-in [:alt-card] (:code first-alt)) 
             (swap! s assoc-in [:alt-card-version] 
                    (get-in @app-state [:options :alt-arts (keyword (:code first-alt))]
@@ -228,41 +231,41 @@
                             :on-change #(swap! s assoc-in [:show-alt-art] (.. % -target -checked))}]
             "Show alternate card arts"]]
 
-          ;; TODO this @app-state will cause a lot of re-rendering as it is a ratom
           (when (and (:special @user) (:alt-arts @app-state))
             [:div {:id "my-alt-art"}
              [:h4 "My alternate card arts"]
-             [:select {:on-change #(select-card (.. % -target -value) s)}
-              (for [card (sort-by :title (vals (:alt-arts @app-state)))]
-                [:option {:value (:code card)} (:title card)])]
+             [:select {:value "" :on-change #(select-card (.. % -target -value) s)}
+              (doall (for [card (sort-by :title (vals (:alt-arts @app-state)))] ^{:key (:code card)}
+                [:option {:value (:code card)} (:title card)]))]
 
              [:div {:class "alt-art-group"}
-              (for [version (conj (keys (get-in (:alt-arts @app-state) [(:alt-card @s) :alt_art])) :default)]
-                (let [curr-alt (:alt-card @s)
-                      url (image-url curr-alt version)
-                      alt (get (:alt-arts @app-state) curr-alt)]
-                  [:div
-                   [:div
-                    [:div [:label [:input {:type "radio"
-                                           :name "alt-art-radio"
-                                           :value (name version)
-                                           :on-change #(set-card-art (.. % -target -value) s)
-                                           :checked (= (:alt-card-version @s) (name version))}]
-                           (alt-art-name version)]]]
-                   [:div
-                    [:img {:class "alt-art-select"
-                           :src url
-                           :alt (str (:title alt) " (" (alt-art-name version) ")")
-                           :on-click #(set-card-art (name version) s)
-                           :onError #(-> % .-target js/$ .hide)
-                           :onLoad #(-> % .-target js/$ .show)}]]]))]
+              (doall (for [version (conj (keys (get-in (:alt-arts @app-state) [(:alt-card @s) :alt_art])) :default)]
+                       (let [curr-alt (:alt-card @s)
+                             url (image-url curr-alt version)
+                             alt (get (:alt-arts @app-state) curr-alt)]
+                         [:div {:key version}
+                          [:div
+                           [:div [:label [:input {:type "radio"
+                                                  :key version
+                                                  :name "alt-art-radio"
+                                                  :value (name version)
+                                                  :on-change #(set-card-art (.. % -target -value) s)
+                                                  :checked (= (:alt-card-version @s) (name version))}]
+                                 (alt-art-name version)]]]
+                          [:div
+                           [:img {:class "alt-art-select"
+                                  :src url
+                                  :alt (str (:title alt) " (" (alt-art-name version) ")")
+                                  :on-click #(set-card-art (name version) s)
+                                  :onError #(-> % .-target js/$ .hide)
+                                  :onLoad #(-> % .-target js/$ .show)}]]])))]
              [:div {:id "set-all"}
               "Set all cards to: "
               [:select {:ref "all-art-select"
                         :value (:all-art-select @s)
                         :on-change #(swap! s assoc-in [:all-art-select] (-> % .-target .-value))}
-               (for [t (all-alt-art-types)]
-                 [:option {:value t} (alt-art-name t)])]
+               (doall (for [t (all-alt-art-types)]
+                        [:option {:value t :key t} (alt-art-name t)]))]
               [:button
                {:type "button"
                 :on-click #(do (reset-card-art s)
@@ -290,11 +293,11 @@
                                     :name "block-user-button"
                                     :on-click #(add-user-to-block-list user s)}
             "Block user"]]
-          (for [bu (:blocked-users @s)]
-            [:div.line
+          (doall (for [bu (:blocked-users @s)]
+            [:div.line {:key bu}
              [:button.small.unblock-user {:type "button"
                                           :on-click #(remove-user-from-block-list % s)} "X" ]
-             [:span.blocked-user-name (str "  " bu)]])]
+             [:span.blocked-user-name (str "  " bu)]]))]
 
          [:p
           [:button "Update Profile"]
@@ -303,3 +306,4 @@
 (defn account [user]
   (when @user
     [account-view user]))
+

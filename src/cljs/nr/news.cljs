@@ -10,7 +10,7 @@
 (go (swap! news-state assoc :news (:json (<! (GET "/data/news")))))
 
 (defn news []
-  (let [news (r/cursor news-state [:news])]
+  (r/with-let [news (r/cursor news-state [:news])]
     [:div.news-box.panel.blue-shade
      [:ul.list
       (doall
