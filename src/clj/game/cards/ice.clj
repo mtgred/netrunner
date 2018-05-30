@@ -69,7 +69,7 @@
   [base]
   (trace-ability base give-tag))
 
-(defn gain-credits
+(defn gain-credits-sub
   "Gain specified amount of credits"
   [credits]
   {:label (str "Gain " credits " [Credits]")
@@ -307,7 +307,7 @@
 
    "Archer"
    {:additional-cost [:forfeit]
-    :subroutines [(gain-credits 2)
+    :subroutines [(gain-credits-sub 2)
                   trash-program
                   end-the-run]}
 
@@ -354,12 +354,12 @@
                         :delayed-completion true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to Bypass it")
                                      (tag-runner state :runner eid 1 {:unpreventable true}))}]
-    :subroutines [(gain-credits 2)
+    :subroutines [(gain-credits-sub 2)
                   end-the-run]}
 
    "Bailiff"
    {:implementation "Gain credit is manual"
-    :abilities [(gain-credits 1)]
+    :abilities [(gain-credits-sub 1)]
     :subroutines [end-the-run]}
 
    "Bandwidth"
@@ -477,7 +477,7 @@
                                                         :label "Force the Runner to trash a program"))]}
 
    "Caduceus"
-   {:subroutines [(trace-ability 3 (gain-credits 3))
+   {:subroutines [(trace-ability 3 (gain-credits-sub 3))
                   (trace-ability 2 end-the-run)]}
 
    "Cell Portal"
@@ -773,7 +773,7 @@
                   end-the-run]}
 
    "Errand Boy"
-   {:subroutines [(gain-credits 1)
+   {:subroutines [(gain-credits-sub 1)
                   {:msg "draw 1 card" :effect (effect (draw))}]}
 
    "Excalibur"
@@ -952,7 +952,7 @@
 
    "Herald"
    {:flags {:rd-reveal (req true)}
-    :subroutines [(gain-credits 2)
+    :subroutines [(gain-credits-sub 2)
                   {:label "Pay 1 [Credits] to place 1 advancement token on a card that can be advanced"
                    :msg (msg "place 1 advancement token on " (card-str state target))
                    :choices {:req can-be-advanced?}
@@ -1501,7 +1501,7 @@
    (space-ice trash-program)
 
    "Negotiator"
-   {:subroutines [(gain-credits 2)
+   {:subroutines [(gain-credits-sub 2)
                   trash-program]
     :runner-abilities [(runner-break [:credit 2] 1)]}
 
@@ -1634,7 +1634,7 @@
 
    "Pop-up Window"
    {:implementation "Encounter effect is manual. Runner choice is not implemented"
-    :abilities [(gain-credits 1)]
+    :abilities [(gain-credits-sub 1)]
     :subroutines [end-the-run]
     :runner-abilities [(runner-pay [:credit 1] 1)]}
 
@@ -1843,7 +1843,7 @@
 
    "Shadow"
    {:advanceable :always
-    :subroutines [(gain-credits 2)
+    :subroutines [(gain-credits-sub 2)
                   (tag-trace 3)]
     :strength-bonus advance-counters}
 

@@ -1535,6 +1535,33 @@
    (card-ability state :runner (get-resource state 0) 0)
    (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
 
+(deftest pad-tap
+  ;; PAD Tap
+  (do-game
+    (new-game (default-corp ["Melange Mining Corp."])
+              (default-runner ["PAD Tap"]))
+    (play-from-hand state :corp "Melange Mining Corp." "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "PAD Tap")
+    (let [mel (get-content state :remote1 0)
+          tap (get-resource state 0)]
+      (take-credits state :runner)
+      (let [credits (:credit (get-runner))]
+        (core/click-credit state :corp nil)
+        (is (= credits (:credit (get-runner))) "Runner shouldn't gain PAD Tap credits from clicking for a credit")
+        (take-credits state :runner))
+      (let [credits (:credit (get-runner))]
+        (core/rez state :corp mel)
+        (card-ability state :corp mel 0)
+        (is (= (+ credits 1) (:credit (get-runner))) "Runner should gain 1 credit from PAD Tap triggering from Melange Mining Corp. ability"))
+      (take-credits state :runner)
+      (is (zero? (-> (get-runner) :discard count)) "Runner should have 0 cards in Heap")
+      (let [credits (:credit (get-corp))
+            clicks (:click (get-corp))]
+        (card-ability state :corp tap 0)
+        (is (= (- credits 3) (:credit (get-corp))) "PAD Tap ability should cost Corp 3 credits")
+        (is (= (- clicks 1) (:click (get-corp))) "PAD Tap ability should cost Corp 1 click")))))
+
 (deftest paige-piper-frantic-coding
   ;; Paige Piper - interaction with Frantic Coding. Issue #2190.
   (do-game

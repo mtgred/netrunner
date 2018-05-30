@@ -1285,10 +1285,14 @@
     :leave-play (req (remove-watch state :order-of-sol))}
 
    "PAD Tap"
-   {:events {
-             }
-    :abilities [{:label "Trash PAD Tap"
-                 }]}
+   {:events {:corp-credit-gain
+             {:req (req (not= target :corp-click-credit))
+              :once :per-turn
+              :effect (effect (gain-credits :runner 1))}}
+    :abilities [{:label "[Corp]: Trash PAD Tap"
+                 :cost [:credit 3 :click 1]
+                 :req (req (= :corp side))
+                 :effect (effect (trash :corp card))}]}
 
    "Paige Piper"
    (let [pphelper (fn [title cards]
