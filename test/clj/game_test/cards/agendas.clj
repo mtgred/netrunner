@@ -2055,6 +2055,81 @@
       (prompt-choice :runner 0)
       (is (= 1 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability"))))
 
+(deftest self-destruct-chips
+  ;; Self-Destruct Chips
+  (do-game
+    (new-game (default-corp ["Self-Destruct Chips"])
+              (default-runner))
+    (is (= 5 (get-hand-size :runner)) "Runner's hand size starts at 5")
+    (play-and-score state "Self-Destruct Chips")
+    (is (= 4 (get-hand-size :runner)) "By scoring Self-Destruct Chips, Runner's hand size is reduced by 1")))
+
+(deftest sensor-net-activation
+  ;; Sensor Net Activation
+  (do-game
+    (new-game (default-corp [(qty "Sensor Net Activation" 2) "Enforcer 1.0" "Ash 2X3ZB9CY"])
+              (default-runner))
+    (play-from-hand state :corp "Enforcer 1.0" "HQ")
+    (play-and-score state "Sensor Net Activation")
+    (let [sna-scored (get-scored state :corp 0)
+          enf (get-ice state :hq 0)]
+      (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
+      (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should start derezzed")
+      (card-ability state :corp (refresh sna-scored) 0)
+      (prompt-select :corp enf)
+      (is (get-in (refresh enf) [:rezzed]) "Enforcer 1.0 should be rezzed")
+      (is (= 1 (count (:scored (get-corp)))) "Enforcer 1.0 should be rezzed without forfeiting agenda")
+      (take-credits state :corp)
+      (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should be derezzed"))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
+    (play-and-score state "Sensor Net Activation")
+    (let [sna-scored (get-scored state :corp 1)
+          ash (get-content state :remote2 0)]
+      (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
+      (is (not (get-in (refresh ash) [:rezzed])) "Ash should start derezzed")
+      (card-ability state :corp (refresh sna-scored) 0)
+      (prompt-select :corp ash)
+      (is (get-in (refresh ash) [:rezzed]) "Ash should be rezzed")
+      (take-credits state :corp)
+      (is (not (get-in (refresh ash) [:rezzed])) "Ash should be derezzed"))))
+
+(deftest sentinel-defense-program
+  ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented
+  (do-game
+    (new-game (default-corp ["Sentinel Defense Program" "Viktor 1.0"])
+              (default-runner ["Feedback Filter" (qty "Sure Gamble" 3)]))
+    (play-and-score state "Sentinel Defense Program")
+    (play-from-hand state :corp "Viktor 1.0" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (let [viktor (get-ice state :hq 0)
+          ff (get-hardware state 0)]
+      (run-on state "HQ")
+      (core/rez state :corp viktor)
+      (card-subroutine state :corp viktor 0)
+      (prompt-choice :runner "Done")  ;; Don't prevent the brain damage
+      (is (= 1 (count (:discard (get-runner)))))
+      (is (= 1 (:brain-damage (get-runner))))
+      (prompt-choice :runner "Done")  ;; So we take the net, but don't prevent it either
+      (is (= 2 (count (:discard (get-runner)))))
+      (card-subroutine state :corp viktor 0)
+      (card-ability state :runner ff 1)  ;; Prevent the brain damage this time
+      (prompt-choice :runner "Done")
+      (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
+      (is (= 1 (:brain-damage (get-runner)))))))
+
+(deftest show-of-force
+  ;; Show of Force
+  (do-game
+    (new-game (default-corp ["Show of Force"])
+              (default-runner))
+    (is (= 3 (count (:hand (get-runner)))) "Runner should start with 3 cards in hand")
+    (play-and-score state "Show of Force")
+    (is (= 1 (count (:hand (get-runner)))) "Runner should have 1 card in hand")
+    (is (= 2 (count (:discard (get-runner)))) "Runner should have discarded 2 cards")))
+
 (deftest ssl-endorsement
   ;; SSL Endorsement
   (testing "gain credits when in corp score area before turn begins"
@@ -2164,71 +2239,55 @@
       (take-credits state :runner)
       (is (empty? (:prompt (get-corp))) "Not prompted when out of money"))))
 
-(deftest sentinel-defense-program
-  ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented
-  (do-game
-    (new-game (default-corp ["Sentinel Defense Program" "Viktor 1.0"])
-              (default-runner ["Feedback Filter" (qty "Sure Gamble" 3)]))
-    (play-and-score state "Sentinel Defense Program")
-    (play-from-hand state :corp "Viktor 1.0" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Feedback Filter")
-    (let [viktor (get-ice state :hq 0)
-          ff (get-hardware state 0)]
-      (run-on state "HQ")
-      (core/rez state :corp viktor)
-      (card-subroutine state :corp viktor 0)
-      (prompt-choice :runner "Done")  ;; Don't prevent the brain damage
-      (is (= 1 (count (:discard (get-runner)))))
-      (is (= 1 (:brain-damage (get-runner))))
-      (prompt-choice :runner "Done")  ;; So we take the net, but don't prevent it either
-      (is (= 2 (count (:discard (get-runner)))))
-      (card-subroutine state :corp viktor 0)
-      (card-ability state :runner ff 1)  ;; Prevent the brain damage this time
-      (prompt-choice :runner "Done")
-      (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
-      (is (= 1 (:brain-damage (get-runner)))))))
-
-(deftest sensor-net-activation
-  ;; Sensor Net Activation
-  (do-game
-    (new-game (default-corp [(qty "Sensor Net Activation" 2) "Enforcer 1.0" "Ash 2X3ZB9CY"])
-              (default-runner))
-    (play-from-hand state :corp "Enforcer 1.0" "HQ")
-    (play-and-score state "Sensor Net Activation")
-    (let [sna-scored (get-scored state :corp 0)
-          enf (get-ice state :hq 0)]
-      (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
-      (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should start derezzed")
-      (card-ability state :corp (refresh sna-scored) 0)
-      (prompt-select :corp enf)
-      (is (get-in (refresh enf) [:rezzed]) "Enforcer 1.0 should be rezzed")
-      (is (= 1 (count (:scored (get-corp)))) "Enforcer 1.0 should be rezzed without forfeiting agenda")
+(deftest standoff
+  ;; Standoff
+  (testing "Runner declines first"
+    (do-game
+      (new-game (default-corp ["Standoff" "Ice Wall" "News Team"])
+                (default-runner ["Cache"]))
+      (starting-hand state :corp ["Standoff" "Ice Wall"])
+      (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should be derezzed"))
-    (take-credits state :corp)
-    (take-credits state :runner)
-    (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
-    (play-and-score state "Sensor Net Activation")
-    (let [sna-scored (get-scored state :corp 1)
-          ash (get-content state :remote2 0)]
-      (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
-      (is (not (get-in (refresh ash) [:rezzed])) "Ash should start derezzed")
-      (card-ability state :corp (refresh sna-scored) 0)
-      (prompt-select :corp ash)
-      (is (get-in (refresh ash) [:rezzed]) "Ash should be rezzed")
+      (play-from-hand state :runner "Cache")
+      (take-credits state :runner)
+      (play-and-score state "Standoff")
+      (starting-hand state :corp [])
+      (is (zero? (-> (get-runner) :discard count)) "Runner should have no cards in Heap")
+      (prompt-select :runner (get-program state 0))
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should now have 1 card in Heap")
+      (is (zero? (-> (get-corp) :discard count)) "Corp should have no cards in Archives")
+      (prompt-select :corp (get-ice state :hq 0))
+      (is (= 1 (-> (get-corp) :discard count)) "Corp should now have 1 card in Archives")
+      (is (zero? (-> (get-corp) :hand count)) "Corp should have no cards in hand")
+      (let [credits (:credit (get-corp))]
+        (prompt-choice :runner "Done")
+        (is (= (+ credits 5) (:credit (get-corp))) "Corp should gain 5 credits from Runner declining to trash an installed card")
+        (is (= 1 (-> (get-corp) :hand count)) "Corp should draw a card from Runner declining to trash an installed card"))))
+  (testing "Corp declines first"
+    (do-game
+      (new-game (default-corp ["Standoff" "Ice Wall" "News Team"])
+                (default-runner ["Cache" "Cache"]))
+      (starting-hand state :corp ["Standoff" "Ice Wall"])
+      (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (is (not (get-in (refresh ash) [:rezzed])) "Ash should be derezzed"))))
-
-(deftest show-of-force
-  ;; Show of Force
-  (do-game
-    (new-game (default-corp ["Show of Force"])
-              (default-runner))
-    (is (= 3 (count (:hand (get-runner)))) "Runner should start with 3 cards in hand")
-    (play-and-score state "Show of Force")
-    (is (= 1 (count (:hand (get-runner)))) "Runner should have 1 card in hand")
-    (is (= 2 (count (:discard (get-runner)))) "Runner should have discarded 2 cards")))
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (take-credits state :runner)
+      (play-and-score state "Standoff")
+      (starting-hand state :corp [])
+      (is (zero? (-> (get-runner) :discard count)) "Runner should have no cards in Heap")
+      (prompt-select :runner (get-program state 0))
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should now have 1 card in Heap")
+      (is (zero? (-> (get-corp) :discard count)) "Corp should have no cards in Archives")
+      (prompt-select :corp (get-ice state :hq 0))
+      (is (= 1 (-> (get-corp) :discard count)) "Corp should now have 1 card in Archives")
+      (is (zero? (-> (get-corp) :hand count)) "Corp should have no cards in hand")
+      (prompt-select :runner (get-program state 0))
+      (is (= 2 (-> (get-runner) :discard count)) "Runner should now have 2 cards in Heap")
+      (let [credits (:credit (get-corp))]
+        (prompt-choice :corp "Done")
+        (is (= credits (:credit (get-corp))) "Corp should gain no credits from declining to trash an installed card")
+        (is (zero? (-> (get-corp) :hand count)) "Corp should draw no cards from declining to trash an installed card")))))
 
 (deftest successful-field-test
   ;; Successful Field Test
