@@ -1284,6 +1284,12 @@
                                            (swap! state assoc-in [:per-turn (:cid card)] true))}}
     :leave-play (req (remove-watch state :order-of-sol))}
 
+   "PAD Tap"
+   {:events {
+             }
+    :abilities [{:label "Trash PAD Tap"
+                 }]}
+
    "Paige Piper"
    (let [pphelper (fn [title cards]
                     (let [num (count cards)]
@@ -1507,7 +1513,7 @@
    "Safety First"
    {:in-play [:hand-size {:mod -2}]
     :events {:runner-turn-ends {:delayed-completion true
-                                :effect (req (if (< (count (:hand runner)) (hand-size state :runner)) 
+                                :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
                                                (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
                                                    (draw state :runner eid 1 nil))
                                                (effect-completed state :runner eid card)))}}}

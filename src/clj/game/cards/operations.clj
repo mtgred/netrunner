@@ -95,7 +95,8 @@
    "Anonymous Tip"
    {:msg "draw 3 cards"
     :delayed-completion true
-    :effect (effect (draw eid 3 nil))}
+    :effect (req (prn "no u")
+                 (draw state side eid 3 nil))}
 
    "Archived Memories"
    {:effect (req (let [cid (:cid card)]
