@@ -1470,6 +1470,47 @@
     (is (zero? (get-counters (get-program state 0) :virus)) "Viruses purged from Datasucker")
     (is (= 2 (count (:discard (get-runner)))) "Two cards trashed from stack")))
 
+(deftest riot-suppression
+  ;; Riot Suppression - lose 3 clicks or take 1 brain damage
+  (testing "Take 1 brain damage"
+    (do-game
+      (new-game (default-corp ["Riot Suppression" "Adonis Campaign"])
+                (default-runner))
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Riot Suppression")
+      (is (empty? (:discard (get-runner))) "Runner discard is empty")
+      (is (zero? (:brain-damage (get-runner))) "Runner starts with no brain damage")
+      (prompt-choice-partial :runner "Yes")
+      (is (= 1 (count (:discard (get-runner)))) "1 card lost to brain damage")
+      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+      (is (= 1 (count (:discard (get-corp)))) "No corp cards trashed")
+      (is (= 1 (count (:rfg (get-corp)))) "Riot Suppestion removed from game")
+      (take-credits state :corp)
+      (is (= 4 (:click (get-runner))) "Runner has all clicks the following turn")))
+  (testing "Lose 3 clicks"
+    (do-game
+      (new-game (default-corp ["Riot Suppression" "Adonis Campaign"])
+                (default-runner))
+      (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Riot Suppression")
+      (is (empty? (:discard (get-runner))) "Runner discard is empty")
+      (is (zero? (:brain-damage (get-runner))) "Runner starts with no brain damage")
+      (prompt-choice-partial :runner "No")
+      (is (empty? (:discard (get-runner))) "Runner discard statys empty")
+      (is (zero? (:brain-damage (get-runner))) "Runner takes no brain damage")
+      (is (= 1 (count (:discard (get-corp)))) "No corp cards trashed")
+      (is (= 1 (count (:rfg (get-corp)))) "Riot Suppestion removed from game")
+      (take-credits state :corp)
+      (is (= 1 (:click (get-runner))) "Runner has 3 fewer clicks following turn"))))
+
 (deftest rolling-brownout
   ;; Rolling Brownout - Increase cost of events/operations by 1, gain 1c on first Runner event of turn
   (do-game
