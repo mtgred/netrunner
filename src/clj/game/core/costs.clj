@@ -217,21 +217,27 @@
       ;; amount is a map, merge-update map
       (map? amount)
       (doseq [[subtype amount] amount]
-        (swap! state update-in [side type subtype] (safe-inc-n amount)))
+        (swap! state update-in [side type subtype] (safe-inc-n amount))
+        (swap! state update-in [:stats side :gain type subtype] (fnil + 0) amount))
+    
       ;; Default cases for the types that expect a map
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})
 
       ;; Else assume amount is a number and try to increment type by it.
       :else
-      (swap! state update-in [side type] (safe-inc-n amount)))))
+      (do (swap! state update-in [side type] (safe-inc-n amount))
+          (swap! state update-in [:stats side :gain type] (fnil + 0) amount)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
     (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
     (if (= (last r) :all)
-      (swap! state assoc-in [side (first r)] 0)
-      (deduct state side r))))
+      (do (swap! state assoc-in [side (first r)] 0)
+          (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (get-in @state [side (first r)])))
+      (do (when (number? (second r))
+            (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (second r)))
+          (deduct state side r)))))
 
 (defn play-cost-bonus [state side costs]
   (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))

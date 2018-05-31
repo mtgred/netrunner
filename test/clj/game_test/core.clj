@@ -83,9 +83,11 @@
                                      :subroutine ability :targets targets})))
 
 (defn get-ice
-  "Get installed ice protecting server by position."
-  [state server pos]
-  (get-in @state [:corp :servers server :ices pos]))
+  "Get installed ice protecting server by position. If no pos, get all ice on the server."
+  ([state server]
+   (get-in @state [:corp :servers server :ices]))
+  ([state server pos]
+   (get-in @state [:corp :servers server :ices pos])))
 
 (defn get-content
   "Get card in a server by position. If no pos, get all cards in the server."

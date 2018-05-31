@@ -539,6 +539,19 @@
                                  (damage-prevent :meat 1)
                                  (damage-prevent :net 1))}]}
 
+   "Hippo"
+   {:implementation "Subroutine and first encounter requirements not enforced"
+    :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
+                 :req (req (and run
+                                (pos? (count run-ices))))
+                 :delayed-completion true
+                 :effect (req (let [ice (last run-ices)]
+                                (system-msg
+                                  state :runner
+                                  (str "removes Hippo from the game to trash " (card-str state ice)))
+                                (move state :runner card :rfg)
+                                (trash state :corp eid ice nil)))}]}
+
    "HQ Interface"
    {:in-play [:hq-access 1]}
 
