@@ -42,8 +42,8 @@
    "Another Day, Another Paycheck"
    {:events {:agenda-stolen
              {:trace {:base 0
-                      :unsuccessful {:effect (effect (gain :runner :credit
-                                                           (+ (:agenda-point runner) (:agenda-point corp))))
+                      :unsuccessful {:effect (effect (gain-credits
+                                                       :runner (+ (:agenda-point runner) (:agenda-point corp))))
                                      :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
