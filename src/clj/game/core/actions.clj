@@ -273,6 +273,14 @@
   [state side args]
   ((dynamic-abilities (:dynamic args)) state (keyword side) args))
 
+(defn play-corp-ability
+  "Triggers a runner card's corp-ability using its zero-based index into the card's card-def :corp-abilities vector."
+  [state side {:keys [card ability targets] :as args}]
+  (let [card (get-card state card)
+        cdef (card-def card)
+        ab (get-in cdef [:corp-abilities ability])]
+    (do-play-ability state side card ab targets)))
+
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
   [state side {:keys [card ability targets] :as args}]

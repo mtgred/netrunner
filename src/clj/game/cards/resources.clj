@@ -981,7 +981,7 @@
            :counter-added {:req (req (>= (get-in (get-card state card) [:counter :power] 0) 4))
                            :effect (effect (as-agenda :runner card 1))
                            :msg "add it to their score area as an agenda worth 1 agenda point"}}}
-                    
+
    "Keros Mcintyre"
    {:events
     {:derez
@@ -1309,11 +1309,10 @@
                                         :effect (effect (gain-credits :runner 1))}
                           :end-effect (effect (clear-wait-prompt :corp))}}
                         card nil))}}
-
-    :abilities [{:label "[Corp]: Trash PAD Tap"
-                 :cost [:credit 3 :click 1]
-                 :req (req (= :corp side))
-                 :effect (effect (trash :corp card))}]}
+    :corp-abilities [{:label "Trash PAD Tap"
+                      :cost [:credit 3 :click 1]
+                      :req (req (= :corp side))
+                      :effect (effect (trash :corp card))}]}
 
    "Paige Piper"
    (let [pphelper (fn [title cards]
