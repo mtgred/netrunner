@@ -806,21 +806,26 @@
       (take-credits state :corp)
       (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
       ;; play Diversion of Funds, use ability
-      (play-run-event state (first (:hand (get-runner))) :hq)
+      (play-from-hand state :runner "Diversion of Funds")
+      (run-successful state)
       (prompt-choice :runner "Replacement effect")
       (is (= 9 (:credit (get-runner))) "Runner netted 4 credits")
-      (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
+      (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")
+      (is (not (:run @state)) "Run finished")))
   (testing "Access"
     (do-game
       (new-game (default-corp) (default-runner [(qty "Diversion of Funds" 3)]))
       (take-credits state :corp) ; pass to runner's turn by taking credits
       (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
       ;; play Diversion, do not use ability
-      (play-run-event state (first (get-in @state [:runner :hand])) :hq)
-      (prompt-choice :runner "Access")
-      (is (zero? (:tag (get-runner))) "Runner did not take any tags")
+      (play-from-hand state :runner "Diversion of Funds")
+      (run-successful state)
+      (prompt-choice-partial :runner "Access")
+      (prompt-choice-partial :runner "No")
+      (is (empty? (:prompt (get-runner))) "Prompt is closed")
       (is (= 4 (:credit (get-runner))) "Runner is down a credit")
-      (is (= 8 (:credit (get-corp))) "Corp did not lose any credits"))))
+      (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")
+      (is (not (:run @state)) "Run finished"))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
