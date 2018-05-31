@@ -407,7 +407,7 @@
     :data {:counter {:credit 9}}
     :abilities [{:label "Take 1[Credits] from Flame-out"
                  :req (req (and (not-empty (:hosted card))
-                                (pos? (get-in card [:counter :credit] 0))))
+                                (pos? (get-counters card :credit))))
                  :counter-cost [:credit 1]
                  :effect (req (gain state :runner :credit 1)
                               (system-msg state :runner "takes 1[Credits] from Flame-out")
@@ -418,8 +418,8 @@
                                 (get-card state card)))}
                 {:label "Take all [Credits] from Flame-out"
                  :req (req (and (not-empty (:hosted card))
-                                (pos? (get-in card [:counter :credit] 0))))
-                 :effect (req (let [credits (get-in card [:counter :credit] 0)]
+                                (pos? (get-counters card :credit))))
+                 :effect (req (let [credits (get-counters card :credit)]
                                 (gain state :runner :credit credits)
                                 (update! state :runner (dissoc-in card [:counter :credit]))
                                 (system-msg state :runner (str "takes " credits "[Credits] from Flame-out"))

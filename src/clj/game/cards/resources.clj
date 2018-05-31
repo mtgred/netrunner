@@ -978,6 +978,17 @@
                  :effect (req (gain state side :credit (get-counters card :credit))
                               (add-counter state side card :credit (- (get-counters card :credit))))}]}
 
+ "Kasi String"
+ {:events {:run-ends {:req (req (and (first-event? state :runner :run-ends is-remote?)
+                                     (not (get-in @state [:run :did-steal]))
+                                     (get-in @state [:run :did-access])
+                                     (is-remote? (:server run))))
+                      :effect (effect (add-counter card :power 1))
+                      :msg "add a power counter to itself"}
+           :counter-added {:req (req (>= (get-counters (get-card state card) :power) 4))
+                           :effect (effect (as-agenda :runner card 1))
+                           :msg "add it to their score area as an agenda worth 1 agenda point"}}}
+
    "Keros Mcintyre"
    {:events
     {:derez
@@ -1449,14 +1460,44 @@
                  :delayed-completion true
                  :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
 
+   "Reclaim"
+   {:abilities
+    [{:label "Install a program, piece of hardware, or virtual resource from your Heap"
+      :cost [:click 1]
+      :req (req (not-empty (:hand runner)))
+      :prompt "Choose a card to trash"
+      :choices (req (cancellable (:hand runner) :sorted))
+      :delayed-completion true
+      :effect (req (when-completed
+                     (trash state :runner card {:cause :ability-cost})
+                     (when-completed
+                       (trash state :runner target {:unpreventable true})
+                       (continue-ability
+                         state :runner
+                         {:prompt "Choose a card to install"
+                          :choices (req (cancellable
+                                          (filter #(and (or (is-type? % "Program")
+                                                            (is-type? % "Hardware")
+                                                            (and (is-type? % "Resource")
+                                                                 (has-subtype? % "Virtual")))
+                                                        (can-pay? state :runner nil (:cost %)))
+                                                  (:discard runner))
+                                          :sorted))
+                          :msg (msg "install " (:title target) " from the Heap")
+                          :delayed-completion true
+                          :effect (req (runner-install state :runner eid target nil))}
+                         card nil))))}]}
+
    "Rolodex"
    {:delayed-completion true
     :msg "look at the top 5 cards of their Stack"
     :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their Stack")
                  (let [from (take 5 (:deck runner))]
                    (if (pos? (count from))
-                     (continue-ability state side (reorder-choice :runner :corp from '()
-                                                                  (count from) from) card nil)
+                     (continue-ability state side
+                                       (reorder-choice :runner :corp from '()
+                                                                  (count from) from)
+                                       card nil)
                      (do (clear-wait-prompt state :corp)
                          (effect-completed state side eid card)))))
     :trash-effect {:effect (effect (system-msg :runner (str "trashes "
@@ -1477,14 +1518,16 @@
                                 (resolve-ability state side
                                   {:prompt "Choose a non-virus program to install"
                                    :msg (req (if (not= target "No install")
-                                               (str "remove " t " from the game and install " (:title target) ", lowering its cost by " n)
+                                               (str "remove " t
+                                                    " from the game and install " (:title target)
+                                                    ", lowering its cost by " n)
                                                (str "shuffle their Stack")))
                                    :priority true
                                    :choices (req (cancellable
                                                    (conj (vec (sort-by :title (filter #(and (is-type? % "Program")
                                                                                             (not (has-subtype? % "Virus")))
                                                                                       (:deck runner))))
-                                                                       "No install")))
+                                                         "No install")))
                                    :effect (req (trigger-event state side :searched-stack nil)
                                                 (shuffle! state side :deck)
                                                 (when (not= target "No install")
@@ -1521,23 +1564,27 @@
 
    "Safety First"
    {:in-play [:hand-size {:mod -2}]
-    :events {:runner-turn-ends {:delayed-completion true
-                                :effect (req (if (< (count (:hand runner)) (hand-size state :runner)) 
-                                               (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
-                                                   (draw state :runner eid 1 nil))
-                                               (effect-completed state :runner eid card)))}}}
+    :events {:runner-turn-ends
+             {:delayed-completion true
+              :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
+                             (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
+                                 (draw state :runner eid 1 nil))
+                             (effect-completed state :runner eid card)))}}}
 
    "Salvaged Vanadis Armory"
    {:events {:damage
              {:effect (req (show-wait-prompt state :corp "Runner to use Salvaged Vanadis Armory")
-                           (resolve-ability state :runner
-                                            {:optional
-                                             {:prompt "Use Salvaged Vanadis Armory?"
-                                              :yes-ability {:msg (msg "force the Corp to trash the top " (get-turn-damage state :runner) " cards of R&D and trash itself")
-                                                            :effect (effect (mill :corp (get-turn-damage state :runner))
-                                                                            (clear-wait-prompt :corp)
-                                                                            (trash card {:unpreventable true}))}
-                                              :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                           (resolve-ability
+                             state :runner
+                             {:optional
+                              {:prompt "Use Salvaged Vanadis Armory?"
+                               :yes-ability {:msg (msg "force the Corp to trash the top "
+                                                       (get-turn-damage state :runner)
+                                                       " cards of R&D and trash itself")
+                                             :effect (effect (mill :corp (get-turn-damage state :runner))
+                                                             (clear-wait-prompt :corp)
+                                                             (trash card {:unpreventable true}))}
+                               :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                                             card nil))}}}
 
    "Salsette Slums"

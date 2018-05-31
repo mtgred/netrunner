@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs nil))
 
 (deftest minigame-prevent-netdmg-resourcetrash
   (testing "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
@@ -122,7 +122,7 @@
           (card-subroutine state :corp tur 0) ; end the run
           (play-from-hand state :runner "Emergency Shutdown")
           (prompt-select :runner tur)
-          (is (not (get-in (refresh tur) [:rezzed])) "Turing derezzed")
+          (is (not (:rezzed (refresh tur))) "Turing derezzed")
           (run-on state "Server 1") ; letting Runner in this time to use Caprice
           (core/rez state :corp cap)
           (run-continue state)

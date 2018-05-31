@@ -206,7 +206,7 @@
        (core/advance state :corp {:card (core/get-card state card)}))
      (is (= advancementcost (get-counters (core/get-card state card) :advancement)))
      (core/score state :corp {:card (core/get-card state card)})
-     (is (find-card title (get-in @state [:corp :scored]))))))
+     (is (find-card title (get-scored state :corp))))))
 
 (defn advance
   "Advance the given card."

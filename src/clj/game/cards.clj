@@ -206,7 +206,7 @@
   ([] (load-all-cards nil))
   ([path]
    (doall (pmap load-file
-                (->> (io/file (str "src/clj/game/cards" (when path (str "/" path))))
+                (->> (io/file (str "src/clj/game/cards" (when path (str "/" path ".clj"))))
                      (file-seq)
                      (filter #(.isFile %))
                      (map str))))))
@@ -231,4 +231,5 @@
                      (constantly
                        (merge cards
                               (do (load-all-cards path)
-                                  (get-card-defs path))))))))
+                                  (get-card-defs path))))))
+   'loaded))

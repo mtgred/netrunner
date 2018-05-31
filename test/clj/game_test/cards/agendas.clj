@@ -7,7 +7,8 @@
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "agendas"))
 
-(deftest fifteen-minutes
+(deftest ^{:card-title "15-minutes"}
+  fifteen-minutes
   ;; 15 Minutes - check if it works correctly from both sides
   (do-game
     (new-game (default-corp ["15 Minutes"])
@@ -165,7 +166,7 @@
       (card-ability state :corp as-scored 0)
       (is (last-log-contains? state "make the Runner trash") "Should only write to log"))))
 
-(deftest astro-script-token
+(deftest astroscript-pilot-program
   ;; AstroScript token placement
   (do-game
     (new-game (default-corp [(qty "AstroScript Pilot Program" 3) (qty "Ice Wall" 2)])
@@ -285,7 +286,7 @@
       (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
       (is (= 2 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
 
-(deftest brainrewiring
+(deftest brain-rewiring
   ;; Brain Rewiring
   (do-game
     (new-game (default-corp ["Brain Rewiring"])
@@ -492,7 +493,7 @@
       (prompt-select :runner ia)
       (prompt-select :runner an)
       (is (= 3 (:agenda-point (get-runner))) "Runner failed to steal Degree Mill")
-      (is (empty? (get-in @state [:runner :rig :resource])) "Degree Mill didn't remove installed cards")
+      (is (empty? (get-resource state)) "Degree Mill didn't remove installed cards")
       (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck"))
     (take-credits state :runner)
     ;; Checking if facedowns work as well
@@ -518,7 +519,7 @@
         (is (empty? (get-in (get-runner)  [:rig :facedown])) "Degree Mill didn't remove facedown cards")
         (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck")))))
 
-(deftest director-haas-pet-project
+(deftest director-haas'-pet-project
   ;; Director Haas' Pet Project
   (do-game
     (new-game (default-corp ["Director Haas' Pet Project"
@@ -694,41 +695,40 @@
 
 (deftest explode-a-palooza
   ;; Explode-a-palooza
-  (do-game
-    (new-game (default-corp ["Explode-a-palooza"])
-              (default-runner))
-    (play-from-hand state :corp "Explode-a-palooza" "New remote")
-    (take-credits state :corp)
-    (run-empty-server state :remote1)
-    (prompt-choice :runner "Access")
-    (prompt-choice :runner "Steal")
-    (prompt-choice :corp "Yes")
-    (is (= 12 (:credit (get-corp))) "Gained 5 credits")))
-
-(deftest explode-ttw
-  ;; Explode-a-palooza - Interaction with The Turning Wheel. Issue #1717.
-  (do-game
-    (new-game (default-corp [(qty "Explode-a-palooza" 3)])
-              (default-runner ["The Turning Wheel"]))
-    (starting-hand state :corp ["Explode-a-palooza" "Explode-a-palooza"])
-    (play-from-hand state :corp "Explode-a-palooza" "New remote")
-    (take-credits state :corp)
-    (play-from-hand state :runner "The Turning Wheel")
-    (run-empty-server state :remote1)
-    (prompt-choice :runner "Access")
-    (prompt-choice :corp "Yes")
-    (prompt-choice :runner "Steal")
-    (let [ttw (get-resource state 0)]
-      (is (zero? (get-counters (refresh ttw) :power)) "TTW did not gain counters")
-      (is (= 1 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
-      (is (= 12 (:credit (get-corp))) "Gained 5 credits")
-      (run-empty-server state :rd)
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Explode-a-palooza"])
+                (default-runner))
+      (play-from-hand state :corp "Explode-a-palooza" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (prompt-choice :runner "Access")
+      (prompt-choice :runner "Steal")
+      (prompt-choice :corp "Yes")
+      (is (= 12 (:credit (get-corp))) "Gained 5 credits")))
+  (testing "Interaction with The Turning Wheel. Issue #1717."
+    (do-game
+      (new-game (default-corp [(qty "Explode-a-palooza" 3)])
+                (default-runner ["The Turning Wheel"]))
+      (starting-hand state :corp ["Explode-a-palooza" "Explode-a-palooza"])
+      (play-from-hand state :corp "Explode-a-palooza" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (run-empty-server state :remote1)
       (prompt-choice :runner "Access")
       (prompt-choice :corp "Yes")
       (prompt-choice :runner "Steal")
-      (is (zero? (get-counters (refresh ttw) :power)) "TTW did not gain counters")
-      (is (= 2 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
-      (is (= 17 (:credit (get-corp))) "Gained 5 credits"))))
+      (let [ttw (get-resource state 0)]
+        (is (zero? (get-counters (refresh ttw) :power)) "TTW did not gain counters")
+        (is (= 1 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
+        (is (= 12 (:credit (get-corp))) "Gained 5 credits")
+        (run-empty-server state :rd)
+        (prompt-choice :runner "Access")
+        (prompt-choice :corp "Yes")
+        (prompt-choice :runner "Steal")
+        (is (zero? (get-counters (refresh ttw) :power)) "TTW did not gain counters")
+        (is (= 2 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
+        (is (= 17 (:credit (get-corp))) "Gained 5 credits")))))
 
 (deftest false-lead
   ;; False Lead
@@ -742,7 +742,7 @@
     (card-ability state :corp (get-scored state :corp 0) 0)
     (is (= 2 (:click (get-runner))) "Runner should lose 2 clicks from False Lead")))
 
-(deftest fetal-ai-damage
+(deftest fetal-ai
   ;; Fetal AI
   (testing "basic test"
     (do-game
@@ -1468,13 +1468,13 @@
         (prompt-choice :corp "Yes")
         (prompt-select :corp (find-card "Commercial Bankers Group" (:hand (get-corp)))))
       (is (= 4 (get-counters (refresh nc) :advancement)))
-      (is (not= :this-turn (get-in (get-content state :remote5 0) [:rezzed])))
+      (is (not= :this-turn (:rezzed (get-content state :remote5 0))))
       (let [credits (:credit (get-corp))]
         (advance state (refresh nc))
         (prompt-choice :corp "Yes")
         (prompt-select :corp (find-card "Commercial Bankers Group" (:hand (get-corp))))
         (is (= 5 (get-counters (refresh nc) :advancement)))
-        (is (= :this-turn (get-in (get-content state :remote6 0) [:rezzed])))
+        (is (= :this-turn (:rezzed (get-content state :remote6 0))))
         (is (= (dec credits) (:credit (get-corp))))))))
 
 (deftest next-wave-2
@@ -1493,7 +1493,7 @@
     (prompt-choice :corp "Yes")
     (is (= 1 (:brain-damage (get-runner))) "Runner should gain 1 brain damage")))
 
-(deftest nisei-mk-ii-step-43
+(deftest nisei-mk-ii
   ;; Nisei MK II - Remove hosted counter to ETR, check this works in 4.3
   (do-game
     (new-game (default-corp ["Nisei MK II"])
@@ -1517,7 +1517,7 @@
     (core/gain state :corp :click 3)
     (play-from-hand state :corp "Oaktown Renovation" "New remote")
     (let [oak (get-content state :remote1 0)]
-      (is (get-in (refresh oak) [:rezzed]) "Oaktown installed face up")
+      (is (:rezzed (refresh oak)) "Oaktown installed face up")
       (advance state oak)
       (is (= 6 (:credit (get-corp))) "Spent 1 credit to advance, gained 2 credits from Oaktown")
       (play-from-hand state :corp "Shipment from SanSan")
@@ -1613,7 +1613,7 @@
       (let [chip (get-hardware state 0)]
         (card-ability state :runner chip 0)
         (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner)))))
-      (let [smc (get-in @state [:runner :rig :program 1])]
+      (let [smc (get-program state 1)]
         (is (some? smc))
         (is (= (:title smc) "Self-modifying Code"))
         (is (= "Clone Chip" (:title (first (:discard (get-runner))))))))))
@@ -1669,7 +1669,7 @@
     (let [arc (get-ice state :hq 0)]
       (play-and-score state "Priority Requisition")
       (prompt-select :corp arc)
-      (is (get-in (refresh arc) [:rezzed])))))
+      (is (:rezzed (refresh arc))))))
 
 (deftest private-security-force
   ;; Private Security Force
@@ -2074,13 +2074,13 @@
     (let [sna-scored (get-scored state :corp 0)
           enf (get-ice state :hq 0)]
       (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
-      (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should start derezzed")
+      (is (not (:rezzed (refresh enf))) "Enforcer 1.0 should start derezzed")
       (card-ability state :corp (refresh sna-scored) 0)
       (prompt-select :corp enf)
-      (is (get-in (refresh enf) [:rezzed]) "Enforcer 1.0 should be rezzed")
+      (is (:rezzed (refresh enf)) "Enforcer 1.0 should be rezzed")
       (is (= 1 (count (:scored (get-corp)))) "Enforcer 1.0 should be rezzed without forfeiting agenda")
       (take-credits state :corp)
-      (is (not (get-in (refresh enf) [:rezzed])) "Enforcer 1.0 should be derezzed"))
+      (is (not (:rezzed (refresh enf))) "Enforcer 1.0 should be derezzed"))
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
@@ -2088,12 +2088,12 @@
     (let [sna-scored (get-scored state :corp 1)
           ash (get-content state :remote2 0)]
       (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
-      (is (not (get-in (refresh ash) [:rezzed])) "Ash should start derezzed")
+      (is (not (:rezzed (refresh ash))) "Ash should start derezzed")
       (card-ability state :corp (refresh sna-scored) 0)
       (prompt-select :corp ash)
-      (is (get-in (refresh ash) [:rezzed]) "Ash should be rezzed")
+      (is (:rezzed (refresh ash)) "Ash should be rezzed")
       (take-credits state :corp)
-      (is (not (get-in (refresh ash) [:rezzed])) "Ash should be derezzed"))))
+      (is (not (:rezzed (refresh ash))) "Ash should be derezzed"))))
 
 (deftest sentinel-defense-program
   ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented

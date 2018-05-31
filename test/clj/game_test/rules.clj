@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs nil))
 
 (deftest undo-turn
   (do-game
@@ -68,7 +68,7 @@
               (default-runner ["Gordian Blade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
-    (let [gord (get-in @state [:runner :rig :program 0])]
+    (let [gord (get-program state 0)]
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
       (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
@@ -84,20 +84,20 @@
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")
     (play-from-hand state :runner "Scheherazade")
-    (let [oca (get-in @state [:runner :rig :resource 1])
-          scheh (get-in @state [:runner :rig :program 0])]
+    (let [oca (get-resource state 1)
+          scheh (get-program state 0)]
       (card-ability state :runner scheh 0)
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= "Hivemind" (:title (first (:hosted (refresh scheh))))) "Hivemind hosted on Scheherazade")
       (play-from-hand state :runner "Kati Jones")
       (is (= 1 (:click (get-runner))) "Not charged a click")
-      (is (= 2 (count (get-in @state [:runner :rig :resource]))) "2nd copy of Kati couldn't install")
+      (is (= 2 (count (get-resource state))) "2nd copy of Kati couldn't install")
       (card-ability state :runner oca 0)
       (prompt-select :runner (find-card "Kati Jones" (:hand (get-runner))))
       (is (empty? (:hosted (refresh oca))) "2nd copy of Kati couldn't be hosted on OCA")
       (is (= 1 (:click (get-runner))) "Not charged a click")
       (play-from-hand state :runner "Hivemind")
-      (is (= 1 (count (get-in @state [:runner :rig :program]))) "2nd copy of Hivemind couldn't install")
+      (is (= 1 (count (get-program state))) "2nd copy of Hivemind couldn't install")
       (card-ability state :runner scheh 0)
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
@@ -110,7 +110,7 @@
               (default-runner ["Gordian Blade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
-    (let [gord (get-in @state [:runner :rig :program 0])]
+    (let [gord (get-program state 0)]
       (core/trash state :runner gord)
       (is (= 4 (core/available-mu state)) "Trashing the program restored MU"))))
 
@@ -153,10 +153,10 @@
     (play-from-hand state :runner "Off-Campus Apartment")
     (play-from-hand state :runner "Compromised Employee")
     (let [iwall (get-ice state :hq 0)
-          apt (get-in @state [:runner :rig :resource 0])]
+          apt (get-resource state 0)]
       (card-ability state :runner apt 1) ; use Off-Campus option to host an installed card
       (prompt-select :runner (find-card "Compromised Employee"
-                                        (get-in @state [:runner :rig :resource])))
+                                        (get-resource state)))
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
@@ -193,9 +193,9 @@
           rdiwall (get-ice state :rd 0)
           jh1 (get-content state :remote1 0)
           jh2 (get-content state :remote2 0)
-          corr (get-in @state [:runner :rig :program 0])
-          cchip (get-in @state [:runner :rig :hardware 0])
-          pap (get-in @state [:runner :rig :resource 0])]
+          corr (get-program state 0)
+          cchip (get-hardware state 0)
+          pap (get-resource state 0)]
       (core/rez state :corp hqiwall0)
       (core/rez state :corp jh1)
       (prompt-select :runner (refresh hqiwall0))
@@ -330,9 +330,9 @@
       (play-from-hand state :runner "Personal Workshop")
       (play-from-hand state :runner "Omni-drive")
       (take-credits state :corp)
-      (let [kn (get-in @state [:runner :rig :program 0])
-            pw (get-in @state [:runner :rig :resource 0])
-            od (get-in @state [:runner :rig :hardware 0])
+      (let [kn (get-program state 0)
+            pw (get-resource state 0)
+            od (get-hardware state 0)
             co (find-card "Corroder" (:hand (get-runner)))
             le (find-card "Leprechaun" (:hand (get-runner)))]
         (card-ability state :runner kn 0)

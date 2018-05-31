@@ -950,13 +950,12 @@
                   :delayed-completion true
                   :effect (req (gain state :corp :credit 2)
                                (when (zero? (get-counters (get-card state card) :credit))
-                                 (trash state :corp eid card nil)
+                                 (trash state :corp eid card {:unpreventable true})
                                  (effect-completed state :corp eid)))}]
      {:effect (effect (add-counter card :credit 8))
       :flags {:corp-phase-12 (req (= 2 (get-counters card :credit)))}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
-      :abilities [ability]
       :trash-effect {:req (req (= :servers (first (:previous-zone card))))
                      :delayed-completion true
                      :effect (effect (show-wait-prompt :runner "Corp to use Marilyn Campaign")

@@ -580,7 +580,7 @@
     (doseq [card (concat rig-cards hosted-on-ice)]
       (when (or (has-subtype? card "Virus")
                 (contains? (:counter card) :virus))
-        (add-counter state :runner card :virus (- (get-in card [:counter :virus] 0)))))
+        (add-counter state :runner card :virus (- (get-counters card :virus)))))
     (update-all-ice state side))
   (trigger-event state side :purge))
 

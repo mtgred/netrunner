@@ -213,7 +213,7 @@
   [state side card]
   (let [hiveminds (when (is-virus-program? card)
                     (filter #(= (:title %) "Hivemind") (all-active-installed state :runner)))]
-    (reduce + (map #(get-in % [:counter :virus] 0) (cons card hiveminds)))))
+    (reduce + (map #(get-counters % :virus) (cons card hiveminds)))))
 
 (defn count-virus-programs
   "Calculate the number of virus programs in play"
