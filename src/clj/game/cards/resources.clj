@@ -1297,14 +1297,16 @@
 
    "PAD Tap"
    {:events {:corp-credit-gain
-             {:req (req (not= target :corp-click-credit))
+             {:req (req (and (not= target :corp-click-credit)
+                             (= 1 (->> (turn-events state :corp :corp-credit-gain)
+                                       (remove #(= (first %) :corp-click-credit))
+                                       count))))
               :delayed-completion true
               :effect
               (effect (show-wait-prompt :corp "Runner to use PAD Tap")
                       (continue-ability :runner
                         {:optional
                          {:prompt "Gain 1[Credits] from PAD Tap?"
-                          :once :per-turn
                           :yes-ability {:msg "gain 1[Credits] from PAD Tap"
                                         :effect (effect (gain-credits :runner 1))}
                           :end-effect (effect (clear-wait-prompt :corp))}}

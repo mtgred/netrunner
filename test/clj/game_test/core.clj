@@ -73,14 +73,26 @@
   ([state side card ability] (card-ability state side card ability nil))
   ([state side card ability targets]
    (core/play-ability state side {:card (core/get-card state card)
-                                  :ability ability :targets targets})))
+                                  :ability ability
+                                  :targets targets})))
 
 (defn card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."
   ([state side card ability] (card-subroutine state side card ability nil))
   ([state side card ability targets]
    (core/play-subroutine state side {:card (core/get-card state card)
-                                     :subroutine ability :targets targets})))
+                                     :subroutine ability
+                                     :targets targets})))
+
+(defn card-side-ability
+  ([state side card ability] (card-side-ability state side card ability nil))
+  ([state side card ability targets]
+   (let [ab {:card (core/get-card state card)
+             :ability ability
+             :targets targets}]
+     (if (= :corp side)
+                (core/play-corp-ability state side ab)
+                (core/play-runner-ability state side ab)))))
 
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
