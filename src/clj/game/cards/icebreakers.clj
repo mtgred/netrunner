@@ -59,6 +59,29 @@
                               :approach-ice breaker-auto-pump }
                              (:events cdef))))
 
+(defn- wrestling-breaker
+  "Laamb and Engolo. Makes currently encountered ice gain chosen type until end of encounter."
+  [cost ice-type]
+  {:once :per-turn
+   :cost [:credit cost]
+   :label (str "Make currently encountered ice gain " ice-type)
+   :msg (msg "make " (:title current-ice) " gain " ice-type)
+   :req (req (and current-ice (rezzed? current-ice)
+                  (not (has-subtype? current-ice ice-type))))
+   :effect (req (let [ice current-ice
+                      stargets (:subtype-target ice)
+                      stypes (:subtype ice)
+                      remove-subtype {:effect (effect
+                                                (update! (assoc ice :subtype-target stargets :subtype stypes))
+                                                (unregister-events card)
+                                                (register-events (:events (card-def card)) card))}]
+                  (update! state side (assoc ice
+                                             :subtype-target (combine-subtypes true stargets ice-type)
+                                             :subtype (combine-subtypes true stypes ice-type)))
+                  (update-ice-strength state side (get-card state ice))
+                  (register-events state side {:pass-ice remove-subtype
+                                               :run-ends remove-subtype} card)))})
+
 (defn cloud-icebreaker [cdef]
   (assoc cdef :effect (req (let [link (get-in @state [:runner :link] 0)]
                              (when (>= link 2)
@@ -551,6 +574,12 @@
                  :msg (msg "trash " (:title target)
                            " and break 1 \"[Subroutine] End the run.\" subroutine")
                  :effect (effect (trash target {:unpreventable true}))}]}
+   "Engolo"
+   (auto-icebreaker
+     ["Code Gate"]
+     {:abilities [(break-sub 1 1 "Code Gate")
+                  (strength-pump 2 4)
+                  (wrestling-breaker 2 "Code Gate")]})
 
    "Faerie"
    (auto-icebreaker ["Sentry"]
@@ -716,24 +745,7 @@
      ["Barrier"]
      {:abilities [(break-sub 2 0 "Barrier")
                   (strength-pump 3 6)
-                  {:once :per-turn
-                   :cost [:credit 2]
-                   :label (str "Turn currently encountered ice into Barrier")
-                   :msg (msg "turn " (:title current-ice) " into Barrier")
-                   :req (req (and current-ice (rezzed? current-ice) (not (has-subtype? current-ice "Barrier"))))
-                   :effect (req (let [ice current-ice
-                                      stargets (:subtype-target ice)
-                                      stypes (:subtype ice)
-                                      remove-subtype {:effect (effect
-                                                                (update! (assoc ice :subtype-target stargets :subtype stypes))
-                                                                (unregister-events card)
-                                                                (register-events (:events (card-def card)) card))}]
-                                  (update! state side (assoc ice
-                                                             :subtype-target (combine-subtypes true stargets "Barrier")
-                                                             :subtype (combine-subtypes true stypes "Barrier")))
-                                  (update-ice-strength state side (get-card state ice))
-                                  (register-events state side {:pass-ice remove-subtype
-                                                               :run-ends remove-subtype} card)))}]})
+                  (wrestling-breaker 2 "Barrier")]})
 
    "Leviathan"
    (auto-icebreaker ["Code Gate"]
