@@ -1939,9 +1939,11 @@
       :leave-play (req (remove-watch state (keyword (str "surveyor" (:cid card)))))
       :strength-bonus x
       :subroutines [{:label "Trace X - Give the Runner 2 tags"
-                     :trace (assoc (give-tags 2) :base x)}
+                     :trace {:base x
+                             :successful (give-tags 2)}}
                     {:label "Trace X - End the run"
-                     :trace (assoc end-the-run :base x)}]})
+                     :trace {:base x
+                             :successful end-the-run}}]})
 
    "Susanoo-no-Mikoto"
    {:subroutines [{:req (req (not= (:server run) [:discard]))
