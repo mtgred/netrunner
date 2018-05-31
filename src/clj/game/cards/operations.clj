@@ -144,9 +144,9 @@
    {:prompt "Select an installed card in a server to trash"
     :choices {:req #(and (= (last (:zone %)) :content)
                          (is-remote? (second (:zone %))))}
-    :effect (final-effect (gain :credit (* 3 (get target :advance-counter 0))) (trash target))
+    :effect (final-effect (gain :credit (* 3 (get-counters target :advancement))) (trash target))
     :msg (msg "trash " (card-str state target) " and gain "
-              (* 3 (get target :advance-counter 0)) " [Credits]")}
+              (* 3 (get-counters target :advancement)) " [Credits]")}
 
    "Bad Times"
    {:implementation "Any required program trashing is manual"
@@ -822,7 +822,7 @@
                      card :can-score
                      (fn [state side card]
                        (if (and (= (:cid card) tgtcid)
-                                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+                                (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
                          ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
                          true)))))}
 
@@ -1584,7 +1584,7 @@
                    (continue-ability
                      state side
                      {:prompt "Move how many advancement tokens?"
-                      :choices (take (inc (:advance-counter fr)) ["0" "1" "2"])
+                      :choices (take (inc (get-counters fr :advancement)) ["0" "1" "2"])
                       :delayed-completion true
                       :effect (req (let [c (str->int target)]
                                      (continue-ability

@@ -651,7 +651,7 @@
 
    "Labyrinthine Servers"
    {:interactions {:prevent [{:type #{:jack-out}
-                              :req (req (-> card :counter :power pos?))}]}
+                              :req (req (pos? (get-counters card :power)))}]}
     :silent (req true)
     :effect (effect (add-counter card :power 2))
     :abilities [{:req (req (:run @state))

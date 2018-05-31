@@ -110,13 +110,17 @@
     (lose state :runner :click 1))))
 
 ;;; For Advanceable ICE
+(defn get-advance-counters
+  [card]
+  (+ (get-counters card :advancement) (:extra-advance-counter card 0)))
+
 (def advance-counters
   "Number of advancement counters - for advanceable ICE."
-  (req (+ (get-counters card :advancement) (:extra-advance-counter card 0))))
+  (req (get-advance-counters card)))
 
 (def space-ice-rez-bonus
   "Amount of rez reduction for the Space ICE."
-  (req (* -3 (+ (get-counters card :advancement) (:extra-advance-counter card 0)))))
+  (req (* -3 (get-advance-counters card))))
 
 (defn space-ice
   "Creates data for Space ICE with specified abilities."
@@ -178,7 +182,7 @@
 (defn morph-effect
   "Creates morph effect for ICE. Morphs from base type to other type"
   [base other]
-  (req (if (odd? (get (get-card state card) :advance-counter 0))
+  (req (if (odd? (get-counters (get-card state card) :advancement))
          (morph state side card other base)
          (morph state side card base other))))
 
@@ -198,6 +202,13 @@
   "Generates map for Constellation ICE with specified effect."
   [ability]
   {:subroutines [(trace-ability 2 (assoc ability :kicker (assoc ability :min 5)))]})
+
+
+;; For 7 Wonders ICE
+(defn wonder-sub
+  "Checks total number of advancement counters on a piece of ice against number"
+  [card number]
+  (<= number (get-advance-counters card)))
 
 ;;; Helper function for adding implementation notes to ICE defined with functions
 (defn- implementation-note
@@ -583,22 +594,23 @@
    {:advanceable :always
     :subroutines [{:label "Give the Runner 1 tag (Give the Runner 2 tags)"
                    :delayed-completion true
-                   :msg (msg "give the Runner " (if (> 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0))) "1 tag" "2 tags"))
-                   :effect (effect (tag-runner :runner eid (if (> 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0))) 1 2)))}
+                   :msg (msg "give the Runner " (if (wonder-sub card 3) "2 tags" "1 tag"))
+                   :effect (effect (tag-runner :runner eid (if (wonder-sub card 3) 2 1)))}
                   {:label "Trash 1 program (Trash 1 program and 1 resource)"
                    :delayed-completion true
-                   :msg (msg "trash 1 program" (when (< 2 (+ (get-counters card :advancement) (:extra-advance-counter card 0))) " and 1 resource"))
+                   :msg (msg "trash 1 program" (when (wonder-sub card 3) " and 1 resource"))
                    :effect (req (when-completed (resolve-ability state side trash-program card nil)
-                                                (if (> 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0)))
-                                                  (effect-completed state side eid)
-                                                  (continue-ability state side
+                                                (if (wonder-sub card 3)
+                                                  (continue-ability
+                                                    state side
                                                     {:prompt "Choose a resource to trash"
                                                      :msg (msg "trash " (:title target))
                                                      :choices {:req #(and (installed? %)
                                                                           (is-type? % "Resource"))}
                                                      :cancel-effect (req (effect-completed state side eid))
                                                      :effect (effect (trash target {:cause :subroutine}))}
-                                                   card nil))))}]
+                                                    card nil)
+                                                  (effect-completed state side eid))))}]
     :strength-bonus advance-counters}
 
    "Conundrum"
@@ -1000,15 +1012,17 @@
                                          (effect-completed state side eid card))))})]
      {:advanceable :always
       :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
-                     :msg (msg "gain " (if (> (+ (get-counters card :advancement) (:extra-advance-counter card 0)) 2) "4" "1") " [Credits]")
-                     :effect (effect (gain :corp :credit (if (> (+ (get-counters card :advancement) (:extra-advance-counter card 0)) 2) 4 1)))}
+                     :msg (msg "gain " (if (wonder-sub card 3) "4" "1") " [Credits]")
+                     :effect (effect (gain :corp :credit (if (wonder-sub 3) 4 1)))}
                     {:label "End the run (Search R&D for up to 2 cards and add them to HQ, shuffle R&D, end the run)"
                      :delayed-completion true
-                     :effect (req (if (> (+ (get-counters card :advancement) (:extra-advance-counter card 0)) 2)
-                                    (when-completed (resolve-ability state side (hort 1) card nil)
-                                                    (do (end-run state side)
-                                                        (system-msg state side (str "uses Hortum to add 2 cards to HQ from R&D, "
-                                                                                    "shuffle R&D, and end the run"))))
+                     :effect (req (if (wonder-sub card 3)
+                                    (when-completed
+                                      (resolve-ability state side (hort 1) card nil)
+                                      (do (end-run state side)
+                                          (system-msg state side
+                                                      (str "uses Hortum to add 2 cards to HQ from R&D, "
+                                                           "shuffle R&D, and end the run"))))
                                     (do (end-run state side)
                                         (system-msg state side (str "uses Hortum to end the run"))
                                         (effect-completed state side eid))))}]})
@@ -1340,19 +1354,20 @@
 
    "Mausolus"
    {:advanceable :always
-    :subroutines [{:label "Gain 1 [Credits] (Gain 3 [Credits])"
-                   :msg (msg "gain " (if (> 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0))) 1 3) " [Credits]")
-                   :effect (effect (gain :credit (if (> 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0))) 1 3)))}
+    :subroutines [{:label "Gain 1 [Credits] (Gain 3[Credits])"
+                   :msg (msg "gain " (if (wonder-sub card 3) 3 1) "[Credits]")
+                   :effect (effect (gain :credit (if (wonder-sub card 3) 3 1)))}
                   {:label "Do 1 net damage (Do 3 net damage)"
                    :delayed-completion true
-                   :msg (msg "do " (if (> 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0))) 1 3) " net damage")
-                   :effect (effect (damage eid :net (if (> 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0))) 1 3) {:card card}))}
+                   :msg (msg "do " (if (wonder-sub card 3) 3 1) " net damage")
+                   :effect (effect (damage eid :net (if (wonder-sub card 3) 3 1) {:card card}))}
                   {:label "Give the Runner 1 tag (and end the run)"
                    :delayed-completion true
                    :msg (msg "give the Runner 1 tag"
-                             (when (<= 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0))) " and end the run"))
+                             (when (wonder-sub card 3)
+                               " and end the run"))
                    :effect (req (tag-runner state :runner eid 1)
-                                (when (<= 3 (+ (get-counters card :advancement) (:extra-advance-counter card 0)))
+                                (when (wonder-sub card 3)
                                   (end-run state side)))}]}
 
    "Masvingo"
