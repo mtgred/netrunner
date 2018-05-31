@@ -46,7 +46,8 @@
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
             "add-art" ["run" "-m" "tasks.altart/add-art"]
-            "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]}
+            "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
+            "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]}
 
   ;; Compilation.
   :source-paths ["src/clj" "src/cljs" "src/cljc"]

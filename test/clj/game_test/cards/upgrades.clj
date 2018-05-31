@@ -573,30 +573,6 @@
     (prompt-choice-partial :runner "Pay") ; trash
     (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
 
-(deftest ghost-branch
-  ;; Ghost Branch
-  (testing "with Dedicated Response Team"
-    (do-game
-      (new-game (default-corp ["Ghost Branch" "Dedicated Response Team"])
-                (default-runner))
-      (play-from-hand state :corp "Ghost Branch" "New remote")
-      (play-from-hand state :corp "Dedicated Response Team" "New remote")
-      (core/gain state :corp :click 1)
-      (let [gb (get-content state :remote1 0)
-            drt (get-content state :remote2 0)]
-        (core/advance state :corp {:card gb})
-        (core/advance state :corp {:card (refresh gb)})
-        (is (= 2 (:advance-counter (refresh gb))) "Ghost Branch advanced twice")
-        (take-credits state :corp)
-        (run-on state "Server 1")
-        (core/rez state :corp drt)
-        (run-successful state)
-        (is (prompt-is-type? :runner :waiting) "Runner has prompt to wait for Ghost Branch")
-        (prompt-choice :corp "Yes")
-        (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
-        (prompt-choice-partial :runner "Pay")
-        (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage")))))
-
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game
@@ -782,31 +758,32 @@
     (take-credits state :runner)
     (is (= 4 (:click (get-corp))) "Corp gained a click due to running last click")))
 
-(deftest marcus-batty-security-nexus
-  ;; Marcus Batty - Simultaneous Interaction with Security Nexus
-  (do-game
-    (new-game (default-corp ["Marcus Batty" "Enigma"])
-              (default-runner ["Security Nexus"]))
-    (play-from-hand state :corp "Marcus Batty" "HQ")
-    (play-from-hand state :corp "Enigma" "HQ")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 8)
-    (play-from-hand state :runner "Security Nexus")
-    (let [mb (get-content state :hq 0)
-          en (get-ice state :hq 0)
-          sn (-> @state :runner :rig :hardware first)]
-      (run-on state "HQ")
-      (core/rez state :corp mb)
-      (core/rez state :corp en)
-      (card-ability state :corp mb 0)
-      (card-ability state :runner sn 0)
-      ;; both prompts should be on Batty
-      (is (prompt-is-card? :corp mb) "Corp prompt is on Marcus Batty")
-      (is (prompt-is-card? :runner mb) "Runner prompt is on Marcus Batty")
-      (prompt-choice :corp "0")
-      (prompt-choice :runner "0")
-      (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
-      (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp"))))
+(deftest marcus-batty
+  ;; Marcus Batty
+  (testing "Simultaneous Interaction with Security Nexus"
+    (do-game
+      (new-game (default-corp ["Marcus Batty" "Enigma"])
+                (default-runner ["Security Nexus"]))
+      (play-from-hand state :corp "Marcus Batty" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 8)
+      (play-from-hand state :runner "Security Nexus")
+      (let [mb (get-content state :hq 0)
+            en (get-ice state :hq 0)
+            sn (-> @state :runner :rig :hardware first)]
+        (run-on state "HQ")
+        (core/rez state :corp mb)
+        (core/rez state :corp en)
+        (card-ability state :corp mb 0)
+        (card-ability state :runner sn 0)
+        ;; both prompts should be on Batty
+        (is (prompt-is-card? :corp mb) "Corp prompt is on Marcus Batty")
+        (is (prompt-is-card? :runner mb) "Runner prompt is on Marcus Batty")
+        (prompt-choice :corp "0")
+        (prompt-choice :runner "0")
+        (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
+        (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp")))))
 
 (deftest mumbad-city-grid
   ;; Mumbad City Grid - when runner passes a piece of ice, swap that ice with another from this server
@@ -1147,7 +1124,6 @@
         (prompt-select :runner (refresh pb))
         (prompt-choice-partial :runner "No")
         (is (empty? (:scored (get-runner))) "End with no stolen agendas")
-
         (run-empty-server state "Server 1")
         (prompt-choice-partial :runner "Steal")
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
@@ -1769,23 +1745,24 @@
       (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
 
 (deftest valley-grid
-  ;; Valley Grid - Reduce Runner max hand size and restore it even if trashed
-  (do-game
-    (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
-              (default-runner))
-    (play-from-hand state :corp "Valley Grid" "New remote")
-    (take-credits state :corp 2)
-    (run-on state "Server 1")
-    (let [vg (get-content state :remote1 0)]
-      (core/rez state :corp vg)
-      (card-ability state :corp vg 0)
-      (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
-      (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
-      (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
-      (run-successful state)
-      (prompt-choice-partial :runner "Pay") ; pay to trash
-      (take-credits state :runner 3)
-      (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))
+  ;; Valley Grid
+  (testing "Reduce Runner max hand size and restore it even if trashed"
+    (do-game
+      (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
+                (default-runner))
+      (play-from-hand state :corp "Valley Grid" "New remote")
+      (take-credits state :corp 2)
+      (run-on state "Server 1")
+      (let [vg (get-content state :remote1 0)]
+        (core/rez state :corp vg)
+        (card-ability state :corp vg 0)
+        (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
+        (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
+        (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
+        (run-successful state)
+        (prompt-choice-partial :runner "Pay") ; pay to trash
+        (take-credits state :runner 3)
+        (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn")))))
 
 (deftest warroid-tracker
   ;; Warroid Tracker
