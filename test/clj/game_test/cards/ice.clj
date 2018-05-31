@@ -1126,7 +1126,7 @@
       (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (= 1 (:tag (get-runner))) "Trace succeeds with 1 advancements"))))
+      (is (= 1 (:tag (get-runner))) "Trace succeeds with 1 advancement"))))
 
 (deftest seidr-adaptive-barrier
   ;; Seidr Adaptive Barrier - +1 strength for every ice protecting its server
