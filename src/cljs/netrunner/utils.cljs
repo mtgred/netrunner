@@ -65,3 +65,10 @@
           "hideMethod" "fadeOut"
           "tapToDismiss" (:tap-to-dismiss options true)))
 
+(defn map-longest
+  [f default & colls]
+  (lazy-seq
+    (when (some seq colls)
+      (cons
+        (apply f (map #(if (seq %) (first %) default) colls))
+        (apply map-longest f default (map rest colls))))))

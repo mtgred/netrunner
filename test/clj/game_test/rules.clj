@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs nil))
 
 (deftest undo-turn
   (do-game
@@ -24,8 +24,8 @@
 
 (deftest undo-click
   (do-game
-    (new-game (default-corp [(qty "Ikawah Project" 1)])
-              (default-runner [(qty "Day Job" 1)]))
+    (new-game (default-corp ["Ikawah Project"])
+              (default-runner ["Day Job"]))
     (play-from-hand state :corp "Ikawah Project" "New remote")
     (take-credits state :corp)
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
@@ -65,7 +65,7 @@
   ;; runner-install - Program; ensure costs are paid
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Gordian Blade" 1)]))
+              (default-runner ["Gordian Blade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-in @state [:runner :rig :program 0])]
@@ -77,7 +77,7 @@
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Kati Jones" 2) (qty "Scheherazade" 2)
-                               (qty "Off-Campus Apartment" 1) (qty "Hivemind" 2)]))
+                               "Off-Campus Apartment" (qty "Hivemind" 2)]))
     (take-credits state :corp)
     (core/gain state :runner :click 1 :memory 2)
     (core/draw state :runner 2)
@@ -107,7 +107,7 @@
   ;; deactivate - Program; ensure MU are restored
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Gordian Blade" 1)]))
+              (default-runner ["Gordian Blade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
     (let [gord (get-in @state [:runner :rig :program 0])]
@@ -117,8 +117,8 @@
 (deftest agenda-forfeit-runner
   ;; forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda
   (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 1)])
-              (default-runner [(qty "Data Dealer" 1)]))
+    (new-game (default-corp ["Mandatory Upgrades"])
+              (default-runner ["Data Dealer"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Data Dealer")
     (run-empty-server state "HQ")
@@ -132,7 +132,7 @@
 (deftest agenda-forfeit-corp
   ;; forfeit - Deactivate agenda to trigger leave play effects if Corp forfeits a scored agenda
   (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 1) (qty "Corporate Town" 1)])
+    (new-game (default-corp ["Mandatory Upgrades" "Corporate Town"])
               (default-runner))
     (play-from-hand state :corp "Mandatory Upgrades" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
@@ -147,7 +147,7 @@
   ;; host - Recurring credits on cards hosted after install refresh properly
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Hedge Fund" 3)])
-              (default-runner [(qty "Compromised Employee" 1) (qty "Off-Campus Apartment" 1)]))
+              (default-runner ["Compromised Employee" "Off-Campus Apartment"]))
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Off-Campus Apartment")
@@ -172,10 +172,10 @@
   ;; ensure card-str names cards in simple situations properly
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Jackson Howard" 2)])
-              (default-runner [(qty "Corroder" 1)
-                               (qty "Clone Chip" 1)
-                               (qty "Paparazzi" 1)
-                               (qty "Parasite" 1)]))
+              (default-runner ["Corroder"
+                               "Clone Chip"
+                               "Paparazzi"
+                               "Parasite"]))
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "R&D")
@@ -215,7 +215,7 @@
 (deftest invalid-score-attempt
   ;; Test scoring with an incorrect number of advancement tokens
   (do-game
-    (new-game (default-corp [(qty "Ancestral Imager" 1)])
+    (new-game (default-corp ["Ancestral Imager"])
               (default-runner))
     (play-from-hand state :corp "Ancestral Imager" "New remote")
     (let [ai (get-content state :remote1 0)]
@@ -229,7 +229,7 @@
 (deftest trash-corp-hosted
   ;; Hosted Corp cards are included in all-installed and fire leave-play effects when trashed
   (do-game
-    (new-game (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Worlds Plaza" 1) (qty "Director Haas" 1)])
+    (new-game (default-corp ["Full Immersion RecStudio" "Worlds Plaza" "Director Haas"])
               (default-runner))
     (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
     (let [fir (get-content state :remote1 0)]
@@ -256,7 +256,7 @@
   ;; Trashing a card should remove it from [:per-turn] - Issue #1345
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 3)])
-              (default-runner [(qty "Imp" 2) (qty "Scavenge" 1)]))
+              (default-runner [(qty "Imp" 2) "Scavenge"]))
     (take-credits state :corp)
     (core/gain state :runner :click 1)
     (play-from-hand state :runner "Imp")
@@ -301,7 +301,7 @@
 (deftest reinstall-seen-asset
   ;; Install a faceup card in Archives, make sure it is not :seen
   (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 1) (qty "Interns" 1)])
+    (new-game (default-corp ["PAD Campaign" "Interns"])
               (default-runner))
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp 2)
@@ -318,8 +318,8 @@
 (deftest all-installed-runner-test
   ;; Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs
   (do-game
-    (new-game (default-corp [(qty "Wraparound" 1)])
-              (default-runner [(qty "Omni-drive" 1) (qty "Personal Workshop" 1) (qty "Leprechaun" 1) (qty "Corroder" 1) (qty "Mimic" 1) (qty "Knight" 1)]))
+    (new-game (default-corp ["Wraparound"])
+              (default-runner ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]))
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
       (core/rez state :corp wrap)
@@ -376,9 +376,9 @@
 (deftest counter-manipulation-commands
   ;; Test interactions of various cards with /counter and /adv-counter commands
   (do-game
-    (new-game (default-corp [(qty "Adonis Campaign" 1)
+    (new-game (default-corp ["Adonis Campaign"
                              (qty "Public Support" 2)
-                             (qty "Oaktown Renovation" 1)])
+                             "Oaktown Renovation"])
               (default-runner))
     ;; Turn 1 Corp, install oaktown and assets
     (core/gain state :corp :click 4)
@@ -523,8 +523,8 @@
 (deftest purge-nested
   ;; Purge nested-hosted virus counters
   (do-game
-    (new-game (default-corp [(qty "Cyberdex Trial" 1)])
-              (default-runner [(qty "Djinn" 1) (qty "Imp" 1) (qty "Leprechaun" 1)]))
+    (new-game (default-corp ["Cyberdex Trial"])
+              (default-runner ["Djinn" "Imp" "Leprechaun"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 100)
     (play-from-hand state :runner "Leprechaun")
@@ -543,10 +543,10 @@
 (deftest multi-access-rd
   ;; multi-access of R&D sees all cards and upgrades
   (do-game
-    (new-game (default-corp [(qty "Keegan Lane" 1) (qty "Midway Station Grid" 1)
-                             (qty "Sweeps Week" 1) (qty "Manhunt" 1)
-                             (qty "Hedge Fund" 1) (qty "Big Brother" 1)])
-              (default-runner [(qty "Medium" 1)]))
+    (new-game (default-corp ["Keegan Lane" "Midway Station Grid"
+                             "Sweeps Week" "Manhunt"
+                             "Hedge Fund" "Big Brother"])
+              (default-runner ["Medium"]))
     (play-from-hand state :corp "Keegan Lane" "R&D")
     (play-from-hand state :corp "Midway Station Grid" "R&D")
     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)

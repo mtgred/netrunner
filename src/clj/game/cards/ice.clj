@@ -1,6 +1,11 @@
-(in-ns 'game.core)
-
-(declare trash-program trash-hardware trash-resource-sub trash-installed)
+(ns game.cards.ice
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 ;;;; Helper functions specific for ICE
 
@@ -38,13 +43,13 @@
    :msg "end the run"
    :effect (effect (end-run))})
 
-(def give-tag
-  "Basic give runner 1 tag subroutine
-   Mostly used with tag-trace"
-  {:label "Give the Runner 1 tag"
-   :msg "give the Runner 1 tag"
+(defn give-tags
+  "Basic give runner n tags subroutine."
+  [n]
+  {:label (str "Give the Runner " (quantify n "tag"))
+   :msg (str "give the Runner " (quantify n "tag"))
    :delayed-completion true
-   :effect (effect (tag-runner :runner eid 1))})
+   :effect (effect (tag-runner :runner eid n))})
 
 (def add-power-counter
   "Adds 1 power counter to the card."
@@ -61,24 +66,8 @@
 
 (defn tag-trace
   "Trace ability for giving a tag, at specified base strength"
-  [base]
-  (trace-ability base give-tag))
-
-(defn do-net-damage
-  "Do specified amount of net-damage."
-  [dmg]
-  {:label (str "Do " dmg " net damage")
-   :delayed-completion true
-   :msg (str "do " dmg " net damage")
-   :effect (effect (damage eid :net dmg {:card card}))})
-
-(defn do-brain-damage
-  "Do specified amount of brain damage."
-  [dmg]
-  {:label (str "Do " dmg " brain damage")
-   :delayed-completion true
-   :msg (str "do " dmg " brain damage")
-   :effect (effect (damage eid :brain dmg {:card card}))})
+  ([base] (tag-trace base 1))
+  ([base n] (trace-ability base (give-tags n))))
 
 (defn gain-credits
   "Gain specified amount of credits"
@@ -218,7 +207,7 @@
 
 
 ;;;; Card definitions
-(def cards-ice
+(def card-definitions
   {"Aiki"
    {:subroutines [(do-psi {:label "Runner draws 2 cards"
                            :msg "make the Runner draw 2 cards"
@@ -360,7 +349,7 @@
 
    "Authenticator"
    {:implementation "Encounter effect is manual"
-    :abilities [give-tag]
+    :abilities [(give-tags 1)]
     :runner-abilities [{:label "Take 1 tag"
                         :delayed-completion true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to Bypass it")
@@ -707,8 +696,8 @@
 
    "Data Raven"
    {:implementation "Encounter effect is manual"
-    :abilities [give-tag
-                (power-counter-ability give-tag)]
+    :abilities [(give-tags 1)
+                (power-counter-ability (give-tags 1))]
     :runner-abilities [{:label "End the run"
                         :effect (req (end-run state :runner)
                                      (system-msg state :runner "chooses to end the run on encountering Data Raven"))}
@@ -1103,8 +1092,9 @@
     :subroutines [trash-installed]}
 
    "IP Block"
-   {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-active-installed state :runner))))
-                                :label "Give the Runner 1 tag if there is an installed AI")]
+   {:abilities [(assoc (give-tags 1)
+                  :req (req (not-empty (filter #(has-subtype? % "AI") (all-active-installed state :runner))))
+                  :label "Give the Runner 1 tag if there is an installed AI")]
     :subroutines [(tag-trace 3)
                   end-the-run-if-tagged]}
 
@@ -1218,9 +1208,9 @@
                                         state :runner
                                         (access-helper-hq
                                           state from-hq
-                                          ; access-helper-hq uses a set to keep track of which cards have already
-                                          ; been accessed. by adding HQ root's contents to this set, we make the runner
-                                          ; unable to access those cards, as Kitsune intends.
+                                          ;; access-helper-hq uses a set to keep track of which cards have already
+                                          ;; been accessed. by adding HQ root's contents to this set, we make the runner
+                                          ;; unable to access those cards, as Kitsune intends.
                                           (conj (set (get-in @state [:corp :servers :hq :content])) target))
                                        card nil)))))}]}
 
@@ -1297,26 +1287,31 @@
                   (trace-ability 1 end-the-run)]}
 
    "Magnet"
-   {:delayed-completion true
-    :effect (req (let [magnet card]
-                   (continue-ability
-                     state side
-                     {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                      (remove-once #(= (:cid %) (:cid magnet)) (all-active-installed state corp))))
-                      :prompt "Select a Program to host on Magnet"
-                      :choices {:req #(and (card-is? % :type "Program")
-                                           (ice? (:host %))
-                                           (not= (:cid (:host %)) (:cid magnet)))}
-                      :effect (req (let [hosted (host state side card target)]
-                                     (unregister-events state side hosted)
-                                     (update! state side (dissoc hosted :abilities))))}
-                     card nil)))
-    :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
-                              :effect (req (doseq [c (get-in card [:hosted])]
-                                             (unregister-events state side c)
-                                             (update! state side (dissoc c :abilities)))
-                                           (update-ice-strength state side card))}}
-    :subroutines [end-the-run]}
+   (letfn [(disable-hosted [state side c]
+             (doseq [hc (:hosted (get-card state c))]
+               (unregister-events state side hc)
+               (update! state side (dissoc hc :abilities))))]
+     {:delayed-completion true
+      :effect (req (let [magnet card]
+                     (when-completed (resolve-ability
+                                       state side
+                                       {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                                        (remove-once #(= (:cid %) (:cid magnet))
+                                                                     (filter ice? (all-installed state corp)))))
+                                        :prompt "Select a Program to host on Magnet"
+                                        :choices {:req #(and (card-is? % :type "Program")
+                                                             (ice? (:host %))
+                                                             (not= (:cid (:host %)) (:cid magnet)))}
+                                        :effect (effect (host card target))}
+                                       card nil)
+                                     (disable-hosted state side card))))
+      :derez-effect {:req (req (not-empty (:hosted card)))
+                     :effect (req (doseq [c (get-in card [:hosted])]
+                                    (card-init state side c {:resolve-effect false})))}
+      :events {:runner-install {:req (req (= (:cid card) (:cid (:host target))))
+                                :effect (req (disable-hosted state side card)
+                                          (update-ice-strength state side card))}}
+      :subroutines [end-the-run]})
 
    "Mamba"
    {:abilities [(power-counter-ability (do-net-damage 1))]
@@ -1451,6 +1446,32 @@
                                                                    (shuffle! :deck))}
                                                  card nil)))}]}
 
+   "Mlinzi"
+   (letfn [(net-or-trash [net-dmg mill-cnt]
+             {:label (str "Do " net-dmg " net damage.")
+              :effect (req (show-wait-prompt state :corp "Runner to choose an option for Mlinzi")
+                           (resolve-ability state :runner
+                                            {:prompt "Take net damage or trash cards from the Stack?"
+                                             :choices [(str "Take " net-dmg " net damage")
+                                                       (str "Trash the top " mill-cnt " cards of the Stack")]
+                                             :effect (req (if (.startsWith target "Take")
+                                                            (do
+                                                              (system-msg state :corp (str "uses Mlinzi to do "
+                                                                                           net-dmg " net damage"))
+                                                              (clear-wait-prompt state :corp)
+                                                              (damage state :runner eid :net net-dmg {:card card}))
+                                                            (do
+                                                              (system-msg state :corp
+                                                                          (str "uses Mlinzi to trash "
+                                                                               (join ", " (map :title (take mill-cnt (:deck runner))))
+                                                                               " from the Runner's Stack"))
+                                                              (clear-wait-prompt state :corp)
+                                                              (mill state :runner mill-cnt))))}
+                                             card nil))})]
+     {:subroutines [(net-or-trash 1 2)
+                    (net-or-trash 2 3)
+                    (net-or-trash 3 4)]})
+
    "Mother Goddess"
    (let [ab (effect (update! (let [subtype (->> (mapcat :ices (flatten (seq (:servers corp))))
                                                 (filter #(and (rezzed? %) (not= (:cid card) (:cid %))))
@@ -1515,6 +1536,11 @@
                                      (has-subtype? target "NEXT")))
                       :effect (effect (update-ice-strength card))}]
               {:rez nb :derez nb :trash nb :card-moved nb})}
+
+   "NEXT Diamond"
+   {:rez-cost-bonus (req (- (next-ice-count corp)))
+    :subroutines [(do-brain-damage 1)
+                  trash-installed]}
 
    "NEXT Gold"
    {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
@@ -1900,6 +1926,22 @@
    "Spiderweb"
    {:subroutines [end-the-run]}
 
+   "Surveyor"
+   (let [x (req (* 2 (count (:ices (card->server state card)))))]
+     {:effect (req (let [srv (second (:zone card))]
+                     (add-watch state (keyword (str "surveyor" (:cid card)))
+                                (fn [k ref old new]
+                                  (let [ices (count (get-in new [:corp :servers srv :ices]))]
+                                    (when (not= (count (get-in old [:corp :servers srv :ices])) ices)
+                                      (update! ref side (assoc (get-card ref card) :strength-bonus ices))
+                                      (update-ice-strength ref side (get-card ref card))))))))
+      :leave-play (req (remove-watch state (keyword (str "surveyor" (:cid card)))))
+      :strength-bonus x
+      :subroutines [{:label "Trace X - Give the Runner 2 tags"
+                     :trace (assoc (give-tags 2) :base x)}
+                    {:label "Trace X - End the run"
+                     :trace (assoc end-the-run :base x)}]})
+
    "Susanoo-no-Mikoto"
    {:subroutines [{:req (req (not= (:server run) [:discard]))
                    :msg "make the Runner continue the run on Archives"
@@ -1927,7 +1969,7 @@
                                         (has-subtype? % "AI"))}}]}
 
    "SYNC BRE"
-   {:subroutines [(trace-ability 4 give-tag)
+   {:subroutines [(tag-trace 4)
                   (trace-ability 2 {:label "Runner reduces cards accessed by 1 for this run"
                                     :delayed-completion true
                                     :msg "reduce cards accessed for this run by 1"
@@ -2072,7 +2114,7 @@
                   {:label "Runner loses 2 [Credits]"
                    :msg "force the Runner to lose 2 [Credits]"
                    :effect (effect (lose :runner :credit 2))}
-                  (trace-ability 2 give-tag)]}
+                  (trace-ability 2 (give-tags 1))]}
 
    "Vikram 1.0"
    {:implementation "Program prevention is not implemented"
@@ -2098,7 +2140,7 @@
                   (trace-ability 3 end-the-run)]}
 
    "Virgo"
-   (constellation-ice give-tag)
+   (constellation-ice (give-tags 1))
 
    "Waiver"
    {:subroutines [(trace-ability 5 {:label "Reveal the Runner's Grip and trash cards"

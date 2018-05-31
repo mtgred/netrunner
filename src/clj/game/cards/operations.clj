@@ -1,6 +1,13 @@
-(in-ns 'game.core)
+(ns game.cards.operations
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
-(def cards-operations
+(def card-definitions
   {"24/7 News Cycle"
    {:req (req (pos? (count (:scored corp))))
     :delayed-completion true
@@ -820,29 +827,32 @@
                          true)))))}
 
    "Mutate"
-   {:additional-cost [:ice 1]
-    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-
-    :events {:corp-trash {:effect (req (let [i (ice-index state target)
+   {:req (req (some #(and (ice? %) (rezzed? %)) (all-installed state :corp)))
+    :prompt "Select a rezzed piece of ice to trash"
+    :choices {:req #(and (ice? %) (rezzed? %))}
+    :delayed-completion true
+    :effect (req (let [i (ice-index state target)
                        [reveal r] (split-with (complement ice?) (get-in @state [:corp :deck]))
                        titles (->> (conj (vec reveal) (first r)) (filter identity) (map :title))]
-                                           (system-msg state side (str "uses Mutate to trash " (:title target)))
-                                           (when (seq titles)
-                                             (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
-                                           (if-let [ice (first r)]
-                                             (let [newice (assoc ice :zone (:zone target) :rezzed true)
-                                                   ices (get-in @state (cons :corp (:zone target)))
-                                                   newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
-                                               (swap! state assoc-in (cons :corp (:zone target)) newices)
-                                               (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(= (:cid %) (:cid newice)) coll)))
-                                               (trigger-event state side :corp-install newice)
-                                               (card-init state side newice {:resolve-effect false})
-                                               (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
-                                               (trigger-event state side :rez newice))
-                                             (system-msg state side (str "does not find any ICE to install from R&D")))
-                                           (shuffle! state :corp :deck)
-                                           (effect-completed state side eid card)
-                                           (unregister-events state side card)))}}}
+                   (when-completed (trash state :corp target nil)
+                                   (do
+                                     (system-msg state side (str "uses Mutate to trash " (:title target)))
+                                     (when (seq titles)
+                                       (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
+                                     (if-let [ice (first r)]
+                                       (let [newice (assoc ice :zone (:zone target) :rezzed true)
+                                             ices (get-in @state (cons :corp (:zone target)))
+                                             newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
+                                         (swap! state assoc-in (cons :corp (:zone target)) newices)
+                                         (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(= (:cid %) (:cid newice)) coll)))
+                                         (trigger-event state side :corp-install newice)
+                                         (card-init state side newice {:resolve-effect false
+                                                                       :init-data true})
+                                         (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
+                                         (trigger-event state side :rez newice))
+                                       (system-msg state side (str "does not find any ICE to install from R&D")))
+                                     (shuffle! state :corp :deck)
+                                     (effect-completed state side eid card)))))}
 
    "Neural EMP"
    {:req (req (last-turn? state :runner :made-run))
@@ -1282,7 +1292,6 @@
 
    "Shipment from MirrorMorph"
    (let [shelper (fn sh [n] {:prompt "Select a card to install with Shipment from MirrorMorph"
-                             :priority -1
                              :delayed-completion true
                              :choices {:req #(and (= (:side %) "Corp")
                                                   (not (is-type? % "Operation"))
@@ -1376,8 +1385,10 @@
     :effect (effect (gain :credit (* 3 (count (:scored runner)))))}
 
    "Sub Boost"
-   (let [new-sub {:label "[Sub Boost] End the run"}]
-     {:sub-effect end-the-run
+   (let [new-sub {:label "[Sub Boost]: End the run"}]
+     {:sub-effect {:label "End the run"
+                   :msg "end the run"
+                   :effect (effect (end-run))}
       :choices {:req #(and (ice? %) (rezzed? %))}
       :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
       :effect (req (update! state side (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))
@@ -1462,6 +1473,11 @@
       :msg (msg "rearrange ICE protecting " target)
       :effect (req (let [serv (next (server->zone state target))]
                      (continue-ability state side (sun serv) card nil)))})
+
+   "Surveillance Sweep"
+   {:events {:run {:effect (req (swap! state assoc-in [:trace :player] :runner))}
+             :run-end {:effect (req (swap! state dissoc-in [:trace :player]))}}
+    :leave-play (req (swap! state dissoc-in [:trace :player]))}
 
    "Sweeps Week"
    {:effect (effect (gain :credit (count (:hand runner))))

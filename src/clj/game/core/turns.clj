@@ -61,6 +61,7 @@
        :room room
        :rid 0 :turn 0 :eid 0
        :sfx [] :sfx-current-id 0
+       :stats {:time {:started (t/now)}}
        :options {:spectatorhands spectatorhands}
        :corp {:user (:user corp) :identity corp-identity
               :options corp-options

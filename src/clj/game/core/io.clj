@@ -302,10 +302,10 @@
           "/take-brain" #(when (= %2 :runner) (damage %1 %2 :brain (max 0 value)))
           "/take-meat"  #(when (= %2 :runner) (damage %1 %2 :meat  (max 0 value)))
           "/take-net"   #(when (= %2 :runner) (damage %1 %2 :net   (max 0 value)))
-          "/trace"      #(when (= %2 :corp) (corp-trace-prompt %1
-                                                               {:title "/trace command" :side %2}
-                                                               {:base (max 0 value)
-                                                                :msg "resolve successful trace effect"}))
+          "/trace"      #(when (= %2 :corp) (init-trace %1 %2
+                                                        {:title "/trace command" :side %2}
+                                                        {:base (max 0 value)
+                                                         :msg "resolve successful trace effect"}))
           "/undo-click" #(command-undo-click %1 %2)
           "/undo-turn"  #(command-undo-turn %1 %2)
           nil)))))

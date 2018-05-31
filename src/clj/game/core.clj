@@ -7,7 +7,9 @@
                                 combine-subtypes remove-subtypes remove-subtypes-once click-spent? used-this-turn?
                                 pluralize quantify type->rig-zone safe-zero? safe-inc-n sub->0]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
-            [clojure.string :refer [split-lines split join lower-case includes?]]
+            [clj-time.core :as t]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.java.io :as io]
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]

@@ -1,18 +1,18 @@
 (ns netrunner.gameboard
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [om.core :as om :include-macros true]
-            [sablono.core :as sab :include-macros true]
-            [cljs.core.async :refer [chan put! <!] :as async]
+  (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
+            [differ.core :as differ]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]
             [netrunner.appstate :refer [app-state]]
             [netrunner.auth :refer [avatar] :as auth]
             [netrunner.cardbrowser :refer [add-symbols] :as cb]
-            [netrunner.utils :refer [toastr-options influence-dot]]
-            [differ.core :as differ]
-            [om.dom :as dom]
+            [netrunner.utils :refer [toastr-options influence-dot map-longest]]
             [netrunner.ws :as ws]
-            [jinteki.utils :refer [str->int]]
-            [jinteki.cards :refer [all-cards]]))
+            [om.core :as om :include-macros true]
+            [om.dom :as dom]
+            [sablono.core :as sab :include-macros true]))
 
 (defonce game-state (atom {}))
 (defonce last-state (atom {}))
@@ -50,7 +50,8 @@
     (.setItem js/localStorage "gameid" (:gameid @app-state))
     (reset! game-state state)
     (swap! game-state assoc :side side)
-    (reset! last-state @game-state)))
+    (reset! last-state @game-state)
+    (reset! lock false)))
 
 (defn launch-game [{:keys [state]}]
   (init-game state)
@@ -76,9 +77,7 @@
                 (get-in @last-state aid))
       (reset! lock false))))
 
-(defn handle-state [{:keys [state]}]
-  (init-game state)
-  (reset! lock false))
+(defn handle-state [{:keys [state]}] (init-game state))
 
 (defn handle-diff [{:keys [gameid diff]}]
   (when (= gameid (:gameid @game-state))
@@ -1165,20 +1164,32 @@
                 ;; choice of number of credits
                 (= (:choices prompt) "credit")
                 [:div
-                 (when (:base prompt)
-                   ;; This is trace prompt
-                   (if (= side :corp)
-                     ;; This is a trace prompt for the corp, show runner link + credits
-                     [:div.info "Runner has " (:link runner) [:span {:class "anr-icon link"}]
-                      " + " (:credit runner) [:span {:class "anr-icon credit"}]]
-                     ;; This is a trace prompt for the runner, show trace strength
-                     [:div.info (str "Trace - " (:strength prompt))]))
+                 (when-let [base (:base prompt)]
+                   ;; This is the initial trace prompt
+                   (if (nil? (:strength prompt))
+                     (if (= "corp" (:player prompt))
+                       ;; This is a trace prompt for the corp, show runner link + credits
+                       [:div.info "Runner: " (:link runner) [:span {:class "anr-icon link"}]
+                        " + " (:credit runner) [:span {:class "anr-icon credit"}]]
+                       ;; Trace in which the runner pays first, showing base trace strength and corp credits
+                       [:div.info "Trace: " (when (:bonus prompt) (+ base (:bonus prompt)) base)
+                        " + " (:credit corp) [:span {:class "anr-icon credit"}]])
+                     ;; This is a trace prompt for the responder to the trace, show strength
+                     (if (= "corp" (:player prompt))
+                       [:div.info "vs Trace: " (:strength prompt)]
+                       [:div.info "vs Runner: " (:strength prompt) [:span {:class "anr-icon link"}]])))
                  [:div.credit-select
                   ;; Inform user of base trace / link and any bonuses
                   (when-let [base (:base prompt)]
-                    (let [bonus (:bonus prompt 0)
-                          preamble (if (pos? bonus) (str base " + " bonus) (str base))]
-                      [:span (str preamble " + ")]))
+                    (if (nil? (:strength prompt))
+                      (if (= "corp" (:player prompt))
+                        (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
+                          [:span (str strength " + ")])
+                        [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )])
+                      (if (= "corp" (:player prompt))
+                        [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )]
+                        (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
+                          [:span (str strength " + ")]))))
                   [:select#credit (for [i (range (inc (:credit me)))]
                                     [:option {:value i} i])] " credits"]
                  [:button {:on-click #(send-command "choice"
@@ -1291,6 +1302,72 @@
   (when sfx-current-id
     (om/set-state! owner :sfx-last-played {:gameid gameid :id sfx-current-id})))
 
+(def corp-stats
+  (let [s #(-> @game-state :stats :corp)]
+    [["Clicks Gained" #(-> (s) :gain :click)]
+     ["Credits Gained" #(-> (s) :gain :credit)]
+     ["Credits Lost" #(-> (s) :lose :credit)]
+     ["Credits by Click" #(-> (s) :click :credit)]
+     ["Cards Drawn" #(-> (s) :gain :card)]
+     ["Cards Drawn by Click" #(-> (s) :click :draw)]
+     ["Damage Done" #(-> (s) :damage :all)]
+     ["Cards Rezzed" #(-> (s) :cards :rezzed)]]))
+
+(def runner-stats
+  (let [s #(-> @game-state :stats :runner)]
+    [["Clicks Gained" #(-> (s) :gain :click)]
+     ["Credits Gained" #(-> (s) :gain :credit)]
+     ["Credits Lost" #(-> (s) :lose :credit)]
+     ["Credits by Click" #(-> (s) :click :credit)]
+     ["Cards Drawn" #(-> (s) :gain :card)]
+     ["Cards Drawn by Click" #(-> (s) :click :draw)]
+     ["Tags Gained" #(-> (s) :gain :tag)]
+     ["Runs Made" #(-> (s) :runs :started)]
+     ["Cards Accessed" #(-> (s) :access :cards)]]))
+
+(defn show-stat
+  "Determines statistic counter and if it should be shown"
+  [side]
+  (when-let [stat-fn (-> side second)]
+    (let [stat (stat-fn)]
+      (if (pos? stat) stat "-"))))
+
+(defn build-game-stats
+  "Builds the end of game statistics div & table"
+  []
+  (let [stats (map-longest list nil corp-stats runner-stats)]
+    [:div
+     [:table.win.table
+      [:tr.win.th
+       [:td.win.th "Corp"] [:td.win.th]
+       [:td.win.th "Runner"] [:td.win.th]]
+      (for [[corp runner] stats]
+        [:tr [:td (first corp)] [:td (show-stat corp)]
+         [:td (first runner)] [:td (show-stat runner)]])]]))
+
+(defn build-win-box
+  "Builds the end of game pop up game end"
+  [game-state]
+  [:div.win.centered.blue-shade
+   [:div
+    (:winning-user @game-state) " (" (-> @game-state :winner capitalize)
+    (cond
+      (= "Decked" (@game-state :reason capitalize))
+      (str ") wins due to the Corp being decked on turn " (:turn @game-state))
+
+      (= "Flatline" (@game-state :reason capitalize))
+      (str ") wins by flatline on turn " (:turn @game-state))
+
+      (= "Concede" (@game-state :reason capitalize))
+      (str ") wins by concession on turn " (:turn @game-state))
+
+      :else
+      (str ") wins by scoring agenda points on turn "  (:turn @game-state)))]
+   [:div "Time taken: " (-> @game-state :stats :time :elapsed) " minutes"]
+   [:br]
+   (build-game-stats)
+   [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "✘"]])
+
 (defn gameboard [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 turn corp runner] :as cursor} owner]
   (reify
     om/IInitState
@@ -1344,19 +1421,7 @@
                opponent (assoc ((if (= side :runner) :corp :runner) cursor) :active (and (pos? turn) (not= (keyword active-player) side)))]
            [:div.gameboard
             (when (and (:winner @game-state) (not (:win-shown @app-state)))
-              [:div.win.centered.blue-shade
-               (:winning-user @game-state) " (" (-> @game-state :winner capitalize)
-               (cond
-                 (= "Decked" (@game-state :reason capitalize))
-                 ") wins due to the Corp being decked"
-
-                 (= "Flatline" (@game-state :reason capitalize))
-                 ") wins by flatlining the Runner"
-
-                 :else
-                 ") wins by scoring agenda points")
-
-               [:button.win-right {:on-click #(swap! app-state assoc :win-shown true) :type "button"} "x"]])
+              (build-win-box game-state))
             [:div {:class (:background (:options @app-state))}]
             [:div.rightpane
              [:div.card-zoom
