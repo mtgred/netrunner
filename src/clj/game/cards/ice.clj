@@ -43,13 +43,13 @@
    :msg "end the run"
    :effect (effect (end-run))})
 
-(def give-tag
-  "Basic give runner 1 tag subroutine
-   Mostly used with tag-trace"
-  {:label "Give the Runner 1 tag"
-   :msg "give the Runner 1 tag"
+(defn give-tags
+  "Basic give runner n tags subroutine."
+  [n]
+  {:label (str "Give the Runner " (quantify n "tag"))
+   :msg (str "give the Runner " (quantify n "tag"))
    :delayed-completion true
-   :effect (effect (tag-runner :runner eid 1))})
+   :effect (effect (tag-runner :runner eid n))})
 
 (def add-power-counter
   "Adds 1 power counter to the card."
@@ -66,8 +66,8 @@
 
 (defn tag-trace
   "Trace ability for giving a tag, at specified base strength"
-  [base]
-  (trace-ability base give-tag))
+  ([base] (tag-trace base 1))
+  ([base n] (trace-ability base (give-tags n))))
 
 (defn gain-credits
   "Gain specified amount of credits"
@@ -349,7 +349,7 @@
 
    "Authenticator"
    {:implementation "Encounter effect is manual"
-    :abilities [give-tag]
+    :abilities [(give-tags 1)]
     :runner-abilities [{:label "Take 1 tag"
                         :delayed-completion true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to Bypass it")
@@ -696,8 +696,8 @@
 
    "Data Raven"
    {:implementation "Encounter effect is manual"
-    :abilities [give-tag
-                (power-counter-ability give-tag)]
+    :abilities [(give-tags 1)
+                (power-counter-ability (give-tags 1))]
     :runner-abilities [{:label "End the run"
                         :effect (req (end-run state :runner)
                                      (system-msg state :runner "chooses to end the run on encountering Data Raven"))}
@@ -1092,8 +1092,9 @@
     :subroutines [trash-installed]}
 
    "IP Block"
-   {:abilities [(assoc give-tag :req (req (not-empty (filter #(has-subtype? % "AI") (all-active-installed state :runner))))
-                                :label "Give the Runner 1 tag if there is an installed AI")]
+   {:abilities [(assoc (give-tags 1)
+                  :req (req (not-empty (filter #(has-subtype? % "AI") (all-active-installed state :runner))))
+                  :label "Give the Runner 1 tag if there is an installed AI")]
     :subroutines [(tag-trace 3)
                   end-the-run-if-tagged]}
 
@@ -1923,6 +1924,22 @@
    "Spiderweb"
    {:subroutines [end-the-run]}
 
+   "Surveyor"
+   (let [x (req (* 2 (count (:ices (card->server state card)))))]
+     {:effect (req (let [srv (second (:zone card))]
+                     (add-watch state (keyword (str "surveyor" (:cid card)))
+                                (fn [k ref old new]
+                                  (let [ices (count (get-in new [:corp :servers srv :ices]))]
+                                    (when (not= (count (get-in old [:corp :servers srv :ices])) ices)
+                                      (update! ref side (assoc (get-card ref card) :strength-bonus ices))
+                                      (update-ice-strength ref side (get-card ref card))))))))
+      :leave-play (req (remove-watch state (keyword (str "surveyor" (:cid card)))))
+      :strength-bonus x
+      :subroutines [{:label "Trace X - Give the Runner 2 tags"
+                     :trace (assoc (give-tags 2) :base x)}
+                    {:label "Trace X - End the run"
+                     :trace (assoc end-the-run :base x)}]})
+
    "Susanoo-no-Mikoto"
    {:subroutines [{:req (req (not= (:server run) [:discard]))
                    :msg "make the Runner continue the run on Archives"
@@ -1950,7 +1967,7 @@
                                         (has-subtype? % "AI"))}}]}
 
    "SYNC BRE"
-   {:subroutines [(trace-ability 4 give-tag)
+   {:subroutines [(tag-trace 4)
                   (trace-ability 2 {:label "Runner reduces cards accessed by 1 for this run"
                                     :delayed-completion true
                                     :msg "reduce cards accessed for this run by 1"
@@ -2095,7 +2112,7 @@
                   {:label "Runner loses 2 [Credits]"
                    :msg "force the Runner to lose 2 [Credits]"
                    :effect (effect (lose :runner :credit 2))}
-                  (trace-ability 2 give-tag)]}
+                  (trace-ability 2 (give-tags 1))]}
 
    "Vikram 1.0"
    {:implementation "Program prevention is not implemented"
@@ -2121,7 +2138,7 @@
                   (trace-ability 3 end-the-run)]}
 
    "Virgo"
-   (constellation-ice give-tag)
+   (constellation-ice (give-tags 1))
 
    "Waiver"
    {:subroutines [(trace-ability 5 {:label "Reveal the Runner's Grip and trash cards"

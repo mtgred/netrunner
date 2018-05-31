@@ -1164,7 +1164,7 @@
       (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (= 1 (:tag (get-runner))) "Trace succeeds with 0 advancements"))))
+      (is (= 1 (:tag (get-runner))) "Trace succeeds with 1 advancement"))))
 
 (deftest seidr-adaptive-barrier
   ;; Seidr Adaptive Barrier - +1 strength for every ice protecting its server
@@ -1310,6 +1310,31 @@
       (card-subroutine state :corp sand-storm 0)
       (prompt-choice :corp "Server 2")
       (is (=  (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
+
+(deftest surveyor
+  ;; Surveyor ice strength
+  (do-game
+    (new-game (default-corp [(qty "Surveyor" 1) (qty "Ice Wall" 2)])
+              (default-runner))
+    (core/gain state :corp :credit 10)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :corp "Surveyor" "HQ")
+    (let [surv (get-ice state :hq 0)]
+      (core/rez state :corp surv)
+      (is (= 2 (:current-strength (refresh surv))) "Surveyor has 2 strength for itself")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (is (= 6 (:current-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ICE")
+      (run-on state "HQ")
+      (card-subroutine state :corp surv 0)
+      (prompt-choice :corp 0)                               ; Should be Trace - 6
+      (prompt-choice :runner 5)
+      (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Surveyor Trace 6 with boost 5")
+      (card-subroutine state :corp surv 0)
+      (prompt-choice :corp 0)                               ; Should be Trace - 6
+      (prompt-choice :runner 6)
+      (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6"))))
 
 (deftest tithonium
   ;; Forfeit option as rez cost, can have hosted condition counters
