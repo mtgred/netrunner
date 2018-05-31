@@ -74,7 +74,7 @@
   [credits]
   {:label (str "Gain " credits " [Credits]")
    :msg (str "gain " credits " [Credits]")
-   :effect (effect (gain :credit credits))})
+   :effect (effect (gain-credits credits))})
 
 (defn power-counter-ability
   "Does specified ability using a power counter."
@@ -244,7 +244,7 @@
                                                        :yes-ability {:delayed-completion true
                                                                      :effect (effect
                                                                                (system-msg :runner "pays 2[Credits] to draw 1 card")
-                                                                               (lose :credit 2)
+                                                                               (lose-credits 2)
                                                                                (clear-wait-prompt :corp)
                                                                                (draw eid 1 nil))}}}
                                                      card nil))}]
@@ -461,12 +461,12 @@
    {:effect take-bad-pub
     :abilities [{:msg "gain 2 [Credits] if there is an installed AI"
                  :req (req (some #(has-subtype? % "AI") (all-active-installed state :runner)))
-                 :effect (effect (gain :credit 2))}]
+                 :effect (effect (gain-credits 2))}]
     :subroutines [(assoc trash-program :player :runner
                                        :msg "force the Runner to trash 1 program"
                                        :label "The Runner trashes 1 program")
                   {:msg "gain 2 [Credits] and end the run"
-                   :effect (effect (gain :credit 2)
+                   :effect (effect (gain-credits 2)
                                    (end-run))}]}
 
 
@@ -1338,7 +1338,7 @@
    {:advanceable :always
     :subroutines [{:label "Gain 1 [Credits] (Gain 3 [Credits])"
                    :msg (msg "gain " (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3) " [Credits]")
-                   :effect (effect (gain :credit (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3)))}
+                   :effect (effect (gain-credits (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3)))}
                   {:label "Do 1 net damage (Do 3 net damage)"
                    :delayed-completion true
                    :msg (msg "do " (if (> 3 (+ (:advance-counter card 0) (:extra-advance-counter card 0))) 1 3) " net damage")

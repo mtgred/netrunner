@@ -73,7 +73,7 @@
                                    :yes-ability {:msg (msg (str "gain 1 [Credits]"
                                                                 (when-not (installed? target)
                                                                   (str " and reveal "  (:title target)))))
-                                                 :effect (effect (gain :credit 1))}}}}}
+                                                 :effect (effect (gain-credits 1))}}}}}
 
    "Aesops Pawnshop"
    {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
@@ -81,7 +81,7 @@
                                 state side
                                 {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
                                  :choices {:req #(and (card-is? % :side :runner) (installed? %) (not (card-is? % :cid (:cid card))))}
-                                 :effect (effect (gain :credit 3) (trash target {:unpreventable true}))}
+                                 :effect (effect (gain-credits 3) (trash target {:unpreventable true}))}
                                 card nil))}]}
 
    "Akshara Sareen"
@@ -95,13 +95,13 @@
     :abilities [{:label "Move up to 3 [Credit] from credit pool to Algo Trading"
                  :prompt "Choose how many [Credit] to move" :once :per-turn
                  :choices {:number (req (min (:credit runner) 3))}
-                 :effect (effect (lose :credit target)
+                 :effect (effect (lose-credits target)
                                  (add-counter card :credit target))
                  :msg (msg "move " target " [Credit] to Algo Trading")}
                 {:label "Take all credits from Algo Trading"
                  :cost [:click 1]
                  :msg (msg "trash it and gain " (get-in card [:counter :credit] 0) " [Credits]")
-                 :effect (effect (gain :credit (get-in card [:counter :credit] 0))
+                 :effect (effect (gain-credits (get-in card [:counter :credit] 0))
                                  (trash card {:cause :ability-cost}))}]
     :events {:runner-turn-begins {:req (req (>= (get-in card [:counter :credit] 0) 6))
                                   :effect (effect (add-counter card :credit 2)
@@ -296,7 +296,7 @@
                  :show-discard true
                  :choices {:req #(and (in-discard? %) (= (:side %) "Runner"))}
                  :msg (msg "remove " (:title target) " from the game and gain 2 [Credits]")
-                 :effect (effect (gain :credit 2)
+                 :effect (effect (gain-credits 2)
                                  (move target :rfg))}]}
 
    "Borrowed Satellite"
@@ -511,7 +511,7 @@
     :events {:runner-turn-begins ability}})
 
    "Data Dealer"
-   {:abilities [{:cost [:click 1 :forfeit] :effect (effect (gain :credit 9))
+   {:abilities [{:cost [:click 1 :forfeit] :effect (effect (gain-credits 9))
                  :msg (msg "gain 9 [Credits]")}]}
 
    "Data Folding"
@@ -519,7 +519,7 @@
                   :msg "gain 1 [Credits]"
                   :once :per-turn
                   :req (req (and (>= (available-mu state) 2) (:runner-phase-12 @state)))
-                  :effect (effect (gain :credit 1))}]
+                  :effect (effect (gain-credits 1))}]
     {:flags {:drip-economy true}
     :abilities [ability]
     :events {:runner-turn-begins ability}})
@@ -622,7 +622,7 @@
                  :msg (msg (if (= (get-in @state [:runner :credit]) 0) "lose 0 [Credits] (runner has no credits to lose)" "lose 1 [Credits]"))
                  :req (req (:runner-phase-12 @state))
                  :once :per-turn
-                 :effect (effect (lose :credit 1))}]
+                 :effect (effect (lose-credits 1))}]
     :events {:corp-turn-begins {:msg (msg "draw " (if (= (count (get-in @state [:runner :deck])) 0)
                                                    "0 cards (runner's stack is empty)"
                                                    "1 card"))
@@ -631,7 +631,7 @@
                                                              "0 [Credits] (runner has no credits to lose)"
                                                              "1 [Credits]"))
                                   :once :per-turn
-                                  :effect (effect (lose :credit 1))}}}
+                                  :effect (effect (lose-credits 1))}}}
 
    "Duggars"
    {:abilities [{:cost [:click 4] :effect (effect (draw 10)) :msg "draw 10 cards"}]}
@@ -690,7 +690,7 @@
     :abilities [{:label "[Trash]: Prevent another installed resource from being trashed"
                  :effect (effect (trash-prevent :resource 1) (trash card {:unpreventable true :cause :ability-cost}))}
                 {:label "[Trash]: Gain 2 [Credits]"
-                 :effect (effect (trash card {:cause :ability-cost}) (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (gain-credits 2)) :msg "gain 2 [Credits]"}]}
 
    "Fan Site"
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
@@ -798,7 +798,7 @@
    "Grifter"
    {:events {:runner-turn-ends
              {:effect (req (let [ab (if (get-in @state [:runner :register :successful-run])
-                                      {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}
+                                      {:effect (effect (gain-credits 1)) :msg "gain 1 [Credits]"}
                                       {:effect (effect (trash card)) :msg "trash Grifter"})]
                              (resolve-ability state side ab card targets)))}}}
 
@@ -846,7 +846,7 @@
    {:events {:agenda-scored {:msg (msg "gain " (get-agenda-points state :corp target) " [Credits]")
                              :effect (effect (gain-credits :runner (get-agenda-points state :corp target)))}
              :agenda-stolen {:msg (msg "gain " (get-agenda-points state :runner target) " [Credits]")
-                             :effect (effect (gain :credit (get-agenda-points state :runner target)))}}}
+                             :effect (effect (gain-credits (get-agenda-points state :runner target)))}}}
 
    "Hunting Grounds"
    {:abilities [{:label "Prevent a \"when encountered\" ability on a piece of ICE"
@@ -864,7 +864,7 @@
                    :msg "place 1 [Credits] on Ice Analyzer"
                    :effect (effect (add-counter :runner card :credit 1))}}
     :abilities [{:counter-cost [:credit 1]
-                 :effect (effect (gain :credit 1))
+                 :effect (effect (gain-credits 1))
                  :msg "take 1 [Credits] to install programs"}]}
 
    "Ice Carver"
@@ -989,7 +989,7 @@
                      (= (second targets) :runner)))
       :once :per-turn
       :msg "gain 2 [Credits]"
-      :effect (effect (gain :credit 2))}}}
+      :effect (effect (gain-credits 2))}}}
 
    "Kongamato"
    {:abilities [{:label "[Trash]: Break the first subroutine on the encountered piece of ice"
@@ -1169,7 +1169,7 @@
    "Net Mercur"
    {:abilities [{:counter-cost [:credit 1]
                  :msg "gain 1 [Credits]"
-                 :effect (effect (gain :credit 1)
+                 :effect (effect (gain-credits 1)
                                  (trigger-event :spent-stealth-credit card))}]
     :events {:spent-stealth-credit
              {:req (req (and (:run @state)
@@ -1282,7 +1282,7 @@
                               (when (and (not (zero? (get-in old [:runner :credit])))
                                          (zero? (get-in new [:runner :credit])))
                                 (resolve-ability ref side {:msg "gain 1 [Credits]" :once :per-turn
-                                                           :effect (effect (gain :credit 1))} card nil)))))
+                                                           :effect (effect (gain-credits 1))} card nil)))))
     :events {:runner-turn-begins {:req (req (= (:credit runner) 0)) :msg "gain 1 [Credits]"
                                   :effect (req (gain-credits state :runner 1)
                                                (swap! state assoc-in [:per-turn (:cid card)] true))}
@@ -1420,7 +1420,7 @@
                                     (resolve-ability
                                       state side
                                       {:msg (msg "pay " cost " [Credit] and trash " (:title c))
-                                       :effect (effect (lose :credit cost)
+                                       :effect (effect (lose-credits cost)
                                                        (trash card {:cause :ability-cost})
                                                        (trash c))}
                                      card nil)))
@@ -1430,7 +1430,7 @@
    {:events {:trace {:msg "gain 1 [Credits]" :effect (effect (gain-credits :runner 1))}}}
 
    "Professional Contacts"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
+   {:abilities [{:cost [:click 1] :effect (effect (gain-credits 1) (draw))
                  :msg "gain 1 [Credits] and draw 1 card"}]}
 
    "Public Sympathy"
@@ -1665,7 +1665,7 @@
                                       {:mandatory true
                                        :effect (effect (resolve-ability
                                                          {:msg "gain 2 [Credits] instead of accessing"
-                                                          :effect (effect (gain :credit 2)
+                                                          :effect (effect (gain-credits 2)
                                                                           (update! (dissoc st :server-target)))}
                                                          st nil))})))}
                :runner-turn-ends {:effect (effect (update! (dissoc card :server-target)))}}
@@ -1734,7 +1734,7 @@
    "Symmetrical Visage"
    {:events {:runner-click-draw {:req (req (genetics-trigger? state side :runner-click-draw))
                                  :msg "gain 1 [Credits]"
-                                 :effect (effect (gain :credit 1))}}}
+                                 :effect (effect (gain-credits 1))}}}
 
    "Synthetic Blood"
    {:events {:damage {:req (req (genetics-trigger? state side :damage))
@@ -1766,7 +1766,7 @@
    "Tech Trader"
    {:events {:runner-trash {:req (req (and (= side :runner) (= (second targets) :ability-cost)))
                             :msg "gain 1 [Credits]"
-                            :effect (effect (gain :credit 1))}}}
+                            :effect (effect (gain-credits 1))}}}
 
    "Technical Writer"
    {:events {:runner-install {:silent (req true)
@@ -1775,7 +1775,7 @@
                                               (system-msg (str "places 1 [Credits] on Technical Writer")))}}
     :abilities [{:cost [:click 1]
                  :msg (msg "gain " (get-in card [:counter :credit] 0) " [Credits]")
-                 :effect (effect (gain :credit (get-in card [:counter :credit] 0))
+                 :effect (effect (gain-credits (get-in card [:counter :credit] 0))
                                  (trash card {:cause :ability-cost}))}]}
 
    "Temple of the Liberated Mind"
@@ -1933,7 +1933,7 @@
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
-                 :effect (effect (gain :credit 2))}]
+                 :effect (effect (gain-credits 2))}]
     :trash-effect {:effect (effect (damage eid :meat 3 {:unboostable true :card card}))}}
 
    "Tyson Observatory"
@@ -1974,7 +1974,7 @@
    {:events {:runner-trash {:req (req (and (first-installed-trash-own? state :runner)
                                            (installed? target)
                                            (= (:side target) "Runner")))
-                            :effect (effect (gain :credit 1))
+                            :effect (effect (gain-credits 1))
                             :msg "gain 1 [Credits]"}}}
 
    "Wireless Net Pavilion"
@@ -2023,7 +2023,7 @@
     :abilities [{:cost [:click 1]
                  :msg (msg "gain " (get-in card [:counter :credit] 0) " [Credits]")
                  :label "Take all credits"
-                 :effect (effect (gain :credit (get-in card [:counter :credit] 0))
+                 :effect (effect (gain-credits (get-in card [:counter :credit] 0))
                                  (add-counter card :credit
                                               (- (get-in card [:counter :credit] 0))))}]
     :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))

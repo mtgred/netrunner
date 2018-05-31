@@ -145,7 +145,7 @@
    {:prompt "Select an installed card in a server to trash"
     :choices {:req #(and (= (last (:zone %)) :content)
                          (is-remote? (second (:zone %))))}
-    :effect (final-effect (gain :credit (* 3 (get target :advance-counter 0))) (trash target))
+    :effect (final-effect (gain-credits (* 3 (get target :advance-counter 0))) (trash target))
     :msg (msg "trash " (card-str state target) " and gain "
               (* 3 (get target :advance-counter 0)) " [Credits]")}
 
@@ -163,7 +163,7 @@
 
    "Beanstalk Royalties"
    {:msg "gain 3 [Credits]"
-    :effect (effect (gain :credit 3))}
+    :effect (effect (gain-credits 3))}
 
    "Best Defense"
    {:delayed-completion true
@@ -226,7 +226,7 @@
    "Blue Level Clearance"
    {:msg "gain 5 [Credits] and draw 2 cards"
     :delayed-completion true
-    :effect (effect (gain :credit 5)
+    :effect (effect (gain-credits 5)
                     (draw eid 2 nil))}
 
    "BOOM!"
@@ -262,7 +262,7 @@
               :req #(and (= (:side %) "Corp")
                          (in-hand? %))}
     :msg (msg "reveal " (join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
-    :effect (final-effect (gain :credit (* 2 (count targets))))}
+    :effect (final-effect (gain-credits (* 2 (count targets))))}
 
    "Cerebral Cast"
    {:req (req (last-turn? state :runner :successful-run))
@@ -291,7 +291,7 @@
    "Commercialization"
    {:msg (msg "gain " (:advance-counter target 0) " [Credits]")
     :choices {:req ice?}
-    :effect (final-effect (gain :credit (:advance-counter target 0)))}
+    :effect (final-effect (gain-credits (:advance-counter target 0)))}
 
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
@@ -367,7 +367,7 @@
    "Diversified Portfolio"
    {:msg (msg "gain " (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))
               " [Credits]")
-    :effect (effect (gain :credit (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
+    :effect (effect (gain-credits (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
 
    "Door to Door"
    {:events {:runner-turn-begins
@@ -543,7 +543,7 @@
    "Green Level Clearance"
    {:msg "gain 3 [Credits] and draw 1 card"
     :delayed-completion true
-    :effect (effect (gain :credit 3)
+    :effect (effect (gain-credits 3)
                     (draw eid 1 nil))}
 
    "Hard-Hitting News"
@@ -591,7 +591,7 @@
             :effect (effect (move :runner target :hand true))}}
 
    "Hedge Fund"
-   {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
+   {:msg "gain 9 [Credits]" :effect (effect (gain-credits 9))}
 
    "Hellion Alpha Test"
    {:req (req (last-turn? state :runner :installed-resource))
@@ -688,7 +688,7 @@
               :unsuccessful {:msg "take 1 bad publicity" :effect (effect (gain-bad-publicity :corp 1))}}})
 
    "IPO"
-   {:msg "gain 13 [Credits]" :effect (effect (gain :credit 13))}
+   {:msg "gain 13 [Credits]" :effect (effect (gain-credits 13))}
 
    "Kill Switch"
    (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title target))
@@ -708,7 +708,7 @@
    "Lateral Growth"
    {:delayed-completion true
     :msg "gain 4 [Credits]"
-    :effect (effect (gain :credit 4)
+    :effect (effect (gain-credits 4)
                     (continue-ability {:player :corp
                                        :prompt "Select a card to install"
                                        :choices {:req #(and (= (:side %) "Corp")
@@ -778,7 +778,7 @@
    "Mass Commercialization"
    {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
                                           (get-all-installed state)))) " [Credits]")
-    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+    :effect (effect (gain-credits (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
                                                       (get-all-installed state))))))}
 
    "MCA Informant"
@@ -794,7 +794,7 @@
 
    "Medical Research Fundraiser"
    {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
-    :effect (effect (gain-credits :credit 8) (gain :runner 3))}
+    :effect (effect (gain-credits 8) (gain :runner 3))}
 
    "Midseason Replacements"
    {:req (req (last-turn? state :runner :stole-agenda))
@@ -1150,7 +1150,7 @@
 
    "Restructure"
    {:msg "gain 15 [Credits]"
-    :effect (effect (gain :credit 15))}
+    :effect (effect (gain-credits 15))}
 
    "Reuse"
    {:delayed-completion true
@@ -1164,7 +1164,7 @@
                                   (str "trash " (quantify m "card")
                                        " and gain " (* 2 m) " [Credits]")))
                       :effect (effect (trash-cards targets)
-                                      (gain :credit (* 2 (count targets))))} card nil)))}
+                                      (gain-credits (* 2 (count targets))))} card nil)))}
 
    "Reverse Infection"
    {:prompt "Choose One:"
@@ -1383,7 +1383,7 @@
 
    "Stock Buy-Back"
    {:msg (msg "gain " (* 3 (count (:scored runner))) " [Credits]")
-    :effect (effect (gain :credit (* 3 (count (:scored runner)))))}
+    :effect (effect (gain-credits (* 3 (count (:scored runner)))))}
 
    "Sub Boost"
    (let [new-sub {:label "[Sub Boost]: End the run"}]
@@ -1434,7 +1434,7 @@
                                            {:effect (effect (register-events (subliminal) (assoc card :zone '(:discard))))}
                                            card nil))))}})]
      {:msg "gain 1 [Credits]"
-      :effect (effect (gain :credit 1)
+      :effect (effect (gain-credits 1)
                       (resolve-ability {:once :per-turn :once-key :subliminal-messaging
                                         :msg "gain [Click]"
                                         :effect (effect (gain :corp :click 1))} card nil))
@@ -1455,7 +1455,7 @@
    "Successful Demonstration"
    {:req (req (last-turn? state :runner :unsuccessful-run))
     :msg "gain 7 [Credits]"
-    :effect (effect (gain :credit 7))}
+    :effect (effect (gain-credits 7))}
 
    "Sunset"
    (letfn [(sun [serv]
@@ -1481,7 +1481,7 @@
     :leave-play (req (swap! state dissoc-in [:trace :player]))}
 
    "Sweeps Week"
-   {:effect (effect (gain :credit (count (:hand runner))))
+   {:effect (effect (gain-credits (count (:hand runner))))
     :msg (msg "gain " (count (:hand runner)) " [Credits]")}
 
    "Targeted Marketing"
@@ -1550,7 +1550,7 @@
    "Too Big to Fail"
    {:req (req (< (:credit corp) 10))
     :msg "gain 7 [Credits] and take 1 bad publicity"
-    :effect (effect (gain :credit 7)
+    :effect (effect (gain-credits 7)
                     (gain-bad-publicity :corp 1) ) }
 
    "Traffic Accident"
@@ -1568,7 +1568,7 @@
                     (host (get-card state target) (assoc card :zone [:discard] :seen true))
                     (register-events
                       {:advance {:req (req (= (:hosted card) (:hosted target)))
-                                 :effect (effect (gain :credit 1)
+                                 :effect (effect (gain-credits 1)
                                                  (system-msg
                                                    (str "uses Transparency Initiative to gain 1 [Credit]")))}}
                       target))}
@@ -1627,7 +1627,7 @@
    "Violet Level Clearance"
    {:msg "gain 8 [Credits] and draw 4 cards"
     :delayed-completion true
-    :effect (effect (gain :credit 8)
+    :effect (effect (gain-credits 8)
                     (draw eid 4 nil))}
 
    "Voter Intimidation"

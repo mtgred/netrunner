@@ -320,7 +320,7 @@
                   :msg "gain 1 [Credits]"
                   :once :per-turn
                   :label "Gain 1 [Credits] (start of turn)"
-                  :effect (effect (gain :credit 1))}]
+                  :effect (effect (gain-credits 1))}]
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins ability}
     :abilities [ability]})
@@ -395,7 +395,7 @@
    {:implementation "Manually triggered by Corp"
     :abilities [{:req (req (and this-server tagged))
                  :msg "gain 2 [Credits]"
-                 :effect (effect (gain :credit 2))}]}
+                 :effect (effect (gain-credits 2))}]}
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
@@ -627,7 +627,7 @@
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
              :once :per-turn
-             :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}]
+             :msg "gain 1 [Credits]" :effect (effect (gain-credits 1))}]
      {:events {:advance ng :advancement-placed ng}})
 
    "Nihongai Grid"
@@ -862,7 +862,7 @@
      {:cost [:click 1]
       :msg (msg "gain " (get-in card [:counter :credit] 0) " [Credits]") :once :per-turn
       :label "Take all credits"
-      :effect (effect (gain :credit (get-in card [:counter :credit] 0))
+      :effect (effect (gain-credits (get-in card [:counter :credit] 0))
                       (set-prop card :counter {:credit 0}))}]}
 
    "Signal Jamming"
@@ -998,7 +998,7 @@
                    :interactive (req true)
                    :trace {:base 2
                            :msg "gain 1 [Credits]"
-                           :effect (effect (gain :credit 1))}}}}
+                           :effect (effect (gain-credits 1))}}}}
 
    "Tyrs Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a piece of Bioroid ICE from being broken"

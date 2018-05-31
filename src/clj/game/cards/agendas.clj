@@ -16,7 +16,7 @@
                     0 (flatten (seq (:servers corp)))))]
     {:msg (msg "gain " (count-ice corp) " [Credits]")
      :interactive (req true)
-     :effect (effect (gain :credit (count-ice corp))
+     :effect (effect (gain-credits (count-ice corp))
                      (update-all-ice))
      :swapped {:effect (req (update-all-ice state side))}
      :events {:pre-ice-strength {:req (req (has-subtype? target subtype))
@@ -438,7 +438,7 @@
                  :cost [:click 1]
                  :once :per-turn
                  :msg (msg "gain " (:tag runner) " [Credits]")
-                 :effect (effect (gain :credit (:tag runner)))}]}
+                 :effect (effect (gain-credits (:tag runner)))}]}
 
    "Executive Retreat"
    {:effect (effect (add-counter card :agenda 1)
@@ -497,13 +497,13 @@
     :abilities [{:cost [:click 1]
                  :counter-cost [:agenda 1]
                  :msg "gain 7 [Credits] and take 1 bad publicity"
-                 :effect (effect (gain :credit 7)
+                 :effect (effect (gain-credits 7)
                                  (gain-bad-publicity :corp 1))}]}
 
    "Gila Hands Arcology"
    {:abilities [{:cost [:click 2]
                  :msg "gain 3 [Credits]"
-                 :effect (effect (gain :credit 3))}]}
+                 :effect (effect (gain-credits 3))}]}
 
    "Global Food Initiative"
    {:agendapoints-runner (req 2)}
@@ -525,12 +525,12 @@
 
    "Government Contracts"
    {:abilities [{:cost [:click 2]
-                 :effect (effect (gain :credit 4))
+                 :effect (effect (gain-credits 4))
                  :msg "gain 4 [Credits]"}]}
 
    "Government Takeover"
    {:abilities [{:cost [:click 1]
-                 :effect (effect (gain :credit 3))
+                 :effect (effect (gain-credits 3))
                  :msg "gain 3 [Credits]"}]}
 
    "Graft"
@@ -583,11 +583,11 @@
     :abilities [{:cost [:click 1]
                  :counter-cost [:agenda 1]
                  :msg (msg "gain " (:credit runner) " [Credits]")
-                 :effect (effect (gain :credit (:credit runner)))}]}
+                 :effect (effect (gain-credits (:credit runner)))}]}
 
    "Hostile Takeover"
    {:msg "gain 7 [Credits] and take 1 bad publicity"
-    :effect (effect (gain :credit 7)
+    :effect (effect (gain-credits 7)
                     (gain-bad-publicity :corp 1))
     :interactive (req true)}
 

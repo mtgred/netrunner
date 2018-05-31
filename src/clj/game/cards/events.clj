@@ -125,7 +125,7 @@
 
    "Build Script"
    {:msg "gain 1 [Credits] and draw 2 cards"
-    :effect (effect (gain :credit 1) (draw 2))}
+    :effect (effect (gain-credits 1) (draw 2))}
 
    "By Any Means"
    {:effect (effect (register-events (:events (card-def card))
@@ -142,7 +142,7 @@
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
                                      (all-active-installed state :runner))) " [Credits]")
-    :effect (effect (gain :credit (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
+    :effect (effect (gain-credits (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
                                                  (all-active-installed state :runner)))))}
 
    "Career Fair"
@@ -333,7 +333,7 @@
 
    "Day Job"
    {:additional-cost [:click 3]
-    :msg "gain 10 [Credits]" :effect (effect (gain :credit 10))}
+    :msg "gain 10 [Credits]" :effect (effect (gain-credits 10))}
 
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
@@ -374,7 +374,7 @@
                     :effect (effect (trash-no-cost eid target))}}}
 
    "Deuces Wild"
-   (let [all [{:effect (effect (gain :credit 3))
+   (let [all [{:effect (effect (gain-credits 3))
                :msg "gain 3 [Credits]"}
               {:effect (effect (draw 2))
                :msg "draw 2 cards"}
@@ -521,7 +521,7 @@
     (effect (gain :click 1)))
 
    "Easy Mark"
-   {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
+   {:msg "gain 3 [Credits]" :effect (effect (gain-credits 3))}
 
    "Embezzle"
    (letfn [(name-string [cards]
@@ -639,7 +639,7 @@
    {:msg (msg "draw 1 card and gain "
               (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))
               " [Credits]")
-    :effect (effect (draw) (gain :credit (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))))}
+    :effect (effect (draw) (gain-credits (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))))}
 
    "Executive Wiretaps"
    {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))}
@@ -696,7 +696,7 @@
                                      (= chosen-type (:type target)))
                               (continue-ability
                                   state :runner
-                                  {:effect (effect (gain :credit 5))
+                                  {:effect (effect (gain-credits 5))
                                    :msg "gain 5 [Credits] "}
                                   card nil)
                               (effect-completed state side eid))))})
@@ -973,7 +973,7 @@
                                         {:choices {:req installed?}
                                          :delayed-completion true
                                          :effect (effect (expose eid target))}
-                                         {:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))})
+                                         {:msg "gain 2 [Credits]" :effect (effect (gain-credits 2))})
                                       card nil))}
 
    "Information Sifting"
@@ -1168,7 +1168,7 @@
 
    "Lucky Find"
    {:msg "gain 9 [Credits]"
-    :effect (effect (gain :credit 9))}
+    :effect (effect (gain-credits 9))}
 
    "Mad Dash"
    {:prompt "Choose a server"
@@ -1225,7 +1225,7 @@
               " cards and gain " (:tag runner) " [Credits]")
     :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
                                          (all-active-installed state :runner))))
-                    (gain :credit (:tag runner)))}
+                    (gain-credits (:tag runner)))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
@@ -1281,7 +1281,7 @@
                                        (register-events state side {:successful-run
                                                                    {:req (req (= target :rd))
                                                                     :msg "gain 4 [Credits]"
-                                                                     :effect (effect (gain :credit 4)
+                                                                     :effect (effect (gain-credits 4)
                                                                                      (unregister-events card))}}
 
                                                         (assoc card :zone '(:discard))))
@@ -1421,13 +1421,13 @@
                                               (unregister-events card))}}}
 
    "Power Nap"
-   {:effect (effect (gain :credit (+ 2 (count (filter #(has-subtype? % "Double")
+   {:effect (effect (gain-credits (+ 2 (count (filter #(has-subtype? % "Double")
                                                       (:discard runner))))))
     :msg (msg "gain " (+ 2 (count (filter #(has-subtype? % "Double") (:discard runner)))) " [Credits]")}
 
    "Power to the People"
    {:effect (effect (register-events {:pre-steal-cost
-                                      {:once :per-turn :effect (effect (gain :credit 7))
+                                      {:once :per-turn :effect (effect (gain-credits 7))
                                                        :msg "gain 7 [Credits]"}
                                       :runner-turn-ends
                                       {:effect (effect (unregister-events card))}}
@@ -1439,7 +1439,7 @@
 
    "Process Automation"
    {:msg "gain 2 [Credits] and draw 1 card"
-    :effect (effect (gain :credit 2) (draw 1))}
+    :effect (effect (gain-credits 2) (draw 1))}
 
    "Push Your Luck"
    {:effect (effect (show-wait-prompt :runner "Corp to guess Odd or Even")
@@ -1484,7 +1484,7 @@
                                            (= (last (:zone %)) :content)
                                            (not (:rezzed %)))}
                       :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
-                      :effect (effect (gain :credit (* 2 c))
+                      :effect (effect (gain-credits (* 2 c))
                                       (add-prop :corp target :advance-counter c {:placed true})
                                       (register-turn-flag! card :can-access
                                                            ;; prevent access of advanced card
@@ -1760,7 +1760,7 @@
     (effect (gain-run-credits 9)))
 
    "Sure Gamble"
-   {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
+   {:msg "gain 9 [Credits]" :effect (effect (gain-credits 9))}
 
    "Surge"
    {:msg (msg "place 2 virus tokens on " (:title target))
@@ -1869,7 +1869,7 @@
                               (unregister-events card))}}}
 
    "Three Steps Ahead"
-   {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
+   {:end-turn {:effect (effect (gain-credits (* 2 (count (:successful-run runner-reg)))))
                :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
 
    "Tinkering"
@@ -1894,7 +1894,7 @@
    "Trade-In"
    {:additional-cost [:hardware 1]
     :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-    :events {:runner-trash {:effect (effect (gain :credit (quot (:cost target) 2))
+    :events {:runner-trash {:effect (effect (gain-credits (quot (:cost target) 2))
                                             (system-msg (str "trashes " (:title target) " and gains " (quot (:cost target) 2) " [Credits]"))
                                             (continue-ability {:prompt "Choose a Hardware to add to your Grip from your Stack"
                                                                :choices (req (filter #(is-type? % "Hardware")

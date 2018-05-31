@@ -392,7 +392,7 @@
                               :req (req (and (= target :hq)
                                              (first-successful-run-on-server? state :hq)))
                               :msg "gain 2 [Credits]"
-                              :effect (effect (gain :credit 2)) }}}
+                              :effect (effect (gain-credits 2)) }}}
 
    "Gagarin Deep Space: Expanding the Horizon"
    {:flags {:slow-remote-access (req (not (:disabled card)))}
@@ -440,7 +440,7 @@
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:req (req (first-event? state corp :corp-install))
                             :msg "gain 1 [Credits]"
-                            :effect (effect (gain :credit 1))}}}
+                            :effect (effect (gain-credits 1))}}}
 
    "Haas-Bioroid: Stronger Together"
    {:events {:pre-ice-strength {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
@@ -493,7 +493,7 @@
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
                   :once :per-turn
                   :msg "gain 2 [Credits]"
-                  :effect (effect (gain :credit 2))}]
+                  :effect (effect (gain-credits 2))}]
      {:flags {:drip-economy true}
       :events {:runner-turn-begins ability}
       :abilities [ability]})
@@ -644,7 +644,7 @@
    {:events {:play-event {:req (req (and (has-subtype? target "Run")
                                          (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
                           :msg "gain 1 [Credits]"
-                          :effect (effect (gain :credit 1))}}}
+                          :effect (effect (gain-credits 1))}}}
 
    "Khan: Savvy Skiptracer"
    {:events {:pass-ice
@@ -1109,7 +1109,7 @@
    "The Outfit: Family Owned and Operated"
    {:events {:corp-gain-bad-publicity {:delayed-completion true
                                        :msg "gain 3 [Credit]"
-                                       :effect (effect (gain :credit 3))}}}
+                                       :effect (effect (gain-credits 3))}}}
 
    ;; No special implementation
    "The Professor: Keeper of Knowledge"
@@ -1144,7 +1144,7 @@
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]"
-                              :effect (effect (gain :credit 1))
+                              :effect (effect (gain-credits 1))
                               :req (req (has-subtype? target "Transaction"))}}}
 
    "Whizzard: Master Gamer"

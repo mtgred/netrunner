@@ -225,7 +225,7 @@
     :in-play [:memory 1]
     :abilities [{:msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
                  :once :per-turn
-                 :effect (effect (gain :credit 1))}]}
+                 :effect (effect (gain-credits 1))}]}
 
    "Cyberfeeder"
    {:recurring 1}
@@ -277,7 +277,7 @@
    "Desperado"
    {:in-play [:memory 1]
     :events {:successful-run {:silent (req true)
-                              :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+                              :msg "gain 1 [Credits]" :effect (effect (gain-credits 1))}}}
 
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
@@ -895,7 +895,7 @@
                                                                (:credit runner)))}
                                    :msg (msg "prevent " target " damage")
                                    :effect (effect (damage-prevent (first (:pre-damage (eventmap @state))) target)
-                                                   (lose :credit target)
+                                                   (lose-credits target)
                                                    (trash card {:cause :ability-cost}))} card nil))}]})
 
    "Record Reconstructor"
@@ -1237,5 +1237,5 @@
    {:abilities [{:cost [:click 1 :net-damage 1]
                  :once :per-turn
                  :msg "gain 1 [Credits] and draw 2 cards"
-                 :effect (effect (gain :credit 1)
+                 :effect (effect (gain-credits 1)
                                  (draw 2))}]}})

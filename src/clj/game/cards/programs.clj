@@ -25,7 +25,7 @@
                                             :msg "shuffle a card into R&D"}} card))}]}
 
    "Au Revoir"
-   {:events {:jack-out {:effect (effect (gain :credit 1)) :msg "gain 1 [Credits]"}}}
+   {:events {:jack-out {:effect (effect (gain-credits 1)) :msg "gain 1 [Credits]"}}}
 
    "Bishop"
    {:abilities [{:cost [:click 1]
@@ -66,7 +66,7 @@
 
    "Cache"
    {:abilities [{:counter-cost [:virus 1]
-                 :effect (effect (gain :credit 1))
+                 :effect (effect (gain-credits 1))
                  :msg "gain 1 [Credits]"}]
     :data {:counter {:virus 3}}}
 
@@ -415,7 +415,7 @@
                                  card nil)))}]}
 
    "Gorman Drip v1"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (get-virus-counters state side card))
+   {:abilities [{:cost [:click 1] :effect (effect (gain-credits (get-virus-counters state side card))
                                                   (trash card {:cause :ability-cost}))
                  :msg (msg "gain " (get-virus-counters state side card) " [Credits]")}]
     :events {:corp-click-credit {:effect (effect (add-counter :runner card :virus 1))}
@@ -594,7 +594,7 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Magnum Opus"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+   {:abilities [{:cost [:click 1] :effect (effect (gain-credits 2)) :msg "gain 2 [Credits]"}]}
 
    "Medium"
    {:events
@@ -615,7 +615,7 @@
                  :prompt "How many [Credits] to spend to remove that number of tags?"
                  :choices {:number (req (min (:credit runner) (:tag runner)))}
                  :msg (msg "spend " target " [Credits] and remove " target " tags")
-                 :effect (effect (lose :credit target)
+                 :effect (effect (lose-credits target)
                                  (lose :tag target))}]}
 
    "Multithreader"
@@ -890,7 +890,7 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                                    :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
+                                    :effect (effect (runner-install target {:host-card card}) (gain-credits 1))}
                                   card nil))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade" :priority 2
@@ -994,7 +994,7 @@
                   :msg (msg "gain " (quot (:credit corp) 5) " [Credits]")
                   :once :per-turn
                   :req (req (:runner-phase-12 @state))
-                  :effect (effect (gain :credit (quot (:credit corp) 5)))}]
+                  :effect (effect (gain-credits (quot (:credit corp) 5)))}]
      {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
       :flags {:drip-economy true}
       :abilities [ability]
