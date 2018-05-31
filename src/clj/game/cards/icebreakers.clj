@@ -57,8 +57,8 @@
   [cost ice-type]
   {:once :per-turn
    :cost [:credit cost]
-   :label (str "Turn currently encountered ice into " ice-type)
-   :msg (msg "turn " (:title current-ice) " into " ice-type)
+   :label (str "Make currently encountered ice gain " ice-type)
+   :msg (msg "make " (:title current-ice) " gain " ice-type)
    :req (req (and current-ice (rezzed? current-ice)
                   (not (has-subtype? current-ice ice-type))))
    :effect (req (let [ice current-ice
