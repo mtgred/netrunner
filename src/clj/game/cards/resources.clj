@@ -1426,7 +1426,7 @@
       :choices (req (cancellable (:hand runner) :sorted))
       :delayed-completion true
       :effect (req (when-completed (trash state :runner card {:cause :ability-cost})
-                                   (when-completed (trash state :runner target {:cause :ability-cost})
+                                   (when-completed (trash state :runner target {:unpreventable true})
                                                    (continue-ability
                                                      state :runner
                                                      {:prompt "Choose a card to install"
