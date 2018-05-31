@@ -189,7 +189,7 @@
                                       {:effect (req (if (> (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))) 1)
                                                       (resolve-ability state side
                                                         {:prompt "Select a copy of Bank Job to use"
-                                                         :choices {:req #(and installed? (= (:title %) "Bank Job"))}
+                                                         :choices {:req #(and (installed? %) (= (:title %) "Bank Job"))}
                                                          :effect (req (let [c target
                                                                             creds (get-counters (get-card state c) :credit)]
                                                                         (resolve-ability state side
