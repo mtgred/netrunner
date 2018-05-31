@@ -11,7 +11,8 @@
 (deftest au-revoir
   ;; Au Revoir - Gain 1 credit every time you jack out
   (do-game
-    (new-game (default-corp) (default-runner [(qty "Au Revoir" 2)]))
+    (new-game (default-corp)
+              (default-runner [(qty "Au Revoir" 2)]))
     (take-credits state :corp)
     (play-from-hand state :runner "Au Revoir")
     (run-on state "Archives")
@@ -106,62 +107,60 @@
 
 (deftest datasucker
   ;; Datasucker - Reduce strength of encountered ICE
-  (do-game
-    (new-game (default-corp ["Fire Wall"])
-              (default-runner ["Datasucker"]))
-    (play-from-hand state :corp "Fire Wall" "New remote")
-    (take-credits state :corp)
-    (core/gain state :runner :click 3)
-    (play-from-hand state :runner "Datasucker")
-    (let [ds (get-in @state [:runner :rig :program 0])
-          fw (get-ice state :remote1 0)]
-      (run-empty-server state "Archives")
-      (is (= 1 (get-counters (refresh ds) :virus)))
-      (run-empty-server state "Archives")
-      (is (= 2 (get-counters (refresh ds) :virus)))
-      (run-on state "Server 1")
-      (run-continue state)
-      (run-successful state)
-      (is (= 2 (get-counters (refresh ds) :virus)) "No counter gained, not a central server")
-      (run-on state "Server 1")
-      (core/rez state :corp fw)
-      (is (= 5 (:current-strength (refresh fw))))
-      (card-ability state :runner ds 0)
-      (is (= 1 (get-counters (refresh ds) :virus)) "1 counter spent from Datasucker")
-      (is (= 4 (:current-strength (refresh fw))) "Fire Wall strength lowered by 1"))))
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Fire Wall"])
+                (default-runner ["Datasucker"]))
+      (play-from-hand state :corp "Fire Wall" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :click 3)
+      (play-from-hand state :runner "Datasucker")
+      (let [ds (get-in @state [:runner :rig :program 0])
+            fw (get-ice state :remote1 0)]
+        (run-empty-server state "Archives")
+        (is (= 1 (get-counters (refresh ds) :virus)))
+        (run-empty-server state "Archives")
+        (is (= 2 (get-counters (refresh ds) :virus)))
+        (run-on state "Server 1")
+        (run-continue state)
+        (run-successful state)
+        (is (= 2 (get-counters (refresh ds) :virus)) "No counter gained, not a central server")
+        (run-on state "Server 1")
+        (core/rez state :corp fw)
+        (is (= 5 (:current-strength (refresh fw))))
+        (card-ability state :runner ds 0)
+        (is (= 1 (get-counters (refresh ds) :virus)) "1 counter spent from Datasucker")
+        (is (= 4 (:current-strength (refresh fw))) "Fire Wall strength lowered by 1"))))
+  (testing "does not affect next ice when current is trashed. Issue #1788"
+    (do-game
+      (new-game
+        (default-corp ["Wraparound" "Spiderweb"])
+        (default-corp ["Datasucker" "Parasite"]))
+      (play-from-hand state :corp "Spiderweb" "HQ")
+      (play-from-hand state :corp "Wraparound" "HQ")
+      (take-credits state :corp)
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :runner "Datasucker")
+      (let [sucker (get-program state 0)
+            spider (get-ice state :hq 0)
+            wrap (get-ice state :hq 1)]
+        (core/add-counter state :runner sucker :virus 2)
+        (core/rez state :corp spider)
+        (core/rez state :corp wrap)
+        (play-from-hand state :runner "Parasite")
+        (prompt-select :runner (refresh spider))
+        (run-on state "HQ")
+        (run-continue state)
+        (card-ability state :runner (refresh sucker) 0)
+        (card-ability state :runner (refresh sucker) 0)
+        (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
+        (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker")))))
 
-(deftest datasucker-trashed
-  ;; Datasucker - does not affect next ice when current is trashed. Issue #1788.
-  (do-game
-    (new-game
-      (default-corp ["Wraparound" "Spiderweb"])
-      (default-corp ["Datasucker" "Parasite"]))
-    (play-from-hand state :corp "Spiderweb" "HQ")
-    (play-from-hand state :corp "Wraparound" "HQ")
-    (take-credits state :corp)
-    (core/gain state :corp :credit 10)
-    (play-from-hand state :runner "Datasucker")
-    (let [sucker (get-program state 0)
-          spider (get-ice state :hq 0)
-          wrap (get-ice state :hq 1)]
-      (core/add-counter state :runner sucker :virus 2)
-      (core/rez state :corp spider)
-      (core/rez state :corp wrap)
-      (play-from-hand state :runner "Parasite")
-      (prompt-select :runner (refresh spider))
-      (run-on state "HQ")
-      (run-continue state)
-      (card-ability state :runner (refresh sucker) 0)
-      (card-ability state :runner (refresh sucker) 0)
-      (is (find-card "Spiderweb" (:discard (get-corp))) "Spiderweb trashed by Parasite + Datasucker")
-      (is (= 7 (:current-strength (refresh wrap))) "Wraparound not reduced by Datasucker"))))
-
-(deftest dhegdheer-adept
+(deftest dhegdheer
   ;; Dheghdheer - hosting a breaker with strength based on unused MU should calculate correctly
   (do-game
     (new-game (default-corp)
-              (default-runner ["Adept"
-                               "Dhegdheer"]))
+              (default-runner ["Adept" "Dhegdheer"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 5)
     (play-from-hand state :runner "Dhegdheer")
@@ -177,6 +176,25 @@
         (is (= 4 (:credit (get-runner))) "4 credits left after hosting")
         (is (= 4 (core/available-mu state)) "0 MU used")
         (is (= 6 (:current-strength (refresh hosted-adpt))) "Adept at 6 strength hosted")))))
+
+(deftest disrupter
+  ;; Disrupter
+  (do-game
+    (new-game (default-corp [(qty "SEA Source" 2)])
+              (default-runner ["Disrupter"]))
+    (take-credits state :corp)
+    (run-empty-server state "Archives")
+    (play-from-hand state :runner "Disrupter")
+    (take-credits state :runner)
+    (play-from-hand state :corp "SEA Source")
+    (prompt-choice :runner "Yes")
+    (is (zero? (-> (get-corp) :prompt first :base)) "Base trace should now be 0")
+    (is (= 1 (-> (get-runner) :discard count)) "Disrupter should be in Heap")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (zero? (:tag (get-runner))) "Runner should gain no tag from beating trace")
+    (play-from-hand state :corp "SEA Source")
+    (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be reset to 3")))
 
 (deftest diwan
   ;; Diwan - Full test
@@ -204,57 +222,54 @@
     (is (= "Diwan" (-> (get-runner) :discard first :title)) "Diwan was trashed from purge")
     (is (= 3 (:credit (get-corp))) "No charge for installs after Diwan purged")))
 
-(deftest djinn-host-chakana
-  ;; Djinn - Hosted Chakana does not disable advancing agendas. Issue #750
-  (do-game
-    (new-game (default-corp ["Priority Requisition"])
-              (default-runner ["Djinn" "Chakana"]))
-    (play-from-hand state :corp "Priority Requisition" "New remote")
-    (take-credits state :corp 2)
-    (play-from-hand state :runner "Djinn")
-    (let [djinn (get-in @state [:runner :rig :program 0])
-          agenda (get-content state :remote1 0)]
-      (is agenda "Agenda was installed")
-      (card-ability state :runner djinn 1)
-      (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
-      (let [chak (first (:hosted (refresh djinn)))]
-        (is (= "Chakana" (:title chak)) "Djinn has a hosted Chakana")
-        ;; manually add 3 counters
-        (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
-        (take-credits state :runner 2)
-        (core/advance state :corp {:card agenda})
-        (is (= 1 (:advance-counter (refresh agenda))) "Agenda was advanced")))))
-
-(deftest djinn-host-program
-  ;; Djinn - Host a non-icebreaker program
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Djinn" "Chakana"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Djinn")
-    (is (= 3 (core/available-mu state)))
-    (let [djinn (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner djinn 1)
-      (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
-      (is (= 3 (core/available-mu state)) "No memory used to host on Djinn")
-      (is (= "Chakana" (:title (first (:hosted (refresh djinn))))) "Djinn has a hosted Chakana")
-      (is (= 1 (:credit (get-runner))) "Full cost to host on Djinn"))))
-
-(deftest djinn-tutor-virus
-  ;; Djinn - Tutor a virus program
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Djinn" "Parasite"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Djinn")
-    (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
-    (is (zero? (count (:hand (get-runner)))) "No cards in hand after moving Parasite to deck")
-    (let [djinn (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner djinn 0)
-      (prompt-card :runner (find-card "Parasite" (:deck (get-runner))))
-      (is (= "Parasite" (:title (first (:hand (get-runner))))) "Djinn moved Parasite to hand")
-      (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
-      (is (= 2 (:click (get-runner))) "1click to use Djinn ability"))))
+(deftest djinn
+  ;; Djinn
+  (testing "Hosted Chakana does not disable advancing agendas. Issue #750"
+    (do-game
+      (new-game (default-corp ["Priority Requisition"])
+                (default-runner ["Djinn" "Chakana"]))
+      (play-from-hand state :corp "Priority Requisition" "New remote")
+      (take-credits state :corp 2)
+      (play-from-hand state :runner "Djinn")
+      (let [djinn (get-in @state [:runner :rig :program 0])
+            agenda (get-content state :remote1 0)]
+        (is agenda "Agenda was installed")
+        (card-ability state :runner djinn 1)
+        (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
+        (let [chak (first (:hosted (refresh djinn)))]
+          (is (= "Chakana" (:title chak)) "Djinn has a hosted Chakana")
+          ;; manually add 3 counters
+          (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
+          (take-credits state :runner 2)
+          (core/advance state :corp {:card agenda})
+          (is (= 1 (:advance-counter (refresh agenda))) "Agenda was advanced")))))
+  (testing "Host a non-icebreaker program"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Djinn" "Chakana"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Djinn")
+      (is (= 3 (core/available-mu state)))
+      (let [djinn (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner djinn 1)
+        (prompt-select :runner (find-card "Chakana" (:hand (get-runner))))
+        (is (= 3 (core/available-mu state)) "No memory used to host on Djinn")
+        (is (= "Chakana" (:title (first (:hosted (refresh djinn))))) "Djinn has a hosted Chakana")
+        (is (= 1 (:credit (get-runner))) "Full cost to host on Djinn"))))
+  (testing "Tutor a virus program"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Djinn" "Parasite"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Djinn")
+      (core/move state :runner (find-card "Parasite" (:hand (get-runner))) :deck)
+      (is (zero? (count (:hand (get-runner)))) "No cards in hand after moving Parasite to deck")
+      (let [djinn (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner djinn 0)
+        (prompt-card :runner (find-card "Parasite" (:deck (get-runner))))
+        (is (= "Parasite" (:title (first (:hand (get-runner))))) "Djinn moved Parasite to hand")
+        (is (= 2 (:credit (get-runner))) "1cr to use Djinn ability")
+        (is (= 2 (:click (get-runner))) "1click to use Djinn ability")))))
 
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
@@ -324,58 +339,57 @@
       (is (= 1 (count (:deck (get-corp)))))
       (is (= 3 (count (:discard (get-corp)))) "Milled 1 card from R&D"))))
 
-(deftest harbinger-blacklist
-  ;; Harbinger - install facedown when Blacklist installed
-  (do-game
-    (new-game (default-corp ["Blacklist"])
-              (default-runner ["Harbinger"]))
-    (play-from-hand state :corp "Blacklist" "New remote")
-    (core/rez state :corp (get-content state :remote1 0))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Harbinger")
-    (core/trash state :runner (-> (get-runner) :rig :program first))
-    (is (= 0 (count (:discard (get-runner)))) "Harbinger not in heap")
-    (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown")))
+(deftest harbinger
+  ;; Harbinger
+  (testing "install facedown when Blacklist installed"
+    (do-game
+      (new-game (default-corp ["Blacklist"])
+                (default-runner ["Harbinger"]))
+      (play-from-hand state :corp "Blacklist" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Harbinger")
+      (core/trash state :runner (-> (get-runner) :rig :program first))
+      (is (= 0 (count (:discard (get-runner)))) "Harbinger not in heap")
+      (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown"))))
 
 (deftest hyperdriver
   ;; Hyperdriver - Remove from game to gain 3 clicks
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Hyperdriver"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Hyperdriver")
-    (is (= 1 (core/available-mu state)) "3 MU used")
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (is (:runner-phase-12 @state) "Runner in Step 1.2")
-    (let [hyp (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner hyp 0)
-      (core/end-phase-12 state :runner nil)
-      (is (= 7 (:click (get-runner))) "Gained 3 clicks")
-      (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
-
-(deftest hyperdriver-dhegdheer
-  ;; triggering a Dhegdeered Hyperdriver should not grant +3 MU
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Hyperdriver"
-                               "Dhegdheer"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Dhegdheer")
-    (let [dheg (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner dheg 0)
-      (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
-      (is (= 4 (core/available-mu state)) "0 MU used by Hyperdriver hosted on Dhegdheer")
-      (is (= 2 (:click (get-runner))) "2 clicks used")
-      (is (= 3 (:credit (get-runner))) "2 credits used")
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Hyperdriver"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hyperdriver")
+      (is (= 1 (core/available-mu state)) "3 MU used")
       (take-credits state :runner)
       (take-credits state :corp)
       (is (:runner-phase-12 @state) "Runner in Step 1.2")
-      (let [hyp (first (:hosted (refresh dheg)))]
+      (let [hyp (get-in @state [:runner :rig :program 0])]
         (card-ability state :runner hyp 0)
         (core/end-phase-12 state :runner nil)
-        (is (= 7 (:click (get-runner))) "Used Hyperdriver")
-        (is (= 4 (core/available-mu state)) "Still 0 MU used after Hyperdriver removed from game")))))
+        (is (= 7 (:click (get-runner))) "Gained 3 clicks")
+        (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
+  (testing "triggering a Dhegdeered Hyperdriver should not grant +3 MU"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Hyperdriver" "Dhegdheer"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dhegdheer")
+      (let [dheg (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner dheg 0)
+        (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
+        (is (= 4 (core/available-mu state)) "0 MU used by Hyperdriver hosted on Dhegdheer")
+        (is (= 2 (:click (get-runner))) "2 clicks used")
+        (is (= 3 (:credit (get-runner))) "2 credits used")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (:runner-phase-12 @state) "Runner in Step 1.2")
+        (let [hyp (first (:hosted (refresh dheg)))]
+          (card-ability state :runner hyp 0)
+          (core/end-phase-12 state :runner nil)
+          (is (= 7 (:click (get-runner))) "Used Hyperdriver")
+          (is (= 4 (core/available-mu state)) "Still 0 MU used after Hyperdriver removed from game"))))))
 
 (deftest imp
   ;; Imp
@@ -451,7 +465,7 @@
       (run-empty-server state "Archives")
       (is (= ["Steal"] (->> (get-runner) :prompt first :choices)) "Should only get the option to steal Hostile on access in Archives"))))
 
-(deftest incubator-transfer-virus-counters
+(deftest incubator
   ;; Incubator - Gain 1 virus counter per turn; trash to move them to an installed virus program
   (do-game
     (new-game (default-corp)
@@ -519,51 +533,49 @@
       (core/purge state :corp)
       (is (empty? (get-in @state [:runner :rig :program])) "Lamprey trashed by purge"))))
 
-(deftest leprechaun-adept
+(deftest leprechaun
   ;; Leprechaun - hosting a breaker with strength based on unused MU should calculate correctly
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Adept"
-                               "Leprechaun"]))
-    (take-credits state :corp)
-    (core/gain state :runner :credit 5)
-    (play-from-hand state :runner "Leprechaun")
-    (play-from-hand state :runner "Adept")
-    (is (= 1 (core/available-mu state)) "3 MU used")
-    (let [lep (get-program state 0)
-          adpt (get-program state 1)]
-      (is (= 3 (:current-strength (refresh adpt))) "Adept at 3 strength individually")
-      (card-ability state :runner lep 1)
-      (prompt-select :runner (refresh adpt))
-      (let [hosted-adpt (first (:hosted (refresh lep)))]
-        (is (= 3 (core/available-mu state)) "1 MU used")
-        (is (= 5 (:current-strength (refresh hosted-adpt))) "Adept at 5 strength hosted")))))
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Adept" "Leprechaun"]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 5)
+      (play-from-hand state :runner "Leprechaun")
+      (play-from-hand state :runner "Adept")
+      (is (= 1 (core/available-mu state)) "3 MU used")
+      (let [lep (get-program state 0)
+            adpt (get-program state 1)]
+        (is (= 3 (:current-strength (refresh adpt))) "Adept at 3 strength individually")
+        (card-ability state :runner lep 1)
+        (prompt-select :runner (refresh adpt))
+        (let [hosted-adpt (first (:hosted (refresh lep)))]
+          (is (= 3 (core/available-mu state)) "1 MU used")
+          (is (= 5 (:current-strength (refresh hosted-adpt))) "Adept at 5 strength hosted")))))
+  (testing "Keep MU the same when hosting or trashing hosted programs"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Leprechaun" "Hyperdriver" "Imp"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Leprechaun")
+      (let [lep (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner lep 0)
+        (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
+        (is (= 2 (:click (get-runner))))
+        (is (= 2 (:credit (get-runner))))
+        (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not deducted from available MU")
+        (card-ability state :runner lep 0)
+        (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
+        (is (= 1 (:click (get-runner))))
+        (is (= 0 (:credit (get-runner))))
+        (is (= 3 (core/available-mu state)) "Imp 1 MU not deducted from available MU")
+        ;; Trash Hyperdriver
+        (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard)
+        (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not added to available MU")
+        (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
+        (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU")))))
 
-(deftest leprechaun-mu-savings
-  ;; Leprechaun - Keep MU the same when hosting or trashing hosted programs
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Leprechaun" "Hyperdriver" "Imp"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Leprechaun")
-    (let [lep (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner lep 0)
-      (prompt-select :runner (find-card "Hyperdriver" (:hand (get-runner))))
-      (is (= 2 (:click (get-runner))))
-      (is (= 2 (:credit (get-runner))))
-      (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not deducted from available MU")
-      (card-ability state :runner lep 0)
-      (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
-      (is (= 1 (:click (get-runner))))
-      (is (= 0 (:credit (get-runner))))
-      (is (= 3 (core/available-mu state)) "Imp 1 MU not deducted from available MU")
-      ;; Trash Hyperdriver
-      (core/move state :runner (find-card "Hyperdriver" (:hosted (refresh lep))) :discard)
-      (is (= 3 (core/available-mu state)) "Hyperdriver 3 MU not added to available MU")
-      (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
-      (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU"))))
-
-(deftest magnum-opus-click
+(deftest magnum-opus
   ;; Magnum Opus - Gain 2 cr
   (do-game
     (new-game (default-corp)
@@ -742,13 +754,12 @@
           (is (= 1 (count (:discard (get-corp)))) "Enigma trashed")
           (is (= 1 (count (:discard (get-runner)))) "Parasite trashed when Enigma was trashed"))))))
 
-(deftest pheromones-no-counters
+(deftest pheromones
   ;; Pheromones ability shouldn't have a NullPointerException when fired with 0 virus counter
   (do-game
     (new-game (default-corp)
               (default-runner ["Pheromones"]))
     (take-credits state :corp)
-
     (play-from-hand state :runner "Pheromones")
     (let [ph (get-in @state [:runner :rig :program 0])]
       (card-ability state :runner (refresh ph) 0)
@@ -775,90 +786,88 @@
       (run-empty-server state "Archives")
       (is (= 4 (get-counters (refresh plague) :virus)) "Plague did not gain counters"))))
 
-(deftest progenitor-host-hivemind
-  ;; Progenitor - Hosting Hivemind, using Virus Breeding Ground. Issue #738
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Progenitor" "Virus Breeding Ground" "Hivemind"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Progenitor")
-    (play-from-hand state :runner "Virus Breeding Ground")
-    (is (= 4 (core/available-mu state)))
-    (let [prog (get-in @state [:runner :rig :program 0])
-          vbg (get-in @state [:runner :rig :resource 0])]
-      (card-ability state :runner prog 0)
-      (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
-      (is (= 4 (core/available-mu state)) "No memory used to host on Progenitor")
-      (let [hive (first (:hosted (refresh prog)))]
-        (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
-        (is (= 1 (get-counters hive :virus)) "Hivemind has 1 counter")
-        (is (= 0 (:credit (get-runner))) "Full cost to host on Progenitor")
-        (take-credits state :runner 1)
-        (take-credits state :corp)
-        (card-ability state :runner vbg 0) ; use VBG to transfer 1 token to Hivemind
-        (prompt-select :runner hive)
-        (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind gained 1 counter")
-        (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter")))))
-
-(deftest progenitor-mu-savings
-  ;; Progenitor - Keep MU the same when hosting or trashing hosted programs
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Progenitor" "Hivemind"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Progenitor")
-    (let [pro (get-in @state [:runner :rig :program 0])]
-      (card-ability state :runner pro 0)
-      (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
-      (is (= 2 (:click (get-runner))))
-      (is (= 2 (:credit (get-runner))))
-      (is (= 4 (core/available-mu state)) "Hivemind 2 MU not deducted from available MU")
-      ;; Trash Hivemind
-      (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
-      (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU"))))
+(deftest progenitor
+  ;; Progenitor
+  (testing "Hosting Hivemind, using Virus Breeding Ground. Issue #738"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Progenitor" "Virus Breeding Ground" "Hivemind"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Progenitor")
+      (play-from-hand state :runner "Virus Breeding Ground")
+      (is (= 4 (core/available-mu state)))
+      (let [prog (get-in @state [:runner :rig :program 0])
+            vbg (get-in @state [:runner :rig :resource 0])]
+        (card-ability state :runner prog 0)
+        (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
+        (is (= 4 (core/available-mu state)) "No memory used to host on Progenitor")
+        (let [hive (first (:hosted (refresh prog)))]
+          (is (= "Hivemind" (:title hive)) "Hivemind is hosted on Progenitor")
+          (is (= 1 (get-counters hive :virus)) "Hivemind has 1 counter")
+          (is (= 0 (:credit (get-runner))) "Full cost to host on Progenitor")
+          (take-credits state :runner 1)
+          (take-credits state :corp)
+          (card-ability state :runner vbg 0) ; use VBG to transfer 1 token to Hivemind
+          (prompt-select :runner hive)
+          (is (= 2 (get-counters (refresh hive) :virus)) "Hivemind gained 1 counter")
+          (is (= 0 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter")))))
+  (testing "Keep MU the same when hosting or trashing hosted programs"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Progenitor" "Hivemind"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Progenitor")
+      (let [pro (get-in @state [:runner :rig :program 0])]
+        (card-ability state :runner pro 0)
+        (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
+        (is (= 2 (:click (get-runner))))
+        (is (= 2 (:credit (get-runner))))
+        (is (= 4 (core/available-mu state)) "Hivemind 2 MU not deducted from available MU")
+        ;; Trash Hivemind
+        (core/move state :runner (find-card "Hivemind" (:hosted (refresh pro))) :discard)
+        (is (= 4 (core/available-mu state)) "Hivemind 2 MU not added to available MU")))))
 
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
-  (do-game
-    (new-game (default-corp ["PAD Campaign"])
-              (default-runner ["Reaver" (qty "Fall Guy" 5)]))
-    (starting-hand state :runner ["Reaver" "Fall Guy"])
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 10)
-    (core/gain state :runner :click 1)
-    (play-from-hand state :runner "Reaver")
-    (is (= 1 (count (:hand (get-runner)))) "One card in hand")
-    (run-empty-server state "Server 1")
-    (prompt-choice-partial :runner "Pay") ; Trash PAD campaign
-    (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
-    (play-from-hand state :runner "Fall Guy")
-    (play-from-hand state :runner "Fall Guy")
-    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
-    ; No draw from Fall Guy trash as Reaver already fired this turn
-    (card-ability state :runner (get-resource state 0) 1)
-    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
-    (take-credits state :runner)
-    ; Draw from Fall Guy trash on corp turn
-    (card-ability state :runner (get-resource state 0) 1)
-    (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
-
-(deftest reaver-fcc
-  ;; Reaver / Freelance Coding Construct - should not draw when trash from hand #2671
-  (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Reaver" 9) "Imp" "Snitch" "Freelance Coding Contract"]))
-    (starting-hand state :runner ["Reaver" "Imp" "Snitch" "Freelance Coding Contract"])
-    (take-credits state :corp)
-    (play-from-hand state :runner "Reaver")
-    (is (= 3 (count (:hand (get-runner)))) "Four cards in hand")
-    (is (= 3 (:credit (get-runner))) "3 credits")
-    (play-from-hand state :runner "Freelance Coding Contract")
-    (prompt-select :runner (find-card "Snitch" (:hand (get-runner))))
-    (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
-    (prompt-choice :runner "Done")
-    (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
-    (is (= 0 (count (:hand (get-runner)))) "No cards in hand")))
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["PAD Campaign"])
+                (default-runner ["Reaver" (qty "Fall Guy" 5)]))
+      (starting-hand state :runner ["Reaver" "Fall Guy"])
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (core/gain state :runner :click 1)
+      (play-from-hand state :runner "Reaver")
+      (is (= 1 (count (:hand (get-runner)))) "One card in hand")
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay") ; Trash PAD campaign
+      (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
+      (play-from-hand state :runner "Fall Guy")
+      (play-from-hand state :runner "Fall Guy")
+      (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+      ; No draw from Fall Guy trash as Reaver already fired this turn
+      (card-ability state :runner (get-resource state 0) 1)
+      (is (= 0 (count (:hand (get-runner)))) "No cards in hand")
+      (take-credits state :runner)
+      ; Draw from Fall Guy trash on corp turn
+      (card-ability state :runner (get-resource state 0) 1)
+      (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
+  (testing "with Freelance Coding Construct - should not draw when trash from hand #2671"
+    (do-game
+      (new-game (default-corp)
+                (default-runner [(qty "Reaver" 9) "Imp" "Snitch" "Freelance Coding Contract"]))
+      (starting-hand state :runner ["Reaver" "Imp" "Snitch" "Freelance Coding Contract"])
+      (take-credits state :corp)
+      (play-from-hand state :runner "Reaver")
+      (is (= 3 (count (:hand (get-runner)))) "Four cards in hand")
+      (is (= 3 (:credit (get-runner))) "3 credits")
+      (play-from-hand state :runner "Freelance Coding Contract")
+      (prompt-select :runner (find-card "Snitch" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
+      (prompt-choice :runner "Done")
+      (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
+      (is (= 0 (count (:hand (get-runner)))) "No cards in hand"))))
 
 (deftest rng-key
   ;; RNG Key - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
@@ -879,14 +888,12 @@
         (prompt-choice :runner "Gain 3 [Credits]")
         (is (= 8 (:credit (get-runner))) "Gained 3 credits")
         (prompt-choice :runner "No action"))
-
       (testing "Do not trigger on second successful run"
         (run-on state "R&D")
         (run-successful state)
         (prompt-choice :runner "No action")
         (take-credits state :runner)
         (take-credits state :corp))
-
       (testing "Do not trigger on archives"
         (run-on state "Archives")
         (run-successful state))
@@ -900,17 +907,14 @@
       (prompt-choice :runner "No action")
       (take-credits state :runner)
       (take-credits state :corp)
-
       (testing "Do not gain credits / cards if guess incorrect"
         (run-on state "R&D")
         (run-successful state)
         (prompt-choice :runner "Yes")
         (prompt-choice :runner 2)
         (prompt-choice :runner "No action"))
-
       (take-credits state :runner)
       (take-credits state :corp)
-
       (testing "Gain 2 cards"
         (is (= 0 (count (:hand (get-runner)))) "Started with 0 cards")
         (run-on state "R&D")
@@ -921,14 +925,12 @@
         (prompt-choice :runner "No action")
         (is (= 2 (count (:hand (get-runner)))) "Gained 2 cards")
         (is (= 0 (count (:deck (get-runner)))) "Cards came from stack"))))
-
   (testing "Do not pay out if accessing an upgrade first -- regression test for #3150"
     (do-game
       (new-game (default-corp ["Hokusai Grid" "Hedge Fund"])
                 (default-runner ["RNG Key"]))
       (play-from-hand state :corp "Hokusai Grid" "HQ")
       (take-credits state :corp)
-
       (testing "Gain 3 credits"
         (play-from-hand state :runner "RNG Key")
         (is (= 5 (:credit (get-runner))) "Starts at 5 credits")
@@ -1106,7 +1108,6 @@
               (default-runner ["Takobi" "Corroder" "Faust"]))
     (play-from-hand state :corp "Enigma" "HQ")
     (take-credits state :corp)
-
     (core/gain state :runner :credit 10)
     (play-from-hand state :runner "Takobi")
     (play-from-hand state :runner "Corroder")
@@ -1117,7 +1118,6 @@
       (dotimes [_ 3]
         (card-ability state :runner tako 0))
       (is (= 3 (get-counters (refresh tako) :power)) "3 counters on Takobi")
-
       (run-on state "HQ")
       (card-ability state :runner tako 1)
       (is (empty? (:prompt (get-runner))) "No prompt for un-rezzed ice")
@@ -1227,4 +1227,3 @@
     (prompt-select :runner (get-ice state :rd 0))
     (is (= 1 (count (:discard (get-runner)))) "Wari in heap")
     (is (not (empty? (get-in @state [:runner :prompt]))) "Runner is currently accessing Ice Wall")))
-

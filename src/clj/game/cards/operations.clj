@@ -1,7 +1,6 @@
 (ns game.cards.operations
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.cards.ice :refer [end-the-run]]
             [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
@@ -1387,8 +1386,10 @@
     :effect (effect (gain :credit (* 3 (count (:scored runner)))))}
 
    "Sub Boost"
-   (let [new-sub {:label "[Sub Boost] End the run"}]
-     {:sub-effect end-the-run
+   (let [new-sub {:label "[Sub Boost]: End the run"}]
+     {:sub-effect {:label "End the run"
+                   :msg "end the run"
+                   :effect (effect (end-run))}
       :choices {:req #(and (ice? %) (rezzed? %))}
       :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
       :effect (req (update! state side (assoc target :subtype (combine-subtypes true (:subtype target) "Barrier")))

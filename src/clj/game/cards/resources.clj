@@ -971,6 +971,17 @@
                  :effect (req (gain-credits state side (get-in card [:counter :credit] 0))
                               (add-counter state side card :credit (- (get-in card [:counter :credit] 0))))}]}
 
+ "Kasi String"
+ {:events {:run-ends {:req (req (and (first-event? state :runner :run-ends is-remote?)
+                                     (not (get-in @state [:run :did-steal]))
+                                     (get-in @state [:run :did-access])
+                                     (is-remote? (:server run))))
+                      :effect (effect (add-counter card :power 1))
+                      :msg "add a power counter to itself"}
+           :counter-added {:req (req (>= (get-in (get-card state card) [:counter :power] 0) 4))
+                           :effect (effect (as-agenda :runner card 1))
+                           :msg "add it to their score area as an agenda worth 1 agenda point"}}}
+                    
    "Keros Mcintyre"
    {:events
     {:derez
@@ -1453,6 +1464,30 @@
                  :choices {:req installed?}
                  :delayed-completion true
                  :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
+
+   "Reclaim"
+   {:abilities
+    [{:label "Install a program, piece of hardware, or virtual resource from your Heap"
+      :cost [:click 1]
+      :req (req (not-empty (:hand runner)))
+      :prompt "Choose a card to trash"
+      :choices (req (cancellable (:hand runner) :sorted))
+      :delayed-completion true
+      :effect (req (when-completed (trash state :runner card {:cause :ability-cost})
+                                   (when-completed (trash state :runner target {:unpreventable true})
+                                                   (continue-ability
+                                                     state :runner
+                                                     {:prompt "Choose a card to install"
+                                                      :choices (req (cancellable (filter #(and (or (is-type? % "Program")
+                                                                                                   (is-type? % "Hardware")
+                                                                                                   (and (is-type? % "Resource")
+                                                                                                        (has-subtype? % "Virtual")))
+                                                                                               (can-pay? state :runner nil (:cost %)))
+                                                                                         (:discard runner)) :sorted))
+                                                      :msg (msg "install " (:title target) " from the Heap")
+                                                      :delayed-completion true
+                                                      :effect (req (runner-install state :runner eid target nil))}
+                                                     card nil))))}]}
 
    "Rolodex"
    {:delayed-completion true
