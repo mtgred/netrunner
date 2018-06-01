@@ -83,12 +83,16 @@
     :abilities [{:effect (req (resolve-ability
                                 state side
                                 {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                                 :choices {:req #(and (card-is? % :side :runner) (installed? %) (not (card-is? % :cid (:cid card))))}
-                                 :effect (effect (gain-credits 3) (trash target {:unpreventable true}))}
+                                 :choices {:req #(and (card-is? % :side :runner)
+                                                      (installed? %)
+                                                      (not (card-is? % :cid (:cid card))))}
+                                 :effect (effect (gain-credits 3)
+                                                 (trash target {:unpreventable true}))}
                                 card nil))}]}
 
    "Akshara Sareen"
-   {:in-play [:click 1 :click-per-turn 1]
+   {:in-play [:click 1
+              :click-per-turn 1]
     :msg "give each player 1 additional [Click] to spend during their turn"
     :effect (effect (gain :corp :click-per-turn 1))
     :leave-play (effect (lose :corp :click-per-turn 1))}
@@ -696,9 +700,12 @@
    {:interactions {:prevent [{:type #{:trash-resource}
                               :req (req true)}]}
     :abilities [{:label "[Trash]: Prevent another installed resource from being trashed"
-                 :effect (effect (trash-prevent :resource 1) (trash card {:unpreventable true :cause :ability-cost}))}
+                 :effect (effect (trash card {:unpreventable true :cause :ability-cost})
+                                 (trash-prevent :resource 1))}
                 {:label "[Trash]: Gain 2 [Credits]"
-                 :effect (effect (trash card {:cause :ability-cost}) (gain-credits 2)) :msg "gain 2 [Credits]"}]}
+                 :msg "gain 2 [Credits]"
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (gain-credits 2))}]}
 
    "Fan Site"
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
