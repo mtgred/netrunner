@@ -110,8 +110,9 @@
 
 (defn get-resource
   "Get non-hosted resource by position."
-  [state pos]
-  (get-in @state [:runner :rig :resource pos]))
+  ([state] (get-in @state [:runner :rig :resource]))
+  ([state pos]
+   (get-in @state [:runner :rig :resource pos])))
 
 (defn get-runner-facedown
   "Get non-hosted runner facedown by position."
