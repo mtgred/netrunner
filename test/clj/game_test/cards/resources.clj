@@ -2255,6 +2255,24 @@
       (card-ability state :runner fall 1)
       (is (= 7 (:credit (get-runner)))))))
 
+(deftest the-archivist
+  ;; The Archivist
+  (do-game
+    (new-game (default-corp ["Global Food Initiative" "Private Security Force"])
+              (default-runner ["The Archivist"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Archivist")
+    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+    (take-credits state :runner)
+    (play-and-score state "Global Food Initiative")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")
+    (play-and-score state "Private Security Force")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 2 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")))
+
 (deftest the-black-file
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"

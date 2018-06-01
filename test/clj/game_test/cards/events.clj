@@ -2549,3 +2549,18 @@
         (take-credits state :corp 1)
         (is (not (get-in (refresh crypsis) [:added-virus-counter]))
             "Counter flag was cleared on Crypsis")))))
+
+(deftest white-hat
+  ;; White Hat
+  (do-game
+    (new-game (default-corp ["Ice Wall" "Fire Wall" "Enigma"])
+              (default-runner ["White Hat"]))
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (play-from-hand state :runner "White Hat")
+    (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner is waiting for Corp to boost")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 4)
+    (prompt-card :runner (find-card "Ice Wall" (:hand (get-corp))))
+    (prompt-card :runner (find-card "Enigma" (:hand (get-corp))))
+    (is (= #{"Ice Wall" "Enigma"} (->> (get-corp) :deck (map :title) (into #{}))))))

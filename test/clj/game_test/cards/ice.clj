@@ -1122,7 +1122,7 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
-      (core/advance state :corp {:card (refresh searchlight)})
+      (advance state searchlight 1)
       (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
@@ -1177,15 +1177,34 @@
               (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Sherlock 1.0" "HQ")
     (take-credits state :corp)
-    (play-from-hand state :runner "Gordian Blade")
-    (run-on state :hq)
-    (core/rez state :corp (get-ice state :hq 0))
-    (card-subroutine state :corp (get-ice state :hq 0) 0)
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 0)
-    (prompt-select :corp (get-in @state [:runner :rig :program 0]))
-    (is (empty? (get-in @state [:runner :rig :program])) "Gordian uninstalled")
-    (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack")))
+    (let [sherlock (get-ice state :hq 0)]
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state :hq)
+      (core/rez state :corp sherlock)
+      (card-subroutine state :corp sherlock 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-program state 0))
+      (is (empty? (get-program state)) "Gordian uninstalled")
+      (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack"))))
+
+(deftest sherlock-2.0
+  ;; Sherlock 2.0 - Trace to add an installed program to the bottom of Runner's Stack
+  (do-game
+    (new-game (default-corp [(qty "Sherlock 2.0" 1)])
+              (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Sherlock 2.0" "HQ")
+    (take-credits state :corp)
+    (let [sherlock (get-ice state :hq 0)]
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state :hq)
+      (core/rez state :corp sherlock)
+      (card-subroutine state :corp sherlock 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-program state 0))
+      (is (empty? (get-program state)) "Gordian uninstalled")
+      (is (= "Gordian Blade" (:title (last (:deck (get-runner))))) "Gordian on bottom of Stack"))))
 
 (deftest shiro
   ;; Shiro - Full test
@@ -1289,11 +1308,13 @@
       (is (= 6 (:current-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ICE")
       (run-on state "HQ")
       (card-subroutine state :corp surv 0)
-      (prompt-choice :corp 0)                               ; Should be Trace - 6
+      (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
+      (prompt-choice :corp 0)
       (prompt-choice :runner 5)
       (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Surveyor Trace 6 with boost 5")
       (card-subroutine state :corp surv 0)
-      (prompt-choice :corp 0)                               ; Should be Trace - 6
+      (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
+      (prompt-choice :corp 0)
       (prompt-choice :runner 6)
       (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6"))))
 
@@ -1358,27 +1379,45 @@
             "Tithonium hosting OAI as a condition")))))
 
 (deftest tmi
-  ;; TMI ICE test
+  ;; TMI
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "TMI" 3)])
+      (new-game (default-corp ["TMI"])
                 (default-runner))
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (get-in (refresh tmi) [:rezzed])))))
+        (is (:rezzed (refresh tmi))))))
   (testing "Losing trace derezzes TMI"
     (do-game
-      (new-game (default-corp [(qty "TMI" 3)])
+      (new-game (default-corp ["TMI"])
                 (make-deck "Sunny Lebeau: Security Specialist" [(qty "Blackmail" 3)]))
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (not (get-in (refresh tmi) [:rezzed])))))))
+        (is (not (:rezzed (refresh tmi))))))))
+
+(deftest troll
+  ;; Troll
+  (testing "Giving the runner a choice on successful trace shouldn't make runner pay trace first. #5335"
+    (do-game
+      (new-game (default-corp ["Troll"])
+                (default-runner))
+      (play-from-hand state :corp "Troll" "HQ")
+      (take-credits state :corp)
+      (let [troll (get-ice state :hq 0)]
+        (core/rez state :corp troll)
+        (run-on state "HQ")
+        (card-ability state :corp troll 0)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (prompt-choice :runner "End the run")
+        (is (not (:run @state)) "Run is ended")))))
 
 (deftest turing
   ;; Turing - Strength boosted when protecting a remote server

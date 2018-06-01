@@ -1005,8 +1005,34 @@
        (is (= 2 (:click (get-runner))) "Spent 1 click")
        (is (= 1 (:credit (get-runner))) "Spent 1c")))))
 
+(deftest security-nexus
+  ;; Security Nexus
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Security Nexus"]))
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :runner "Security Nexus")
+    (let [nexus (get-hardware state 0)]
+      (run-on state :rd)
+      (card-ability state :runner nexus 0)
+      (is (zero? (:tag (get-runner))) "Runner should have no tags to start")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (not (:run @state)) "Run should end from losing Security Nexus trace")
+      (is (= 1 (:tag (get-runner))) "Runner should take 1 tag from losing Security Nexus trace")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :rd)
+      (card-ability state :runner nexus 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 10)
+      (is (:run @state) "Run should still be going on from winning Security Nexus trace")
+      (is (= 1 (:tag (get-runner))) "Runner should still only have 1 tag"))))
+
 (deftest sifr
-  ;; Once per turn drop encountered ICE to zero strenght
+  ;; Sifr - Once per turn drop encountered ICE to zero strenght
   ;; Also handle archangel then re-install sifr should not break the game #2576
   (do-game
     (new-game (default-corp ["Archangel" "IP Block" "Hedge Fund"])

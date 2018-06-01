@@ -23,6 +23,23 @@
         (is (get-in (refresh spid) [:rezzed]) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest ash-2x3zb9cy
+  ;; Ash 2X3ZB9CY
+  (do-game
+    (new-game (default-corp ["Ash 2X3ZB9CY" (qty "Ice Wall" 10)])
+              (default-runner))
+    (starting-hand state :corp ["Ash 2X3ZB9CY" "Ice Wall"])
+    (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+    (take-credits state :corp)
+    (let [ash (get-content state :hq 0)]
+      (core/rez state :corp ash)
+      (run-empty-server state "HQ")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= "Ash 2X3ZB9CY" (-> (get-runner) :prompt first :card :title)) "Should access Ash")
+      (prompt-choice-partial :runner "Pay")
+      (is (not (:run @state)) "Accessing Ash then ends the run"))))
+
 (deftest ben-musashi
   ;; Ben Musashi
   (testing "Basic test - pay 2 net damage to steal from this server"
@@ -351,7 +368,7 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 3 (:credit (get-corp))) "Trace was successful")
-      (is (= 0 (:tag (get-runner))) "No tags given for run on different server")
+      (is (zero? (:tag (get-runner))) "No tags given for run on different server")
       (run-successful state)
       (run-on state "Server 1")
       (card-subroutine state :corp cad 0)
@@ -517,6 +534,22 @@
         ;; purged counters
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
+
+(deftest drone-screen
+  ;; Drone Screen
+  (do-game
+    (new-game (default-corp ["Drone Screen"])
+              (default-runner))
+    (play-from-hand state :corp "Drone Screen" "New remote")
+    (let [drone (get-content state :remote1 0)]
+      (core/rez state :corp drone)
+      (core/gain state :runner :tag 1)
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (is (zero? (-> (get-runner) :discard count)) "Heap should start empty")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should discard 1 card from meat damage from losing Drone Screen trace"))))
 
 (deftest forced-connection
   ;; Forced Connection - ambush, trace(3) give the runner 2 tags
@@ -1425,6 +1458,26 @@
       (core/derez state :corp sg)
       (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
+(deftest self-destruct
+  ;; Self-destruct
+  (do-game
+    (new-game (default-corp ["Self-destruct" "Dedicated Response Team" "Ice Wall"])
+              (default-runner))
+    (core/gain state :corp :credit 100 :click 4)
+    (play-from-hand state :corp "Self-destruct" "New remote")
+    (play-from-hand state :corp "Dedicated Response Team" "Server 1")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (let [self (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (card-ability state :corp self 0)
+      (is (= 3 (-> (get-corp) :discard count)) "All 3 cards from Server 1 should be in discard")
+      (is (= 2 (-> (get-corp) :prompt first :base)) "Self-destruct base trace should start at 2")
+      (is (zero? (-> (get-runner) :discard count)) "Runner should have no cards in heap")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 3 (-> (get-runner) :discard count)) "Runner should take 3 net damage from losing Self-destruct trace"))))
+
 (deftest signal-jamming
   ;; Trash to stop installs for the rest of the run
   (do-game
@@ -1570,6 +1623,29 @@
     (prompt-choice :runner 4)
     (prompt-choice-partial :runner "Pay")))
 
+(deftest the-twins
+  ;; The Twins
+  (do-game
+    (new-game (default-corp ["The Twins" (qty "Ice Wall" 10)])
+              (default-runner ["Corroder"]))
+    (starting-hand state :corp ["The Twins" "Ice Wall" "Ice Wall"])
+    (play-from-hand state :corp "The Twins" "New remote")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (let [twins (get-content state :remote1 0)
+          iw (get-ice state :remote1 0)]
+      (core/rez state :corp twins)
+      (core/rez state :corp iw)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [cor (get-program state 0)]
+        (run-on state "Server 1")
+        (card-ability state :runner cor 0)
+        (run-continue state)
+        (is (zero? (-> @state :run :position)) "Run should be at position 0")
+        (card-ability state :corp twins 0)
+        (prompt-select :corp (-> (get-corp) :hand first))
+        (is (= 1 (-> @state :run :position)) "Run should be moved back to position 1")))))
+
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
   (testing "Basic test"
@@ -1687,3 +1763,26 @@
         (prompt-choice-partial :runner "Pay") ; pay to trash
         (take-credits state :runner 3)
         (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn")))))
+
+(deftest warroid-tracker
+  ;; Warroid Tracker
+  (do-game
+    (new-game (default-corp ["Warroid Tracker"])
+              (default-runner ["Corroder" "Dyson Mem Chip"]))
+    (play-from-hand state :corp "Warroid Tracker" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Dyson Mem Chip")
+    (let [war (get-content state :remote1 0)
+          cor (get-program state 0)
+          mem (get-hardware state 0)]
+      (core/rez state :corp war)
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
+      (prompt-select :runner cor)
+      (prompt-select :runner mem)
+      (is (= 2 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards"))))

@@ -98,14 +98,14 @@
       (is (= 0 (count (get-in @state [:corp :servers :remote2 :content]))) "Agenda was stolen")
       (prompt-choice :corp "Medical Breakthrough") ;simult. effect resolution
       (prompt-choice :corp "Yes")
-      (prompt-choice :corp 0)  ;; Corp doesn't pump trace
+      (prompt-choice :corp 0)
       (is (= 3 (-> (get-runner) :prompt first :strength)) "Trace base strength is 3 after stealing first Breakthrough")
       (prompt-choice :runner 0)
-      (let [n (count (get-in @state [:runner :hand]))]
-        (is (= 1 (count (get-in @state [:runner :rig :program]))) "There is an Analog Dreamers installed")
-        (prompt-select :corp (first (get-in @state [:runner :rig :program])))
-        (is (= 0 (count (get-in @state [:runner :rig :program]))) "Analog Dreamers was uninstalled")
-        (is (= (+ n 1) (count (get-in @state [:runner :hand]))) "Analog Dreamers was added to hand"))
+      (let [n (count (:hand (get-runner)))]
+        (is (= 1 (count (get-program state))) "There is an Analog Dreamers installed")
+        (prompt-select :corp (get-program state 0))
+        (is (zero? (count (get-program state))) "Analog Dreamers was uninstalled")
+        (is (= (+ n 1) (count (:hand (get-runner)))) "Analog Dreamers was added to hand"))
       (take-credits state :runner)
       (score-agenda state :corp breakthrough)
       ;; (prompt-choice :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason

@@ -526,7 +526,10 @@
                                                    corp-strength)))
     (clear-wait-prompt state player)
     (let [successful (> corp-strength runner-strength)
-          which-ability (assoc (if successful trace (:unsuccessful trace)) :eid (make-eid state))]
+          which-ability (assoc (if successful
+                                 (:successful trace)
+                                 (:unsuccessful trace))
+                               :eid (make-eid state))]
       (system-say state side (str "The trace was " (when-not successful "un") "successful."))
       (when-completed (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace)
                                           {:runner-spent (if (corp-start? trace)
@@ -552,7 +555,8 @@
                                   " strength to " strength))
     (clear-wait-prompt state other)
     (show-wait-prompt state player
-                      (str (if (corp-start? trace) "Runner" "Corp") " to boost " other-type " strength")
+                      (str (if (corp-start? trace) "Runner" "Corp")
+                           " to boost " other-type " strength")
                       {:priority priority})
     (show-trace-prompt state other card (str "Boost " other-type " strength?")
                        #(resolve-trace state side card trace %)
@@ -571,7 +575,8 @@
                          (if (corp-start? trace) "trace" "link")
                          " strength")
                     {:priority priority})
-  (show-trace-prompt state player card (str "Boost " (if (corp-start? trace) "trace" "link") " strength?")
+  (show-trace-prompt state player card
+                     (str "Boost " (if (corp-start? trace) "trace" "link") " strength?")
                      #(trace-reply state side card trace %)
                      trace))
 

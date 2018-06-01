@@ -134,17 +134,21 @@
                  :msg (msg "swap " (:advance-counter card 0) " cards in HQ and Archives")}]}
 
    "Amani Senai"
-   (let [get-last-stolen-pts (fn [state] (advancement-cost state :corp (last (get-in @state [:runner :scored]))))
-         get-last-scored-pts (fn [state] (advancement-cost state :corp (last (get-in @state [:corp :scored]))))
+   (let [get-last-stolen-pts (fn [state]
+                               (advancement-cost state :corp (last (get-in @state [:runner :scored]))))
+         get-last-scored-pts (fn [state]
+                               (advancement-cost state :corp (last (get-in @state [:corp :scored]))))
          senai-ability (fn [trace-base-func]
                          {:interactive (req true)
-                          :optional {:prompt "Trace with Amani Senai?" :player :corp
+                          :optional {:prompt "Trace with Amani Senai?"
+                                     :player :corp
                                      :yes-ability {:trace {:base (req (trace-base-func state))
-                                                           :choices {:req #(and (installed? %)
-                                                                                (card-is? % :side :runner))}
-                                                           :label "add an installed card to the Grip"
-                                                           :msg (msg "add " (:title target) " to the Runner's Grip")
-                                                           :effect (effect (move :runner target :hand true))}}}})]
+                                                           :successful
+                                                           {:choices {:req #(and (installed? %)
+                                                                                 (card-is? % :side :runner))}
+                                                            :label "add an installed card to the Grip"
+                                                            :msg (msg "add " (:title target) " to the Runner's Grip")
+                                                            :effect (effect (move :runner target :hand true))}}}}})]
      {:events {:agenda-scored (senai-ability get-last-scored-pts)
                :agenda-stolen (senai-ability get-last-stolen-pts)}})
 
@@ -223,8 +227,8 @@
    "Broadcast Square"
    {:events {:pre-bad-publicity {:delayed-completion true
                                  :trace {:base 3
-                                         :msg "prevents all bad publicity"
-                                         :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}
+                                         :successful {:msg "prevents all bad publicity"
+                                                      :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}}
 
    "Capital Investors"
    {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
@@ -774,10 +778,10 @@
 
    "Kuwinda K4H1U3"
    (let [ability {:trace {:base (req (get-in card [:counter :power] 0))
-                          :delayed-completion true
-                          :effect (effect (damage :runner eid :brain 1 {:card card})
-                                          (trash card))
-                          :msg "do 1 brain damage"
+                          :successful {:delayed-completion true
+                                       :msg "do 1 brain damage"
+                                       :effect (effect (damage :runner eid :brain 1 {:card card})
+                                                       (trash card))}
                           :unsuccessful {:effect (effect (add-counter card :power 1)
                                                          (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
