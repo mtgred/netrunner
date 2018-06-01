@@ -525,7 +525,8 @@
 (defmethod choose-access :hq [cards server]
   {:delayed-completion true
    :effect (req (if (pos? (count cards))
-                  (if (and (= 1 (count cards)) (not (any-flag-fn? state :runner :slow-hq-access true)))
+                  (if (and (= 1 (count cards))
+                           (not (any-flag-fn? state :runner :slow-hq-access true)))
                     (access-card state side eid (first cards))
                     (let [from-hq (min (access-count state side :hq-access)
                                        (-> @state :corp :hand count))
