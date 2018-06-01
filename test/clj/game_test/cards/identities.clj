@@ -453,8 +453,8 @@
                 (take-credits state :corp)
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
-                (is (= 1 (->> @state :runner :prompt first :choices count)) "Should only have 1 option")
-                (is (= "No action" (->> @state :runner :prompt first :choices first)) "Only option should be 'No action'")))]
+                (is (= 1 (-> @state :runner :prompt first :choices count)) "Should only have 1 option")
+                (is (= "No action" (-> @state :runner :prompt first :choices first)) "Only option should be 'No action'")))]
       (doall (map fk-test
                   ["Archer"
                    "Fire Wall"
@@ -490,7 +490,7 @@
         (prompt-choice :runner "Yes")
         (run-empty-server state "HQ")
         (prompt-choice-partial :runner "Freedom")
-        (prompt-select :runner (->> (refresh iw) :hosted first)))
+        (prompt-select :runner (-> (refresh iw) :hosted first)))
       (is (= 1 (count (:discard (get-corp)))) "Accessed Ice Wall should be discarded after selecting 1 virus counter")))
   (testing "Doesn't trigger when accessing an Agenda"
     (do-game
@@ -500,7 +500,7 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "HQ")
       (is (= 1 (->> @state :runner :prompt first :choices count)) "Should only have 1 option")
-      (is (= "Steal" (->> @state :runner :prompt first :choices first)) "Only option should be 'Steal'")))
+      (is (= "Steal" (-> @state :runner :prompt first :choices first)) "Only option should be 'Steal'")))
   (testing "Shows multiple prompts when playing Imp"
     (do-game
       (new-game (default-corp ["Dedicated Response Team"])
@@ -511,7 +511,7 @@
       (play-from-hand state :runner "Cache")
       (play-from-hand state :runner "Imp")
       (run-empty-server state "HQ")
-      (is (= 4 (->> @state :runner :prompt first :choices count)) "Should have 4 options: Freedom, Imp, Trash, No action")))
+      (is (= 4 (-> @state :runner :prompt first :choices count)) "Should have 4 options: Freedom, Imp, Trash, No action")))
   (testing "Should return to access prompts when Done is pressed"
     (do-game
       (new-game (default-corp ["Dedicated Response Team"])
@@ -523,9 +523,9 @@
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (prompt-choice :runner "Done")
-      (is (= 3 (->> @state :runner :prompt first :choices count))
+      (is (= 3 (-> @state :runner :prompt first :choices count))
           (str "Should go back to access prompts, with 3 choices: Freedom, Trash, No action. "
-               "Choices seen: " (->> @state :runner :prompt first :choices)))
+               "Choices seen: " (-> @state :runner :prompt first :choices)))
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (prompt-select :runner (get-program state 0))
@@ -553,7 +553,7 @@
       (prompt-choice-partial :runner "Freedom")
       (prompt-select :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall should be discarded now")
-      (is (zero? (->> (get-program state 1) :counter :virus)) "Aumakua doesn't gain any virus counters from trash ability.")
+      (is (zero? (get-counters (get-program state 1) :virus)) "Aumakua doesn't gain any virus counters from trash ability.")
       (is (not (:run @state)) "Run ended")))
   (testing "interaction with trash-cost-bonuses, and declining ability once initiated"
     (do-game

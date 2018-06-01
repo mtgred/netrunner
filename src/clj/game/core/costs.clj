@@ -77,7 +77,7 @@
   [state side cost]
   (>= (+ (- (get-in @state [side :credit] -1) cost)
          (->> (all-installed state side)
-              (map #(:rec-counter % 0))
+              (map #(get-counters % :recurring))
               (reduce +)))
       0))
 
