@@ -144,9 +144,9 @@
    {:prompt "Select an installed card in a server to trash"
     :choices {:req #(and (= (last (:zone %)) :content)
                          (is-remote? (second (:zone %))))}
-    :effect (final-effect (gain :credit (* 3 (get target :advance-counter 0))) (trash target))
+    :effect (final-effect (gain :credit (* 3 (get-counters target :advancement))) (trash target))
     :msg (msg "trash " (card-str state target) " and gain "
-              (* 3 (get target :advance-counter 0)) " [Credits]")}
+              (* 3 (get-counters target :advancement)) " [Credits]")}
 
    "Bad Times"
    {:implementation "Any required program trashing is manual"
@@ -288,9 +288,9 @@
     :effect (effect (lose :runner :credit :all))}
 
    "Commercialization"
-   {:msg (msg "gain " (:advance-counter target 0) " [Credits]")
+   {:msg (msg "gain " (get-counters target :advancement) " [Credits]")
     :choices {:req ice?}
-    :effect (final-effect (gain :credit (:advance-counter target 0)))}
+    :effect (final-effect (gain :credit (get-counters target :advancement)))}
 
    "Consulting Visit"
    {:prompt  "Choose an Operation from R&D to play"
@@ -337,13 +337,16 @@
                      target :can-score
                      (fn [state side card]
                        (if (and (= (:cid card) tgtcid)
-                                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+                                (>= (get-counters card :advancement) (or (:current-cost card)
+                                                                         (:advancementcost card))))
                          ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
                          true)))))}
 
    "Defective Brainchips"
-   {:events {:pre-damage {:req (req (= target :brain)) :msg "do 1 additional brain damage"
-                          :once :per-turn :effect (effect (damage-bonus :brain 1))}}}
+   {:events {:pre-damage {:req (req (= target :brain))
+                          :msg "do 1 additional brain damage"
+                          :once :per-turn
+                          :effect (effect (damage-bonus :brain 1))}}}
 
    "Distract the Masses"
    (let [shuffle-two {:delayed-completion true
@@ -793,9 +796,9 @@
                      (gain state :corp :credit c)))})
 
    "Mass Commercialization"
-   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+   {:msg (msg "gain " (* 2 (count (filter #(pos? (+ (get-counters % :advancement) (:extra-advance-counter % 0)))
                                           (get-all-installed state)))) " [Credits]")
-    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (:advance-counter % 0) (:extra-advance-counter % 0)))
+    :effect (effect (gain :credit (* 2 (count (filter #(pos? (+ (get-counters % :advancement) (:extra-advance-counter % 0)))
                                                       (get-all-installed state))))))}
 
    "MCA Informant"
@@ -841,18 +844,23 @@
                      card :can-score
                      (fn [state side card]
                        (if (and (= (:cid card) tgtcid)
-                                (>= (:advance-counter card) (or (:current-cost card) (:advancementcost card))))
+                                (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
                          ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
                          true)))))}
 
    "Mutate"
-   {:req (req (some #(and (ice? %) (rezzed? %)) (all-installed state :corp)))
+   {:req (req (some #(and (ice? %)
+                          (rezzed? %))
+                    (all-installed state :corp)))
     :prompt "Select a rezzed piece of ice to trash"
-    :choices {:req #(and (ice? %) (rezzed? %))}
+    :choices {:req #(and (ice? %)
+                         (rezzed? %))}
     :delayed-completion true
     :effect (req (let [i (ice-index state target)
                        [reveal r] (split-with (complement ice?) (get-in @state [:corp :deck]))
-                       titles (->> (conj (vec reveal) (first r)) (filter identity) (map :title))]
+                       titles (->> (conj (vec reveal) (first r))
+                                   (filter identity)
+                                   (map :title))]
                    (when-completed (trash state :corp target nil)
                                    (do
                                      (system-msg state side (str "uses Mutate to trash " (:title target)))
@@ -1112,10 +1120,9 @@
     :prompt "Select an installed card that can be advanced"
     :choices {:req can-be-advanced?}
     :effect (req (let [installed (get-all-installed state)
-                       total-adv (reduce + (map :advance-counter
-                                                (filter #(:advance-counter %) installed)))]
+                       total-adv (reduce + (map #(get-counters % :advancement) installed))]
                    (doseq [c installed]
-                     (update! state side (dissoc c :advance-counter)))
+                     (set-prop state side c :advance-counter 0))
                    (set-prop state side target :advance-counter total-adv)
                    (update-all-ice state side)
                    (system-msg state side (str "uses Red Planet Couriers to move " total-adv
@@ -1229,7 +1236,7 @@
     :events {:pass-ice {:req (req (= (:cid target) (:cid (:host card))))
                                 :effect (effect (add-counter card :power 1))}
              :pre-ice-strength {:req (req (= (:cid target) (:cid (:host card))))
-                                :effect (effect (ice-strength-bonus (get-in card [:counter :power] 0) target))}}}
+                                :effect (effect (ice-strength-bonus (get-counters card :power) target))}}}
 
    "Sacrifice"
    {:req (req (pos? (:bad-publicity corp)))
@@ -1310,7 +1317,8 @@
    "Shipment from Kaguya"
    {:choices {:max 2 :req can-be-advanced?}
     :msg (msg "place 1 advancement token on " (count targets) " cards")
-    :effect (req (doseq [t targets] (add-prop state :corp t :advance-counter 1 {:placed true}))
+    :effect (req (doseq [t targets]
+                   (add-prop state :corp t :advance-counter 1 {:placed true}))
                  (effect-completed state side eid card))}
 
    "Shipment from MirrorMorph"
@@ -1603,13 +1611,13 @@
                       target))}
 
    "Trick of Light"
-   {:choices {:req #(and (contains? % :advance-counter) (> (:advance-counter %) 0))}
+   {:choices {:req #(pos? (get-counters % :advancement))}
     :delayed-completion true
     :effect (req (let [fr target tol card]
                    (continue-ability
                      state side
                      {:prompt "Move how many advancement tokens?"
-                      :choices (take (inc (:advance-counter fr)) ["0" "1" "2"])
+                      :choices (take (inc (get-counters fr :advancement)) ["0" "1" "2"])
                       :delayed-completion true
                       :effect (req (let [c (str->int target)]
                                      (continue-ability

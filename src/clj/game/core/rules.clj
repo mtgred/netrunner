@@ -292,18 +292,25 @@
    (trigger-event state side :pre-tag card)
    (let [n (tag-count state side n args)
          prevent (get-prevent-list state :runner :tag)]
-     (if (and (pos? n) (not unpreventable) (cards-can-prevent? state :runner prevent :tag))
+     (if (and (pos? n)
+              (not unpreventable)
+              (cards-can-prevent? state :runner prevent :tag))
        (do (system-msg state :runner "has the option to avoid tags")
            (show-wait-prompt state :corp "Runner to prevent tags" {:priority 10})
            (swap! state assoc-in [:prevent :current] :tag)
            (show-prompt
-             state :runner nil (str "Avoid any of the " n " tags?") ["Done"]
-             (fn [_] (let [prevent (get-in @state [:tag :tag-prevent])]
-                       (system-msg state :runner
-                                   (if prevent (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                                    (if (< 1 prevent) " tags" " tag")) "will not avoid tags"))
-                       (clear-wait-prompt state :corp)
-                       (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
+             state :runner nil
+             (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
+             (fn [_]
+               (let [prevent (get-in @state [:tag :tag-prevent])]
+                 (system-msg state :runner
+                             (if prevent
+                               (str "avoids "
+                                    (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                    (if (< 1 prevent) " tags" " tag"))
+                               "will not avoid tags"))
+                 (clear-wait-prompt state :corp)
+                 (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
              {:priority 10}))
        (resolve-tag state side eid n args)))))
 
@@ -330,7 +337,7 @@
     (effect-completed state side eid)))
 
 (defn gain-bad-publicity
-  "Attempts to give the runner n bad-publicity, allowing for boosting/prevention effects."
+  "Attempts to give the runner n bad publicity, allowing for boosting/prevention effects."
   ([state side n] (gain-bad-publicity state side (make-eid state) n nil))
   ([state side eid n] (gain-bad-publicity state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
@@ -338,18 +345,23 @@
    (when-completed (trigger-event-sync state side :pre-bad-publicity card)
      (let [n (bad-publicity-count state side n args)
            prevent (get-prevent-list state :corp :bad-publicity)]
-       (if (and (pos? n) (not unpreventable) (cards-can-prevent? state :corp prevent :bad-publicity))
+       (if (and (pos? n)
+                (not unpreventable)
+                (cards-can-prevent? state :corp prevent :bad-publicity))
          (do (system-msg state :corp "has the option to avoid bad publicity")
              (show-wait-prompt state :runner "Corp to prevent bad publicity" {:priority 10})
              (swap! state assoc-in [:prevent :current] :bad-publicity)
              (show-prompt
-               state :corp nil (str "Avoid any of the " n " bad publicity?") ["Done"]
+               state :corp nil
+               (str "Avoid " (when (< 1 n) "any of the ") n " bad publicity?") ["Done"]
                (fn [_]
                  (let [prevent (get-in @state [:bad-publicity :bad-publicity-prevent])]
                    (system-msg state :corp
                                (if prevent
-                                 (str "avoids " (if (= prevent Integer/MAX_VALUE) "all" prevent) " bad publicity")
-                                 "will not avoid bad publicity"))
+                                   (str "avoids "
+                                        (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                        " bad publicity")
+                                   "will not avoid bad publicity"))
                    (clear-wait-prompt state :runner)
                    (resolve-bad-publicity state side eid (max 0 (- n (or prevent 0))) args)))
                {:priority 10}))
@@ -391,7 +403,8 @@
   ([state side eid card args] (resolve-trash state side eid card eid args))
   ([state side eid {:keys [zone type] :as card} oid
    {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
-  (if (and (not suppress-event) (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
+  (if (and (not suppress-event)
+           (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (when-completed (trigger-event-sync state side (keyword (str (name side) "-trash")) card cause)
                     (resolve-trash-end state side eid card oid args))
     (resolve-trash-end state side eid card args))))
@@ -417,12 +430,15 @@
        ;; Card is not enforced untrashable
        :else
        (let [ktype (keyword (clojure.string/lower-case type))]
-         (when (and (not unpreventable) (not= cause :ability-cost))
+         (when (and (not unpreventable)
+                    (not= cause :ability-cost))
            (swap! state update-in [:trash :trash-prevent] dissoc ktype))
          (let [type (->> ktype name (str "trash-") keyword)
                prevent (get-prevent-list state :runner type)]
            ;; Check for prevention effects
-           (if (and (not unpreventable) (not= cause :ability-cost) (cards-can-prevent? state :runner prevent type card args))
+           (if (and (not unpreventable)
+                    (not= cause :ability-cost)
+                    (cards-can-prevent? state :runner prevent type card args))
              (do (system-msg state :runner "has the option to prevent trash effects")
                  (show-wait-prompt state :corp "Runner to prevent trash effects" {:priority 10})
                  (show-prompt state :runner nil
@@ -564,7 +580,7 @@
     (doseq [card (concat rig-cards hosted-on-ice)]
       (when (or (has-subtype? card "Virus")
                 (contains? (:counter card) :virus))
-        (add-counter state :runner card :virus (- (get-in card [:counter :virus] 0)))))
+        (add-counter state :runner card :virus (- (get-counters card :virus)))))
     (update-all-ice state side))
   (trigger-event state side :purge))
 
@@ -600,7 +616,8 @@
       (effect-completed state side eid) ; cannot expose faceup cards
       (when-completed (trigger-event-sync state side :pre-expose target)
                       (let [prevent (get-prevent-list state :corp :expose)]
-                        (if (and (not unpreventable) (cards-can-prevent? state :corp prevent :expose))
+                        (if (and (not unpreventable)
+                                 (cards-can-prevent? state :corp prevent :expose))
                           (do (system-msg state :corp "has the option to prevent a card from being exposed")
                               (show-wait-prompt state :runner "Corp to prevent the expose" {:priority 10})
                               (show-prompt state :corp nil

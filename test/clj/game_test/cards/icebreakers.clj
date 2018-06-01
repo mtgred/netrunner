@@ -37,7 +37,7 @@
      (play-from-hand state :runner "Ankusa")
      (run-on state "HQ")
      (let [ank (get-program state 0)]
-       (is (= 0 (:current-strength (refresh ank))) "Ankusa starts at 1 strength")
+       (is (zero? (:current-strength (refresh ank))) "Ankusa starts at 1 strength")
        (is (= 4 (:credit (get-runner))) "Spent 6 to install")
        (core/play-dynamic-ability state :runner {:dynamic "auto-pump" :card (refresh ank)})
        (is (= 3 (:current-strength (refresh ank))) "Ankusa is at 3 strength")
@@ -66,9 +66,9 @@
       (play-from-hand state :runner "Atman")
       (prompt-choice :runner 0)
       (is (= 3 (core/available-mu state)))
-      (let [atman (get-in @state [:runner :rig :program 0])]
-        (is (= 0 (get-counters atman :power)) "0 power counters")
-        (is (= 0 (:current-strength atman)) "0 current strength"))))
+      (let [atman (get-program state 0)]
+        (is (zero? (get-counters atman :power)) "0 power counters")
+        (is (zero? (:current-strength atman)) "0 current strength"))))
   (testing "Installing with 2 power counters"
     (do-game
       (new-game (default-corp)
@@ -77,7 +77,7 @@
       (play-from-hand state :runner "Atman")
       (prompt-choice :runner 2)
       (is (= 3 (core/available-mu state)))
-      (let [atman (get-in @state [:runner :rig :program 0])]
+      (let [atman (get-program state 0)]
         (is (= 2 (get-counters atman :power)) "2 power counters")
         (is (= 2 (:current-strength atman)) "2 current strength")))))
 
@@ -152,7 +152,7 @@
    (take-credits state :corp)
    (play-from-hand state :runner "Cerberus \"Rex\" H2")
    (is (= 2 (:credit (get-runner))) "2 credits left after install")
-   (let [rex (get-in @state [:runner :rig :program 0])]
+   (let [rex (get-program state 0)]
      (is (= 4 (get-counters rex :power)) "Start with 4 counters")
      ;; boost strength
      (card-ability state :runner rex 1)
@@ -172,15 +172,15 @@
       (play-from-hand state :runner "Clone Chip")
       (core/move state :runner (find-card "Chameleon" (:hand (get-runner))) :discard)
       (take-credits state :runner)
-      (is (= 0 (count (:hand (get-runner)))))
+      (is (zero? (count (:hand (get-runner)))))
       ;; Install Chameleon on corp turn
       (take-credits state :corp 1)
-      (let [chip (get-in @state [:runner :rig :hardware 0])]
+      (let [chip (get-hardware state 0)]
         (card-ability state :runner chip 0)
         (prompt-select :runner (find-card "Chameleon" (:discard (get-runner))))
         (prompt-choice :runner "Sentry"))
       (take-credits state :corp)
-      (is (= 0 (count (:hand (get-runner)))) "Chameleon not returned to hand at end of corp turn")
+      (is (zero? (count (:hand (get-runner)))) "Chameleon not returned to hand at end of corp turn")
       (take-credits state :runner)
       (is (= 1 (count (:hand (get-runner)))) "Chameleon returned to hand at end of runner's turn")))
   (testing "Returns to hand after hosting. #977"
@@ -192,7 +192,7 @@
       (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon")
       ;; Host the Chameleon on Scheherazade that was just played (as in Personal Workshop/Hayley ability scenarios)
       (play-from-hand state :runner "Scheherazade")
-      (let [scheherazade (get-in @state [:runner :rig :program 1])]
+      (let [scheherazade (get-program state 1)]
         (card-ability state :runner scheherazade 1) ; Host an installed program
         (prompt-select :runner (find-card "Chameleon" (:program (:rig (get-runner)))))
         (is (= 4 (:credit (get-runner))) "+1 from hosting onto Scheherazade")
@@ -202,7 +202,7 @@
         (prompt-choice :runner "Code Gate")
         (is (= 2 (count (:hosted (refresh scheherazade)))) "2 Chameleons hosted on Scheherazade")
         (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon, +1 from installing onto Scheherazade"))
-      (is (= 0 (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
+      (is (zero? (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
       (take-credits state :runner)
       (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2"))))
 
@@ -215,26 +215,26 @@
     (take-credits state :corp)
     (core/gain state :runner :credit 100)
     (play-from-hand state :runner "Crypsis")
-    (let [crypsis (get-in @state [:runner :rig :program 0])]
+    (let [crypsis (get-program state 0)]
       (card-ability state :runner crypsis 2)
-      (is (= 1 (get-in (refresh crypsis) [:counter :virus]))
+      (is (= 1 (get-counters (refresh crypsis) :virus))
           "Crypsis has 1 virus counter")
       (run-on state "Archives")
       (core/rez state :corp (get-ice state :archives 0))
       (card-ability state :runner (refresh crypsis) 0) ; Match strength
       (card-ability state :runner (refresh crypsis) 1) ; Break
-      (is (= 1 (get-in (refresh crypsis) [:counter :virus]))
+      (is (= 1 (get-counters (refresh crypsis) :virus))
           "Crypsis has 1 virus counter")
       (run-continue state)
-      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+      (is (zero? (get-counters (refresh crypsis) :virus))
           "Crypsis has 0 virus counters")
       (run-jack-out state)
-      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+      (is (zero? (get-counters (refresh crypsis) :virus))
           "Crypsis has 0 virus counters")
       (run-on state "Archives")
       (card-ability state :runner (refresh crypsis) 0) ; Match strength
       (card-ability state :runner (refresh crypsis) 1) ; Break
-      (is (= 0 (get-in (refresh crypsis) [:counter :virus]))
+      (is (zero? (get-counters (refresh crypsis) :virus))
           "Crypsis has 0 virus counters")
       (run-jack-out state)
       (is (= "Crypsis" (:title (first (:discard (get-runner)))))
@@ -242,11 +242,11 @@
     (take-credits state :runner)
     (take-credits state :corp)
     (play-from-hand state :runner "Crypsis")
-    (let [crypsis (get-in @state [:runner :rig :program 0])]
+    (let [crypsis (get-program state 0)]
       (run-on state "Archives")
       (card-ability state :runner (refresh crypsis) 0) ; Match strength
       (card-ability state :runner (refresh crypsis) 1) ; Break
-      (is (nil? (get-in (refresh crypsis) [:counter :virus]))
+      (is (zero? (get-counters (refresh crypsis) :virus))
           "Crypsis has nil virus counters")
       (run-jack-out state)
       (is (= "Crypsis" (:title (first (:discard (get-runner)))))
@@ -261,7 +261,7 @@
     (play-from-hand state :runner "Darwin")
     (let [darwin (get-program state 0)]
       (is (zero? (get-counters (refresh darwin) :virus)) "Darwin starts with 0 virus counters")
-      (is (= 0 (:current-strength (refresh darwin ))) "Darwin starts at 0 strength")
+      (is (zero? (:current-strength (refresh darwin ))) "Darwin starts at 0 strength")
       (take-credits state :runner)
       (take-credits state :corp)
       (card-ability state :runner (refresh darwin) 1) ; add counter
@@ -350,8 +350,8 @@
       (play-from-hand state :runner "Faust")
       (play-from-hand state :runner "Fall Guy")
       (play-from-hand state :runner "Sacrificial Construct")
-      (is (= 2 (count (get-in @state [:runner :rig :resource]))) "Resources installed")
-      (let [faust (get-in @state [:runner :rig :program 0])]
+      (is (= 2 (count (get-resource state))) "Resources installed")
+      (let [faust (get-program state 0)]
         (card-ability state :runner faust 1)
         (prompt-select :runner (find-card "Astrolabe" (:hand (get-runner))))
         (is (empty? (:prompt (get-runner))) "No trash-prevention prompt for hardware")
@@ -374,7 +374,7 @@
     (play-from-hand state :runner "Femme Fatale")
     (prompt-select :runner iw)
     (is (:icon (refresh iw)) "Ice Wall has an icon")
-    (core/trash state :runner (get-in @state [:runner :rig :program 0]))
+    (core/trash state :runner (get-program state 0))
     (is (not (:icon (refresh iw))) "Ice Wall does not have an icon after Femme trashed")
     (play-from-hand state :runner "Femme Fatale")
     (prompt-select :runner iw)
@@ -436,7 +436,7 @@
      (is (= 2 (:credit (get-runner))) "Spent 3 credits")
      (is (= 3 (get-counters (refresh mam) :power)) "Mammon has 3 power counters")
      (take-credits state :runner)
-     (is (= 0 (get-counters (refresh mam) :power)) "All power counters removed"))))
+     (is (zero? (get-counters (refresh mam) :power)) "All power counters removed"))))
 
 (deftest na'not'k
   ;; Na'Not'K - Strength adjusts accordingly when ice installed during run
@@ -491,7 +491,7 @@
     (is (= 6 (core/available-mu state)))
     (play-from-hand state :runner "Overmind")
     (is (= 5 (core/available-mu state)))
-    (let [ov (get-in @state [:runner :rig :program 0])]
+    (let [ov (get-program state 0)]
       (is (= 5 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
 
 (deftest paperclip
@@ -571,9 +571,9 @@
       (is (and (= 2 (:credit (get-runner))) (empty? (:hand (get-runner)))) "Can't use Peregrine on unrezzed code gate")
       (run-continue state)
       (card-ability state :runner per 2)
-      (is (= 0 (:credit (get-runner))) "Spent 2 credits")
+      (is (zero? (:credit (get-runner))) "Spent 2 credits")
       (is (= 1 (count (:hand (get-runner)))) "Peregrine returned to grip")
-      (is (not (get-in (refresh bw1) [:rezzed])) "Bandwidth derezzed"))))
+      (is (not (:rezzed (refresh bw1))) "Bandwidth derezzed"))))
 
 (deftest persephone
   ;; Persephone's ability trashes cards from R&D, triggering AR-Enhanced Security
@@ -689,10 +689,10 @@
    (play-from-hand state :runner "Wyrm")
    (run-on state "HQ")
    (let [ice-wall (get-ice state :hq 0)
-         wyrm (get-in @state [:runner :rig :program 0])]
+         wyrm (get-program state 0)]
      (core/rez state :corp ice-wall)
      (card-ability state :runner wyrm 1)
-     (is (= 0 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to 0")
+     (is (zero? (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to 0")
      (card-ability state :runner wyrm 1)
      (is (= -1 (:current-strength (refresh ice-wall))) "Strength of Ice Wall reduced to -1"))))
 
@@ -707,24 +707,24 @@
     (let [musaazi (get-program state 0)
           cache (get-program state 1)]
       (run-empty-server state "Archives")
-      (is (= 1 (get-in (refresh musaazi) [:counter :virus])) "Musaazi has 1 virus counter")
+      (is (= 1 (get-counters (refresh musaazi) :virus)) "Musaazi has 1 virus counter")
       (is (= 1 (:current-strength (refresh musaazi))) "Initial Musaazi strength")
-      (is (= 3 (get-in (refresh cache) [:counter :virus])) "Initial Cache virus counters")
+      (is (= 3 (get-counters (refresh cache) :virus)) "Initial Cache virus counters")
       (card-ability state :runner musaazi 0)
       (prompt-select :runner cache)
       (prompt-choice :runner 1)
-      (is (= 2 (get-in (refresh cache) [:counter :virus])) "Cache lost a virus counter to pump")
+      (is (= 2 (get-counters (refresh cache) :virus)) "Cache lost a virus counter to pump")
       (is (= 2 (:current-strength (refresh musaazi))) "Musaazi strength 2")
-      (is (= 1 (get-in (refresh musaazi) [:counter :virus])) "Initial Musaazi virus counters")
+      (is (= 1 (get-counters (refresh musaazi) :virus)) "Initial Musaazi virus counters")
       (card-ability state :runner musaazi 0)
       (prompt-select :runner musaazi)
       (prompt-choice :runner 1)
       (is (= 3 (:current-strength (refresh musaazi))) "Musaazi strength 3")
-      (is (= 0 (get-in (refresh musaazi) [:counter :virus])) "Musaazi lost a virus counter")
+      (is (zero? (get-counters (refresh musaazi) :virus)) "Musaazi lost a virus counter")
       (card-ability state :runner musaazi 1)
       (prompt-select :runner cache)
       (prompt-choice :runner 1)
-      (is (= 1 (get-in (refresh cache) [:counter :virus])) "Cache lost a virus counter to break"))))
+      (is (= 1 (get-counters (refresh cache) :virus)) "Cache lost a virus counter to break"))))
 
 (deftest yusuf
   ;; Yusuf gains virus counters on successful runs and can spend virus counters from any installed card
@@ -737,21 +737,21 @@
     (let [yusuf (get-program state 0)
           cache (get-program state 1)]
       (run-empty-server state "Archives")
-      (is (= 1 (get-in (refresh yusuf) [:counter :virus])) "Yusuf has 1 virus counter")
+      (is (= 1 (get-counters (refresh yusuf) :virus)) "Yusuf has 1 virus counter")
       (is (= 3 (:current-strength (refresh yusuf))) "Initial Yusuf strength")
-      (is (= 3 (get-in (refresh cache) [:counter :virus])) "Initial Cache virus counters")
+      (is (= 3 (get-counters (refresh cache) :virus)) "Initial Cache virus counters")
       (card-ability state :runner yusuf 0)
       (prompt-select :runner cache)
       (prompt-choice :runner 1)
-      (is (= 2 (get-in (refresh cache) [:counter :virus])) "Cache lost a virus counter to pump")
+      (is (= 2 (get-counters (refresh cache) :virus)) "Cache lost a virus counter to pump")
       (is (= 4 (:current-strength (refresh yusuf))) "Yusuf strength 4")
-      (is (= 1 (get-in (refresh yusuf) [:counter :virus])) "Initial Yusuf virus counters")
+      (is (= 1 (get-counters (refresh yusuf) :virus)) "Initial Yusuf virus counters")
       (card-ability state :runner yusuf 0)
       (prompt-select :runner yusuf)
       (prompt-choice :runner 1)
       (is (= 5 (:current-strength (refresh yusuf))) "Yusuf strength 5")
-      (is (= 0 (get-in (refresh yusuf) [:counter :virus])) "Yusuf lost a virus counter")
+      (is (zero? (get-counters (refresh yusuf) :virus)) "Yusuf lost a virus counter")
       (card-ability state :runner yusuf 1)
       (prompt-select :runner cache)
       (prompt-choice :runner 1)
-      (is (= 1 (get-in (refresh cache) [:counter :virus])) "Cache lost a virus counter to break"))))
+      (is (= 1 (get-counters (refresh cache) :virus)) "Cache lost a virus counter to break"))))

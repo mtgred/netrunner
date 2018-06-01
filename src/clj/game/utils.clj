@@ -228,7 +228,7 @@
   [zone]
   (let [kw (if (keyword? zone) zone (last zone))
         s (str kw)]
-    (if (.startsWith s ":remote")
+    (when (.startsWith s ":remote")
       (let [num (last (split s #":remote"))]
         (remote-num->name num)))))
 
@@ -338,3 +338,14 @@
   ([n string suffix] (str n " " (pluralize string suffix n)))
   ([n string single-suffix plural-suffix]
    (str n " " (pluralize string single-suffix plural-suffix n))))
+
+(defn get-counters
+  "Get number of counters of specified type."
+  [card counter]
+  (cond
+    (= counter :advancement)
+    (:advance-counter card 0)
+    (= counter :recurring)
+    (:rec-counter card 0)
+    :else
+    (get-in card [:counter counter] 0)))
