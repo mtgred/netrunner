@@ -588,7 +588,8 @@
         (is (= 3 (get-counters (refresh fc) :virus)) "Friday Chip has 3 counters after Contaminate")
         (is (zero? (get-counters (refresh aum) :virus)) "Aumakua ends with 0 virus counters (not counting Hivemind)")))))
 
-(deftest corporate-grant
+(deftest ^{:card-title "corporate-\"grant\""}
+  corporate-grant
   ;; Corporate "Grant" - First time runner installs a card, the corp loses 1 credit
   (testing "Basic test"
     (do-game
@@ -1654,7 +1655,7 @@
     (is (= 1 (count (get-program state))) "Installed Nerve Agent")
     (is (= 4 (:credit (get-runner))) "Paid 0 credits")))
 
-(deftest noble-path
+(deftest the-noble-path
   ;; The Noble Path - Prevents damage during run
   (do-game
     (new-game (default-corp) (default-runner ["The Noble Path" (qty "Sure Gamble" 2)]))
@@ -2379,7 +2380,7 @@
           (is (empty? (:deck (get-runner))) "Morning Star not returned to Stack")
           (is (= "Morning Star" (:title (get-program state 0))) "Morning Star still installed"))))))
 
-(deftest the-makers-eye
+(deftest the-maker's-eye
   (do-game
     (new-game (default-corp [(qty "Quandary" 5)])
               (default-runner ["The Maker's Eye"]))
@@ -2516,8 +2517,8 @@
     (is (= 5 (:credit (get-runner))) "Paid 8 credits")
     (is (zero? (:credit (get-corp))) "Corp lost all 8 credits")))
 
-(deftest virus-counter-flags
-  ^:skip-card-coverage
+(deftest ^:skip-card-coverage
+  virus-counter-flags
   (testing "Set counter flag when virus card enters play with counters"
     (do-game
       (new-game (default-corp)
