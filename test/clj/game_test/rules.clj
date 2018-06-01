@@ -19,7 +19,7 @@
     (core/command-undo-turn state :runner)
     (core/command-undo-turn state :corp)
     (is (= 3 (count (:hand (get-corp)))) "Corp has 3 cards in HQ")
-    (is (= 0 (:click (get-corp))) "Corp has no clicks - turn not yet started")
+    (is (zero? (:click (get-corp))) "Corp has no clicks - turn not yet started")
     (is (= 5 (:credit (get-corp))) "Corp has 5 credits")))
 
 (deftest undo-click
@@ -40,11 +40,11 @@
     (core/command-undo-click state :corp)
     (is (= 1 (count (:scored (get-runner)))) "Corp attempt to undo click does nothing")
     (core/command-undo-click state :runner)
-    (is (= 0 (count (:scored (get-runner)))) "Runner attempt to undo click works ok")
+    (is (zero? (count (:scored (get-runner)))) "Runner attempt to undo click works ok")
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")
     (play-from-hand state :runner "Day Job")
-    (is (= 0 (:click (get-runner))) "Runner spent 4 clicks")
+    (is (zero? (:click (get-runner))) "Runner spent 4 clicks")
     (core/command-undo-click state :runner)
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
@@ -68,7 +68,7 @@
               (default-runner ["Gordian Blade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
-    (let [gord (get-in @state [:runner :rig :program 0])]
+    (let [gord (get-program state 0)]
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
       (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
@@ -84,20 +84,20 @@
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")
     (play-from-hand state :runner "Scheherazade")
-    (let [oca (get-in @state [:runner :rig :resource 1])
-          scheh (get-in @state [:runner :rig :program 0])]
+    (let [oca (get-resource state 1)
+          scheh (get-program state 0)]
       (card-ability state :runner scheh 0)
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= "Hivemind" (:title (first (:hosted (refresh scheh))))) "Hivemind hosted on Scheherazade")
       (play-from-hand state :runner "Kati Jones")
       (is (= 1 (:click (get-runner))) "Not charged a click")
-      (is (= 2 (count (get-in @state [:runner :rig :resource]))) "2nd copy of Kati couldn't install")
+      (is (= 2 (count (get-resource state))) "2nd copy of Kati couldn't install")
       (card-ability state :runner oca 0)
       (prompt-select :runner (find-card "Kati Jones" (:hand (get-runner))))
       (is (empty? (:hosted (refresh oca))) "2nd copy of Kati couldn't be hosted on OCA")
       (is (= 1 (:click (get-runner))) "Not charged a click")
       (play-from-hand state :runner "Hivemind")
-      (is (= 1 (count (get-in @state [:runner :rig :program]))) "2nd copy of Hivemind couldn't install")
+      (is (= 1 (count (get-program state))) "2nd copy of Hivemind couldn't install")
       (card-ability state :runner scheh 0)
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
@@ -110,7 +110,7 @@
               (default-runner ["Gordian Blade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
-    (let [gord (get-in @state [:runner :rig :program 0])]
+    (let [gord (get-program state 0)]
       (core/trash state :runner gord)
       (is (= 4 (core/available-mu state)) "Trashing the program restored MU"))))
 
@@ -153,19 +153,19 @@
     (play-from-hand state :runner "Off-Campus Apartment")
     (play-from-hand state :runner "Compromised Employee")
     (let [iwall (get-ice state :hq 0)
-          apt (get-in @state [:runner :rig :resource 0])]
+          apt (get-resource state 0)]
       (card-ability state :runner apt 1) ; use Off-Campus option to host an installed card
       (prompt-select :runner (find-card "Compromised Employee"
-                                        (get-in @state [:runner :rig :resource])))
+                                        (get-resource state)))
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
-        (is (= 0 (:rec-counter (refresh cehosted))))
+        (is (zero? (get-counters (refresh cehosted) :recurring)))
         (core/rez state :corp iwall)
         (is (= 5 (:credit (get-runner))) "Compromised Employee gave 1 credit from ice rez")
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 1 (:rec-counter (refresh cehosted)))
+        (is (= 1 (get-counters (refresh cehosted) :recurring))
             "Compromised Employee recurring credit refreshed")))))
 
 (deftest card-str-test-simple
@@ -193,9 +193,9 @@
           rdiwall (get-ice state :rd 0)
           jh1 (get-content state :remote1 0)
           jh2 (get-content state :remote2 0)
-          corr (get-in @state [:runner :rig :program 0])
-          cchip (get-in @state [:runner :rig :hardware 0])
-          pap (get-in @state [:runner :rig :resource 0])]
+          corr (get-program state 0)
+          cchip (get-hardware state 0)
+          pap (get-resource state 0)]
       (core/rez state :corp hqiwall0)
       (core/rez state :corp jh1)
       (prompt-select :runner (refresh hqiwall0))
@@ -242,7 +242,7 @@
         (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
         (let [dh (first (:hosted (refresh wp)))]
           (is (:rezzed dh) "Director Haas was rezzed")
-          (is (= 0 (:credit (get-corp))) "Corp has 0 credits")
+          (is (zero? (:credit (get-corp))) "Corp has 0 credits")
           (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
           (is (= 3 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
           (take-credits state :corp)
@@ -330,9 +330,9 @@
       (play-from-hand state :runner "Personal Workshop")
       (play-from-hand state :runner "Omni-drive")
       (take-credits state :corp)
-      (let [kn (get-in @state [:runner :rig :program 0])
-            pw (get-in @state [:runner :rig :resource 0])
-            od (get-in @state [:runner :rig :hardware 0])
+      (let [kn (get-program state 0)
+            pw (get-resource state 0)
+            od (get-hardware state 0)
             co (find-card "Corroder" (:hand (get-runner)))
             le (find-card "Leprechaun" (:hand (get-runner)))]
         (card-ability state :runner kn 0)
@@ -417,15 +417,15 @@
       (prompt-select :corp (refresh publics2))
       (is (= 2 (get-counters (refresh publics2) :power)))
       ;; Oaktown checks and manipulation
-      (is (= 3 (:advance-counter (refresh oaktown))))
+      (is (= 3 (get-counters (refresh oaktown) :advancement)))
       (core/command-adv-counter state :corp 2)
       (prompt-select :corp (refresh oaktown))
       ;; score should fail, shouldn't be able to score with 2 advancement tokens
       (core/score state :corp (refresh oaktown))
-      (is (= 0 (:agenda-point (get-corp))))
+      (is (zero? (:agenda-point (get-corp))))
       (core/command-adv-counter state :corp 4)
       (prompt-select :corp (refresh oaktown))
-      (is (= 4 (:advance-counter (refresh oaktown))))
+      (is (= 4 (get-counters (refresh oaktown) :advancement)))
       (is (= 3 (:credit (get-corp))))
       (is (= 3 (:click (get-corp))))
       (core/score state :corp (refresh oaktown)) ; now the score should go through
@@ -459,15 +459,15 @@
 (deftest counter-manipulation-commands-smart
   ;; Test interactions of smart counter advancement command
   (do-game
-    (new-game (default-corp [(qty "House of Knives" 1)])
+    (new-game (default-corp ["House of Knives"])
               (default-runner))
     (play-from-hand state :corp "House of Knives" "New remote")
     (let [hok (get-content state :remote1 0)]
       (core/command-counter state :corp [3])
       (prompt-select :corp (refresh hok))
-      (is (= 3 (:advance-counter (refresh hok))))
+      (is (= 3 (get-counters (refresh hok) :advancement)))
       (core/score state :corp (refresh hok)))
-    (let [hok-scored (get-scored state :corp)]
+    (let [hok-scored (get-scored state :corp 0)]
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
       (core/command-counter state :corp ["virus" 2])
       (prompt-select :corp (refresh hok-scored))
@@ -538,7 +538,7 @@
           (is (= 2 (get-counters imp :virus)) "Imp has 2 virus counters")
           (take-credits state :runner)
           (play-from-hand state :corp "Cyberdex Trial")
-          (is (= 0 (get-counters (refresh imp) :virus)) "Imp counters purged"))))))
+          (is (zero? (get-counters (refresh imp) :virus)) "Imp counters purged"))))))
 
 (deftest multi-access-rd
   ;; multi-access of R&D sees all cards and upgrades

@@ -122,7 +122,7 @@
           (card-subroutine state :corp tur 0) ; end the run
           (play-from-hand state :runner "Emergency Shutdown")
           (prompt-select :runner tur)
-          (is (not (get-in (refresh tur) [:rezzed])) "Turing derezzed")
+          (is (not (:rezzed (refresh tur))) "Turing derezzed")
           (run-on state "Server 1") ; letting Runner in this time to use Caprice
           (core/rez state :corp cap)
           (run-continue state)

@@ -219,7 +219,7 @@
       (doseq [[subtype amount] amount]
         (swap! state update-in [side type subtype] (safe-inc-n amount))
         (swap! state update-in [:stats side :gain type subtype] (fnil + 0) amount))
-    
+
       ;; Default cases for the types that expect a map
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})
