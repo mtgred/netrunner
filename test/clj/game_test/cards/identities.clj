@@ -435,7 +435,7 @@
                 (run-empty-server state "HQ")
                 (let [cost (->> (get-corp) :hand first :cost)]
                   (prompt-choice-partial :runner "Freedom")
-                  (when (< 0 cost)
+                  (when (pos? cost)
                     (dotimes [_ cost]
                       (prompt-select :runner (get-program state 0))))
                   (is (= 1 (count (:discard (get-corp))))
@@ -554,7 +554,31 @@
       (prompt-select :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall should be discarded now")
       (is (nil? (->> (get-program state 1) :counter :virus)) "Aumakua doesn't gain any virus counters from trash ability.")
-      (is (not (:run @state)) "Run ended"))))
+      (is (not (:run @state)) "Run ended")))
+  (testing "interaction with trash-cost-bonuses, and declining ability once initiated"
+    (do-game
+      (new-game (default-corp ["The Board"])
+                (make-deck "Freedom Khumalo: Crypto-Anarchist" ["Skulljack" "Imp" "Sure Gamble"]))
+      (play-from-hand state :corp "The Board" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner doesn't have enough credits to trash")
+      (prompt-choice :runner "No action")
+      (play-from-hand state :runner "Imp")
+      (core/add-counter state :runner (get-program state 0) :virus 5)
+      (play-from-hand state :runner "Skulljack")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "The Board should cost 6 to trash")
+      (is (= 3 (-> (get-runner) :prompt first :choices count)) "Runner can use Freedom or Imp to trash")
+      (prompt-choice-partial :runner "Freedom")
+      (prompt-select :runner (get-program state 0))
+      (prompt-choice :runner "Done")
+      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "Skulljack shouldn't trigger a second time")
+      (is (= 3 (-> (get-runner) :prompt first :choices count)) "Runner can still use Freedom or Imp the second time around")
+      (prompt-choice-partial :runner "Imp")
+      (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board with Imp and gain 2 agenda points"))))
 
 (deftest gabriel-santiago:-consummate-professional
   ;; Gabriel Santiago - Gain 2c on first successful HQ run each turn

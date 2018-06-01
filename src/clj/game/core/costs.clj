@@ -42,7 +42,6 @@
   (let [cost-type (first cost)
         amount (last cost)
         computer-says-no "Unable to pay"]
-
     (cond
 
       (flag-stops-pay? state side cost-type)
@@ -56,7 +55,7 @@
                (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
                (and (= cost-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                               (all-active-installed state :runner))) amount) 0))
+                                                                    (all-active-installed state :runner))) amount) 0))
                (and (= cost-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
                (>= (- (get-in @state [side cost-type] -1) amount) 0)))
       computer-says-no)))
@@ -72,6 +71,15 @@
     (if-not cost-msg
       costs
       (when title (toast state side (str cost-msg " for " title ".")) false))))
+
+(defn can-pay-with-recurring?
+  "Returns true if the player can pay the cost factoring in available recurring credits"
+  [state side cost]
+  (>= (+ (- (get-in @state [side :credit] -1) cost)
+         (->> (all-installed state side)
+              (map #(:rec-counter % 0))
+              (reduce +)))
+      0))
 
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability
@@ -219,7 +227,7 @@
       (doseq [[subtype amount] amount]
         (swap! state update-in [side type subtype] (safe-inc-n amount))
         (swap! state update-in [:stats side :gain type subtype] (fnil + 0) amount))
-    
+
       ;; Default cases for the types that expect a map
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})

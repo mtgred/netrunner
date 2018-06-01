@@ -372,7 +372,7 @@
                                                  (trash-no-cost state side eid accessed-card))
                                              ;; Player cancelled ability
                                              (do (swap! state dissoc-in [:per-turn (:cid card)])
-                                                 (access-non-agenda state side eid accessed-card))))))))}}}
+                                                 (access-non-agenda state side eid accessed-card :skip-trigger-event true))))))))}}}
 
    "Fringe Applications: Tomorrow, Today"
    {:events
