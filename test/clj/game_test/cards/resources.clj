@@ -1712,7 +1712,7 @@
     (is (= 3 (core/available-mu state)) "Gordian cost 1 mu, Corroder freed")
     (is (zero? (:credit (get-runner))) "Ending with 0 credits")
     (is (= 1 (count (:rfg (get-runner)))) "Corroder removed from game")
-    (is (= 1 (count (get-in @state [:runner :rig :program]))) "One program installed")
+    (is (= 1 (count (get-program state))) "One program installed")
     (is (= "Gordian Blade" (:title (get-program state 0))) "Gordian installed")))
 
 (deftest sacrificial-construct
