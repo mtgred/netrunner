@@ -598,7 +598,9 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Magnum Opus"
-   {:abilities [{:cost [:click 1] :effect (effect (gain-credits 2)) :msg "gain 2 [Credits]"}]}
+   {:abilities [{:cost [:click 1]
+                 :effect (effect (gain-credits 2))
+                 :msg "gain 2 [Credits]"}]}
 
    "Medium"
    {:events
