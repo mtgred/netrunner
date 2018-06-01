@@ -767,7 +767,7 @@
               :effect (effect (add-counter :runner card :virus 2))}}}
 
    "Pheromones"
-   {:recurring (req (when (< (get-counters card :rec-counter) (get-counters card :virus))
+   {:recurring (req (when (< (get-counters card :recurring) (get-counters card :virus))
                       (set-prop state side card :rec-counter (get-counters card :virus))))
     :events {:successful-run {:silent (req true)
                               :req (req (= target :hq))

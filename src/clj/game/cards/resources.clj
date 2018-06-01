@@ -373,8 +373,9 @@
              {:req (req (pos? (:tag runner)))
               :msg "force the Corp to initiate a trace"
               :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
-              :trace {:base 1 :unsuccessful {:effect (effect (lose :runner :tag 1))
-                                             :msg "remove 1 tag"}}}}}
+              :trace {:base 1
+                      :unsuccessful {:msg "remove 1 tag"
+                                     :effect (effect (lose :runner :tag 1))}}}}}
 
    "Clan Vengeance"
    {:events {:pre-resolve-damage {:req (req (pos? (last targets)))
@@ -1227,9 +1228,12 @@
    "No One Home"
    (letfn [(first-chance? [state side]
              (< (+ (event-count state side :pre-tag)
-                   (event-count state side :pre-damage)) 2))
+                   (event-count state side :pre-damage))
+                2))
            (start-trace [type]
-             (let [message (str "avoid any " (if (= type :net) "amount of net damage" "number of tags"))]
+             (let [message (str "avoid any " (if (= type :net)
+                                               "amount of net damage"
+                                               "number of tags"))]
                {:player :corp
                 :label (str "Trace 0 - if unsuccessful, " message)
                 :trace {:base 0
@@ -1246,6 +1250,7 @@
                                   (when-completed (trash state side card {:unpreventable true})
                                                   (continue-ability state side (start-trace type)
                                                                     card nil))))}]})
+
    "Off-Campus Apartment"
    {:flags {:runner-install-draw true}
     :abilities [{:label "Install and host a connection on Off-Campus Apartment"
@@ -1421,11 +1426,14 @@
                                 (swap! state update-in [:bonus] dissoc :trash)))}]}
 
    "Power Tap"
-   {:events {:trace {:msg "gain 1 [Credits]" :effect (effect (gain :runner :credit 1))}}}
+   {:events {:trace {:successful {:msg "gain 1 [Credits]"
+                                  :effect (effect (gain :runner :credit 1))}}}}
 
    "Professional Contacts"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 1) (draw))
-                 :msg "gain 1 [Credits] and draw 1 card"}]}
+   {:abilities [{:cost [:click 1]
+                 :msg "gain 1 [Credits] and draw 1 card"
+                 :effect (effect (gain :credit 1)
+                                 (draw))}]}
 
    "Public Sympathy"
    {:in-play [:hand-size 2]}
@@ -1819,8 +1827,9 @@
                              :msg "force the Corp to initiate a trace"
                              :label "Trace 1 - If unsuccessful, take 1 bad publicity"
                              :trace {:base 1
-                                     :unsuccessful {:effect (effect (gain-bad-publicity :corp 1)
-                                                                    (system-msg :corp (str "takes 1 bad publicity")))}}}}}
+                                     :unsuccessful
+                                     {:effect (effect (gain-bad-publicity :corp 1)
+                                                      (system-msg :corp (str "takes 1 bad publicity")))}}}}}
 
    "The Black File"
    {:msg "prevent the Corp from winning the game unless they are flatlined"

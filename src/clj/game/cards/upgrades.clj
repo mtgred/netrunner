@@ -24,14 +24,16 @@
    {:events {:successful-run {:interactive (req true)
                               :req (req this-server)
                               :trace {:base 4
-                                      :effect (req (max-access state side 0)
-                                                   (when-not (:replace-access (get-in @state [:run :run-effect]))
-                                                     (let [ash card]
-                                                       (swap! state update-in [:run :run-effect]
-                                                              #(assoc % :replace-access
-                                                                        {:mandatory true
-                                                                         :effect (effect (access-card ash)) :card ash})))))
-                                      :msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"}}}}
+                                      :successful
+                                      {:msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
+                                       :effect (req (max-access state side 0)
+                                                    (when-not (:replace-access (get-in @state [:run :run-effect]))
+                                                      (let [ash card]
+                                                        (swap! state update-in [:run :run-effect]
+                                                               #(assoc % :replace-access
+                                                                       {:mandatory true
+                                                                        :effect (effect (access-card ash))
+                                                                        :card ash})))))}}}}}
 
    "Awakening Center"
    {:can-host (req (is-type? target "ICE"))
@@ -104,11 +106,13 @@
    "Bernice Mai"
    {:events {:successful-run {:interactive (req true)
                               :req (req this-server)
-                              :trace {:base 5 :msg "give the Runner 1 tag"
-                                      :delayed-completion true
-                                      :effect (effect (tag-runner :runner eid 1))
-                                      :unsuccessful {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
-                                                                     (trash card))}}}}}
+                              :trace {:base 5
+                                      :successful {:msg "give the Runner 1 tag"
+                                                   :delayed-completion true
+                                                   :effect (effect (tag-runner :runner eid 1))}
+                                      :unsuccessful
+                                      {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
+                                                       (trash card))}}}}}
 
   "Bio Vault"
   {:implementation "Installation restriction not enforced"
@@ -259,10 +263,10 @@
    {:advanceable :always
     :abilities [{:label "[Trash]: Add 1 facedown card from Archives to HQ for each advancement token"
                  :req (req (and run (= (:server run) [:archives])
-                                (pos? (get-in card [:advance-counter] 0))))
+                                (pos? (get-counters card :advancement))))
                  :effect (effect (resolve-ability
                                    {:show-discard true
-                                    :choices {:max (get-in card [:advance-counter] 0)
+                                    :choices {:max (get-counters card :advancement)
                                               :req #(and (= (:side %) "Corp")
                                                          (not (:seen %))
                                                          (= (:zone %) [:discard]))}
@@ -304,8 +308,10 @@
    {:events {:run {:req (req (and this-server tagged))
                    :delayed-completion true
                    :trace {:base 3
-                           :msg "do 1 meat damage"
-                           :effect (effect (damage eid :meat 1 {:card card :unpreventable true}))}}}}
+                           :successful
+                           {:msg "do 1 meat damage"
+                            :effect (effect (damage eid :meat 1 {:card card
+                                                                 :unpreventable true}))}}}}}
 
    "Experiential Data"
    {:effect (req (update-ice-in-server state side (card->server state card)))
@@ -331,9 +337,9 @@
     :access {:req (req (not= (first (:zone card)) :discard))
              :interactive (req true)
              :trace {:base 3
-                     :msg "give the Runner 2 tags"
-                     :delayed-completion true
-                     :effect (effect (tag-runner :runner eid 2))}}}
+                     :successful {:msg "give the Runner 2 tags"
+                                  :delayed-completion true
+                                  :effect (effect (tag-runner :runner eid 2))}}}}
 
    "Fractal Threat Matrix"
    {:implementation "Manual trigger each time all subs are broken"
@@ -398,7 +404,8 @@
                  :effect (effect (gain :credit 2))}]}
 
    "Hokusai Grid"
-   {:events {:successful-run {:req (req this-server) :msg "do 1 net damage"
+   {:events {:successful-run {:req (req this-server)
+                              :msg "do 1 net damage"
                               :delayed-completion true
                               :effect (effect (damage eid :net 1 {:card card}))}}}
 
@@ -408,24 +415,23 @@
              :interactive (req true)
              :trace {:base 4
                      :label "add an installed program or virtual resource to the Grip"
-                     :delayed-completion true
-                     :effect (req (show-wait-prompt state :runner "Corp to resolve Intake")
-                                  (continue-ability
-                                    state :corp
-                                    {:prompt "Select a program or virtual resource"
-                                     :player :corp
-                                     :choices {:req #(and (installed? %)
-                                                          (or (program? %)
-                                                              (and (resource? %)
-                                                                   (has-subtype? % "Virtual"))))}
-                                     :delayed-completion true
-                                     :msg (msg "move " (:title target) " to the Grip")
-                                     :cancel-effect (effect (clear-wait-prompt :runner)
-                                                            (effect-completed eid))
-                                     :effect (req (move state :runner target :hand)
-                                                  (clear-wait-prompt state :runner)
-                                                  (effect-completed state side eid))}
-                                    card nil))}}}
+                     :successful
+                     {:delayed-completion true
+                      :effect (req (show-wait-prompt state :runner "Corp to resolve Intake")
+                                   (continue-ability
+                                     state :corp
+                                     {:prompt "Select a program or virtual resource"
+                                      :player :corp
+                                      :choices {:req #(and (installed? %)
+                                                           (or (program? %)
+                                                               (and (resource? %)
+                                                                    (has-subtype? % "Virtual"))))}
+                                      :delayed-completion true
+                                      :msg (msg "move " (:title target) " to the Grip")
+                                      :effect (effect (move :runner target :hand))
+                                      :end-effect (effect (clear-wait-prompt :runner)
+                                                          (effect-completed eid))}
+                                     card nil))}}}}
 
    "Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]
@@ -848,12 +854,14 @@
                  :effect (req (let [serv (card->server state card)
                                     cards (concat (:ices serv) (:content serv))]
                                 (trash state side card)
-                                (doseq [c cards] (trash state side c))
+                                (doseq [c cards]
+                                  (trash state side c))
                                 (resolve-ability
                                   state side
                                   {:trace {:base (req (dec (count cards)))
-                                           :effect (effect (damage eid :net 3 {:card card}))
-                                           :msg "do 3 net damage"}} card nil)))}]}
+                                           :successful {:msg "do 3 net damage"
+                                                        :effect (effect (damage eid :net 3 {:card card}))}}}
+                                  card nil)))}]}
 
    "Shell Corporation"
    {:abilities
@@ -926,31 +934,33 @@
              :effect (req (when (= (first (:zone card)) :deck)
                             (system-msg state :runner (str "accesses Tempus"))))
              :trace {:base 3
-                     :msg "make the Runner choose between losing [Click][Click] or suffering 1 brain damage"
-                     :delayed-completion true
-                     :effect (req (let [tempus card]
-                                    (if (< (:click runner) 2)
-                                      (do
-                                        (system-msg state side "suffers 1 brain damage")
-                                        (damage state side eid :brain 1 {:card tempus}))
-                                      (do
-                                        (show-wait-prompt state :corp "Runner to resolve Tempus")
-                                        (continue-ability
-                                          state :runner
-                                          {:prompt "Lose [Click][Click] or take 1 brain damage?"
-                                           :player :runner
-                                           :choices ["Lose [Click][Click]" "Take 1 brain damage"]
-                                           :delayed-completion true
-                                           :effect (req (clear-wait-prompt state :corp)
-                                                        (if (.startsWith target "Take")
-                                                          (do
-                                                            (system-msg state side (str "chooses to take 1 brain damage"))
-                                                            (damage state side eid :brain 1 {:card tempus}))
-                                                          (do
-                                                            (system-msg state side "chooses to lose [Click][Click]")
-                                                            (lose state :runner :click 2)
-                                                            (effect-completed state side eid))))}
-                                          card nil)))))}}}
+                     :successful
+                     {:msg "make the Runner choose between losing [Click][Click] or suffering 1 brain damage"
+                      :delayed-completion true
+                      :effect (req (let [tempus card]
+                                     (if (< (:click runner) 2)
+                                       (do
+                                         (system-msg state side "suffers 1 brain damage")
+                                         (damage state side eid :brain 1 {:card tempus}))
+                                       (do
+                                         (show-wait-prompt state :corp "Runner to resolve Tempus")
+                                         (continue-ability
+                                           state :runner
+                                           {:prompt "Lose [Click][Click] or take 1 brain damage?"
+                                            :player :runner
+                                            :choices ["Lose [Click][Click]" "Take 1 brain damage"]
+                                            :delayed-completion true
+                                            :effect
+                                            (req (clear-wait-prompt state :corp)
+                                                 (if (.startsWith target "Take")
+                                                   (do
+                                                     (system-msg state side (str "chooses to take 1 brain damage"))
+                                                     (damage state side eid :brain 1 {:card tempus}))
+                                                   (do
+                                                     (system-msg state side "chooses to lose [Click][Click]")
+                                                     (lose state :runner :click 2)
+                                                     (effect-completed state side eid))))}
+                                           card nil)))))}}}}
 
    "The Twins"
    {:abilities [{:label "Reveal and trash a copy of the ICE just passed from HQ"
@@ -1009,8 +1019,8 @@
                                   (ice? target)))
                    :interactive (req true)
                    :trace {:base 2
-                           :msg "gain 1 [Credits]"
-                           :effect (effect (gain :credit 1))}}}}
+                           :successful {:msg "gain 1 [Credits]"
+                                        :effect (effect (gain :credit 1))}}}}}
 
    "Tyrs Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a piece of Bioroid ICE from being broken"
@@ -1067,12 +1077,20 @@
     :events {:runner-trash {:delayed-completion true
                             :req (req (= (-> card :zone second) (-> target :zone second)))
                             :trace {:base 4
-                                    :effect (req (let [n (count (all-installed state :runner))
-                                                       n (if (> n 2) 2 n)]
-                                                   (if (pos? n) (do (system-msg state side (str "uses Warroid Tracker to force the runner to trash " n " installed card(s)"))
-                                                                    (show-wait-prompt state :corp "Runner to choose cards to trash")
-                                                                    (resolve-ability state side (wt card n 1) card nil))
-                                                                (system-msg state side (str "uses Warroid Tracker but there are no installed cards to trash")))))}}}})
+                                    :successful
+                                    {:effect
+                                     (req (let [n (count (all-installed state :runner))
+                                                n (if (> n 2) 2 n)]
+                                            (if (pos? n)
+                                              (do (system-msg
+                                                    state side
+                                                    (str "uses Warroid Tracker to force the runner to trash "
+                                                         (quantify n " installed card")))
+                                                  (show-wait-prompt state :corp "Runner to choose cards to trash")
+                                                  (resolve-ability state side (wt card n 1) card nil))
+                                              (system-msg
+                                                state side
+                                                (str "uses Warroid Tracker but there are no installed cards to trash")))))}}}}})
 
    "Will-o-the-Wisp"
    {:events

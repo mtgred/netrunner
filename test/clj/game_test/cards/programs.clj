@@ -242,7 +242,7 @@
           (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
           (take-credits state :runner 2)
           (core/advance state :corp {:card agenda})
-          (is (= 1 (:advance-counter (refresh agenda))) "Agenda was advanced")))))
+          (is (= 1 (get-counters (refresh agenda) :advancement)) "Agenda was advanced")))))
   (testing "Host a non-icebreaker program"
     (do-game
       (new-game (default-corp)

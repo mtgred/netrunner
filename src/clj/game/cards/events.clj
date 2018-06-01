@@ -42,9 +42,10 @@
    "Another Day, Another Paycheck"
    {:events {:agenda-stolen
              {:trace {:base 0
-                      :unsuccessful {:effect (effect (gain :runner :credit
-                                                           (+ (:agenda-point runner) (:agenda-point corp))))
-                                     :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
+                      :unsuccessful
+                      {:effect (effect (gain :runner :credit
+                                             (+ (:agenda-point runner) (:agenda-point corp))))
+                       :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
    (let [corp-trash {:delayed-completion true
@@ -531,7 +532,8 @@
               (run :hq {:req (req (= target :hq))
                         :replace-access
                         {:mandatory true
-                         :msg (msg "reveal 2 cards from HQ and trash all " target "s") ;should maybe lower-case target
+                         :msg (msg "reveal 2 cards from HQ and trash all "
+                                   target (when (not= "ICE" (:type target)) "s"))
                          :prompt "Choose a card type"
                          :choices ["Asset" "Upgrade" "Operation" "ICE"]
                          :effect (req (let [chosen-type target
@@ -1956,7 +1958,8 @@
    (letfn [(finish-choice [choices]
              (let [choices (filter #(not= "None" %) choices)]
                (when (not-empty choices)
-                {:effect (req (doseq [c choices] (move state :corp c :deck))
+                {:effect (req (doseq [c choices]
+                                (move state :corp c :deck))
                               (shuffle! state :corp :deck))
                  :msg (str "shuffle " (join ", " (map :title choices)) " into R&D")})))
            (choose-cards [hand chosen]
@@ -1965,14 +1968,16 @@
               :choices (conj (vec (clojure.set/difference hand chosen))
                              "None")
               :delayed-completion true
-              :effect (req (if (and (empty? chosen) (not= "None" target))
+              :effect (req (if (and (empty? chosen)
+                                    (not= "None" target))
                              (continue-ability state side (choose-cards hand (conj chosen target)) card nil)
                              (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :trace {:base 3
-            :unsuccessful {:delayed-completion true
-                           :msg "reveal all cards in HQ"
-                           :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
+            :unsuccessful
+            {:delayed-completion true
+             :msg "reveal all cards in HQ"
+             :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
 
    "Windfall"
    {:effect (effect (shuffle! :deck)

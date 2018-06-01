@@ -345,7 +345,7 @@
   (cond
     (= counter :advancement)
     (:advance-counter card 0)
-    (= counter :rec-counter)
+    (= counter :recurring)
     (:rec-counter card 0)
     :else
     (get-in card [:counter counter] 0)))

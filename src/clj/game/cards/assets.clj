@@ -147,13 +147,14 @@
               :optional {:prompt "Trace with Amani Senai?"
                          :player :corp
                          :yes-ability {:trace {:base (req (trace-base-func state))
-                                               :choices {:req #(and (installed? %)
-                                                                    (card-is? % :side :runner))}
-                                               :label "add an installed card to the Grip"
-                                               :msg (msg "add " (:title target) " to the Runner's Grip")
-                                               :effect (effect (move :runner target :hand true))}}}})]
-     {:events {:agenda-scored (senai-ability get-last-scored-pts)
-               :agenda-stolen (senai-ability get-last-stolen-pts)}})
+                                               :successful
+                                               {:choices {:req #(and (installed? %)
+                                                                     (card-is? % :side :runner))}
+                                                :label "add an installed card to the Grip"
+                                                :msg (msg "add " (:title target) " to the Runner's Grip")
+                                                :effect (effect (move :runner target :hand true))}}}}})]
+    {:events {:agenda-scored (senai-ability get-last-scored-pts)
+              :agenda-stolen (senai-ability get-last-stolen-pts)}})
 
    "Anson Rose"
    (let [ability {:label "Place 1 advancement token on Anson Rose (start of turn)"
@@ -234,8 +235,8 @@
    "Broadcast Square"
    {:events {:pre-bad-publicity {:delayed-completion true
                                  :trace {:base 3
-                                         :msg "prevents all bad publicity"
-                                         :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}
+                                         :successful {:msg "prevents all bad publicity"
+                                                      :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}}
 
    "Capital Investors"
    {:abilities [{:cost [:click 1]
@@ -852,12 +853,12 @@
     :flags {:corp-phase-12 (req true)}
     :abilities [{:label "Trace X - do 1 brain damage (start of turn)"
                  :trace {:base (req (get-counters card :power))
-                         :delayed-completion true
-                         :msg "do 1 brain damage"
-                         :effect (effect (damage :runner eid :brain 1 {:card card})
-                                         (trash card))
-                         :unsuccessful {:effect (effect (add-counter card :power 1)
-                                                        (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]}
+                          :successful {:delayed-completion true
+                                       :msg "do 1 brain damage"
+                                       :effect (effect (damage :runner eid :brain 1 {:card card})
+                                                       (trash card))}
+                          :unsuccessful {:effect (effect (add-counter card :power 1)
+                                                         (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]}
 
    "Lakshmi Smartfabrics"
    {:events {:rez {:effect (effect (add-counter card :power 1))}}

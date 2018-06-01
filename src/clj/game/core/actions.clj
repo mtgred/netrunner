@@ -224,7 +224,7 @@
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]"
-              :req (req (pos? (:rec-counter card 0)))
+              :req (req (pos? (get-counters card :recurring)))
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)
                            (when (has-subtype? card "Stealth")
@@ -437,7 +437,8 @@
    (let [card (or (:card args) args)]
      (when (and (can-score? state side card)
                 (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
-                (>= (:advance-counter card 0) (or (:current-cost card) (:advancementcost card))))
+                (>= (get-counters card :advancement) (or (:current-cost card)
+                                                         (:advancementcost card))))
 
        ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
        (let [moved-card (move state :corp card :scored)

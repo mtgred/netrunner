@@ -243,7 +243,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Compromised Employee")
     (let [ce (get-resource state 0)]
-      (is (= 1 (get-counters (refresh ce) :rec-counter)) "Has 1 recurring credit")
+      (is (= 1 (get-counters (refresh ce) :recurring)) "Has 1 recurring credit")
       (core/rez state :corp (get-ice state :hq 0))
       (is (= 4 (:credit (get-runner))) "Gained 1c from ICE rez")
       (core/rez state :corp (get-ice state :rd 0))
@@ -2264,6 +2264,24 @@
       (card-ability state :runner fall 1)
       (is (= 7 (:credit (get-runner)))))))
 
+(deftest the-archivist
+  ;; The Archivist
+  (do-game
+    (new-game (default-corp ["Global Food Initiative" "Private Security Force"])
+              (default-runner ["The Archivist"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Archivist")
+    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+    (take-credits state :runner)
+    (play-and-score state "Global Food Initiative")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")
+    (play-and-score state "Private Security Force")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 2 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")))
+
 (deftest the-black-file
   ;; The Black File - Prevent Corp from winning by agenda points
   (testing "Basic test"
@@ -2281,10 +2299,10 @@
       (is (not (:winner @state)) "No registered Corp win")
       (take-credits state :corp)
       (let [bf (get-resource state 0)]
-        (is (= 1 (get-in (refresh bf) [:counter :power])) "1 power counter on The Black File")
+        (is (= 1 (get-counters (refresh bf) :power)) "1 power counter on The Black File")
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 2 (get-in (refresh bf) [:counter :power])) "2 power counters on The Black File")
+        (is (= 2 (get-counters (refresh bf) :power)) "2 power counters on The Black File")
         (take-credits state :runner)
         (take-credits state :corp)
         (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game")

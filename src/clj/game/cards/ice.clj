@@ -60,9 +60,15 @@
 (defn trace-ability
   "Run a trace with specified base strength.
    If successful trigger specified ability"
-  [base ability]
-  {:label (str "Trace " base " - " (:label ability))
-   :trace (assoc ability :base base)})
+  ([base {:keys [label] :as ability}]
+   {:label (str "Trace " base " - " label)
+    :trace {:base base
+            :successful ability}})
+  ([base {:keys [label] :as ability} {:keys [un-label] :as un-ability}]
+   {:label (str "Trace " base " - " label " / " un-label)
+    :trace {:base base
+            :successful ability
+            :unsuccessful un-ability}}))
 
 (defn tag-trace
   "Trace ability for giving a tag, at specified base strength"
@@ -201,7 +207,7 @@
 (defn constellation-ice
   "Generates map for Constellation ICE with specified effect."
   [ability]
-  {:subroutines [(trace-ability 2 (assoc ability :kicker (assoc ability :min 5)))]})
+  {:subroutines [(assoc-in (trace-ability 2 ability) [:trace :kicker] (assoc ability :min 5))]})
 
 
 ;; For 7 Wonders ICE
@@ -515,8 +521,9 @@
     :events {:successful-run nil :run-ends nil}}
 
    "Chetana"
-   {:subroutines [{:msg "make each player gain 2 [Credits]" :effect (effect (gain :runner :credit 2)
-                                                                            (gain :corp :credit 2))}
+   {:subroutines [{:msg "make each player gain 2 [Credits]"
+                   :effect (effect (gain :runner :credit 2)
+                                   (gain :corp :credit 2))}
                   (do-psi {:label "Do 1 net damage for each card in the Runner's grip"
                            :effect (effect (damage eid :net (count (get-in @state [:runner :hand])) {:card card}))
                            :msg (msg (str "do " (count (get-in @state [:runner :hand])) " net damage"))})]}
@@ -1854,12 +1861,7 @@
 
    "Searchlight"
    {:advanceable :always
-    ;; Could replace this with (tag-trace advance-counters).
-    :subroutines [{:label "Trace X - Give the Runner 1 tag"
-                   :trace {:base advance-counters
-                           :delayed-completion true
-                           :effect (effect (tag-runner :runner eid 1))
-                           :msg "give the Runner 1 tag"}}]}
+    :subroutines [(tag-trace advance-counters)]}
 
    "Seidr Adaptive Barrier"
    {:effect (req (let [srv (second (:zone card))]
@@ -1890,21 +1892,21 @@
    "Sherlock 1.0"
    {:subroutines [{:label "Trace 4 - Add an installed program to the top of the Runner's Stack"
                    :trace {:base 4
-                           :choices {:req #(and (installed? %)
-                                                (is-type? % "Program"))}
-                           :msg (msg "add " (:title target) " to the top of the Runner's Stack")
-                           :effect (effect (move :runner target :deck {:front true}))}}]
+                           :successful {:choices {:req #(and (installed? %)
+                                                             (is-type? % "Program"))}
+                                        :msg (msg "add " (:title target) " to the top of the Runner's Stack")
+                                        :effect (effect (move :runner target :deck {:front true}))}}}]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Sherlock 2.0"
    {:subroutines [{:label "Trace 4 - Add an installed program to the bottom of the Runner's Stack"
                    :trace {:base 4
-                           :choices {:req #(and (installed? %)
-                                                (is-type? % "Program"))}
-                           :msg     (msg "add " (:title target) " to the bottom of the Runner's Stack")
-                           :effect  (effect (move :runner target :deck))}}
-                  {:label  "Give the Runner 1 tag"
-                   :msg    "give the Runner 1 tag"
+                           :successful {:choices {:req #(and (installed? %)
+                                                             (is-type? % "Program"))}
+                                        :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                                        :effect (effect (move :runner target :deck))}}}
+                  {:label "Give the Runner 1 tag"
+                   :msg "give the Runner 1 tag"
                    :delayed-completion true
                    :effect (effect (tag-runner :runner eid 1))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
@@ -1915,7 +1917,8 @@
                   (trace-ability 2 (do-net-damage 2))
                   (trace-ability 3 {:label "Do 3 net damage and end the run"
                                     :msg "do 3 net damage and end the run"
-                                    :effect (effect (damage eid :net 3 {:card card}) (end-run))})]}
+                                    :effect (effect (damage eid :net 3 {:card card})
+                                                    (end-run))})]}
 
    "Shiro"
    {:subroutines [{:label "Rearrange the top 3 cards of R&D"
@@ -1975,9 +1978,11 @@
       :leave-play (req (remove-watch state (keyword (str "surveyor" (:cid card)))))
       :strength-bonus x
       :subroutines [{:label "Trace X - Give the Runner 2 tags"
-                     :trace (assoc (give-tags 2) :base x)}
+                     :trace {:base x
+                             :successful (give-tags 2)}}
                     {:label "Trace X - End the run"
-                     :trace (assoc end-the-run :base x)}]})
+                     :trace {:base x
+                             :successful end-the-run}}]})
 
    "Susanoo-no-Mikoto"
    {:subroutines [{:req (req (not= (:server run) [:discard]))

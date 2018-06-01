@@ -742,8 +742,8 @@
   (testing "Basic test"
     (do-game
       (new-game
-        (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success." ["Enforcer 1.0" "Hostile Takeover"
-                                                                          "Ice Wall" "Global Food Initiative"])
+        (make-deck "Jemison Astronautics: Sacrifice. Audacity. Success."
+                   ["Enforcer 1.0" "Hostile Takeover" "Ice Wall" "Global Food Initiative"])
         (default-runner ["Data Dealer"]))
       (play-from-hand state :corp "Enforcer 1.0" "HQ")
       (play-from-hand state :corp "Ice Wall" "R&D")
@@ -764,7 +764,7 @@
           (core/rez state :corp enf)
           (prompt-select :corp (get-in (get-corp) [:scored 0]))
           (prompt-select :corp iwall)
-          (is (= 4 (:advance-counter (refresh iwall))) "Jemison placed 4 advancements")))))
+          (is (= 4 (get-counters (refresh iwall) :advancement)) "Jemison placed 4 advancements")))))
   (testing "24/7 - Armed Intimidation combination"
     ;; Expected result: 24/7 causes Forfeit, Jemison places counters, AI triggers
     (do-game
@@ -784,12 +784,12 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "24/7 News Cycle")
-      (prompt-select :corp (get-scored state :corp 0))        ; select HT to forfeit
+      (prompt-select :corp (get-scored state :corp 0)) ; select HT to forfeit
       (let [ice-wall (get-ice state :hq 0)]
-        (prompt-select :corp ice-wall)                        ; The Jemison forfeit triggers
-        (is (= 2 (:advance-counter (refresh ice-wall))) "Ice Wall has 2 advancement counters from HT forfeit"))
-      (prompt-select :corp (get-scored state :corp 0))        ; select AI to trigger
-      (prompt-choice :runner "Take 2 tags")                   ; First runner has prompt
+        (prompt-select :corp ice-wall) ; The Jemison forfeit triggers
+        (is (= 2 (get-counters (refresh ice-wall) :advancement)) "Ice Wall has 2 advancement counters from HT forfeit"))
+      (prompt-select :corp (get-scored state :corp 0)) ; select AI to trigger
+      (prompt-choice :runner "Take 2 tags") ; First runner has prompt
       (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the delayed-completion"))))
 
 (deftest jesminder-sareen:-girl-behind-the-curtain
@@ -851,10 +851,10 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (let [bt (get-content state :remote1 0)]
-        (is (nil? (:advance-counter (refresh bt))) "No advancement counters on agenda")
+        (is (zero? (get-counters (refresh bt) :advancement)) "No advancement counters on agenda")
         (card-ability state :corp (:identity (get-corp)) 1)
         (prompt-select :corp (refresh bt))
-        (is (= 4 (:advance-counter (refresh bt))) "Four advancement counters on agenda"))))
+        (is (= 4 (get-counters (refresh bt) :advancement)) "Four advancement counters on agenda"))))
   (testing "Tank shuffle Archives into R&D"
     (do-game
       (new-game

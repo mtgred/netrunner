@@ -100,7 +100,7 @@
         (prompt-select :corp ss)
         (prompt-choice :corp "2")
         (prompt-select :corp co)
-        (is (= 2 (:advance-counter (refresh co))) "Cerebral Overwriter gained 2 advancements")
+        (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
         (prompt-select :corp hf)
         (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund")
         (prompt-select :corp bc)
@@ -128,7 +128,7 @@
         (prompt-select :corp ss)
         (prompt-choice :corp "2")
         (prompt-select :corp co)
-        (is (= 2 (:advance-counter (refresh co))) "Cerebral Overwriter gained 2 advancements")
+        (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
         (prompt-select :corp hf)
         (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund")))))
 
@@ -413,6 +413,26 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
+
+(deftest door-to-door
+  ;; Door to Door
+  (do-game
+    (new-game (default-corp ["Door to Door"])
+              (default-runner))
+    (play-from-hand state :corp "Door to Door")
+    (take-credits state :corp)
+    (is (zero? (:tag (get-runner))) "Runner should start with 0 tags")
+    (is (= 3 (-> (get-runner) :hand count)) "Runner should start with 3 cards in hand")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner should gain 1 tag from Door to Door")
+    (is (= 3 (-> (get-runner) :hand count)) "Runner should start with 3 cards in hand")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner should still have 1 tag")
+    (is (= 2 (-> (get-runner) :hand count)) "Runner should take 1 meat damage from Door to Door")))
 
 (deftest economic-warfare
   ;; Economic Warfare - If successful run last turn, make the runner lose 4 credits if able
@@ -719,6 +739,43 @@
       (is (= 3 (:click (get-corp))))
       (is (= 3 (:click-per-turn (get-corp)))))))
 
+(deftest foxfire
+  ;; Foxfire
+  (do-game
+    (new-game (default-corp [(qty "Foxfire" 2)])
+              (default-runner ["Dyson Mem Chip" "Ice Carver"]))
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100)
+    (play-from-hand state :runner "Dyson Mem Chip")
+    (play-from-hand state :runner "Ice Carver")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Foxfire")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-hardware state 0))
+    (is (= 1 (-> (get-runner) :discard count)) "Corp should trash Dyson Mem Chip from winning Foxfire trace")
+    (play-from-hand state :corp "Foxfire")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (is (= 2 (-> (get-runner) :discard count)) "Corp should trash Ice Carver from winning Foxfire trace")))
+
+(deftest hard-hitting-news
+  ;; Hard-Hitting News
+  (do-game
+    (new-game (default-corp ["Hard-Hitting News"])
+              (default-runner))
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (take-credits state :runner)
+    (is (= 3 (:click (get-corp))) "Corp should start with 3 clicks")
+    (play-from-hand state :corp "Hard-Hitting News")
+    (is (zero? (:click (get-corp))) "Playing Hard-Hitting News should lose all remaining clicks")
+    (is (zero? (:tag (get-runner))) "Runner should start with 0 tags")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 4 (:tag (get-runner))) "Runner should gain 4 tags from losing Hard-Hitting News trace")))
+
 (deftest hatchet-job
   ;; Hatchet Job - Win trace to add installed non-virtual to grip
   (do-game
@@ -743,6 +800,71 @@
     (is (= 5 (:credit (get-corp))))
     (play-from-hand state :corp "Hedge Fund")
     (is (= 9 (:credit (get-corp))))))
+
+(deftest hellion-alpha-test
+  ;; Hellion Alpha Test
+  (do-game
+    (new-game (default-corp [(qty "Hellion Alpha Test" 2)])
+              (default-runner ["Daily Casts"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Daily Casts")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hellion Alpha Test")
+    (is (zero? (-> (get-runner) :deck count)) "Runner should have no cards in Stack")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (is (= 1 (-> (get-runner) :deck count)) "Runner should have 1 card in Stack from losing Hellion Alpha Test trace")
+    (is (= "Daily Casts" (-> (get-runner) :deck first :title))
+        "Runner should have Daily Casts on top of Stack from losing Hellion Alpha Test trace")
+    (take-credits state :corp)
+    (core/draw state :runner)
+    (play-from-hand state :runner "Daily Casts")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hellion Alpha Test")
+    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 2)
+    (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from losing Hellion Alpha Test trace")))
+
+(deftest hellion-beta-test
+  ;; Hellion Beta Test
+  (testing "Winning Trace - Trashing 2 cards"
+    (do-game
+      (new-game (default-corp ["Dedicated Response Team" "Hellion Beta Test"])
+                (default-runner ["Daily Casts" "Dyson Mem Chip"]))
+      (play-from-hand state :corp "Dedicated Response Team" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "Dyson Mem Chip")
+      (run-empty-server state :remote1)
+      (prompt-choice-partial :runner "Pay")
+      (take-credits state :runner)
+      (is (zero? (-> (get-runner) :discard count)) "Runner's heap should be empty")
+      (play-from-hand state :corp "Hellion Beta Test")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-resource state 0))
+      (prompt-select :corp (get-hardware state 0))
+      (is (= 2 (-> (get-runner) :discard count)) "Runner should have 2 cards in heap after losing Hellion Beta Test trace")))
+  (testing "Losing trace - Gaining bad publicity"
+    (do-game
+      (new-game (default-corp ["Dedicated Response Team" "Hellion Beta Test"])
+                (default-runner ["Daily Casts" "Dyson Mem Chip"]))
+      (play-from-hand state :corp "Dedicated Response Team" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "Dyson Mem Chip")
+      (run-empty-server state :remote1)
+      (prompt-choice-partial :runner "Pay")
+      (take-credits state :runner)
+      (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+      (play-from-hand state :corp "Hellion Beta Test")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 2)
+      (is (= 1 (:bad-publicity (get-corp))) "Corp should gain 1 bad publicity from losing Hellion Beta Test trace"))))
 
 (deftest high-profile-target
   (testing "when the runner has no tags"
@@ -838,6 +960,25 @@
     (play-from-hand state :corp "IPO")
     (is (= 13 (:credit (get-corp))))
     (is (zero? (:click (get-corp))) "Terminal ends turns")))
+
+(deftest kill-switch
+  ;; Kill Switch
+  (do-game
+    (new-game (default-corp ["Kill Switch" (qty "Hostile Takeover" 2)])
+              (default-runner))
+    (play-from-hand state :corp "Kill Switch")
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (is (zero? (:brain-damage (get-runner))) "Runner should start with 0 brain damage")
+    (play-and-score state "Hostile Takeover")
+    (prompt-choice :corp "Hostile Takeover")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Kill Switch after Corp scores an agenda")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 2 (:brain-damage (get-runner))) "Runner should get 1 brain damage from Kill Switch after accecssing an agenda")))
 
 (deftest lag-time
   (do-game
@@ -1118,6 +1259,21 @@
     (prompt-select :runner (get-program state 0))
     (is (= 1 (count (:discard (get-runner)))) "Cache trashed")))
 
+(deftest power-grid-overload
+  ;; Power Grid Overload
+  (do-game
+    (new-game (default-corp ["Power Grid Overload"])
+              (default-runner ["Dyson Mem Chip"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dyson Mem Chip")
+    (run-empty-server state :rd)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Power Grid Overload")
+    (prompt-choice :corp 3)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-hardware state 0))
+    (is (= 1 (-> (get-runner) :discard count)) "Dyson Mem Chip should be in heap after Runner loses Power Grid Overload trace")))
+
 (deftest precognition
   ;; Precognition - Full test
   (do-game
@@ -1375,6 +1531,20 @@
       (is (= :corp (:winner @state)) "Corp wins")
       (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
 
+(deftest sea-source
+  ;; SEA Source
+  (do-game
+    (new-game (default-corp ["SEA Source"])
+              (default-runner))
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (take-credits state :runner)
+    (is (zero? (:tag (get-runner))) "Runner should start with 0 tags")
+    (play-from-hand state :corp "SEA Source")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (is (= 1 (:tag (get-runner))) "Runner should get 1 tag from losing SEA Source trace")))
+
 (deftest self-growth-program
   ;; Self-Growth Program - Add 2 installed cards to grip if runner is tagged
   (do-game
@@ -1558,6 +1728,29 @@
       (prompt-select :corp iwall)
       (is (= 5 (:credit (get-corp))))
       (is (= 2 (get-counters (refresh iwall) :advancement))))))
+
+(deftest snatch-and-grab
+  ;; Snatch and Grab
+  (do-game
+    (new-game (default-corp [(qty "Snatch and Grab" 2)])
+              (default-runner ["Scrubber"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Scrubber")
+    (take-credits state :runner)
+    (is (zero? (:tag (get-runner))) "Runner should start with 0 tags")
+    (play-from-hand state :corp "Snatch and Grab")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (prompt-choice :runner "Yes")
+    (is (= 1 (:tag (get-runner))) "Runner should get 1 tag from losing Snatch and Grab trace and opting to take the tag")
+    (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
+    (play-from-hand state :corp "Snatch and Grab")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-resource state 0))
+    (prompt-choice :runner "No")
+    (is (= 1 (-> (get-runner) :discard count)) "Scrubber should be in Runner's heap after losing Snatch and Grab trace")))
 
 (deftest stock-buy-back
   ;; Stock Buy-Back - Gain 3c for every agenda in Runner's area
@@ -1757,14 +1950,14 @@
       (let [napd (get-content state :remote1 0)
             beale (get-content state :remote2 0)]
         (dotimes [_ 13] (core/advance state :corp {:card (refresh napd)}))
-        (is (= 13 (:advance-counter (refresh napd))))
+        (is (= 13 (get-counters (refresh napd) :advancement)))
         (core/score state :corp {:card (refresh napd)})
         (is (= 2 (:agenda-point (get-corp))))
         (play-from-hand state :corp "Success")
         (prompt-select :corp (get-scored state :corp 0))
         (is (= "NAPD Contract" (:title (first (:rfg (get-corp))))))
         (prompt-select :corp (refresh beale))
-        (is (= 13 (:advance-counter (refresh beale))))
+        (is (= 13 (get-counters (refresh beale) :advancement)))
         (core/score state :corp {:card (refresh beale)})
         (is (= 7 (:agenda-point (get-corp)))))))
   (testing "Works with public agendas"
@@ -1781,7 +1974,7 @@
       (is (= "Vanity Project" (:title (first (:rfg (get-corp))))))
       (let [oaktown (get-content state :remote1 0)]
         (prompt-select :corp (refresh oaktown))
-        (is (= 6 (:advance-counter (refresh oaktown))))
+        (is (= 6 (get-counters (refresh oaktown) :advancement)))
         (is (= 19 (:credit (get-corp))) "Gain 2 + 2 + 2 + 2 + 3 + 3 = 14 credits for advancing Oaktown")
         (core/score state :corp {:card (refresh oaktown)})
         (is (= 2 (:agenda-point (get-corp)))))))
@@ -1800,10 +1993,10 @@
       (let [gto (get-content state :remote1 0)]
         ;; Prompt for Jemison
         (prompt-select :corp (refresh gto))
-        (is (= 4 (:advance-counter (refresh gto))) "Added 4 counters from Jemison trigger")
+        (is (= 4 (get-counters (refresh gto) :advancement)) "Added 4 counters from Jemison trigger")
         ;; Prompt for Success
         (prompt-select :corp (refresh gto))
-        (is (= (+ 4 5) (:advance-counter (refresh gto))) "Advance 5 times from Success")))))
+        (is (= (+ 4 5) (get-counters (refresh gto) :advancement)) "Advance 5 times from Success")))))
 
 (deftest successful-demonstration
   ;; Successful Demonstration - Play if only Runner made unsuccessful run last turn; gain 7 credits
@@ -1832,7 +2025,7 @@
       (play-and-score state "Restructured Datapool")
       (let [rd-scored (get-scored state :corp 0)]
         (card-ability state :corp rd-scored 0)
-        (is (not= :waiting (->> (get-corp) :prompt first :prompt-type)) "Surveillance Sweep only works during a run")
+        (is (not= :waiting (-> (get-corp) :prompt first :prompt-type)) "Surveillance Sweep only works during a run")
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
         (is (= 1 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability"))
@@ -1844,18 +2037,18 @@
         (core/rez state :corp (refresh dr))
         (run-on state :hq)
         (card-subroutine state :corp dr 0)
-        (is (= :waiting (->> (get-corp) :prompt first :prompt-type)) "During a run, Corp should wait on Runner first")
+        (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "During a run, Corp should wait on Runner first")
         (prompt-choice :runner 0)
         (prompt-choice :corp 0)
-        (is (= 1 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (is (= 1 (get-counters (refresh dr) :power)) "Data Raven should gain a power counter from trace")
         (run-successful state)
         (play-from-hand state :runner "Scrubbed")
         (run-on state :hq)
         (card-subroutine state :corp dr 0)
-        (is (not= :waiting (->> (get-corp) :prompt first :prompt-type)) "Runner should now be waiting on Corp")
+        (is (not= :waiting (-> (get-corp) :prompt first :prompt-type)) "Runner should now be waiting on Corp")
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (= 2 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (is (= 2 (get-counters (refresh dr) :power)) "Data Raven should gain a power counter from trace")
         (run-successful state))))
   (testing "trace during run after stealing an agenda"
     (do-game
@@ -1874,10 +2067,10 @@
         (core/rez state :corp (refresh dr))
         (run-on state :remote1)
         (card-subroutine state :corp dr 0)
-        (is (= :waiting (->> (get-corp) :prompt first :prompt-type)) "During a run, Corp should wait on Runner first")
+        (is (= :waiting (-> (get-corp) :prompt first :prompt-type)) "During a run, Corp should wait on Runner first")
         (prompt-choice :runner 0)
         (prompt-choice :corp 0)
-        (is (= 1 (-> (refresh dr) :counter :power)) "Data Raven should gain a power counter from trace")
+        (is (= 1 (get-counters (refresh dr) :power)) "Data Raven should gain a power counter from trace")
         (run-successful state)
         (prompt-select :runner bn)
         (prompt-choice :runner "Steal")
@@ -2037,6 +2230,23 @@
       (is (= 6 (:credit (get-corp))) "Transparency initiative didn't fire")
       (core/advance state :corp {:card (refresh atlas)})
       (is (= 5 (:credit (get-corp))) "Transparency initiative didn't fire"))))
+
+(deftest trojan-horse
+  ;; Trojan Horse
+  (do-game
+    (new-game (default-corp ["Trojan Horse" "Dedicated Response Team"])
+              (default-runner ["Wyrm"]))
+    (play-from-hand state :corp "Dedicated Response Team" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Wyrm")
+    (run-empty-server state :remote1)
+    (take-credits state :runner)
+    (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
+    (play-from-hand state :corp "Trojan Horse")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 0)
+    (prompt-select :corp (get-program state 0))
+    (is (= 1 (-> (get-runner) :discard count)) "Wyrm should be in heap after Runner loses Trojan Horse trace")))
 
 (deftest wake-up-call
   ;; Wake Up Call

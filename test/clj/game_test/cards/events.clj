@@ -135,7 +135,7 @@
         (is hivemind "Hivemind facedown")
         (is (= 3 (count facedowns)) "No other cards facedown")
         (is (= corroder (first (:hosted scheherazade))) "Corroder is still hosted on Scheherazade")
-        (is (= 1 (get-in hivemind [:counter :virus])) "Hivemind still has a virus counters"))
+        (is (= 1 (get-counters hivemind :virus)) "Hivemind still has a virus counters"))
       (is (find-card "Apocalypse" (:discard (get-runner))) "Apocalypse is in the heap")
       (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
       (is (= 4 (core/available-mu state)) "Memory back to 4")))
@@ -503,7 +503,7 @@
     (let [bl (get-content state :remote1 0)]
       (play-from-hand state :runner "Cold Read")
       (prompt-choice :runner "HQ")
-      (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
+      (is (= 4 (get-counters (find-card "Cold Read" (get-in @state [:runner :play-area])) :recurring)) "Cold Read has 4 counters")
       (run-successful state)
       (prompt-choice-partial :runner "Imp")
       (prompt-select :runner (get-program state 0))
@@ -512,7 +512,7 @@
       (core/rez state :corp bl)
       (play-from-hand state :runner "Cold Read")
       (prompt-choice :runner "HQ")
-      (is (= 4 (:rec-counter (find-card "Cold Read" (get-in @state [:runner :play-area])))) "Cold Read has 4 counters")
+      (is (= 4 (get-counters (find-card "Cold Read" (get-in @state [:runner :play-area])) :recurring)) "Cold Read has 4 counters")
       (run-successful state))))
 
 (deftest ^{:card-title "compile"}
@@ -1028,7 +1028,7 @@
         (prompt-choice :runner "2")
         (prompt-select :runner (refresh tg))
         (is (zero? (:tag (get-runner))) "No tags, didn't access TGTBT")
-        (is (zero? (:advance-counter (refresh tg))) "Advancements removed"))))
+        (is (zero? (get-counters (refresh tg) :advancement)) "Advancements removed"))))
   (testing "Don't remove more than the existing number of advancement tokens"
     (do-game
       (new-game (default-corp ["TGTBT"])
@@ -1044,7 +1044,7 @@
         (prompt-choice :runner "3")
         (prompt-select :runner (refresh tg))
         (is (zero? (:tag (get-runner))) "No tags, didn't access TGTBT")
-        (is (zero? (:advance-counter (refresh tg))) "Advancements removed")))))
+        (is (zero? (get-counters (refresh tg) :advancement)) "Advancements removed")))))
 
 (deftest falsified-credentials
   ;; Falsified Credentials - Expose card in remote
@@ -1525,9 +1525,9 @@
       (is (:rezzed (get-ice state :hq 0)) "Ice Wall should be rezzed initially")
       (play-from-hand state :runner "Leave No Trace")
       (prompt-choice :runner "Server 1")
-      (core/add-counter state :corp (get-ice state :hq 0) :advance-counter 1)
+      (core/add-prop state :corp (get-ice state :hq 0) :advance-counter 1)
       (run-successful state)
-      (is (= 1 (get-counters (get-ice state :hq 0) :advance-counter)))
+      (is (= 1 (get-counters (get-ice state :hq 0) :advancement)))
       (is (:rezzed (get-ice state :hq 0)) "Ice Wall should still be rezzed"))))
 
 (deftest mad-dash
@@ -2549,3 +2549,18 @@
         (take-credits state :corp 1)
         (is (not (get-in (refresh crypsis) [:added-virus-counter]))
             "Counter flag was cleared on Crypsis")))))
+
+(deftest white-hat
+  ;; White Hat
+  (do-game
+    (new-game (default-corp ["Ice Wall" "Fire Wall" "Enigma"])
+              (default-runner ["White Hat"]))
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (play-from-hand state :runner "White Hat")
+    (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner is waiting for Corp to boost")
+    (prompt-choice :corp 0)
+    (prompt-choice :runner 4)
+    (prompt-card :runner (find-card "Ice Wall" (:hand (get-corp))))
+    (prompt-card :runner (find-card "Enigma" (:hand (get-corp))))
+    (is (= #{"Ice Wall" "Enigma"} (->> (get-corp) :deck (map :title) (into #{}))))))

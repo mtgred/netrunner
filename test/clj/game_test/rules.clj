@@ -160,12 +160,12 @@
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
-        (is (zero? (:rec-counter (refresh cehosted))))
+        (is (zero? (get-counters (refresh cehosted) :recurring)))
         (core/rez state :corp iwall)
         (is (= 5 (:credit (get-runner))) "Compromised Employee gave 1 credit from ice rez")
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 1 (:rec-counter (refresh cehosted)))
+        (is (= 1 (get-counters (refresh cehosted) :recurring))
             "Compromised Employee recurring credit refreshed")))))
 
 (deftest card-str-test-simple

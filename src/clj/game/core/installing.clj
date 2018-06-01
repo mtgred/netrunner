@@ -381,7 +381,7 @@
   "Deal with setting the added-virus-counter flag"
   [state side installed-card]
   (if (and (has-subtype? installed-card "Virus")
-           (pos? (get-in installed-card [:counter :virus] 0)))
+           (pos? (get-counters installed-card :virus)))
     (update! state side (assoc installed-card :added-virus-counter true))))
 
 (defn runner-install

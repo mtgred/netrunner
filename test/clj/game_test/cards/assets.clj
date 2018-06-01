@@ -133,14 +133,14 @@
       (is (zero? (count (get-content state :remote2))) "Agenda was stolen")
       (prompt-choice :corp "Medical Breakthrough") ; simult. effect resolution
       (prompt-choice :corp "Yes")
-      (prompt-choice :corp 0) ; Corp doesn't pump trace
+      (prompt-choice :corp 0)
       (is (= 3 (-> (get-runner) :prompt first :strength)) "Trace base strength is 3 after stealing first Breakthrough")
       (prompt-choice :runner 0)
-      (let [n (-> @state :runner :hand count)]
+      (let [grip (-> (get-runner) :hand count)]
         (is (= 1 (count (get-program state))) "There is an Analog Dreamers installed")
         (prompt-select :corp (get-program state 0))
         (is (zero? (count (get-program state))) "Analog Dreamers was uninstalled")
-        (is (= (+ n 1) (-> @state :runner :hand count)) "Analog Dreamers was added to hand"))
+        (is (= (+ grip 1) (-> (get-runner) :hand count)) "Analog Dreamers was added to hand"))
       (take-credits state :runner)
       (score-agenda state :corp breakthrough)
       ;; (prompt-choice :corp "Medical Breakthrough") ; there is no simult. effect resolution on score for some reason
@@ -823,7 +823,7 @@
     (play-from-hand state :corp "Dedicated Server" "New remote")
     (let [servers (get-content state :remote1 0)]
       (core/rez state :corp servers)
-      (is (= 2 (get-counters (refresh servers) :rec-counter)) "Should have 2 recurring credits"))))
+      (is (= 2 (get-counters (refresh servers) :recurring)) "Should have 2 recurring credits"))))
 
 (deftest director-haas
   ;; Director Haas
@@ -1472,7 +1472,7 @@
             drt (get-content state :remote2 0)]
         (core/advance state :corp {:card gb})
         (core/advance state :corp {:card (refresh gb)})
-        (is (= 2 (:advance-counter (refresh gb))) "Ghost Branch advanced twice")
+        (is (= 2 (get-counters (refresh gb) :advancement)) "Ghost Branch advanced twice")
         (take-credits state :corp)
         (run-on state "Server 1")
         (core/rez state :corp drt)
@@ -2154,7 +2154,7 @@
     (play-from-hand state :corp "Mumba Temple" "New remote")
     (let [mumba (get-content state :remote1 0)]
       (core/rez state :corp mumba)
-      (is (= 2 (get-counters (refresh mumba) :rec-counter)) "Should have 2 recurring credits"))))
+      (is (= 2 (get-counters (refresh mumba) :recurring)) "Should have 2 recurring credits"))))
 
 (deftest mumbad-city-hall
   ;; Mumbad City Hall
@@ -2292,15 +2292,15 @@
     (is (= 2 (:link (get-runner))))
     (let [netpol (get-content state :remote1 0)]
       (core/rez state :corp netpol)
-      (is (= 2 (get-counters (refresh netpol) :rec-counter)) "2 recurring for Runner's 2 link")
+      (is (= 2 (get-counters (refresh netpol) :recurring)) "2 recurring for Runner's 2 link")
       (take-credits state :corp)
       (play-from-hand state :runner "Dyson Mem Chip")
       (take-credits state :runner)
-      (is (= 3 (get-counters (refresh netpol) :rec-counter)) "3 recurring for Runner's 3 link")
+      (is (= 3 (get-counters (refresh netpol) :recurring)) "3 recurring for Runner's 3 link")
       (take-credits state :corp)
       (play-from-hand state :runner "Access to Globalsec")
       (take-credits state :runner)
-      (is (= 4 (get-counters (refresh netpol) :rec-counter)) "4 recurring for Runner's 4 link"))))
+      (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link"))))
 
 (deftest news-team
   ;; News Team - on access take 2 tags or take as agenda worth -1
@@ -2538,7 +2538,7 @@
     (play-from-hand state :corp "Primary Transmission Dish" "New remote")
     (let [dish (get-content state :remote1 0)]
       (core/rez state :corp dish)
-      (is (= 3 (get-counters (refresh dish) :rec-counter)) "Should have 3 recurring credits"))))
+      (is (= 3 (get-counters (refresh dish) :recurring)) "Should have 3 recurring credits"))))
 
 (deftest private-contracts
   ;; Private Contracts
@@ -3585,13 +3585,13 @@
     (let [root (get-content state :remote1 0)]
       (core/rez state :corp root)
       (card-ability state :corp (refresh root) 0)
-      (is (= 2 (get-counters (refresh root) :rec-counter)) "Took 1 credit from The Root")
+      (is (= 2 (get-counters (refresh root) :recurring)) "Took 1 credit from The Root")
        (is (= 6 (:credit (get-corp))) "Corp took Root credit into credit pool")
       (take-credits state :corp)
       (take-credits state :runner)
       ;; we expect Step 1.2 to have triggered because of Blue Sun
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-      (is (= 3 (get-counters (refresh root) :rec-counter)) "Recurring credits were refilled before Step 1.2 window"))))
+      (is (= 3 (get-counters (refresh root) :recurring)) "Recurring credits were refilled before Step 1.2 window"))))
 
 (deftest thomas-haas
   ;; Thomas Haas
