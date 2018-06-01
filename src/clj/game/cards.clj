@@ -179,7 +179,7 @@
                  counter-count (when (pos? target-count) (str " of " target-count))
                  " virus counters)")
     :choices {:req #(and (installed? %)
-                         (pos? (get-in % [:counter :virus] 0)))}
+                         (pos? (get-counters % :virus)))}
     :effect (req (add-counter state :runner target :virus -1)
                  (let [selected-cards (update selected-cards (:cid target)
                                               ;; Store card reference and number of counters picked

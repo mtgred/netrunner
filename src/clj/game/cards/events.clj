@@ -42,9 +42,10 @@
    "Another Day, Another Paycheck"
    {:events {:agenda-stolen
              {:trace {:base 0
-                      :unsuccessful {:effect (effect (gain-credits
-                                                       :runner (+ (:agenda-point runner) (:agenda-point corp))))
-                                     :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
+                      :unsuccessful
+                      {:effect (effect (gain-credits
+                                         :runner (+ (:agenda-point runner) (:agenda-point corp))))
+                       :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
    (let [corp-trash {:delayed-completion true
@@ -531,7 +532,8 @@
               (run :hq {:req (req (= target :hq))
                         :replace-access
                         {:mandatory true
-                         :msg (msg "reveal 2 cards from HQ and trash all " target "s") ;should maybe lower-case target
+                         :msg (msg "reveal 2 cards from HQ and trash all "
+                                   target (when (not= "ICE" (:type target)) "s"))
                          :prompt "Choose a card type"
                          :choices ["Asset" "Upgrade" "Operation" "ICE"]
                          :effect (req (let [chosen-type target
@@ -666,7 +668,7 @@
                                                               (= (first (:server run)) (second (:zone %))))}
                                          :msg (msg "remove " (quantify c "advancement token")
                                                    " from " (card-str state target))
-                                         :effect (req (let [to-remove (min c (:advance-counter target 0))]
+                                         :effect (req (let [to-remove (min c (get-counters target :advancement))]
                                                         (add-prop state :corp target :advance-counter (- to-remove))
                                                         (clear-wait-prompt state :corp)
                                                         (effect-completed state side eid)))}
@@ -712,11 +714,11 @@
                                :msg "force the Corp to trash the top card of R&D"
                                :effect (req (mill state :corp)
                                             (let [n (count (filter #(= (:title card) (:title %)) (:hand runner)))]
-                                              (if (> n 0)
+                                              (if (pos? n)
                                                 (continue-ability state side
                                                   {:prompt "Reveal how many copies of Fear the Masses?"
                                                    :choices {:number (req n)}
-                                                   :effect (req (when (> target 0)
+                                                   :effect (req (when (pos? target)
                                                                   (mill state :corp target)
                                                                   (system-msg state side
                                                                               (str "reveals " target " copies of Fear the Masses,"
@@ -872,7 +874,8 @@
 
    "Hacktivist Meeting"
    {:implementation "Does not prevent rez if HQ is empty"
-    :events {:rez {:req (req (and (not (ice? target)) (< 0 (count (:hand corp)))))
+    :events {:rez {:req (req (and (not (ice? target))
+                                  (pos? (count (:hand corp)))))
                    ;; FIXME the above condition is just a bandaid, proper fix would be preventing the rez altogether
                    :msg "force the Corp to trash 1 card from HQ at random"
                    :effect (effect (trash (first (shuffle (:hand corp)))))}}}
@@ -1955,7 +1958,8 @@
    (letfn [(finish-choice [choices]
              (let [choices (filter #(not= "None" %) choices)]
                (when (not-empty choices)
-                {:effect (req (doseq [c choices] (move state :corp c :deck))
+                {:effect (req (doseq [c choices]
+                                (move state :corp c :deck))
                               (shuffle! state :corp :deck))
                  :msg (str "shuffle " (join ", " (map :title choices)) " into R&D")})))
            (choose-cards [hand chosen]
@@ -1964,14 +1968,16 @@
               :choices (conj (vec (clojure.set/difference hand chosen))
                              "None")
               :delayed-completion true
-              :effect (req (if (and (empty? chosen) (not= "None" target))
+              :effect (req (if (and (empty? chosen)
+                                    (not= "None" target))
                              (continue-ability state side (choose-cards hand (conj chosen target)) card nil)
                              (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :trace {:base 3
-            :unsuccessful {:delayed-completion true
-                           :msg "reveal all cards in HQ"
-                           :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
+            :unsuccessful
+            {:delayed-completion true
+             :msg "reveal all cards in HQ"
+             :effect (effect (continue-ability :runner (choose-cards (set (:hand corp)) #{}) card nil))}}})
 
    "Windfall"
    {:effect (effect (shuffle! :deck)

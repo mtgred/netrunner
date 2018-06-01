@@ -224,7 +224,8 @@
 
       ;; Check to see if a second agenda/asset was installed.
       (when-completed (corp-install-asset-agenda state side moved-card dest-zone server)
-                      (letfn [(event [state side eid _] (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
+                      (letfn [(event [state side eid _]
+                                (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
                         (case install-state
                           ;; Ignore all costs. Pass eid to rez.
                           :rezzed-no-cost
@@ -390,7 +391,7 @@
   "Deal with setting the added-virus-counter flag"
   [state side installed-card]
   (if (and (has-subtype? installed-card "Virus")
-           (pos? (get-in installed-card [:counter :virus] 0)))
+           (pos? (get-counters installed-card :virus)))
     (update! state side (assoc installed-card :added-virus-counter true))))
 
 (defn runner-install

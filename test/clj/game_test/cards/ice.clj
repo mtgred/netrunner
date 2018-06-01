@@ -1,6 +1,6 @@
 (ns game-test.cards.ice
   (:require [game.core :as core]
-            [game.utils :refer :all]
+            [game.utils :refer [has?]]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
@@ -39,7 +39,7 @@
       (card-subroutine state :corp aim 0)
       (is (= 3 (count (:discard (get-runner)))) "Runner trashed 3 cards")
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck"))
-    (is (= 0 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
+    (is (zero? (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
 
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
@@ -86,7 +86,7 @@
       (core/advance state :corp {:card (refresh ab)})
       (core/advance state :corp {:card (refresh ab)})
       (is (= 8 (:credit (get-corp))))
-      (is (= 2 (:advance-counter (refresh ab))))
+      (is (= 2 (get-counters (refresh ab) :advancement)))
       (core/rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
 
@@ -103,7 +103,7 @@
       (card-subroutine state :corp bw 0)
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
       (run-successful state)
-      (is (= 0 (:tag (get-runner))) "Run successful; Runner lost 1 tag")
+      (is (zero? (:tag (get-runner))) "Run successful; Runner lost 1 tag")
       (run-on state "Archives")
       (card-subroutine state :corp bw 0)
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
@@ -149,7 +149,7 @@
       (core/rez state :corp cp)
       (card-subroutine state :corp cp 0)
       (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
-      (is (not (get-in (refresh cp) [:rezzed])) "Cell Portal derezzed"))))
+      (is (not (:rezzed (refresh cp))) "Cell Portal derezzed"))))
 
 (deftest chimera
   ;; Chimera - Gains chosen subtype
@@ -310,7 +310,7 @@
     (let [envl (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp envl)
-      (is (= 0 (count (:discard (get-runner)))) "No discarded cards")
+      (is (zero? (count (:discard (get-runner)))) "No discarded cards")
       (card-subroutine state :corp envl 0)
       (is (= 1 (count (:discard (get-runner)))) "1 card in discard pile")
       (is (:run @state) "Run still ongoing")
@@ -377,7 +377,7 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (prompt-select :corp cc)
-      (is (= 1 (count (get-in @state [:runner :rig :hardware]))) "Clone Chip trashed")
+      (is (= 1 (count (get-hardware state))) "Clone Chip trashed")
       (is (empty? (:prompt (get-runner))) "Plascrete didn't try preventing meat damage")
       (is (= 1 (count (:hand (get-runner)))))
       (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
@@ -528,7 +528,7 @@
         (take-credits state :corp)
         (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 cards in hand")
         (play-from-hand state :runner "Desperado")
-        (is (= 0 (count (:hand (get-runner)))) "Card installed"))))
+        (is (zero? (count (:hand (get-runner)))) "Card installed"))))
   (testing "Subroutine effect - Select 2 runner cards, runner moves one to the stack"
     (do-game
       (new-game (default-corp ["Jua"])
@@ -597,13 +597,13 @@
      (is (empty? (:discard (get-runner))) "Runner starts with no discarded cards")
      (prompt-choice :runner "Trash an installed piece of hardware")
      (prompt-select :runner (get-hardware state 0))
-     (is (empty? (get-in @state [:runner :rig :hardware])) "Astrolabe trashed")
+     (is (empty? (get-hardware state)) "Astrolabe trashed")
      (is (= 1 (count (:discard (get-runner)))) "Runner trashed 1 card")
      (card-subroutine state :corp kamali 2)
      (is (= 1 (count (:discard (get-runner)))) "Runner starts with 1 discarded card")
      (prompt-choice :runner "Trash an installed program")
      (prompt-select :runner (get-program state 0))
-     (is (empty? (get-in @state [:runner :rig :program])) "Cache trashed")
+     (is (empty? (get-program state)) "Cache trashed")
      (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
 
 (deftest kitsune
@@ -784,8 +784,8 @@
       (take-credits state :corp)
       (run-on state :hq)
       (is (= 3 (:credit (get-corp))) "corp starts encounter with 3 crs")
-      (is (= 0 (count (:discard (get-runner)))) "runner starts encounter with no cards in heap")
-      (is (= 0 (:tag (get-runner))) "runner starts encounter with 0 tags")
+      (is (zero? (count (:discard (get-runner)))) "runner starts encounter with no cards in heap")
+      (is (zero? (:tag (get-runner))) "runner starts encounter with 0 tags")
       (card-subroutine state :corp mau 0)
       (card-subroutine state :corp mau 1)
       (card-subroutine state :corp mau 2)
@@ -816,9 +816,9 @@
               (default-runner))
     (play-from-hand state :corp "Masvingo" "HQ")
     (let [mas (get-ice state :hq 0)]
-      (is (= 0 (:advance-counter (refresh mas) 0)) "Should install with 0 counter")
+      (is (zero? (get-counters (refresh mas) :advancement)) "Should install with 0 counter")
       (core/rez state :corp (refresh mas))
-      (is (= 1 (:advance-counter (refresh mas))) "Should rez with 1 counter")
+      (is (= 1 (get-counters (refresh mas) :advancement)) "Should rez with 1 counter")
       (take-credits state :corp)
       (run-on state :hq)
       (card-subroutine state :corp mas 0)
@@ -958,7 +958,7 @@
       (core/rez state :corp (get-ice state :archives 0))
       (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
       (core/rez state :corp (get-ice state :hq 0))
-      (is (= 0 (:credit (get-corp))) "Corp spends 9 credits to rez"))))
+      (is (zero? (:credit (get-corp))) "Corp spends 9 credits to rez"))))
 
 (deftest nightdancer
   ;; Nightdancer - Runner loses a click if able, corp gains a click on next turn
@@ -996,8 +996,8 @@
       (card-ability state :corp (refresh odu) 0)
       (card-ability state :corp (refresh odu) 1)
       (prompt-select :corp (refresh eni))
-      (is (= 1 (:advance-counter (refresh odu))))
-      (is (= 1 (:advance-counter (refresh eni))))
+      (is (= 1 (get-counters (refresh odu) :advancement)))
+      (is (= 1 (get-counters (refresh eni) :advancement)))
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1005,8 +1005,8 @@
       (card-ability state :corp (refresh odu) 0)
       (card-ability state :corp (refresh odu) 1)
       (prompt-select :corp (refresh eni))
-      (is (= 2 (:advance-counter (refresh odu))))
-      (is (= 3 (:advance-counter (refresh eni))))
+      (is (= 2 (get-counters (refresh odu) :advancement)))
+      (is (= 3 (get-counters (refresh eni) :advancement)))
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1014,8 +1014,8 @@
       (card-ability state :corp (refresh odu) 0)
       (card-ability state :corp (refresh odu) 1)
       (prompt-select :corp (refresh eni))
-      (is (= 3 (:advance-counter (refresh odu))))
-      (is (= 6 (:advance-counter (refresh eni)))))))
+      (is (= 3 (get-counters (refresh odu) :advancement)))
+      (is (= 6 (get-counters (refresh eni) :advancement))))))
 
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
@@ -1025,7 +1025,7 @@
     (play-from-hand state :corp "Resistor" "HQ")
     (let [resistor (get-ice state :hq 0)]
       (core/rez state :corp resistor)
-      (is (= 0 (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
+      (is (zero? (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
       (core/tag-runner state :runner 2)
       (is (= 2 (:tag (get-runner))))
       (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
@@ -1045,7 +1045,7 @@
         (take-credits state :corp)
         (run-on state "archives")
         (core/rez state :corp sadaka)
-        (is (= 0 (count (:hand (get-corp)))) "Corp starts with empty hand")
+        (is (zero? (count (:hand (get-corp)))) "Corp starts with empty hand")
         (card-subroutine state :corp (refresh sadaka) 0)
         (prompt-choice :corp "Shuffle R&D")
         (prompt-choice :corp "Yes")
@@ -1067,7 +1067,7 @@
         (run-on state "archives")
         (core/rez state :corp sadaka)
         (is (= 3 (count (:hand (get-corp)))) "Corp starts with 3 cards in hand")
-        (is (= 0 (count (:discard (get-corp)))) "Corps starts with 0 cards in archives")
+        (is (zero? (count (:discard (get-corp)))) "Corps starts with 0 cards in archives")
         (card-subroutine state :corp (refresh sadaka) 1)
         (prompt-card :corp (find-card "Enigma" (:hand (get-corp))))
         (is (= 2 (count (:hand (get-corp)))) "Corp discards 1 card")
@@ -1079,7 +1079,7 @@
         (core/rez state :corp sadakaHQ)
         (is (= 2 (count (:hand (get-corp)))) "Corp starts with 2 cards in hand")
         (is (= 2 (count (:discard (get-corp)))) "Corps starts with 2 cards in archives")
-        (is (= 0 (count (:discard (get-runner)))) "Runner starts with 0 cards in discard")
+        (is (zero? (count (:discard (get-runner)))) "Runner starts with 0 cards in discard")
         (card-subroutine state :corp (refresh sadakaHQ) 1)
         (prompt-card :corp (find-card "Enigma" (:hand (get-corp))))
         (is (= 1 (count (:hand (get-corp)))) "Corp discards 1 card")
@@ -1121,8 +1121,8 @@
       (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
-      (core/advance state :corp {:card (refresh searchlight)})
+      (is (zero? (:tag (get-runner))) "Trace failed with 0 advancements")
+      (advance state searchlight 1)
       (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
@@ -1177,15 +1177,34 @@
               (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Sherlock 1.0" "HQ")
     (take-credits state :corp)
-    (play-from-hand state :runner "Gordian Blade")
-    (run-on state :hq)
-    (core/rez state :corp (get-ice state :hq 0))
-    (card-subroutine state :corp (get-ice state :hq 0) 0)
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 0)
-    (prompt-select :corp (get-in @state [:runner :rig :program 0]))
-    (is (empty? (get-in @state [:runner :rig :program])) "Gordian uninstalled")
-    (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack")))
+    (let [sherlock (get-ice state :hq 0)]
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state :hq)
+      (core/rez state :corp sherlock)
+      (card-subroutine state :corp sherlock 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-program state 0))
+      (is (empty? (get-program state)) "Gordian uninstalled")
+      (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack"))))
+
+(deftest sherlock-2.0
+  ;; Sherlock 2.0 - Trace to add an installed program to the bottom of Runner's Stack
+  (do-game
+    (new-game (default-corp [(qty "Sherlock 2.0" 1)])
+              (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Sherlock 2.0" "HQ")
+    (take-credits state :corp)
+    (let [sherlock (get-ice state :hq 0)]
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state :hq)
+      (core/rez state :corp sherlock)
+      (card-subroutine state :corp sherlock 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-program state 0))
+      (is (empty? (get-program state)) "Gordian uninstalled")
+      (is (= "Gordian Blade" (:title (last (:deck (get-runner))))) "Gordian on bottom of Stack"))))
 
 (deftest shiro
   ;; Shiro - Full test
@@ -1289,11 +1308,13 @@
       (is (= 6 (:current-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ICE")
       (run-on state "HQ")
       (card-subroutine state :corp surv 0)
-      (prompt-choice :corp 0)                               ; Should be Trace - 6
+      (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
+      (prompt-choice :corp 0)
       (prompt-choice :runner 5)
       (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Surveyor Trace 6 with boost 5")
       (card-subroutine state :corp surv 0)
-      (prompt-choice :corp 0)                               ; Should be Trace - 6
+      (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
+      (prompt-choice :corp 0)
       (prompt-choice :runner 6)
       (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6"))))
 
@@ -1319,7 +1340,7 @@
         (prompt-choice :corp "Yes") ; use alternative cost
         (prompt-select :corp (get-in (get-corp) [:scored 0]))
         (is (= 3 (:credit (get-corp))) "Still on 3c")
-        (is (= 0 (count (:scored (get-corp)))) "Agenda forfeited")
+        (is (zero? (count (:scored (get-corp)))) "Agenda forfeited")
         ;; Can Host Conditions Counters
         (play-from-hand state :corp "Patch")
         (prompt-select :corp (refresh ti))
@@ -1353,32 +1374,50 @@
         (score-agenda state :corp ht)
         (play-from-hand state :corp "Oversight AI")
         (prompt-select :corp ti)
-        (is (get-in (refresh ti) [:rezzed]))
+        (is (:rezzed (refresh ti)))
         (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
             "Tithonium hosting OAI as a condition")))))
 
 (deftest tmi
-  ;; TMI ICE test
+  ;; TMI
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "TMI" 3)])
+      (new-game (default-corp ["TMI"])
                 (default-runner))
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (get-in (refresh tmi) [:rezzed])))))
+        (is (:rezzed (refresh tmi))))))
   (testing "Losing trace derezzes TMI"
     (do-game
-      (new-game (default-corp [(qty "TMI" 3)])
+      (new-game (default-corp ["TMI"])
                 (make-deck "Sunny Lebeau: Security Specialist" [(qty "Blackmail" 3)]))
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (not (get-in (refresh tmi) [:rezzed])))))))
+        (is (not (:rezzed (refresh tmi))))))))
+
+(deftest troll
+  ;; Troll
+  (testing "Giving the runner a choice on successful trace shouldn't make runner pay trace first. #5335"
+    (do-game
+      (new-game (default-corp ["Troll"])
+                (default-runner))
+      (play-from-hand state :corp "Troll" "HQ")
+      (take-credits state :corp)
+      (let [troll (get-ice state :hq 0)]
+        (core/rez state :corp troll)
+        (run-on state "HQ")
+        (card-ability state :corp troll 0)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (prompt-choice :runner "End the run")
+        (is (not (:run @state)) "Run is ended")))))
 
 (deftest turing
   ;; Turing - Strength boosted when protecting a remote server
@@ -1449,5 +1488,5 @@
           "Wraparound +7 strength with no fracter in play")
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
-      (is (= 0 (:current-strength (refresh wrap)))
+      (is (zero? (:current-strength (refresh wrap)))
           "Wraparound 0 strength after Corroder installed"))))
