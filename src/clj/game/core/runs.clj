@@ -161,7 +161,7 @@
                               (.contains target "Pay")
                               (if (> trash-cost (get-in @state [:runner :credit] 0))
                                 (do (toast state side (str "You don't have the credits to pay for " card-name
-                                                           ". Did you mean to first gain recurring credits?"))
+                                                           ". Did you mean to first gain credits from installed cards?"))
                                     (access-non-agenda state side eid c :skip-trigger-event true))
                                 (do (lose state side :credit trash-cost)
                                     (when (:run @state)
