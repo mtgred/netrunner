@@ -209,6 +209,7 @@
                 (->> (io/file (str "src/clj/game/cards" (when path (str "/" path ".clj"))))
                      (file-seq)
                      (filter #(.isFile %))
+                     (filter #(clojure.string/ends-with? (.getPath %) ".clj"))
                      (map str))))))
 
 (defn get-card-defs
