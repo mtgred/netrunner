@@ -889,10 +889,10 @@
                                    (toast :runner "Cannot install until the end of the run")
                                    (toast :corp "Cannot install until the end of the run")
                                    (register-events {:run-ends {:effect (effect (unlock-install (:cid card) :runner)
-                                                                                (unlock-install (:cid card) :corp))}}
+                                                                                (unlock-install (:cid card) :corp)
+                                                                                (unregister-events card))}}
                                                     (assoc card :zone '(:discard))))}
-    :events {:run-ends nil
-             :turn-ends {:effect (effect (unregister-events card))}}}
+    :events {:run-ends nil}}
 
    "Simone Diego"
    {:recurring 2}
