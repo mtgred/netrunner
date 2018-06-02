@@ -736,4 +736,3 @@
       (load-alt-arts)
       (>! cards-channel cards)))
 
-; not working - id missing

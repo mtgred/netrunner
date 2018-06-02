@@ -86,7 +86,7 @@
   (r/render [card-browser] (.getElementById js/document "cardbrowser"))
   (r/render [chat] (.getElementById js/document "chat"))
   (r/render [deck-builder] (.getElementById js/document "deckbuilder"))
-  (r/render [gameboard game-state] (.getElementById js/document "gameboard"))
+  (r/render [gameboard] (.getElementById js/document "gameboard"))
   (r/render [game-lobby] (.getElementById js/document "gamelobby"))
   (r/render [help] (.getElementById js/document "help"))
   (r/render [news] (.getElementById js/document "news"))
