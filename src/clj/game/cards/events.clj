@@ -493,9 +493,8 @@
                          {:req (req (= target :hq))
                           :replace-access
                           (let [five-or-all (fn [corp] (min 5 (:credit corp)))]
-                            {:delayed-completion true
-                             :msg (msg "force the Corp to lose " (five-or-all corp)
-                                       " [Credits], and gain " (five-or-all corp))
+                            {:msg (msg "force the Corp to lose " (five-or-all corp)
+                                       "[Credits], and gain " (five-or-all corp) "[Credits]")
                              :effect (effect (lose-credits :corp (five-or-all corp))
                                              (gain-credits :runner (five-or-all corp)))})}
                       card))}
