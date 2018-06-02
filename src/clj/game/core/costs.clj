@@ -239,6 +239,25 @@
             (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (second r)))
           (deduct state side r)))))
 
+(defn gain-credits
+  "Utility function for triggering events"
+  [state side amount & args]
+  (when (and amount
+             (pos? amount))
+    (gain state side :credit amount)
+    (let [kw (keyword (str (name side) "-credit-gain"))]
+      (apply trigger-event-sync state side (make-eid state) kw args))))
+
+(defn lose-credits
+  "Utility function for triggering events"
+  [state side amount & args]
+  (when (and amount
+             (or (= :all amount)
+                 (pos? amount)))
+    (lose state side :credit amount)
+    (let [kw (keyword (str (name side) "-credit-loss"))]
+      (apply trigger-event-sync state side (make-eid state) kw args))))
+
 (defn play-cost-bonus [state side costs]
   (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))
 

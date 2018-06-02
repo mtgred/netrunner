@@ -44,7 +44,7 @@
   [state side args]
   (when (pay state side nil :click 1 {:action :corp-click-credit})
     (system-msg state side "spends [Click] to gain 1 [Credits]")
-    (gain state side :credit 1)
+    (gain-credits state side 1 (keyword (str (name side) "-click-credit")))
     (swap! state update-in [:stats side :click :credit] (fnil inc 0))
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
     (play-sfx state side "click-credit")))
@@ -272,6 +272,14 @@
   :abilities vector."
   [state side args]
   ((dynamic-abilities (:dynamic args)) state (keyword side) args))
+
+(defn play-corp-ability
+  "Triggers a runner card's corp-ability using its zero-based index into the card's card-def :corp-abilities vector."
+  [state side {:keys [card ability targets] :as args}]
+  (let [card (get-card state card)
+        cdef (card-def card)
+        ab (get-in cdef [:corp-abilities ability])]
+    (do-play-ability state side card ab targets)))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."

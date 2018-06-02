@@ -21,6 +21,7 @@
    "close-deck" core/close-deck
    "concede" core/concede
    "continue" core/continue
+   "corp-ability" core/play-corp-ability
    "corp-phase-43" core/corp-phase-43
    "credit" core/click-credit
    "derez" #(core/derez %1 %2 (:card %3))

@@ -31,8 +31,8 @@
                                          " [Credits] and take 2 tags")
                                :delayed-completion true
                                :effect (req (when-completed (tag-runner state :runner 2)
-                                                            (do (gain state :runner :credit (* 2 (min 5 (:credit corp))))
-                                                                (lose state :corp :credit (min 5 (:credit corp)))
+                                                            (do (gain-credits state :runner (* 2 (min 5 (:credit corp))))
+                                                                (lose-credits state :corp (min 5 (:credit corp)))
                                                                 (effect-completed state side eid))))}} card))}
 
    "Amped Up"
@@ -43,8 +43,8 @@
    {:events {:agenda-stolen
              {:trace {:base 0
                       :unsuccessful
-                      {:effect (effect (gain :runner :credit
-                                             (+ (:agenda-point runner) (:agenda-point corp))))
+                      {:effect (effect (gain-credits
+                                         :runner (+ (:agenda-point runner) (:agenda-point corp))))
                        :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}}}
 
    "Apocalypse"
@@ -126,7 +126,7 @@
 
    "Build Script"
    {:msg "gain 1 [Credits] and draw 2 cards"
-    :effect (effect (gain :credit 1) (draw 2))}
+    :effect (effect (gain-credits 1) (draw 2))}
 
    "By Any Means"
    {:effect (effect (register-events (:events (card-def card))
@@ -143,7 +143,7 @@
    "Calling in Favors"
    {:msg (msg "gain " (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
                                      (all-active-installed state :runner))) " [Credits]")
-    :effect (effect (gain :credit (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
+    :effect (effect (gain-credits (count (filter #(and (has-subtype? % "Connection") (is-type? % "Resource"))
                                                  (all-active-installed state :runner)))))}
 
    "Career Fair"
@@ -244,7 +244,7 @@
   {:events {:runner-install {:silent (req true) ;; there are no current interactions where we'd want Grant to not be last, and this fixes a bug with Hayley
                              :req (req (first-event? state side :runner-install))
                              :msg "force the Corp to lose 1 [Credit]"
-                             :effect (effect (lose :corp :credit 1))}}}
+                             :effect (effect (lose-credits :corp 1))}}}
 
    "Corporate Scandal"
    {:msg "give the Corp 1 additional bad publicity"
@@ -270,7 +270,7 @@
                                      {:optional
                                       {:prompt (msg "Spend " cost " [Credits] to prevent the trash of " title "?")
                                        :player :corp
-                                       :yes-ability {:effect (req (lose state :corp :credit cost)
+                                       :yes-ability {:effect (req (lose-credits state :corp cost)
                                                                   (system-msg state :corp (str "spends " cost " [Credits] to prevent "
                                                                                                title " from being trashed at no cost"))
                                                                   (clear-wait-prompt state :runner))}
@@ -334,7 +334,7 @@
 
    "Day Job"
    {:additional-cost [:click 3]
-    :msg "gain 10 [Credits]" :effect (effect (gain :credit 10))}
+    :msg "gain 10 [Credits]" :effect (effect (gain-credits 10))}
 
    "Déjà Vu"
    {:prompt "Choose a card to add to Grip" :choices (req (cancellable (:discard runner) :sorted))
@@ -375,7 +375,7 @@
                     :effect (effect (trash-no-cost eid target))}}}
 
    "Deuces Wild"
-   (let [all [{:effect (effect (gain :credit 3))
+   (let [all [{:effect (effect (gain-credits 3))
                :msg "gain 3 [Credits]"}
               {:effect (effect (draw 2))
                :msg "draw 2 cards"}
@@ -485,7 +485,7 @@
    (run-event
     {:end-run {:req (req (:successful run))
                :msg "gain 5 [Credits]"
-               :effect (effect (gain :runner :credit 5))}})
+               :effect (effect (gain-credits :runner 5))}})
 
    "Diversion of Funds"
    {:req (req hq-runnable)
@@ -495,8 +495,8 @@
                           (let [five-or-all (fn [corp] (min 5 (:credit corp)))]
                             {:msg (msg "force the Corp to lose " (five-or-all corp)
                                        "[Credits], and gain " (five-or-all corp) "[Credits]")
-                             :effect (effect (lose :corp :credit (five-or-all corp))
-                                             (gain :runner :credit (five-or-all corp)))})}
+                             :effect (effect (lose-credits :corp (five-or-all corp))
+                                             (gain-credits :runner (five-or-all corp)))})}
                       card))}
 
    "Drive By"
@@ -521,7 +521,7 @@
     (effect (gain :click 1)))
 
    "Easy Mark"
-   {:msg "gain 3 [Credits]" :effect (effect (gain :credit 3))}
+   {:msg "gain 3 [Credits]" :effect (effect (gain-credits 3))}
 
    "Embezzle"
    (letfn [(name-string [cards]
@@ -544,7 +544,7 @@
                                                                       " from HQ and gain " (* 4 (count cards-to-trash)) "[Credits]"))
                                           (doseq [c cards-to-trash]
                                             (trash state :runner (assoc c :seen true)))
-                                          (gain state :runner :credit (* 4 (count cards-to-trash))))))}}
+                                          (gain-credits state :runner (* 4 (count cards-to-trash))))))}}
                 card))})
 
    "Emergency Shutdown"
@@ -640,7 +640,7 @@
    {:msg (msg "draw 1 card and gain "
               (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))
               " [Credits]")
-    :effect (effect (draw) (gain :credit (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))))}
+    :effect (effect (draw) (gain-credits (count (filter #(= (:title %) "Exclusive Party") (:discard runner)))))}
 
    "Executive Wiretaps"
    {:msg (msg "reveal cards in HQ: " (join ", " (map :title (:hand corp))))}
@@ -697,7 +697,7 @@
                                      (= chosen-type (:type target)))
                               (continue-ability
                                   state :runner
-                                  {:effect (effect (gain :credit 5))
+                                  {:effect (effect (gain-credits 5))
                                    :msg "gain 5 [Credits] "}
                                   card nil)
                               (effect-completed state side eid))))})
@@ -817,7 +817,7 @@
               (* 2 (count targets)) " [Credits]")
     :effect (req (doseq [c targets]
                    (trash state side c {:unpreventable true}))
-                 (gain state side :credit (* 2 (count targets))))}
+                 (gain-credits state side (* 2 (count targets))))}
 
    "Game Day"
    {:msg (msg "draw " (- (hand-size state :runner) (count (:hand runner))) " cards")
@@ -886,7 +886,7 @@
                      (zones->sorted-names (remove (set bad-zones) (get-runnable-zones @state)))))}
     {:end-run {:req (req (:successful run))
                :msg "gain 12 [Credits]"
-               :effect (effect (gain :runner :credit 12))}})
+               :effect (effect (gain-credits :runner 12))}})
 
    "Hostage"
    {:prompt "Choose a Connection"
@@ -975,7 +975,7 @@
                                         {:choices {:req installed?}
                                          :delayed-completion true
                                          :effect (effect (expose eid target))}
-                                         {:msg "gain 2 [Credits]" :effect (effect (gain :credit 2))})
+                                         {:msg "gain 2 [Credits]" :effect (effect (gain-credits 2))})
                                       card nil))}
 
    "Information Sifting"
@@ -1029,7 +1029,7 @@
    {:effect (req (doseq [c (take 4 (get-in @state [:runner :deck]))]
                    (if (is-type? c "Program")
                      (do (trash state side c {:unpreventable true})
-                         (gain state side :credit 1)
+                         (gain-credits state side 1)
                          (system-msg state side (str "trashes " (:title c) " and gains 1 [Credits]")))
                      (do (move state side c :hand)
                          (system-msg state side (str "adds " (:title c) " to Grip"))))))}
@@ -1170,7 +1170,7 @@
 
    "Lucky Find"
    {:msg "gain 9 [Credits]"
-    :effect (effect (gain :credit 9))}
+    :effect (effect (gain-credits 9))}
 
    "Mad Dash"
    {:prompt "Choose a server"
@@ -1227,7 +1227,7 @@
               " cards and gain " (:tag runner) " [Credits]")
     :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
                                          (all-active-installed state :runner))))
-                    (gain :credit (:tag runner)))}
+                    (gain-credits (:tag runner)))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
@@ -1246,7 +1246,7 @@
                        :effect (req (cond
 
                                       (and (= target "Pay 5 [Credits]") (can-pay? state :corp nil :credit 5))
-                                      (do (lose state :corp :credit 5)
+                                      (do (lose-credits state :corp 5)
                                           (system-msg state side "pays 5 [Credits] from Mining Accident")
                                           (clear-wait-prompt state :runner)
                                           (effect-completed state side eid))
@@ -1283,7 +1283,7 @@
                                        (register-events state side {:successful-run
                                                                    {:req (req (= target :rd))
                                                                     :msg "gain 4 [Credits]"
-                                                                     :effect (effect (gain :credit 4)
+                                                                     :effect (effect (gain-credits 4)
                                                                                      (unregister-events card))}}
 
                                                         (assoc card :zone '(:discard))))
@@ -1377,8 +1377,8 @@
    "Peace in Our Time"
    {:req (req (not (:scored-agenda corp-reg)))
     :msg "gain 10 [Credits]. The Corp gains 5 [Credits]"
-    :effect (req (gain state :runner :credit 10)
-                 (gain state :corp :credit 5)
+    :effect (req (gain-credits state :runner 10)
+                 (gain-credits state :corp 5)
                  (apply prevent-run-on-server
                         state card (get-zones @state))
                  (register-events state side
@@ -1423,13 +1423,13 @@
                                               (unregister-events card))}}}
 
    "Power Nap"
-   {:effect (effect (gain :credit (+ 2 (count (filter #(has-subtype? % "Double")
+   {:effect (effect (gain-credits (+ 2 (count (filter #(has-subtype? % "Double")
                                                       (:discard runner))))))
     :msg (msg "gain " (+ 2 (count (filter #(has-subtype? % "Double") (:discard runner)))) " [Credits]")}
 
    "Power to the People"
    {:effect (effect (register-events {:pre-steal-cost
-                                      {:once :per-turn :effect (effect (gain :credit 7))
+                                      {:once :per-turn :effect (effect (gain-credits 7))
                                                        :msg "gain 7 [Credits]"}
                                       :runner-turn-ends
                                       {:effect (effect (unregister-events card))}}
@@ -1441,7 +1441,7 @@
 
    "Process Automation"
    {:msg "gain 2 [Credits] and draw 1 card"
-    :effect (effect (gain :credit 2) (draw 1))}
+    :effect (effect (gain-credits 2) (draw 1))}
 
    "Push Your Luck"
    {:effect (effect (show-wait-prompt :runner "Corp to guess Odd or Even")
@@ -1458,7 +1458,7 @@
                                          :effect (req (when (or (and (= guess "Even") (odd? target))
                                                                 (and (= guess "Odd") (even? target)))
                                                         (system-msg state :runner (str "gains " (* 2 target) " [Credits]"))
-                                                        (gain state :runner :credit (* 2 target))))} card nil)))}
+                                                        (gain-credits state :runner (* 2 target))))} card nil)))}
                       card nil))}
 
    "Pushing the Envelope"
@@ -1486,7 +1486,7 @@
                                            (= (last (:zone %)) :content)
                                            (not (:rezzed %)))}
                       :msg (msg "add " c " advancement tokens on a card and gain " (* 2 c) " [Credits]")
-                      :effect (effect (gain :credit (* 2 c))
+                      :effect (effect (gain-credits (* 2 c))
                                       (add-prop :corp target :advance-counter c {:placed true})
                                       (register-turn-flag! card :can-access
                                                            ;; prevent access of advanced card
@@ -1571,7 +1571,7 @@
               :effect (req (system-msg state :runner (str "spends " spent "[Credit]. "
                                        (-> corp :user :username) " guesses " target "[Credit]"))
                            (clear-wait-prompt state :runner)
-                           (lose state :runner :credit spent)
+                           (lose-credits state :runner spent)
                            (if (not= (str spent) target)
                              (continue-ability state :runner (choose-ice) card nil)
                              (effect-completed state side eid)))})
@@ -1713,7 +1713,7 @@
                   :effect (effect (register-events {:pre-rez-cost
                                                     {:req (req (= target ice))
                                                      :effect (req (let [cost (rez-cost state side (get-card state target))]
-                                                                    (gain state :runner :credit cost)))
+                                                                    (gain-credits state :runner cost)))
                                                      :msg (msg "gain " (rez-cost state side (get-card state target)) " [Credits]")}}
                                   (assoc card :zone '(:discard))))}
                card nil)))
@@ -1762,7 +1762,7 @@
     (effect (gain-run-credits 9)))
 
    "Sure Gamble"
-   {:msg "gain 9 [Credits]" :effect (effect (gain :credit 9))}
+   {:msg "gain 9 [Credits]" :effect (effect (gain-credits 9))}
 
    "Surge"
    {:msg (msg "place 2 virus tokens on " (:title target))
@@ -1792,7 +1792,7 @@
    "System Outage"
    {:events {:corp-draw {:req (req (not (first-event? state side :corp-draw)))
                          :msg "force the Corp to lose 1 [Credits]"
-                         :effect (effect (lose :corp :credit 1))}}}
+                         :effect (effect (lose-credits :corp 1))}}}
 
    "System Seizure"
   {:effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
@@ -1871,7 +1871,7 @@
                               (unregister-events card))}}}
 
    "Three Steps Ahead"
-   {:end-turn {:effect (effect (gain :credit (* 2 (count (:successful-run runner-reg)))))
+   {:end-turn {:effect (effect (gain-credits (* 2 (count (:successful-run runner-reg)))))
                :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")}}
 
    "Tinkering"
@@ -1896,7 +1896,7 @@
    "Trade-In"
    {:additional-cost [:hardware 1]
     :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-    :events {:runner-trash {:effect (effect (gain :credit (quot (:cost target) 2))
+    :events {:runner-trash {:effect (effect (gain-credits (quot (:cost target) 2))
                                             (system-msg (str "trashes " (:title target) " and gains " (quot (:cost target) 2) " [Credits]"))
                                             (continue-ability {:prompt "Choose a Hardware to add to your Grip from your Stack"
                                                                :choices (req (filter #(is-type? % "Hardware")
@@ -1939,7 +1939,7 @@
                               {:delayed-completion true
                                :prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
-                               :effect (effect (lose :corp :credit target)
+                               :effect (effect (lose-credits :corp target)
                                                (tag-runner eid 1))}} card))}
 
    "Wanton Destruction"
@@ -1985,7 +1985,7 @@
                                           cost (:cost topcard)]
                                       (trash state side topcard)
                                       (when-not (is-type? topcard "Event")
-                                        (gain state side :credit cost))
+                                        (gain-credits state side cost))
                                       (system-msg state side
                                                   (str "shuffles their Stack and trashes " (:title topcard)
                                                        (when-not (is-type? topcard "Event")

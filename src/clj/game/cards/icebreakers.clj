@@ -337,7 +337,7 @@
                                   :req (req (and (has-subtype? current-ice "Code Gate")
                                                  (rezzed? current-ice)))
                                   :msg (msg "make the Corp lose 1 [Credits]")
-                                  :effect (effect (lose :corp :credit 1))}]})
+                                  :effect (effect (lose-credits :corp 1))}]})
 
    "Ankusa"
    (auto-icebreaker ["Barrier"]
@@ -771,7 +771,7 @@
                                   :prompt "How many power counters to place on Mammon?" :once :per-turn
                                   :choices {:number (req (:credit runner))}
                                   :req (req (:runner-phase-12 @state))
-                                  :effect (effect (lose :credit target)
+                                  :effect (effect (lose-credits target)
                                                   (add-counter card :power target))
                                   :msg (msg "place " target " power counters on it")}
                                  {:counter-cost [:power 1]
@@ -870,7 +870,7 @@
                                                 1)
                                            1))}
                  :prompt "How many credits?"
-                 :effect (effect (lose :credit target)
+                 :effect (effect (lose-credits target)
                                  (pump card target))
                  :msg (msg "spend " target " [Credits], increase strength by " target ", and break "
                            (quantify target "Barrier subroutine"))}])
