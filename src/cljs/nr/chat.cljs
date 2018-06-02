@@ -103,9 +103,9 @@
 (defn message-view [message s]
   (let [user (:user @app-state)
         my-msg (= (:username message) (:username user))]
-    (fn [message]
+    (fn [message s]
       [:div.message
-      [avatar user {:opts {:size 38}}]
+      [avatar message {:opts {:size 38}}]
       [:div.content
        [:div.name-menu
         [:span.username
@@ -124,9 +124,11 @@
        [:div
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
          :on-mouse-out  #(card-preview-mouse-out % (:zoom-ch @s))}
-        (doall (for [item (get-message-parts (:msg message))]
-                 [:div {:key (:_id message)}
-                  (create-span item)]))]]])))
+        (let [parts (get-message-parts (:msg message))]
+          (doall (map-indexed
+            (fn [i item]
+              [:div {:key i}
+               (create-span item)]) parts)))]]])))
 
 (defn fetch-messages [s]
   (let [channel (:channel @s)
@@ -203,10 +205,13 @@
                                                                (swap! s assoc :scrolling scrolling))}
              (if (not cards-loaded)
                [:h4 "Loading cards..."]
-               (doall
-                 (for [message (get-in @app-state [:channels (:channel @s)])]
-                   ^{:key (:_id message)}
-                   [message-view message s])))]
+               (let [message-list (get-in @app-state [:channels (:channel @s)])]
+                 (map-indexed
+                   (fn [i message]
+                     [:div {:key i}
+                      [message-view message s]]) message-list)))]
             (when @user
               [:div
                [msg-input-view (:channel @s)]])]]])})))
+
+; TODO hyperlink card texr unreliable  -- or rror at start

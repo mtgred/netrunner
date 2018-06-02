@@ -9,8 +9,8 @@
                  [org.clojure/clojurescript "1.10.238"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
-                 [org.omcljs/om "0.9.0"]
-                 [sablono "0.3.4"]
+                 [org.omcljs/om "0.9.0"] ; to be retired by reagent
+                 [sablono "0.3.4"]       ; to be retired by reagent
                  [danhut/monger "3.1.0"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.3.1"]
@@ -75,7 +75,7 @@
       {:id "dev"
        :source-paths ["src/cljs/nr" "src/cljs/dev" "src/cljc"]
        :figwheel true
-       :compiler {:output-to "resources/public/cljs/app.js"
+       :compiler {:output-to "resources/public/cljs/app10.js"
                   :output-dir "resources/public/cljs"
                   :main "dev.nr"
                   :asset-path   "cljs"
@@ -85,7 +85,7 @@
                   :external-config {:devtools/config {:features-to-install :all}}}}
       {:id "prod"
        :source-paths ["src/cljs/nr" "src/cljc"]
-       :compiler {:output-to "resources/public/js/app.js"
+       :compiler {:output-to "resources/public/js/app10.js"
                   :output-dir "out"
                   :optimizations :advanced
                   :pretty-print false
