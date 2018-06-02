@@ -10,7 +10,8 @@
             [web.game :as game]
             [web.stats :as stats]
             [jinteki.nav :as nav]
-            [clj-time.format :as f])
+            [clj-time.format :as f]
+            [game.core :as core])
   (:gen-class :main true))
 
 (defonce server (atom nil))
@@ -32,6 +33,7 @@
                        (map (fn [e] (update e :date_start #(f/parse (f/formatters :date) %))))
                        (sort-by :date_start)
                        (last))]
+      (core/reset-card-defs)
       (reset! cards/all-cards (into {} (map (juxt :title identity)
                                             (sort-by (complement :rotated) cards))))
       (reset! cards/sets sets)

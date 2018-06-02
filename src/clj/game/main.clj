@@ -21,6 +21,7 @@
    "close-deck" core/close-deck
    "concede" core/concede
    "continue" core/continue
+   "corp-ability" core/play-corp-ability
    "corp-phase-43" core/corp-phase-43
    "credit" core/click-credit
    "derez" #(core/derez %1 %2 (:card %3))
@@ -58,8 +59,7 @@
 (defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"
   [state user]
-  (and state (#{(get-in @state [:corp :user]) (get-in @state [:runner :user])} user)))
-
+  (and state (#{(get-in @state [:corp :user :_id]) (get-in @state [:runner :user :_id])} (:_id user))))
 
 (defn- private-card-vector [state side cards]
   (vec (map (fn [card]

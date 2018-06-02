@@ -1,15 +1,9 @@
 (ns game-test.core
-  (:require [game.utils :refer [remove-once has? merge-costs zone make-cid to-keyword capitalize
-                                costs-to-symbol vdissoc distinct-by]]
-            [game.macros :refer [effect req msg]]
-            [clojure.string :refer [split-lines split join]]
-            [game.core :as core]
+  (:require [game.core :as core]
+            [game.utils :as utils :refer [make-cid]]
             [jinteki.cards :refer [all-cards]]
-            [game-test.utils :refer [load-card load-cards qty default-corp default-runner
-                                make-deck]]
-            [game-test.macros :refer [do-game]]
+            [game-test.utils :refer [load-cards]]
             [clojure.test :refer :all]))
-
 
 
 ;;; Click action functions
@@ -49,12 +43,17 @@
         (when (= start-as :runner) (take-credits state :corp)))
       state)))
 
-
 (defn load-all-cards [tests]
   (when (empty? @all-cards)
+    (core/reset-card-defs)
     (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
   (tests))
 (use-fixtures :once load-all-cards)
+
+(defn reset-card-defs [card-type tests]
+  (core/reset-card-defs card-type)
+  (tests))
+
 
 ;;; Card related functions
 (defn find-card
@@ -68,19 +67,33 @@
   ([state side card ability] (card-ability state side card ability nil))
   ([state side card ability targets]
    (core/play-ability state side {:card (core/get-card state card)
-                                  :ability ability :targets targets})))
+                                  :ability ability
+                                  :targets targets})))
 
 (defn card-subroutine
   "Trigger a piece of ice's subroutine with the 0-based index."
   ([state side card ability] (card-subroutine state side card ability nil))
   ([state side card ability targets]
    (core/play-subroutine state side {:card (core/get-card state card)
-                                     :subroutine ability :targets targets})))
+                                     :subroutine ability
+                                     :targets targets})))
+
+(defn card-side-ability
+  ([state side card ability] (card-side-ability state side card ability nil))
+  ([state side card ability targets]
+   (let [ab {:card (core/get-card state card)
+             :ability ability
+             :targets targets}]
+     (if (= :corp side)
+                (core/play-corp-ability state side ab)
+                (core/play-runner-ability state side ab)))))
 
 (defn get-ice
-  "Get installed ice protecting server by position."
-  [state server pos]
-  (get-in @state [:corp :servers server :ices pos]))
+  "Get installed ice protecting server by position. If no pos, get all ice on the server."
+  ([state server]
+   (get-in @state [:corp :servers server :ices]))
+  ([state server pos]
+   (get-in @state [:corp :servers server :ices pos])))
 
 (defn get-content
   "Get card in a server by position. If no pos, get all cards in the server."
@@ -90,40 +103,39 @@
    (get-in @state [:corp :servers server :content pos])))
 
 (defn get-program
-  "Get non-hosted program by position."
+  "Get non-hosted program by position. If no pos, get all installed programs."
   ([state] (get-in @state [:runner :rig :program]))
   ([state pos]
    (get-in @state [:runner :rig :program pos])))
 
 (defn get-hardware
-  "Get hardware by position."
+  "Get hardware by position. If no pos, get all installed hardware."
   ([state] (get-in @state [:runner :rig :hardware]))
   ([state pos]
    (get-in @state [:runner :rig :hardware pos])))
 
 (defn get-resource
-  "Get non-hosted resource by position."
-  [state pos]
-  (get-in @state [:runner :rig :resource pos]))
+  "Get non-hosted resource by position. If no pos, get all installed resources."
+  ([state] (get-in @state [:runner :rig :resource]))
+  ([state pos]
+   (get-in @state [:runner :rig :resource pos])))
 
 (defn get-runner-facedown
-  "Get non-hosted runner facedown by position."
-  [state pos]
-  (get-in @state [:runner :rig :facedown pos]))
+  "Get non-hosted runner facedown by position. If no pos, get all runner facedown installed cards."
+  ([state] (get-in @state [:runner :rig :facedown]))
+  ([state pos]
+   (get-in @state [:runner :rig :facedown pos])))
 
 (defn get-discarded
-  ([state side] (let [l (-> @state
-                            (get-in [side :discard])
-                            count
-                            dec)]
-                  (get-discarded state side l)))
+  "Get discarded card by position. If no pos, selects most recently discarded card."
+  ([state side] (get-discarded state side (-> @state side :discard count dec)))
   ([state side pos]
    (get-in @state [side :discard pos])))
 
 (defn get-scored
   "Get a card from the score area. Can find by name or index.
-  If no index or name provided, get the first scored agenda."
-  ([state side] (get-scored state side 0))
+  If no index or name provided, gets all scored cards."
+  ([state side] (get-in @state [side :scored]))
   ([state side x]
    (if (number? x)
      ;; Find by index
@@ -132,10 +144,7 @@
      (when (string? x)
        (find-card x (get-in @state [side :scored]))))))
 
-(defn get-counters
-  "Get number of counters of specified type."
-  [card type]
-  (get-in card [:counter type] 0))
+(def get-counters utils/get-counters)
 
 (defn play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
@@ -158,7 +167,7 @@
      (is (get-in @state [:run :run-effect]) "There is a run-effect")
      (core/no-action state :corp nil)
      (core/successful-run state :runner nil)
-     (if show-prompt 
+     (if show-prompt
        (is (get-in @state [:runner :prompt]) "A prompt is shown")
        (is (not (get-in @state [:runner :prompt])) "A prompt is not shown"))
      (is (get-in @state [:run :successful]) "Run is marked successful"))))
@@ -207,9 +216,9 @@
      (core/gain state :corp :click advancementcost :credit advancementcost)
      (dotimes [n advancementcost]
        (core/advance state :corp {:card (core/get-card state card)}))
-     (is (= advancementcost (get-in (core/get-card state card) [:advance-counter])))
+     (is (= advancementcost (get-counters (core/get-card state card) :advancement)))
      (core/score state :corp {:card (core/get-card state card)})
-     (is (find-card title (get-in @state [:corp :scored]))))))
+     (is (find-card title (get-scored state :corp))))))
 
 (defn advance
   "Advance the given card."
@@ -220,15 +229,13 @@
 
 (defn last-log-contains?
   [state content]
-  (not (nil?
-         (re-find (re-pattern content)
-                  (get (last (get @state :log)) :text)))))
+  (some? (re-find (re-pattern content)
+                  (-> @state :log last :text))))
 
 (defn second-last-log-contains?
   [state content]
-  (not (nil?
-         (re-find (re-pattern content)
-                  (get (last (butlast (get @state :log))) :text)))))
+  (some? (re-find (re-pattern content)
+                  (-> @state :log butlast last :text))))
 
 (defn trash-from-hand
   "Trash specified card from hand of specified side"

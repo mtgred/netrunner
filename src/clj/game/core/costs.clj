@@ -9,14 +9,18 @@
     ;; value is a map, should be :base, :mod, etc.
     (map? value)
     (doseq [[subattr value] value]
-      (swap! state update-in [side attr subattr] (if (= subattr :mod)
-                                                   ;; Modifications may be negative
+      (swap! state update-in [side attr subattr] (if (#{:mod :used} subattr)
+                                                   ;; Modifications and mu used may be negative
+                                                   ;; mu used is for easier implementation of the 0-mu hosting things
                                                    #(- % value)
                                                    (sub->0 value))))
+    ;; values that expect map, if passed a number use default subattr of :mod
+    (#{:hand-size :memory} attr)
+    (deduct state side [attr {:mod value}])
+
     :else
-    (do (swap! state update-in [side attr] (if (or (= attr :memory)
-                                                   (= attr :agenda-point))
-                                             ;; Memory or agenda points may be negative
+    (do (swap! state update-in [side attr] (if (= attr :agenda-point)
+                                             ;; Agenda points may be negative
                                              #(- % value)
                                              (sub->0 value)))
         (when (and (= attr :credit)
@@ -38,13 +42,12 @@
   (let [cost-type (first cost)
         amount (last cost)
         computer-says-no "Unable to pay"]
-
     (cond
 
       (flag-stops-pay? state side cost-type)
       computer-says-no
 
-      (not (or (some #(= cost-type %) [:memory :net-damage])
+      (not (or (#{:memory :net-damage} cost-type)
                (and (= cost-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
                (and (= cost-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
                (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
@@ -52,7 +55,7 @@
                (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
                (and (= cost-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                               (all-active-installed state :runner))) amount) 0))
+                                                                    (all-active-installed state :runner))) amount) 0))
                (and (= cost-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
                (>= (- (get-in @state [side cost-type] -1) amount) 0)))
       computer-says-no)))
@@ -68,6 +71,16 @@
     (if-not cost-msg
       costs
       (when title (toast state side (str cost-msg " for " title ".")) false))))
+
+(defn can-pay-with-recurring?
+  "Returns true if the player can pay the cost factoring in available recurring credits"
+  [state side cost]
+  (>= (+ (- (get-in @state [side :credit] -1) cost)
+         (->> (all-installed state side)
+              (map #(+ (get-counters % :recurring)
+                       (get-counters % :credit)))
+              (reduce +)))
+      0))
 
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability
@@ -102,6 +115,13 @@
                                                      (effect-completed state side (make-result eid cost-name))))}
                        card nil)
      cost-name)))
+
+(defn pay-damage
+  "Suffer a damage as part of paying for a card or ability"
+  [state side eid type amount]
+  (let [cost-name (cost-names amount type)]
+    (damage state side eid type amount {:unpreventable true})
+    cost-name))
 
 (defn pay-shuffle-installed-to-stack
   "Shuffle installed runner card(s) into the stack as part of paying for a card or ability"
@@ -156,7 +176,7 @@
      :ice (pay-trash state :corp eid card "rezzed ICE" (second cost) (every-pred rezzed? ice?) {:cause :ability-cost :keep-server-alive true})
 
      :tag (complete-with-result state side eid (deduct state :runner cost))
-     :net-damage (damage state side eid :net (second cost) {:unpreventable true})
+     :net-damage (pay-damage state side eid :net (second cost))
      :mill (complete-with-result state side eid (mill state side (second cost)))
 
      ;; Shuffle installed runner cards into the stack (eg Degree Mill)
@@ -206,17 +226,46 @@
       ;; amount is a map, merge-update map
       (map? amount)
       (doseq [[subtype amount] amount]
-        (swap! state update-in [side type subtype] (safe-inc-n amount)))
+        (swap! state update-in [side type subtype] (safe-inc-n amount))
+        (swap! state update-in [:stats side :gain type subtype] (fnil + 0) amount))
+
+      ;; Default cases for the types that expect a map
+      (#{:hand-size :memory} type)
+      (gain state side type {:mod amount})
+
       ;; Else assume amount is a number and try to increment type by it.
       :else
-      (swap! state update-in [side type] (safe-inc-n amount)))))
+      (do (swap! state update-in [side type] (safe-inc-n amount))
+          (swap! state update-in [:stats side :gain type] (fnil + 0) amount)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
     (trigger-event state side (if (= side :corp) :corp-loss :runner-loss) r)
     (if (= (last r) :all)
-      (swap! state assoc-in [side (first r)] 0)
-      (deduct state side r))))
+      (do (swap! state assoc-in [side (first r)] 0)
+          (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (get-in @state [side (first r)])))
+      (do (when (number? (second r))
+            (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (second r)))
+          (deduct state side r)))))
+
+(defn gain-credits
+  "Utility function for triggering events"
+  [state side amount & args]
+  (when (and amount
+             (pos? amount))
+    (gain state side :credit amount)
+    (let [kw (keyword (str (name side) "-credit-gain"))]
+      (apply trigger-event-sync state side (make-eid state) kw args))))
+
+(defn lose-credits
+  "Utility function for triggering events"
+  [state side amount & args]
+  (when (and amount
+             (or (= :all amount)
+                 (pos? amount)))
+    (lose state side :credit amount)
+    (let [kw (keyword (str (name side) "-credit-loss"))]
+      (apply trigger-event-sync state side (make-eid state) kw args))))
 
 (defn play-cost-bonus [state side costs]
   (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))
