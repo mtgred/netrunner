@@ -193,7 +193,7 @@
                                       {:effect (req (if (> (count (filter #(= (:title %) "Bank Job") (all-active-installed state :runner))) 1)
                                                       (resolve-ability state side
                                                         {:prompt "Select a copy of Bank Job to use"
-                                                         :choices {:req #(and installed? (= (:title %) "Bank Job"))}
+                                                         :choices {:req #(and (installed? %) (= (:title %) "Bank Job"))}
                                                          :effect (req (let [c target
                                                                             creds (get-counters (get-card state c) :credit)]
                                                                         (resolve-ability state side
@@ -1549,11 +1549,10 @@
                                 (some #(is-type? % "Program") (all-active-installed state :runner))))
                  :cost [:click 1]
                  :prompt "Choose an installed program to remove from the game"
-                 :choices {:req #(and installed? (is-type? % "Program"))}
+                 :choices {:req #(and (installed? %) (is-type? % "Program"))}
                  :effect (req (let [n (:cost target)
                                     t (:title target)]
                                 (move state side target :rfg)
-                                (free-mu state (:memoryunits target))
                                 (resolve-ability state side
                                   {:prompt "Choose a non-virus program to install"
                                    :msg (req (if (not= target "No install")
@@ -1572,6 +1571,7 @@
                                                 (when (not= target "No install")
                                                   (install-cost-bonus state side [:credit (- n)])
                                                   (runner-install state side target)))} card nil)))}]}
+
    "Rogue Trading"
    {:data {:counter {:credit 18}}
     :abilities [{:cost [:click 2]

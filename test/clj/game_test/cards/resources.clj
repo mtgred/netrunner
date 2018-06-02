@@ -1726,6 +1726,27 @@
     (is (= 4 (count (:discard (get-runner)))) "Rolodex mills 3 cards when trashed")
     (is (= "Corroder" (:title (first (:deck (get-runner))))))))
 
+(deftest rosetta-2.0
+  ;; Rosetta 2.0 remove an installed program from the game and install one from the heap lower install cost
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Rosetta 2.0" "Corroder" "Gordian Blade"]))
+    (take-credits state :corp)
+    (starting-hand state :runner ["Rosetta 2.0" "Corroder"])
+    (core/gain state :runner :credit 2)
+    (play-from-hand state :runner "Rosetta 2.0")
+    (play-from-hand state :runner "Corroder")
+    (is (= 3 (core/available-mu state)) "Corrder cost 1 mu")
+    (is (= 2 (:credit (get-runner))) "Starting with 2 credits")
+    (card-ability state :runner (get-resource state 0) 0)
+    (prompt-select :runner (get-program state 0))
+    (prompt-choice :runner (find-card "Gordian Blade" (:deck (get-runner))))
+    (is (= 3 (core/available-mu state)) "Gordian cost 1 mu, Corroder freed")
+    (is (zero? (:credit (get-runner))) "Ending with 0 credits")
+    (is (= 1 (count (:rfg (get-runner)))) "Corroder removed from game")
+    (is (= 1 (count (get-program state))) "One program installed")
+    (is (= "Gordian Blade" (:title (get-program state 0))) "Gordian installed")))
+
 (deftest sacrificial-construct
   ;; Sacrificial Construct - Trash to prevent trash of installed program or hardware
   (do-game
