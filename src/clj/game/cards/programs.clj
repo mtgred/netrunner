@@ -28,7 +28,7 @@
                                 card))}]}
 
    "Au Revoir"
-   {:events {:jack-out {:effect (effect (gain :credit 1))
+   {:events {:jack-out {:effect (effect (gain-credits 1))
                         :msg "gain 1 [Credits]"}}}
 
    "Bishop"
@@ -70,7 +70,7 @@
 
    "Cache"
    {:abilities [{:counter-cost [:virus 1]
-                 :effect (effect (gain :credit 1))
+                 :effect (effect (gain-credits 1))
                  :msg "gain 1 [Credits]"}]
     :data {:counter {:virus 3}}}
 
@@ -175,7 +175,7 @@
     :abilities [{:req (req (pos? (get-virus-counters state side card)))
                  :cost [:click 1]
                  :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."
-                 :effect (req (gain state side :credit (* 2 (get-virus-counters state side card)))
+                 :effect (req (gain-credits state side (* 2 (get-virus-counters state side card)))
                               (update! state side (assoc-in card [:counter :virus] 0))
                               (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
                                         (doseq [h hiveminds]
@@ -262,7 +262,7 @@
                  :msg (msg "host " (:title target) (when (-> target :cost pos?) ", lowering its cost by 1 [Credit]"))
                  :effect (req (free-mu state (:memoryunits target))
                               (when (-> target :cost pos?)
-                                (gain state side :credit 1))
+                                (gain-credits state side 1))
                               (update-breaker-strength state side target)
                               (host state side card (get-card state target))
                               (update! state side (assoc-in (get-card state card) [:special :dheg-prog] (:cid target))))}
@@ -419,7 +419,7 @@
                                  card nil)))}]}
 
    "Gorman Drip v1"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit (get-virus-counters state side card))
+   {:abilities [{:cost [:click 1] :effect (effect (gain-credits (get-virus-counters state side card))
                                                   (trash card {:cause :ability-cost}))
                  :msg (msg "gain " (get-virus-counters state side card) " [Credits]")}]
     :events {:corp-click-credit {:effect (effect (add-counter :runner card :virus 1))}
@@ -526,8 +526,8 @@
                                  (add-counter target :virus (get-counters card :virus)))}]}
 
    "Ixodidae"
-   {:events {:corp-loss {:req (req (= (first target) :credit)) :msg "gain 1 [Credits]"
-                         :effect (effect (gain :runner :credit 1))}
+   {:events {:corp-credit-loss {:msg "gain 1 [Credits]"
+                                :effect (effect (gain-credits :runner 1))}
              :purge {:effect (effect (trash card {:cause :purge}))}}}
 
    "Keyhole"
@@ -547,7 +547,7 @@
 
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "force the Corp to lose 1 [Credits]"
-                              :effect (effect (lose :corp :credit 1))}
+                              :effect (effect (lose-credits :corp 1))}
              :purge {:effect (effect (trash card {:cause :purge}))}}}
 
    "Leprechaun"
@@ -598,7 +598,9 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Magnum Opus"
-   {:abilities [{:cost [:click 1] :effect (effect (gain :credit 2)) :msg "gain 2 [Credits]"}]}
+   {:abilities [{:cost [:click 1]
+                 :effect (effect (gain-credits 2))
+                 :msg "gain 2 [Credits]"}]}
 
    "Medium"
    {:events
@@ -619,7 +621,7 @@
                  :prompt "How many [Credits] to spend to remove that number of tags?"
                  :choices {:number (req (min (:credit runner) (:tag runner)))}
                  :msg (msg "spend " target " [Credits] and remove " target " tags")
-                 :effect (effect (lose :credit target)
+                 :effect (effect (lose-credits target)
                                  (lose :tag target))}]}
 
    "Multithreader"
@@ -831,7 +833,7 @@
                                                                      :effect (req (if (= target "Draw 2 cards")
                                                                                     (do (draw state :runner 2)
                                                                                         (system-msg state :runner "uses RNG Key to draw 2 cards"))
-                                                                                    (do (gain state :runner :credit 3)
+                                                                                    (do (gain-credits state :runner 3)
                                                                                         (system-msg state :runner "uses RNG Key to gain 3 [Credits]"))))}
                                                                     card nil)
                                                   (effect-completed state side eid)))
@@ -893,7 +895,7 @@
                                                          (runner-can-install? state side % false)
                                                          (in-hand? %))}
                                     :msg (msg "host " (:title target) " and gain 1 [Credits]")
-                                    :effect (effect (runner-install target {:host-card card}) (gain :credit 1))}
+                                    :effect (effect (runner-install target {:host-card card}) (gain-credits 1))}
                                   card nil))}
                 {:label "Host an installed program"
                  :prompt "Choose a program to host on Scheherazade" :priority 2
@@ -901,7 +903,7 @@
                                       (installed? %))}
                  :msg (msg "host " (:title target) " and gain 1 [Credits]")
                  :effect (req (when (host state side card target)
-                                (gain state side :credit 1)))}]}
+                                (gain-credits state side 1)))}]}
 
    "Self-modifying Code"
    {:abilities [{:req (req (not (install-locked? state side)))
@@ -997,7 +999,7 @@
                   :msg (msg "gain " (quot (:credit corp) 5) " [Credits]")
                   :once :per-turn
                   :req (req (:runner-phase-12 @state))
-                  :effect (effect (gain :credit (quot (:credit corp) 5)))}]
+                  :effect (effect (gain-credits (quot (:credit corp) 5)))}]
      {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
       :flags {:drip-economy true}
       :abilities [ability]

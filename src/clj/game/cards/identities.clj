@@ -223,7 +223,7 @@
                       :effect (effect (update! (assoc card :az-target target))
                                       (system-msg (str "uses Azmari EdTech: Shaping the Future to name " target)))}
          check-type {:req (req (is-type? target (:az-target card)))
-                     :effect (effect (gain :corp :credit 2))
+                     :effect (effect (gain-credits :corp 2))
                      :once :per-turn
                      :msg (msg "gain 2 [Credits] from " (:az-target card))}]
      {:events {:corp-turn-ends choose-type
@@ -236,7 +236,7 @@
     :abilities [{:choices {:req #(:rezzed %)}
                  :effect (req (trigger-event state side :pre-rez-cost target)
                               (let [cost (rez-cost state side target)]
-                                (gain state side :credit cost)
+                                (gain-credits state side cost)
                                 (move state side target :hand)
                                 (system-msg state side (str "adds " (:title target) " to HQ and gains " cost " [Credits]"))
                                 (swap! state update-in [:bonus] dissoc :cost)))}]}
@@ -392,7 +392,7 @@
                               :req (req (and (= target :hq)
                                              (first-successful-run-on-server? state :hq)))
                               :msg "gain 2 [Credits]"
-                              :effect (effect (gain :credit 2)) }}}
+                              :effect (effect (gain-credits 2)) }}}
 
    "Gagarin Deep Space: Expanding the Horizon"
    {:flags {:slow-remote-access (req (not (:disabled card)))}
@@ -402,7 +402,7 @@
 
    "GRNDL: Power Unleashed"
    {:events {:pre-start-game {:req (req (= :corp side))
-                              :effect (req (gain state :corp :credit 5)
+                              :effect (req (gain-credits state :corp 5)
                                            (when (zero? (:bad-publicity corp))
                                              (gain-bad-publicity state :corp 1)))}}}
 
@@ -440,7 +440,7 @@
    "Haas-Bioroid: Engineering the Future"
    {:events {:corp-install {:req (req (first-event? state corp :corp-install))
                             :msg "gain 1 [Credits]"
-                            :effect (effect (gain :credit 1))}}}
+                            :effect (effect (gain-credits 1))}}}
 
    "Haas-Bioroid: Stronger Together"
    {:events {:pre-ice-strength {:req (req (and (ice? target) (has-subtype? target "Bioroid")))
@@ -493,7 +493,7 @@
    (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
                   :once :per-turn
                   :msg "gain 2 [Credits]"
-                  :effect (effect (gain :credit 2))}]
+                  :effect (effect (gain-credits 2))}]
      {:flags {:drip-economy true}
       :events {:runner-turn-begins ability}
       :abilities [ability]})
@@ -644,7 +644,7 @@
    {:events {:play-event {:req (req (and (has-subtype? target "Run")
                                          (first-event? state :runner :play-event #(has-subtype? (first %) "Run"))))
                           :msg "gain 1 [Credits]"
-                          :effect (effect (gain :credit 1))}}}
+                          :effect (effect (gain-credits 1))}}}
 
    "Khan: Savvy Skiptracer"
    {:events {:pass-ice
@@ -691,7 +691,7 @@
    {:events {:rez {:once :per-turn
                    :req (req (ice? target))
                    :msg "gain 2 [Credits]"
-                   :effect (effect (gain :runner :credit 2))}}}
+                   :effect (effect (gain-credits :runner 2))}}}
 
    "MaxX: Maximum Punk Rock"
    (let [ability {:msg (msg (let [deck (:deck runner)]
@@ -738,8 +738,8 @@
                  :effect (req (let [current-ice (get-card state current-ice)]
                                 (trigger-event state side :pre-rez-cost current-ice)
                                 (let [cost (rez-cost state side current-ice)]
-                                  (lose state side :credit (:credit runner))
-                                  (gain state side :credit cost)
+                                  (lose-credits state side (:credit runner))
+                                  (gain-credits state side cost)
                                   (system-msg state side (str "loses all credits and gains " cost
                                                               " [Credits] from the rez of " (:title current-ice)))
                                   (swap! state update-in [:bonus] dissoc :cost))))}]}
@@ -821,7 +821,7 @@
                                 (swap! state dissoc :turn-events))}]})
 
    "Nisei Division: The Next Generation"
-   {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain :corp :credit 1))}}}
+   {:events {:psi-game {:msg "gain 1 [Credits]" :effect (effect (gain-credits :corp 1))}}}
 
    "Noise: Hacker Extraordinaire"
    {:events {:runner-install {:msg "force the Corp to trash the top card of R&D"
@@ -870,7 +870,7 @@
    {:events {:runner-draw {:req (req (and (first-event? state :corp :runner-draw)
                                           (pos? target)))
                            :msg "gain 1 [Credits]"
-                           :effect (effect (gain :corp :credit 1))}}}
+                           :effect (effect (gain-credits :corp 1))}}}
 
    "Quetzal: Free Spirit"
    {:abilities [{:once :per-turn :msg "break 1 Barrier subroutine"}]}
@@ -941,7 +941,7 @@
    {:events
     {:rez {:req (req (and (has-subtype? target "Advertisement")
                           (first-event? state :corp :rez #(has-subtype? (first %) "Advertisement"))))
-           :effect (effect (lose :runner :credit 1))
+           :effect (effect (lose-credits :runner 1))
            :msg (msg "make the Runner lose 1 [Credits] by rezzing an Advertisement")}}}
 
    "SSO Industries: Fueling Innovation"
@@ -1108,7 +1108,7 @@
    "The Outfit: Family Owned and Operated"
    {:events {:corp-gain-bad-publicity {:delayed-completion true
                                        :msg "gain 3 [Credit]"
-                                       :effect (effect (gain :credit 3))}}}
+                                       :effect (effect (gain-credits 3))}}}
 
    ;; No special implementation
    "The Professor: Keeper of Knowledge"
@@ -1143,7 +1143,7 @@
 
    "Weyland Consortium: Building a Better World"
    {:events {:play-operation {:msg "gain 1 [Credits]"
-                              :effect (effect (gain :credit 1))
+                              :effect (effect (gain-credits 1))
                               :req (req (has-subtype? target "Transaction"))}}}
 
    "Whizzard: Master Gamer"

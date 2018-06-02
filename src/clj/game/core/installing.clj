@@ -9,7 +9,7 @@
 (defn- dissoc-card
   "Dissoc relevant keys in card"
   [card keep-counter]
-  (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :rezzed :special :new
+  (let [c (dissoc card :current-strength :abilities :subroutines :runner-abilities :corp-abilities :rezzed :special :new
                   :added-virus-counter :subtype-target :sifr-used :sifr-target :pump :server-target)
         c (if keep-counter c (dissoc c :counter :rec-counter :advance-counter :extra-advance-counter))]
     c))
@@ -57,6 +57,12 @@
     (for [ab abilities]
       (assoc (select-keys ab [:cost :pump :breaks]) :label (make-label ab)))))
 
+(defn- corp-ability-init
+  "Gets abilities associated with the card"
+  [cdef]
+  (for [ab (:corp-abilities cdef)]
+    (assoc (select-keys ab [:cost]) :label (make-label ab))))
+
 (defn- runner-ability-init
   "Gets abilities associated with the card"
   [cdef]
@@ -81,10 +87,14 @@
          recurring (:recurring cdef)
          abilities (ability-init cdef)
          run-abs (runner-ability-init cdef)
+         corp-abs (corp-ability-init cdef)
          subroutines (subroutines-init cdef)
          c (merge card
                   (when init-data (:data cdef))
-                  {:abilities abilities :subroutines subroutines :runner-abilities run-abs})
+                  {:abilities abilities
+                   :subroutines subroutines
+                   :runner-abilities run-abs
+                   :corp-abilities corp-abs})
          c (if (number? recurring) (assoc c :rec-counter recurring) c)
          c (if (string? (:strength c)) (assoc c :strength 0) c)]
      (when recurring

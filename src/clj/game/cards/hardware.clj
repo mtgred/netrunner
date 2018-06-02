@@ -13,20 +13,20 @@
                                         (update! state side (assoc-in (get-card state card) [:special :numpurged] counters))))}
              :purge {:delayed-completion true
                      :effect (effect (show-wait-prompt  :corp "Runner to decide if they will use Acacia")
-                                  (continue-ability
-                                    {:optional
-                                     {:player :runner
-                                      :prompt "Use Acacia?"
-                                      :yes-ability {:effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
-                                                                                   (number-of-virus-counters state))]
-                                                                   (gain state side :credit counters)
-                                                                   (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
-                                                                   (trash state side card)
-                                                                   (clear-wait-prompt state :corp)
-                                                                   (effect-completed state side eid)))}
-                                      :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                   (effect-completed eid))}}}
-                                    card nil))}}}
+                                     (continue-ability
+                                       {:optional
+                                        {:player :runner
+                                         :prompt "Use Acacia?"
+                                         :yes-ability {:effect (req (let [counters (- (get-in (get-card state card) [:special :numpurged])
+                                                                                      (number-of-virus-counters state))]
+                                                                      (gain-credits state side counters)
+                                                                      (system-msg state side (str "uses Acacia and gains " counters "[Credit]"))
+                                                                      (trash state side card)
+                                                                      (clear-wait-prompt state :corp)
+                                                                      (effect-completed state side eid)))}
+                                         :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                      (effect-completed eid))}}}
+                                       card nil))}}}
 
    "Adjusted Matrix"
    {:implementation "Click Adjusted Matrix to use ability."
@@ -227,7 +227,7 @@
     :in-play [:memory 1]
     :abilities [{:msg "gain 1 [Credits] for breaking all subroutines on a piece of ice"
                  :once :per-turn
-                 :effect (effect (gain :credit 1))}]}
+                 :effect (effect (gain-credits 1))}]}
 
    "Cyberfeeder"
    {:recurring 1}
@@ -279,7 +279,7 @@
    "Desperado"
    {:in-play [:memory 1]
     :events {:successful-run {:silent (req true)
-                              :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}}}
+                              :msg "gain 1 [Credits]" :effect (effect (gain-credits 1))}}}
 
    "Dinosaurus"
    {:abilities [{:label "Install a non-AI icebreaker on Dinosaurus"
@@ -409,7 +409,7 @@
                  :req (req (and (not-empty (:hosted card))
                                 (pos? (get-counters card :credit))))
                  :counter-cost [:credit 1]
-                 :effect (req (gain state :runner :credit 1)
+                 :effect (req (gain-credits state :runner 1)
                               (system-msg state :runner "takes 1[Credits] from Flame-out")
                               (register-events
                                 state :runner
@@ -420,7 +420,7 @@
                  :req (req (and (not-empty (:hosted card))
                                 (pos? (get-counters card :credit))))
                  :effect (req (let [credits (get-counters card :credit)]
-                                (gain state :runner :credit credits)
+                                (gain-credits state :runner credits)
                                 (update! state :runner (dissoc-in card [:counter :credit]))
                                 (system-msg state :runner (str "takes " credits "[Credits] from Flame-out"))
                                 (register-events
@@ -903,7 +903,7 @@
                                    :msg (msg "prevent " target " damage")
                                    :effect (effect (trash card {:cause :ability-cost})
                                                    (damage-prevent (first (:pre-damage (eventmap @state))) target)
-                                                   (lose :credit target))}
+                                                   (lose-credits target))}
                                   card nil))}]})
 
    "Record Reconstructor"
@@ -1243,12 +1243,12 @@
    "Zamba"
    {:implementation "Credit gain is automatic"
     :in-play [:memory 2]
-    :events {:expose {:effect (effect (gain :runner :credit 1))
+    :events {:expose {:effect (effect (gain-credits :runner 1))
                       :msg "gain 1 [Credits]"}}}
 
    "Zer0"
    {:abilities [{:cost [:click 1 :net-damage 1]
                  :once :per-turn
                  :msg "gain 1 [Credits] and draw 2 cards"
-                 :effect (effect (gain :credit 1)
+                 :effect (effect (gain-credits 1)
                                  (draw 2))}]}})

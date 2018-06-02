@@ -141,7 +141,7 @@
                                                     (swap! state update-in [:runner :prompt] rest)
                                                     (close-access-prompt state side)
                                                     (handle-end-run state side)
-                                                    (gain state :corp :credit 5)
+                                                    (gain-credits state :corp 5)
                                                     (draw state :corp)
                                                     (system-msg state :corp (str "gains 5 [Credits] and draws 1 card. Black Level Clearance is trashed"))
                                                     (trash state side card)
@@ -327,7 +327,7 @@
                   :msg "gain 1 [Credits]"
                   :once :per-turn
                   :label "Gain 1 [Credits] (start of turn)"
-                  :effect (effect (gain :credit 1))}]
+                  :effect (effect (gain-credits 1))}]
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :events {:corp-turn-begins ability}
     :abilities [ability]})
@@ -372,7 +372,8 @@
    {:abilities [{:req (req this-server)
                  :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
                  :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
-                 :effect (effect (lose :runner :credit :all :run-credit :all))}]}
+                 :effect (effect (lose-credits :runner :all)
+                                 (lose :runner :run-credit :all))}]}
 
    "Helheim Servers"
    {:abilities [{:label "Trash 1 card from HQ: All ice protecting this server has +2 strength until the end of the run"
@@ -401,7 +402,7 @@
    {:implementation "Manually triggered by Corp"
     :abilities [{:req (req (and this-server tagged))
                  :msg "gain 2 [Credits]"
-                 :effect (effect (gain :credit 2))}]}
+                 :effect (effect (gain-credits 2))}]}
 
    "Hokusai Grid"
    {:events {:successful-run {:req (req this-server)
@@ -614,7 +615,7 @@
                      :silent (req true)
                      :effect (req (let [cnt (:cards-accessed run)
                                         total (* 2 cnt)]
-                                    (gain state :corp :credit total)
+                                    (gain-credits state :corp total)
                                     (system-msg state :corp
                                                 (str "gains " total " [Credits] from Mwanza City Grid"))))}]
      {:events {:pre-access {:req (req (and installed
@@ -634,8 +635,10 @@
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
              :once :per-turn
-             :msg "gain 1 [Credits]" :effect (effect (gain :credit 1))}]
-     {:events {:advance ng :advancement-placed ng}})
+             :msg "gain 1 [Credits]"
+             :effect (effect (gain-credits 1))}]
+     {:events {:advance ng
+               :advancement-placed ng}})
 
    "Nihongai Grid"
    {:events
@@ -788,7 +791,7 @@
    "Product Placement"
    {:flags {:rd-reveal (req true)}
     :access {:req (req (not= (first (:zone card)) :discard))
-             :msg "gain 2 [Credits]" :effect (effect (gain :corp :credit 2))}}
+             :msg "gain 2 [Credits]" :effect (effect (gain-credits :corp 2))}}
 
    "Red Herrings"
    (let [ab {:req (req (or (in-same-server? card target)
@@ -873,7 +876,7 @@
       :msg (msg "gain " (get-counters card :credit) " [Credits]")
       :once :per-turn
       :label "Take all credits"
-      :effect (effect (gain :credit (get-counters card :credit))
+      :effect (effect (gain-credits (get-counters card :credit))
                       (set-prop card :counter {:credit 0}))}]}
 
    "Signal Jamming"
@@ -1020,7 +1023,7 @@
                    :interactive (req true)
                    :trace {:base 2
                            :successful {:msg "gain 1 [Credits]"
-                                        :effect (effect (gain :credit 1))}}}}}
+                                        :effect (effect (gain-credits 1))}}}}}
 
    "Tyrs Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a piece of Bioroid ICE from being broken"

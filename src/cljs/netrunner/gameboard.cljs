@@ -252,6 +252,8 @@
                                         (-> (om/get-node owner "servers") js/$ .toggle))
                    (send-command "play" {:card card}))
           ("servers" "scored" "current" "onhost") (handle-abilities card owner)
+          "rig" (when (:corp-abilities card)
+                  (-> (om/get-node owner "corp-abilities") js/$ .toggle))
           nil)))))
 
 (defn in-play? [card]
@@ -651,7 +653,8 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines]
+                         side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
+                         corp-abilities]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -736,6 +739,14 @@
                                                            "\" subroutine on " title)})
                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str "Let fire: \"" (:label sub) "\""))}}])
               subroutines)])
+      (when (pos? (count corp-abilities))
+        [:div.panel.blue-shade.corp-abilities {:ref "corp-abilities"}
+         (map-indexed
+           (fn [i ab]
+             [:div {:on-click #(do (send-command "corp-ability" {:card @cursor
+                                                                 :ability i}))
+                    :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+           corp-abilities)])
       (let [actions (action-list cursor)
             dynabi-count (count (filter :dynamic abilities))]
         (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
