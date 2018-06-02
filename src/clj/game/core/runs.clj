@@ -188,10 +188,10 @@
 
 (defn- steal-pay-choice
   "Enables a vector of costs to be resolved in the order of choosing"
-  [state side cost-strs chosen n {:keys [title cid] :as card}]
+  [state side cost-map {:keys [title cid] :as card}]
   {:delayed-completion true
    :prompt (str "Pay steal cost for " title "?")
-   :choices (conj (vec cost-strs) "No action")
+   :choices (conj (vec (keys cost-map)) "No action")
    :effect (req
              (if (= target "No action")
                (continue-ability state :runner
@@ -200,18 +200,17 @@
                                                  (system-msg state side (str "decides not to pay to steal " title)))
                                                (access-end state side eid card))}
                  card nil)
-               (let [chosen (cons target chosen)
-                     clicks (count (re-seq #"\[Click\]+" target))
-                     kw (if (pos? clicks) :click (to-keyword (join "-" (rest (split target #" ")))))
-                     val (if (pos? clicks) clicks (string->num (first (split target #" "))))]
-                 (if (can-pay? state side title [kw val])
+               (let [cost (cost-map target)
+                     kw (first cost)
+                     v (second cost)]
+                 (if (and cost (can-pay? state side title [kw v]))
                    (when-completed
-                     (pay-sync state side nil [kw val] {:action :steal-cost})
+                     (pay-sync state side nil [kw v] {:action :steal-cost})
                      (do (system-msg state side (str "pays " target " to steal " title))
-                         (if (< (count chosen) n)
+                         (if (> (count cost-map) 1)
                            (continue-ability
                              state side
-                             (steal-pay-choice state :runner (remove-once #(= % target) cost-strs) chosen n card)
+                             (steal-pay-choice state :runner (dissoc cost-map target) card)
                              card nil)
                            (steal-agenda state side eid card))))
                    (access-end state side eid card)))))})
@@ -222,9 +221,11 @@
   (trigger-event state side :pre-steal-cost c)
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (let [cost (steal-cost state side c)
-        card-name (:title c)
-        cost-strs (map costs->symbol (partition 2 cost))
+        part-cost (partition 2 cost)
+        cost-strs (map costs->symbol part-cost)
+        cost-map (zipmap cost-strs part-cost)
         n (count cost-strs)
+        card-name (:title c)
         can-pay-costs? (can-pay? state side card-name cost)
         cost-as-symbol (when (= 1 (count cost-strs)) (costs->symbol cost))
         ;; any trash abilities
@@ -265,7 +266,7 @@
                                       (if (> n 1)
                                         ;; Use the better function for multiple costs
                                         (continue-ability state :runner
-                                                          (steal-pay-choice state :runner cost-strs '() n c)
+                                                          (steal-pay-choice state :runner cost-map c)
                                                           c nil)
                                         ;; Otherwise, just handle everything right friggin here
                                         (when-completed (pay-sync state side nil cost {:action :steal-cost})
