@@ -113,15 +113,17 @@
 
 (defn access-non-agenda
   "Access a non-agenda. Show a prompt to trash for trashable cards."
-  [state side eid c]
-  (trigger-event state side :pre-trash c)
+  [state side eid c & {:keys [skip-trigger-event]}]
+  (when-not skip-trigger-event
+    (trigger-event state side :pre-trash c))
   (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
   (if (not= (:zone c) [:discard]) ; if not accessing in Archives
     ;; The card has a trash cost (Asset, Upgrade)
     (let [card (assoc c :seen true)
           card-name (:title card)
           trash-cost (trash-cost state side c)
-          can-pay (when trash-cost (can-pay? state :runner nil :credit trash-cost))]
+          can-pay (when trash-cost (or (can-pay? state :runner nil :credit trash-cost)
+                                       (can-pay-with-recurring? state :runner trash-cost)))]
       ;; Show the option to pay to trash the card.
       (when-not (and (is-type? card "Operation")
                      ;; Don't show the option if Edward Kim's auto-trash flag is true.
@@ -157,15 +159,19 @@
                               (access-end state side eid c)
 
                               (.contains target "Pay")
-                              (do (lose state side :credit trash-cost)
-                                  (when (:run @state)
-                                    (swap! state assoc-in [:run :did-trash] true)
-                                    (when forced-to-trash?
-                                      (swap! state assoc-in [:run :did-access] true)))
-                                  (swap! state assoc-in [:runner :register :trashed-card] true)
-                                  (system-msg state side pay-str)
-                                  (when-completed (trash state side card nil)
-                                                  (access-end state side eid c)))
+                              (if (> trash-cost (get-in @state [:runner :credit] 0))
+                                (do (toast state side (str "You don't have the credits to pay for " card-name
+                                                           ". Did you mean to first gain credits from installed cards?"))
+                                    (access-non-agenda state side eid c :skip-trigger-event true))
+                                (do (lose state side :credit trash-cost)
+                                    (when (:run @state)
+                                      (swap! state assoc-in [:run :did-trash] true)
+                                      (when forced-to-trash?
+                                        (swap! state assoc-in [:run :did-access] true)))
+                                    (swap! state assoc-in [:runner :register :trashed-card] true)
+                                    (system-msg state side pay-str)
+                                    (when-completed (trash state side card nil)
+                                                    (access-end state side eid c))))
 
                               (some #(= % target) ability-strs)
                               (let [idx (.indexOf ability-strs target)
