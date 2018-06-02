@@ -166,7 +166,8 @@
 
 (defn load-decks [decks]
   (swap! app-state assoc :decks decks)
-  (put! select-channel (first (sort-by :date > decks)))
+  (when-let [selected-deck (first (sort-by :date > decks))]
+    (put! select-channel selected-deck))
   (swap! app-state assoc :decks-loaded true))
 
 (defn process-decks
@@ -274,10 +275,14 @@
           (end-delete s))))))
 
 (defn new-deck [side s]
-  (let [old-deck (:deck @s)]
-    (swap! s assoc :deck {:name "New deck" :cards [] :identity (-> side side-identities first)})
+  (let [old-deck (:deck @s)
+        id (->> side
+                side-identities
+                (sort-by :title)
+                first)]
+    (swap! s assoc :deck {:name "New deck" :cards [] :identity id})
     (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
-    (edit-deck s)
+    (edit-deck owner)
     (swap! s assoc :old-deck old-deck)))
 
 (defn save-deck [s]
@@ -615,8 +620,13 @@
            [:div.viewport {:ref #(swap! s assoc :viewport %)}
             [:div.decks
              [:div.button-bar
-              [:button {:on-click #(new-deck "Corp" s)} "New Corp deck"]
-              [:button {:on-click #(new-deck "Runner" s)} "New Runner deck"]]
+              (if (:user @app-state)
+                (list
+                  [:button {:on-click #(new-deck "Corp" s)} "New Corp deck"]
+                  [:button {:on-click #(new-deck "Runner" s)} "New Runner deck"])
+                (list
+                  [:button {:class "disabled"} "New Corp deck"]
+                  [:button {:class "disabled"} "New Runner deck"]))]
              [:div.deck-collection
               (when-not (:edit @s)
                 [deck-collection {:sets card-sets :decks decks :decks-loaded decks-loaded :active-deck (:deck @s)}])

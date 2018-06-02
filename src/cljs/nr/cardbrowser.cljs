@@ -1,6 +1,7 @@
 (ns nr.cardbrowser
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! >! sub pub] :as async]
+            [clojure.string :as str]
             [jinteki.cards :refer [all-cards] :as cards]
             [jinteki.decks :as decks]
             [nr.appstate :refer [app-state]]
@@ -43,30 +44,44 @@
   (.replace text (js/RegExp. symbol "gi") (str "<span class='anr-icon " class "'></span>")))
 
 (defn show-alt-art?
-  "Is the current user allowed to use alternate art cards and do they want to see them? "
-  []
-  (and
-    (get-in @app-state [:options :show-alt-art] true)
-    (get-in @app-state [:user :special] false)))
+  "Is the current user allowed to use alternate art cards and do they want to see them?"
+  ([] (show-alt-art? false))
+  ([allow-all-users]
+   (and
+     (get-in @app-state [:options :show-alt-art] true)
+     (or allow-all-users
+         (get-in @app-state [:user :special] false)))))
 
-(defn image-url [card]
-  (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
-                (get-in @app-state [:options :alt-arts (keyword (:code card))]))
-        alt-card (get (:alt-arts @app-state) (:code card))
-        has-art (and (show-alt-art?)
-                     art
-                     (contains? (:alt_art alt-card) (keyword art)))
-        version-path (if has-art
-                       (get (:alt_art alt-card) (keyword art) (:code card))
-                       (:code card))]
-    (str "/img/cards/" version-path ".png")))
+(defn image-url
+  ([card] (image-url card false))
+  ([card allow-all-users]
+   (let [art (or (:art card) ; use the art set on the card itself, or fall back to the user's preferences.
+                 (get-in @app-state [:options :alt-arts (keyword (:code card))]))
+         alt-card (get (:alt-arts @app-state) (:code card))
+         has-art (and (show-alt-art? allow-all-users)
+                      art
+                      (contains? (:alt_art alt-card) (keyword art)))
+         version-path (if has-art
+                        (get (:alt_art alt-card) (keyword art) (:code card))
+                        (:code card))]
+     (str "/img/cards/" version-path ".png"))))
 
-(defn expand-alts
-  [acc card]
+(defn- alt-version-from-string
+  "Given a string name, get the keyword version or nil"
+  [setname]
+  (when-let [alt (some #(when (= setname (:name %)) %) (:alt-info @app-state))]
+    (keyword (:version alt))))
+
+(defn- expand-alts
+  [only-version acc card]
   (let [alt-card (get (:alt-arts @app-state) (:code card))
-        alt-arts (keys (:alt_art alt-card))]
+        alt-only (alt-version-from-string only-version)
+        alt-keys (keys (:alt_art alt-card))
+        alt-arts (if alt-only
+                   (filter #(= alt-only %) alt-keys)
+                   alt-keys)]
     (if (and alt-arts
-             (show-alt-art?))
+             (show-alt-art? true))
       (->> alt-arts
            (concat [""])
            (map (fn [art] (if art
@@ -78,10 +93,10 @@
            (concat acc))
       (conj acc card))))
 
-(defn insert-alt-arts
-  "Add copies of all alt art cards to the list of cards"
-  [cards]
-  (reduce expand-alts () (reverse cards)))
+(defn- insert-alt-arts
+  "Add copies of alt art cards to the list of cards. If `only-version` is nil, all alt versions will be added."
+  [only-version cards]
+  (reduce (partial expand-alts only-version) () (reverse cards)))
 
 (defn add-symbols [card-text]
   (-> (if (nil? card-text) "" card-text)
@@ -155,7 +170,7 @@
 
 (defn- card-text
   "Generate text html representation a card"
-  [card]
+  [card cursor]
   [:div
    [:h4 (str (:title card) " ")
     [:span.influence
@@ -199,12 +214,13 @@
          (str pack " " number
               (when-let [art (:art card)]
                 (str " [" (alt-art-name art) "]")))))]
-    (if (selected-alt-art card)
-      [:div.selected-alt "Selected Alt Art"]
-      (when (:art card)
-        [:button.alt-art-selector
-         {:on-click #(select-alt-art card)}
-         "Select Art"]))
+    (when (show-alt-art?)
+      (if (selected-alt-art card cursor)
+        [:div.selected-alt "Selected Alt Art"]
+        (when (:art card)
+          [:button.alt-art-selector
+           {:on-click #(select-alt-art card cursor)}
+           "Select Art"])))
     ]])
 
 (defn types [side]
@@ -231,6 +247,12 @@
 (defn filter-alt-art-cards [cards]
   (let [alt-arts (:alt-arts @app-state)]
     (filter #(contains? alt-arts (:code %)) cards)))
+
+(defn filter-alt-art-set [setname cards]
+  (when-let [alt-key (alt-version-from-string setname)]
+    (let [sa (map first
+                  (filter (fn [[k v]] (contains? (:alt_art v) alt-key)) (:alt-arts @app-state)))]
+      (filter (fn [c] (some #(= (:code c) %) sa)) cards))))
 
 (defn filter-cards [filter-value field cards]
   (if (= filter-value "All")
@@ -303,7 +325,7 @@
                        (selected-alt-art card) "selected-alt")})
        (if (:showText @cv)
          (card-text card)
-         (when-let [url (image-url card)]
+         (when-let [url (image-url card true)]
            [:img {:src url
                   :alt (:title card)
                   :onClick #(do (.preventDefault %)
@@ -314,20 +336,20 @@
 (defn card-list-view [s _]
   (let [selected (selected-set-name s)
         cycle-sets (set (for [x selected :when (= (:cycle x) selected)] (:name x)))
-        cards (cond
-                (= selected "All") @all-cards
-                (= selected "Alt Art") (filter-alt-art-cards @all-cards)
-                :else
-                (if (= (.indexOf (:set-filter @s) "Cycle") -1)
-                  (filter #(= (:setname %) selected) @all-cards)
-                  (filter #(cycle-sets (:setname %)) @all-cards)))
+        [alt-filter cards] (cond
+                             (= s "All") [nil @all-cards]
+                             (= s "Alt Art") [nil (filter-alt-art-cards @all-cards)]
+                             (str/ends-with? (:set-filter state) " Cycle") [nil (filter #(cycle-sets (:setname %)) @all-cards)]
+                             (not (some #(= s (:name %)) (:sets @app-state))) [s (filter-alt-art-set s @all-cards)]
+                             :else
+                             [nil (filter #(= (:setname %) s) @all-cards)])
         cards (->> cards
                    (filter-cards (:side-filter @s) :side)
                    (filter-cards (:faction-filter @s) :faction)
                    (filter-cards (:type-filter @s) :type)
                    (filter-rotated (:hide-rotated @s))
                    (filter-title (:search-query @s))
-                   (insert-alt-arts)
+                   (insert-alt-arts alt-filter)
                    (sort-by (sort-field (:sort-field @s)))
                    (take (* (:page @s) 28)))]
     [:div.card-list {:on-scroll #(handle-scroll % s)}
@@ -375,7 +397,8 @@
                                 [:option {:value field} field])]
                              ]
 
-                            (let [hide-rotated (:hide-rotated @s)
+                            (let [format-pack-name (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name))
+                                  hide-rotated (:hide-rotated @s)
                                   cycles-filtered (filter-rotated hide-rotated @cycles)
                                   cycles-list-all (map #(assoc % :name (str (:name %) " Cycle")
                                                                  :cycle_position (:position %)
@@ -386,15 +409,18 @@
                                   ;; Draft is specified as a cycle, but contains no set, nor is it marked as a bigbox
                                   ;; so we handled it specifically here for formatting purposes
                                   sets-list (map #(if (not (or (:bigbox %) (= (:name %) "Draft")))
-                                                    (update-in % [:name] (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name)))
+                                                    (update-in % [:name] format-pack-name)
                                                     %)
                                                  sets-filtered)
                                   set-names (map :name
                                                  (sort-by (juxt :cycle_position :position)
-                                                          (concat cycles-list sets-list)))]
+                                                          (concat cycles-list sets-list)))
+                                  alt-art-sets (concat `("Alt Art")
+                                                       (map #(format-pack-name (:name %))
+                                                            (sort-by :position (:alt-info @app-state))))]
                               (doall
-                                (for [[title key f] [["Set" :set-filter (if (show-alt-art?)
-                                                                          (concat set-names (list "Alt Art"))
+                                (for [[title key f] [["Set" :set-filter (if (show-alt-art? true)
+                                                                          (concat set-names alt-art-sets)
                                                                           set-names)]
                                                      ["Side" :side-filter ["Corp" "Runner"]]
                                                      ["Faction" :faction-filter (factions (:side-filter @s))]
@@ -419,5 +445,3 @@
                             ]
 
           [card-list-view s @all-cards]])})))
-
-; alt art not loading

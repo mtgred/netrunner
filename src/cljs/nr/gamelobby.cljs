@@ -2,12 +2,13 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [join]]
+            [jinteki.utils :refer [str->int]]
             [nr.ajax :refer [GET]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [authenticated avatar] :as auth]
             [nr.cardbrowser :refer [image-url non-game-toast] :as cb]
             [nr.deckbuilder :refer [deck-status-span format-deck-status-span num->percent]]
-            [nr.gameboard :refer [init-game game-state launch-game parse-state toast]]
+            [nr.gameboard :refer [game-state launch-game parse-state toast]]
             [nr.stats :refer [notnum->zero]]
             [nr.ws :as ws]
             [reagent.core :as r]
@@ -17,6 +18,12 @@
 (def socket-channel (chan))
 
 (def lobby-dom (atom {}))
+
+(defn- play-sound
+  [element-id]
+  (when (get-in @app-state [:options :sounds])
+    (when-let [element (.getElementById js/document element-id)]
+      (.play element))))
 
 (defn resume-sound
   "Chrome doesn't allow audio until audio context is resumed (or created) after a user interaction."
@@ -48,7 +55,7 @@
                    delete (apply dissoc update (keys (:delete diff)))]
                (sort-games-list (vals delete)))))
     (when (and notification (not (:gameid @app-state)))
-      (.play (.getElementById js/document notification)))))
+      (play-sound notification))))
 
 (ws/register-ws-handler!
   :lobby/select
@@ -60,7 +67,7 @@
   (fn [{:keys [text notification] :as msg}]
     (swap! app-state update :messages conj msg)
     (when notification
-      (.play (.getElementById js/document notification)))))
+      (play-sound notification))))
 
 (ws/register-ws-handler!
   :lobby/timeout
@@ -87,13 +94,12 @@
                         (swap! app-state assoc :games (sort-games-list (vals (:games msg)))))
                       (when-let [sound (:notification msg)]
                         (when-not (:gameid @app-state)
-                          (.play (.getElementById js/document sound)))))
+                          (play-sound sound))))
           "say" (do
                   (swap! app-state update-in [:messages]
                            #(conj % {:user (:user msg) :text (:text msg)}))
-                 ; (swap! app-state update :messages conj {:user (:user msg) :text (:text msg)})
                     (when-let [sound (:notification msg)]
-                      (.play (.getElementById js/document sound))))
+                      (play-sound sound)))
           "start" (launch-game (:state msg))
           "Invalid password" (js/console.log "pwd" (:gameid msg))
           "lobby-notification" (toast (:text msg) (:severity msg) nil)
