@@ -127,7 +127,7 @@
         (let [parts (get-message-parts (:msg message))]
           (doall (map-indexed
             (fn [i item]
-              (create-span item)) parts)))]]])))
+              (when (not-empty item) (create-span item))) parts)))]]])))
 
 (defn fetch-messages [s]
   (let [channel (:channel @s)
@@ -202,7 +202,7 @@
                                                                    client-height (.-clientHeight currElt)
                                                                    scrolling (< (+ scroll-top client-height) scroll-height)]
                                                                (swap! s assoc :scrolling scrolling))}
-             (if (not cards-loaded)
+             (if (not @cards-loaded)
                [:h4 "Loading cards..."]
                (let [message-list (get-in @app-state [:channels (:channel @s)])]
                  (doall (map-indexed
@@ -212,5 +212,3 @@
             (when @user
               [:div
                [msg-input-view (:channel @s)]])]]])})))
-
-; TODO hyperlink card texr unreliable  -- or rror at start
