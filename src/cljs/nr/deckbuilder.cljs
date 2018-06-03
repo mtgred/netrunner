@@ -19,6 +19,8 @@
 (def select-channel (chan))
 (def zoom-channel (chan))
 
+(defonce db-dom (atom {}))
+
 (defn num->percent
   "Converts an input number to a percent of the second input number for display"
   [num1 num2]
@@ -229,18 +231,18 @@
     (swap! s assoc :old-deck deck)
     (swap! s assoc :edit true)
     (deck->str s)
-    (-> (:viewport @s) js/$ (.addClass "edit"))
+    (-> (:viewport @db-dom) js/$ (.addClass "edit"))
     (try (js/ga "send" "event" "deckbuilder" "edit") (catch js/Error e))
     (go (<! (timeout 500))
-        (-> (:deckname @s) js/$ .select))))
+        (-> (:deckname @db-dom) js/$ .select))))
 
 (defn end-edit [s]
   (swap! s assoc :edit false)
   (swap! s assoc :query "")
-  (-> (:viewport @s) js/$ (.removeClass "edit")))
+  (-> (:viewport @db-dom) js/$ (.removeClass "edit")))
 
 (defn handle-edit [s]
-  (let [text (.-value (:deckedit @s))
+  (let [text (.-value (:deckedit @db-dom))
         side (get-in @s [:deck :identity :side])
         cards (parse-deck-string side text)]
     (swap! s assoc :deck-edit text)
@@ -256,12 +258,12 @@
 (defn delete-deck [s]
   (swap! s assoc :delete true)
   (deck->str s)
-  (-> (:viewport @s) js/$ (.addClass "delete"))
+  (-> (:viewport @db-dom) js/$ (.addClass "delete"))
   (try (js/ga "send" "event" "deckbuilder" "delete") (catch js/Error e)))
 
 (defn end-delete [s]
   (swap! s assoc :delete false)
-  (-> (:viewport @s) js/$ (.removeClass "delete")))
+  (-> (:viewport @db-dom) js/$ (.removeClass "delete")))
 
 (defn handle-delete [s]
   (authenticated
@@ -618,7 +620,7 @@
        (fn []
          [:div
           [:div.deckbuilder.blue-shade.panel
-           [:div.viewport {:ref #(swap! s assoc :viewport %)}
+           [:div.viewport {:ref #(swap! db-dom assoc :viewport %)}
             [:div.decks
              [:div.button-bar
               (if @user
@@ -722,7 +724,7 @@
               [:div
                [:h3 "Deck name"]
                [:input.deckname {:type "text" :placeholder "Deck name"
-                                 :ref #(swap! s assoc :deckname %)
+                                 :ref #(swap! db-dom assoc :deckname %)
                                  :value (get-in @s [:deck :name])
                                  :on-change #(swap! s assoc-in [:deck :name] (.. % -target -value))}]]
               [:div
@@ -738,12 +740,11 @@
               [card-lookup]
               [:h3 "Decklist"
                [:span.small "(Type or paste a decklist, it will be parsed)" ]]]
-             [:textarea {:ref #(swap! s assoc :deckedit %)
+             [:textarea {:ref #(swap! db-dom assoc :deckedit %)
                          :value (:deck-edit @s)
                          :on-change #(handle-edit s)}]]]]])
 
        })))
-
 
 (go (let [cards (<! cards-channel)
           decks (process-decks (:json (<! (GET (str "/data/decks")))))]

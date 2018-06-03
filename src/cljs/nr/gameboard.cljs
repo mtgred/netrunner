@@ -1567,6 +1567,3 @@
               [hand-view me (get-remotes (:servers @corp)) true "me"]]
              ]
             ]))})))
-
-; TODO
-; test toast.
