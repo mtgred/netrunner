@@ -857,13 +857,13 @@
               [:div {:key (:cid card)
                      :class (str
                               (if (and (not= "select" (get-in @player [:prompt 0 :prompt-type]))
-                                       (this-user? player)
+                                       (this-user? @player)
                                        (not (:selected card)) (playable? card))
                                 "playable" "")
                               " "
                               wrapper-class)
                      :style {:left (* (/ 320 (dec size)) i)}}
-               (if (or (this-user? player)
+               (if (or (this-user? @player)
                        (:openhand @player)
                        (spectator-view-hidden?))
                  [card-view (assoc card :remotes remotes)]
