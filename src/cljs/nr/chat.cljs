@@ -127,8 +127,7 @@
         (let [parts (get-message-parts (:msg message))]
           (doall (map-indexed
             (fn [i item]
-              [:div {:key i}
-               (create-span item)]) parts)))]]])))
+              (create-span item)) parts)))]]])))
 
 (defn fetch-messages [s]
   (let [channel (:channel @s)
@@ -206,10 +205,10 @@
              (if (not cards-loaded)
                [:h4 "Loading cards..."]
                (let [message-list (get-in @app-state [:channels (:channel @s)])]
-                 (map-indexed
+                 (doall (map-indexed
                    (fn [i message]
                      [:div {:key i}
-                      [message-view message s]]) message-list)))]
+                      [message-view message s]]) message-list))))]
             (when @user
               [:div
                [msg-input-view (:channel @s)]])]]])})))

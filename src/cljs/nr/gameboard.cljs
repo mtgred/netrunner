@@ -8,7 +8,7 @@
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
             [nr.cardbrowser :refer [add-symbols] :as cb]
-            [nr.utils :refer [toastr-options influence-dot]]
+            [nr.utils :refer [influence-dot map-longest toastr-options]]
             [nr.ws :as ws]
             [reagent.core :as r]))
 

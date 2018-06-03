@@ -282,7 +282,7 @@
                 first)]
     (swap! s assoc :deck {:name "New deck" :cards [] :identity id})
     (try (js/ga "send" "event" "deckbuilder" "new" side) (catch js/Error e))
-    (edit-deck owner)
+    (edit-deck s)
     (swap! s assoc :old-deck old-deck)))
 
 (defn save-deck [s]
@@ -579,6 +579,7 @@
                    :edit-channel (chan)
                    :deck nil})
         decks (r/cursor app-state [:decks])
+        user (r/cursor app-state [:user])
         decks-loaded (r/cursor app-state [:decks-loaded])
         card-sets (r/cursor app-state [:sets])]
 
@@ -620,13 +621,17 @@
            [:div.viewport {:ref #(swap! s assoc :viewport %)}
             [:div.decks
              [:div.button-bar
-              (if (:user @app-state)
+              (if @user
                 (list
-                  [:button {:on-click #(new-deck "Corp" s)} "New Corp deck"]
-                  [:button {:on-click #(new-deck "Runner" s)} "New Runner deck"])
+                  [:button {:key "corp"
+                            :on-click #(new-deck "Corp" s)} "New Corp deck"]
+                  [:button {:key "runner"
+                            :on-click #(new-deck "Runner" s)} "New Runner deck"])
                 (list
-                  [:button {:class "disabled"} "New Corp deck"]
-                  [:button {:class "disabled"} "New Runner deck"]))]
+                  [:button {:key "corp"
+                            :class "disabled"} "New Corp deck"]
+                  [:button {:key "runner"
+                            :class "disabled"} "New Runner deck"]))]
              [:div.deck-collection
               (when-not (:edit @s)
                 [deck-collection {:sets card-sets :decks decks :decks-loaded decks-loaded :active-deck (:deck @s)}])

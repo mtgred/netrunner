@@ -170,7 +170,7 @@
 
 (defn- card-text
   "Generate text html representation a card"
-  [card cursor]
+  [card]
   [:div
    [:h4 (str (:title card) " ")
     [:span.influence
@@ -215,11 +215,11 @@
               (when-let [art (:art card)]
                 (str " [" (alt-art-name art) "]")))))]
     (when (show-alt-art?)
-      (if (selected-alt-art card cursor)
+      (if (selected-alt-art card)
         [:div.selected-alt "Selected Alt Art"]
         (when (:art card)
           [:button.alt-art-selector
-           {:on-click #(select-alt-art card cursor)}
+           {:on-click #(select-alt-art card)}
            "Select Art"])))
     ]])
 
@@ -337,12 +337,12 @@
   (let [selected (selected-set-name s)
         cycle-sets (set (for [x selected :when (= (:cycle x) selected)] (:name x)))
         [alt-filter cards] (cond
-                             (= s "All") [nil @all-cards]
-                             (= s "Alt Art") [nil (filter-alt-art-cards @all-cards)]
-                             (str/ends-with? (:set-filter state) " Cycle") [nil (filter #(cycle-sets (:setname %)) @all-cards)]
-                             (not (some #(= s (:name %)) (:sets @app-state))) [s (filter-alt-art-set s @all-cards)]
+                             (= selected "All") [nil @all-cards]
+                             (= selected "Alt Art") [nil (filter-alt-art-cards @all-cards)]
+                             (str/ends-with? (:set-filter @s) " Cycle") [nil (filter #(cycle-sets (:setname %)) @all-cards)]
+                             (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected @all-cards)]
                              :else
-                             [nil (filter #(= (:setname %) s) @all-cards)])
+                             [nil (filter #(= (:setname %) selected) @all-cards)])
         cards (->> cards
                    (filter-cards (:side-filter @s) :side)
                    (filter-cards (:faction-filter @s) :faction)
@@ -355,7 +355,7 @@
     [:div.card-list {:on-scroll #(handle-scroll % s)}
      (doall
        (for [card cards]
-         ^{:key (or (:alt-art card) (:code card))}
+         ^{:key (or (:display-name card) (:code card))}
          [card-view card s]))]))
 
 (defn card-browser []
