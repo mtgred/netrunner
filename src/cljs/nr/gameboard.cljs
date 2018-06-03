@@ -1416,12 +1416,16 @@
   (let [stats (map-longest list nil corp-stats runner-stats)]
     [:div
      [:table.win.table
-      [:tr.win.th
-       [:td.win.th "Corp"] [:td.win.th]
-       [:td.win.th "Runner"] [:td.win.th]]
-      (for [[corp runner] stats]
-        [:tr [:td (first corp)] [:td (show-stat corp)]
-         [:td (first runner)] [:td (show-stat runner)]])]]))
+      [:tbody
+        [:tr.win.th
+         [:td.win.th "Corp"] [:td.win.th]
+         [:td.win.th "Runner"] [:td.win.th]]
+       (doall (map-indexed
+          (fn [i [corp runner]]
+            [:tr {:key i}
+             [:td (first corp)] [:td (show-stat corp)]
+             [:td (first runner)] [:td (show-stat runner)]])
+          stats))]]]))
 
 (defn build-win-box
   "Builds the end of game pop up game end"
