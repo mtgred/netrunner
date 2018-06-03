@@ -333,7 +333,7 @@
                   :onError #(-> (swap! cv assoc :showText true))
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
-(defn card-list-view [s _]
+(defn card-list-view [s]
   (let [selected (selected-set-name s)
         cycle-sets (set (for [x selected :when (= (:cycle x) selected)] (:name x)))
         [alt-filter cards] (cond
@@ -444,4 +444,4 @@
                             [card-info-view s]
                             ]
 
-          [card-list-view s @all-cards]])})))
+          [card-list-view s]])})))
