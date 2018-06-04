@@ -1728,47 +1728,63 @@
       (run-on state :archives)
       (is (zero? (:credit (get-runner)))
           "Runner spends 1 additional credit to make a run")))
-(testing "Doesn't fire if already run when played on the runner's turn"
-  (do-game
-    (new-game (make-deck "New Angeles Sol: Your News" ["Service Outage"
-                                                       "Breaking News"])
-              (default-runner ["Hades Shard"]))
-    (trash-from-hand state :corp "Breaking News")
-    (take-credits state :corp)
-    (run-on state :hq)
-    (run-successful state)
-    (prompt-choice :runner "No action")
-    (core/gain state :runner :credit 3)
-    (play-from-hand state :runner "Hades Shard")
-    (card-ability state :runner (get-resource state 0) 0)
-    (prompt-choice :runner "Steal")
-    (prompt-choice :corp "Yes")
-    (prompt-select :corp (find-card "Service Outage" (:hand (get-corp))))
-    (is (find-card "Service Outage" (:current (get-corp)))
-        "Service Outage is in play")
-    (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
-    (run-on state :archives)
-    (is (= 1 (:credit (get-runner)))
-        "Runner doesn't spend 1 additional credit to make a run")))
-(testing "trashed and reinstalled on steal doesn't double remove penalty"
-  (do-game
-    (new-game
-      (make-deck "New Angeles Sol: Your News" ["Service Outage"
-                                               "Breaking News"])
-      (default-runner))
-    (play-from-hand state :corp "Breaking News" "New remote")
-    (play-from-hand state :corp "Service Outage")
-    (take-credits state :corp)
-    (run-on state :remote1)
-    (run-successful state)
-    (prompt-choice :runner "Steal")
-    (prompt-choice :corp "Yes")
-    (prompt-select :corp (find-card "Service Outage" (:discard (get-corp))))
-    (take-credits state :runner)
-    (take-credits state :corp)
-    (is (= 7 (:credit (get-runner))) "Runner has 7 credits")
-    (run-on state :archives)
-    (is (= 6 (:credit (get-runner))) "Runner spends 1 credit to make a run"))))
+  (testing "Doesn't fire if already run when played on the runner's turn"
+    (do-game
+      (new-game (make-deck "New Angeles Sol: Your News" ["Service Outage"
+                                                         "Breaking News"])
+                (default-runner ["Hades Shard"]))
+      (trash-from-hand state :corp "Breaking News")
+      (take-credits state :corp)
+      (run-on state :hq)
+      (run-successful state)
+      (prompt-choice :runner "No action")
+      (core/gain state :runner :credit 3)
+      (play-from-hand state :runner "Hades Shard")
+      (card-ability state :runner (get-resource state 0) 0)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (find-card "Service Outage" (:hand (get-corp))))
+      (is (find-card "Service Outage" (:current (get-corp)))
+          "Service Outage is in play")
+      (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
+      (run-on state :archives)
+      (is (= 1 (:credit (get-runner)))
+          "Runner doesn't spend 1 additional credit to make a run")))
+  (testing "trashed and reinstalled on steal doesn't double remove penalty"
+    (do-game
+      (new-game
+        (make-deck "New Angeles Sol: Your News" ["Service Outage"
+                                                 "Breaking News"])
+        (default-runner))
+      (play-from-hand state :corp "Breaking News" "New remote")
+      (play-from-hand state :corp "Service Outage")
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (run-successful state)
+      (prompt-choice :runner "Steal")
+      (prompt-choice :corp "Yes")
+      (prompt-select :corp (find-card "Service Outage" (:discard (get-corp))))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 7 (:credit (get-runner))) "Runner has 7 credits")
+      (run-on state :archives)
+      (is (= 6 (:credit (get-runner))) "Runner spends 1 credit to make a run")))
+  (testing "Shouldn't spend bad publicity on additional cost"
+    (do-game
+      (new-game (default-corp ["Service Outage" "Hostile Takeover"])
+                (default-runner))
+      (play-from-hand state :corp "Service Outage")
+      (take-credits state :corp)
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state :hq)
+        (is (= (- credits 1) (:credit (get-runner))) "Runner should pay 1 to initiate first run"))
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (take-credits state :corp)
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state :hq)
+        (is (= credits (:credit (get-runner))) "Runner should lose 1 from pool and gain 1 from BP")
+        (is (= 1 (:run-credit (get-runner))) "Runner should have 1 BP")))))
 
 (deftest shipment-from-sansan
   ;; Shipment from SanSan - placing advancements

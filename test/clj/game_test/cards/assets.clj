@@ -3241,7 +3241,7 @@
     (play-from-hand state :runner "Sure Gamble")
     (is (= 13 (:credit (get-runner))) "3rd Gamble played for 2c")))
 
-(deftest sundew
+(deftest-pending sundew
   ;; Sundew
   (testing "Basic test"
     (do-game
@@ -3259,20 +3259,19 @@
         (run-on state "Server 1")
         (is (= 10 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")
         (is (= 3 (:click (get-runner))) "Runner spent 1 click to start run"))))
-  ; (testing "Sundew - Dirty Laundry"
-  ;   (do-game
-  ;     (new-game (default-corp ["Sundew"])
-  ;               (default-runner ["Dirty Laundry"]))
-  ;     (play-from-hand state :corp "Sundew" "New remote")
-  ;     (let [sund (get-content state :remote1 0)]
-  ;       (core/rez state :corp (refresh sund))
-  ;       (is (= 3 (:credit (get-corp))) "Cost 2cr to rez")
-  ;       (take-credits state :corp)
-  ;       (play-from-hand state :runner "Dirty Laundry")
-  ;       (prompt-choice :runner "Server 1")
-  ;       ;; spend a click on a run through a card, not through click-run
-  ;       (is (= 5 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew"))))
-  )
+  (testing "Sundew - Dirty Laundry"
+    (do-game
+      (new-game (default-corp ["Sundew"])
+                (default-runner ["Dirty Laundry"]))
+      (play-from-hand state :corp "Sundew" "New remote")
+      (let [sund (get-content state :remote1 0)]
+        (core/rez state :corp (refresh sund))
+        (is (= 3 (:credit (get-corp))) "Cost 2cr to rez")
+        (take-credits state :corp)
+        (play-from-hand state :runner "Dirty Laundry")
+        (prompt-choice :runner "Server 1")
+        ;; spend a click on a run through a card, not through click-run
+        (is (= 5 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")))))
 
 (deftest synth-dna-modification
   ;; Synth DNA Modification
