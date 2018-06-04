@@ -514,12 +514,6 @@
   [trace]
   (= :corp (:player trace)))
 
-(defn reset-trace-modifications
-  [state]
-  (swap! state dissoc-in [:trace :force-base])
-  (swap! state dissoc-in [:trace :force-link])
-  (swap! state dissoc-in [:bonus :trace]))
-
 (defn resolve-trace
   "Compares trace strength and link strength and triggers the appropriate effects."
   [state side card {:keys [eid player other base bonus link priority ability strength] :as trace} boost]
@@ -559,8 +553,7 @@
                                       (do (when-let [kicker (:kicker trace)]
                                             (when (>= corp-strength (:min kicker))
                                               (resolve-ability state :corp kicker card [corp-strength runner-strength])))
-                                          (effect-completed state side eid nil)
-                                          (reset-trace-modifications state)))))))
+                                          (effect-completed state side eid nil)))))))
 
 (defn trace-reply
   "Shows a trace prompt to the second player, after the first has already spent credits to boost."
@@ -599,8 +592,15 @@
                      #(trace-reply state side card trace %)
                      trace))
 
+(defn reset-trace-modifications
+  [state]
+  (swap! state dissoc-in [:trace :force-base])
+  (swap! state dissoc-in [:trace :force-link])
+  (swap! state dissoc-in [:bonus :trace]))
+
 (defn init-trace
   [state side card {:keys [base priority] :as trace}]
+  (reset-trace-modifications state)
   (when-completed (trigger-event-sync state :corp :pre-init-trace card)
                   (let [force-base (get-in @state [:trace :force-base])
                         force-link (get-in @state [:trace :force-link])
