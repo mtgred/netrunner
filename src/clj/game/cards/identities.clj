@@ -499,8 +499,10 @@
       :abilities [ability]})
 
    "Industrial Genomics: Growing Solutions"
-   {:events {:pre-trash {:effect (effect (trash-cost-bonus
-                                           (count (filter #(not (:seen %)) (:discard corp)))))}}}
+   {:events
+    {:pre-trash
+     {:effect
+      (effect (trash-cost-bonus (count (remove #(:seen %) (:discard corp)))))}}}
 
    "Information Dynamics: All You Need To Know"
    {:events (let [inf {:req (req (and (not (:disabled card))
