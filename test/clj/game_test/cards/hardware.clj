@@ -603,7 +603,24 @@
       (play-from-hand state :runner "Maw")
       (run-empty-server state :remote1)
       (prompt-choice :runner "Steal")
-      (is (zero? (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen"))))
+      (is (zero? (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen")))
+  (testing "Maw shouldn't trigger when accessing a card in archives"
+    (do-game
+      (new-game (default-corp ["Rashida Jaheem" "Cyberdex Virus Suite" (qty "Ice Wall" 4)])
+                (make-deck "Alice Merchant: Clan Agitator" ["Maw" "Imp"]))
+      (core/move state :corp (find-card "Rashida Jaheem" (:hand (get-corp))) :deck)
+      (trash-from-hand state :corp "Cyberdex Virus Suite")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Maw")
+      (play-from-hand state :runner "Imp")
+      (run-empty-server state :archives)
+      (prompt-card :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (prompt-choice :runner "Cyberdex Virus Suite")
+      (prompt-choice :corp "Yes")
+      (run-empty-server state :rd)
+      (prompt-choice-partial :runner "Pay")
+      (is (= 3 (count (:discard (get-corp)))) "Ice Wall, CVS, and Rashida"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D

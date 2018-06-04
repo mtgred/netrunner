@@ -44,7 +44,9 @@
   (when (and (is-type? c "Agenda")
              (not (find-cid (:cid c) (get-in @state [:runner :scored]))))
     (trigger-event state side :no-steal c))
-  (when (get-card state c)
+  (when (and (get-card state c)
+             ;; Don't increment :no-trash-or-steal if accessing a card in Archives
+             (not (find-cid (:cid c) (get-in @state [:corp :discard]))))
     (swap! state update-in [:runner :register :no-trash-or-steal] (fnil inc 0)))
   (trigger-event-sync state side eid :post-access-card c))
 
