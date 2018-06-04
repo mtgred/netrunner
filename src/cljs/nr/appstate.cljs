@@ -2,6 +2,12 @@
   (:require [jinteki.utils :refer [str->int]]
             [reagent.core :as r]))
 
+(defn- get-local-value
+  "Read the value of the given key from localStorage. Return the default-value if no matching key found"
+  [k default-value]
+  (let [rtn (js->clj (.getItem js/localStorage k))]
+    (if (nil? rtn) default-value rtn)))
+
 (def app-state
   (r/atom {:active-page "/"
            :user (js->clj js/user :keywordize-keys true)
@@ -9,10 +15,9 @@
                             :show-alt-art true
                             :deckstats "always"
                             :gamestats "always"
-                            :sounds (let [sounds (js->clj (.getItem js/localStorage "sounds"))]
-                                      (if (nil? sounds) true (= sounds "true")))
-                            :sounds-volume (let [volume (js->clj (.getItem js/localStorage "sounds_volume"))]
-                                             (if (nil? volume) 100 (str->int volume)))}
+                            :sounds (= (get-local-value "sounds" "true") "true")
+                            :lobby-sounds (= (get-local-value "lobby_sounds" "true") "true")
+                            :sounds-volume (str->int (get-local-value "sounds_volume" "100"))}
                            (:options (js->clj js/user :keywordize-keys true)))
 
            :cards-loaded false
