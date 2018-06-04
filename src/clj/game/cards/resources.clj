@@ -1456,8 +1456,10 @@
                                 (swap! state update-in [:bonus] dissoc :trash)))}]}
 
    "Power Tap"
-   {:events {:trace {:successful {:msg "gain 1 [Credits]"
-                                  :effect (effect (gain-credits :runner 1))}}}}
+   (let [ability {:msg "gain 1[Credits]"
+                  :effect (effect (gain-credits :runner 1))}]
+     {:events {:successful-trace ability
+               :unsuccessful-trace ability}})
 
    "Professional Contacts"
    {:abilities [{:cost [:click 1]

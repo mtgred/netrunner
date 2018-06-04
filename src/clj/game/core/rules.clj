@@ -677,8 +677,3 @@
   [state]
   (system-msg state :corp "is decked")
   (win state :runner "Decked"))
-
-(defn init-trace-bonus
-  "Applies a bonus base strength of n to the next trace attempt."
-  [state side n]
-  (swap! state update-in [:bonus :trace] (fnil #(+ % n) 0)))
