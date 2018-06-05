@@ -21,7 +21,7 @@
 
 (defn- play-sound
   [element-id]
-  (when (get-in @app-state [:options :sounds])
+  (when (get-in @app-state [:options :lobby-sounds])
     (when-let [element (.getElementById js/document element-id)]
       (.play element))))
 

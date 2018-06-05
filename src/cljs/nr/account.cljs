@@ -57,14 +57,16 @@
   (.preventDefault event)
   (swap! s assoc :flash-message "Updating profile...")
   (swap! app-state assoc-in [:options :sounds] (:sounds @s))
+  (swap! app-state assoc-in [:options :lobby-sounds] (:lobby-sounds @s))
+  (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
   (swap! app-state assoc-in [:options :background] (:background @s))
   (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
-  (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
   (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
   (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
   (swap! app-state assoc-in [:options :deckstats] (:deckstats @s))
   (.setItem js/localStorage "sounds" (:sounds @s))
+  (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
   (.setItem js/localStorage "sounds_volume" (:volume @s))
   (post-options url (partial post-response s)))
 
@@ -138,9 +140,10 @@
   (let [s (r/atom {:flash-message ""
                    :background (get-in @app-state [:options :background])
                    :sounds (get-in @app-state [:options :sounds])
+                   :lobby-sounds (get-in @app-state [:options :lobby-sounds])
+                   :volume (get-in @app-state [:options :sounds-volume])
                    :show-alt-art (get-in @app-state [:options :show-alt-art])
                    :all-art-select ""
-                   :volume (get-in @app-state [:options :sounds-volume])
                    :gamestats (get-in @app-state [:options :gamestats])
                    :deckstats (get-in @app-state [:options :deckstats])
                    :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
@@ -164,18 +167,24 @@
           [:a {:href "http://gravatar.com" :target "_blank"} "Change on gravatar.com"]]
          [:section 
           [:h3 "Sounds"] 
-          [:div 
-           [:label [:input {:type "checkbox" 
-                            :value true 
-                            :checked (:sounds @s) 
-                            :on-change #(swap! s assoc-in [:sounds] (.. % -target -checked))}] 
-            "Enable sounds"]] 
-          [:div "Volume" 
-           [:input {:type "range" 
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:lobby-sounds @s)
+                            :on-change #(swap! s assoc-in [:lobby-sounds] (.. % -target -checked))}]
+            "Enable lobby sounds"]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:sounds @s)
+                            :on-change #(swap! s assoc-in [:sounds] (.. % -target -checked))}]
+            "Enable game sounds"]]
+          [:div "Volume"
+           [:input {:type "range"
                     :min 1 :max 100 :step 1 
                     :on-change #(swap! s assoc-in [:volume] (.. % -target -value)) 
                     :value (or (:volume @s) 50)
-                    :disabled (not (:sounds @s))}]]]
+                    :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
          
          [:section 
           [:h3  "Game board background"]
