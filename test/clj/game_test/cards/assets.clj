@@ -2025,12 +2025,10 @@
       (is (= 2 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should lose 2 credits start of turn")
       (take-credits state :corp)
       (take-credits state :runner)
-      (is (:corp-phase-12 @state) "Corp is in Step 1.2")
-      (core/end-phase-12 state :corp nil)
       (is (zero? (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should lose 2 credits start of turn")
       (prompt-choice :corp "Yes")
-      (is (= 1 (-> (get-corp) :deck count)) "R&D should have 1 card in it")
-      (is (= "Marilyn Campaign" (-> (get-corp) :deck first :title)) "Marilyn Campaign should be in R&D"))))
+      (is (= 1 (-> (get-corp) :hand count)) "HQ should have 1 card in it, after mandatory draw")
+      (is (= "Marilyn Campaign" (-> (get-corp) :hand first :title)) "Marilyn Campaign should be in HQ, after mandatory draw"))))
 
 (deftest mark-yale
   ;; Mark Yale
