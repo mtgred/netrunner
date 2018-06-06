@@ -115,8 +115,8 @@
              moved-card (if (and (= (first (:zone moved-card)) :scored) (card-flag? moved-card :has-abilities-when-stolen true))
                           (merge moved-card {:abilities (:abilities (card-def moved-card))}) moved-card)]
          (if front
-           (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
-           (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
+           (swap! state update-in (cons side dest) #(into [] (cons moved-card (vec %))))
+           (swap! state update-in (cons side dest) #(into [] (conj (vec %) moved-card))))
          (doseq [s [:runner :corp]]
            (if host
              (remove-from-host state side card)
