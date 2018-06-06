@@ -1020,7 +1020,7 @@
      {:advanceable :always
       :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
                      :msg (msg "gain " (if (wonder-sub card 3) "4" "1") " [Credits]")
-                     :effect (effect (gain-credits :corp (if (wonder-sub 3) 4 1)))}
+                     :effect (effect (gain-credits :corp (if (wonder-sub card 3) 4 1)))}
                     {:label "End the run (Search R&D for up to 2 cards and add them to HQ, shuffle R&D, end the run)"
                      :delayed-completion true
                      :effect (req (if (wonder-sub card 3)
