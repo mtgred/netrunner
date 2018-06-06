@@ -950,11 +950,10 @@
                   :label (str "Gain 2 [Credits] (start of turn)")
                   :delayed-completion true
                   :effect (req (gain-credits state :corp 2)
-                               (when (zero? (get-counters (get-card state card) :credit))
+                               (if (zero? (get-counters (get-card state card) :credit))
                                  (trash state :corp eid card {:unpreventable true})
                                  (effect-completed state :corp eid)))}]
      {:effect (effect (add-counter card :credit 8))
-      :flags {:corp-phase-12 (req (= 2 (get-counters card :credit)))}
       :derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
       :trash-effect {:req (req (= :servers (first (:previous-zone card))))
