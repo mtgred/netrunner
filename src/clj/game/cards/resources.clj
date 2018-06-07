@@ -1335,7 +1335,7 @@
     :corp-abilities [{:label "Trash PAD Tap"
                       :cost [:credit 3 :click 1]
                       :req (req (= :corp side))
-                      :effect (effect (system-msg :corp "trashes PAD Tap")
+                      :effect (effect (system-msg :corp "spends [Click] and 3 [Credits] to trash PAD Tap")
                                       (trash :corp card))}]}
 
    "Paige Piper"
