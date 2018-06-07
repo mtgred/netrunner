@@ -522,12 +522,13 @@
         (send-command "move" {:card cardinfo :server server})))))
 
 (defn ability-costs [ab]
-  (when-let [cost (:cost ab)]
-    (str (clojure.string/join
-           ", " (for [c (partition 2 cost)]
-                  (str (case (first c)
-                         "credit" (str (second c) " [" (capitalize (name (first c))) "]")
-                         (clojure.string/join "" (repeat (second c) (str "[" (capitalize (name (first c))) "]"))))))) ": ")))
+  (when-let [costs (:cost ab)]
+    (str (join ", " (for [[cost amount] (partition 2 costs)
+                          :let [cost-symbol (str "[" (capitalize (name cost)) "]")]]
+                      (case cost
+                        "credit" (str amount " " cost-symbol)
+                        (join "" (repeat amount cost-symbol)))))
+         ": ")))
 
 (defn remote->num [server]
   (-> server str (clojure.string/split #":remote") last str->int))
@@ -567,23 +568,6 @@
 
 (defn remote-list [remotes]
   (->> remotes (map first) zones->sorted-names))
-
-(defn card-counter-type [card]
-  (let [counter-type (:counter-type card)]
-    ;; Determine the appropriate type of counter for styling, falling back to
-    ;; power counters when no other type can be inferred.
-    (cond
-      ;; If an installed card contains an annotation, use it.
-      (and (:installed card)
-           (not (nil? counter-type)))
-      counter-type
-      (= "Agenda" (:type card)) "Agenda"
-      ;; Assume uninstalled cards with counters are hosted on Personal
-      ;; Workshop.
-      (not (:installed card)) "Power"
-      (not (:subtype card)) "Power"
-      (> (.indexOf (:subtype card) "Virus") -1) "Virus"
-      :else "Power")))
 
 (defn facedown-card
   "Image element of a facedown card"
