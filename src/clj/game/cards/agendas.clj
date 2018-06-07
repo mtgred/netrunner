@@ -956,6 +956,7 @@
    {:flags {:rd-reveal (req true)}
     :access {:req (req tagged)
              :delayed-completion true
+             :interactive (req true)
              :effect (req (when-completed (as-agenda state side card 1)
                                           (continue-ability state :runner
                                             {:prompt "Quantum Predictive Model was added to the corp's score area"
