@@ -1532,7 +1532,6 @@
         (core/rez state :corp mel)
         (core/gain state :corp :click 10)
         (card-ability state :corp mel 0)
-        (prompt-choice :runner "Yes")
         (is (= (+ credits 1) (:credit (get-runner))) "Runner should gain 1 credit from PAD Tap triggering from Melange Mining Corp. ability")
         (card-ability state :corp mel 0) ;; Triggering Melange a second time
         (is (zero? (-> (get-runner) :prompt count)) "Runner should have no prompts from PAD Tap"))

@@ -1330,16 +1330,8 @@
                              (= 1 (->> (turn-events state :corp :corp-credit-gain)
                                        (remove #(= (first %) :corp-click-credit))
                                        count))))
-              :delayed-completion true
-              :effect
-              (effect (show-wait-prompt :corp "Runner to use PAD Tap")
-                      (continue-ability :runner
-                        {:optional
-                         {:prompt "Gain 1[Credits] from PAD Tap?"
-                          :yes-ability {:msg "gain 1[Credits] from PAD Tap"
-                                        :effect (effect (gain-credits :runner 1))}
-                          :end-effect (effect (clear-wait-prompt :corp))}}
-                        card nil))}}
+              :msg "gain 1[Credits] from PAD Tap"
+              :effect (effect (gain-credits :runner 1))}}
     :corp-abilities [{:label "Trash PAD Tap"
                       :cost [:credit 3 :click 1]
                       :req (req (= :corp side))
