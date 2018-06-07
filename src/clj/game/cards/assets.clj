@@ -42,7 +42,7 @@
                  :once :per-turn
                  :req (req (:corp-phase-12 @state))
                  :label (str "Gain " per-turn " [Credits] (start of turn)")
-                 :effect (req (gain-credits state :corp per-turn)
+                 :effect (req (take-credits state :corp per-turn)
                               (when (zero? (get-counters card :credit))
                                 (trash state :corp card)))}]
     {:effect (effect (add-counter card :credit counters))
@@ -282,7 +282,7 @@
                  :cost [:credit 2]
                  :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
                  :effect (effect (trash card {:cause :ability-cost})
-                                 (gain-credits (get-counters card :credit)))}]
+                                 (take-credits (get-counters card :credit)))}]
     :events {:corp-turn-begins {:req (req (>= (get-counters card :credit) 6))
                                 :effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2[Credits] to C.I. Fund")))}}}
@@ -923,7 +923,7 @@
                  :prompt "How many [Credits]?"
                  :choices {:counter :credit}
                  :msg (msg "gain " target " [Credits]")
-                 :effect (effect (gain-credits target))}]
+                 :effect (effect (take-credits target))}]
     :events {:corp-turn-begins {:effect (effect (add-counter card :credit 2)
                                                 (system-msg (str "adds 2 [Credit] to Long-Term Investment")))}}}
 
@@ -1291,7 +1291,7 @@
     :abilities [{:cost [:click 1]
                  :counter-cost [:credit 2]
                  :msg "gain 2 [Credits]"
-                 :effect (req (gain-credits state :corp 2)
+                 :effect (req (take-credits state :corp 2)
                               (when (zero? (get-counters (get-card state card) :credit))
                                 (trash state :corp card)))}]}
 

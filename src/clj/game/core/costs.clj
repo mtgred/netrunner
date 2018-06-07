@@ -248,6 +248,13 @@
             (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (second r)))
           (deduct state side r)))))
 
+(defn take-credits
+  "Like gain-credits, but does not trigger gain events."
+  [state side amount & args]
+  (when (and amount
+             (pos? amount))
+    (gain state side :credit amount)))
+
 (defn gain-credits
   "Utility function for triggering events"
   [state side amount & args]

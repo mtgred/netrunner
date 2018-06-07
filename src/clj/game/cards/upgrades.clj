@@ -876,7 +876,7 @@
       :msg (msg "gain " (get-counters card :credit) " [Credits]")
       :once :per-turn
       :label "Take all credits"
-      :effect (effect (gain-credits (get-counters card :credit))
+      :effect (effect (take-credits (get-counters card :credit))
                       (set-prop card :counter {:credit 0}))}]}
 
    "Signal Jamming"

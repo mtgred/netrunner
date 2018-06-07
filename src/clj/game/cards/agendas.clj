@@ -314,7 +314,7 @@
 
    "Corporate Sales Team"
    (let [e {:effect (req (when (pos? (get-counters card :credit))
-                           (gain-credits state :corp 1)
+                           (take-credits state :corp 1)
                            (system-msg state :corp (str "uses Corporate Sales Team to gain 1 [Credits]"))
                            (add-counter state side card :credit -1)))}]
      {:effect (effect (add-counter card :credit 10))
@@ -1112,7 +1112,7 @@
                                     :prompt "Gain 3 [Credits] from SSL Endorsement?"
                                     :yes-ability
                                     {:effect (req (when (pos? (get-counters card :credit))
-                                                    (gain-credits state :corp 3)
+                                                    (take-credits state :corp 3)
                                                     (system-msg state :corp (str "uses SSL Endorsement to gain 3 [Credits]"))
                                                     (add-counter state side card :credit -3)))}}}]
      {:effect add-credits
