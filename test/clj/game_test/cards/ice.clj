@@ -508,6 +508,7 @@
       (is (= 1 (count (:discard (get-corp)))) "It's a Trap trashed"))))
 
 (deftest jua
+  ;; Jua
   (testing "Encounter effect - Prevent Runner from installing cards for the rest of the turn"
     (do-game
       (new-game (default-corp ["Jua"])
@@ -550,7 +551,31 @@
         (prompt-select :corp (get-hardware state 0))
         (prompt-card :runner (get-program state 0))
         (is (nil? (get-program state 0)) "Card is uninstalled")
-        (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck")))))
+        (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck"))))
+ (testing "Should only lock installing for Runner, not for both sides"
+    (do-game
+      (new-game (make-deck "Mti Mwekundu: Life Improved" ["Jua" "Kakugo"])
+                (default-runner ["Paperclip"]))
+      (play-from-hand state :corp "Jua" "HQ")
+      (let [mti (get-in @state [:corp :identity])
+            jua (get-ice state :hq 0)]
+        (core/rez state :corp jua)
+        (take-credits state :corp)
+        (trash-from-hand state :runner "Paperclip")
+        (run-on state "HQ")
+        (is (= 1 (get-in @state [:run :position])) "Now approaching Jua")
+        (card-ability state :corp jua 0)
+        (run-continue state)
+        (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
+        (card-ability state :corp mti 0)
+        (prompt-select :corp (find-card "Kakugo" (:hand (get-corp))))
+        (is (= 1 (get-in @state [:run :position])) "Now approaching Kakugo")
+        (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
+        (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (is (empty? (:prompt (get-runner))) "Runner can't install Paperclip because of Jua encounter ability")
+        (run-continue state)
+        (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))))
 
 (deftest kakugo
   ;; Kakugo

@@ -201,12 +201,6 @@
 (defn release-zone [state side cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
-(defn lock-install [state side cid tside]
-  (swap! state update-in [tside :lock-install] #(conj % cid)))
-
-(defn unlock-install [state side cid tside]
-  (swap! state update-in [tside :lock-install] #(remove #{cid} %)))
-
 ;;; Small utilities for card properties.
 (defn in-server?
   "Checks if the specified card is installed in -- and not PROTECTING -- a server"
@@ -312,9 +306,10 @@
 (defn install-locked?
   "Checks if installing is locked"
   [state side]
-  (or (seq (get-in @state [side :lock-install]))
-      (seq (get-in @state [:stack :current-turn :lock-install]))
-      (seq (get-in @state [:stack :persistent :lock-install]))))
+  (let [kw (keyword (str (name side) "-lock-install"))]
+    (or (seq (get-in @state [:stack :current-run kw]))
+        (seq (get-in @state [:stack :current-turn kw]))
+        (seq (get-in @state [:stack :persistent kw])))))
 
 (defn- can-rez-reason
   "Checks if the corp can rez the card.
