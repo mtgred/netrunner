@@ -1193,7 +1193,22 @@
       (prompt-select :corp (find-card "Enigma" (:hand (get-corp))))
       (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
       (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
-      (is (empty? (:hand (get-corp))) "Enigma removed from HQ"))))
+      (is (empty? (:hand (get-corp))) "Enigma removed from HQ")))
+  (testing "with Kakugo, passing shouldn't fire net damage twice. #3588"
+    (do-game
+      (new-game (make-deck "Mti Mwekundu: Life Improved" ["Kakugo"])
+                (default-runner))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (prompt-select :corp (find-card "Kakugo" (:hand (get-corp))))
+      (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
+      (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
+      (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo"))))
 
 (deftest nasir-meidan:-cyber-explorer
   ;; Nasir

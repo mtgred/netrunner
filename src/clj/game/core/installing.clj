@@ -204,7 +204,7 @@
 (defn- corp-install-continue
   "Used by corp-install to actually install the card, rez it if it's supposed to be installed
   rezzed, and calls :corp-install in an awaitable fashion."
-  [state side eid card server {:keys [install-state host-card] :as args} slot cost-str]
+  [state side eid card server {:keys [install-state host-card front] :as args} slot cost-str]
   (let [cdef (card-def card)
         dest-zone (get-in @state (cons :corp slot))
         install-state (or install-state (:install-state cdef))
@@ -218,7 +218,7 @@
 
     (let [moved-card (if host-card
                        (host state side host-card (assoc c :installed true))
-                       (move state side c slot))]
+                       (move state side c slot {:front front}))]
       (when (is-type? c "Agenda")
         (update-advancement-cost state side moved-card))
 
