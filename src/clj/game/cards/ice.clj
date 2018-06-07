@@ -1579,7 +1579,13 @@
    "NEXT Diamond"
    {:rez-cost-bonus (req (- (next-ice-count corp)))
     :subroutines [(do-brain-damage 1)
-                  trash-installed]}
+                  {:prompt "Select a card to trash"
+                   :label "Trash 1 installed Runner card"
+                   :msg (msg "trash " (:title target))
+                   :choices {:req #(and (installed? %)
+                                        (= (:side %) "Runner"))}
+                   :delayed-completion true
+                   :effect (req (trash state side eid target {:cause :subroutine}))}]}
 
    "NEXT Gold"
    {:subroutines [{:label "Do 1 net damage for each rezzed NEXT ice"
