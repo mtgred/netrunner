@@ -1330,12 +1330,13 @@
                              (= 1 (->> (turn-events state :corp :corp-credit-gain)
                                        (remove #(= (first %) :corp-click-credit))
                                        count))))
-              :msg "gain 1[Credits] from PAD Tap"
+              :msg "gain 1 [Credits]"
               :effect (effect (gain-credits :runner 1))}}
     :corp-abilities [{:label "Trash PAD Tap"
                       :cost [:credit 3 :click 1]
                       :req (req (= :corp side))
-                      :effect (effect (trash :corp card))}]}
+                      :effect (effect (system-msg :corp "trashes PAD Tap")
+                                      (trash :corp card))}]}
 
    "Paige Piper"
    (letfn [(pphelper [title cards]
