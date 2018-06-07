@@ -1042,6 +1042,7 @@
                                       (not (and (card-flag? h :untrashable-while-rezzed true)
                                                 (rezzed? h))))
                              (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))
+                                 (unregister-events state side card)
                                  (trash state :runner eid h nil))
                              (effect-completed state side eid))))]
        {:hosting {:req #(and (ice? %) (can-host? %))}
@@ -1051,7 +1052,6 @@
                              :yes-ability {:effect (req (system-msg state :runner "places a virus counter on Trypano")
                                                         (add-counter state side card :virus 1))}}}
                  :counter-added {:delayed-completion true
-                                 :req (req (= (:cid card) (:cid target)))
                                  :effect trash-if-5}
                  :card-moved {:effect trash-if-5
                               :delayed-completion true}
