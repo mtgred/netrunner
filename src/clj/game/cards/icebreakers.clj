@@ -586,10 +586,10 @@
 
    "Faerie"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [(break-sub 0 1 "Sentry" (effect (update! (assoc card :faerie-used true))))
+                    {:abilities [(break-sub 0 1 "Sentry" (effect (update! (assoc-in card [:special :faerie-used] true))))
                                  (strength-pump 1 1)]
-                     :events {:pass-ice {:req (req (:faerie-used card))
-                                         :effect (effect (trash (dissoc card :faerie-used)))}}})
+                     :events {:pass-ice {:req (req (get-in card [:special :faerie-used]))
+                                         :effect (effect (trash card))}}})
 
    "Faust"
    {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
