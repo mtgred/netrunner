@@ -915,7 +915,9 @@
     (do-game
       (new-game (default-corp ["Mwanza City Grid" (qty "Hedge Fund" 5)])
                 (default-runner))
-      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (play-from-hand state :corp "Mwanza City Grid")
+      (is (= #{"R&D" "HQ"} (-> (get-corp) :prompt first :choices set)) "Mwanza can only be installed in root of HQ or R&D")
+      (prompt-choice :corp "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
       (let [mcg (get-content state :hq 0)]

@@ -1361,11 +1361,13 @@
   ;; Pyschokinesis - Terminal Event (end the turn); Look at R&D, install an Asset, Agenda, or Upgrade in a Remote Server
   (do-game
     (new-game (default-corp [(qty "Psychokinesis" 3) "Caprice Nisei" "Adonis Campaign"
-                              "Global Food Initiative"])
+                              "Global Food Initiative" "Mwanza City Grid"])
               (default-runner))
-    (starting-hand state :corp ["Psychokinesis","Psychokinesis","Psychokinesis"])
+    (starting-hand state :corp ["Psychokinesis" "Psychokinesis" "Psychokinesis"])
     ;; Test installing an Upgrade
     (play-from-hand state :corp "Psychokinesis")
+    (is (not-any? #{"Mwanza City Grid"} (map :title (-> (get-corp) :prompt first :choices)))
+        "Mwanza City Grid is not on the list of installable cards")
     (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
     (prompt-choice :corp "New remote")
     (is (= "Caprice Nisei" (:title (get-content state :remote1 0)))
