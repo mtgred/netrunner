@@ -360,7 +360,7 @@
                  :delayed-completion true
                  :effect (effect (continue-ability
                                    {:prompt "Choose a server"
-                                    :choices (butlast (server-list state side))
+                                    :choices (server-list state)
                                     :msg (msg "move to " target)
                                     :effect (req (let [c (move state side card
                                                                (conj (server->zone state target) :content))]
