@@ -368,9 +368,13 @@
                       (continue-ability trash-from-hq card nil))})
 
    "Diversified Portfolio"
-   {:msg (msg "gain " (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))
-              " [Credits]")
-    :effect (effect (gain-credits (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
+   (letfn [(number-of-non-empty-remotes [state]
+             (count (filter #(not (empty? %))
+                            (map #(:content (second %))
+                                 (get-remotes state)))))]
+     {:msg (msg "gain " (number-of-non-empty-remotes state)
+                " [Credits]")
+      :effect (effect (gain-credits (number-of-non-empty-remotes state)))})
 
    "Door to Door"
    {:events {:runner-turn-begins
@@ -999,7 +1003,7 @@
    "Priority Construction"
    (letfn [(install-card [chosen]
             {:prompt "Select a remote server"
-             :choices (req (conj (vec (get-remote-names @state)) "New remote"))
+             :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :delayed-completion true
              :effect (effect (corp-install (assoc chosen :advance-counter 3) target {:no-install-cost true}))})]
      {:delayed-completion true
@@ -1049,7 +1053,7 @@
                            (clear-wait-prompt state :runner))})
             (install-card [chosen]
              {:prompt "Select a remote server"
-              :choices (req (conj (vec (get-remote-names @state)) "New remote"))
+              :choices (req (conj (vec (get-remote-names state)) "New remote"))
               :delayed-completion true
               :effect (effect (clear-wait-prompt :runner)
                               (corp-install (move state side chosen :play-area) target))})]

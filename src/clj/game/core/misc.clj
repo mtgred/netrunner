@@ -3,17 +3,17 @@
 (declare set-prop get-nested-host get-nested-zone all-active-installed)
 
 (defn get-zones [state]
-  (keys (get-in state [:corp :servers])))
+  (keys (get-in @state [:corp :servers])))
 
 (defn get-remote-zones [state]
   (filter is-remote? (get-zones state)))
 
 (defn get-runnable-zones [state]
-  (let [restricted-zones (keys (get-in state [:runner :register :cannot-run-on-server]))]
+  (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))]
     (remove (set restricted-zones) (get-zones state))))
 
 (defn get-remotes [state]
-  (select-keys (get-in state [:corp :servers]) (get-remote-zones state)))
+  (select-keys (get-in @state [:corp :servers]) (get-remote-zones state)))
 
 (defn get-remote-names [state]
   (zones->sorted-names (get-remote-zones state)))
