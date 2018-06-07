@@ -756,8 +756,8 @@
     :effect (req (gain state :runner :hand-size {:mod (:tag runner)})
                  (add-watch state :obelus
                    (fn [k ref old new]
-                     (let [tagnew (get-in new [:runner :tag])
-                           tagold (get-in old [:runner :tag])]
+                     (let [tagnew (get-in new [:runner :tag] 0)
+                           tagold (get-in old [:runner :tag] 0)]
                        (when (> tagnew tagold)
                          (gain state :runner :hand-size {:mod (- tagnew tagold)}))
                        (when (< tagnew tagold)
