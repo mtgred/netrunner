@@ -133,7 +133,7 @@
          (not (turn-flag? state side card :can-install-ice)))
     :ice
     ;; Installing not locked
-    (install-locked? state side) :lock-install
+    (install-locked? state :corp) :lock-install
     ;; no restrictions
     :default true))
 
@@ -337,7 +337,7 @@
            (some #(has-subtype? % "Console") (all-active-installed state :runner)))
       :console
       ;; Installing not locked
-      (install-locked? state side) :lock-install
+      (install-locked? state :runner) :lock-install
       ;; Uniqueness check
       (and uniqueness (in-play? state card)) :unique
       ;; Req check
@@ -401,7 +401,7 @@
   ([state side card params] (runner-install state side (make-eid state) card params))
   ([state side eid card {:keys [host-card facedown no-mu] :as params}]
    (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
-            (not (seq (get-in @state [:runner :lock-install]))))
+            (not (install-locked? state :runner)))
      (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
        (continue-ability state side
                          {:choices hosting

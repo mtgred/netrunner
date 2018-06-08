@@ -199,7 +199,7 @@
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice ice-type)
-                                       (not (install-locked? state side))))
+                                       (not (install-locked? state :runner))))
                         :delayed-completion true
                         :effect (effect (continue-ability
                                           {:optional {:req (req (and (not-any? #(= title (:title %)) (all-active-installed state :runner))

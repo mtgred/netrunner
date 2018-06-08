@@ -1154,7 +1154,7 @@
    "Jua"
    {:implementation "Encounter effect is manual"
     :abilities [{:msg "prevent the Runner from installing cards for the rest of the turn"
-                 :effect (effect (register-turn-flag! card :lock-install (constantly true)))}]
+                 :effect (effect (register-turn-flag! card :runner-lock-install (constantly true)))}]
     :subroutines [{:label "Choose 2 installed Runner cards, if able. The Runner must add 1 of those to the top of the Stack."
                    :req (req (>= (count (all-installed state :runner)) 2))
                    :delayed-completion true
