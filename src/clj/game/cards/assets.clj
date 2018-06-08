@@ -119,7 +119,7 @@
                                                                       (quantify prevented "random card")
                                                                       " in HQ from being shuffled into R&D")))
                                                    (shuffle-into-deck state :corp :hand)))
-                                    :end-effect (effect (clear-wait-prompt state :corp))}
+                                    :end-effect (effect (clear-wait-prompt :corp))}
                                    card nil))}]}
 
    "Alix T4LB07"

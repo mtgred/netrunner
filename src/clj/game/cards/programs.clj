@@ -51,7 +51,7 @@
                                                     (and (ice? %)
                                                          (can-host? %)
                                                          (= (last (:zone %)) :ices)
-                                                         (not (some (fn [c] (has-subtype? c :subtype "Caïssa"))
+                                                         (not (some (fn [c] (has-subtype? c "Caïssa"))
                                                                     (:hosted %)))))}
                                   :msg (msg "host it on " (card-str state target))
                                   :effect (effect (host target card))} card nil)))}]
