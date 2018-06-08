@@ -220,7 +220,8 @@
                        :corp
                        {:optional
                         {:prompt "Give the runner 1 tag?"
-                         :yes-ability {:msg (str "give the Runner a tag for " kind)
+                         :yes-ability {:delayed-completion true
+                                       :msg (str "give the Runner a tag for " kind)
                                        :effect (req (swap! state assoc-in [:per-turn (:cid card)] true)
                                                     (tag-runner state :runner eid 1))}
                          :end-effect (effect (clear-wait-prompt :runner))}}
