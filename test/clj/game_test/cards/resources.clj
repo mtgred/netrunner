@@ -1620,6 +1620,32 @@
         (core/end-phase-12 state :runner nil)
         (is (empty? (:prompt (get-runner))) "No second prompt for Patron - used already")))))
 
+(deftest power-tap
+  ;; Power Tap
+  (do-game
+    (new-game (default-corp ["Restructured Datapool"])
+              (default-runner ["Power Tap"]))
+    (play-and-score state "Restructured Datapool")
+    (let [agenda (get-scored state :corp 0)
+          tags (:tag (get-runner))
+          credits (:credit (get-runner))]
+      (card-ability state :corp agenda 0)
+      (is (= credits (:credit (get-runner))) "Runner shouldn't gain any credits from trace")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= (+ tags 1) (:tag (get-runner))) "Runner should gain 1 tag from losing trace"))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Power Tap")
+    (take-credits state :runner)
+    (let [agenda (get-scored state :corp 0)
+          tags (:tag (get-runner))
+          credits (:credit (get-runner))]
+      (card-ability state :corp agenda 0)
+      (is (= (+ credits 1) (:credit (get-runner))) "Runner should gain 1 credit from trace initiation")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= (+ tags 1) (:tag (get-runner))) "Runner should gain 1 tag from losing trace"))))
+
 (deftest professional-contacts
   ;; Professional Contacts - Click to gain 1 credit and draw 1 card
   (do-game
