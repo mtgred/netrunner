@@ -1697,6 +1697,42 @@
     (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
 
+(deftest on-the-lam
+  ;; On the Lam
+  (testing "vs tags"
+    (do-game
+      (new-game (default-corp ["SEA Source"])
+                (default-runner ["Daily Casts" "On the Lam"]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "On the Lam")
+      (prompt-select :runner (get-resource state 0))
+      (run-empty-server state "Archives")
+      (take-credits state :runner)
+      (play-from-hand state :corp "SEA Source")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (card-ability state :runner (-> (get-resource state 0) :hosted first) 0)
+      (prompt-choice :runner "Done")
+      (is (zero? (:tag (get-runner))) "Runner should avoid tag")
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap")))
+  (testing "vs damage"
+    (do-game
+      (new-game (default-corp ["Show of Force"])
+                (default-runner ["Daily Casts" "On the Lam"]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "On the Lam")
+      (prompt-select :runner (get-resource state 0))
+      (take-credits state :runner)
+      (play-and-score state "Show of Force")
+      (card-ability state :runner (-> (get-resource state 0) :hosted first) 1)
+      (prompt-choice :runner "Done")
+      (is (zero? (:tag (get-runner))) "Runner should avoid all meat damage")
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap"))))
+
 (deftest out-of-the-ashes
   ;; Out of the Ashes - ensure card works when played/trashed/milled
   (do-game
