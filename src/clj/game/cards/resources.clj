@@ -1962,8 +1962,9 @@
                                (access-bonus state side 1))}]}
 
    "Theophilius Bagbiter"
-   {:effect (req (lose-credits :runner :all)
+   {:effect (req (lose-credits state :runner :all)
                  (lose state :runner :run-credit :all)
+                 (swap! state assoc-in [:runner :hand-size :base] 0)
                  (add-watch state :theophilius-bagbiter
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
