@@ -227,6 +227,7 @@
                          :end-effect (effect (clear-wait-prompt :runner))}}
                        card nil)))]
     {:events {:play-event {:req (req (and (first-event? state :runner :run)
+                                          (has-subtype? target "Run")
                                           (not (used-this-turn? (:cid card) state))))
                            :delayed-completion true
                            :effect (ability "playing a run event")}
