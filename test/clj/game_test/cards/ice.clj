@@ -1141,7 +1141,9 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (is (= 4 (:current-strength (refresh sab))) "+2 strength for 2 pieces of ICE")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 5 (:current-strength (refresh sab))) "+3 strength for 3 pieces of ICE"))))
+      (is (= 5 (:current-strength (refresh sab))) "+3 strength for 3 pieces of ICE")
+      (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (is (= 4 (:current-strength (refresh sab))) "+2 strength for 2 pieces of ICE"))))
 
 (deftest self-adapting-code-wall
   ;; Self-Adapting Code Wall
@@ -1316,7 +1318,9 @@
       (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
       (prompt-choice :corp 0)
       (prompt-choice :runner 6)
-      (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6"))))
+      (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6")
+      (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
 
 (deftest tithonium
   ;; Forfeit option as rez cost, can have hosted condition counters

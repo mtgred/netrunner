@@ -1870,16 +1870,14 @@
     :subroutines [(tag-trace advance-counters)]}
 
    "Seidr Adaptive Barrier"
-   {:effect (req (let [srv (second (:zone card))]
-                   (add-watch state (keyword (str "sab" (:cid card)))
-                              (fn [k ref old new]
-                                (let [ices (count (get-in new [:corp :servers srv :ices]))]
-                                  (when (not= (count (get-in old [:corp :servers srv :ices])) ices)
-                                    (update! ref side (assoc (get-card ref card) :strength-bonus ices))
-                                    (update-ice-strength ref side (get-card ref card))))))))
-    :strength-bonus (req (count (:ices (card->server state card))))
-    :leave-play (req (remove-watch state (keyword (str "sab" (:cid card)))))
-    :subroutines [end-the-run]}
+   (let [recalculate-strength (req (update-ice-strength state side (get-card state card)))
+         recalc-event {:req (req (= (:zone target) (:zone card)))
+                       :effect recalculate-strength}]
+     {:effect recalculate-strength
+      :strength-bonus (req (count (:ices (card->server state card))))
+      :subroutines [end-the-run]
+      :events {:card-moved recalc-event
+               :corp-install recalc-event}})
 
    "Self-Adapting Code Wall"
    {:subroutines [end-the-run]
@@ -1973,22 +1971,20 @@
    {:subroutines [end-the-run]}
 
    "Surveyor"
-   (let [x (req (* 2 (count (:ices (card->server state card)))))]
-     {:effect (req (let [srv (second (:zone card))]
-                     (add-watch state (keyword (str "surveyor" (:cid card)))
-                                (fn [k ref old new]
-                                  (let [ices (count (get-in new [:corp :servers srv :ices]))]
-                                    (when (not= (count (get-in old [:corp :servers srv :ices])) ices)
-                                      (update! ref side (assoc (get-card ref card) :strength-bonus ices))
-                                      (update-ice-strength ref side (get-card ref card))))))))
-      :leave-play (req (remove-watch state (keyword (str "surveyor" (:cid card)))))
+   (let [x (req (* 2 (count (:ices (card->server state card)))))
+         recalculate-strength (req (update-ice-strength state side (get-card state card)))
+         recalc-event {:req (req (= (:zone target) (:zone card)))
+                       :effect recalculate-strength}]
+     {:effect recalculate-strength
       :strength-bonus x
       :subroutines [{:label "Trace X - Give the Runner 2 tags"
                      :trace {:base x
                              :successful (give-tags 2)}}
                     {:label "Trace X - End the run"
                      :trace {:base x
-                             :successful end-the-run}}]})
+                             :successful end-the-run}}]
+      :events {:card-moved recalc-event
+               :corp-install recalc-event}})
 
    "Susanoo-no-Mikoto"
    {:subroutines [{:req (req (not= (:server run) [:discard]))
