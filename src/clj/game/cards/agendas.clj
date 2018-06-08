@@ -214,16 +214,28 @@
         :interactive (req true)}))
 
    "Better Citizen Program"
-   {:events {:play-event {:req (req (first-event? state :runner :run))
-                          :delayed-completion true
-                          :msg "give the Runner a tag for playing a run event"
-                          :effect (effect (tag-runner :runner eid 1))}
-             :runner-install {:silent (req true)
-                              :req (req (and (has-subtype? target "Icebreaker")
-                                             (first-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))))
-                              :delayed-completion true
-                              :msg "give the Runner a tag for installing an icebreaker"
-                              :effect (effect (tag-runner :runner eid 1))}}}
+   (letfn [(ability [kind]
+             (effect (show-wait-prompt :runner "Corp to use Better Citizen Program")
+                     (continue-ability
+                       :corp
+                       {:optional
+                        {:prompt "Give the runner 1 tag?"
+                         :yes-ability {:delayed-completion true
+                                       :msg (str "give the Runner a tag for " kind)
+                                       :effect (req (swap! state assoc-in [:per-turn (:cid card)] true)
+                                                    (tag-runner state :runner eid 1))}
+                         :end-effect (effect (clear-wait-prompt :runner))}}
+                       card nil)))]
+    {:events {:play-event {:req (req (and (first-event? state :runner :run)
+                                          (not (used-this-turn? (:cid card) state))))
+                           :delayed-completion true
+                           :effect (ability "playing a run event")}
+              :runner-install {:silent (req true)
+                               :req (req (and (has-subtype? target "Icebreaker")
+                                              (first-event? state :runner :runner-install #(has-subtype? (first %) "Icebreaker"))
+                                              (not (used-this-turn? (:cid card) state))))
+                               :delayed-completion true
+                               :effect (ability "installing an icebreaker")}}})
 
    "Bifrost Array"
    {:req (req (not (empty? (filter #(not= (:title %)
