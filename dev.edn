@@ -11,6 +11,7 @@
          :cookie     {:http-only true
                       :max-age   5184000                    ; 60 days
                       }}
+ :chat  {:max-length 144}
  :web   {:port 1042}
  :email {:host nil
          :user nil
