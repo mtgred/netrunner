@@ -188,8 +188,8 @@
      (gain state side :click (get-in @state [side :click-per-turn]))
      (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
                      (do (when (= side :corp)
-                           (draw state side)
-                           (trigger-event-simult state side eid :corp-mandatory-draw nil nil))
+                           (when-completed (draw state side 1 nil)
+                                           (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
 
                          (cond
 

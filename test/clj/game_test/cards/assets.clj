@@ -739,6 +739,7 @@
       (prompt-select :corp (find-card "Resistor" (:hand (get-corp))))
       (prompt-select :corp (find-card "Product Placement" (:hand (get-corp))))
       (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
+      (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
       (is (= 2 (count (:hand (get-corp)))))
       (is (= "Hedge Fund" (:title (first (:hand (get-corp))))))
       (is (= "Jackson Howard" (:title (second (:hand (get-corp))))))
@@ -795,7 +796,24 @@
       (core/rez state :corp (get-content state :remote1 0))
       (core/draw state :corp)
       (is (= 1 (count (:hand (get-corp)))) "DBS did not fire on manual draw")
-      (is (empty? (:prompt (get-corp))) "Corp is not being asked to bury a card with DBS"))))
+      (is (empty? (:prompt (get-corp))) "Corp is not being asked to bury a card with DBS")))
+  (testing "Fire on Runner turn"
+    (do-game
+      (new-game (default-corp ["Daily Business Show" "Hedge Fund"
+                               "Resistor" "Product Placement" "Breaking News"])
+                (default-runner ["Fisk Investment Seminar"]))
+      (starting-hand state :corp ["Daily Business Show"])
+      (play-from-hand state :corp "Daily Business Show" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (is (empty? (:hand (get-corp))) "Corp hand is empty")
+      (play-from-hand state :runner "Fisk Investment Seminar")
+      (is (= 4 (count (:hand (get-corp)))) "Drew an additional card from FIS")
+      (is (not-empty (:prompt (get-runner))) "Runner is waiting for Corp to use DBS")
+      (prompt-select :corp (find-card "Resistor" (:hand (get-corp))))
+      (is (empty? (:prompt (get-runner))) "Runner prompt cleared")
+      (is (= 3 (count (:hand (get-corp))))))))
+
 
 (deftest dedicated-response-team
   ;; Dedicated Response Team - Do 2 meat damage when successful run ends if Runner is tagged

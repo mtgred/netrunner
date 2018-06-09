@@ -468,16 +468,17 @@
                                                     (all-installed state :corp)))
                                  drawn (get-in @state [:corp :register :most-recent-drawn])]
                              (show-wait-prompt state :runner "Corp to use Daily Business Show")
-                             (continue-ability
-                               state side
-                               {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
-                                :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
-                                :choices {:max dbs
-                                          :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
-                                :effect (req (doseq [c targets]
-                                               (move state side c :deck)))
-                                :end-effect (effect (clear-wait-prompt :runner))}
-                               card targets)))}}}
+                             (when-completed (resolve-ability
+                                               state side
+                                               {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
+                                                :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
+                                                :choices {:max dbs
+                                                          :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
+                                                :effect (req (doseq [c targets]
+                                                               (move state side c :deck)))}
+                                               card targets)
+                                             (do (clear-wait-prompt state :runner)
+                                                 (effect-completed state side eid card)))))}}}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged)
