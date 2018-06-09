@@ -20,7 +20,9 @@
 
 (defn- insert-msg [{{{:keys [username emailhash]} :user} :ring-req
                     {:keys [:channel :msg]} :?data :as event}]
-  (when (and (not (s/blank? msg))
+  (when (and username
+             emailhash
+             (not (s/blank? msg))
              (<= (count msg) (:max-length chat-config 144)))
     (let [message {:emailhash emailhash
                    :username  username
