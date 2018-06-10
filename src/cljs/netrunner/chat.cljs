@@ -53,6 +53,18 @@
     (non-game-toast (str "Blocked user " blocked-user ". Refresh browser to update.") "success" nil)
     (non-game-toast "Failed to block user" "error" nil)))
 
+(defn- delete-message
+  [owner message]
+  (authenticated
+   (fn [user]
+     (ws/ws-send! [:chat/delete-msg {:msg message}]))))
+
+(defn- delete-all-messages
+  [owner username]
+  (authenticated
+   (fn [user]
+     (ws/ws-send! [:chat/delete-all {:sender username}]))))
+
 (defn block-user
   [owner blocked-user]
   (authenticated
@@ -119,6 +131,14 @@
                (when (not my-msg)
                  [:div.panel.blue-shade.block-menu
                   {:ref "user-msg-buttons"}
+                  (when (or (:isadmin user) (:ismoderator user))
+                    [:div {:on-click #(do
+                                        (delete-message owner message)
+                                        (hide-block-menu owner))} "Delete Message"])
+                  (when (or (:isadmin user) (:ismoderator user))
+                    [:div {:on-click #(do
+                                        (delete-all-messages owner (:username message))
+                                        (hide-block-menu owner))} "Delete All Messages From User"])
                   [:div {:on-click #(do
                                       (block-user owner (:username message))
                                       (hide-block-menu owner))} "Block User"]

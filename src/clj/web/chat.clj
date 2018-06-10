@@ -13,9 +13,10 @@
   (:import org.bson.types.ObjectId))
 
 (defonce chat-config (:chat server-config))
+(def msg-collection "messages")
 
 (defn messages-handler [{{:keys [channel]} :params}]
-  (response 200 (reverse (q/with-collection db "messages"
+  (response 200 (reverse (q/with-collection db msg-collection
                                             (q/find {:channel channel})
                                             (q/sort (array-map :date -1))
                                             (q/limit 100)))))
@@ -25,7 +26,7 @@
   (let [window (:rate-window chat-config 60)
         start-date (c/to-date (t/plus (t/now) (t/seconds (- window))))
         max-cnt (:rate-cnt chat-config 10)
-        msg-cnt (mc/count db "messages" {:username username :date {"$gt" start-date}})]
+        msg-cnt (mc/count db msg-collection {:username username :date {"$gt" start-date}})]
     (< msg-cnt max-cnt)))
 
 (defn- insert-msg [{{{:keys [username emailhash]} :user} :ring-req
@@ -40,7 +41,7 @@
                    :msg       msg
                    :channel   channel
                    :date      (java.util.Date.)}]
-      (mc/insert db "messages" message)
+      (mc/insert db msg-collection message)
       message)))
 
 (defn broadcast-msg
@@ -48,6 +49,23 @@
   (when-let [msg (insert-msg arg)]
     (ws/broadcast! :chat/message msg)))
 
-(ws/register-ws-handler!
-  :chat/say broadcast-msg)
+(defn- delete-msg [{{{:keys [username isadmin ismoderator]} :user} :ring-req
+                    {:keys [msg]} :?data :as event}]
+  (when-let [id (:_id msg)]
+    (when (or isadmin ismoderator)
+      (println username "deleted message" msg "\n")
+      (mc/remove-by-id db msg-collection (ObjectId. id)))))
+
+(defn- delete-all-msg [{{{:keys [username isadmin ismoderator]} :user} :ring-req
+                        {:keys [sender]} :?data :as event}]
+  (println event)
+  (when (and sender
+             (or isadmin ismoderator))
+      (println username "deleted all messages from" sender "\n")
+      (mc/remove db msg-collection {:username sender})))
+
+(ws/register-ws-handlers!
+  :chat/say broadcast-msg
+  :chat/delete-msg delete-msg
+  :chat/delete-all delete-all-msg)
 
