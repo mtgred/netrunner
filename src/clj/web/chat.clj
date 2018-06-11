@@ -30,18 +30,25 @@
         msg-cnt (mc/count db msg-collection {:username username :date {"$gt" start-date}})]
     (< msg-cnt max-cnt)))
 
-(def bad-words
-  (->> (slurp "resources/public/chat/bad-words.txt")
-       (s/split-lines)
-       (s/join "|")
-       (str "(?i)")))
+(let [alpha (into #{} "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+      rot13-map (->> (cycle alpha)
+                     (drop 26)
+                     (take 52)
+                     (zipmap alpha))]
+  (defn- rot13 [in]
+    (apply str (map #(get rot13-map % %) in))))
 
-(defn- has-banned-words
-  [msg]
-  (re-find (re-pattern bad-words) msg))
+(let [banned-words (->> (slurp "resources/public/chat/banned-words.txt")
+                        (s/split-lines)
+                        (s/join "|")
+                        (str "(?i)"))]
+  (defn- has-banned-words
+    [msg]
+    (re-find (re-pattern banned-words) (rot13 msg))))
 
-(defn- insert-msg [{{{:keys [username emailhash]} :user} :ring-req
-                    {:keys [:channel :msg]} :?data :as event}]
+(defn- insert-msg
+  [{{{:keys [username emailhash]} :user} :ring-req
+    {:keys [:channel :msg]} :?data :as event}]
   (when (and username
              emailhash
              (not (s/blank? msg))
