@@ -1086,6 +1086,17 @@
     (play-from-hand state :corp "Mass Commercialization")
     (is (= 8 (:credit (get-corp))) "Gained 6 for 3 advanced ice from Mass Commercialization")))
 
+(deftest medical-research-fundraiser
+  ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds
+  (do-game
+    (new-game (default-corp ["Medical Research Fundraiser"])
+              (default-runner))
+    (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+    (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+    (play-from-hand state :corp "Medical Research Fundraiser")
+    (is (= 10 (:credit (get-corp))) "Corp gains 8 credits")
+    (is (= 8 (:credit (get-runner))) "Runner gains 3 credits")))
+
 (deftest midseason-replacements
   ;; Midseason Replacements - Trace to give Runner tags after they steal an agenda
   (do-game

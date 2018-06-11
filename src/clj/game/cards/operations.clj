@@ -815,7 +815,7 @@
 
    "Medical Research Fundraiser"
    {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
-    :effect (effect (gain-credits 8) (gain :runner 3))}
+    :effect (effect (gain-credits 8) (gain-credits :runner 3))}
 
    "Midseason Replacements"
    {:req (req (last-turn? state :runner :stole-agenda))
