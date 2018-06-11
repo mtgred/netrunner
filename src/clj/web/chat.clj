@@ -30,11 +30,22 @@
         msg-cnt (mc/count db msg-collection {:username username :date {"$gt" start-date}})]
     (< msg-cnt max-cnt)))
 
+(def bad-words
+  (->> (slurp "resources/public/chat/bad-words.txt")
+       (s/split-lines)
+       (s/join "|")
+       (str "(?i)")))
+
+(defn- check-banned-words
+  [msg]
+  (not (re-find (re-pattern bad-words) msg)))
+
 (defn- insert-msg [{{{:keys [username emailhash]} :user} :ring-req
                     {:keys [:channel :msg]} :?data :as event}]
   (when (and username
              emailhash
              (not (s/blank? msg))
+             (check-banned-words msg)
              (<= (count msg) (:max-length chat-config 144))
              (within-rate-limit username))
     (let [message {:emailhash emailhash
