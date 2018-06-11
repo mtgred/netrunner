@@ -54,18 +54,18 @@
   (when-let [id (:_id msg)]
     (when (or isadmin ismoderator)
       (println username "deleted message" msg "\n")
-      (mc/remove-by-id db msg-collection (ObjectId. id)))))
+      (mc/remove-by-id db msg-collection (ObjectId. id))
+      (ws/broadcast! :chat/delete-msg msg))))
 
 (defn- delete-all-msg [{{{:keys [username isadmin ismoderator]} :user} :ring-req
                         {:keys [sender]} :?data :as event}]
-  (println event)
   (when (and sender
              (or isadmin ismoderator))
-      (println username "deleted all messages from" sender "\n")
-      (mc/remove db msg-collection {:username sender})))
+      (println username "deleted all messages from user" sender "\n")
+      (mc/remove db msg-collection {:username sender})
+      (ws/broadcast! :chat/delete-all {:username sender})))
 
 (ws/register-ws-handlers!
   :chat/say broadcast-msg
   :chat/delete-msg delete-msg
   :chat/delete-all delete-all-msg)
-

@@ -16,10 +16,12 @@
 (enable-console-print!)
 
 (def chat-channel (chan))
+(def delete-msg-channel (chan))
+(def delete-all-channel (chan))
 
-(ws/register-ws-handler!
-  :chat/message
-  (partial put! chat-channel))
+(ws/register-ws-handler! :chat/message (partial put! chat-channel))
+(ws/register-ws-handler! :chat/delete-msg (partial put! delete-msg-channel))
+(ws/register-ws-handler! :chat/delete-all (partial put! delete-all-channel))
 
 (defn current-block-list
   []
@@ -35,11 +37,30 @@
   [channel messages]
   (swap! app-state assoc-in [:channels channel] (filter-blocked-messages messages)))
 
+(defn filter-message-channel
+  [channel k v]
+  (let [messages (get-in @app-state [:channels channel])
+        filtered (remove #(= v (k %)) messages)]
+    (update-message-channel channel filtered)))
+
 (go (while true
       (let [msg (<! chat-channel)
             ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
         (update-message-channel ch (reverse (conj (reverse messages) msg))))))
+
+(go (while true
+      (let [msg (<! delete-msg-channel)
+            ch (keyword (:channel msg))
+            id (:_id msg)]
+        (filter-message-channel ch :_id id))))
+
+(go (while true
+      (let [msg (<! delete-all-channel)
+            username (:username msg)
+            channels (keys (:channels @app-state))]
+        (doseq [ch channels]
+          (filter-message-channel ch :username username)))))
 
 (defn non-game-toast
   "Display a toast warning with the specified message."
