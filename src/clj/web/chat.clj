@@ -14,6 +14,7 @@
 
 (defonce chat-config (:chat server-config))
 (def msg-collection "messages")
+(def log-collection "moderator_actions")
 
 (defn messages-handler [{{:keys [channel]} :params}]
   (response 200 (reverse (q/with-collection db msg-collection
@@ -55,6 +56,11 @@
     (when (or isadmin ismoderator)
       (println username "deleted message" msg "\n")
       (mc/remove-by-id db msg-collection (ObjectId. id))
+      (mc/insert db log-collection
+                 {:moderator username
+                  :action :delete-message
+                  :date (java.util.Date.)
+                  :msg msg})
       (ws/broadcast! :chat/delete-msg msg))))
 
 (defn- delete-all-msg [{{{:keys [username isadmin ismoderator]} :user} :ring-req
@@ -63,6 +69,11 @@
              (or isadmin ismoderator))
       (println username "deleted all messages from user" sender "\n")
       (mc/remove db msg-collection {:username sender})
+      (mc/insert db log-collection
+                 {:moderator username
+                  :action :delete-all-messages
+                  :date (java.util.Date.)
+                  :sender sender})
       (ws/broadcast! :chat/delete-all {:username sender})))
 
 (ws/register-ws-handlers!
