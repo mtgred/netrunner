@@ -41,9 +41,9 @@
                    :username  username
                    :msg       msg
                    :channel   channel
-                   :date      (java.util.Date.)}]
-      (mc/insert db msg-collection message)
-      message)))
+                   :date      (java.util.Date.)}
+          inserted (mc/insert-and-return db msg-collection message)]
+      (update inserted :_id str))))
 
 (defn broadcast-msg
   [arg]
