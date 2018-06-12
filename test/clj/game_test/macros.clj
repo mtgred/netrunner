@@ -34,7 +34,8 @@
                                   (= ~'type (-> @~'state ~'side :prompt first :prompt-type))))
 
          ~'prompt-map (fn [side#] (first (get-in @~'state [side# :prompt])))
-         ~'prompt-titles (fn [side#] (map #(:title %) (:choices (~'prompt-map side#))))]
+         ~'prompt-titles (fn [side#] (map #(:title %) (:choices (~'prompt-map side#))))
+         ~'prompt? (fn [~'side] (-> @~'state ~'side :prompt first))]
      ~@body))
 
 (defmacro deftest-pending [name & body]
