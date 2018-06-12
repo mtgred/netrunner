@@ -38,13 +38,20 @@
   (defn- rot13 [in]
     (apply str (map #(get rot13-map % %) in))))
 
-(let [banned-words (->> (slurp "resources/public/chat/banned-words.txt")
-                        (s/split-lines)
-                        (s/join "|")
-                        (str "(?i)"))]
-  (defn- has-banned-words
-    [msg]
-    (re-find (re-pattern banned-words) (rot13 msg))))
+(def banned-words "")
+
+(defn- get-banned-words []
+  (when (empty? banned-words)
+    (def banned-words
+      (->> (slurp "data/banned-words.txt")
+           (s/split-lines)
+           (s/join "|")
+           (str "(?i)"))))
+  banned-words)
+
+(defn- has-banned-words?
+  [msg]
+  (re-find (re-pattern (get-banned-words)) (rot13 msg)))
 
 (defn- insert-msg
   [{{{:keys [username emailhash]} :user} :ring-req
@@ -52,7 +59,7 @@
   (when (and username
              emailhash
              (not (s/blank? msg))
-             (not (has-banned-words msg))
+             (not (has-banned-words? msg))
              (<= (count msg) (:max-length chat-config 144))
              (within-rate-limit username))
     (let [message {:emailhash emailhash
