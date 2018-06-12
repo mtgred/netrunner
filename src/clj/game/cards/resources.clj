@@ -1906,13 +1906,13 @@
                                         (:hosted card)))
                    :choices {:req #(and (= "The Supplier" (:title (:host %)))
                                         (= "Runner" (:side %)))}
+                   :once :per-turn
                    :effect (req
                              (runner-can-install? state side target nil)
                              (when (and (can-pay? state side nil (modified-install-cost state side target [:credit -2]))
                                            (not (and (:uniqueness target) (in-play? state target))))
                                   (install-cost-bonus state side [:credit -2])
                                   (runner-install state side target)
-                                  :once :per-turn
                                   (system-msg state side (str "uses The Supplier to install " (:title target) " lowering its install cost by 2"))
                                   (update! state side (-> card
                                                           (assoc :supplier-installed (:cid target))
@@ -1962,8 +1962,9 @@
                                (access-bonus state side 1))}]}
 
    "Theophilius Bagbiter"
-   {:effect (req (lose-credits :runner :all)
+   {:effect (req (lose-credits state :runner :all)
                  (lose state :runner :run-credit :all)
+                 (swap! state assoc-in [:runner :hand-size :base] 0)
                  (add-watch state :theophilius-bagbiter
                             (fn [k ref old new]
                               (let [credit (get-in new [:runner :credit])]
