@@ -308,6 +308,16 @@
         (+ (get-in @state [:bonus :trash] 0))
         (max 0))))
 
+(defn modified-trash-cost
+  "Returns the numbe of credits required to trash the given card, after modification effects.
+  Allows cards like Product Recall to pre-calculate trash costs without manually triggering the effects."
+  [state side card]
+  (swap! state update-in [:bonus] dissoc :trash)
+  (trigger-event state side :pre-trash card)
+  (let [tcost (trash-cost state side card)]
+    (swap! state update-in [:bonus] dissoc :trash)
+    tcost))
+
 (defn install-cost-bonus [state side n]
   (swap! state update-in [:bonus :install-cost] #(merge-costs (concat % n))))
 

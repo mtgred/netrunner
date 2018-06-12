@@ -34,8 +34,7 @@
 
 ;;; Card definitions
 (def card-definitions
-  {
-   "419: Amoral Scammer"
+  {"419: Amoral Scammer"
    {:events {:corp-install
              {:delayed-completion true
               :req (req (and (first-event? state :corp :corp-install)
@@ -499,10 +498,8 @@
       :abilities [ability]})
 
    "Industrial Genomics: Growing Solutions"
-   {:events
-    {:pre-trash
-     {:effect
-      (effect (trash-cost-bonus (count (remove #(:seen %) (:discard corp)))))}}}
+   {:events {:pre-trash {:effect (effect (trash-cost-bonus
+                                           (count (remove #(:seen %) (:discard corp)))))}}}
 
    "Information Dynamics: All You Need To Know"
    {:events (let [inf {:req (req (and (not (:disabled card))

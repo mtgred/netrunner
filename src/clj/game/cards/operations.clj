@@ -1014,15 +1014,12 @@
     :choices {:req #(and (rezzed? %)
                          (or (is-type? % "Asset")
                              (is-type? % "Upgrade")))}
-    :effect (req (let [c target]
-                   (swap! state update-in [:bonus] dissoc :trash)
-                   (trigger-event state side :pre-trash c)
-                   (let [tcost (trash-cost state side c)]
-                     (trash state side c)
-                     (gain-credits state :corp tcost)
-                     (system-msg state side (str "uses Product Recall to trash " (card-str state c)
-                                                 " and gain " tcost "[Credits]"))
-                     (effect-completed state side eid card))))}
+    :effect (req (let [tcost (modified-trash-cost state side target)]
+                   (trash state side target)
+                   (gain-credits state :corp tcost)
+                   (system-msg state side (str "uses Product Recall to trash " (card-str state target)
+                                               " and gain " tcost "[Credits]"))
+                   (effect-completed state side eid card)))}
 
    "Psychographics"
    {:req (req tagged)

@@ -1441,19 +1441,17 @@
    "Political Operative"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
     :abilities [{:prompt "Select a rezzed card with a trash cost"
-                 :choices {:req #(and (:trash %) (rezzed? %))}
-                 :effect (req (let [c target]
-                                (trigger-event state side :pre-trash c)
-                                (let [cost (trash-cost state :runner c)]
-                                  (when (can-pay? state side nil [:credit cost])
-                                    (resolve-ability
-                                      state side
-                                      {:msg (msg "pay " cost " [Credit] and trash " (:title c))
-                                       :effect (effect (lose-credits cost)
-                                                       (trash card {:cause :ability-cost})
-                                                       (trash c))}
-                                     card nil)))
-                                (swap! state update-in [:bonus] dissoc :trash)))}]}
+                 :choices {:req #(and (:trash %)
+                                      (rezzed? %))}
+                 :effect (req (let [cost (modified-trash-cost state :runner target)]
+                                (when (can-pay? state side nil [:credit cost])
+                                  (resolve-ability
+                                    state side
+                                    {:msg (msg "pay " cost " [Credit] and trash " (:title target))
+                                     :effect (effect (lose-credits cost)
+                                                     (trash card {:cause :ability-cost})
+                                                     (trash target))}
+                                    card nil))))}]}
 
    "Power Tap"
    {:events {:trace {:successful {:msg "gain 1 [Credits]"
