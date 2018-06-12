@@ -498,8 +498,8 @@
                (can-run-server? state server)
                (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
       (swap! state assoc-in [:runner :register :made-click-run] true)
-      (run state side server)
       (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
+        (run state side server)
         (system-msg state :runner
                     (str (build-spend-msg cost-str "make a run on") server))
         (play-sfx state side "click-run")))))
