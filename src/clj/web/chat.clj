@@ -31,19 +31,26 @@
     (< msg-cnt max-cnt)))
 
 (defn- insert-msg [{{{:keys [username emailhash]} :user} :ring-req
+                    client-id :client-id
                     {:keys [:channel :msg]} :?data :as event}]
-  (when (and username
-             emailhash
-             (not (s/blank? msg))
-             (<= (count msg) (:max-length chat-config 144))
-             (within-rate-limit username))
-    (let [message {:emailhash emailhash
-                   :username  username
-                   :msg       msg
-                   :channel   channel
-                   :date      (java.util.Date.)}
-          inserted (mc/insert-and-return db msg-collection message)]
-      (update inserted :_id str))))
+  (let [len-valid (<= (count msg) (:max-length chat-config 144))
+        rate-valid (within-rate-limit username)]
+    (when (and username
+               emailhash
+               (not (s/blank? msg)))
+      (if (and len-valid rate-valid)
+        (let [message {:emailhash emailhash
+                       :username  username
+                       :msg       msg
+                       :channel   channel
+                       :date      (java.util.Date.)}
+              inserted (mc/insert-and-return db msg-collection message)]
+          (update inserted :_id str))
+        (do
+          (when client-id
+            (ws/send! client-id [:chat/blocked
+                                 {:reason (if len-valid :rate-exceeded :length-exceeded)}]))
+          nil)))))
 
 (defn broadcast-msg
   [arg]
