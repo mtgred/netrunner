@@ -1224,8 +1224,8 @@
                    :label "Force the Runner to access a card in HQ"
                    :msg (msg "force the Runner to access " (:title target))
                    :effect (req (trash state side card)
-                                (when-completed (access-card state side target)
-                                  (when-completed (trigger-event-sync state side :pre-access :hq)
+                                (when-completed (trigger-event-sync state side :pre-access :hq)
+                                  (when-completed (access-card state side target)
                                     (let [from-hq (dec (access-count state side :hq-access))]
                                       (continue-ability
                                         state :runner
@@ -1936,9 +1936,14 @@
                                     (do (clear-wait-prompt state :runner)
                                         (effect-completed state side eid card)))))}
                   {:label "Force the Runner to access the top card of R&D"
-                   :effect (req (doseq [c (take (get-in @state [:runner :rd-access]) (:deck corp))]
-                                  (system-msg state :runner (str "accesses " (:title c)))
-                                  (access-card state side c)))}]}
+                   :effect (req (when-completed (trigger-event-sync state side :pre-access :rd)
+                                                (let [total-cards (access-count state side :rd-access)]
+                                                  (swap! state assoc-in [:run :did-access] true)
+                                                  (swap! state assoc-in [:runner :register :accessed-cards] true)
+                                                  (doseq [c (take total-cards (:deck corp))]
+                                                    (system-msg state :runner (str "accesses " (:title c)))
+                                                    (access-card state side c))
+                                                  (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"
