@@ -615,12 +615,13 @@
       (play-from-hand state :runner "Maw")
       (play-from-hand state :runner "Imp")
       (run-empty-server state :archives)
-      (prompt-card :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (prompt-card :corp (find-card "Ice Wall" (:hand (get-corp)))) ;; Alice's ability
       (prompt-choice :runner "Cyberdex Virus Suite")
       (prompt-choice :corp "Yes")
       (run-empty-server state :rd)
       (prompt-choice-partial :runner "Pay")
-      (is (= 3 (count (:discard (get-corp)))) "Ice Wall, CVS, and Rashida")))
+      (is (= 3 (count (:discard (get-corp)))) "Ice Wall, CVS, and Rashida")
+      (is (empty? (:prompt (get-runner))) "No more prompts for runner")))
  (testing "Maw should trigger when declining to steal. #3388"
     (do-game
       (new-game (default-corp [(qty "Obokata Protocol" 2) (qty "Ice Wall" 4)])
