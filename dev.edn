@@ -11,6 +11,9 @@
          :cookie     {:http-only true
                       :max-age   5184000                    ; 60 days
                       }}
+ :chat  {:max-length 144
+         :rate-window 60  ;; sliding window size in seconds
+         :rate-cnt 10}    ;; number of messages allowed in the sliding window
  :web   {:port 1042}
  :email {:host nil
          :user nil
