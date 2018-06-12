@@ -85,7 +85,7 @@
                   :npm-deps false
                   :external-config {:devtools/config {:features-to-install :all}}}}
       {:id "prod"
-       :source-paths ["src/cljs/nr" "src/cljc"]
+       :source-paths ["src/cljs/nr" "src/cljs/prod" "src/cljc"]
        :compiler {:output-to "resources/public/js/app10.js"
                   :output-dir "out"
                   :optimizations :advanced
