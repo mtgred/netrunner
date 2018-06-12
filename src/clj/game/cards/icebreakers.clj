@@ -253,49 +253,37 @@
   {:events {:successful-run {:silent (req true)
                              :effect (effect (system-msg "adds 1 virus counter to " (:title card))
                                              (add-counter card :virus 1))}}
-   :abilities [{:label "Add strength"
-                :prompt "Choose a card with virus counters"
-                :choices {:req #(pos? (get-counters % :virus))}
-                :effect (req (let [selected-virus target
-                                   self card
-                                   counters (get-counters selected-virus :virus)]
-                               (resolve-ability
-                                 state side
-                                 {:prompt "Spend how many counters?"
-                                  :choices {:number (req counters)
-                                            :default (req 1)}
-                                  :effect (req (let [cost target]
-                                                 (resolve-ability
-                                                   state side
-                                                   {:counter-cost [:virus cost]
-                                                    :effect (effect (pump (get-card state self) cost)
-                                                                    (system-msg (str "spends " cost (pluralize " counter" cost)
-                                                                                     " from " (:title selected-virus)
-                                                                                     " to add " cost " strength to " (:title self))))}
-                                                   selected-virus nil)))}
-                                 self nil)))}
-               {:label "Break " ice-type " subroutine(s)"
-                :prompt "Choose a card with virus counters"
-                :choices {:req #(pos? (get-counters % :virus))}
-                :effect (req (let [selected-virus target
-                                   self card
-                                   counters (get-counters selected-virus :virus)]
-                               (resolve-ability
-                                 state side
-                                 {:prompt "Spend how many counters?"
-                                  :choices {:number (req counters)
-                                            :default (req 1)}
-                                  :effect (req (let [cost target]
-                                                 (resolve-ability
-                                                   state side
-                                                   {:counter-cost [:virus cost]
-                                                    :effect (effect (system-msg (str "spends " cost (pluralize " counter" cost)
-                                                                                     " from " (:title selected-virus)
-                                                                                     " to break " cost
-                                                                                     " " ice-type (pluralize " subroutine" cost)
-                                                                                     " with " (:title self))))}
-                                                   selected-virus nil)))}
-                                 self nil)))}]})
+   :abilities [{:label (str  "Break " ice-type "subroutine(s)")
+                :effect (req (when-completed (resolve-ability
+                                              state side (pick-virus-counters-to-spend) card nil)
+                               (do (if-let [msg (:msg async-result)]
+                                     (do (system-msg state :runner
+                                                     (str "spends " msg" to break " (:number async-result)
+                                                          " " ice-type " subroutine(s)")))))))}
+               {:label "Match strength of currently encountered ice"
+                :req (req (and current-ice
+                               (> (ice-strength state side current-ice)
+                                  (or (:current-strength card) (:strength card)))))
+                :effect (req (when-completed (resolve-ability
+                                              state side (pick-virus-counters-to-spend
+                                                          (- (ice-strength state side current-ice)
+                                                             (or (:current-strength card) (:strength card))))
+                                              card nil)
+                               (if-let [msg (:msg async-result)]
+                                 (do (system-msg state :runner (str "spends " msg " to add "
+                                                                    (:number async-result) " strength"))
+                                     (dotimes [_ (:number async-result)]
+                                       (pump state side (get-card state card) 1))))))}
+               {:label "Add strength"
+                :effect (req (when-completed
+                                 (resolve-ability
+                                  state side (pick-virus-counters-to-spend) card nil)
+                               (if-let [msg (:msg async-result)]
+                                 (do (system-msg state :runner (str "spends " msg" to add "
+                                                                    (:number async-result)
+                                                                    " strength"))
+                                     (dotimes [_ (:number async-result)]
+                                       (pump state side (get-card state card) 1))))))}]})
 
 ;;; Icebreaker definitions
 (def card-definitions
