@@ -1014,19 +1014,17 @@
       :effect (effect (continue-ability (install-card target) card nil))})
 
    "Product Recall"
-   {:prompt "Select a rezzed asset or upgrade to trash"
+   {:delayed-completion true
+    :prompt "Select a rezzed asset or upgrade to trash"
     :choices {:req #(and (rezzed? %)
-                         (or (is-type? % "Asset") (is-type? % "Upgrade")))}
-    :effect (req (let [c target]
-                   (trigger-event state side :pre-trash c)
-                   (let [tcost (trash-cost state side c)]
-                     (trash state side c)
-                     (gain-credits state :corp tcost)
-                     (resolve-ability state side
-                       {:msg (msg "trash " (card-str state c) " and gain " tcost " [Credits]")}
-                      card nil)
-                     (swap! state update-in [:bonus] dissoc :trash)
-                     (effect-completed state side eid card))))}
+                         (or (is-type? % "Asset")
+                             (is-type? % "Upgrade")))}
+    :effect (req (let [tcost (modified-trash-cost state side target)]
+                   (when-completed (trash state side target {:unpreventable true})
+                                   (do (gain-credits state :corp tcost)
+                                       (system-msg state side (str "uses Product Recall to trash " (card-str state target)
+                                                                   " and gain " tcost "[Credits]"))
+                                        (effect-completed state side eid)))))}
 
    "Psychographics"
    {:req (req tagged)
