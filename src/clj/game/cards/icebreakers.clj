@@ -200,7 +200,7 @@
                                        (rezzed? current-ice)
                                        (has-subtype? current-ice ice-type)
                                        (not (install-locked? state :runner))))
-                        :delayed-completion true
+                        :async true
                         :effect (effect (continue-ability
                                           {:optional {:req (req (and (not-any? #(= title (:title %)) (all-active-installed state :runner))
                                                                      (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
@@ -406,11 +406,11 @@
     :events {:encounter-ice {:req (req (and (= (:cid target) (:cid current-ice))
                                             (has-subtype? target "Barrier")
                                             (rezzed? target)))
-                             :delayed-completion true
+                             :async true
                              :effect (effect (continue-ability :runner
                                                {:prompt "How many subroutines are on the encountered Barrier?"
                                                 :choices {:number (req 10)}
-                                                :delayed-completion true
+                                                :async true
                                                 :effect (effect (system-msg (str "pumps Berserker by " target " on encounter with the current ICE"))
                                                                 (pump card target))} card nil))}}}
 
@@ -892,7 +892,7 @@
                      :events {:pass-ice {:req (req (and (has-subtype? target "Sentry") (rezzed? target)) (pos? (count (:deck runner))))
                                          :optional {:prompt (msg "Use Persephone's ability??")
                                                     :yes-ability {:prompt "How many subroutines resolved on the passed ICE?"
-                                                                  :delayed-completion true
+                                                                  :async true
                                                                   :choices {:number (req 10)}
                                                                   :msg (msg (if (pos? target)
                                                                               (str "trash " (:title (first (:deck runner))) " from their Stack and trash " target " cards from R&D")

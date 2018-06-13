@@ -358,7 +358,7 @@
                (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
                    (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
-                            {:delayed-completion true
+                            {:async true
                              :effect (req (if (and (= target "Yes")
                                                    (can-pay? state side (:title card) altcost))
                                             (do (pay state side card altcost)

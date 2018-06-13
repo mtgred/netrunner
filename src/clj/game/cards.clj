@@ -53,7 +53,7 @@
                 (if (= dest "bottom") "under " "onto ")
                 (if (= reorder-side :corp) "R&D" "your Stack"))
    :choices remaining
-   :delayed-completion true
+   :async true
    :effect (req (let [chosen (cons target chosen)]
                   (if (< (count chosen) n)
                     (continue-ability
@@ -77,7 +77,7 @@
               (str "The top cards of " (if (= reorder-side :corp) "R&D" "your Stack")
                    " will be " (join  ", " (map :title chosen)) "."))
    :choices ["Done" "Start over"]
-   :delayed-completion true
+   :async true
    :effect (req
              (cond
                (and (= dest "bottom") (= target "Done"))
@@ -146,7 +146,7 @@
   "Do specified amount of net-damage."
   [dmg]
   {:label (str "Do " dmg " net damage")
-   :delayed-completion true
+   :async true
    :msg (str "do " dmg " net damage")
    :effect (effect (damage eid :net dmg {:card card}))})
 
@@ -154,7 +154,7 @@
   "Do specified amount of meat damage."
   [dmg]
   {:label (str "Do " dmg " meat damage")
-   :delayed-completion true
+   :async true
    :msg (str "do " dmg " meat damage")
    :effect (effect (damage eid :meat dmg {:card card}))})
 
@@ -162,7 +162,7 @@
   "Do specified amount of brain damage."
   [dmg]
   {:label (str "Do " dmg " brain damage")
-   :delayed-completion true
+   :async true
    :msg (str "do " dmg " brain damage")
    :effect (effect (damage eid :brain dmg {:card card}))})
 
@@ -175,7 +175,7 @@
   ([] (pick-virus-counters-to-spend (hash-map) 0 nil))
   ([target-count] (pick-virus-counters-to-spend (hash-map) 0 target-count))
   ([selected-cards counter-count target-count]
-   {:delayed-completion true
+   {:async true
     :prompt (str "Select a card with virus counters ("
                  counter-count (when (and target-count (pos? target-count))
                                  (str " of " target-count))

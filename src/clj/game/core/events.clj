@@ -97,7 +97,7 @@
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
                                  (next handlers))]
                     (if-let [the-card (get-card state card-to-resolve)]
-                      {:delayed-completion true
+                      {:async true
                        :effect (req (when-completed (resolve-ability state (to-keyword (:side the-card))
                                                                      ability-to-resolve
                                                                      the-card event-targets)
@@ -105,13 +105,13 @@
                                                       (continue-ability state side
                                                                         (choose-handler others) nil event-targets)
                                                       (effect-completed state side eid nil))))}
-                      {:delayed-completion true
+                      {:async true
                        :effect (req (if (should-continue state handlers)
                                       (continue-ability state side (choose-handler (next handlers)) nil event-targets)
                                       (effect-completed state side eid nil)))}))
                   {:prompt "Choose a trigger to resolve"
                    :choices titles
-                   :delayed-completion true
+                   :async true
                    :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
                                       ability-to-resolve (dissoc (:ability to-resolve) :req)
                                       the-card (get-card state (:card to-resolve))]

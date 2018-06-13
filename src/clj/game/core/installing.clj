@@ -170,7 +170,7 @@
              (not (:host card)))
       (continue-ability state side {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
                                     :choices ["OK"]
-                                    :delayed-completion true
+                                    :async true
                                     :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
                                                  (if (get-card state prev-card) ; make sure they didn't trash the card themselves
                                                    (trash state :corp eid prev-card {:keep-server-alive true})
@@ -299,7 +299,7 @@
      (continue-ability state side
                        {:prompt (str "Choose a location to install " (:title card))
                         :choices (corp-install-list state card)
-                        :delayed-completion true
+                        :async true
                         :effect (effect (corp-install eid card target args))}
                        card nil)
      ;; A card was selected as the server; recurse, with the :host-card parameter set.
@@ -406,7 +406,7 @@
        (continue-ability state side
                          {:choices hosting
                           :prompt (str "Choose a card to host " (:title card) " on")
-                          :delayed-completion true
+                          :async true
                           :effect (effect (runner-install eid card (assoc params :host-card target)))}
                          card nil)
        (do (trigger-event state side :pre-install card facedown)

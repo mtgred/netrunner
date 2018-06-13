@@ -153,7 +153,7 @@
                 choices (into [] (concat ability-strs trash-cost-str no-action-str))]
             (continue-ability
               state :runner
-              {:delayed-completion true
+              {:async true
                :prompt prompt-str
                :choices choices
                :effect (req (cond
@@ -191,13 +191,13 @@
 (defn- steal-pay-choice
   "Enables a vector of costs to be resolved in the order of choosing"
   [state side cost-map {:keys [title cid] :as card}]
-  {:delayed-completion true
+  {:async true
    :prompt (str "Pay steal cost for " title "?")
    :choices (conj (vec (keys cost-map)) "No action")
    :effect (req
              (if (= target "No action")
                (continue-ability state :runner
-                                 {:delayed-completion true
+                                 {:async true
                                   :effect (req (when-not (find-cid cid (:deck corp))
                                                  (system-msg state side (str "decides not to pay to steal " title)))
                                                (access-end state side eid card))}
@@ -251,7 +251,7 @@
         choices (into [] (concat ability-strs steal-str no-action-str))]
     ;; Steal costs are additional costs and can be denied by the runner.
     (continue-ability state :runner
-                      {:delayed-completion true
+                      {:async true
                        :prompt prompt-str
                        :choices choices
                        :effect (req (cond
@@ -344,7 +344,7 @@
         anon-card (dissoc c :title)
         cant-pay {:prompt "You can't pay the cost to access this card"
                   :choices ["OK"]
-                  :delayed-completion true
+                  :async true
                   :effect (effect (access-end eid c))}]
     (cond
       ;; Check if a pre-access-card effect trashed the card (By Any Means)
@@ -411,7 +411,7 @@
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
    :choices {:req #(some (fn [c] (= (:cid %) (:cid c))) cards)}
-   :delayed-completion true
+   :async true
    :effect (req (when-completed (access-card state side target)
                                 (if (< 1 (count cards))
                                   (continue-ability state side (access-helper-remote (filter #(not= (:cid %) (:cid target)) cards))
@@ -419,7 +419,7 @@
                                   (effect-completed state side eid nil))))})
 
 (defmethod choose-access :remote [cards server]
-  {:delayed-completion true
+  {:async true
    :effect (req (if (and (>= 1 (count cards))
                          (not (any-flag-fn? state :runner :slow-remote-access true
                                             (concat (all-active state :runner) (all-active state :corp)))))
@@ -442,7 +442,7 @@
         server-name (central->name chosen-zone)
         unrezzed-upgrade (str "Unrezzed upgrade in " server-name)
         card-from (str "Card from " label)]
-    {:delayed-completion true
+    {:async true
      :prompt "Select a card to access."
      :choices (concat (when (pos? amount) [card-from])
                       (map #(if (rezzed? %) (:title %) unrezzed-upgrade)
@@ -466,7 +466,7 @@
                         ;; more than one unrezzed upgrade. allow user to select with mouse.
                         (continue-ability
                           state side
-                          {:delayed-completion true
+                          {:async true
                            :prompt (str "Choose an upgrade in " server-name " to access.")
                            :choices {:req #(and (= (second (:zone %)) chosen-zone)
                                                 (complement already-accessed))}
@@ -510,7 +510,7 @@
                                         (effect-completed state side eid))))))}))
 
 (defmethod choose-access :rd [cards server]
-  {:delayed-completion true
+  {:async true
    :effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
                     (access-card state side eid (first cards) "an unseen card")
@@ -526,7 +526,7 @@
                   (effect-completed state side eid)))})
 
 (defmethod choose-access :hq [cards server]
-  {:delayed-completion true
+  {:async true
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards))
                            (not (any-flag-fn? state :runner :slow-hq-access true)))
@@ -589,7 +589,7 @@
                               (pos? (+ (count (root-content already-accessed))
                                        (count (faceup-accessible already-accessed))
                                        (count (facedown-cards already-accessed))))))]
-    {:delayed-completion true
+    {:async true
      :prompt "Select a card to access. You must access all cards."
      :choices (concat (when (<= amount (count (filter (complement already-accessed) (get-archives-inactive state))))
                         [(str "Access " amount " inactive cards")])
@@ -627,7 +627,7 @@
                         ;; more than one unrezzed upgrade. allow user to select with mouse.
                         (continue-ability
                           state side
-                          {:delayed-completion true
+                          {:async true
                            :prompt "Choose an upgrade in Archives to access."
                            :choices {:req #(and (= (second (:zone %)) :archives)
                                                 (not (already-accessed %)))}
@@ -649,7 +649,7 @@
                                         (effect-completed state side eid))))))}))
 
 (defmethod choose-access :archives [cards server]
-  {:delayed-completion true
+  {:async true
    :effect (req (let [cards (concat (get-archives-accessible state) (-> @state :corp :servers :archives :content))
                       archives-count (+ (count (-> @state :corp :discard)) (count (-> @state :corp :servers :archives :content)))]
                   (if (not-empty cards)

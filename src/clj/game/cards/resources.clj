@@ -48,12 +48,12 @@
 
    "Activist Support"
    {:events
-    {:corp-turn-begins {:delayed-completion true
+    {:corp-turn-begins {:async true
                         :effect (req (if (zero? (:tag runner))
                                        (do (tag-runner state :runner eid 1)
                                            (system-msg state :runner (str "uses " (:title card) " to take 1 tag")))
                                        (effect-completed state :runner eid card)))}
-     :runner-turn-begins {:delayed-completion true
+     :runner-turn-begins {:async true
                           :effect (req (if (not has-bad-pub)
                                          (do (gain-bad-publicity state :corp eid 1)
                                              (system-msg state :runner
@@ -225,14 +225,14 @@
       {:runner-install
        {:interactive (req (hardware-and-in-hand? target runner))
         :silent (req (not (hardware-and-in-hand? target runner)))
-        :delayed-completion true
+        :async true
         :req (req (and (is-type? target "Hardware") (= [:hand] (:previous-zone target))))
         :effect (req (let [hw (:title target)]
                        (continue-ability state side
                                          {:optional {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
                                                      :prompt (msg "Install another copy of " hw "?")
                                                      :msg (msg "install another copy of " hw)
-                                                     :yes-ability {:delayed-completion true
+                                                     :yes-ability {:async true
                                                                    :effect (req (if-let [c (some #(when (= (:title %) hw) %)
                                                                                                  (:hand runner))]
                                                                                   (runner-install state side eid c nil)))}}} card nil)))}}})
@@ -599,7 +599,7 @@
 
                                        (clear-wait-prompt state :corp)
                                        (effect-completed state side eid)))}]
-     {:delayed-completion true
+     {:async true
       :effect (req (show-wait-prompt state :corp "Runner to pick identity to host on DJ Fenris")
                    (continue-ability state side fenris-effect card nil))})
 
@@ -650,7 +650,7 @@
 
    "Dummy Box"
    (letfn [(dummy-prevent [type] {:msg (str "prevent a " type " from being trashed")
-                                  :delayed-completion true
+                                  :async true
                                   :priority 15
                                   :prompt (str "Choose a " type " in your Grip")
                                   :choices {:req #(and (is-type? % (capitalize type))
@@ -709,7 +709,7 @@
 
    "Fan Site"
    {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 0 agenda points"
-                             :delayed-completion true
+                             :async true
                              :req (req (installed? card))
                              :effect (req (as-agenda state :runner eid card 0))}}}
 
@@ -729,11 +729,11 @@
      {:events {:access {:req (req (and (empty? (filter #(= "Agenda" (:type %)) (:hosted card)))
                                        (is-type? target "Agenda")))
                         :interactive (req true)
-                        :delayed-completion true
+                        :async true
                         :effect (effect (continue-ability (host-agenda? target) card nil))}}
       :abilities [{:cost [:click 2] :label "Add hosted agenda to your score area"
                    :req (req (get-agenda card))
-                   :delayed-completion true
+                   :async true
                    :effect (req (let [c (get-agenda card)
                                       points (get-agenda-points state :runner c)]
                                   (as-agenda state :runner eid c points)))
@@ -760,7 +760,7 @@
 
    "Gang Sign"
    {:events {:agenda-scored
-             {:delayed-completion true
+             {:async true
               :interactive (req true)
               :msg (msg "access " (quantify (get-in @state [:runner :hq-access]) "card") " from HQ")
               :effect (req (when-completed
@@ -839,7 +839,7 @@
                               card nil)))}}}
 
    "Hades Shard"
-   (shard-constructor :archives "access all cards in Archives" {:delayed-completion true}
+   (shard-constructor :archives "access all cards in Archives" {:async true}
                       (req (trash state side card {:cause :ability-cost})
                            (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                            (when (:run @state)
@@ -898,7 +898,7 @@
 
    "Jackpot!"
    (let [jackpot {:interactive (req true)
-                  :delayed-completion true
+                  :async true
                   :req (req (= :runner (:as-agenda-side target)))
                   :effect (req (show-wait-prompt state :corp "Runner to use Jackpot!")
                                (continue-ability
@@ -909,7 +909,7 @@
                                    :yes-ability
                                    {:prompt "Choose how many [Credit] to take"
                                     :choices {:number (req (get-counters card :credit))}
-                                    :delayed-completion true
+                                    :async true
                                     :effect (req (gain-credits state :runner target)
                                                  (system-msg state :runner (str "trashes Jackpot! to gain " target " credits"))
                                                  (clear-wait-prompt state :corp)
@@ -955,7 +955,7 @@
                               :msg "draw 1 card" :once-key :john-masanori-draw
                               :effect (effect (draw))}
              :unsuccessful-run {:req (req (= 1 (count (get-in @state [:runner :register :unsuccessful-run]))))
-                                :delayed-completion true
+                                :async true
                                 :msg "take 1 tag" :once-key :john-masanori-tag
                                 :effect (effect (tag-runner :runner eid 1))}}}
 
@@ -964,7 +964,7 @@
                   :once :per-turn
                   :label "Gain [Click] (start of turn)"
                   :effect (effect (gain :click 1))
-                  :end-turn {:delayed-completion true
+                  :end-turn {:async true
                              :effect (effect (tag-runner eid 1))
                              :msg "gain 1 tag"}}]
      {:flags {:runner-phase-12 (req true)}
@@ -1042,7 +1042,7 @@
    (letfn [(lab-keep [cards]
              {:prompt "Choose a Program to keep"
               :choices (cons "None" (filter #(= "Program" (:type %)) cards))
-              :delayed-completion true
+              :async true
               :msg (msg (if (= target "None") "take no card to their Grip" (str "take " (-> target :title) " to their Grip")))
               :effect (req (when (not= target "None")
                              (move state side target :hand))
@@ -1054,7 +1054,7 @@
                                  (effect-completed state side eid card))))})]
    {:abilities [{:cost [:click 1]
                  :msg (msg "draw 4 cards: " (join ", " (map :title (take 4 (:deck runner)))))
-                 :delayed-completion true
+                 :async true
                  :effect (req (show-wait-prompt state :corp "Runner to choose card to keep")
                               (let [from (take 4 (:deck runner))]
                                 (continue-ability state side (lab-keep from) card nil)))}]})
@@ -1071,7 +1071,7 @@
    "Liberated Chela"
    {:abilities [{:cost [:click 5 :forfeit]
                  :msg "add it to their score area"
-                 :delayed-completion true
+                 :async true
                  :effect (req (if (not (empty? (:scored corp)))
                                 (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
                                     (resolve-ability
@@ -1086,14 +1086,14 @@
                                                                   :effect (effect (forfeit target)
                                                                                   (move :runner card :rfg)
                                                                                   (clear-wait-prompt :runner))}
-                                                                 {:delayed-completion true
+                                                                 {:async true
                                                                   :effect (req (clear-wait-prompt state :runner)
                                                                                (as-agenda state :runner eid card 2))
                                                                   :msg "add it to their score area as an agenda worth 2 points"})
                                                               card nil))} card nil))
                                 (resolve-ability
                                   state side
-                                  {:delayed-completion true
+                                  {:async true
                                    :effect (req (as-agenda state :runner eid card 2))
                                    :msg "add it to their score area as an agenda worth 2 points"} card nil)))}]}
 
@@ -1190,7 +1190,7 @@
              {:req (req (and (:run @state)
                              (has-subtype? target "Stealth")))
               :once :per-run
-              :delayed-completion true
+              :async true
               :effect (effect (show-wait-prompt :corp "Runner to use Net Mercur")
                               (continue-ability
                                 {:prompt "Place 1 [Credits] on Net Mercur or draw 1 card?"
@@ -1252,7 +1252,7 @@
      {:interactions {:prevent [{:type #{:net :tag}
                                 :req (req (first-chance? state side))}]}
       :abilities [{:msg "force the Corp to trace"
-                   :delayed-completion true
+                   :async true
                    :effect (req (let [type (get-in @state [:prevent :current])]
                                   (when-completed (trash state side card {:unpreventable true})
                                                   (continue-ability state side (start-trace type)
@@ -1355,7 +1355,7 @@
                                                                           (quantify target "cop" "y" "ies")
                                                                           " of " title)))))}}})]
      {:events {:runner-install {:req (req (first-event? state side :runner-install))
-                                :delayed-completion true
+                                :async true
                                 :effect (effect (continue-ability
                                                  (pphelper (:title target)
                                                            (->> (:deck runner)
@@ -1486,7 +1486,7 @@
     :leave-play (req (remove-watch state :raymond-flint))
     :abilities [{:msg "expose 1 card"
                  :choices {:req installed?}
-                 :delayed-completion true
+                 :async true
                  :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
 
    "Reclaim"
@@ -1496,7 +1496,7 @@
       :req (req (not-empty (:hand runner)))
       :prompt "Choose a card to trash"
       :choices (req (cancellable (:hand runner) :sorted))
-      :delayed-completion true
+      :async true
       :effect (req (when-completed
                      (trash state :runner card {:cause :ability-cost})
                      (when-completed
@@ -1513,12 +1513,12 @@
                                                   (:discard runner))
                                           :sorted))
                           :msg (msg "install " (:title target) " from the Heap")
-                          :delayed-completion true
+                          :async true
                           :effect (req (runner-install state :runner eid target nil))}
                          card nil))))}]}
 
    "Rolodex"
-   {:delayed-completion true
+   {:async true
     :msg "look at the top 5 cards of their Stack"
     :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their Stack")
                  (let [from (take 5 (:deck runner))]
@@ -1596,7 +1596,7 @@
    "Safety First"
    {:in-play [:hand-size {:mod -2}]
     :events {:runner-turn-ends
-             {:delayed-completion true
+             {:async true
               :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
                              (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
                                  (draw state :runner eid 1 nil))
@@ -1792,7 +1792,7 @@
                               {:prompt "Use Tallie Perrault to give the Corp 1 bad publicity and take 1 tag?"
                                :player :runner
                                :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
-                                             :delayed-completion true
+                                             :async true
                                              :effect (effect (gain-bad-publicity :corp 1)
                                                              (tag-runner :runner eid 1)
                                                              (clear-wait-prompt :corp))}
@@ -1846,7 +1846,7 @@
     :events {:agenda-scored {:req (req (or (has-subtype? target "Initiative")
                                            (has-subtype? target "Security")))
                              :interactive (req true)
-                             :delayed-completion true
+                             :async true
                              :msg "force the Corp to initiate a trace"
                              :label "Trace 1 - If unsuccessful, take 1 bad publicity"
                              :trace {:base 1

@@ -139,11 +139,11 @@
 
 ;;; Checking functions for resolve-ability
 (defn- complete-ability
-  [state side {:keys [eid choices optional prompt delayed-completion psi trace] :as ability} card]
-  ;if it doesn't have choices and it doesn't have a true delayed-completion; or
-  ;if it does have choices and has false delayed-completion
-  (when (or (and (not choices) (not optional) (not psi) (not trace) (not delayed-completion))
-            (and (or optional psi choices trace) (false? delayed-completion)))
+  [state side {:keys [eid choices optional prompt async psi trace] :as ability} card]
+  ;; If it doesn't have choices and it doesn't have a true async or
+  ;; if it does have choices and has false async
+  (when (or (and (not choices) (not optional) (not psi) (not trace) (not async))
+            (and (or optional psi choices trace) (false? async)))
     (effect-completed state side eid card)))
 
 (defn- check-optional
@@ -489,7 +489,7 @@
           (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
           (when-completed (trigger-event-sync state side :psi-game bet opponent-bet)
                           (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
+                            (resolve-ability state (:side card) (assoc ability :eid eid :async true) card nil)
                             (effect-completed state side eid card)))
           (trigger-event state side :psi-game-done bet opponent-bet))
       (show-wait-prompt

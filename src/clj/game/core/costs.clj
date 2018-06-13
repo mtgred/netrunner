@@ -91,7 +91,7 @@
   (let [cost-name (cost-names n :forfeit)]
     (continue-ability state side
                     {:prompt "Choose an Agenda to forfeit"
-                     :delayed-completion true
+                     :async true
                      :choices {:max n
                                :req #(is-scored? state side %)}
                      :effect (req (when-completed (forfeit state side target)
@@ -110,7 +110,7 @@
                        {:prompt (str "Choose a " type " to trash")
                         :choices {:max amount
                                   :req select-fn}
-                        :delayed-completion true
+                        :async true
                         :effect (req (when-completed (trash state side target (merge args {:unpreventable true}))
                                                      (effect-completed state side (make-result eid cost-name))))}
                        card nil)
@@ -132,7 +132,7 @@
                      :choices {:max amount
                                :all true
                                :req #(and (installed? %) (= (:side %) "Runner"))}
-                     :delayed-completion true
+                     :async true
                      :effect (req
                                (doseq [c targets]
                                  (move state :runner c :deck))
