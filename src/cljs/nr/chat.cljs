@@ -15,10 +15,27 @@
 (defonce chat-state (atom {}))
 
 (def chat-channel (chan))
+(def delete-msg-channel (chan))
+(def delete-all-channel (chan))
 
+(defn non-game-toast
+  "Display a toast warning with the specified message."
+  [msg type options]
+  (set! (.-options js/toastr) (toastr-options options))
+  (let [f (aget js/toastr type)]
+    (f msg)))
+
+(ws/register-ws-handler! :chat/message (partial put! chat-channel))
+(ws/register-ws-handler! :chat/delete-msg (partial put! delete-msg-channel))
+(ws/register-ws-handler! :chat/delete-all (partial put! delete-all-channel))
 (ws/register-ws-handler!
-  :chat/message
-  (partial put! chat-channel))
+  :chat/blocked
+  (fn [{:keys [reason] :as msg}]
+    (let [reason-str (case reason
+                       :rate-exceeded "Rate exceeded"
+                       :length-exceeded "Length exceeded")]
+      (non-game-toast (str "Message Blocked" (when reason-str (str ": " reason-str)))
+                      "warning" nil))))
 
 (defn current-block-list
   []
@@ -34,23 +51,47 @@
   [channel messages]
   (swap! app-state assoc-in [:channels channel] (filter-blocked-messages messages)))
 
+(defn filter-message-channel
+  [channel k v]
+  (let [messages (get-in @app-state [:channels channel])
+        filtered (remove #(= v (k %)) messages)]
+    (update-message-channel channel filtered)))
+
 (go (while true
       (let [msg (<! chat-channel)
             ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
         (update-message-channel ch (reverse (conj (reverse messages) msg))))))
 
-(defn non-game-toast
-  "Display a toast warning with the specified message."
-  [msg type options]
-  (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr type)]
-    (f msg)))
+(go (while true
+      (let [msg (<! delete-msg-channel)
+            ch (keyword (:channel msg))
+            id (:_id msg)]
+        (filter-message-channel ch :_id id))))
+
+(go (while true
+      (let [msg (<! delete-all-channel)
+            username (:username msg)
+            channels (keys (:channels @app-state))]
+        (doseq [ch channels]
+          (filter-message-channel ch :username username)))))
 
 (defn- post-response [blocked-user response]
   (if (= 200 (:status response))
     (non-game-toast (str "Blocked user " blocked-user ". Refresh browser to update.") "success" nil)
     (non-game-toast "Failed to block user" "error" nil)))
+
+(defn- delete-message
+  [message]
+  (authenticated
+    (fn [user]
+      (ws/ws-send! [:chat/delete-msg {:msg message}]))))
+
+(defn- delete-all-messages
+  [username]
+  (authenticated
+    (fn [user]
+      (ws/ws-send! [:chat/delete-all {:sender username}]))))
 
 (defn block-user
   [blocked-user]
@@ -117,6 +158,14 @@
           (when (not my-msg)
             [:div.panel.blue-shade.block-menu
              {:ref #(swap! msg-state assoc :msg-buttons %)}
+             (when (or (:isadmin user) (:ismoderator user))
+               [:div {:on-click #(do
+                                   (delete-message message)
+                                   (hide-block-menu msg-state))} "Delete Message"])
+             (when (or (:isadmin user) (:ismoderator user))
+               [:div {:on-click #(do
+                                   (delete-all-messages (:username message))
+                                   (hide-block-menu msg-state))} "Delete All Messages From User"])
              [:div {:on-click #(do
                                  (block-user (:username message))
                                  (hide-block-menu msg-state))} "Block User"]
