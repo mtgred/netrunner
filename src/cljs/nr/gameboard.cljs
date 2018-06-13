@@ -522,12 +522,13 @@
         (send-command "move" {:card cardinfo :server server})))))
 
 (defn ability-costs [ab]
-  (when-let [cost (:cost ab)]
-    (str (clojure.string/join
-           ", " (for [c (partition 2 cost)]
-                  (str (case (first c)
-                         "credit" (str (second c) " [" (capitalize (name (first c))) "]")
-                         (clojure.string/join "" (repeat (second c) (str "[" (capitalize (name (first c))) "]"))))))) ": ")))
+  (when-let [costs (:cost ab)]
+    (str (join ", " (for [[cost amount] (partition 2 costs)
+                          :let [cost-symbol (str "[" (capitalize (name cost)) "]")]]
+                      (case cost
+                        "credit" (str amount " " cost-symbol)
+                        (join "" (repeat amount cost-symbol)))))
+         ": ")))
 
 (defn remote->num [server]
   (-> server str (clojure.string/split #":remote") last str->int))
@@ -567,23 +568,6 @@
 
 (defn remote-list [remotes]
   (->> remotes (map first) zones->sorted-names))
-
-(defn card-counter-type [card]
-  (let [counter-type (:counter-type card)]
-    ;; Determine the appropriate type of counter for styling, falling back to
-    ;; power counters when no other type can be inferred.
-    (cond
-      ;; If an installed card contains an annotation, use it.
-      (and (:installed card)
-           (not (nil? counter-type)))
-      counter-type
-      (= "Agenda" (:type card)) "Agenda"
-      ;; Assume uninstalled cards with counters are hosted on Personal
-      ;; Workshop.
-      (not (:installed card)) "Power"
-      (not (:subtype card)) "Power"
-      (> (.indexOf (:subtype card) "Virus") -1) "Virus"
-      :else "Power")))
 
 (defn facedown-card
   "Image element of a facedown card"
@@ -838,7 +822,7 @@
   (.stopPropagation event))
 
 (defn label [cursor opts]
-  (let [fn (or (:fn opts) count)]
+  (let [fn (or (get-in opts [:opts :fn]) count)]
     [:div.header {:class (when (> (count cursor) 0) "darkbg")}
      (str (:name opts) " (" (fn cursor) ")")]))
 
@@ -1233,7 +1217,7 @@
                     (if (nil? (:strength prompt))
                       (if (= "corp" (:player prompt))
                         ;; This is a trace prompt for the corp, show runner link + credits
-                        [:div.info "Runner: " (:link runner) [:span {:class "anr-icon link"}]
+                        [:div.info "Runner: " (:link prompt) [:span {:class "anr-icon link"}]
                          " + " (:credit runner) [:span {:class "anr-icon credit"}]]
                         ;; Trace in which the runner pays first, showing base trace strength and corp credits
                         [:div.info "Trace: " (when (:bonus prompt) (+ base (:bonus prompt)) base)
@@ -1249,9 +1233,9 @@
                        (if (= "corp" (:player prompt))
                          (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
                            [:span (str strength " + ")])
-                         [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )])
+                         [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )])
                        (if (= "corp" (:player prompt))
-                         [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )]
+                         [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )]
                          (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
                            [:span (str strength " + ")]))))
                    [:select#credit (for [i (range (inc (:credit me)))]
