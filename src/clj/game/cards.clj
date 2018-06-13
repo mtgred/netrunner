@@ -84,13 +84,13 @@
                (do (swap! state update-in [reorder-side :deck]
                           #(vec (concat (drop (count chosen) %) (reverse chosen))))
                    (clear-wait-prompt state wait-side)
-                   (effect-completed state side eid card))
+                   (effect-completed state side eid))
 
                (= target "Done")
                (do (swap! state update-in [reorder-side :deck]
                           #(vec (concat chosen (drop (count chosen) %))))
                    (clear-wait-prompt state wait-side)
-                   (effect-completed state side eid card))
+                   (effect-completed state side eid))
 
                :else
                (continue-ability state side (reorder-choice reorder-side wait-side original '() (count original) original dest) card nil)))}))

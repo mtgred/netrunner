@@ -1,7 +1,7 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -682,7 +682,7 @@
                                                        (do (system-msg state :corp (str "trashes " (:title (first from))))
                                                            (trash state side (first from) {:unpreventable true})
                                                            (clear-wait-prompt state :runner)
-                                                           (effect-completed state side eid card)))))})]})
+                                                           (effect-completed state side eid)))))})]})
 
    "Data Loop"
    {:implementation "Encounter effect is manual"
@@ -1016,7 +1016,7 @@
                                      (continue-ability state side (hort (inc n)) card nil)
                                      (do (shuffle! state side :deck)
                                          (system-msg state side (str "shuffles R&D"))
-                                         (effect-completed state side eid card))))})]
+                                         (effect-completed state side eid))))})]
      {:advanceable :always
       :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
                      :msg (msg "gain " (if (wonder-sub card 3) "4" "1") " [Credits]")
@@ -1407,7 +1407,7 @@
                                      :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
                                      :effect (req (when (= (count targets) 2)
                                                     (swap-ice state side (first targets) (second targets))
-                                                    (effect-completed state side eid card)))}
+                                                    (effect-completed state side eid)))}
                                     card nil)
                                   (continue-ability
                                     state side
@@ -1417,7 +1417,7 @@
                                      :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
                                      :effect (req (when (= (count targets) 2)
                                                     (swap-installed state side (first targets) (second targets))
-                                                    (effect-completed state side eid card)))}
+                                                    (effect-completed state side eid)))}
                                     card nil)))}]}
 
    "Mganga"
@@ -1939,7 +1939,7 @@
                                     (continue-ability state side (reorder-choice :corp :runner from '()
                                                                                  (count from) from) card nil)
                                     (do (clear-wait-prompt state :runner)
-                                        (effect-completed state side eid card)))))}
+                                        (effect-completed state side eid)))))}
                   {:label "Force the Runner to access the top card of R&D"
                    :effect (req (wait-for (trigger-event-sync state side :pre-access :rd)
                                           (let [total-cards (access-count state side :rd-access)]

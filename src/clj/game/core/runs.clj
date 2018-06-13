@@ -416,7 +416,7 @@
                           (if (< 1 (count cards))
                             (continue-ability state side (access-helper-remote (filter #(not= (:cid %) (:cid target)) cards))
                                               card nil)
-                            (effect-completed state side eid nil))))})
+                            (effect-completed state side eid))))})
 
 (defmethod choose-access :remote [cards server]
   {:async true
@@ -700,7 +700,7 @@
                      (system-msg state side "accessed no cards during the run")
                      (do (swap! state assoc-in [:runner :register :accessed-cards] true)
                          (wait-for (resolve-ability state side (choose-access cards server) nil nil)
-                                   (effect-completed state side eid nil))
+                                   (effect-completed state side eid))
                          (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
                  (handle-end-run state side)))))
 
@@ -722,7 +722,7 @@
    (wait-for (trigger-event-simult state side :pre-successful-run nil (first server))
              (wait-for (trigger-event-simult state side :successful-run nil (first (get-in @state [:run :server])))
                        (wait-for (trigger-event-simult state side :post-successful-run nil (first (get-in @state [:run :server])))
-                                 (effect-completed state side eid nil))))))
+                                 (effect-completed state side eid))))))
 
 (defn- successful-run-trigger
   "The real 'successful run' trigger."
@@ -885,7 +885,7 @@
   (let [prompt (-> @state side :prompt first)
         eid (:eid prompt)]
     (swap! state update-in [side :prompt] rest)
-    (effect-completed state side eid nil)
+    (effect-completed state side eid)
     (when-let [run (:run @state)]
       (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
         (handle-end-run state :runner)))))

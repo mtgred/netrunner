@@ -1,7 +1,7 @@
 (ns game.cards.upgrades
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -291,7 +291,7 @@
                              (do
                                (clear-wait-prompt state :runner)
                                (effect-completed state side eid))))
-              :cancel-effect (final-effect (clear-wait-prompt :runner))})]
+              :cancel-effect (effect (clear-wait-prompt :runner))})]
      {:flags {:rd-reveal (req true)}
       :access {:async true
                :effect (req (let [n (count (:hand corp))]
@@ -679,10 +679,10 @@
                                                              (effect-completed state side eid)))}
                                             card nil)))}
                            :no-ability {:effect (req (clear-wait-prompt state :runner)
-                                                     (effect-completed state side eid card))}}}
+                                                     (effect-completed state side eid))}}}
                         card nil)
                        (do (clear-wait-prompt state :runner)
-                           (effect-completed state side eid card)))))}}}
+                           (effect-completed state side eid)))))}}}
 
    "Oaktown Grid"
    {:events {:pre-trash {:req (req (in-same-server? card target))
@@ -1071,7 +1071,7 @@
                            (if (> n t)
                              (continue-ability state side (wt card n (inc t)) card nil)
                              (do (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid card)))
+                                 (effect-completed state side eid)))
                            ;; this ends-the-run if WT is the only card and is trashed, and trashes at least one runner card
                            (when (zero? (count (cards-to-access state side (get-in @state [:run :server]))))
                              (handle-end-run state side)))})]

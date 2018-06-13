@@ -47,7 +47,7 @@
         (wait-for (resolve-ability state side ability card targets)
                   (apply trigger-event-sync-next state side eid (next handlers) event targets)))
       (apply trigger-event-sync-next state side eid (next handlers) event targets))
-    (effect-completed state side eid nil)))
+    (effect-completed state side eid)))
 
 (defn trigger-event-sync
   "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler. Does not
@@ -104,11 +104,11 @@
                                               (if (should-continue state handlers)
                                                 (continue-ability state side
                                                                   (choose-handler others) nil event-targets)
-                                                (effect-completed state side eid nil))))}
+                                                (effect-completed state side eid))))}
                       {:async true
                        :effect (req (if (should-continue state handlers)
                                       (continue-ability state side (choose-handler (next handlers)) nil event-targets)
-                                      (effect-completed state side eid nil)))}))
+                                      (effect-completed state side eid)))}))
                   {:prompt "Choose a trigger to resolve"
                    :choices titles
                    :async true
@@ -123,10 +123,10 @@
                                                         (choose-handler
                                                           (remove-once #(= target (:title (:card %))) handlers))
                                                         nil event-targets)
-                                      (effect-completed state side eid nil)))))})))]
+                                      (effect-completed state side eid)))))})))]
 
       (continue-ability state side (choose-handler handlers) nil event-targets))
-    (effect-completed state side eid nil)))
+    (effect-completed state side eid)))
 
 (defn ability-as-handler
   "Wraps a card ability as an event handler."
@@ -295,8 +295,7 @@
   (swap! state update-in [:effect-completed (:eid eid)] #(conj % {:card card :effect effect})))
 
 (defn effect-completed
-  ([state side eid] (effect-completed state side eid nil))
-  ([state side eid card]
-   (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
-     ((:effect handler) state side eid (:card card) nil))
-   (swap! state update-in [:effect-completed] dissoc (:eid eid))))
+  [state side eid]
+  (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
+    ((:effect handler) state side eid nil nil))
+  (swap! state update-in [:effect-completed] dissoc (:eid eid)))

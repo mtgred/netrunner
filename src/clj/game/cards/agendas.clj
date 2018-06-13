@@ -1,7 +1,7 @@
 (ns game.cards.agendas
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -98,7 +98,7 @@
                                         "No action"
                                         (system-msg state :corp (str "doesn't use Advanced Concept Hopper")))
                                       (clear-wait-prompt state :runner)
-                                      (effect-completed state side eid card))}
+                                      (effect-completed state side eid))}
                         card nil))}}}
 
    "Ancestral Imager"
@@ -372,7 +372,7 @@
                                                                       (clojure.set/difference (set (:hand corp)) (set targets)))
                                                                     card nil))}
                                  card nil))
-                           (effect-completed state side eid card)))}]
+                           (effect-completed state side eid)))}]
        {:events {:successful-run {:interactive (req true)
                                   :psi {:req (req (= target :hq))
                                         :once :per-turn
@@ -396,7 +396,7 @@
                              (continue-ability state side
                                                (install-ability (last (get-remote-names state)) (inc n))
                                                card nil)
-                             (effect-completed state side eid card)))
+                             (effect-completed state side eid)))
               :msg (msg (if (pos? n)
                           (corp-install-msg target)
                           "create a new remote server, installing cards from HQ or Archives, ignoring all install costs"))})]
@@ -496,12 +496,12 @@
                  :req (req (pos? (get-counters card :agenda)))
                  :msg (msg "place 1 advancement token on " (card-str state target))
                  :once :per-turn
-                 :effect (final-effect (add-prop target :advance-counter 1))}]}
+                 :effect (effect (add-prop target :advance-counter 1))}]}
 
    "Genetic Resequencing"
    {:choices {:req #(= (last (:zone %)) :scored)}
     :msg (msg "add 1 agenda counter on " (:title target))
-    :effect (final-effect (add-counter target :agenda 1))
+    :effect (effect (add-counter target :agenda 1))
     :silent (req true)}
 
    "Geothermal Fracking"
@@ -559,7 +559,7 @@
                                       (continue-ability state side (graft (inc n)) card nil)
                                       (do (shuffle! state side :deck)
                                           (system-msg state side (str "shuffles R&D"))
-                                          (effect-completed state side eid card))))})]
+                                          (effect-completed state side eid))))})]
      {:async true
       :msg "add up to 3 cards from R&D to HQ"
       :effect (effect (continue-ability (graft 1) card nil))})
@@ -579,7 +579,8 @@
                            " to the bottom of R&D")}]}
 
    "Helium-3 Deposit"
-   {:interactive (req true)
+   {:async true
+    :interactive (req true)
     :prompt "How many power counters?"
     :choices ["0" "1" "2"]
     :effect (req (let [c (str->int target)]
@@ -587,7 +588,7 @@
                      state side
                      {:choices {:req #(pos? (get-counters % :power))}
                       :msg (msg "add " c " power counters on " (:title target))
-                      :effect (final-effect (add-counter target :power c))}
+                      :effect (effect (add-counter target :power c))}
                      card nil)))}
 
    "High-Risk Investment"
@@ -607,7 +608,8 @@
    "Hollywood Renovation"
    {:install-state :face-up
     :events {:advance
-             {:req (req (= (:cid card)
+             {:async true
+              :req (req (= (:cid card)
                            (:cid target)))
               :effect (req (let [n (if (>= (get-counters (get-card state card) :advancement) 6) 2 1)]
                              (continue-ability state side
@@ -617,7 +619,7 @@
                                :msg (msg "place " n
                                          " advancement tokens on "
                                          (card-str state target))
-                               :effect (final-effect (add-prop :corp target :advance-counter n {:placed true}))}
+                               :effect (effect (add-prop :corp target :advance-counter n {:placed true}))}
                               card nil)))}}}
 
    "House of Knives"
@@ -891,9 +893,9 @@
                                             (count (all-installed state :runner)))
                                   :req #(and (= (:side %) "Runner")
                                              (:installed %))}
-                        :effect (final-effect (trash-cards targets)
-                                              (system-msg (str "trashes " (join ", " (map :title targets))))
-                                              (gain-bad-publicity :corp 1))}
+                        :effect (effect (trash-cards targets)
+                                        (system-msg (str "trashes " (join ", " (map :title targets))))
+                                        (gain-bad-publicity :corp 1))}
                        card nil)
                       (clear-wait-prompt :corp))})
 
@@ -960,10 +962,11 @@
                              {:prompt "Select a card to place 1 advancement token on"
                               :player :corp
                               :choices {:req can-be-advanced?}
-                              :cancel-effect (final-effect (clear-wait-prompt :runner))
+                              :cancel-effect (effect (clear-wait-prompt :runner)
+                                                     (effect-completed eid))
                               :msg (msg "place 1 advancement token on " (card-str state target))
-                              :effect (final-effect (add-prop :corp target :advance-counter 1 {:placed true})
-                                                    (clear-wait-prompt :runner))} card nil))}}}
+                              :effect (effect (add-prop :corp target :advance-counter 1 {:placed true})
+                                              (clear-wait-prompt :runner))} card nil))}}}
 
    "Quantum Predictive Model"
    {:flags {:rd-reveal (req true)}
@@ -1014,7 +1017,7 @@
                                  (when (<= n (count (:hand runner)))
                                    (doseq [r (take n (shuffle (:hand runner)))] (move state :runner r :deck)))
                                  (clear-wait-prompt state :runner)
-                                 (effect-completed state side eid card))
+                                 (effect-completed state side eid))
                              (continue-ability state side (corp-choice original '() original) card nil))))})
            (corp-choice [remaining chosen original] ; Corp chooses cards until they press 'Done'
              {:prompt "Choose a card to move to bottom of R&D"
@@ -1030,14 +1033,14 @@
                                  (continue-ability state side (corp-final (remove #(= % "Done") chosen) original) card nil)
                                  (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
                                      (clear-wait-prompt state :runner)
-                                     (effect-completed state side eid card))))))})]
+                                     (effect-completed state side eid))))))})]
    {:async true
     :effect (req (show-wait-prompt state :runner "Corp to add cards from HQ to bottom of R&D")
                  (let [from (get-in @state [:corp :hand])]
                    (if (pos? (count from))
                      (continue-ability state :corp (corp-choice from '() from) card nil)
                      (do (system-msg state side "does not add any cards from HQ to bottom of R&D")
-                         (effect-completed state side eid card)))))})
+                         (effect-completed state side eid)))))})
 
    "Remote Data Farm"
    {:silent (req true)
@@ -1173,7 +1176,7 @@
                                         (corp-install state side target nil {:no-install-cost true})
                                         (if (< n max)
                                           (continue-ability state side (sft (inc n) max) card nil)
-                                          (effect-completed state side eid card))))})]
+                                          (effect-completed state side eid))))})]
      {:async true
       :msg "install cards from HQ, ignoring all costs"
       :effect (req (let [max (count (filter #(not (is-type? % "Operation")) (:hand corp)))]
@@ -1208,8 +1211,10 @@
     :access
     {:psi {:req (req (not installed))
            :not-equal {:msg (msg "prevent it from being stolen")
-                       :effect (final-effect (register-run-flag! card :can-steal
-                                                                 (fn [_ _ c] (not= (:cid c) (:cid card)))))}}}}
+                       :effect (effect (register-run-flag! card :can-steal
+                                                           (fn [_ _ c] (not= (:cid c) (:cid card))))
+                                       ;; TODO: investigate why this is needed??
+                                       (effect-completed eid))}}}}
 
    "Underway Renovation"
    (letfn [(adv4? [s c] (if (>= (get-counters (get-card s c) :advancement) 4) 2 1))]

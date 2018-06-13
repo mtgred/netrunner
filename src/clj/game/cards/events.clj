@@ -1,7 +1,7 @@
 (ns game.cards.events
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -174,7 +174,7 @@
               :effect (req (if (= target "Done")
                              (do (doseq [c (reverse chosen)] (move state :corp c :deck {:front true}))
                                  (clear-wait-prompt state :runner)
-                                 (effect-completed state side eid card))
+                                 (effect-completed state side eid))
                              (continue-ability state side (cbi-choice original '() (count original) original)
                                                card nil)))})
            (cbi-choice [remaining chosen n original]
@@ -197,7 +197,7 @@
                                                 (if (pos? (count from))
                                                   (continue-ability state :corp (cbi-choice from '() (count from) from) card nil)
                                                   (do (clear-wait-prompt state :runner)
-                                                      (effect-completed state side eid card)))))}} card))})
+                                                      (effect-completed state side eid)))))}} card))})
 
    "Code Siphon"
    {:req (req rd-runnable)
@@ -569,7 +569,7 @@
                             (trash state side c {:unpreventable true}))
                           (install-cost-bonus state side [:credit (- trash-cost)])
                           (runner-install state side target)
-                          (effect-completed state side eid card))})]
+                          (effect-completed state side eid))})]
    {:prompt "Choose Hardware and Programs to trash from your Grip"
     :choices {:req #(and (or (is-type? % "Hardware")
                              (is-type? % "Program"))
@@ -724,7 +724,7 @@
                                                                                    " forcing the Corp to trash " target " cards"
                                                                                    " from the top of R&D"))))}
                                                  card nil)
-                                                (effect-completed state side eid card))))}} card))}
+                                                (effect-completed state side eid))))}} card))}
 
    "Feint"
    {:req (req hq-runnable)
@@ -850,7 +850,7 @@
                                                        :effect (req (doseq [c (take 5 (shuffle (:hand corp)))]
                                                                       (trash state :corp c))
                                                                     (clear-wait-prompt state :runner)
-                                                                    (effect-completed state :runner eid card))}
+                                                                    (effect-completed state :runner eid))}
                                                       card nil)))}
         access-effect {:mandatory true
                        :async true
@@ -967,7 +967,7 @@
                                             (continue-ability state side (reorder-choice :corp :corp from '()
                                                                                          (count from) from) card nil)
                                             (do (clear-wait-prompt state :corp)
-                                                (effect-completed state side eid card)))))}} card))}
+                                                (effect-completed state side eid)))))}} card))}
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]
@@ -988,7 +988,7 @@
                              (if (< 1 (count cards))
                                (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
                                (do (swap! state assoc-in [:run :cards-accessed] pile-size)
-                                   (effect-completed state side eid card)))))})
+                                   (effect-completed state side eid)))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
               :choices [(str "Pile 1 (" (count p1) " cards)") (str "Pile 2 (" (count p2) " cards)")]
@@ -1019,7 +1019,7 @@
                                                                                 (set (:hand corp)) (set targets)))))
                                                     card nil))
                                   } card nil))
-                           (effect-completed state side eid card)))}]
+                           (effect-completed state side eid)))}]
        {:req (req hq-runnable)
         :effect (effect (run :hq {:req (req (= target :hq))
                                   :replace-access access-effect}
@@ -1201,7 +1201,7 @@
                                (continue-ability state side (reorder-choice :runner :corp cards '()
                                                                             (count cards) cards) card nil)
                                (do (clear-wait-prompt state :corp)
-                                   (effect-completed state side eid card)))
+                                   (effect-completed state side eid)))
                              (do (trash state side target {:unpreventable true})
                                  (continue-ability state side (entrance-trash (remove-once #(= % target) cards))
                                                    card nil))))})]
@@ -1564,7 +1564,7 @@
              {:prompt "Select a piece of ICE to bypass"
               :choices {:req #(ice? %)}
               :msg (msg "bypass " (card-str state target))
-              :effect (final-effect (run (second (:zone target))))})
+              :effect (effect (run (second (:zone target))))})
            (corp-choice [spent]
              {:prompt "Guess how many credits were spent"
               :choices ["0" "1" "2"]

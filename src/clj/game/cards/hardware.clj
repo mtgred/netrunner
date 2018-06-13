@@ -1,7 +1,7 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -1085,7 +1085,7 @@
                                   (continue-ability state side (reorder-choice :runner :corp from '()
                                                                                (count from) from) card nil)
                                   (do (clear-wait-prompt state :corp)
-                                      (effect-completed state side eid card)))))}
+                                      (effect-completed state side eid)))))}
                 {:label "[Trash]: Look at the top card of R&D"
                  :msg "trash it and look at the top card of R&D"
                  :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {})
@@ -1193,7 +1193,7 @@
                                                            (swap-agendas state side scored stolen)
                                                            (system-msg state side (str "uses Turntable to swap "
                                                                                        (:title stolen) " for " (:title scored)))
-                                                           (effect-completed state side eid card)))}
+                                                           (effect-completed state side eid)))}
                                            card targets))}}}
                             card targets)))}}}
 

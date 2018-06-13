@@ -113,7 +113,7 @@
 (defn- resolve-ability-eid
   ([state side {:keys [eid] :as ability} card targets]
    (if (= 1 (count ability)) ;; only has the eid, in effect a nil ability
-     (effect-completed state side eid card)
+     (effect-completed state side eid)
      (if (and ability (not eid))
        (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
        (when-let [ability (if (and (:makes-run ability)
@@ -134,7 +134,7 @@
              (do-choices state side ability card targets)
              ;; Not a prompt. Trigger the ability.
              (do-ability state side ability card targets))
-           (effect-completed state side eid card))
+           (effect-completed state side eid))
          (complete-ability state side ability card))))))
 
 ;;; Checking functions for resolve-ability
@@ -144,7 +144,7 @@
   ;; if it does have choices and has false async
   (when (or (and (not choices) (not optional) (not psi) (not trace) (not async))
             (and (or optional psi choices trace) (false? async)))
-    (effect-completed state side eid card)))
+    (effect-completed state side eid)))
 
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
@@ -152,7 +152,7 @@
   (when-let [optional (:optional ability)]
     (if (can-trigger? state side optional card targets)
       (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
-      (effect-completed state side eid card))))
+      (effect-completed state side eid))))
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
@@ -160,7 +160,7 @@
   (when-let [psi (:psi ability)]
     (if (can-trigger? state side psi card targets)
       (psi-game state side eid card psi)
-      (effect-completed state side eid card))))
+      (effect-completed state side eid))))
 
 (defn- check-trace
   "Checks if there is a trace to resolve"
@@ -168,7 +168,7 @@
   (when-let [trace (:trace ability)]
     (if (can-trigger? state side ability card targets)
       (init-trace state side card (assoc trace :eid (:eid ability)))
-      (effect-completed state side eid card))))
+      (effect-completed state side eid))))
 
 (defn- do-choices
   "Handle a choices ability"
@@ -290,7 +290,7 @@
                     (resolve-ability state side (assoc yes-ability :eid eid) card targets)
                     (if-let [no-ability (:no-ability ability)]
                       (resolve-ability state side (assoc no-ability :eid eid) card targets)
-                      (effect-completed state side eid card))))
+                      (effect-completed state side eid))))
                 ability)))
 
 
@@ -417,7 +417,7 @@
           (resolve-ability state side (:ability selected) (:card curprompt) cards))
       (if-let [cancel-effect (:cancel-effect curprompt)]
         (cancel-effect nil)
-        (effect-completed state side (:eid (:ability selected)) nil)))))
+        (effect-completed state side (:eid (:ability selected)))))))
 
 (defn show-wait-prompt
   "Shows a 'Waiting for ...' prompt to the given side with the given message.
@@ -490,7 +490,7 @@
           (wait-for (trigger-event-sync state side :psi-game bet opponent-bet)
                     (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
                       (resolve-ability state (:side card) (assoc ability :eid eid :async true) card nil)
-                      (effect-completed state side eid card)))
+                      (effect-completed state side eid)))
           (trigger-event state side :psi-game-done bet opponent-bet))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
@@ -540,7 +540,7 @@
                           (do (when-let [kicker (:kicker trace)]
                                 (when (>= corp-strength (:min kicker))
                                   (resolve-ability state :corp kicker card [corp-strength runner-strength])))
-                              (effect-completed state side eid nil)))))))
+                              (effect-completed state side eid)))))))
 
 (defn trace-reply
   "Shows a trace prompt to the second player, after the first has already spent credits to boost."

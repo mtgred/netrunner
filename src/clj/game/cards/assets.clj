@@ -1,7 +1,7 @@
 (ns game.cards.assets
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -478,7 +478,7 @@
                                                          (move state side c :deck)))}
                                          card targets)
                                        (do (clear-wait-prompt state :runner)
-                                           (effect-completed state side eid card)))))}}}
+                                           (effect-completed state side eid)))))}}}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged)
@@ -729,7 +729,7 @@
                                                    (if-not (empty? t)
                                                      (wait-for (damage state side :net 1 {:card card})
                                                                (do-damage (rest t)))
-                                                     (effect-completed state side eid card)))]
+                                                     (effect-completed state side eid)))]
                                            (do-damage (filter #(card-is? % :side :corp) targets))))}}
     :abilities [{:msg "do 1 net damage"
                  :async true
@@ -1529,7 +1529,7 @@
                             :async true
                             :effect (req (wait-for (trash state side card nil)
                                                    (do (system-msg state :runner "trashes Server Diagnostics")
-                                                       (effect-completed state side eid card))))}}})
+                                                       (effect-completed state side eid))))}}})
 
    "Shannon Claire"
    {:abilities [{:cost [:click 1]

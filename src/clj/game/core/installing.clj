@@ -270,7 +270,7 @@
         all-cost (concat extra-cost [:credit ice-cost])
         end-cost (if no-install-cost 0 (install-cost state side card all-cost))
         end-fn #((clear-install-cost-bonus state side)
-                 (effect-completed state side eid card))]
+                 (effect-completed state side eid))]
     (if (and (corp-can-install? state side card dest-zone)
              (not (install-locked? state :corp)))
       (wait-for (pay-sync state side card end-cost {:action action})

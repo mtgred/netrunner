@@ -184,7 +184,7 @@
       (do (if-let [cancel-effect (:cancel-effect prompt)]
             ;; trigger the cancel effect
             (cancel-effect choice)
-            (effect-completed state side (:eid prompt) nil))
+            (effect-completed state side (:eid prompt)))
           (finish-prompt state side prompt card)))))
 
 (defn select

@@ -1,7 +1,7 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -194,7 +194,7 @@
                  :choices (req (cancellable (:hosted card)))
                  :msg "move a card from NVRAM to their Grip"
                  :effect (effect (move target :hand)
-                                 (effect-completed eid card))}]
+                                 (effect-completed eid))}]
     :events {:pre-start-game
              {:req (req (= side :runner))
               :async true
@@ -214,7 +214,7 @@
                                                                (move state side c :deck))
                                                              (shuffle! state side :deck)
                                                              (clear-wait-prompt state :corp)
-                                                             (effect-completed state side eid card))} card nil))}}}
+                                                             (effect-completed state side eid))} card nil))}}}
 
    "Azmari EdTech: Shaping the Future"
    (let [choose-type {:prompt "Name a Runner card type"
@@ -430,7 +430,7 @@
                                 {:prompt "Select a Bioroid to rez" :player :corp
                                  :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
                                  :msg (msg "rez " (:title target))
-                                 :cancel-effect (final-effect (clear-wait-prompt :runner))
+                                 :cancel-effect (effect (clear-wait-prompt :runner))
                                  :effect (effect (rez-cost-bonus -4)
                                                  (rez target)
                                                  (clear-wait-prompt :runner))}
@@ -681,7 +681,7 @@
                 :prompt "Select an unrezzed card to return to HQ"
                 :choices {:req #(and (not (rezzed? %)) (installed? %) (card-is? % :side :corp))}
                 :msg (msg "add " (card-str state target) " to HQ")
-                :effect (final-effect (move :corp target :hand))}]
+                :effect (effect (move :corp target :hand))}]
      {:flags {:slow-hq-access (req true)}
       :events {:agenda-scored leela
                :agenda-stolen leela}})

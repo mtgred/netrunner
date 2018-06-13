@@ -1,7 +1,7 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -136,7 +136,7 @@
                              (do (clear-wait-prompt state :corp)
                                  (shuffle! state side :deck)
                                  (system-msg state side (str "shuffles their Stack"))
-                                 (effect-completed state side eid card))
+                                 (effect-completed state side eid))
                              (do (host state side (get-card state card) target)
                                  (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
                                  (continue-ability state side (custsec-host (remove-once #(= % target) cards))

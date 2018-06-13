@@ -1,7 +1,7 @@
 (ns game.cards.resources
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -52,13 +52,13 @@
                         :effect (req (if (zero? (:tag runner))
                                        (do (tag-runner state :runner eid 1)
                                            (system-msg state :runner (str "uses " (:title card) " to take 1 tag")))
-                                       (effect-completed state :runner eid card)))}
+                                       (effect-completed state :runner eid)))}
      :runner-turn-begins {:async true
                           :effect (req (if (not has-bad-pub)
                                          (do (gain-bad-publicity state :corp eid 1)
                                              (system-msg state :runner
                                                          (str "uses " (:title card) " to give the corp 1 bad publicity")))
-                                         (effect-completed state :runner eid card)))}}}
+                                         (effect-completed state :runner eid)))}}}
 
    "Adjusted Chronotype"
    {:events {:runner-loss {:req (req (and (some #{:click} target)
@@ -1051,7 +1051,7 @@
                                (continue-ability state side (reorder-choice :runner :corp tobottom '()
                                                                             (count tobottom) tobottom "bottom") card nil))
                              (do (clear-wait-prompt state :corp)
-                                 (effect-completed state side eid card))))})]
+                                 (effect-completed state side eid))))})]
    {:abilities [{:cost [:click 1]
                  :msg (msg "draw 4 cards: " (join ", " (map :title (take 4 (:deck runner)))))
                  :async true
@@ -1074,24 +1074,26 @@
                  :async true
                  :effect (req (if (not (empty? (:scored corp)))
                                 (do (show-wait-prompt state :runner "Corp to decide whether or not to prevent Liberated Chela")
-                                    (resolve-ability
+                                    (continue-ability
                                       state side
                                       {:prompt (msg "Forfeit an agenda to prevent Liberated Chela from being added to Runner's score area?")
-                                       :choices ["Yes" "No"] :player :corp
-                                       :effect (final-effect (resolve-ability
-                                                               (if (= target "Yes")
-                                                                 {:player :corp
-                                                                  :prompt "Select an agenda to forfeit"
-                                                                  :choices {:req #(in-corp-scored? state side %)}
-                                                                  :effect (effect (forfeit target)
-                                                                                  (move :runner card :rfg)
-                                                                                  (clear-wait-prompt :runner))}
-                                                                 {:async true
-                                                                  :effect (req (clear-wait-prompt state :runner)
-                                                                               (as-agenda state :runner eid card 2))
-                                                                  :msg "add it to their score area as an agenda worth 2 points"})
-                                                              card nil))} card nil))
-                                (resolve-ability
+                                       :choices ["Yes" "No"]
+                                       :player :corp
+                                       :async true
+                                       :effect (effect (continue-ability
+                                                         (if (= target "Yes")
+                                                           {:player :corp
+                                                            :prompt "Select an agenda to forfeit"
+                                                            :choices {:req #(in-corp-scored? state side %)}
+                                                            :effect (effect (forfeit target)
+                                                                            (move :runner card :rfg)
+                                                                            (clear-wait-prompt :runner))}
+                                                           {:async true
+                                                            :effect (req (clear-wait-prompt state :runner)
+                                                                         (as-agenda state :runner eid card 2))
+                                                            :msg "add it to their score area as an agenda worth 2 points"})
+                                                         card nil))} card nil))
+                                (continue-ability
                                   state side
                                   {:async true
                                    :effect (req (as-agenda state :runner eid card 2))
@@ -1528,7 +1530,7 @@
                        (reorder-choice :runner :corp from '() (count from) from)
                        card nil)
                      (do (clear-wait-prompt state :corp)
-                         (effect-completed state side eid card)))))
+                         (effect-completed state side eid)))))
     :trash-effect {:effect (effect (system-msg :runner
                                                (str "trashes "
                                                     (join ", " (map :title (take 3 (:deck runner))))
@@ -1600,7 +1602,7 @@
               :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
                              (do (system-msg state :runner (str "uses " (:title card) " to draw a card"))
                                  (draw state :runner eid 1 nil))
-                             (effect-completed state :runner eid card)))}}}
+                             (effect-completed state :runner eid)))}}}
 
    "Salvaged Vanadis Armory"
    {:events {:damage

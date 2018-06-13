@@ -74,9 +74,9 @@
                    (if-let [cost-str async-result]
                      (complete-play-instant state side eid card cost-str ignore-cost)
                      ;; could not pay the card's price; mark the effect as being over.
-                     (effect-completed state side eid card)))
+                     (effect-completed state side eid)))
          ;; card's req was not satisfied; mark the effect as being over.
-         (effect-completed state side eid card))))))
+         (effect-completed state side eid))))))
 
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."
@@ -225,7 +225,7 @@
                               (trigger-event state side :damage type card n)))))))
                 (swap! state update-in [:damage :defer-damage] dissoc type)
                 (swap! state update-in [:damage] dissoc :damage-replace)
-                (effect-completed state side eid card))))
+                (effect-completed state side eid))))
 
 (defn damage
   "Attempts to deal n damage of the given type to the runner. Starts the
