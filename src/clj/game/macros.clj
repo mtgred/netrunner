@@ -75,10 +75,10 @@
        (str ~@expr))))
 
 (defmacro wait-for
-  ([action expr]
+  ([action & expr]
    (let [reqmac `(fn [~'state1 ~'side1 ~'eid1 ~'card1 ~'target1]
                    (let [~'async-result (:result ~'eid1)]
-                     ~expr))
+                     ~@expr))
    ;; this creates a five-argument function to be resolved later,
    ;; without overriding any local variables name state, card, etc.
          totake (if (= 'apply (first action)) 4 3)
@@ -89,9 +89,6 @@
         (if ~'use-eid
           ~(concat (take totake action) (list 'new-eid) (drop (inc totake) action))
           ~(concat (take totake action) (list 'new-eid) (drop totake action)))))))
-
-(defmacro final-effect [& expr]
-  (macroexpand (apply list `(effect ~@expr ~(list (quote effect-completed) 'eid 'card)))))
 
 (defmacro continue-ability
   [state side ability card targets]
