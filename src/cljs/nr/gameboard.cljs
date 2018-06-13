@@ -838,7 +838,7 @@
   (.stopPropagation event))
 
 (defn label [cursor opts]
-  (let [fn (or (:fn opts) count)]
+  (let [fn (or (get-in opts [:opts :fn]) count)]
     [:div.header {:class (when (> (count cursor) 0) "darkbg")}
      (str (:name opts) " (" (fn cursor) ")")]))
 
