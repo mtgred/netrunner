@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare available-mu free-mu host in-play? install-locked? make-rid rez run-flag? server-list server->zone set-prop system-msg
+(declare available-mu free-mu host in-play? install-locked? make-rid rez run-flag? installable-servers server->zone set-prop system-msg
          turn-flag? update-breaker-strength update-ice-strength update-run-ice use-mu)
 
 ;;;; Functions for the installation and deactivation of cards.
@@ -199,7 +199,7 @@
                         (and (rezzed? %)
                              (can-host state :corp (make-eid state) % [card])))
                       (all-installed state :corp))]
-    (concat hosts (server-list state card))))
+    (concat hosts (installable-servers state card))))
 
 (defn- corp-install-continue
   "Used by corp-install to actually install the card, rez it if it's supposed to be installed

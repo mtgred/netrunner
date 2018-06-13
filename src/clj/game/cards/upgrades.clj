@@ -115,7 +115,7 @@
                                                        (trash card))}}}}}
 
   "Bio Vault"
-  {:implementation "Installation restriction not enforced"
+  {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
    :advanceable :always
    :abilities [{:label "[Trash]: End the run"
                 :advance-counter-cost 2
@@ -166,7 +166,8 @@
                                  (move target :rfg))}]}
 
    "Calibration Testing"
-   {:abilities [{:label "[Trash]: Place 1 advancement token on a card in this server"
+   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    :abilities [{:label "[Trash]: Place 1 advancement token on a card in this server"
                  :delayed-completion true
                  :effect (effect (continue-ability
                                    {:prompt "Select a card in this server"
@@ -360,7 +361,7 @@
                  :delayed-completion true
                  :effect (effect (continue-ability
                                    {:prompt "Choose a server"
-                                    :choices (butlast (server-list state side))
+                                    :choices (server-list state)
                                     :msg (msg "move to " target)
                                     :effect (req (let [c (move state side card
                                                                (conj (server->zone state target) :content))]
@@ -496,8 +497,8 @@
                               (lose state :runner :tag 1))}]}
 
    "Khondi Plaza"
-   {:recurring (effect (set-prop card :rec-counter (count (get-remotes @state))))
-    :effect (effect (set-prop card :rec-counter (count (get-remotes @state))))}
+   {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
+    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
 
    "K. P. Lynn"
    (let [abi {:prompt "Choose one"
@@ -617,7 +618,8 @@
                                     (gain-credits state :corp total)
                                     (system-msg state :corp
                                                 (str "gains " total " [Credits] from Mwanza City Grid"))))}]
-     {:events {:pre-access {:req (req (and installed
+     {:install-req (req (filter #{"HQ" "R&D"} targets))
+      :events {:pre-access {:req (req (and installed
                                            ;; Pre-access server is same server as that Mwanza is in the root of
                                            (= target (second  (:zone card)))))
                             :msg "force the Runner to access 3 additional cards"
@@ -695,7 +697,7 @@
                        :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}}}
 
    "Off the Grid"
-   {:implementation "Installation restriction not enforced"
+   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
     :effect (req (prevent-run-on-server state card (second (:zone card))))
     :events {:runner-turn-begins {:effect (req (prevent-run-on-server state card (second (:zone card))))}
              :successful-run {:req (req (= target :hq))
@@ -759,8 +761,9 @@
                :runner-trash om}})
 
    "Panic Button"
-   {:init {:root "HQ"} :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
-                                    :req (req (and run (= (first (:server run)) :hq)))}]}
+   {:init {:root "HQ"}
+    :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
+                 :req (req (and run (= (first (:server run)) :hq)))}]}
 
    "Port Anson Grid"
    {:msg "prevent the Runner from jacking out unless they trash an installed program"
@@ -851,7 +854,8 @@
                      (update-all-ice state side))}
 
    "Self-destruct"
-   {:abilities [{:req (req this-server)
+   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    :abilities [{:req (req this-server)
                  :label "[Trash]: Trace X - Do 3 net damage"
                  :effect (req (let [serv (card->server state card)
                                     cards (concat (:ices serv) (:content serv))]

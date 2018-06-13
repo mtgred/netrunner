@@ -242,7 +242,7 @@
     :effect (req (let [agenda target]
                    (continue-ability
                      state side {:prompt (str "Choose a server to install " (:title agenda))
-                                 :choices (server-list state agenda)
+                                 :choices (installable-servers state agenda)
                                  :effect (req (corp-install state side agenda target {:install-state :face-up})
                                               ; find where the agenda ended up and host on it
                                               (let [agenda (some #(when (= (:cid %) (:cid agenda)) %)
@@ -368,9 +368,13 @@
                       (continue-ability trash-from-hq card nil))})
 
    "Diversified Portfolio"
-   {:msg (msg "gain " (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))
-              " [Credits]")
-    :effect (effect (gain-credits (count (filter #(not (empty? %)) (map #(:content (second %)) (get-remotes @state))))))}
+   (letfn [(number-of-non-empty-remotes [state]
+             (count (filter #(not (empty? %))
+                            (map #(:content (second %))
+                                 (get-remotes state)))))]
+     {:msg (msg "gain " (number-of-non-empty-remotes state)
+                " [Credits]")
+      :effect (effect (gain-credits (number-of-non-empty-remotes state)))})
 
    "Door to Door"
    {:events {:runner-turn-begins
@@ -999,7 +1003,7 @@
    "Priority Construction"
    (letfn [(install-card [chosen]
             {:prompt "Select a remote server"
-             :choices (req (conj (vec (get-remote-names @state)) "New remote"))
+             :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :delayed-completion true
              :effect (effect (corp-install (assoc chosen :advance-counter 3) target {:no-install-cost true}))})]
      {:delayed-completion true
@@ -1038,26 +1042,28 @@
                                      card nil)))}
 
     "Psychokinesis"
-    (letfn [(choose-card [cards]
-             {:prompt "Select an agenda, asset, or upgrade to install"
-              :choices (cons "None" cards)
-              :delayed-completion true
-              :effect (req (if-not (or (= target "None") (ice? target) (is-type? target "Operation"))
-                             (continue-ability state side (install-card target) card nil)
-                             (system-msg state side "does not install an asset, agenda, or upgrade"))
-                           (effect-completed state side eid card)
-                           (clear-wait-prompt state :runner))})
+    (letfn [(choose-card [state cards]
+              (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %) )
+                                          cards)]
+                {:prompt "Select an agenda, asset, or upgrade to install"
+                 :choices (cons "None" allowed-cards)
+                 :delayed-completion true
+                 :effect (req (if-not (or (= target "None") (ice? target) (is-type? target "Operation"))
+                                (continue-ability state side (install-card target) card nil)
+                                (system-msg state side "does not install an asset, agenda, or upgrade"))
+                              (effect-completed state side eid card)
+                              (clear-wait-prompt state :runner))}))
             (install-card [chosen]
              {:prompt "Select a remote server"
-              :choices (req (conj (vec (get-remote-names @state)) "New remote"))
+              :choices (req (conj (vec (get-remote-names state)) "New remote"))
               :delayed-completion true
               :effect (effect (clear-wait-prompt :runner)
                               (corp-install (move state side chosen :play-area) target))})]
      {:msg "look at the top 5 cards of R&D"
       :delayed-completion true
       :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of R&D")
-                   (let [from (take 5 (:deck corp))]
-                     (continue-ability state side (choose-card from) card nil)))})
+                   (let [top-5 (take 5 (:deck corp))]
+                     (continue-ability state side (choose-card state top-5) card nil)))})
 
    "Punitive Counterstrike"
    {:trace {:base 5

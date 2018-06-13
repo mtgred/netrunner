@@ -394,7 +394,7 @@
               :effect (req (corp-install state side target server-name {:no-install-cost true})
                            (if (< n 2)
                              (continue-ability state side
-                                               (install-ability (last (get-remote-names @state)) (inc n))
+                                               (install-ability (last (get-remote-names state)) (inc n))
                                                card nil)
                              (effect-completed state side eid card)))
               :msg (msg (if (pos? n)
