@@ -603,7 +603,43 @@
       (play-from-hand state :runner "Maw")
       (run-empty-server state :remote1)
       (prompt-choice :runner "Steal")
-      (is (zero? (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen"))))
+      (is (zero? (count (:discard (get-corp)))) "No HQ card in discard as agenda was stolen")))
+  (testing "Maw shouldn't trigger when accessing a card in archives. #3388"
+    (do-game
+      (new-game (default-corp ["Rashida Jaheem" "Cyberdex Virus Suite" (qty "Ice Wall" 4)])
+                (make-deck "Alice Merchant: Clan Agitator" ["Maw" "Imp"]))
+      (core/move state :corp (find-card "Rashida Jaheem" (:hand (get-corp))) :deck)
+      (trash-from-hand state :corp "Cyberdex Virus Suite")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Maw")
+      (play-from-hand state :runner "Imp")
+      (run-empty-server state :archives)
+      (prompt-card :corp (find-card "Ice Wall" (:hand (get-corp)))) ;; Alice's ability
+      (prompt-choice :runner "Cyberdex Virus Suite")
+      (prompt-choice :corp "Yes")
+      (run-empty-server state :rd)
+      (prompt-choice-partial :runner "Pay")
+      (is (= 3 (count (:discard (get-corp)))) "Ice Wall, CVS, and Rashida")
+      (is (empty? (:prompt (get-runner))) "No more prompts for runner")))
+ (testing "Maw should trigger when declining to steal. #3388"
+    (do-game
+      (new-game (default-corp [(qty "Obokata Protocol" 2) (qty "Ice Wall" 4)])
+                (make-deck "Alice Merchant: Clan Agitator" ["Maw" "Archives Interface"]))
+      (trash-from-hand state :corp "Ice Wall")
+      (starting-hand state :corp ["Obokata Protocol" "Obokata Protocol"])
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (play-from-hand state :runner "Maw")
+      (play-from-hand state :runner "Archives Interface")
+      (run-empty-server state :archives)
+      (prompt-card :corp (find-card "Obokata Protocol" (:hand (get-corp))))
+      (prompt-choice :runner "Yes")
+      (prompt-card :runner (find-card "Ice Wall" (:discard (get-corp))))
+      (prompt-choice :runner "No action")
+      (run-empty-server state :hq)
+      (prompt-choice :runner "No action")
+      (is (= 2 (count (:discard (get-corp)))) "Ice Wall and Obokata"))))
 
 (deftest maya
   ;; Maya - Move accessed card to bottom of R&D
