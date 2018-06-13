@@ -19,9 +19,24 @@
 (def delete-msg-channel (chan))
 (def delete-all-channel (chan))
 
+(defn non-game-toast
+  "Display a toast warning with the specified message."
+  [msg type options]
+  (set! (.-options js/toastr) (toastr-options options))
+  (let [f (aget js/toastr type)]
+    (f msg)))
+
 (ws/register-ws-handler! :chat/message (partial put! chat-channel))
 (ws/register-ws-handler! :chat/delete-msg (partial put! delete-msg-channel))
 (ws/register-ws-handler! :chat/delete-all (partial put! delete-all-channel))
+(ws/register-ws-handler!
+  :chat/blocked
+  (fn [{:keys [reason] :as msg}]
+    (let [reason-str (case reason
+                       :rate-exceeded "Rate exceeded"
+                       :length-exceeded "Length exceeded")]
+    (non-game-toast (str "Message Blocked" (when reason-str (str ": " reason-str)))
+                    "warning" nil))))
 
 (defn current-block-list
   []
@@ -61,13 +76,6 @@
             channels (keys (:channels @app-state))]
         (doseq [ch channels]
           (filter-message-channel ch :username username)))))
-
-(defn non-game-toast
-  "Display a toast warning with the specified message."
-  [msg type options]
-  (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr type)]
-    (f msg)))
 
 (defn- post-response [owner blocked-user response]
   (if (= 200 (:status response))
