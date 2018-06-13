@@ -97,11 +97,12 @@
                                           (keyword (s/replace (-> % .-target .-innerHTML) #"#" ""))))}
    (str "#" (name channel))])
 
-(defn- hide-block-menu []
-  (-> (:msg-buttons @chat-state) js/$ .hide))
+(defn- hide-block-menu [msg-state]
+  (-> (:msg-buttons @msg-state) js/$ .hide))
 
 (defn message-view [message s]
-  (let [user (:user @app-state)
+  (let [msg-state (atom {})
+        user (:user @app-state)
         my-msg (= (:username message) (:username user))]
     (fn [message s]
       [:div.message
@@ -109,17 +110,17 @@
       [:div.content
        [:div.name-menu
         [:span.username
-         {:on-click #(-> (:msg-buttons @chat-state) js/$ .toggle)
+         {:on-click #(-> (:msg-buttons @msg-state) js/$ .toggle)
           :class (if my-msg "" "clickable")}
          (:username message)]
         (when user
           (when (not my-msg)
             [:div.panel.blue-shade.block-menu
-             {:ref #(swap! chat-state assoc :msg-buttons %)}
+             {:ref #(swap! msg-state assoc :msg-buttons %)}
              [:div {:on-click #(do
                                  (block-user (:username message))
-                                 (hide-block-menu))} "Block User"]
-             [:div {:on-click #(hide-block-menu)} "Cancel"]]))
+                                 (hide-block-menu msg-state))} "Block User"]
+             [:div {:on-click #(hide-block-menu msg-state)} "Cancel"]]))
         [:span.date (-> (:date message) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]]
        [:div
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
