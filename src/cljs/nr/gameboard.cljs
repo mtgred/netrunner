@@ -1233,7 +1233,7 @@
                     (if (nil? (:strength prompt))
                       (if (= "corp" (:player prompt))
                         ;; This is a trace prompt for the corp, show runner link + credits
-                        [:div.info "Runner: " (:link runner) [:span {:class "anr-icon link"}]
+                        [:div.info "Runner: " (:link prompt) [:span {:class "anr-icon link"}]
                          " + " (:credit runner) [:span {:class "anr-icon credit"}]]
                         ;; Trace in which the runner pays first, showing base trace strength and corp credits
                         [:div.info "Trace: " (when (:bonus prompt) (+ base (:bonus prompt)) base)
@@ -1249,9 +1249,9 @@
                        (if (= "corp" (:player prompt))
                          (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
                            [:span (str strength " + ")])
-                         [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )])
+                         [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )])
                        (if (= "corp" (:player prompt))
-                         [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )]
+                         [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )]
                          (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
                            [:span (str strength " + ")]))))
                    [:select#credit (for [i (range (inc (:credit me)))]
