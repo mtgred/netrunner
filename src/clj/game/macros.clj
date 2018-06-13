@@ -74,7 +74,7 @@
             'tagged '(or (pos? (:tagged runner)) (pos? (:tag runner)))]
        (str ~@expr))))
 
-(defmacro when-completed
+(defmacro wait-for
   ([action expr]
    (let [reqmac `(fn [~'state1 ~'side1 ~'eid1 ~'card1 ~'target1]
                    (let [~'async-result (:result ~'eid1)]

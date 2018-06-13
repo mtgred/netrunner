@@ -487,10 +487,10 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
           (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
-          (when-completed (trigger-event-sync state side :psi-game bet opponent-bet)
-                          (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                            (resolve-ability state (:side card) (assoc ability :eid eid :async true) card nil)
-                            (effect-completed state side eid card)))
+          (wait-for (trigger-event-sync state side :psi-game bet opponent-bet)
+                    (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+                      (resolve-ability state (:side card) (assoc ability :eid eid :async true) card nil)
+                      (effect-completed state side eid card)))
           (trigger-event state side :psi-game-done bet opponent-bet))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
@@ -531,16 +531,16 @@
                                  (:unsuccessful trace))
                                :eid (make-eid state))]
       (system-say state side (str "The trace was " (when-not successful "un") "successful."))
-      (when-completed (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace)
-                                          {:runner-spent (if (corp-start? trace)
-                                                           boost
-                                                           (- strength link))})
-                      (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
-                                                       card [corp-strength runner-strength])
-                                      (do (when-let [kicker (:kicker trace)]
-                                            (when (>= corp-strength (:min kicker))
-                                              (resolve-ability state :corp kicker card [corp-strength runner-strength])))
-                                          (effect-completed state side eid nil)))))))
+      (wait-for (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace)
+                                    {:runner-spent (if (corp-start? trace)
+                                                     boost
+                                                     (- strength link))})
+                (wait-for (resolve-ability state :corp (:eid which-ability) which-ability
+                                           card [corp-strength runner-strength])
+                          (do (when-let [kicker (:kicker trace)]
+                                (when (>= corp-strength (:min kicker))
+                                  (resolve-ability state :corp kicker card [corp-strength runner-strength])))
+                              (effect-completed state side eid nil)))))))
 
 (defn trace-reply
   "Shows a trace prompt to the second player, after the first has already spent credits to boost."
@@ -582,20 +582,20 @@
 
 (defn init-trace
   [state side card {:keys [base priority] :as trace}]
-  (when-completed (trigger-event-sync state :corp :pre-init-trace card)
-                  (let [force-base (get-in @state [:trace :force-base])
-                        base (cond force-base force-base
-                                   (fn? base) (base state :corp (make-eid state) card nil)
-                                   :else base)
-                        trace (merge trace {:player (determine-initiator state trace)
-                                            :other (if (= :corp (determine-initiator state trace)) :runner :corp)
-                                            :base base
-                                            :bonus (get-in @state [:bonus :trace] 0)
-                                            :link (get-in @state [:runner :link] 0)
-                                            :priority (or priority 2)})]
-                    (when force-base
-                      (swap! state dissoc-in [:trace :force-base]))
-                    (trace-start state side card trace))))
+  (wait-for (trigger-event-sync state :corp :pre-init-trace card)
+            (let [force-base (get-in @state [:trace :force-base])
+                  base (cond force-base force-base
+                             (fn? base) (base state :corp (make-eid state) card nil)
+                             :else base)
+                  trace (merge trace {:player (determine-initiator state trace)
+                                      :other (if (= :corp (determine-initiator state trace)) :runner :corp)
+                                      :base base
+                                      :bonus (get-in @state [:bonus :trace] 0)
+                                      :link (get-in @state [:runner :link] 0)
+                                      :priority (or priority 2)})]
+              (when force-base
+                (swap! state dissoc-in [:trace :force-base]))
+              (trace-start state side card trace))))
 
 (defn rfg-and-shuffle-rd-effect
   ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))

@@ -1,7 +1,7 @@
 (ns game.cards.icebreakers
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -254,30 +254,31 @@
                              :effect (effect (system-msg "adds 1 virus counter to " (:title card))
                                              (add-counter card :virus 1))}}
    :abilities [{:label (str  "Break " ice-type "subroutine(s)")
-                :effect (req (when-completed (resolve-ability
-                                              state side (pick-virus-counters-to-spend) card nil)
-                               (do (if-let [msg (:msg async-result)]
-                                     (do (system-msg state :runner
-                                                     (str "spends " msg" to break " (:number async-result)
-                                                          " " ice-type " subroutine(s)")))))))}
+                :effect (req (wait-for (resolve-ability
+                                         state side (pick-virus-counters-to-spend) card nil)
+                                       (do (if-let [msg (:msg async-result)]
+                                             (do (system-msg state :runner
+                                                             (str "spends " msg" to break " (:number async-result)
+                                                                  " " ice-type " subroutine(s)")))))))}
                {:label "Match strength of currently encountered ice"
                 :req (req (and current-ice
                                (> (ice-strength state side current-ice)
                                   (or (:current-strength card) (:strength card)))))
-                :effect (req (when-completed (resolve-ability
-                                              state side (pick-virus-counters-to-spend
-                                                          (- (ice-strength state side current-ice)
-                                                             (or (:current-strength card) (:strength card))))
-                                              card nil)
-                               (if-let [msg (:msg async-result)]
-                                 (do (system-msg state :runner (str "spends " msg " to add "
-                                                                    (:number async-result) " strength"))
-                                     (dotimes [_ (:number async-result)]
-                                       (pump state side (get-card state card) 1))))))}
+                :effect (req (wait-for (resolve-ability
+                                         state side
+                                         (pick-virus-counters-to-spend
+                                           (- (ice-strength state side current-ice)
+                                              (or (:current-strength card) (:strength card))))
+                                         card nil)
+                                       (if-let [msg (:msg async-result)]
+                                         (do (system-msg state :runner (str "spends " msg " to add "
+                                                                            (:number async-result) " strength"))
+                                             (dotimes [_ (:number async-result)]
+                                               (pump state side (get-card state card) 1))))))}
                {:label "Add strength"
-                :effect (req (when-completed
-                                 (resolve-ability
-                                  state side (pick-virus-counters-to-spend) card nil)
+                :effect (req (wait-for
+                               (resolve-ability
+                                 state side (pick-virus-counters-to-spend) card nil)
                                (if-let [msg (:msg async-result)]
                                  (do (system-msg state :runner (str "spends " msg" to add "
                                                                     (:number async-result)
@@ -642,13 +643,13 @@
                                   :msg "break 1 subroutine"}
                                  {:label "Take 1 tag to place 2 virus counters (start of turn)"
                                   :once :per-turn
-                                  :effect (req (when-completed (tag-runner state :runner 1)
-                                                               (if (not (get-in @state [:tag :tag-prevent]))
-                                                                 (do (add-counter state side card :virus 2)
-                                                                     (system-msg state side
-                                                                                 (str "takes 1 tag to place 2 virus counters on God of War"))
-                                                                     (effect-completed state side eid))
-                                                                 (effect-completed state side eid))))}]})
+                                  :effect (req (wait-for (tag-runner state :runner 1)
+                                                         (if (not (get-in @state [:tag :tag-prevent]))
+                                                           (do (add-counter state side card :virus 2)
+                                                               (system-msg state side
+                                                                           (str "takes 1 tag to place 2 virus counters on God of War"))
+                                                               (effect-completed state side eid))
+                                                           (effect-completed state side eid))))}]})
 
    "Golden"
    (auto-icebreaker ["Sentry"]

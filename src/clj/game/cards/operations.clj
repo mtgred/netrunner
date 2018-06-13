@@ -1,7 +1,7 @@
 (ns game.cards.operations
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -32,10 +32,10 @@
                                    (= (:zone %) [:play-area]))}
               :msg (msg "play " (:title target))
               :async true
-              :effect (req (when-completed (play-instant state side target {:no-additional-cost true})
-                                           (if (and (not (get-in @state [:corp :register :terminal])) (< i n))
-                                             (continue-ability state side (ad (inc i) n adcard) adcard nil)
-                                             (effect-completed state side eid))))})]
+              :effect (req (wait-for (play-instant state side target {:no-additional-cost true})
+                                     (if (and (not (get-in @state [:corp :register :terminal])) (< i n))
+                                       (continue-ability state side (ad (inc i) n adcard) adcard nil)
+                                       (effect-completed state side eid))))})]
      {:async true
       :implementation "Corp has to manually cards back to R&D to correctly play a draw operation"
       :effect (req (let [n (count (filter #(is-type? % "Operation")
@@ -56,7 +56,7 @@
                                         (has-subtype? % "Advertisement")
                                         (or (in-hand? %)
                                             (= (:zone %) [:discard])))}
-                   :effect (req (when-completed
+                   :effect (req (wait-for
                                   (corp-install state side target nil {:install-state :rezzed})
                                   (if (< n total)
                                     (continue-ability state side (ab (inc n) total) card nil)
@@ -185,7 +185,7 @@
     :effect (req (let [t target
                        num (count (filter #(is-type? % t) (all-active-installed state :runner)))]
                    (show-wait-prompt state :corp "Runner to choose cards to trash")
-                   (when-completed
+                   (wait-for
                      (resolve-ability state :runner
                        {:prompt (msg "Choose any number of cards of type " t " to trash")
                         :choices {:max num :req #(and (installed? %) (is-type? % t))}
@@ -358,7 +358,7 @@
                                   :req #(and (= (:side %) "Corp")
                                              (in-hand? %))}
                         :msg (msg "trash " (quantify (count targets) "card") " from HQ")
-                        :effect (req (when-completed
+                        :effect (req (wait-for
                                        (trash-cards state side targets nil)
                                        (continue-ability state side shuffle-two card nil)))
                         :cancel-effect (req (continue-ability state side shuffle-two card nil))}]
@@ -538,7 +538,7 @@
                               :choices {:req #(and (= (:side %) "Corp")
                                                    (not (is-type? % "Operation"))
                                                    (in-discard? %))}
-                              :effect (req (when-completed
+                              :effect (req (wait-for
                                              (corp-install state side target nil nil)
                                              (do (system-msg state side (str "uses Friends in High Places to "
                                                                              (corp-install-msg target)))
@@ -591,10 +591,10 @@
      {:additional-cost [:mill 1]
       :async true
       :msg "trash the top card of R&D, draw 3 cards, and add 3 cards in HQ to the top of R&D"
-      :effect (req (when-completed (draw state side 3 nil)
-                                   (do (show-wait-prompt state :runner "Corp to add 3 cards in HQ to the top of R&D")
-                                       (let [from (get-in @state [:corp :hand])]
-                                         (continue-ability state :corp (hr-choice from '() 3 from) card nil)))))})
+      :effect (req (wait-for (draw state side 3 nil)
+                             (do (show-wait-prompt state :runner "Corp to add 3 cards in HQ to the top of R&D")
+                                 (let [from (get-in @state [:corp :hand])]
+                                   (continue-ability state :corp (hr-choice from '() 3 from) card nil)))))})
 
    "Hatchet Job"
    {:trace {:base 5
@@ -637,14 +637,14 @@
 
    "Heritage Committee"
    {:async true
-    :effect (req (when-completed (draw state side 3 nil)
-                                 (continue-ability state side
-                                   {:prompt "Select a card in HQ to put on top of R&D"
-                                    :choices {:req #(and (= (:side %) "Corp")
-                                                         (in-hand? %))}
-                                    :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
-                                    :effect (effect (move target :deck {:front true}))}
-                                   card nil)))}
+    :effect (req (wait-for (draw state side 3 nil)
+                           (continue-ability state side
+                                             {:prompt "Select a card in HQ to put on top of R&D"
+                                              :choices {:req #(and (= (:side %) "Corp")
+                                                                   (in-hand? %))}
+                                              :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
+                                              :effect (effect (move target :deck {:front true}))}
+                                             card nil)))}
 
    "High-Profile Target"
    (letfn [(dmg-count [runner]
@@ -866,25 +866,25 @@
                        titles (->> (conj (vec reveal) (first r))
                                    (filter identity)
                                    (map :title))]
-                   (when-completed (trash state :corp target nil)
-                                   (do
-                                     (system-msg state side (str "uses Mutate to trash " (:title target)))
-                                     (when (seq titles)
-                                       (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
-                                     (if-let [ice (first r)]
-                                       (let [newice (assoc ice :zone (:zone target) :rezzed true)
-                                             ices (get-in @state (cons :corp (:zone target)))
-                                             newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
-                                         (swap! state assoc-in (cons :corp (:zone target)) newices)
-                                         (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(= (:cid %) (:cid newice)) coll)))
-                                         (trigger-event state side :corp-install newice)
-                                         (card-init state side newice {:resolve-effect false
-                                                                       :init-data true})
-                                         (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
-                                         (trigger-event state side :rez newice))
-                                       (system-msg state side (str "does not find any ICE to install from R&D")))
-                                     (shuffle! state :corp :deck)
-                                     (effect-completed state side eid card)))))}
+                   (wait-for (trash state :corp target nil)
+                             (do
+                               (system-msg state side (str "uses Mutate to trash " (:title target)))
+                               (when (seq titles)
+                                 (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
+                               (if-let [ice (first r)]
+                                 (let [newice (assoc ice :zone (:zone target) :rezzed true)
+                                       ices (get-in @state (cons :corp (:zone target)))
+                                       newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
+                                   (swap! state assoc-in (cons :corp (:zone target)) newices)
+                                   (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(= (:cid %) (:cid newice)) coll)))
+                                   (trigger-event state side :corp-install newice)
+                                   (card-init state side newice {:resolve-effect false
+                                                                 :init-data true})
+                                   (system-msg state side (str "uses Mutate to install and rez " (:title newice) " from R&D at no cost"))
+                                   (trigger-event state side :rez newice))
+                                 (system-msg state side (str "does not find any ICE to install from R&D")))
+                               (shuffle! state :corp :deck)
+                               (effect-completed state side eid card)))))}
 
    "Neural EMP"
    {:req (req (last-turn? state :runner :made-run))
@@ -1020,11 +1020,11 @@
                          (or (is-type? % "Asset")
                              (is-type? % "Upgrade")))}
     :effect (req (let [tcost (modified-trash-cost state side target)]
-                   (when-completed (trash state side target {:unpreventable true})
-                                   (do (gain-credits state :corp tcost)
-                                       (system-msg state side (str "uses Product Recall to trash " (card-str state target)
-                                                                   " and gain " tcost "[Credits]"))
-                                        (effect-completed state side eid)))))}
+                   (wait-for (trash state side target {:unpreventable true})
+                             (do (gain-credits state :corp tcost)
+                                 (system-msg state side (str "uses Product Recall to trash " (card-str state target)
+                                                             " and gain " tcost "[Credits]"))
+                                 (effect-completed state side eid)))))}
 
    "Psychographics"
    {:req (req tagged)
@@ -1141,10 +1141,10 @@
               :choices {:req #(and (= (:side %) "Corp")
                                    (not (is-type? % "Operation"))
                                    (in-hand? %))}
-              :effect (req (when-completed (corp-install state side target nil {:no-install-cost true})
-                                           (if (< n 2)
-                                             (continue-ability state side (replant (inc n)) card nil)
-                                             (effect-completed state side eid card))))})]
+              :effect (req (wait-for (corp-install state side target nil {:no-install-cost true})
+                                     (if (< n 2)
+                                       (continue-ability state side (replant (inc n)) card nil)
+                                       (effect-completed state side eid))))})]
      {:async true
       :prompt "Select an installed card to add to HQ"
       :choices {:req #(and (= (:side %) "Corp")
@@ -1162,7 +1162,7 @@
                                        :choices {:req #(and (= (:side %) "Corp")
                                                             (not (is-type? % "Operation"))
                                                             (in-discard? %))}
-                                       :effect (req (when-completed
+                                       :effect (req (wait-for
                                                       (corp-install state side target nil {:install-state :rezzed})
                                                       (do (system-msg state side (str "uses Restore to "
                                                                                       (corp-install-msg target)))
@@ -1355,7 +1355,7 @@
                              :choices {:req #(and (= (:side %) "Corp")
                                                   (not (is-type? % "Operation"))
                                                   (in-hand? %))}
-                             :effect (req (when-completed
+                             :effect (req (wait-for
                                             (corp-install state side target nil nil)
                                             (if (< n 3)
                                               (continue-ability state side (sh (inc n)) card nil)
@@ -1468,10 +1468,10 @@
                                    (in-hand? %))}
               :async true
               :msg (msg "play " (:title target))
-              :effect (req (when-completed (play-instant state side target)
-                                           (if (and (not (get-in @state [:corp :register :terminal])) (< i 2))
-                                               (continue-ability state side (sc (inc i) sccard) sccard nil)
-                                               (effect-completed state side eid))))})]
+              :effect (req (wait-for (play-instant state side target)
+                                     (if (and (not (get-in @state [:corp :register :terminal])) (< i 2))
+                                       (continue-ability state side (sc (inc i) sccard) sccard nil)
+                                       (effect-completed state side eid))))})]
      {:req (req tagged)
       :async true
       :effect (effect (continue-ability (sc 1 card) card nil))})
@@ -1681,14 +1681,14 @@
    "Ultraviolet Clearance"
    {:async true
     :effect (req (gain-credits state side 10)
-                 (when-completed (draw state side 4 nil)
-                                 (continue-ability state side
-                                                   {:prompt "Choose a card in HQ to install"
-                                                    :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (not (is-type? % "Operation")))}
-                                                    :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
-                                                    :cancel-effect (req (effect-completed state side eid))
-                                                    :effect (effect (corp-install target nil))}
-                                                   card nil)))}
+                 (wait-for (draw state side 4 nil)
+                           (continue-ability state side
+                                             {:prompt "Choose a card in HQ to install"
+                                              :choices {:req #(and (in-hand? %) (= (:side %) "Corp") (not (is-type? % "Operation")))}
+                                              :msg "gain 10 [Credits], draw 4 cards, and install 1 card from HQ"
+                                              :cancel-effect (req (effect-completed state side eid))
+                                              :effect (effect (corp-install target nil))}
+                                             card nil)))}
 
    "Violet Level Clearance"
    {:msg "gain 8 [Credits] and draw 4 cards"

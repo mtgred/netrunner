@@ -1,7 +1,7 @@
 (ns game.cards.upgrades
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -381,7 +381,7 @@
                  :req (req (and this-server (pos? (count run-ices)) (pos? (count (:hand corp)))))
                  :async true
                  :effect (req (show-wait-prompt state :runner "Corp to use Helheim Servers")
-                              (when-completed
+                              (wait-for
                                 (resolve-ability
                                   state side
                                   {:prompt "Choose a card in HQ to trash"
@@ -442,11 +442,11 @@
               :effect (req (if (= "None" server)
                              (continue-ability state side (choose-ice remaining grids) card nil)
                              (do (system-msg state side (str "reveals that they drew " (:title ice)))
-                                 (when-completed (corp-install state side ice server {:extra-cost [:credit -4]})
-                                                 (if (= 1 (count ices))
-                                                   (effect-completed state side eid)
-                                                   (continue-ability state side (choose-ice remaining grids)
-                                                                     card nil))))))}))
+                                 (wait-for (corp-install state side ice server {:extra-cost [:credit -4]})
+                                           (if (= 1 (count ices))
+                                             (effect-completed state side eid)
+                                             (continue-ability state side (choose-ice remaining grids)
+                                                               card nil))))))}))
 
            (choose-grid [ice ices grids]
              (if (= 1 (count grids))
@@ -786,8 +786,8 @@
                                  :yes-ability {:cost [:credit 2]
                                                :msg "do 1 meat damage and give the Runner 1 tag"
                                                :async true
-                                               :effect (req (when-completed (damage state side :meat 1 {:card card})
-                                                                            (tag-runner state :runner eid 1)))}}}
+                                               :effect (req (wait-for (damage state side :meat 1 {:card card})
+                                                                      (tag-runner state :runner eid 1)))}}}
                                card nil))}}
 
    "Product Placement"
@@ -1003,9 +1003,9 @@
                                      :effect (req (swap! state update-in [:damage] dissoc :damage-replace :defer-damage)
                                                   (clear-wait-prompt state :runner)
                                                   (pay state :corp card :credit 2)
-                                                  (when-completed (damage state side :brain 1 {:card card})
-                                                                  (do (swap! state assoc-in [:damage :damage-replace] true)
-                                                                      (effect-completed state side eid))))}
+                                                  (wait-for (damage state side :brain 1 {:card card})
+                                                            (do (swap! state assoc-in [:damage :damage-replace] true)
+                                                                (effect-completed state side eid))))}
                        :no-ability {:async true
                                     :effect (req (swap! state update-in [:damage] dissoc :damage-replace)
                                                  (clear-wait-prompt state :runner)

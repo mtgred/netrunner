@@ -1,7 +1,7 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -278,8 +278,8 @@
                                              (effect-completed state side eid)))))}
                     {:label "Draw 1 card; allow runner to draw 1 card"
                      :async true
-                     :effect (req (when-completed (resolve-ability state side corp-draw card nil)
-                                                  (continue-ability state :runner runner-draw card nil)))}
+                     :effect (req (wait-for (resolve-ability state side corp-draw card nil)
+                                            (continue-ability state :runner runner-draw card nil)))}
                     (do-net-damage 1)]
       :abilities [(do-net-damage 3)]})
 
@@ -606,18 +606,18 @@
                   {:label "Trash 1 program (Trash 1 program and 1 resource)"
                    :async true
                    :msg (msg "trash 1 program" (when (wonder-sub card 3) " and 1 resource"))
-                   :effect (req (when-completed (resolve-ability state side trash-program card nil)
-                                                (if (wonder-sub card 3)
-                                                  (continue-ability
-                                                    state side
-                                                    {:prompt "Choose a resource to trash"
-                                                     :msg (msg "trash " (:title target))
-                                                     :choices {:req #(and (installed? %)
-                                                                          (is-type? % "Resource"))}
-                                                     :cancel-effect (req (effect-completed state side eid))
-                                                     :effect (effect (trash target {:cause :subroutine}))}
-                                                    card nil)
-                                                  (effect-completed state side eid))))}]
+                   :effect (req (wait-for (resolve-ability state side trash-program card nil)
+                                          (if (wonder-sub card 3)
+                                            (continue-ability
+                                              state side
+                                              {:prompt "Choose a resource to trash"
+                                               :msg (msg "trash " (:title target))
+                                               :choices {:req #(and (installed? %)
+                                                                    (is-type? % "Resource"))}
+                                               :cancel-effect (req (effect-completed state side eid))
+                                               :effect (effect (trash target {:cause :subroutine}))}
+                                              card nil)
+                                            (effect-completed state side eid))))}]
     :strength-bonus advance-counters}
 
    "Conundrum"
@@ -738,8 +738,8 @@
 
    "DNA Tracker"
    {:subroutines [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
-                   :effect (req (when-completed (damage state side :net 1 {:card card})
-                                                (lose-credits state :runner 2)))}]}
+                   :effect (req (wait-for (damage state side :net 1 {:card card})
+                                          (lose-credits state :runner 2)))}]}
 
    "Dracō"
    {:prompt "How many power counters?"
@@ -871,10 +871,10 @@
                                                       :label "Trash a piece of hardware"
                                                       :choices {:req #(is-type? % "Hardware")}
                                                       :msg (msg "trash " (:title target))
-                                                      :effect (req (when-completed
+                                                      :effect (req (wait-for
                                                                      (trash state side target {:cause :subroutine})
                                                                      (do (damage state side eid :meat 2 {:unpreventable true
-                                                                                              :card card})
+                                                                                                         :card card})
                                                                          (end-run state side))))
                                                       :cancel-effect (effect (damage eid :meat 2 {:unpreventable true :card card})
                                                                              (end-run))}
@@ -1024,7 +1024,7 @@
                     {:label "End the run (Search R&D for up to 2 cards and add them to HQ, shuffle R&D, end the run)"
                      :async true
                      :effect (req (if (wonder-sub card 3)
-                                    (when-completed
+                                    (wait-for
                                       (resolve-ability state side (hort 1) card nil)
                                       (do (end-run state side)
                                           (system-msg state side
@@ -1084,8 +1084,8 @@
                   (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"
                                     :msg "give the Runner 1 tag and do 1 brain damage"
                                     :async true
-                                    :effect (req (when-completed (damage state :runner :brain 1 {:card card})
-                                                                 (tag-runner state :runner eid 1)))})]
+                                    :effect (req (wait-for (damage state :runner :brain 1 {:card card})
+                                                           (tag-runner state :runner eid 1)))})]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Ichi 2.0"
@@ -1093,8 +1093,8 @@
                   (trace-ability 3 {:label "Give the Runner 1 tag and do 1 brain damage"
                                     :msg "give the Runner 1 tag and do 1 brain damage"
                                     :async true
-                                    :effect (req (when-completed (damage state :runner :brain 1 {:card card})
-                                                                 (tag-runner state :runner eid 1)))})]
+                                    :effect (req (wait-for (damage state :runner :brain 1 {:card card})
+                                                           (tag-runner state :runner eid 1)))})]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Inazuma"
@@ -1211,8 +1211,8 @@
               :msg (str "force the Runner to take 1 brain damage or trash an installed " (better-name kind))
               :async true
               :effect (req (show-wait-prompt state :corp "Runner to decide on Kamali 1.0 action")
-                           (when-completed (resolve-ability state side (sub-map kind) card nil)
-                                           (clear-wait-prompt state :corp)))})]
+                           (wait-for (resolve-ability state side (sub-map kind) card nil)
+                                     (clear-wait-prompt state :corp)))})]
      {:subroutines [(brain-trash "resource")
                     (brain-trash "hardware")
                     (brain-trash "program")]
@@ -1224,18 +1224,18 @@
                    :label "Force the Runner to access a card in HQ"
                    :msg (msg "force the Runner to access " (:title target))
                    :effect (req (trash state side card)
-                                (when-completed (trigger-event-sync state side :pre-access :hq)
-                                  (when-completed (access-card state side target)
-                                    (let [from-hq (dec (access-count state side :hq-access))]
-                                      (continue-ability
-                                        state :runner
-                                        (access-helper-hq
-                                          state from-hq
-                                          ;; access-helper-hq uses a set to keep track of which cards have already
-                                          ;; been accessed. by adding HQ root's contents to this set, we make the runner
-                                          ;; unable to access those cards, as Kitsune intends.
-                                          (conj (set (get-in @state [:corp :servers :hq :content])) target))
-                                       card nil)))))}]}
+                                (wait-for (trigger-event-sync state side :pre-access :hq)
+                                          (wait-for (access-card state side target)
+                                                    (let [from-hq (dec (access-count state side :hq-access))]
+                                                      (continue-ability
+                                                        state :runner
+                                                        (access-helper-hq
+                                                          state from-hq
+                                                          ;; access-helper-hq uses a set to keep track of which cards have already
+                                                          ;; been accessed. by adding HQ root's contents to this set, we make the runner
+                                                          ;; unable to access those cards, as Kitsune intends.
+                                                          (conj (set (get-in @state [:corp :servers :hq :content])) target))
+                                                        card nil)))))}]}
 
    "Komainu"
    {:abilities [{:label "Gain subroutines"
@@ -1318,18 +1318,18 @@
                (update! state side (dissoc hc :abilities))))]
      {:async true
       :effect (req (let [magnet card]
-                     (when-completed (resolve-ability
-                                       state side
-                                       {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                                        (remove-once #(= (:cid %) (:cid magnet))
-                                                                     (filter ice? (all-installed state corp)))))
-                                        :prompt "Select a Program to host on Magnet"
-                                        :choices {:req #(and (card-is? % :type "Program")
-                                                             (ice? (:host %))
-                                                             (not= (:cid (:host %)) (:cid magnet)))}
-                                        :effect (effect (host card target))}
-                                       card nil)
-                                     (disable-hosted state side card))))
+                     (wait-for (resolve-ability
+                                 state side
+                                 {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                                  (remove-once #(= (:cid %) (:cid magnet))
+                                                               (filter ice? (all-installed state corp)))))
+                                  :prompt "Select a Program to host on Magnet"
+                                  :choices {:req #(and (card-is? % :type "Program")
+                                                       (ice? (:host %))
+                                                       (not= (:cid (:host %)) (:cid magnet)))}
+                                  :effect (effect (host card target))}
+                                 card nil)
+                               (disable-hosted state side card))))
       :derez-effect {:req (req (not-empty (:hosted card)))
                      :effect (req (doseq [c (get-in card [:hosted])]
                                     (card-init state side c {:resolve-effect false})))}
@@ -1424,13 +1424,13 @@
    {:subroutines [(do-psi {:label "do 2 net damage"
                            :async true
                            :player :corp
-                           :effect (req (when-completed (damage state :corp :net 2 {:card card})
-                                                        (trash state :corp eid card nil)))}
+                           :effect (req (wait-for (damage state :corp :net 2 {:card card})
+                                                  (trash state :corp eid card nil)))}
                           {:label "do 1 net damage"
                            :async true
                            :player :corp
-                           :effect (req (when-completed (damage state :corp :net 1 {:card card})
-                                                        (trash state :corp eid card nil)))})]}
+                           :effect (req (wait-for (damage state :corp :net 1 {:card card})
+                                                  (trash state :corp eid card nil)))})]}
 
    "Mind Game"
    {:subroutines [(do-psi {:label "Redirect the run to another server"
@@ -1464,19 +1464,22 @@
                                                :server [:archives]))
                               (derez state side card))}]
     :subroutines [{:label "Draw 1 card, then shuffle 1 card from HQ into R&D"
-                   :effect (req (when-completed (resolve-ability state side
-                                                  {:optional
-                                                   {:prompt "Draw 1 card?"
-                                                    :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}}}
-                                                 card nil)
-                                                (resolve-ability state side
-                                                  {:prompt "Choose 1 card in HQ to shuffle into R&D"
-                                                   :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
-                                                   :msg "shuffle 1 card in HQ into R&D"
-                                                   :effect (effect (move target :deck)
-                                                                   (shuffle! :deck))}
-                                                 card nil)))}]}
+                   :effect (req (wait-for (resolve-ability
+                                            state side
+                                            {:optional
+                                             {:prompt "Draw 1 card?"
+                                              :yes-ability {:async true
+                                                            :msg "draw 1 card"
+                                                            :effect (effect (draw eid 1 nil))}}}
+                                            card nil)
+                                          (resolve-ability
+                                            state side
+                                            {:prompt "Choose 1 card in HQ to shuffle into R&D"
+                                             :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                             :msg "shuffle 1 card in HQ into R&D"
+                                             :effect (effect (move target :deck)
+                                                             (shuffle! :deck))}
+                                            card nil)))}]}
 
    "Mlinzi"
    (letfn [(net-or-trash [net-dmg mill-cnt]
@@ -1546,13 +1549,15 @@
    {:subroutines [{:label "Do 1 brain damage and Corp may draw 1 card"
                    :async true
                    :msg "do 1 brain damage"
-                   :effect (req (when-completed (damage state :runner :brain 1 {:card card})
-                                                (resolve-ability state side
-                                                  {:optional
-                                                   {:prompt "Draw 1 card?"
-                                                    :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}}}
-                                                 card nil)))}]
+                   :effect (req (wait-for (damage state :runner :brain 1 {:card card})
+                                          (resolve-ability
+                                            state side
+                                            {:optional
+                                             {:prompt "Draw 1 card?"
+                                              :yes-ability {:async true
+                                                            :msg "draw 1 card"
+                                                            :effect (effect (draw eid 1 nil))}}}
+                                            card nil)))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Neural Katana"
@@ -1770,7 +1775,7 @@
                                        :async true
                                        :effect
                                        (req (if (= target "Arrange cards")
-                                              (when-completed
+                                              (wait-for
                                                 (resolve-ability state side (reorder-choice :corp top-cards) card nil)
                                                 (do
                                                   (system-msg state :corp (str "rearranges the top "
@@ -1789,7 +1794,7 @@
                      :async true
                      :effect
                      (req (show-wait-prompt state :runner "Corp to select cards to trash with Sadaka")
-                          (when-completed
+                          (wait-for
                             (resolve-ability
                               state side
                               {:prompt "Choose a card in HQ to trash"
@@ -1797,11 +1802,11 @@
                                :async true
                                :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
                                                       (effect-completed eid))
-                               :effect (req (when-completed
+                               :effect (req (wait-for
                                               (trash state :corp (make-eid state) target nil)
                                               (do
                                                 (system-msg state :corp "trashes a card from HQ")
-                                                (when-completed
+                                                (wait-for
                                                   (resolve-ability state side trash-resource-sub card nil)
                                                   (effect-completed state side eid)))))}
                               card nil)
@@ -1936,14 +1941,14 @@
                                     (do (clear-wait-prompt state :runner)
                                         (effect-completed state side eid card)))))}
                   {:label "Force the Runner to access the top card of R&D"
-                   :effect (req (when-completed (trigger-event-sync state side :pre-access :rd)
-                                                (let [total-cards (access-count state side :rd-access)]
-                                                  (swap! state assoc-in [:run :did-access] true)
-                                                  (swap! state assoc-in [:runner :register :accessed-cards] true)
-                                                  (doseq [c (take total-cards (:deck corp))]
-                                                    (system-msg state :runner (str "accesses " (:title c)))
-                                                    (access-card state side c))
-                                                  (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
+                   :effect (req (wait-for (trigger-event-sync state side :pre-access :rd)
+                                          (let [total-cards (access-count state side :rd-access)]
+                                            (swap! state assoc-in [:run :did-access] true)
+                                            (swap! state assoc-in [:runner :register :accessed-cards] true)
+                                            (doseq [c (take total-cards (:deck corp))]
+                                              (system-msg state :runner (str "accesses " (:title c)))
+                                              (access-card state side c))
+                                            (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"

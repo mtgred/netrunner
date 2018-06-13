@@ -1,7 +1,7 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -643,8 +643,8 @@
                  :msg "move the card just accessed to the bottom of R&D"
                  :effect (req (let [accessed-card (-> @state :runner :prompt first :card)]
                                 (move state :corp accessed-card :deck)
-                                (when-completed (tag-runner state :runner (make-eid state) 1)
-                                                (close-access-prompt state side))))}
+                                (wait-for (tag-runner state :runner (make-eid state) 1)
+                                          (close-access-prompt state side))))}
                 {:once :per-turn
                  :label "Move a previously accessed card to bottom of R&D"
                  :effect (effect (resolve-ability
@@ -1133,21 +1133,21 @@
                        (swap! state update-in [:runner :brain-damage] #(+ % dmg))
                        (swap! state update-in [:runner :hand-size :mod] #(- % dmg)))
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
-                     (when-completed (resolve-ability state side
-                                       {:async true
-                                        :prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
-                                        :player :runner
-                                        :choices {:max dmg :all true :req #(and (in-hand? %) (= (:side %) "Runner"))}
-                                        :msg (msg "trash " (join ", " (map :title targets)))
-                                        :effect (req (clear-wait-prompt state :corp)
-                                                     (doseq [c targets]
-                                                       (trash state side c {:cause dtype :unpreventable true}))
-                                                     (trigger-event state side :damage-chosen)
-                                                     (damage-defer state side dtype 0)
-                                                     (effect-completed state side eid))}
-                                      card nil)
-                                     (do (trigger-event state side :damage dtype src dmg)
-                                         (effect-completed state side eid)))))}
+                     (wait-for (resolve-ability
+                                 state side
+                                 {:async true
+                                  :prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
+                                  :player :runner
+                                  :choices {:max dmg :all true :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                                  :msg (msg "trash " (join ", " (map :title targets)))
+                                  :effect (req (clear-wait-prompt state :corp)
+                                               (doseq [c targets]
+                                                 (trash state side c {:cause dtype :unpreventable true}))
+                                               (trigger-event state side :damage-chosen)
+                                               (damage-defer state side dtype 0)
+                                               (effect-completed state side eid))}
+                                 card nil)
+                               (trigger-event-sync state side eid :damage dtype src dmg))))}
     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
     :async true
     :effect (effect (enable-runner-damage-choice)

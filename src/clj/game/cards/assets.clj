@@ -1,7 +1,7 @@
 (ns game.cards.assets
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -59,9 +59,9 @@
     (move state :runner (assoc (deactivate state side card) :agendapoints n) :scored options)
     ; allow force option in case of Blacklist/News Team
     (move state :runner (assoc (deactivate state side card) :agendapoints n :zone [:discard]) :scored options))
-   (when-completed (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
-                   (do (gain-agenda-point state side n)
-                       (effect-completed state side eid)))))
+   (wait-for (trigger-event-sync state side :as-agenda (assoc card :as-agenda-side side :as-agenda-points n))
+             (do (gain-agenda-point state side n)
+                 (effect-completed state side eid)))))
 
 ;;; Card definitions
 (def card-definitions
@@ -468,17 +468,17 @@
                                                     (all-installed state :corp)))
                                  drawn (get-in @state [:corp :register :most-recent-drawn])]
                              (show-wait-prompt state :runner "Corp to use Daily Business Show")
-                             (when-completed (resolve-ability
-                                               state side
-                                               {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
-                                                :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
-                                                :choices {:max dbs
-                                                          :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
-                                                :effect (req (doseq [c targets]
-                                                               (move state side c :deck)))}
-                                               card targets)
-                                             (do (clear-wait-prompt state :runner)
-                                                 (effect-completed state side eid card)))))}}}
+                             (wait-for (resolve-ability
+                                         state side
+                                         {:prompt (str "Select " (quantify dbs "card") " to add to the bottom of R&D")
+                                          :msg (msg "add " (quantify dbs "card") " to the bottom of R&D")
+                                          :choices {:max dbs
+                                                    :req #(some (fn [c] (= (:cid c) (:cid %))) drawn)}
+                                          :effect (req (doseq [c targets]
+                                                         (move state side c :deck)))}
+                                         card targets)
+                                       (do (clear-wait-prompt state :runner)
+                                           (effect-completed state side eid card)))))}}}
 
    "Dedicated Response Team"
    {:events {:successful-run-ends {:req (req tagged)
@@ -586,8 +586,8 @@
                  :msg (msg "rez " (:title target))
                  :async true
                  :effect (req (rez-cost-bonus state side -1)
-                              (when-completed (rez state side target {:no-warning true})
-                                              (update! state side (assoc card :ebc-rezzed (:cid target)))))}
+                              (wait-for (rez state side target {:no-warning true})
+                                        (update! state side (assoc card :ebc-rezzed (:cid target)))))}
                 {:prompt "Choose an asset to add to HQ"
                  :msg (msg "add " (:title target) " to HQ")
                  :activatemsg "searches R&D for an asset"
@@ -727,8 +727,8 @@
                                            " net damage"))
                             :effect (req (letfn [(do-damage [t]
                                                    (if-not (empty? t)
-                                                     (when-completed (damage state side :net 1 {:card card})
-                                                                     (do-damage (rest t)))
+                                                     (wait-for (damage state side :net 1 {:card card})
+                                                               (do-damage (rest t)))
                                                      (effect-completed state side eid card)))]
                                            (do-damage (filter #(card-is? % :side :corp) targets))))}}
     :abilities [{:msg "do 1 net damage"
@@ -1261,15 +1261,15 @@
               {:prompt (msg "Reveal and install " (:title (nth agendas n)) "?")
                :yes-ability {:async true
                              :msg (msg "reveal " (:title (nth agendas n)))
-                             :effect (req (when-completed (corp-install
-                                                            state side (nth agendas n) nil
-                                                            {:install-state
-                                                             (:install-state
-                                                               (card-def (nth agendas n))
-                                                               :unrezzed)})
-                                            (if (< (inc n) (count agendas))
-                                              (continue-ability state side (pdhelper agendas (inc n)) card nil)
-                                              (effect-completed state side eid))))}
+                             :effect (req (wait-for (corp-install
+                                                      state side (nth agendas n) nil
+                                                      {:install-state
+                                                       (:install-state
+                                                         (card-def (nth agendas n))
+                                                         :unrezzed)})
+                                                    (if (< (inc n) (count agendas))
+                                                      (continue-ability state side (pdhelper agendas (inc n)) card nil)
+                                                      (effect-completed state side eid))))}
                :no-ability {:async true
                             :effect (req (if (< (inc n) (count agendas))
                                            (continue-ability state side (pdhelper agendas (inc n)) card nil)
@@ -1375,9 +1375,9 @@
                                      {:prompt "Trash Rashida Jaheem to gain 3 [Credits] and draw 3 cards?"
                                       :yes-ability {:async true
                                                     :msg "gain 3 [Credits] and draw 3 cards"
-                                                    :effect (req (when-completed (trash state side card nil)
-                                                                                 (do (gain-credits state side 3)
-                                                                                     (draw state side eid 3 nil))))}}}
+                                                    :effect (req (wait-for (trash state side card nil)
+                                                                           (do (gain-credits state side 3)
+                                                                               (draw state side eid 3 nil))))}}}
                                     card nil))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :flags {:corp-phase-12 (req true)}
@@ -1527,9 +1527,9 @@
     :events {:corp-turn-begins ability
              :corp-install {:req (req (ice? target))
                             :async true
-                            :effect (req (when-completed (trash state side card nil)
-                                                         (do (system-msg state :runner "trashes Server Diagnostics")
-                                                             (effect-completed state side eid card))))}}})
+                            :effect (req (wait-for (trash state side card nil)
+                                                   (do (system-msg state :runner "trashes Server Diagnostics")
+                                                       (effect-completed state side eid card))))}}})
 
    "Shannon Claire"
    {:abilities [{:cost [:click 1]
@@ -1611,8 +1611,8 @@
                                  :yes-ability {:async true
                                                :cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
-                                               :effect (req (when-completed (damage state side :net 3 {:card card})
-                                                                            (tag-runner state :runner eid 1)))}}}
+                                               :effect (req (wait-for (damage state side :net 3 {:card card})
+                                                                      (tag-runner state :runner eid 1)))}}}
                                card nil))}}
 
    "Space Camp"
@@ -1720,8 +1720,8 @@
                                   (trash state side card {:cause :ability-cost})
                                   (show-wait-prompt state :runner (str "Corp to derez "
                                                                        (quantify advancements "card")))
-                                  (when-completed (resolve-ability state side (derez-card advancements) card nil)
-                                                  (clear-wait-prompt state :runner))))}]})
+                                  (wait-for (resolve-ability state side (derez-card advancements) card nil)
+                                            (clear-wait-prompt state :runner))))}]})
 
    "The Board"
    (let [the-board {:req (req (and (= :runner (:as-agenda-side target))
@@ -1798,9 +1798,9 @@
              {:async true
               :effect (req (add-counter state side card :power -1)
                            (if (zero? (get-counters (get-card state card) :power))
-                             (when-completed (trash state side card nil)
-                               (do (system-msg state :corp "uses Urban Renewal to do 4 meat damage")
-                                   (damage state side eid :meat 4 {:card card})))
+                             (wait-for (trash state side card nil)
+                                       (do (system-msg state :corp "uses Urban Renewal to do 4 meat damage")
+                                           (damage state side eid :meat 4 {:card card})))
                              (effect-completed state side eid)))}}}
 
    "Victoria Jenkins"
@@ -1855,20 +1855,21 @@
                                 (pos? (count (:discard corp)))))
                  :async true
                  :effect (req (show-wait-prompt state :runner "Corp to use Whampoa Reclamation")
-                              (when-completed (resolve-ability state side
-                                                {:prompt "Choose a card in HQ to trash"
-                                                 :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
-                                                 :effect (effect (trash target))}
-                                               card nil)
-                                              (continue-ability state side
-                                                {:prompt "Select a card in Archives to add to the bottom of R&D"
-                                                 :show-discard true
-                                                 :choices {:req #(and (in-discard? %) (= (:side %) "Corp"))}
-                                                 :msg (msg "trash 1 card from HQ and add "
-                                                           (if (:seen target) (:title target) "a card") " from Archives to the bottom of R&D")
-                                                 :effect (effect (move target :deck)
-                                                                 (clear-wait-prompt :runner))}
-                                               card nil)))}]}
+                              (wait-for (resolve-ability state side
+                                                         {:prompt "Choose a card in HQ to trash"
+                                                          :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                                          :effect (effect (trash target))}
+                                                         card nil)
+                                        (continue-ability
+                                          state side
+                                          {:prompt "Select a card in Archives to add to the bottom of R&D"
+                                           :show-discard true
+                                           :choices {:req #(and (in-discard? %) (= (:side %) "Corp"))}
+                                           :msg (msg "trash 1 card from HQ and add "
+                                                     (if (:seen target) (:title target) "a card") " from Archives to the bottom of R&D")
+                                           :effect (effect (move target :deck)
+                                                           (clear-wait-prompt :runner))}
+                                          card nil)))}]}
 
    "Worlds Plaza"
    {:abilities [{:label "Install an asset on Worlds Plaza"

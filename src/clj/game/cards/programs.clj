@@ -1,7 +1,7 @@
 (ns game.cards.programs
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -368,10 +368,10 @@
                       {:optional {:prompt (str "Force the Corp to draw " title "?")
                                   :yes-ability {:async true
                                                 :effect (req (show-wait-prompt state :runner "Corp to draw")
-                                                             (when-completed (draw state :corp 1 nil)
-                                                                             (do (system-msg state :corp (str "is forced to draw " title))
-                                                                                 (clear-wait-prompt state :runner)
-                                                                                 (effect-completed state side eid))))}}})
+                                                             (wait-for (draw state :corp 1 nil)
+                                                                       (do (system-msg state :corp (str "is forced to draw " title))
+                                                                           (clear-wait-prompt state :runner)
+                                                                           (effect-completed state side eid))))}}})
          reveal {:optional {:prompt "Reveal the top card of R&D?"
                             :yes-ability {:async true
                                           :effect (req (let [topcard (-> corp :deck first :title)]
@@ -907,22 +907,22 @@
 
    "Self-modifying Code"
    {:abilities [{:req (req (not (install-locked? state side)))
-                 :effect (req (when-completed (trash state side card {:cause :ability-cost})
-                                              (continue-ability state side
-                                                {:prompt "Choose a program to install"
-                                                 :msg (req (if (not= target "No install")
-                                                             (str "install " (:title target))
-                                                             (str "shuffle their Stack")))
-                                                 :priority true
-                                                 :choices (req (cancellable
-                                                                 (conj (vec (sort-by :title (filter #(is-type? % "Program")
-                                                                                                    (:deck runner))))
-                                                                       "No install")))
-                                                 :cost [:credit 2]
-                                                 :effect (req (trigger-event state side :searched-stack nil)
-                                                              (shuffle! state side :deck)
-                                                              (when (not= target "No install")
-                                                                (runner-install state side target)))} card nil)))}]}
+                 :effect (req (wait-for (trash state side card {:cause :ability-cost})
+                                        (continue-ability state side
+                                                          {:prompt "Choose a program to install"
+                                                           :msg (req (if (not= target "No install")
+                                                                       (str "install " (:title target))
+                                                                       (str "shuffle their Stack")))
+                                                           :priority true
+                                                           :choices (req (cancellable
+                                                                           (conj (vec (sort-by :title (filter #(is-type? % "Program")
+                                                                                                              (:deck runner))))
+                                                                                 "No install")))
+                                                           :cost [:credit 2]
+                                                           :effect (req (trigger-event state side :searched-stack nil)
+                                                                        (shuffle! state side :deck)
+                                                                        (when (not= target "No install")
+                                                                          (runner-install state side target)))} card nil)))}]}
 
    "Sneakdoor Beta"
    {:abilities [{:cost [:click 1]
@@ -944,14 +944,14 @@
    "Snitch"
    {:abilities [{:once :per-run :req (req (and (ice? current-ice) (not (rezzed? current-ice))))
                  :async true
-                 :effect (req (when-completed (expose state side current-ice)
-                                              (continue-ability
-                                                state side
-                                                {:optional {:prompt "Jack out?"
-                                                            :yes-ability {:msg "jack out"
-                                                                          :effect (effect (jack-out nil))}
-                                                            :no-ability {:msg "continue the run"}}}
-                                                card nil)))}]}
+                 :effect (req (wait-for (expose state side current-ice)
+                                        (continue-ability
+                                          state side
+                                          {:optional {:prompt "Jack out?"
+                                                      :yes-ability {:msg "jack out"
+                                                                    :effect (effect (jack-out nil))}
+                                                      :no-ability {:msg "continue the run"}}}
+                                          card nil)))}]}
 
    "Surfer"
    (letfn [(surf [state cice]
@@ -1074,21 +1074,21 @@
              {:prompt "Choose a subtype"
               :choices ["Barrier" "Code Gate" "Sentry"]
               :async true
-              :effect (req (when-completed (trash state side card {:unpreventable true})
-                             (continue-ability state side
-                                               (expose-and-maybe-bounce target)
-                                               card nil)))})
+              :effect (req (wait-for (trash state side card {:unpreventable true})
+                                     (continue-ability state side
+                                                       (expose-and-maybe-bounce target)
+                                                       card nil)))})
            (expose-and-maybe-bounce [chosen-subtype]
              {:choices {:req #(and (ice? %) (not (rezzed? %)))}
               :async true
               :msg (str "name " chosen-subtype)
-              :effect (req (when-completed (expose state side target)
-                             (do (if (and async-result
-                                          (has-subtype? target chosen-subtype))
-                                   (do (move state :corp target :hand)
-                                       (system-msg state :runner
-                                                   (str "add " (:title target) " to HQ"))))
-                                 (effect-completed state side eid))))})]
+              :effect (req (wait-for (expose state side target)
+                                     (do (if (and async-result
+                                                  (has-subtype? target chosen-subtype))
+                                           (do (move state :corp target :hand)
+                                               (system-msg state :runner
+                                                           (str "add " (:title target) " to HQ"))))
+                                         (effect-completed state side eid))))})]
      {:events {:successful-run
               {:interactive (req true)
                :async true

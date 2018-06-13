@@ -1,7 +1,7 @@
 (ns game.cards.identities
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -361,17 +361,17 @@
                                           :effect (effect (clear-wait-prompt :corp)
                                                           (trash-no-cost eid accessed-card))}
                                          card nil)
-                       (when-completed (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
-                                       (do (clear-wait-prompt state :corp)
-                                           (if-let [msg (:msg async-result)]
-                                             (do (system-msg state :runner
-                                                             (str "uses Freedom Khumalo: Crypto-Anarchist to"
-                                                                  " trash " (:title accessed-card)
-                                                                  " at no cost, spending " msg))
-                                                 (trash-no-cost state side eid accessed-card))
-                                             ;; Player cancelled ability
-                                             (do (swap! state dissoc-in [:per-turn (:cid card)])
-                                                 (access-non-agenda state side eid accessed-card :skip-trigger-event true))))))))}}}
+                       (wait-for (resolve-ability state side (pick-virus-counters-to-spend play-or-rez) card nil)
+                                 (do (clear-wait-prompt state :corp)
+                                     (if-let [msg (:msg async-result)]
+                                       (do (system-msg state :runner
+                                                       (str "uses Freedom Khumalo: Crypto-Anarchist to"
+                                                            " trash " (:title accessed-card)
+                                                            " at no cost, spending " msg))
+                                           (trash-no-cost state side eid accessed-card))
+                                       ;; Player cancelled ability
+                                       (do (swap! state dissoc-in [:per-turn (:cid card)])
+                                           (access-non-agenda state side eid accessed-card :skip-trigger-event true))))))))}}}
 
    "Fringe Applications: Tomorrow, Today"
    {:events

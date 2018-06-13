@@ -1,7 +1,7 @@
 (ns game.cards.resources
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -28,10 +28,10 @@
                          ability-options)]
       :install-cost-bonus (req (when (can-install-shard? state run) [:credit -15 :click -1]))
       :effect (req (when (can-install-shard? state run)
-                     (when-completed (register-successful-run state side (:server run))
-                                     (do (clear-wait-prompt state :corp)
-                                         (swap! state update-in [:runner :prompt] rest)
-                                         (handle-end-run state side)))))})))
+                     (wait-for (register-successful-run state side (:server run))
+                               (do (clear-wait-prompt state :corp)
+                                   (swap! state update-in [:runner :prompt] rest)
+                                   (handle-end-run state side)))))})))
 
 ;;; Card definitions
 (def card-definitions
@@ -763,7 +763,7 @@
              {:async true
               :interactive (req true)
               :msg (msg "access " (quantify (get-in @state [:runner :hq-access]) "card") " from HQ")
-              :effect (req (when-completed
+              :effect (req (wait-for
                              ; manually trigger the pre-access event to alert Nerve Agent.
                              (trigger-event-sync state side :pre-access :hq)
                              (let [from-hq (access-count state side :hq-access)]
@@ -844,10 +844,10 @@
                            (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                            (when (:run @state)
                              (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0)))
-                           (when-completed (trigger-event-sync state side :pre-access :archives)
-                                           (resolve-ability state :runner
-                                                            (choose-access (get-in @state [:corp :discard])
-                                                                           '(:archives)) card nil))))
+                           (wait-for (trigger-event-sync state side :pre-access :archives)
+                                     (resolve-ability state :runner
+                                                      (choose-access (get-in @state [:corp :discard])
+                                                                     '(:archives)) card nil))))
 
    "Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"
@@ -1254,9 +1254,9 @@
       :abilities [{:msg "force the Corp to trace"
                    :async true
                    :effect (req (let [type (get-in @state [:prevent :current])]
-                                  (when-completed (trash state side card {:unpreventable true})
-                                                  (continue-ability state side (start-trace type)
-                                                                    card nil))))}]})
+                                  (wait-for (trash state side card {:unpreventable true})
+                                            (continue-ability state side (start-trace type)
+                                                              card nil))))}]})
 
    "Off-Campus Apartment"
    {:flags {:runner-install-draw true}
@@ -1472,7 +1472,7 @@
    {:effect (req (add-watch state :raymond-flint
                             (fn [k ref old new]
                               (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
-                                (when-completed
+                                (wait-for
                                   ; manually trigger the pre-access event to alert Nerve Agent.
                                   (trigger-event-sync ref side :pre-access :hq)
                                   (let [from-hq (access-count state side :hq-access)]
@@ -1497,9 +1497,9 @@
       :prompt "Choose a card to trash"
       :choices (req (cancellable (:hand runner) :sorted))
       :async true
-      :effect (req (when-completed
+      :effect (req (wait-for
                      (trash state :runner card {:cause :ability-cost})
-                     (when-completed
+                     (wait-for
                        (trash state :runner target {:unpreventable true})
                        (continue-ability
                          state :runner

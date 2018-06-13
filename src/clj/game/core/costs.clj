@@ -90,13 +90,13 @@
   [state side eid card n]
   (let [cost-name (cost-names n :forfeit)]
     (continue-ability state side
-                    {:prompt "Choose an Agenda to forfeit"
-                     :async true
-                     :choices {:max n
-                               :req #(is-scored? state side %)}
-                     :effect (req (when-completed (forfeit state side target)
-                                                  (effect-completed state side (make-result eid cost-name))))}
-                    card nil)
+                      {:prompt "Choose an Agenda to forfeit"
+                       :async true
+                       :choices {:max n
+                                 :req #(is-scored? state side %)}
+                       :effect (req (wait-for (forfeit state side target)
+                                              (effect-completed state side (make-result eid cost-name))))}
+                      card nil)
     cost-name))
 
 (defn pay-trash
@@ -111,8 +111,8 @@
                         :choices {:max amount
                                   :req select-fn}
                         :async true
-                        :effect (req (when-completed (trash state side target (merge args {:unpreventable true}))
-                                                     (effect-completed state side (make-result eid cost-name))))}
+                        :effect (req (wait-for (trash state side target (merge args {:unpreventable true}))
+                                               (effect-completed state side (make-result eid cost-name))))}
                        card nil)
      cost-name)))
 
@@ -203,21 +203,21 @@
   [state side eid costs card action msgs]
   (if (empty? costs)
     (effect-completed state side (make-result eid msgs))
-    (when-completed (cost-handler state side card action costs (first costs))
-                    (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
+    (wait-for (cost-handler state side card action costs (first costs))
+              (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
 
 (defn pay-sync
-  "Same as pay, but awaitable with when-completed. "
+  "Same as pay, but awaitable. "
   [state side eid card & args]
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
     (if-let [costs (apply can-pay? state side (:title card) raw-costs)]
-      (when-completed (pay-sync-next state side costs card action [])
-                      (effect-completed state side
-                                        (make-result eid (->> async-result
-                                                              (filter some?)
-                                                              (interpose " and ")
-                                                              (apply str)))))
+      (wait-for (pay-sync-next state side costs card action [])
+                (effect-completed state side
+                                  (make-result eid (->> async-result
+                                                        (filter some?)
+                                                        (interpose " and ")
+                                                        (apply str)))))
       (effect-completed state side (make-result eid nil)))))
 
 (defn gain [state side & args]

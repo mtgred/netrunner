@@ -223,41 +223,41 @@
         (update-advancement-cost state side moved-card))
 
       ;; Check to see if a second agenda/asset was installed.
-      (when-completed (corp-install-asset-agenda state side moved-card dest-zone server)
-                      (letfn [(event [state side eid _]
-                                (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
-                        (case install-state
-                          ;; Ignore all costs. Pass eid to rez.
-                          :rezzed-no-cost
-                          (when-completed (event state side nil)
-                                          (rez state side eid moved-card {:ignore-cost :all-costs}))
+      (wait-for (corp-install-asset-agenda state side moved-card dest-zone server)
+                (letfn [(event [state side eid _]
+                          (trigger-event-sync state side eid :corp-install (get-card state moved-card)))]
+                  (case install-state
+                    ;; Ignore all costs. Pass eid to rez.
+                    :rezzed-no-cost
+                    (wait-for (event state side nil)
+                              (rez state side eid moved-card {:ignore-cost :all-costs}))
 
-                          ;; Ignore rez cost only. Pass eid to rez.
-                          :rezzed-no-rez-cost
-                          (when-completed (event state side nil)
-                                          (rez state side eid moved-card {:ignore-cost :rez-costs}))
+                    ;; Ignore rez cost only. Pass eid to rez.
+                    :rezzed-no-rez-cost
+                    (wait-for (event state side nil)
+                              (rez state side eid moved-card {:ignore-cost :rez-costs}))
 
-                          ;; Pay costs. Pass eid to rez.
-                          :rezzed
-                          (when-completed (event state side nil)
-                                          (rez state side eid moved-card nil))
+                    ;; Pay costs. Pass eid to rez.
+                    :rezzed
+                    (wait-for (event state side nil)
+                              (rez state side eid moved-card nil))
 
-                          ;; "Face-up" cards. Trigger effect-completed manually.
-                          :face-up
-                          (if (:install-state cdef)
-                            (when-completed (card-init state side
-                                                       (assoc (get-card state moved-card) :rezzed true :seen true)
-                                                       {:resolve-effect false
-                                                        :init-data true})
-                                            (event state side eid nil))
-                            (do (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))
-                                (event state side eid nil)))
+                    ;; "Face-up" cards. Trigger effect-completed manually.
+                    :face-up
+                    (if (:install-state cdef)
+                      (wait-for (card-init state side
+                                           (assoc (get-card state moved-card) :rezzed true :seen true)
+                                           {:resolve-effect false
+                                            :init-data true})
+                                (event state side eid nil))
+                      (do (update! state side (assoc (get-card state moved-card) :rezzed true :seen true))
+                          (event state side eid nil)))
 
-                          ;; All other cards. Trigger events, which will trigger effect-completed
-                          (event state side eid nil))
-                        (when-let [dre (:derezzed-events cdef)]
-                          (when-not (:rezzed (get-card state moved-card))
-                            (register-events state side dre moved-card))))))))
+                    ;; All other cards. Trigger events, which will trigger effect-completed
+                    (event state side eid nil))
+                  (when-let [dre (:derezzed-events cdef)]
+                    (when-not (:rezzed (get-card state moved-card))
+                      (register-events state side dre moved-card))))))))
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs, code continues in corp-install-continue"
@@ -273,13 +273,13 @@
                  (effect-completed state side eid card))]
     (if (and (corp-can-install? state side card dest-zone)
              (not (install-locked? state :corp)))
-      (when-completed (pay-sync state side card end-cost {:action action})
-                      (if-let [cost-str async-result]
-                        (if (= server "New remote")
-                          (when-completed (trigger-event-sync state side :server-created card)
-                                          (corp-install-continue state side eid card server args slot cost-str))
-                          (corp-install-continue state side eid card server args slot cost-str))
-                        (end-fn)))
+      (wait-for (pay-sync state side card end-cost {:action action})
+                (if-let [cost-str async-result]
+                  (if (= server "New remote")
+                    (wait-for (trigger-event-sync state side :server-created card)
+                              (corp-install-continue state side eid card server args slot cost-str))
+                    (corp-install-continue state side eid card server args slot cost-str))
+                  (end-fn)))
       (end-fn))))
 
 (defn corp-install
@@ -313,8 +313,8 @@
            dest-zone (get-in @state (cons :corp slot))]
        ;; trigger :pre-corp-install before computing install costs so that
        ;; event handlers may adjust the cost.
-       (when-completed (trigger-event-sync state side :pre-corp-install card {:server server :dest-zone dest-zone})
-                       (corp-install-pay state side eid card server args slot))))))
+       (wait-for (trigger-event-sync state side :pre-corp-install card {:server server :dest-zone dest-zone})
+                 (corp-install-pay state side eid card server args slot))))))
 
 
 ;;; Installing a runner card

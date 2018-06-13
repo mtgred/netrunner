@@ -1,7 +1,7 @@
 (ns game.cards.agendas
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for final-effect continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -42,21 +42,21 @@
                 :choices {:req #(and (= (:side %) "Corp")
                                      (ice? %)
                                      (= (:zone %) [:play-area]))}
-                :effect (req (when-completed (corp-install state side target nil
-                                                           {:no-install-cost true :install-state :rezzed-no-cost})
-                                             (let [card (get-card state card)]
-                                               (unregister-events state side card)
-                                               (if (not (:shuffle-occurred card))
-                                                 (if (< n i)
-                                                   (continue-ability state side (abt (inc n) i) card nil)
-                                                   (do (doseq [c (get-in @state [:corp :play-area])]
-                                                         (system-msg state side "trashes a card")
-                                                         (trash state side c {:unpreventable true}))
-                                                       (effect-completed state side eid)))
-                                                 (do (doseq [c (get-in @state [:corp :play-area])]
-                                                       (move state side c :deck))
-                                                     (shuffle! state side :deck)
-                                                     (effect-completed state side eid))))))
+                :effect (req (wait-for (corp-install state side target nil
+                                                     {:no-install-cost true :install-state :rezzed-no-cost})
+                                       (let [card (get-card state card)]
+                                         (unregister-events state side card)
+                                         (if (not (:shuffle-occurred card))
+                                           (if (< n i)
+                                             (continue-ability state side (abt (inc n) i) card nil)
+                                             (do (doseq [c (get-in @state [:corp :play-area])]
+                                                   (system-msg state side "trashes a card")
+                                                   (trash state side c {:unpreventable true}))
+                                                 (effect-completed state side eid)))
+                                           (do (doseq [c (get-in @state [:corp :play-area])]
+                                                 (move state side c :deck))
+                                               (shuffle! state side :deck)
+                                               (effect-completed state side eid))))))
                 :cancel-effect (req (doseq [c (get-in @state [:corp :play-area])]
                                       (system-msg state side "trashes a card")
                                       (trash state side c {:unpreventable true})))}
@@ -634,17 +634,17 @@
 
    "Illicit Sales"
    {:async true
-    :effect (req (when-completed
-                   (resolve-ability state side
-                     {:optional
-                      {:prompt "Take 1 bad publicity from Illicit Sales?"
-                       :yes-ability {:msg "take 1 bad publicity"
-                                     :effect (effect (gain-bad-publicity :corp 1))}}}
-                     card nil)
-                   (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
-                         (gain-credits state side n)
-                         (system-msg state side (str "gains " n " [Credits] from Illicit Sales"))
-                         (effect-completed state side eid)))))}
+    :effect (req (wait-for (resolve-ability
+                             state side
+                             {:optional
+                              {:prompt "Take 1 bad publicity from Illicit Sales?"
+                               :yes-ability {:msg "take 1 bad publicity"
+                                             :effect (effect (gain-bad-publicity :corp 1))}}}
+                             card nil)
+                           (do (let [n (* 3 (+ (get-in @state [:corp :bad-publicity]) (:has-bad-pub corp)))]
+                                 (gain-credits state side n)
+                                 (system-msg state side (str "gains " n " [Credits] from Illicit Sales"))
+                                 (effect-completed state side eid)))))}
 
    "Improved Protein Source"
    {:msg "make the Runner gain 4 [Credits]"
@@ -970,11 +970,12 @@
     :access {:req (req tagged)
              :async true
              :interactive (req true)
-             :effect (req (when-completed (as-agenda state side card 1)
-                                          (continue-ability state :runner
-                                            {:prompt "Quantum Predictive Model was added to the corp's score area"
-                                             :choices ["OK"]}
-                                            card nil)))
+             :effect (req (wait-for (as-agenda state side card 1)
+                                    (continue-ability
+                                      state :runner
+                                      {:prompt "Quantum Predictive Model was added to the corp's score area"
+                                       :choices ["OK"]}
+                                      card nil)))
              :msg "add it to their score area and gain 1 agenda point"}}
 
    "Rebranding Team"
@@ -1150,12 +1151,12 @@
                                     (do (system-msg state :corp "declines to trash a card from Standoff")
                                         (clear-wait-prompt state :runner)
                                         (effect-completed state :corp eid))))
-              :effect (req (when-completed (trash state side target {:unpreventable true})
-                                           (do
-                                             (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
-                                             (clear-wait-prompt state (other-side side))
-                                             (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
-                                             (continue-ability state (other-side side) (stand (other-side side)) card nil))))})]
+              :effect (req (wait-for (trash state side target {:unpreventable true})
+                                     (do
+                                       (system-msg state side (str "trashes " (card-str state target) " due to Standoff"))
+                                       (clear-wait-prompt state (other-side side))
+                                       (show-wait-prompt state side (str (side-str (other-side side)) " to trash a card for Standoff"))
+                                       (continue-ability state (other-side side) (stand (other-side side)) card nil))))})]
      {:interactive (req true)
       :async true
       :effect (effect (show-wait-prompt (str (side-str (other-side side)) " to trash a card for Standoff"))
@@ -1168,7 +1169,7 @@
                          :choices {:req #(and (= (:side %) "Corp")
                                               (not (is-type? % "Operation"))
                                               (in-hand? %))}
-                         :effect (req (when-completed
+                         :effect (req (wait-for
                                         (corp-install state side target nil {:no-install-cost true})
                                         (if (< n max)
                                           (continue-ability state side (sft (inc n) max) card nil)
