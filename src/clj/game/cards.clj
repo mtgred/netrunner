@@ -142,18 +142,102 @@
           (unregister-events state side h)
           (register-events state side (:events (card-def newh)) newh))))))
 
-;; Load all card definitions into the current namespace.
-(load "cards/agendas")
-(load "cards/assets")
-(load "cards/events")
-(load "cards/hardware")
-(load "cards/ice")
-(load "cards/icebreakers")
-(load "cards/identities")
-(load "cards/operations")
-(load "cards/programs")
-(load "cards/resources")
-(load "cards/upgrades")
+(defn do-net-damage
+  "Do specified amount of net-damage."
+  [dmg]
+  {:label (str "Do " dmg " net damage")
+   :delayed-completion true
+   :msg (str "do " dmg " net damage")
+   :effect (effect (damage eid :net dmg {:card card}))})
 
-(def cards (merge cards-agendas cards-assets cards-events cards-hardware cards-ice cards-icebreakers cards-identities
-                  cards-operations cards-programs cards-resources cards-upgrades))
+(defn do-meat-damage
+  "Do specified amount of meat damage."
+  [dmg]
+  {:label (str "Do " dmg " meat damage")
+   :delayed-completion true
+   :msg (str "do " dmg " meat damage")
+   :effect (effect (damage eid :meat dmg {:card card}))})
+
+(defn do-brain-damage
+  "Do specified amount of brain damage."
+  [dmg]
+  {:label (str "Do " dmg " brain damage")
+   :delayed-completion true
+   :msg (str "do " dmg " brain damage")
+   :effect (effect (damage eid :brain dmg {:card card}))})
+
+(defn pick-virus-counters-to-spend
+  "Pick virus counters to spend. For use with Freedom Khumalo and virus breakers, and any other relevant cards.
+  This function returns a map for use with resolve-ability or continue-ability.
+  The ability triggered returns either {:number n :msg msg} on completed effect, or :cancel on a cancel.
+  n is the number of virus counters selected, msg is the msg string of all the cards and the virus counters taken from each.
+  If called with no arguments, allows user to select as many counters as they like until 'Cancel' is pressed."
+  ([] (pick-virus-counters-to-spend (hash-map) 0 nil))
+  ([target-count] (pick-virus-counters-to-spend (hash-map) 0 target-count))
+  ([selected-cards counter-count target-count]
+   {:delayed-completion true
+    :prompt (str "Select a card with virus counters ("
+                 counter-count (when (and target-count (pos? target-count))
+                                 (str " of " target-count))
+                 " virus counters)")
+    :choices {:req #(and (installed? %)
+                         (pos? (get-counters % :virus)))}
+    :effect (req (add-counter state :runner target :virus -1)
+                 (let [selected-cards (update selected-cards (:cid target)
+                                              ;; Store card reference and number of counters picked
+                                              ;; Overwrite card reference each time
+                                              #(assoc % :card target :number (inc (:number % 0))))
+                       counter-count (inc counter-count)]
+                   (if (or (not target-count) (< counter-count target-count))
+                     (continue-ability state side
+                                       (pick-virus-counters-to-spend selected-cards counter-count target-count)
+                                       card nil)
+                     (let [msg (join ", " (map #(let [{:keys [card number]} %
+                                                      title (:title card)]
+                                                  (str (quantify number "virus counter") " from " title))
+                                               (vals selected-cards)))]
+                       (effect-completed state side (make-result eid {:number counter-count :msg msg}))))))
+    :cancel-effect (if target-count
+                     (req (doseq [{:keys [card number]} (vals selected-cards)]
+                            (add-counter state :runner (get-card state card) :virus number))
+                          (effect-completed state side (make-result eid :cancel)))
+                     (req (let [msg (join ", " (map #(let [{:keys [card number]} %
+                                                      title (:title card)]
+                                                  (str (quantify number "virus counter") " from " title))
+                                               (vals selected-cards)))]
+                           (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
+
+;; Load all card definitions into the current namespace.
+(defn load-all-cards
+  "Load all card definitions into their own namespaces"
+  ([] (load-all-cards nil))
+  ([path]
+   (doall (pmap load-file
+                (->> (io/file (str "src/clj/game/cards" (when path (str "/" path ".clj"))))
+                     (file-seq)
+                     (filter #(.isFile %))
+                     (filter #(clojure.string/ends-with? (.getPath %) ".clj"))
+                     (map str))))))
+
+(defn get-card-defs
+  ([] (get-card-defs nil))
+  ([path]
+   (->> (all-ns)
+        (filter #(starts-with? % (str "game.cards" (when path (str "." path)))))
+        (map #(ns-resolve % 'card-definitions))
+        (map var-get)
+        (apply merge))))
+
+(def cards {})
+
+(defn reset-card-defs
+  "Performs any once only initialization that should be performed on startup"
+  ([] (reset-card-defs nil))
+  ([path]
+   (let [cards-var #'game.core/cards]
+     (alter-var-root cards-var
+                     (constantly
+                       (merge cards
+                              (do (load-all-cards path)
+                                  (get-card-defs path))))))
+   'loaded))

@@ -201,12 +201,6 @@
 (defn release-zone [state side cid tside tzone]
   (swap! state update-in [tside :locked tzone] #(remove #{cid} %)))
 
-(defn lock-install [state side cid tside]
-  (swap! state update-in [tside :lock-install] #(conj % cid)))
-
-(defn unlock-install [state side cid tside]
-  (swap! state update-in [tside :lock-install] #(remove #{cid} %)))
-
 ;;; Small utilities for card properties.
 (defn in-server?
   "Checks if the specified card is installed in -- and not PROTECTING -- a server"
@@ -312,9 +306,10 @@
 (defn install-locked?
   "Checks if installing is locked"
   [state side]
-  (or (seq (get-in @state [side :lock-install]))
-      (seq (get-in @state [:stack :current-turn :lock-install]))
-      (seq (get-in @state [:stack :persistent :lock-install]))))
+  (let [kw (keyword (str (name side) "-lock-install"))]
+    (or (seq (get-in @state [:stack :current-run kw]))
+        (seq (get-in @state [:stack :current-turn kw]))
+        (seq (get-in @state [:stack :persistent kw])))))
 
 (defn- can-rez-reason
   "Checks if the corp can rez the card.
@@ -433,3 +428,38 @@
              (or (is-type? card "Operation") (rezzed? card)))
         (and (in-discard? card) (:seen card))
         (#{:scored :current} (last zone)))))
+
+(defn ab-can-prevent?
+  "Checks if the specified ability definition should prevent.
+  Checks for a :req in the :prevent map of the card-def.
+  Defaults to false if req check not met"
+  ([state side card req-fn target args]
+   (ab-can-prevent? state side (make-eid state) card req-fn target args))
+  ([state side eid card req-fn target args]
+   (cond
+     req-fn (req-fn state side eid card (list (assoc args :prevent-target target)))
+     :else false)))
+
+(defn get-card-prevention
+  "Returns card prevent abilities for a given type"
+  [card type]
+  (->> (-> card card-def :interactions :prevent)
+       (filter #(contains? (:type %) type))))
+
+(defn card-can-prevent?
+  "Checks if a cards req (truthy test) can be met for this type"
+  [state side card type target args]
+  (let [abilities (get-card-prevention card type)]
+    (some #(-> % false? not) (map #(ab-can-prevent? state side card (:req %) target args) abilities))))
+
+(defn cards-can-prevent?
+  "Checks if any cards in a list can prevent this type"
+  ([state side cards type] (cards-can-prevent? state side cards type nil nil))
+  ([state side cards type target args]
+  (some #(true? %) (map #(card-can-prevent? state side % type target args) cards))))
+
+(defn get-prevent-list
+  "Get list of cards that have prevent for a given type"
+  [state side type]
+  (->> (all-active state side)
+       (filter #(seq (get-card-prevention % type)))))

@@ -61,6 +61,7 @@
        :room room
        :rid 0 :turn 0 :eid 0
        :sfx [] :sfx-current-id 0
+       :stats {:time {:started (t/now)}}
        :options {:spectatorhands spectatorhands}
        :corp {:user (:user corp) :identity corp-identity
               :options corp-options
@@ -82,7 +83,8 @@
                 :discard [] :scored [] :rfg [] :play-area []
                 :rig {:program [] :resource [] :hardware []}
                 :toast []
-                :click 0 :credit 5 :run-credit 0 :memory 4 :link 0 :tag 0
+                :click 0 :credit 5 :run-credit 0 :link 0 :tag 0
+                :memory {:base 4 :mod 0 :used 0}
                 :hand-size {:base 5 :mod 0}
                 :agenda-point 0
                 :hq-access 1 :rd-access 1 :tagged 0
@@ -186,8 +188,8 @@
      (gain state side :click (get-in @state [side :click-per-turn]))
      (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
                      (do (when (= side :corp)
-                           (draw state side)
-                           (trigger-event-simult state side eid :corp-mandatory-draw nil nil))
+                           (when-completed (draw state side 1 nil)
+                                           (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
 
                          (cond
 

@@ -1,6 +1,11 @@
-(in-ns 'game.core)
-
-(declare add-icon remove-icon can-host?)
+(ns game.cards.icebreakers
+  (:require [game.core :refer :all]
+            [game.utils :refer :all]
+            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.stacktrace :refer [print-stack-trace]]
+            [jinteki.utils :refer [str->int]]
+            [jinteki.cards :refer [all-cards]]))
 
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
@@ -21,7 +26,9 @@
                                      (:strength current-ice))
                                  (or (:current-strength card)
                                      (:strength card)))))
-              pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+              pumpnum (when (and strdif
+                                 (:pump pumpabi))
+                        (int (Math/ceil (/ strdif (:pump pumpabi)))))]
           (update! state side
                    (assoc card :abilities
                           (if (and pumpcst
@@ -29,7 +36,7 @@
                                    (rezzed? current-ice)
                                    (or (some #(has-subtype? current-ice %) (:breaks card))
                                        (= (first (:breaks card)) "All"))
-                                   (pos? strdif))
+                                   (pos? pumpnum))
                             (vec (cons {:dynamic :auto-pump
                                         :cost [:credit (* pumpcst pumpnum)]
                                         :label (str "Match strength of " (:title current-ice))}
@@ -52,20 +59,55 @@
                               :approach-ice breaker-auto-pump }
                              (:events cdef))))
 
+(defn- wrestling-breaker
+  "Laamb and Engolo. Makes currently encountered ice gain chosen type until end of encounter."
+  [cost ice-type]
+  {:once :per-turn
+   :cost [:credit cost]
+   :label (str "Make currently encountered ice gain " ice-type)
+   :msg (msg "make " (:title current-ice) " gain " ice-type)
+   :req (req (and current-ice
+                  (rezzed? current-ice)
+                  (not (has-subtype? current-ice ice-type))))
+   :effect (req (let [ice current-ice
+                      stargets (:subtype-target ice)
+                      stypes (:subtype ice)
+                      remove-subtype {:effect
+                                      (effect (update! (assoc ice
+                                                              :subtype-target stargets
+                                                              :subtype stypes))
+                                              (unregister-events card)
+                                              (register-events (:events (card-def card)) card))}]
+                  (update! state side (assoc ice
+                                             :subtype-target (combine-subtypes true stargets ice-type)
+                                             :subtype (combine-subtypes true stypes ice-type)))
+                  (update-ice-strength state side (get-card state ice))
+                  (register-events state side {:pass-ice remove-subtype
+                                               :run-ends remove-subtype} card)))})
+
 (defn cloud-icebreaker [cdef]
-  (assoc cdef :effect (req (add-watch state (keyword (str "cloud" (:cid card)))
-                        (fn [k ref old new]
-                          (when (and (< (get-in old [:runner :link]) 2)
-                                     (> (get-in new [:runner :link]) 1))
-                            (gain state :runner :memory (:memoryunits card)))
-                          (when (and (> (get-in old [:runner :link]) 1)
-                                     (< (get-in new [:runner :link]) 2))
-                            (lose state :runner :memory (:memoryunits card))))))
+  (assoc cdef :effect (req (let [link (get-in @state [:runner :link] 0)]
+                             (when (>= link 2)
+                               (free-mu state (:memoryunits card))))
+                           (add-watch state (keyword (str "cloud" (:cid card)))
+                                      (fn [k ref old new]
+                                        (let [old-link (get-in old [:runner :link] 0)
+                                              new-link (get-in new [:runner :link] 0)
+                                              cloud-turned-on (and (< old-link 2)
+                                                                   (>= new-link 2))
+                                              cloud-turned-off (and (>= old-link 2)
+                                                                    (< new-link 2))]
+                                          (cond
+                                            cloud-turned-on
+                                            (free-mu state (:memoryunits card))
+
+                                            cloud-turned-off
+                                            (use-mu state (:memoryunits card)))))))
               :leave-play (req (remove-watch state (keyword (str "cloud" (:cid card))))
-                               (when (> (get-in @state [:runner :link]) 1)
-                                 (lose state :runner :memory (:memoryunits card))))
-              :install-cost-bonus (req (when (> (get-in @state [:runner :link]) 1)
-                                         [:memory (* -1 (:memoryunits card))]))))
+                               (let [link (get-in @state [:runner :link] 0)]
+                                 (when (>= link 2)
+                                   ;; To counteract the normal freeing of MU on program `:leave-play`
+                                   (use-mu state (:memoryunits card)))))))
 
 (defn- strength-pump
   "Creates a strength pump ability.
@@ -98,18 +140,18 @@
 ;;; Breaker sets
 (defn- cerberus
   "Breaker from the dog set"
-  [type]
-  (auto-icebreaker [type]
+  [ice-type]
+  (auto-icebreaker [ice-type]
                    {:data {:counter {:power 4}}
                     :abilities [{:counter-cost [:power 1]
-                                 :msg (str "break up to 2 " (lower-case type) " subroutines")}
+                                 :msg (str "break up to 2 " (lower-case ice-type) " subroutines")}
                                 (strength-pump 1 1)]}))
 
 (defn- break-and-enter
   "Breakers from the Break and Entry set"
-  [type]
-  (cloud-icebreaker {:abilities [{:label (str "[Trash]: Break up to 3 " (lower-case type) "subroutines")
-                                  :msg (str "break up to 3 " (lower-case type) " subroutines")
+  [ice-type]
+  (cloud-icebreaker {:abilities [{:label (str "[Trash]: Break up to 3 " (lower-case ice-type) "subroutines")
+                                  :msg (str "break up to 3 " (lower-case ice-type) " subroutines")
                                   :effect (effect (trash card {:cause :ability-cost}))}]
                       :events (let [cloud {:silent (req true)
                                            :req (req (has-subtype? target "Icebreaker"))
@@ -120,19 +162,20 @@
 
 (defn- global-sec-breaker
   "GlobalSec breakers for Sunny"
-  [type]
-  (cloud-icebreaker (auto-icebreaker [type] {:abilities [(break-sub 2 0 (lower-case type))
+  [ice-type]
+  (cloud-icebreaker (auto-icebreaker [ice-type] {:abilities [(break-sub 2 0 (lower-case ice-type))
                                                          (strength-pump 2 3)]})))
 
 (defn- deva
   "Deva breakers"
-  [name]
+  [card-name]
   (auto-icebreaker ["All"]
                    {:abilities [(break-sub 1 1 "ICE")
                                 (strength-pump 1 1)
                                 {:req (req (seq (filter #(has-subtype? % "Deva") (:hand runner))))
-                                 :label "Swap with a deva program from your Grip" :cost [:credit 2]
-                                 :prompt (str "Select a deva program in your Grip to swap with " name)
+                                 :label "Swap with a deva program from your Grip"
+                                 :cost [:credit 2]
+                                 :prompt (str "Select a deva program in your Grip to swap with " card-name)
                                  :choices {:req #(and in-hand? (has-subtype? % "Deva"))}
                                  :msg (msg "swap in " (:title target) " from their Grip")
                                  :effect (req (if-let [hostcard (:host card)]
@@ -152,20 +195,23 @@
 
 (defn- conspiracy
   "Install-from-heap breakers"
-  [title type abilities]
+  [title ice-type abilities]
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
                                        (rezzed? current-ice)
-                                       (has-subtype? current-ice type)
-                                       (not (install-locked? state side))
-                                       (not (some #(= title (:title %)) (all-active-installed state :runner)))
-                                       (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
-                        :optional {:player :runner
-                                   :prompt (str "Install " title "?")
-                                   :yes-ability {:effect (effect (unregister-events card)
-                                                                 (runner-install :runner card))}
-                                   :no-ability {:effect (req  ;; Add a register to note that the player was already asked about installing,
-                                                              ;; to prevent multiple copies from prompting multiple times.
-                                                              (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                                       (has-subtype? current-ice ice-type)
+                                       (not (install-locked? state :runner))))
+                        :delayed-completion true
+                        :effect (effect (continue-ability
+                                          {:optional {:req (req (and (not-any? #(= title (:title %)) (all-active-installed state :runner))
+                                                                     (not (get-in @state [:run :register :conspiracy (:cid current-ice)]))))
+                                                      :player :runner
+                                                      :prompt (str "Install " title "?")
+                                                      :yes-ability {:effect (effect (unregister-events card)
+                                                                                    (runner-install :runner card))}
+                                                      ;; Add a register to note that the player was already asked about installing,
+                                                      ;; to prevent multiple copies from prompting multiple times.
+                                                      :no-ability {:effect (req (swap! state assoc-in [:run :register :conspiracy (:cid current-ice)] true))}}}
+                                          card targets))}
         heap-event (req (when (= (:zone card) [:discard])
                           (unregister-events state side card)
                           (register-events state side
@@ -181,15 +227,66 @@
 
 (defn- central-breaker
   "'Cannot be used on a remote server' breakers"
-  [type break pump]
+  [ice-type break pump]
   (let [central-req (req (or (not (:central-breaker card)) (#{:hq :rd :archives} (first (:server run)))))]
-    (auto-icebreaker [type]
+    (auto-icebreaker [ice-type]
                      {:abilities [(assoc break :req central-req)
                                   (assoc pump :req central-req)]
                       :effect (effect (update! (assoc card :central-breaker true)))})))
 
+(defn- ancient-greek-breaker
+  "Adept, Sage and Savant. Strength depends on available memory units."
+  [card-name abilities]
+  {:abilities abilities
+   :effect (req (add-watch state (keyword (str card-name (:cid card)))
+                           (fn [k ref old new]
+                             (when (not= (available-mu (atom old))
+                                         (available-mu (atom new)))
+                               (update-breaker-strength ref side card))))
+                (update-breaker-strength state side card))
+   :leave-play (req (remove-watch state (keyword (str card-name (:cid card)))))
+   :strength-bonus (req (available-mu state))})
+
+(defn- khumalo-breaker
+  "Spends virus counters from any card to pump/break, gains virus counters for successful runs."
+  [ice-type]
+  {:events {:successful-run {:silent (req true)
+                             :effect (effect (system-msg "adds 1 virus counter to " (:title card))
+                                             (add-counter card :virus 1))}}
+   :abilities [{:label (str  "Break " ice-type "subroutine(s)")
+                :effect (req (when-completed (resolve-ability
+                                              state side (pick-virus-counters-to-spend) card nil)
+                               (do (if-let [msg (:msg async-result)]
+                                     (do (system-msg state :runner
+                                                     (str "spends " msg" to break " (:number async-result)
+                                                          " " ice-type " subroutine(s)")))))))}
+               {:label "Match strength of currently encountered ice"
+                :req (req (and current-ice
+                               (> (ice-strength state side current-ice)
+                                  (or (:current-strength card) (:strength card)))))
+                :effect (req (when-completed (resolve-ability
+                                              state side (pick-virus-counters-to-spend
+                                                          (- (ice-strength state side current-ice)
+                                                             (or (:current-strength card) (:strength card))))
+                                              card nil)
+                               (if-let [msg (:msg async-result)]
+                                 (do (system-msg state :runner (str "spends " msg " to add "
+                                                                    (:number async-result) " strength"))
+                                     (dotimes [_ (:number async-result)]
+                                       (pump state side (get-card state card) 1))))))}
+               {:label "Add strength"
+                :effect (req (when-completed
+                                 (resolve-ability
+                                  state side (pick-virus-counters-to-spend) card nil)
+                               (if-let [msg (:msg async-result)]
+                                 (do (system-msg state :runner (str "spends " msg" to add "
+                                                                    (:number async-result)
+                                                                    " strength"))
+                                     (dotimes [_ (:number async-result)]
+                                       (pump state side (get-card state card) 1))))))}]})
+
 ;;; Icebreaker definitions
-(def cards-icebreakers
+(def card-definitions
   {"Abagnale"
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "Code Gate")
@@ -200,16 +297,10 @@
                                   :effect (effect (trash card {:cause :ability-cost}))}]})
 
    "Adept"
-   {:abilities [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
-                                                 (has-subtype? current-ice "Sentry")))
-                 :msg "break 1 Sentry or Barrier subroutine"}]
-    :effect (req (add-watch state (keyword (str "adept" (:cid card)))
-                            (fn [k ref old new]
-                              (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
-                                (update-breaker-strength ref side card))))
-                 (update-breaker-strength state side card))
-    :leave-play (req (remove-watch state (keyword (str "adept" (:cid card)))))
-    :strength-bonus (req (:memory runner))}
+   (ancient-greek-breaker "adept" [{:cost [:credit 2]
+                                    :req (req (or (has-subtype? current-ice "Barrier")
+                                                  (has-subtype? current-ice "Sentry")))
+                                    :msg "break 1 Sentry or Barrier subroutine"}])
 
    "Aghora"
    (deva "Aghora")
@@ -225,6 +316,16 @@
    (central-breaker "Sentry"
                     (break-sub 1 1 "Sentry")
                     (strength-pump 2 3))
+
+   "Amina"
+   (auto-icebreaker ["Code Gate"]
+                    {:abilities [(break-sub 2 3 "Code Gate")
+                                 (strength-pump 2 3)
+                                 {:label "Corp loses 1 [Credits]"
+                                  :req (req (and (has-subtype? current-ice "Code Gate")
+                                                 (rezzed? current-ice)))
+                                  :msg (msg "make the Corp lose 1 [Credits]")
+                                  :effect (effect (lose-credits :corp 1))}]})
 
    "Ankusa"
    (auto-icebreaker ["Barrier"]
@@ -244,7 +345,7 @@
     :msg (msg "add " target " power counters")
     :effect (effect (add-counter card :power target))
     :abilities [(break-sub 1 1)]
-    :strength-bonus (req (get-in card [:counter :power] 0))
+    :strength-bonus (req (get-counters card :power))
     :events {:counter-added {:req (req (= :cid target) (:cid card))
                              :effect (effect (update-breaker-strength card))}}}
 
@@ -384,12 +485,13 @@
                                  {:cost [:click 1]
                                   :msg "place 1 virus counter"
                                   :effect (effect (add-counter card :virus 1))}]
-                     :events (let [encounter-ends-effect {:req (req (:crypsis-broke card))
-                                                          :effect (req ((:effect breaker-auto-pump) state side eid card targets)
-                                                                       (if (pos? (get-in card [:counter :virus] 0))
-                                                                         (add-counter state side card :virus -1)
-                                                                         (trash state side card {:cause :self-trash}))
-                                                                       (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
+                     :events (let [encounter-ends-effect
+                                   {:req (req (:crypsis-broke card))
+                                    :effect (req ((:effect breaker-auto-pump) state side eid card targets)
+                                                 (if (pos? (get-counters card :virus))
+                                                   (add-counter state side card :virus -1)
+                                                   (trash state side card {:cause :self-trash}))
+                                                 (update! state side (dissoc (get-card state card) :crypsis-broke)))}]
                                {:pass-ice encounter-ends-effect
                                 :run-ends encounter-ends-effect})
                      :move-zone (req (when (= [:discard] (:zone card))
@@ -441,7 +543,8 @@
                                   :effect (effect (trash card {:cause :ability-cost}))}]})
 
    "Deus X"
-   {:prevent {:damage [:net]}
+   {:interactions {:prevent [{:type #{:net}
+                              :req (req true)}]}
     :abilities [{:msg "break any number of AP subroutines"
                  :effect (effect (trash card {:cause :ability-cost}))}
                 {:msg "prevent any amount of net damage"
@@ -462,13 +565,19 @@
                  :msg (msg "trash " (:title target)
                            " and break 1 \"[Subroutine] End the run.\" subroutine")
                  :effect (effect (trash target {:unpreventable true}))}]}
+   "Engolo"
+   (auto-icebreaker
+     ["Code Gate"]
+     {:abilities [(break-sub 1 1 "Code Gate")
+                  (strength-pump 2 4)
+                  (wrestling-breaker 2 "Code Gate")]})
 
    "Faerie"
    (auto-icebreaker ["Sentry"]
-                    {:abilities [(break-sub 0 1 "Sentry" (effect (update! (assoc card :faerie-used true))))
+                    {:abilities [(break-sub 0 1 "Sentry" (effect (update! (assoc-in card [:special :faerie-used] true))))
                                  (strength-pump 1 1)]
-                     :events {:pass-ice {:req (req (:faerie-used card))
-                                         :effect (effect (trash (dissoc card :faerie-used)))}}})
+                     :events {:pass-ice {:req (req (get-in card [:special :faerie-used]))
+                                         :effect (effect (trash card))}}})
 
    "Faust"
    {:abilities [{:label "Trash 1 card from Grip to break 1 subroutine"
@@ -627,24 +736,7 @@
      ["Barrier"]
      {:abilities [(break-sub 2 0 "Barrier")
                   (strength-pump 3 6)
-                  {:once :per-turn
-                   :cost [:credit 2]
-                   :label (str "Turn currently encountered ice into Barrier")
-                   :msg (msg "turn " (:title current-ice) " into Barrier")
-                   :req (req (and current-ice (rezzed? current-ice) (not (has-subtype? current-ice "Barrier"))))
-                   :effect (req (let [ice current-ice
-                                      stargets (:subtype-target ice)
-                                      stypes (:subtype ice)
-                                      remove-subtype {:effect (effect
-                                                                (update! (assoc ice :subtype-target stargets :subtype stypes))
-                                                                (unregister-events card)
-                                                                (register-events (:events (card-def card)) card))}]
-                                  (update! state side (assoc ice
-                                                             :subtype-target (combine-subtypes true stargets "Barrier")
-                                                             :subtype (combine-subtypes true stypes "Barrier")))
-                                  (update-ice-strength state side (get-card state ice))
-                                  (register-events state side {:pass-ice remove-subtype
-                                                               :run-ends remove-subtype} card)))}]})
+                  (wrestling-breaker 2 "Barrier")]})
 
    "Leviathan"
    (auto-icebreaker ["Code Gate"]
@@ -662,12 +754,12 @@
 
    "Mammon"
    (auto-icebreaker ["All"]
-                    {:flags {:runner-phase-12 (req (> (:credit runner) 0))}
+                    {:flags {:runner-phase-12 (req (pos? (:credit runner)))}
                      :abilities [{:label "X [Credits]: Place X power counters"
                                   :prompt "How many power counters to place on Mammon?" :once :per-turn
                                   :choices {:number (req (:credit runner))}
                                   :req (req (:runner-phase-12 @state))
-                                  :effect (effect (lose :credit target)
+                                  :effect (effect (lose-credits target)
                                                   (add-counter card :power target))
                                   :msg (msg "place " target " power counters on it")}
                                  {:counter-cost [:power 1]
@@ -708,6 +800,9 @@
                  :effect (effect (pump card 2)) :pump 2
                  :msg "add 2 strength and break up to 2 subroutines"}])
 
+   "Musaazi"
+   (khumalo-breaker "sentry")
+
    "NaNotK"
    (auto-icebreaker ["Sentry"]
                     {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))
@@ -734,7 +829,7 @@
                  :effect (effect (add-counter card :power 1)
                                  (update-breaker-strength card))}
                 (break-sub 1 1 "Barrier")]
-    :strength-bonus (req (get-in card [:counter :power] 0))}
+    :strength-bonus (req (get-counters card :power))}
 
    "Ninja"
    (auto-icebreaker ["Sentry"]
@@ -749,7 +844,7 @@
 
    "Overmind"
    (auto-icebreaker ["All"]
-                    {:effect (effect (add-counter card :power (:memory runner)))
+                    {:effect (effect (add-counter card :power (available-mu state)))
                      :abilities [{:counter-cost [:power 1]
                                   :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
@@ -763,7 +858,7 @@
                                                 1)
                                            1))}
                  :prompt "How many credits?"
-                 :effect (effect (lose :credit target)
+                 :effect (effect (lose-credits target)
                                  (pump card target))
                  :msg (msg "spend " target " [Credits], increase strength by " target ", and break "
                            (quantify target "Barrier subroutine"))}])
@@ -823,7 +918,7 @@
                                   :label "Remove 1 power counter"
                                   :effect (effect (add-counter card :power -1)
                                                   (update-breaker-strength card))}]
-                     :strength-bonus (req (get-in card [:counter :power] 0))})
+                     :strength-bonus (req (get-counters card :power))})
 
    "Refractor"
    (auto-icebreaker ["Code Gate"]
@@ -834,16 +929,9 @@
    (deva "Sadyojata")
 
    "Sage"
-   {:abilities [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
-                                                 (has-subtype? current-ice "Code Gate")))
-                 :msg "break 1 Code Gate or Barrier subroutine"}]
-    :effect (req (add-watch state (keyword (str "sage" (:cid card)))
-                            (fn [k ref old new]
-                              (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
-                                (update-breaker-strength ref side card))))
-                 (update-breaker-strength state side card))
-    :leave-play (req (remove-watch state (keyword (str "sage" (:cid card)))))
-    :strength-bonus (req (:memory runner))}
+   (ancient-greek-breaker "sage" [{:cost [:credit 2] :req (req (or (has-subtype? current-ice "Barrier")
+                                                                   (has-subtype? current-ice "Code Gate")))
+                                   :msg "break 1 Code Gate or Barrier subroutine"}])
 
    "Saker"
    (auto-icebreaker ["Barrier"]
@@ -857,17 +945,10 @@
                                                   (move card :hand))}]})
 
    "Savant"
-   {:abilities [{:cost [:credit 2] :req (req (has-subtype? current-ice "Sentry"))
-                 :msg "break 1 Sentry subroutine"}
-                {:cost [:credit 2] :req (req (has-subtype? current-ice "Code Gate"))
-                              :msg "break 2 Code Gate subroutines"}]
-    :effect (req (add-watch state (keyword (str "savant" (:cid card)))
-                            (fn [k ref old new]
-                              (when (not= (get-in old [:runner :memory]) (get-in new [:runner :memory]))
-                                (update-breaker-strength ref side card))))
-                 (update-breaker-strength state side card))
-    :leave-play (req (remove-watch state (keyword (str "savant" (:cid card)))))
-    :strength-bonus (req (:memory runner))}
+   (ancient-greek-breaker "savant" [{:cost [:credit 2] :req (req (has-subtype? current-ice "Sentry"))
+                                     :msg "break 1 Sentry subroutine"}
+                                    {:cost [:credit 2] :req (req (has-subtype? current-ice "Code Gate"))
+                                     :msg "break 2 Code Gate subroutines"}])
 
    "Snowball"
    (auto-icebreaker ["Barrier"]
@@ -893,7 +974,7 @@
                 {:cost [:credit 2] :msg "place 1 power counter"
                  :effect (effect (add-counter card :power 1)
                                  (update-breaker-strength card))}]
-    :strength-bonus (req (get-in card [:counter :power] 0))}
+    :strength-bonus (req (get-counters card :power))}
 
    "Sūnya"
    {:implementation "Adding power counter is manual"
@@ -903,7 +984,7 @@
                                  (system-msg (str "places 1 power counter on Sūnya"))
                                  (update-breaker-strength card))}
                 (break-sub 2 1 "Sentry")]
-    :strength-bonus (req (get-in card [:counter :power] 0))}
+    :strength-bonus (req (get-counters card :power))}
 
    "Switchblade"
    (auto-icebreaker ["Sentry"]
@@ -943,46 +1024,7 @@
                                 :run-ends wy})})
 
    "Yusuf"
-   {:events {:successful-run {:silent (req true)
-                              :effect (effect (system-msg "adds 1 virus counter to Yusuf")
-                                              (add-counter card :virus 1))}}
-    :abilities [{:label "Add strength"
-                 :prompt "Choose a card with virus counters"
-                 :choices {:req #(pos? (get-in % [:counter :virus] 0))}
-                 :effect (req (let [selected-virus target
-                                    yusuf card
-                                    counters (get-in selected-virus [:counter :virus] 0)]
-                                (resolve-ability state side
-                                                 {:prompt "Spend how many counters?"
-                                                  :choices {:number (req counters)
-                                                            :default (req 1)}
-                                                  :effect (req (let [cost target]
-                                                                 (resolve-ability
-                                                                   state side
-                                                                   {:counter-cost [:virus cost]
-                                                                    :effect (effect (pump (get-card state yusuf) cost)
-                                                                                    (system-msg (str "spends " cost (pluralize " counter" cost) " from " (:title selected-virus)
-                                                                                                     " to add " cost " strength to Yusuf")))}
-                                                                   selected-virus nil)))}
-                                                 yusuf nil)))}
-                {:label "Break barrier subroutine(s)"
-                 :prompt "Choose a card with virus counters"
-                 :choices {:req #(pos? (get-in % [:counter :virus] 0))}
-                 :effect (req (let [selected-virus target
-                                    yusuf card
-                                    counters (get-in selected-virus [:counter :virus] 0)]
-                                (resolve-ability state side
-                                                 {:prompt "Spend how many counters?"
-                                                  :choices {:number (req counters)
-                                                            :default (req 1)}
-                                                  :effect (req (let [cost target]
-                                                                 (resolve-ability
-                                                                   state side
-                                                                   {:counter-cost [:virus cost]
-                                                                    :effect (effect (system-msg (str "spends " cost (pluralize " counter" cost) " from " (:title selected-virus)
-                                                                                                     " to break " cost (pluralize " barrier subroutine" cost) " with Yusuf")))}
-                                                                   selected-virus nil)))}
-                                                 yusuf nil)))}]}
+   (khumalo-breaker "barrier")
 
    "Yog.0"
    {:abilities [(break-sub 0 1 "Code Gate")]}

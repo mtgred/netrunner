@@ -41,11 +41,12 @@
   [costs]
   (let [fc (partition 2 (flatten (clean-forfeit costs)))
         jc (filter #(not= :net-damage (first %)) fc)
-        dc (filter #(= :net-damage (first %)) fc)]
-    (vec (map vec (concat
-      (reduce #(let [k (first %2) value (last %2)]
-                    (assoc %1 k (+ (or (k %1) 0) value)))
-                 {} jc) dc)))))
+        dc (filter #(= :net-damage (first %)) fc)
+        reduce-fn (fn [cost-map cost]
+                    (let [[cost-type value] cost
+                          old-value (get cost-map cost-type 0)]
+                      (assoc cost-map cost-type (+ old-value value))))]
+    (vec (map vec (concat (reduce reduce-fn {} jc) dc)))))
 
 (defn remove-once [pred coll]
   (let [[head tail] (split-with (complement pred) coll)]
@@ -89,7 +90,7 @@
 (defn capitalize [string]
   (str (Character/toUpperCase (first string)) (subs string 1)))
 
-(defn costs-to-symbol
+(defn costs->symbol
   "Used during steal to print runner prompt for payment"
   [costs]
   (join ", " (map #(let [key (first %) value (last %)]
@@ -172,6 +173,8 @@
       :credit (str value " [$]")
       :click (->> "[Click]" repeat (take value) (apply str))
       :forfeit (str value " Agenda" (when (> value 1) "s"))
+      :net (str value " net damage")
+      :meat (str value " meat damage")
       nil)))
 
 (defn build-cost-str
@@ -225,7 +228,7 @@
   [zone]
   (let [kw (if (keyword? zone) zone (last zone))
         s (str kw)]
-    (if (.startsWith s ":remote")
+    (when (.startsWith s ":remote")
       (let [num (last (split s #":remote"))]
         (remote-num->name num)))))
 
@@ -335,3 +338,14 @@
   ([n string suffix] (str n " " (pluralize string suffix n)))
   ([n string single-suffix plural-suffix]
    (str n " " (pluralize string single-suffix plural-suffix n))))
+
+(defn get-counters
+  "Get number of counters of specified type."
+  [card counter]
+  (cond
+    (= counter :advancement)
+    (:advance-counter card 0)
+    (= counter :recurring)
+    (:rec-counter card 0)
+    :else
+    (get-in card [:counter counter] 0)))

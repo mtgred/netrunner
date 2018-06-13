@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs nil))
 
 (deftest undo-turn
   (do-game
@@ -19,13 +19,13 @@
     (core/command-undo-turn state :runner)
     (core/command-undo-turn state :corp)
     (is (= 3 (count (:hand (get-corp)))) "Corp has 3 cards in HQ")
-    (is (= 0 (:click (get-corp))) "Corp has no clicks - turn not yet started")
+    (is (zero? (:click (get-corp))) "Corp has no clicks - turn not yet started")
     (is (= 5 (:credit (get-corp))) "Corp has 5 credits")))
 
 (deftest undo-click
   (do-game
-    (new-game (default-corp [(qty "Ikawah Project" 1)])
-              (default-runner [(qty "Day Job" 1)]))
+    (new-game (default-corp ["Ikawah Project"])
+              (default-runner ["Day Job"]))
     (play-from-hand state :corp "Ikawah Project" "New remote")
     (take-credits state :corp)
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
@@ -40,11 +40,11 @@
     (core/command-undo-click state :corp)
     (is (= 1 (count (:scored (get-runner)))) "Corp attempt to undo click does nothing")
     (core/command-undo-click state :runner)
-    (is (= 0 (count (:scored (get-runner)))) "Runner attempt to undo click works ok")
+    (is (zero? (count (:scored (get-runner)))) "Runner attempt to undo click works ok")
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")
     (play-from-hand state :runner "Day Job")
-    (is (= 0 (:click (get-runner))) "Runner spent 4 clicks")
+    (is (zero? (:click (get-runner))) "Runner spent 4 clicks")
     (core/command-undo-click state :runner)
     (is (= 4 (:click (get-runner))) "Runner back to 4 clicks")
     (is (= 5 (:credit (get-runner))) "Runner back to 5 credits")))
@@ -65,39 +65,39 @@
   ;; runner-install - Program; ensure costs are paid
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Gordian Blade" 1)]))
+              (default-runner ["Gordian Blade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
-    (let [gord (get-in @state [:runner :rig :program 0])]
+    (let [gord (get-program state 0)]
       (is (= (- 5 (:cost gord)) (:credit (get-runner))) "Program cost was applied")
-      (is (= (- 4 (:memoryunits gord)) (:memory (get-runner))) "Program MU was applied"))))
+      (is (= (- 4 (:memoryunits gord)) (core/available-mu state)) "Program MU was applied"))))
 
 (deftest runner-installing-uniques
   ;; Installing a copy of an active unique Runner card is prevented
   (do-game
     (new-game (default-corp)
               (default-runner [(qty "Kati Jones" 2) (qty "Scheherazade" 2)
-                               (qty "Off-Campus Apartment" 1) (qty "Hivemind" 2)]))
+                               "Off-Campus Apartment" (qty "Hivemind" 2)]))
     (take-credits state :corp)
     (core/gain state :runner :click 1 :memory 2)
     (core/draw state :runner 2)
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Off-Campus Apartment")
     (play-from-hand state :runner "Scheherazade")
-    (let [oca (get-in @state [:runner :rig :resource 1])
-          scheh (get-in @state [:runner :rig :program 0])]
+    (let [oca (get-resource state 1)
+          scheh (get-program state 0)]
       (card-ability state :runner scheh 0)
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= "Hivemind" (:title (first (:hosted (refresh scheh))))) "Hivemind hosted on Scheherazade")
       (play-from-hand state :runner "Kati Jones")
       (is (= 1 (:click (get-runner))) "Not charged a click")
-      (is (= 2 (count (get-in @state [:runner :rig :resource]))) "2nd copy of Kati couldn't install")
+      (is (= 2 (count (get-resource state))) "2nd copy of Kati couldn't install")
       (card-ability state :runner oca 0)
       (prompt-select :runner (find-card "Kati Jones" (:hand (get-runner))))
       (is (empty? (:hosted (refresh oca))) "2nd copy of Kati couldn't be hosted on OCA")
       (is (= 1 (:click (get-runner))) "Not charged a click")
       (play-from-hand state :runner "Hivemind")
-      (is (= 1 (count (get-in @state [:runner :rig :program]))) "2nd copy of Hivemind couldn't install")
+      (is (= 1 (count (get-program state))) "2nd copy of Hivemind couldn't install")
       (card-ability state :runner scheh 0)
       (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
@@ -107,18 +107,18 @@
   ;; deactivate - Program; ensure MU are restored
   (do-game
     (new-game (default-corp)
-              (default-runner [(qty "Gordian Blade" 1)]))
+              (default-runner ["Gordian Blade"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Gordian Blade")
-    (let [gord (get-in @state [:runner :rig :program 0])]
+    (let [gord (get-program state 0)]
       (core/trash state :runner gord)
-      (is (= 4 (:memory (get-runner))) "Trashing the program restored MU"))))
+      (is (= 4 (core/available-mu state)) "Trashing the program restored MU"))))
 
 (deftest agenda-forfeit-runner
   ;; forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda
   (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 1)])
-              (default-runner [(qty "Data Dealer" 1)]))
+    (new-game (default-corp ["Mandatory Upgrades"])
+              (default-runner ["Data Dealer"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Data Dealer")
     (run-empty-server state "HQ")
@@ -132,7 +132,7 @@
 (deftest agenda-forfeit-corp
   ;; forfeit - Deactivate agenda to trigger leave play effects if Corp forfeits a scored agenda
   (do-game
-    (new-game (default-corp [(qty "Mandatory Upgrades" 1) (qty "Corporate Town" 1)])
+    (new-game (default-corp ["Mandatory Upgrades" "Corporate Town"])
               (default-runner))
     (play-from-hand state :corp "Mandatory Upgrades" "New remote")
     (score-agenda state :corp (get-content state :remote1 0))
@@ -147,35 +147,35 @@
   ;; host - Recurring credits on cards hosted after install refresh properly
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Hedge Fund" 3)])
-              (default-runner [(qty "Compromised Employee" 1) (qty "Off-Campus Apartment" 1)]))
+              (default-runner ["Compromised Employee" "Off-Campus Apartment"]))
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Off-Campus Apartment")
     (play-from-hand state :runner "Compromised Employee")
     (let [iwall (get-ice state :hq 0)
-          apt (get-in @state [:runner :rig :resource 0])]
+          apt (get-resource state 0)]
       (card-ability state :runner apt 1) ; use Off-Campus option to host an installed card
       (prompt-select :runner (find-card "Compromised Employee"
-                                        (get-in @state [:runner :rig :resource])))
+                                        (get-resource state)))
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
-        (is (= 0 (:rec-counter (refresh cehosted))))
+        (is (zero? (get-counters (refresh cehosted) :recurring)))
         (core/rez state :corp iwall)
         (is (= 5 (:credit (get-runner))) "Compromised Employee gave 1 credit from ice rez")
         (take-credits state :runner)
         (take-credits state :corp)
-        (is (= 1 (:rec-counter (refresh cehosted)))
+        (is (= 1 (get-counters (refresh cehosted) :recurring))
             "Compromised Employee recurring credit refreshed")))))
 
 (deftest card-str-test-simple
   ;; ensure card-str names cards in simple situations properly
   (do-game
     (new-game (default-corp [(qty "Ice Wall" 3) (qty "Jackson Howard" 2)])
-              (default-runner [(qty "Corroder" 1)
-                               (qty "Clone Chip" 1)
-                               (qty "Paparazzi" 1)
-                               (qty "Parasite" 1)]))
+              (default-runner ["Corroder"
+                               "Clone Chip"
+                               "Paparazzi"
+                               "Parasite"]))
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "R&D")
@@ -193,9 +193,9 @@
           rdiwall (get-ice state :rd 0)
           jh1 (get-content state :remote1 0)
           jh2 (get-content state :remote2 0)
-          corr (get-in @state [:runner :rig :program 0])
-          cchip (get-in @state [:runner :rig :hardware 0])
-          pap (get-in @state [:runner :rig :resource 0])]
+          corr (get-program state 0)
+          cchip (get-hardware state 0)
+          pap (get-resource state 0)]
       (core/rez state :corp hqiwall0)
       (core/rez state :corp jh1)
       (prompt-select :runner (refresh hqiwall0))
@@ -215,7 +215,7 @@
 (deftest invalid-score-attempt
   ;; Test scoring with an incorrect number of advancement tokens
   (do-game
-    (new-game (default-corp [(qty "Ancestral Imager" 1)])
+    (new-game (default-corp ["Ancestral Imager"])
               (default-runner))
     (play-from-hand state :corp "Ancestral Imager" "New remote")
     (let [ai (get-content state :remote1 0)]
@@ -229,7 +229,7 @@
 (deftest trash-corp-hosted
   ;; Hosted Corp cards are included in all-installed and fire leave-play effects when trashed
   (do-game
-    (new-game (default-corp [(qty "Full Immersion RecStudio" 1) (qty "Worlds Plaza" 1) (qty "Director Haas" 1)])
+    (new-game (default-corp ["Full Immersion RecStudio" "Worlds Plaza" "Director Haas"])
               (default-runner))
     (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
     (let [fir (get-content state :remote1 0)]
@@ -242,7 +242,7 @@
         (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
         (let [dh (first (:hosted (refresh wp)))]
           (is (:rezzed dh) "Director Haas was rezzed")
-          (is (= 0 (:credit (get-corp))) "Corp has 0 credits")
+          (is (zero? (:credit (get-corp))) "Corp has 0 credits")
           (is (= 4 (:click-per-turn (get-corp))) "Corp has 4 clicks per turn")
           (is (= 3 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
           (take-credits state :corp)
@@ -256,7 +256,7 @@
   ;; Trashing a card should remove it from [:per-turn] - Issue #1345
   (do-game
     (new-game (default-corp [(qty "Hedge Fund" 3)])
-              (default-runner [(qty "Imp" 2) (qty "Scavenge" 1)]))
+              (default-runner [(qty "Imp" 2) "Scavenge"]))
     (take-credits state :corp)
     (core/gain state :runner :click 1)
     (play-from-hand state :runner "Imp")
@@ -301,7 +301,7 @@
 (deftest reinstall-seen-asset
   ;; Install a faceup card in Archives, make sure it is not :seen
   (do-game
-    (new-game (default-corp [(qty "PAD Campaign" 1) (qty "Interns" 1)])
+    (new-game (default-corp ["PAD Campaign" "Interns"])
               (default-runner))
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp 2)
@@ -318,8 +318,8 @@
 (deftest all-installed-runner-test
   ;; Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs
   (do-game
-    (new-game (default-corp [(qty "Wraparound" 1)])
-              (default-runner [(qty "Omni-drive" 1) (qty "Personal Workshop" 1) (qty "Leprechaun" 1) (qty "Corroder" 1) (qty "Mimic" 1) (qty "Knight" 1)]))
+    (new-game (default-corp ["Wraparound"])
+              (default-runner ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]))
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
       (core/rez state :corp wrap)
@@ -330,9 +330,9 @@
       (play-from-hand state :runner "Personal Workshop")
       (play-from-hand state :runner "Omni-drive")
       (take-credits state :corp)
-      (let [kn (get-in @state [:runner :rig :program 0])
-            pw (get-in @state [:runner :rig :resource 0])
-            od (get-in @state [:runner :rig :hardware 0])
+      (let [kn (get-program state 0)
+            pw (get-resource state 0)
+            od (get-hardware state 0)
             co (find-card "Corroder" (:hand (get-runner)))
             le (find-card "Leprechaun" (:hand (get-runner)))]
         (card-ability state :runner kn 0)
@@ -376,9 +376,9 @@
 (deftest counter-manipulation-commands
   ;; Test interactions of various cards with /counter and /adv-counter commands
   (do-game
-    (new-game (default-corp [(qty "Adonis Campaign" 1)
+    (new-game (default-corp ["Adonis Campaign"
                              (qty "Public Support" 2)
-                             (qty "Oaktown Renovation" 1)])
+                             "Oaktown Renovation"])
               (default-runner))
     ;; Turn 1 Corp, install oaktown and assets
     (core/gain state :corp :click 4)
@@ -417,15 +417,15 @@
       (prompt-select :corp (refresh publics2))
       (is (= 2 (get-counters (refresh publics2) :power)))
       ;; Oaktown checks and manipulation
-      (is (= 3 (:advance-counter (refresh oaktown))))
+      (is (= 3 (get-counters (refresh oaktown) :advancement)))
       (core/command-adv-counter state :corp 2)
       (prompt-select :corp (refresh oaktown))
       ;; score should fail, shouldn't be able to score with 2 advancement tokens
       (core/score state :corp (refresh oaktown))
-      (is (= 0 (:agenda-point (get-corp))))
+      (is (zero? (:agenda-point (get-corp))))
       (core/command-adv-counter state :corp 4)
       (prompt-select :corp (refresh oaktown))
-      (is (= 4 (:advance-counter (refresh oaktown))))
+      (is (= 4 (get-counters (refresh oaktown) :advancement)))
       (is (= 3 (:credit (get-corp))))
       (is (= 3 (:click (get-corp))))
       (core/score state :corp (refresh oaktown)) ; now the score should go through
@@ -455,6 +455,29 @@
     (testing "Turn 4 Corp"
       (is (= 4 (:agenda-point (get-corp)))) ; PS2 should get scored
       (is (= 12 (:credit (get-corp))))))))
+
+(deftest counter-manipulation-commands-smart
+  ;; Test interactions of smart counter advancement command
+  (do-game
+    (new-game (default-corp ["House of Knives"])
+              (default-runner))
+    (play-from-hand state :corp "House of Knives" "New remote")
+    (let [hok (get-content state :remote1 0)]
+      (core/command-counter state :corp [3])
+      (prompt-select :corp (refresh hok))
+      (is (= 3 (get-counters (refresh hok) :advancement)))
+      (core/score state :corp (refresh hok)))
+    (let [hok-scored (get-scored state :corp 0)]
+      (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
+      (core/command-counter state :corp ["virus" 2])
+      (prompt-select :corp (refresh hok-scored))
+      (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should stay at 3 counters")
+      (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters")
+      (core/command-counter state :corp [4])
+      (prompt-select :corp (refresh hok-scored)) ;; doesn't crash with unknown counter type
+      (is (empty? (:prompt (get-corp))) "Counter prompt closed")
+      (is (= 4 (get-counters (refresh hok-scored) :agenda)) "House of Knives should have 4 agenda counters")
+      (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters"))))
 
 (deftest run-bad-publicity-credits
   ;; Should not lose BP credits until a run is completely over. Issue #1721.
@@ -500,8 +523,8 @@
 (deftest purge-nested
   ;; Purge nested-hosted virus counters
   (do-game
-    (new-game (default-corp [(qty "Cyberdex Trial" 1)])
-              (default-runner [(qty "Djinn" 1) (qty "Imp" 1) (qty "Leprechaun" 1)]))
+    (new-game (default-corp ["Cyberdex Trial"])
+              (default-runner ["Djinn" "Imp" "Leprechaun"]))
     (take-credits state :corp)
     (core/gain state :runner :credit 100)
     (play-from-hand state :runner "Leprechaun")
@@ -515,15 +538,15 @@
           (is (= 2 (get-counters imp :virus)) "Imp has 2 virus counters")
           (take-credits state :runner)
           (play-from-hand state :corp "Cyberdex Trial")
-          (is (= 0 (get-counters (refresh imp) :virus)) "Imp counters purged"))))))
+          (is (zero? (get-counters (refresh imp) :virus)) "Imp counters purged"))))))
 
 (deftest multi-access-rd
   ;; multi-access of R&D sees all cards and upgrades
   (do-game
-    (new-game (default-corp [(qty "Keegan Lane" 1) (qty "Midway Station Grid" 1)
-                             (qty "Sweeps Week" 1) (qty "Manhunt" 1)
-                             (qty "Hedge Fund" 1) (qty "Big Brother" 1)])
-              (default-runner [(qty "Medium" 1)]))
+    (new-game (default-corp ["Keegan Lane" "Midway Station Grid"
+                             "Sweeps Week" "Manhunt"
+                             "Hedge Fund" "Big Brother"])
+              (default-runner ["Medium"]))
     (play-from-hand state :corp "Keegan Lane" "R&D")
     (play-from-hand state :corp "Midway Station Grid" "R&D")
     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)

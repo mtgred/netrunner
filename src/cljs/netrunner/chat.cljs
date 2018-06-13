@@ -16,10 +16,12 @@
 (enable-console-print!)
 
 (def chat-channel (chan))
+(def delete-msg-channel (chan))
+(def delete-all-channel (chan))
 
-(ws/register-ws-handler!
-  :chat/message
-  (partial put! chat-channel))
+(ws/register-ws-handler! :chat/message (partial put! chat-channel))
+(ws/register-ws-handler! :chat/delete-msg (partial put! delete-msg-channel))
+(ws/register-ws-handler! :chat/delete-all (partial put! delete-all-channel))
 
 (defn current-block-list
   []
@@ -35,11 +37,30 @@
   [channel messages]
   (swap! app-state assoc-in [:channels channel] (filter-blocked-messages messages)))
 
+(defn filter-message-channel
+  [channel k v]
+  (let [messages (get-in @app-state [:channels channel])
+        filtered (remove #(= v (k %)) messages)]
+    (update-message-channel channel filtered)))
+
 (go (while true
       (let [msg (<! chat-channel)
             ch (keyword (:channel msg))
             messages (get-in @app-state [:channels ch])]
         (update-message-channel ch (reverse (conj (reverse messages) msg))))))
+
+(go (while true
+      (let [msg (<! delete-msg-channel)
+            ch (keyword (:channel msg))
+            id (:_id msg)]
+        (filter-message-channel ch :_id id))))
+
+(go (while true
+      (let [msg (<! delete-all-channel)
+            username (:username msg)
+            channels (keys (:channels @app-state))]
+        (doseq [ch channels]
+          (filter-message-channel ch :username username)))))
 
 (defn non-game-toast
   "Display a toast warning with the specified message."
@@ -52,6 +73,18 @@
   (if (= 200 (:status response))
     (non-game-toast (str "Blocked user " blocked-user ". Refresh browser to update.") "success" nil)
     (non-game-toast "Failed to block user" "error" nil)))
+
+(defn- delete-message
+  [owner message]
+  (authenticated
+   (fn [user]
+     (ws/ws-send! [:chat/delete-msg {:msg message}]))))
+
+(defn- delete-all-messages
+  [owner username]
+  (authenticated
+   (fn [user]
+     (ws/ws-send! [:chat/delete-all {:sender username}]))))
 
 (defn block-user
   [owner blocked-user]
@@ -119,6 +152,14 @@
                (when (not my-msg)
                  [:div.panel.blue-shade.block-menu
                   {:ref "user-msg-buttons"}
+                  (when (or (:isadmin user) (:ismoderator user))
+                    [:div {:on-click #(do
+                                        (delete-message owner message)
+                                        (hide-block-menu owner))} "Delete Message"])
+                  (when (or (:isadmin user) (:ismoderator user))
+                    [:div {:on-click #(do
+                                        (delete-all-messages owner (:username message))
+                                        (hide-block-menu owner))} "Delete All Messages From User"])
                   [:div {:on-click #(do
                                       (block-user owner (:username message))
                                       (hide-block-menu owner))} "Block User"]

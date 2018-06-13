@@ -36,16 +36,18 @@
 
 (defn ice-strength
   "Gets the modified strength of the given ice."
-  [state side {:keys [strength] :as card}]
-  (+ (if-let [strfun (:strength-bonus (card-def card))]
-       (+ strength (strfun state side (make-eid state) card nil))
-       strength)
-     (get-in @state [:bonus :ice-strength] 0)))
+  [state side card]
+  (let [strength (:strength card 0)]
+    (+ (if-let [strfun (:strength-bonus (card-def card))]
+         (+ strength (strfun state side (make-eid state) card nil))
+         strength)
+       (get-in @state [:bonus :ice-strength] 0))))
 
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."
   [state side ice]
-  (let [ice (get-card state ice) oldstren (or (:current-strength ice) (:strength ice))]
+  (let [ice (get-card state ice)
+        oldstren (or (:current-strength ice) (:strength ice))]
     (when (:rezzed ice)
       (swap! state update-in [:bonus] dissoc :ice-strength)
       (trigger-event state side :pre-ice-strength ice)

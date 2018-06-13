@@ -95,7 +95,7 @@
 (defn number-of-virus-counters
   "Returns number of actual virus counters (excluding virtual counters from Hivemind)"
   [state]
-  (reduce + (map #(get-in % [:counter :virus] 0) (all-installed state :runner))))
+  (reduce + (map #(get-counters % :virus) (all-installed state :runner))))
 
 (defn all-active
   "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,
@@ -126,6 +126,8 @@
   [state card]
   (installed-byname state (to-keyword (:side card)) (:title card)))
 
+;;; Stuff for handling {:base x :mod y} data structures
+
 (defn base-mod-size
   "Returns the value of properties using the `base` and `mod` system"
   [state side prop]
@@ -137,6 +139,30 @@
   "Returns the current maximum hand-size of the specified side."
   [state side]
   (base-mod-size state side :hand-size))
+
+(defn available-mu
+  "Returns the available MU the runner has"
+  [state]
+  (- (base-mod-size state :runner :memory)
+     (get-in @state [:runner :memory :used] 0)))
+
+(defn toast-check-mu
+  "Check runner has not exceeded, toast if they have"
+  [state]
+  (when (neg? (available-mu state))
+    (toast state :runner "You have exceeded your memory units!")))
+
+(defn free-mu
+  "Frees up specified amount of mu (reduces :used)"
+  ([state _ n] (free-mu state n))
+  ([state n]
+   (deduct state :runner [:memory {:used n}])))
+
+(defn use-mu
+  "Increases amount of mu used (increased :used)"
+  ([state _ n] (use-mu state n))
+  ([state n]
+   (gain state :runner :memory {:used n})))
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"

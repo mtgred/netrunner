@@ -506,13 +506,15 @@ nav ul
 .win.centered
   position: fixed
   top: 30%
-  left: 45%
+  left: 35%
+  width: 40%
+  text-align: center
   margin-top: -50px
   margin-left: -100px
   padding: 15px
   border: 1px solid #ffa500
   z-index: 2
-
+  border-radius: 4px
 
 .win-right
   position: absolute
@@ -525,10 +527,20 @@ nav ul
   height: 15px
   width: 15px
   background-color: transparent
+  border-radius: 1px
 
   &:hover
     background-color: transparent-orange
     border-color: orange
+
+.win.table
+  border: 1px solid #ffa500
+  width: 100%
+  text-align: left
+
+.win.th
+  border-bottom: 1px solid #ffa500
+//
 
 #stats
   .content-page
@@ -1472,12 +1484,12 @@ nav ul
     &.sentry
       background-color: criminal-blue
 
-  .abilities, .servers-menu, .menu, .runner-abilities, .popup
+  .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .popup
     left: 0
     bottom: 100%
     margin: 6px -1px
 
-  .abilities, .servers-menu, .menu, .runner-abilities
+  .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities
     display: none
     position: absolute
     z-index: 30
@@ -1802,7 +1814,7 @@ nav ul
               .counters
                 transform(rotate(-90deg))
 
-              .abilities, .runner-abilities
+              .abilities, .runner-abilities, .corp-abilities
                 top: auto
                 bottom: 100%
                 left: 0
@@ -1822,7 +1834,7 @@ nav ul
           .counter
             transform(rotate(90deg))
 
-          .abilities, .runner-abilities
+          .abilities, .runner-abilities, .corp-abilities
             left: 100%
             margin: -1px 6px
 
@@ -1832,7 +1844,7 @@ nav ul
             transform(rotate(90deg) translateY(-100%))
             transform-origin(0 0)
 
-          .runner-abilities
+          .runner-abilities, .corp-abilities
             bottom: 0
             transform(rotate(-90deg) translateY(100%))
             transform-origin(0 100%)
@@ -1868,7 +1880,7 @@ nav ul
           .counters
             transform(rotate(90deg))
 
-          .abilities, .runner-abilities
+          .abilities, .runner-abilities, .corp-abilities
             top: 100%
             bottom: auto
 
