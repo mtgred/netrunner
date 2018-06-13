@@ -291,7 +291,10 @@
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
-  ([state side args] (play-subroutine state side (make-eid state) args))
+  ([state side args]
+   (let [eid (make-eid state {:source (-> args :card :title)
+                              :source-type :subroutine})]
+     (play-subroutine state side eid args)))
   ([state side eid {:keys [card subroutine targets] :as args}]
    (let [card (get-card state card)
          sub (nth (:subroutines card) subroutine nil)]
