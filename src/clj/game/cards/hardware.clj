@@ -1,7 +1,7 @@
 (ns game.cards.hardware
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -11,7 +11,7 @@
   {"Acacia"
    {:events {:pre-purge {:effect (req (let [counters (number-of-virus-counters state)]
                                         (update! state side (assoc-in (get-card state card) [:special :numpurged] counters))))}
-             :purge {:delayed-completion true
+             :purge {:async true
                      :effect (effect (show-wait-prompt  :corp "Runner to decide if they will use Acacia")
                                      (continue-ability
                                        {:optional
@@ -48,7 +48,7 @@
    "Archives Interface"
    {:events
     {:pre-access
-     {:delayed-completion true
+     {:async true
       :interactive (req true)
       :req (req (and (= target :archives)
                      (not= (:max-access run) 0)
@@ -64,7 +64,7 @@
    "Astrolabe"
    {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
-                              :delayed-completion true
+                              :async true
                               :effect (effect (draw :runner eid 1 nil))}}}
 
    "Autoscripter"
@@ -85,7 +85,7 @@
    {:in-play [:memory 2]
     :events {:expose
              {:msg (msg "attempt to force the rez of " (:title target))
-              :delayed-completion true
+              :async true
               :effect (req (let [c target
                                  cdef (card-def c)
                                  cname (:title c)]
@@ -263,10 +263,10 @@
              {:optional
               {:req (req (has-subtype? target "Caïssa"))
                :prompt "Use Deep Red?" :priority 1
-               :yes-ability {:delayed-completion true
+               :yes-ability {:async true
                              :effect (req (let [cid (:cid target)]
                                             (continue-ability state side
-                                              {:delayed-completion true
+                                              {:async true
                                                :prompt "Choose the just-installed Caïssa to have Deep Red trigger its [Click] ability"
                                                :choices {:req #(= cid (:cid %))}
                                                :msg (msg "trigger the [Click] ability of " (:title target)
@@ -324,7 +324,7 @@
                :player :runner
                :prompt "Use Doppelgänger to run again?"
                :yes-ability {:prompt "Choose a server"
-                             :delayed-completion true
+                             :async true
                              :choices (req runnable-servers)
                              :msg (msg "make a run on " target)
                              :makes-run true
@@ -396,7 +396,7 @@
                                  (damage-prevent :brain 2))}]}
 
    "Flame-out"
-   (let [turn-end {:delayed-completion true
+   (let [turn-end {:async true
                    :effect (req (unregister-events state :runner card)
                                 (if-let [hosted (first (:hosted card))]
                                   (do
@@ -474,7 +474,7 @@
                    :label "Toggle auomatically adding virus counters"}]
       :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Friday Chip."))
       :events {:runner-turn-begins ability
-               :runner-trash {:delayed-completion true
+               :runner-trash {:async true
                               :req (req (some #(card-is? % :side :corp) targets))
                               :effect (req (let [amt-trashed (count (filter #(card-is? % :side :corp) targets))
                                                  auto-ab {:effect (effect (system-msg :runner
@@ -520,7 +520,7 @@
    "GPI Net Tap"
    {:implementation "Trash and jack out effect is manual"
     :abilities [{:req (req (and (ice? current-ice) (not (rezzed? current-ice))))
-                 :delayed-completion true
+                 :async true
                  :effect (effect (expose eid current-ice))}]}
 
    "Grimoire"
@@ -546,7 +546,7 @@
     :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
                  :req (req (and run
                                 (pos? (count run-ices))))
-                 :delayed-completion true
+                 :async true
                  :effect (req (let [ice (last run-ices)]
                                 (system-msg
                                   state :runner
@@ -636,19 +636,19 @@
    "Maya"
    {:in-play [:memory 2]
     :abilities [{:once :per-turn
-                 :delayed-completion true
+                 :async true
                  :label "Move this accessed card to bottom of R&D"
                  :req (req (when-let [accessed-card (-> @state :runner :prompt first :card)]
                              (in-deck? accessed-card)))
                  :msg "move the card just accessed to the bottom of R&D"
                  :effect (req (let [accessed-card (-> @state :runner :prompt first :card)]
                                 (move state :corp accessed-card :deck)
-                                (when-completed (tag-runner state :runner (make-eid state) 1)
-                                                (close-access-prompt state side))))}
+                                (wait-for (tag-runner state :runner (make-eid state) 1)
+                                          (close-access-prompt state side))))}
                 {:once :per-turn
                  :label "Move a previously accessed card to bottom of R&D"
                  :effect (effect (resolve-ability
-                                   {:delayed-completion true
+                                   {:async true
                                     ;; only allow targeting cards that were accessed this turn
                                     :choices {:req #(some (fn [accessed-card]
                                                             (= (:cid %) (:cid accessed-card)))
@@ -670,7 +670,7 @@
    "Mirror"
    {:in-play [:memory 2]
     :events {:successful-run
-             {:delayed-completion true
+             {:async true
               :req (req (= target :rd))
               :effect (effect (continue-ability
                                 {:prompt "Select a card and replace 1 spent [Recurring Credits] on it"
@@ -818,13 +818,13 @@
       :events {:pass-ice {:req (req (and (= (:server run) [:hq])
                                          (= (:position run) 1) ; trigger when last ICE passed
                                          (pos? (count (:deck runner)))))
-                          :delayed-completion true
+                          :async true
                           :once :per-turn
                           :effect (req (continue-ability state :runner abi card nil))}
                :run {:req (req (and (= (:server run) [:hq])
                                     (zero? (:position run)) ; trigger on unprotected HQ
                                     (pos? (count (:deck runner)))))
-                     :delayed-completion true
+                     :async true
                      :once :per-turn
                      :effect (req (continue-ability state :runner abi card nil))}}})
 
@@ -895,16 +895,16 @@
                                 :req (req (:access @state))}]}
       :abilities [{:req (req (= (:cid (second (:pre-damage (eventmap @state))))
                                 (:cid (first (:pre-access-card (eventmap @state))))))
-                :effect (effect (resolve-ability
-                                  {:prompt "Choose how much damage to prevent"
-                                   :priority 50
-                                   :choices {:number (req (min (last (:pre-damage (eventmap @state)))
-                                                               (:credit runner)))}
-                                   :msg (msg "prevent " target " damage")
-                                   :effect (effect (trash card {:cause :ability-cost})
-                                                   (damage-prevent (first (:pre-damage (eventmap @state))) target)
-                                                   (lose-credits target))}
-                                  card nil))}]})
+                   :effect (effect (resolve-ability
+                                     {:prompt "Choose how much damage to prevent"
+                                      :priority 50
+                                      :choices {:number (req (min (last (:pre-damage (eventmap @state)))
+                                                                  (:credit runner)))}
+                                      :msg (msg "prevent " target " damage")
+                                      :effect (effect (trash card {:cause :ability-cost})
+                                                      (damage-prevent (first (:pre-damage (eventmap @state))) target)
+                                                      (lose-credits target))}
+                                     card nil))}]})
 
    "Record Reconstructor"
    {:events
@@ -968,7 +968,7 @@
    "Rubicon Switch"
    {:abilities [{:cost [:click 1]
                  :once :per-turn
-                 :delayed-completion true
+                 :async true
                  :prompt "How many [Credits]?" :choices :credit
                  :effect (effect (system-msg (str "spends a [Click] and " target " [Credit] on Rubicon Switch"))
                                  (resolve-ability {:choices {:req #(and (ice? %)
@@ -1005,7 +1005,7 @@
     :in-play [:memory 1 :link 1]
     :abilities [{:req (req (:run @state))
                  :once :per-turn
-                 :delayed-completion true
+                 :async true
                  :msg "force the Corp to initiate a trace"
                  :label "Trace 5 - Give the Runner 1 tag and end the run"
                  :trace {:base 5
@@ -1074,7 +1074,7 @@
 
    "Spy Camera"
    {:abilities [{:cost [:click 1]
-                 :delayed-completion true
+                 :async true
                  :label "Look at the top X cards of your Stack"
                  :msg "look at the top X cards of their Stack and rearrange them"
                  :effect (req (show-wait-prompt state :corp "Runner to rearrange the top cards of their stack")
@@ -1085,7 +1085,7 @@
                                   (continue-ability state side (reorder-choice :runner :corp from '()
                                                                                (count from) from) card nil)
                                   (do (clear-wait-prompt state :corp)
-                                      (effect-completed state side eid card)))))}
+                                      (effect-completed state side eid)))))}
                 {:label "[Trash]: Look at the top card of R&D"
                  :msg "trash it and look at the top card of R&D"
                  :effect (effect (prompt! card (str "The top card of R&D is " (:title (first (:deck corp)))) ["OK"] {})
@@ -1097,7 +1097,7 @@
     :events {:post-successful-run {:req (req (and (= :hq target)
                                                   run))
                                    :silent (req true)
-                                   :delayed-completion true
+                                   :async true
                                    :effect (effect (continue-ability
                                                      {:prompt "How many ICE protecting HQ did you break all subroutines on?"
                                                       ;; Makes number of ice on server (HQ) the upper limit.
@@ -1120,7 +1120,7 @@
    "Titanium Ribs"
    {:events
     {:pre-resolve-damage
-     {:delayed-completion true
+     {:async true
       :req (req (and (pos? (last targets))
                      (runner-can-choose-damage? state)
                      (not (get-in @state [:damage :damage-replace]))))
@@ -1133,23 +1133,23 @@
                        (swap! state update-in [:runner :brain-damage] #(+ % dmg))
                        (swap! state update-in [:runner :hand-size :mod] #(- % dmg)))
                      (show-wait-prompt state :corp "Runner to use Titanium Ribs to choose cards to be trashed")
-                     (when-completed (resolve-ability state side
-                                       {:delayed-completion true
-                                        :prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
-                                        :player :runner
-                                        :choices {:max dmg :all true :req #(and (in-hand? %) (= (:side %) "Runner"))}
-                                        :msg (msg "trash " (join ", " (map :title targets)))
-                                        :effect (req (clear-wait-prompt state :corp)
-                                                     (doseq [c targets]
-                                                       (trash state side c {:cause dtype :unpreventable true}))
-                                                     (trigger-event state side :damage-chosen)
-                                                     (damage-defer state side dtype 0)
-                                                     (effect-completed state side eid))}
-                                      card nil)
-                                     (do (trigger-event state side :damage dtype src dmg)
-                                         (effect-completed state side eid)))))}
+                     (wait-for (resolve-ability
+                                 state side
+                                 {:async true
+                                  :prompt (msg "Select " dmg " cards to trash for the " (name dtype) " damage")
+                                  :player :runner
+                                  :choices {:max dmg :all true :req #(and (in-hand? %) (= (:side %) "Runner"))}
+                                  :msg (msg "trash " (join ", " (map :title targets)))
+                                  :effect (req (clear-wait-prompt state :corp)
+                                               (doseq [c targets]
+                                                 (trash state side c {:cause dtype :unpreventable true}))
+                                               (trigger-event state side :damage-chosen)
+                                               (damage-defer state side dtype 0)
+                                               (effect-completed state side eid))}
+                                 card nil)
+                               (trigger-event-sync state side eid :damage dtype src dmg))))}
     :damage-chosen {:effect (effect (enable-runner-damage-choice))}}
-    :delayed-completion true
+    :async true
     :effect (effect (enable-runner-damage-choice)
                     (system-msg (str "suffers 2 meat damage from installing Titanium Ribs"))
                     (damage eid :meat 2 {:unboostable true :card card}))
@@ -1157,7 +1157,7 @@
 
    "Top Hat"
    (letfn [(ability [n]
-             {:delayed-completion true
+             {:async true
               :mandatory true
               :prompt "Which card from the top of R&D would you like to access? (Card 1 is on top.)"
               :choices (take n ["1" "2" "3" "4" "5"])
@@ -1175,7 +1175,7 @@
     :events {:agenda-stolen
              {:interactive (req true)
               :req (req (not (empty? (:scored corp))))
-              :delayed-completion true
+              :async true
               :effect (req
                         (let [stolen target]
                           (continue-ability
@@ -1183,7 +1183,7 @@
                             {:optional
                              {:prompt (msg "Swap " (:title stolen) " for an agenda in the Corp's score area?")
                               :yes-ability
-                              {:delayed-completion true
+                              {:async true
                                :effect (req
                                          (continue-ability
                                            state side
@@ -1193,7 +1193,7 @@
                                                            (swap-agendas state side scored stolen)
                                                            (system-msg state side (str "uses Turntable to swap "
                                                                                        (:title stolen) " for " (:title scored)))
-                                                           (effect-completed state side eid card)))}
+                                                           (effect-completed state side eid)))}
                                            card targets))}}}
                             card targets)))}}}
 

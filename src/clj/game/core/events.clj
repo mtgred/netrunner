@@ -44,10 +44,10 @@
   (if-let [e (first handlers)]
     (if-let [card (get-card state (:card e))]
       (let [ability (dissoc (:ability e) :req)]
-        (when-completed (resolve-ability state side ability card targets)
-                        (apply trigger-event-sync-next state side eid (next handlers) event targets)))
+        (wait-for (resolve-ability state side ability card targets)
+                  (apply trigger-event-sync-next state side eid (next handlers) event targets)))
       (apply trigger-event-sync-next state side eid (next handlers) event targets))
-    (effect-completed state side eid nil)))
+    (effect-completed state side eid)))
 
 (defn trigger-event-sync
   "Triggers the given event synchronously, requiring each handler to complete before alerting the next handler. Does not
@@ -61,8 +61,8 @@
           handlers (filter #(and (not (apply trigger-suppress state side event (cons (:card %) targets)))
                                  (can-trigger? state side (:ability %) (get-card state (:card %)) targets))
                            handlers)]
-      (when-completed (apply trigger-event-sync-next state side handlers event targets)
-                      (effect-completed state side eid nil)))))
+      (wait-for (apply trigger-event-sync-next state side handlers event targets)
+                (effect-completed state side eid)))))
 
 (defn- trigger-event-simult-player
   "Triggers the simultaneous event handlers for the given event trigger and player.
@@ -97,25 +97,25 @@
                                  (remove-once #(= (get-cid to-resolve) (get-cid %)) handlers)
                                  (next handlers))]
                     (if-let [the-card (get-card state card-to-resolve)]
-                      {:delayed-completion true
-                       :effect (req (when-completed (resolve-ability state (to-keyword (:side the-card))
-                                                                     ability-to-resolve
-                                                                     the-card event-targets)
-                                                    (if (should-continue state handlers)
-                                                      (continue-ability state side
-                                                                        (choose-handler others) nil event-targets)
-                                                      (effect-completed state side eid nil))))}
-                      {:delayed-completion true
+                      {:async true
+                       :effect (req (wait-for (resolve-ability state (to-keyword (:side the-card))
+                                                               ability-to-resolve
+                                                               the-card event-targets)
+                                              (if (should-continue state handlers)
+                                                (continue-ability state side
+                                                                  (choose-handler others) nil event-targets)
+                                                (effect-completed state side eid))))}
+                      {:async true
                        :effect (req (if (should-continue state handlers)
                                       (continue-ability state side (choose-handler (next handlers)) nil event-targets)
-                                      (effect-completed state side eid nil)))}))
+                                      (effect-completed state side eid)))}))
                   {:prompt "Choose a trigger to resolve"
                    :choices titles
-                   :delayed-completion true
+                   :async true
                    :effect (req (let [to-resolve (some #(when (= target (:title (:card %))) %) handlers)
                                       ability-to-resolve (dissoc (:ability to-resolve) :req)
                                       the-card (get-card state (:card to-resolve))]
-                                  (when-completed
+                                  (wait-for
                                     (resolve-ability state (to-keyword (:side the-card))
                                                      ability-to-resolve the-card event-targets)
                                     (if (should-continue state handlers)
@@ -123,10 +123,10 @@
                                                         (choose-handler
                                                           (remove-once #(= target (:title (:card %))) handlers))
                                                         nil event-targets)
-                                      (effect-completed state side eid nil)))))})))]
+                                      (effect-completed state side eid)))))})))]
 
       (continue-ability state side (choose-handler handlers) nil event-targets))
-    (effect-completed state side eid nil)))
+    (effect-completed state side eid)))
 
 (defn ability-as-handler
   "Wraps a card ability as an event handler."
@@ -187,11 +187,11 @@
          active-player-events (get-handlers active-player)
          opponent-events (get-handlers opponent)]
      ; let active player activate their events first
-     (when-completed
+     (wait-for
        (resolve-ability state side first-ability nil nil)
        (do (show-wait-prompt state opponent (str (side-str active-player) " to resolve " (event-title event) " triggers")
                              {:priority -1})
-           (when-completed
+           (wait-for
              (trigger-event-simult-player state side event active-player-events cancel-fn targets)
              (do (when after-active-player
                    (resolve-ability state side after-active-player nil nil))
@@ -199,9 +199,9 @@
                  (show-wait-prompt state active-player
                                    (str (side-str opponent) " to resolve " (event-title event) " triggers")
                                    {:priority -1})
-                 (when-completed (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
-                                 (do (clear-wait-prompt state active-player)
-                                     (effect-completed state side eid nil))))))))))
+                 (wait-for (trigger-event-simult-player state opponent event opponent-events cancel-fn targets)
+                           (do (clear-wait-prompt state active-player)
+                               (effect-completed state side eid))))))))))
 
 
 ; Functions for registering trigger suppression events.
@@ -295,8 +295,7 @@
   (swap! state update-in [:effect-completed (:eid eid)] #(conj % {:card card :effect effect})))
 
 (defn effect-completed
-  ([state side eid] (effect-completed state side eid nil))
-  ([state side eid card]
-   (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
-     ((:effect handler) state side eid (:card card) nil))
-   (swap! state update-in [:effect-completed] dissoc (:eid eid))))
+  [state side eid]
+  (doseq [handler (get-in @state [:effect-completed (:eid eid)])]
+    ((:effect handler) state side eid nil nil))
+  (swap! state update-in [:effect-completed] dissoc (:eid eid)))

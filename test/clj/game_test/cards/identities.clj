@@ -837,7 +837,7 @@
         (is (= 2 (get-counters (refresh ice-wall) :advancement)) "Ice Wall has 2 advancement counters from HT forfeit"))
       (prompt-select :corp (get-scored state :corp 0)) ; select AI to trigger
       (prompt-choice :runner "Take 2 tags") ; First runner has prompt
-      (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the delayed-completion"))))
+      (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the async completion"))))
 
 (deftest jesminder-sareen:-girl-behind-the-curtain
   ;; Jesminder Sareen - avoid tags only during a run

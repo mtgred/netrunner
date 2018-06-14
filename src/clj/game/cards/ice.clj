@@ -1,7 +1,7 @@
 (ns game.cards.ice
   (:require [game.core :refer :all]
             [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int]]
@@ -48,7 +48,7 @@
   [n]
   {:label (str "Give the Runner " (quantify n "tag"))
    :msg (str "give the Runner " (quantify n "tag"))
-   :delayed-completion true
+   :async true
    :effect (effect (tag-runner :runner eid n))})
 
 (def add-power-counter
@@ -247,10 +247,10 @@
 
    "Anansi"
    (let [corp-draw {:optional {:prompt "Draw 1 card?"
-                               :yes-ability {:delayed-completion true
+                               :yes-ability {:async true
                                              :msg "draw 1 card"
                                              :effect (effect (draw eid 1 nil))}}}
-         runner-draw {:delayed-completion true
+         runner-draw {:async true
                       :effect (req (show-wait-prompt state :corp "Runner to decide on card draw")
                                    (continue-ability state side
                                                      {:player :runner
@@ -258,7 +258,7 @@
                                                       {:prompt "Pay 2[Credits] to draw 1 card?"
                                                        :no-ability {:effect (effect (system-msg :runner "does not draw 1 card")
                                                                                     (clear-wait-prompt :corp))}
-                                                       :yes-ability {:delayed-completion true
+                                                       :yes-ability {:async true
                                                                      :effect (effect
                                                                                (system-msg :runner "pays 2[Credits] to draw 1 card")
                                                                                (lose-credits 2)
@@ -267,7 +267,7 @@
                                                      card nil))}]
      {:implementation "Encounter-ends effect is manually triggered."
       :subroutines [{:msg "rearrange the top 5 cards of R&D"
-                     :delayed-completion true
+                     :async true
                      :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
                                   (let [from (take 5 (:deck corp))]
                                        (if (pos? (count from))
@@ -277,23 +277,23 @@
                                          (do (clear-wait-prompt state :runner)
                                              (effect-completed state side eid)))))}
                     {:label "Draw 1 card; allow runner to draw 1 card"
-                     :delayed-completion true
-                     :effect (req (when-completed (resolve-ability state side corp-draw card nil)
-                                                  (continue-ability state :runner runner-draw card nil)))}
+                     :async true
+                     :effect (req (wait-for (resolve-ability state side corp-draw card nil)
+                                            (continue-ability state :runner runner-draw card nil)))}
                     (do-net-damage 1)]
       :abilities [(do-net-damage 3)]})
 
    "Archangel"
    {:flags {:rd-reveal (req true)}
     :access
-    {:delayed-completion true
+    {:async true
      :req (req (not= (first (:zone card)) :discard))
      :effect (effect (show-wait-prompt :runner "Corp to decide to trigger Archangel")
                      (continue-ability
                        {:optional
                         {:prompt "Pay 3 [Credits] to force Runner to encounter Archangel?"
                          :yes-ability {:cost [:credit 3]
-                                       :delayed-completion true
+                                       :async true
                                        :effect (effect (system-msg :corp "pays 3 [Credits] to force the Runner to encounter Archangel")
                                                        (clear-wait-prompt :runner)
                                                        (continue-ability
@@ -301,14 +301,14 @@
                                                                   {:player :runner
                                                                    :prompt "You are encountering Archangel. Allow its subroutine to fire?"
                                                                    :priority 1
-                                                                   :yes-ability {:delayed-completion true
+                                                                   :yes-ability {:async true
                                                                                  :effect (effect (play-subroutine eid {:card card :subroutine 0}))}
                                                                    :no-ability {:effect (effect (effect-completed eid))}}}
                                                          card nil))}
                          :no-ability {:effect (effect (system-msg :corp "declines to force the Runner to encounter Archangel")
                                                       (clear-wait-prompt :runner))}}}
                        card nil))}
-   :subroutines [(trace-ability 6 {:delayed-completion true
+   :subroutines [(trace-ability 6 {:async true
                                    :effect (effect (show-wait-prompt :runner "Corp to select Archangel target")
                                                    (continue-ability {:choices {:req #(and (installed? %)
                                                                                            (card-is? % :side :runner))}
@@ -368,7 +368,7 @@
    {:implementation "Encounter effect is manual"
     :abilities [(give-tags 1)]
     :runner-abilities [{:label "Take 1 tag"
-                        :delayed-completion true
+                        :async true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to Bypass it")
                                      (tag-runner state :runner eid 1 {:unpreventable true}))}]
     :subroutines [(gain-credits-sub 2)
@@ -381,7 +381,7 @@
 
    "Bandwidth"
    {:subroutines [{:msg "give the Runner 1 tag"
-                   :delayed-completion true
+                   :async true
                    :effect (effect (tag-runner :runner eid 1)
                                    (register-events
                                      {:successful-run {:effect (effect (lose :runner :tag 1))
@@ -418,7 +418,7 @@
      {:subroutines
               [{:label "Install a piece of ice from HQ protecting another server, ignoring all costs"
                 :prompt "Choose ICE to install from HQ in another server"
-                :delayed-completion true
+                :async true
                 :choices {:req #(and (ice? %)
                                      (in-hand? %))}
                 :effect (req (let [this (zone->name (second (:zone card)))
@@ -426,12 +426,12 @@
                                (continue-ability state side
                                                  {:prompt (str "Choose a location to install " (:title target))
                                                   :choices (req (remove #(= this %) (corp-install-list state nice)))
-                                                  :delayed-completion true
+                                                  :async true
                                                   :effect (effect (corp-install nice target {:no-install-cost true}))}
                                                  card nil)))}
                {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
                 :prompt "Choose ICE to install from HQ in this server"
-                :delayed-completion true
+                :async true
                 :choices {:req #(and (ice? %)
                                      (in-hand? %))}
                 :effect (req (let [newice (assoc target :zone (:zone card))
@@ -513,7 +513,7 @@
                                     :msg "do 3 meat damage when this run is successful"
                                     :effect (effect (register-events
                                                       {:successful-run
-                                                       {:delayed-completion true
+                                                       {:async true
                                                         :msg "do 3 meat damage"
                                                         :effect (effect (damage eid :meat 3 {:card card}))}
                                                        :run-ends {:effect (effect (unregister-events card))}}
@@ -554,7 +554,7 @@
    "Chrysalis"
    {:flags {:rd-reveal (req true)}
     :subroutines [(do-net-damage 2)]
-    :access {:delayed-completion true
+    :access {:async true
              :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Chrysalis subroutine")
                              (continue-ability
@@ -600,24 +600,24 @@
    "Colossus"
    {:advanceable :always
     :subroutines [{:label "Give the Runner 1 tag (Give the Runner 2 tags)"
-                   :delayed-completion true
+                   :async true
                    :msg (msg "give the Runner " (if (wonder-sub card 3) "2 tags" "1 tag"))
                    :effect (effect (tag-runner :runner eid (if (wonder-sub card 3) 2 1)))}
                   {:label "Trash 1 program (Trash 1 program and 1 resource)"
-                   :delayed-completion true
+                   :async true
                    :msg (msg "trash 1 program" (when (wonder-sub card 3) " and 1 resource"))
-                   :effect (req (when-completed (resolve-ability state side trash-program card nil)
-                                                (if (wonder-sub card 3)
-                                                  (continue-ability
-                                                    state side
-                                                    {:prompt "Choose a resource to trash"
-                                                     :msg (msg "trash " (:title target))
-                                                     :choices {:req #(and (installed? %)
-                                                                          (is-type? % "Resource"))}
-                                                     :cancel-effect (req (effect-completed state side eid))
-                                                     :effect (effect (trash target {:cause :subroutine}))}
-                                                    card nil)
-                                                  (effect-completed state side eid))))}]
+                   :effect (req (wait-for (resolve-ability state side trash-program card nil)
+                                          (if (wonder-sub card 3)
+                                            (continue-ability
+                                              state side
+                                              {:prompt "Choose a resource to trash"
+                                               :msg (msg "trash " (:title target))
+                                               :choices {:req #(and (installed? %)
+                                                                    (is-type? % "Resource"))}
+                                               :cancel-effect (req (effect-completed state side eid))
+                                               :effect (effect (trash target {:cause :subroutine}))}
+                                              card nil)
+                                            (effect-completed state side eid))))}]
     :strength-bonus advance-counters}
 
    "Conundrum"
@@ -659,7 +659,7 @@
    (letfn [(dh-trash [cards]
              {:prompt "Choose a card to trash"
               :choices cards
-              :delayed-completion true
+              :async true
               :msg (msg "trash " (:title target))
               :effect (req (do (trash state side target {:unpreventable true})
                                (continue-ability
@@ -669,7 +669,7 @@
                                    '() (count (remove-once #(= % target) cards))
                                    (remove-once #(= % target) cards))
                                  card nil)))})]
-     {:subroutines [(trace-ability 2 {:delayed-completion true
+     {:subroutines [(trace-ability 2 {:async true
                                       :label "Look at the top of Stack"
                                       :msg "look at top X cards of Stack"
                                       :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of the Runner's Stack")
@@ -682,7 +682,7 @@
                                                        (do (system-msg state :corp (str "trashes " (:title (first from))))
                                                            (trash state side (first from) {:unpreventable true})
                                                            (clear-wait-prompt state :runner)
-                                                           (effect-completed state side eid card)))))})]})
+                                                           (effect-completed state side eid)))))})]})
 
    "Data Loop"
    {:implementation "Encounter effect is manual"
@@ -721,7 +721,7 @@
                         :effect (req (end-run state :runner)
                                      (system-msg state :runner "chooses to end the run on encountering Data Raven"))}
                        {:label "Take 1 tag"
-                        :delayed-completion true
+                        :async true
                         :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Raven")
                                      (tag-runner state :runner eid 1))}]
     :subroutines [(trace-ability 3 add-power-counter)]}
@@ -731,15 +731,15 @@
                         :effect (req (pay state :runner card :credit 3)
                                      (system-msg state :runner "chooses to pay 3 [Credits] on encountering Data Ward"))}
                        {:label "Take 1 tag"
-                        :delayed-completion true
+                        :async true
                         :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Ward")
                                      (tag-runner state :runner eid 1))}]
     :subroutines [end-the-run-if-tagged]}
 
    "DNA Tracker"
    {:subroutines [{:msg "do 1 net damage and make the Runner lose 2 [Credits]"
-                   :effect (req (when-completed (damage state side :net 1 {:card card})
-                                                (lose-credits state :runner 2)))}]}
+                   :effect (req (wait-for (damage state side :net 1 {:card card})
+                                          (lose-credits state :runner 2)))}]}
 
    "Dracō"
    {:prompt "How many power counters?"
@@ -750,7 +750,7 @@
     :strength-bonus (req (get-counters card :power))
     :subroutines [(trace-ability 2 {:label "Give the Runner 1 tag and end the run"
                                     :msg "give the Runner 1 tag and end the run"
-                                    :delayed-completion true
+                                    :async true
                                     :effect (effect (tag-runner :runner eid 1)
                                                     (end-run))})]}
 
@@ -865,16 +865,16 @@
    "Flare"
    {:subroutines [(trace-ability 6 {:label "Trash 1 hardware, do 2 meat damage, and end the run"
                                     :msg "trash 1 hardware, do 2 meat damage, and end the run"
-                                    :delayed-completion true
+                                    :async true
                                     :effect (effect (continue-ability
                                                      {:prompt "Select a piece of hardware to trash"
                                                       :label "Trash a piece of hardware"
                                                       :choices {:req #(is-type? % "Hardware")}
                                                       :msg (msg "trash " (:title target))
-                                                      :effect (req (when-completed
+                                                      :effect (req (wait-for
                                                                      (trash state side target {:cause :subroutine})
                                                                      (do (damage state side eid :meat 2 {:unpreventable true
-                                                                                              :card card})
+                                                                                                         :card card})
                                                                          (end-run state side))))
                                                       :cancel-effect (effect (damage eid :meat 2 {:unpreventable true :card card})
                                                                              (end-run))}
@@ -976,7 +976,7 @@
                    :msg (msg "place 1 advancement token on " (card-str state target))
                    :choices {:req can-be-advanced?}
                    :cost [:credit 1] :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
-    :access {:delayed-completion true
+    :access {:async true
              :req (req (not= (first (:zone card)) :discard))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Herald subroutines")
                              (continue-ability
@@ -1005,7 +1005,7 @@
 
    "Hortum"
    (letfn [(hort [n] {:prompt "Choose a card to add to HQ with Hortum"
-                      :delayed-completion true
+                      :async true
                       :choices (req (cancellable (:deck corp) :sorted))
                       :msg "add 1 card to HQ from R&D"
                       :cancel-effect (req (shuffle! state side :deck)
@@ -1016,15 +1016,15 @@
                                      (continue-ability state side (hort (inc n)) card nil)
                                      (do (shuffle! state side :deck)
                                          (system-msg state side (str "shuffles R&D"))
-                                         (effect-completed state side eid card))))})]
+                                         (effect-completed state side eid))))})]
      {:advanceable :always
       :subroutines [{:label "Gain 1 [Credits] (Gain 4 [Credits])"
                      :msg (msg "gain " (if (wonder-sub card 3) "4" "1") " [Credits]")
                      :effect (effect (gain-credits :corp (if (wonder-sub card 3) 4 1)))}
                     {:label "End the run (Search R&D for up to 2 cards and add them to HQ, shuffle R&D, end the run)"
-                     :delayed-completion true
+                     :async true
                      :effect (req (if (wonder-sub card 3)
-                                    (when-completed
+                                    (wait-for
                                       (resolve-ability state side (hort 1) card nil)
                                       (do (end-run state side)
                                           (system-msg state side
@@ -1083,18 +1083,18 @@
    {:subroutines [trash-program
                   (trace-ability 1 {:label "Give the Runner 1 tag and do 1 brain damage"
                                     :msg "give the Runner 1 tag and do 1 brain damage"
-                                    :delayed-completion true
-                                    :effect (req (when-completed (damage state :runner :brain 1 {:card card})
-                                                                 (tag-runner state :runner eid 1)))})]
+                                    :async true
+                                    :effect (req (wait-for (damage state :runner :brain 1 {:card card})
+                                                           (tag-runner state :runner eid 1)))})]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Ichi 2.0"
    {:subroutines [trash-program
                   (trace-ability 3 {:label "Give the Runner 1 tag and do 1 brain damage"
                                     :msg "give the Runner 1 tag and do 1 brain damage"
-                                    :delayed-completion true
-                                    :effect (req (when-completed (damage state :runner :brain 1 {:card card})
-                                                                 (tag-runner state :runner eid 1)))})]
+                                    :async true
+                                    :effect (req (wait-for (damage state :runner :brain 1 {:card card})
+                                                           (tag-runner state :runner eid 1)))})]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Inazuma"
@@ -1139,7 +1139,7 @@
 
    "Its a Trap!"
    {:expose {:msg "do 2 net damage"
-             :delayed-completion true
+             :async true
              :effect (effect (damage eid :net 2 {:card card}))}
     :subroutines [(assoc trash-installed :effect (req (trash state side target {:cause :subroutine})
                                                       (when current-ice
@@ -1157,7 +1157,7 @@
                  :effect (effect (register-turn-flag! card :runner-lock-install (constantly true)))}]
     :subroutines [{:label "Choose 2 installed Runner cards, if able. The Runner must add 1 of those to the top of the Stack."
                    :req (req (>= (count (all-installed state :runner)) 2))
-                   :delayed-completion true
+                   :async true
                    :prompt "Select 2 installed Runner cards"
                    :choices {:req #(and (= (:side %) "Runner")
                                         (installed? %))
@@ -1179,7 +1179,7 @@
                                          card nil)))}]}
 
    "Kakugo"
-   {:events {:pass-ice {:delayed-completion true
+   {:events {:pass-ice {:async true
                         :req (req (= target card))
                         :msg "do 1 net damage"
                         :effect (effect (damage eid :net 1 {:card card}))}}
@@ -1191,7 +1191,7 @@
              {:prompt (str "Select an installed " (better-name kind) " to trash")
               :label (str "Trash an installed " (better-name kind))
               :msg (msg "trash " (:title target))
-              :delayed-completion true
+              :async true
               :choices {:req #(and (installed? %)
                                    (is-type? % (capitalize kind)))}
               :cancel-effect (effect (system-msg (str "fails to trash an installed " (better-name kind)))
@@ -1199,7 +1199,7 @@
               :effect (effect (trash eid target {:cause :subroutine}))})
            (sub-map [kind]
              {:player :runner
-              :delayed-completion true
+              :async true
               :prompt "Choose one"
               :choices ["Take 1 brain damage" (str "Trash an installed " (better-name kind))]
               :effect (req (if (= target "Take 1 brain damage")
@@ -1209,10 +1209,10 @@
            (brain-trash [kind]
              {:label (str "Force the Runner to take 1 brain damage or trash an installed " (better-name kind))
               :msg (str "force the Runner to take 1 brain damage or trash an installed " (better-name kind))
-              :delayed-completion true
+              :async true
               :effect (req (show-wait-prompt state :corp "Runner to decide on Kamali 1.0 action")
-                           (when-completed (resolve-ability state side (sub-map kind) card nil)
-                                           (clear-wait-prompt state :corp)))})]
+                           (wait-for (resolve-ability state side (sub-map kind) card nil)
+                                     (clear-wait-prompt state :corp)))})]
      {:subroutines [(brain-trash "resource")
                     (brain-trash "hardware")
                     (brain-trash "program")]
@@ -1224,18 +1224,18 @@
                    :label "Force the Runner to access a card in HQ"
                    :msg (msg "force the Runner to access " (:title target))
                    :effect (req (trash state side card)
-                                (when-completed (trigger-event-sync state side :pre-access :hq)
-                                  (when-completed (access-card state side target)
-                                    (let [from-hq (dec (access-count state side :hq-access))]
-                                      (continue-ability
-                                        state :runner
-                                        (access-helper-hq
-                                          state from-hq
-                                          ;; access-helper-hq uses a set to keep track of which cards have already
-                                          ;; been accessed. by adding HQ root's contents to this set, we make the runner
-                                          ;; unable to access those cards, as Kitsune intends.
-                                          (conj (set (get-in @state [:corp :servers :hq :content])) target))
-                                       card nil)))))}]}
+                                (wait-for (trigger-event-sync state side :pre-access :hq)
+                                          (wait-for (access-card state side target)
+                                                    (let [from-hq (dec (access-count state side :hq-access))]
+                                                      (continue-ability
+                                                        state :runner
+                                                        (access-helper-hq
+                                                          state from-hq
+                                                          ;; access-helper-hq uses a set to keep track of which cards have already
+                                                          ;; been accessed. by adding HQ root's contents to this set, we make the runner
+                                                          ;; unable to access those cards, as Kitsune intends.
+                                                          (conj (set (get-in @state [:corp :servers :hq :content])) target))
+                                                        card nil)))))}]}
 
    "Komainu"
    {:abilities [{:label "Gain subroutines"
@@ -1316,20 +1316,20 @@
              (doseq [hc (:hosted (get-card state c))]
                (unregister-events state side hc)
                (update! state side (dissoc hc :abilities))))]
-     {:delayed-completion true
+     {:async true
       :effect (req (let [magnet card]
-                     (when-completed (resolve-ability
-                                       state side
-                                       {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
-                                                        (remove-once #(= (:cid %) (:cid magnet))
-                                                                     (filter ice? (all-installed state corp)))))
-                                        :prompt "Select a Program to host on Magnet"
-                                        :choices {:req #(and (card-is? % :type "Program")
-                                                             (ice? (:host %))
-                                                             (not= (:cid (:host %)) (:cid magnet)))}
-                                        :effect (effect (host card target))}
-                                       card nil)
-                                     (disable-hosted state side card))))
+                     (wait-for (resolve-ability
+                                 state side
+                                 {:req (req (some #(some (fn [h] (card-is? h :type "Program")) (:hosted %))
+                                                  (remove-once #(= (:cid %) (:cid magnet))
+                                                               (filter ice? (all-installed state corp)))))
+                                  :prompt "Select a Program to host on Magnet"
+                                  :choices {:req #(and (card-is? % :type "Program")
+                                                       (ice? (:host %))
+                                                       (not= (:cid (:host %)) (:cid magnet)))}
+                                  :effect (effect (host card target))}
+                                 card nil)
+                               (disable-hosted state side card))))
       :derez-effect {:req (req (not-empty (:hosted card)))
                      :effect (req (doseq [c (get-in card [:hosted])]
                                     (card-init state side c {:resolve-effect false})))}
@@ -1365,11 +1365,11 @@
                    :msg (msg "gain " (if (wonder-sub card 3) 3 1) "[Credits]")
                    :effect (effect (gain-credits (if (wonder-sub card 3) 3 1)))}
                   {:label "Do 1 net damage (Do 3 net damage)"
-                   :delayed-completion true
+                   :async true
                    :msg (msg "do " (if (wonder-sub card 3) 3 1) " net damage")
                    :effect (effect (damage eid :net (if (wonder-sub card 3) 3 1) {:card card}))}
                   {:label "Give the Runner 1 tag (and end the run)"
-                   :delayed-completion true
+                   :async true
                    :msg (msg "give the Runner 1 tag"
                              (when (wonder-sub card 3)
                                " and end the run"))
@@ -1395,42 +1395,42 @@
    "Metamorph"
    {:subroutines [{:label "Swap two ICE or swap two installed non-ICE"
                    :msg "swap two ICE or swap two installed non-ICE"
-                   :delayed-completion true
+                   :async true
                    :prompt "Choose one"
                    :choices ["Swap two ICE" "Swap two non-ICE"]
                    :effect (req (if (= target "Swap two ICE")
                                   (continue-ability
                                     state side
                                     {:prompt "Select the two ICE to swap"
-                                     :delayed-completion true
+                                     :async true
                                      :choices {:req #(and (installed? %) (ice? %)) :max 2 :all true}
                                      :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
                                      :effect (req (when (= (count targets) 2)
                                                     (swap-ice state side (first targets) (second targets))
-                                                    (effect-completed state side eid card)))}
+                                                    (effect-completed state side eid)))}
                                     card nil)
                                   (continue-ability
                                     state side
                                     {:prompt "Select the two cards to swap"
-                                     :delayed-completion true
+                                     :async true
                                      :choices {:req #(and (installed? %) (not (ice? %))) :max 2 :all true}
                                      :msg (msg "swap the positions of " (card-str state (first targets)) " and " (card-str state (second targets)))
                                      :effect (req (when (= (count targets) 2)
                                                     (swap-installed state side (first targets) (second targets))
-                                                    (effect-completed state side eid card)))}
+                                                    (effect-completed state side eid)))}
                                     card nil)))}]}
 
    "Mganga"
    {:subroutines [(do-psi {:label "do 2 net damage"
-                           :delayed-completion true
+                           :async true
                            :player :corp
-                           :effect (req (when-completed (damage state :corp :net 2 {:card card})
-                                                        (trash state :corp eid card nil)))}
+                           :effect (req (wait-for (damage state :corp :net 2 {:card card})
+                                                  (trash state :corp eid card nil)))}
                           {:label "do 1 net damage"
-                           :delayed-completion true
+                           :async true
                            :player :corp
-                           :effect (req (when-completed (damage state :corp :net 1 {:card card})
-                                                        (trash state :corp eid card nil)))})]}
+                           :effect (req (wait-for (damage state :corp :net 1 {:card card})
+                                                  (trash state :corp eid card nil)))})]}
 
    "Mind Game"
    {:subroutines [(do-psi {:label "Redirect the run to another server"
@@ -1464,19 +1464,22 @@
                                                :server [:archives]))
                               (derez state side card))}]
     :subroutines [{:label "Draw 1 card, then shuffle 1 card from HQ into R&D"
-                   :effect (req (when-completed (resolve-ability state side
-                                                  {:optional
-                                                   {:prompt "Draw 1 card?"
-                                                    :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}}}
-                                                 card nil)
-                                                (resolve-ability state side
-                                                  {:prompt "Choose 1 card in HQ to shuffle into R&D"
-                                                   :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
-                                                   :msg "shuffle 1 card in HQ into R&D"
-                                                   :effect (effect (move target :deck)
-                                                                   (shuffle! :deck))}
-                                                 card nil)))}]}
+                   :effect (req (wait-for (resolve-ability
+                                            state side
+                                            {:optional
+                                             {:prompt "Draw 1 card?"
+                                              :yes-ability {:async true
+                                                            :msg "draw 1 card"
+                                                            :effect (effect (draw eid 1 nil))}}}
+                                            card nil)
+                                          (resolve-ability
+                                            state side
+                                            {:prompt "Choose 1 card in HQ to shuffle into R&D"
+                                             :choices {:req #(and (in-hand? %) (= (:side %) "Corp"))}
+                                             :msg "shuffle 1 card in HQ into R&D"
+                                             :effect (effect (move target :deck)
+                                                             (shuffle! :deck))}
+                                            card nil)))}]}
 
    "Mlinzi"
    (letfn [(net-or-trash [net-dmg mill-cnt]
@@ -1544,15 +1547,17 @@
 
    "Nerine 2.0"
    {:subroutines [{:label "Do 1 brain damage and Corp may draw 1 card"
-                   :delayed-completion true
+                   :async true
                    :msg "do 1 brain damage"
-                   :effect (req (when-completed (damage state :runner :brain 1 {:card card})
-                                                (resolve-ability state side
-                                                  {:optional
-                                                   {:prompt "Draw 1 card?"
-                                                    :yes-ability {:msg "draw 1 card"
-                                                                  :effect (effect (draw))}}}
-                                                 card nil)))}]
+                   :effect (req (wait-for (damage state :runner :brain 1 {:card card})
+                                          (resolve-ability
+                                            state side
+                                            {:optional
+                                             {:prompt "Draw 1 card?"
+                                              :yes-ability {:async true
+                                                            :msg "draw 1 card"
+                                                            :effect (effect (draw eid 1 nil))}}}
+                                            card nil)))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Neural Katana"
@@ -1584,7 +1589,7 @@
                    :msg (msg "trash " (:title target))
                    :choices {:req #(and (installed? %)
                                         (= (:side %) "Runner"))}
-                   :delayed-completion true
+                   :async true
                    :effect (req (trash state side eid target {:cause :subroutine}))}]}
 
    "NEXT Gold"
@@ -1609,7 +1614,7 @@
                    :msg (msg "draw " target " cards")
                    :choices {:number (req (next-ice-count corp))
                              :default (req 1)}
-                   :delayed-completion true
+                   :async true
                    :effect (effect (draw eid target nil))}
                   {:label "Add up to X cards from Archives to HQ"
                    :prompt "Select cards to add to HQ"
@@ -1742,7 +1747,7 @@
 
    "Sadaka"
    (let [maybe-draw-effect
-         {:delayed-completion true
+         {:async true
           :effect (req (show-wait-prompt state :runner "Corp to decide on Sadaka card draw action")
                        (continue-ability
                          state side
@@ -1750,7 +1755,7 @@
                           {:player :corp
                            :prompt "Draw 1 card?"
                            :yes-ability
-                           {:delayed-completion true
+                           {:async true
                             :effect (effect (clear-wait-prompt :runner)
                                             (draw eid 1 nil))
                             :msg "draw 1 card"}
@@ -1759,7 +1764,7 @@
                          card nil))}]
      {:subroutines [{:label "Look at the top 3 cards of R&D"
                      :req (req (not-empty (:deck corp)))
-                     :delayed-completion true
+                     :async true
                      :effect (req (let [top-cards (take 3 (:deck corp))
                                         top-names (map :title top-cards)]
                                     (show-wait-prompt state :runner "Corp to decide on Sadaka R&D card actions")
@@ -1767,10 +1772,10 @@
                                       state side
                                       {:prompt (str "Top 3 cards of R&D: " (clojure.string/join ", " top-names))
                                        :choices ["Arrange cards" "Shuffle R&D"]
-                                       :delayed-completion true
+                                       :async true
                                        :effect
                                        (req (if (= target "Arrange cards")
-                                              (when-completed
+                                              (wait-for
                                                 (resolve-ability state side (reorder-choice :corp top-cards) card nil)
                                                 (do
                                                   (system-msg state :corp (str "rearranges the top "
@@ -1786,22 +1791,22 @@
                                       card nil)))}
 
                     {:label "Trash 1 card in HQ"
-                     :delayed-completion true
+                     :async true
                      :effect
                      (req (show-wait-prompt state :runner "Corp to select cards to trash with Sadaka")
-                          (when-completed
+                          (wait-for
                             (resolve-ability
                               state side
                               {:prompt "Choose a card in HQ to trash"
                                :choices (req (cancellable (:hand corp) :sorted))
-                               :delayed-completion true
+                               :async true
                                :cancel-effect (effect (system-msg "chooses not to trash a card from HQ")
                                                       (effect-completed eid))
-                               :effect (req (when-completed
+                               :effect (req (wait-for
                                               (trash state :corp (make-eid state) target nil)
                                               (do
                                                 (system-msg state :corp "trashes a card from HQ")
-                                                (when-completed
+                                                (wait-for
                                                   (resolve-ability state side trash-resource-sub card nil)
                                                   (effect-completed state side eid)))))}
                               card nil)
@@ -1849,7 +1854,7 @@
    "Sapper"
    {:flags {:rd-reveal (req true)}
     :subroutines [trash-program]
-    :access {:delayed-completion true
+    :access {:async true
              :req (req (and (not= (first (:zone card)) :discard)
                             (some #(is-type? % "Program") (all-active-installed state :runner))))
              :effect (effect (show-wait-prompt :corp "Runner to decide to break Sapper subroutine")
@@ -1911,7 +1916,7 @@
                                         :effect (effect (move :runner target :deck))}}}
                   {:label "Give the Runner 1 tag"
                    :msg "give the Runner 1 tag"
-                   :delayed-completion true
+                   :async true
                    :effect (effect (tag-runner :runner eid 1))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
@@ -1927,23 +1932,23 @@
    "Shiro"
    {:subroutines [{:label "Rearrange the top 3 cards of R&D"
                    :msg "rearrange the top 3 cards of R&D"
-                   :delayed-completion true
+                   :async true
                    :effect (req (show-wait-prompt state :runner "Corp to rearrange the top cards of R&D")
                                 (let [from (take 3 (:deck corp))]
                                   (if (pos? (count from))
                                     (continue-ability state side (reorder-choice :corp :runner from '()
                                                                                  (count from) from) card nil)
                                     (do (clear-wait-prompt state :runner)
-                                        (effect-completed state side eid card)))))}
+                                        (effect-completed state side eid)))))}
                   {:label "Force the Runner to access the top card of R&D"
-                   :effect (req (when-completed (trigger-event-sync state side :pre-access :rd)
-                                                (let [total-cards (access-count state side :rd-access)]
-                                                  (swap! state assoc-in [:run :did-access] true)
-                                                  (swap! state assoc-in [:runner :register :accessed-cards] true)
-                                                  (doseq [c (take total-cards (:deck corp))]
-                                                    (system-msg state :runner (str "accesses " (:title c)))
-                                                    (access-card state side c))
-                                                  (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
+                   :effect (req (wait-for (trigger-event-sync state side :pre-access :rd)
+                                          (let [total-cards (access-count state side :rd-access)]
+                                            (swap! state assoc-in [:run :did-access] true)
+                                            (swap! state assoc-in [:runner :register :accessed-cards] true)
+                                            (doseq [c (take total-cards (:deck corp))]
+                                              (system-msg state :runner (str "accesses " (:title c)))
+                                              (access-card state side c))
+                                            (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"
@@ -2020,7 +2025,7 @@
    "SYNC BRE"
    {:subroutines [(tag-trace 4)
                   (trace-ability 2 {:label "Runner reduces cards accessed by 1 for this run"
-                                    :delayed-completion true
+                                    :async true
                                     :msg "reduce cards accessed for this run by 1"
                                     :effect (effect (access-bonus -1))})]}
 
@@ -2042,15 +2047,15 @@
    "Thoth"
    {:implementation "Encounter effect is manual"
     :runner-abilities [{:label "Take 1 tag"
-                        :delayed-completion true
+                        :async true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Thoth")
                                      (tag-runner state :runner eid 1))}]
     :subroutines [(trace-ability 4 {:label "Do 1 net damage for each Runner tag"
-                                    :delayed-completion true
+                                    :async true
                                     :msg (msg "do " (:tag runner) " net damage")
                                     :effect (effect (damage eid :net (:tag runner) {:card card}))})
                   (trace-ability 4 {:label "Runner loses 1 [Credits] for each tag"
-                                    :delayed-completion true
+                                    :async true
                                     :msg (msg "force the Runner to lose " (:tag runner) " [Credits]")
                                     :effect (effect (lose-credits :runner (:tag runner)))})]}
 
@@ -2062,7 +2067,7 @@
                   end-the-run
                   {:label "Trash a resource"
                    :msg (msg "trash " (:title target))
-                   :delayed-completion true
+                   :async true
                    :choices {:req #(and (installed? %)
                                         (is-type? % "Resource"))}
                    :effect (effect (trash target {:reason :subroutine}))}]}

@@ -1,6 +1,6 @@
 (ns game.core
   (:require [game.utils :refer :all]
-            [game.macros :refer [effect req msg when-completed final-effect continue-ability]]
+            [game.macros :refer [effect req msg wait-for continue-ability]]
             [clj-time.core :as t]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.java.io :as io]
