@@ -183,7 +183,9 @@
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))
 
      ;; Else
-     (complete-with-result state side eid (deduct state side cost)))))
+     (let [[type amount] cost]
+       (swap! state update-in [:stats side :spent type] (fnil + 0) amount)
+       (complete-with-result state side eid (deduct state side cost))))))
 
 (defn pay
   "Deducts each cost from the player.
