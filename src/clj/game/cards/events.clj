@@ -438,7 +438,7 @@
                                  (let [compile-installed (first (filter #(get-in % [:special :compile-installed]) (game.core/all-installed state :runner)))]
                                    (when (not (empty? compile-installed))
                                      (system-msg state side (str "moved " (:title compile-installed) " to the bottom of the Stack at the end of the run from Compile"))
-                                     (move state side compile-installed :deck)))
+                                     (move state :runner compile-installed :deck)))
                                  (unregister-events state side card)
                                  (trash state side card))}}}
 
