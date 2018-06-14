@@ -764,7 +764,8 @@
              :unsuccessful-trace nq}})
 
    "NEXT Wave 2"
-   {:not-when-scored true
+   {:delayed-completion true
+    :not-when-scored true
     :req (req (some #(and (rezzed? %)
                           (ice? %)
                           (has-subtype? % "NEXT"))
