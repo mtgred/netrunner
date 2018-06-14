@@ -1638,8 +1638,9 @@
                                         (= [:hand] (:zone %)))
                              :max (req (next-ice-count corp))}
                    :effect (req (doseq [c targets]
-                                  (move state side c :deck))
-                                (shuffle! state side :deck))
+                                  (move state :corp c :deck))
+                                (shuffle! state :corp :deck))
+                   :cancel-effect (effect (shuffle! :corp :deck))
                    :msg (msg "shuffle " (count targets) " cards from HQ into R&D")}]}
 
    "NEXT Silver"
