@@ -1437,59 +1437,50 @@
 
 (defn build-start-box
   "Builds the start-of-game pop up box"
-  [game-state]
-  (let [my-side (r/cursor game-state [:side])
-        op-side (utils/other-side @my-side)
-        my-ident (r/cursor game-state [@my-side :identity])
-        my-user (r/cursor game-state [@my-side :user])
-        my-hand (r/cursor game-state [@my-side :hand])
-        my-prompt (r/cursor game-state [@my-side :prompt])
-        op-ident (r/cursor game-state [op-side :identity])
-        op-user (r/cursor game-state [op-side :user])]
-    (fn [game-state]
-      (prn "STARTBOX RENDER")
-      (let [squeeze (< 5 (count @my-hand))]
-        [:div.win.centered.blue-shade.start-game
-         [:div
-          [:div
-           [:div.box
-            [:div.start-game.ident.column
-             (when-let [url (image-url @my-ident)]
-               [:img {:src url :alt (:title @my-ident) :onLoad #(-> % .-target js/$ .show)}])]
-            [:div.column.contestants
-             [:div (:username @my-user)]
-             [:div.vs "VS"]
-             [:div (:username @op-user)]
-             [:div.intro-blurb
-              "Do these idealogues know what this planet would look like without us? Protect our investment or Mars will return to dust."]]
-            [:div.ident.column
-             (when-let [url (image-url @op-ident)]
-               [:img {:src url :alt (:title @op-ident) :onLoad #(-> % .-target js/$ .show)}])]]
-           [:div.start-hand
-            [:div {:class (when squeeze "squeeze")}
-             (doall (map-indexed
-                      (fn [i {title :title :as card}]
-                        [:div.start-card-frame {:style (when squeeze {:left (* (/ 610 (dec (count @my-hand))) i)
-                                                                      :position "absolute"})
-                                                :id (str "startcard" i)
-                                                :key (str (:cid card) "-" i)}
-                         [:div.flipper
-                          [:div.card-back
-                           [:img.start-card {:src (str "/img/" (.toLowerCase (name @my-side)) ".png")}]]
-                          [:div.card-front
-                           (when-let [url (image-url card)]
-                             [:div {:on-mouse-enter #(put! zoom-channel card)
-                                    :on-mouse-leave #(put! zoom-channel false)}
-                              [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]
-                              ])]]
-                         (js/setTimeout (fn [] (.add (.-classList (.querySelector js/document (str "#startcard" i))) "flip"))
-                                        (+ 1000 (* i 300)))])
-                      @my-hand))]]
-           [:div.mulligan
-            [cond-button "Keep" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Keep"})]
-            [cond-button "Mulligan" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Mulligan"})]]]]
-         [:br]
-         [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]]))))
+  [my-ident my-user my-hand my-prompt op-ident op-user]
+  (let [squeeze (< 5 (count @my-hand))]
+    (prn "RENDER STARTBOX")
+    [:div.win.centered.blue-shade.start-game
+     [:div
+      [:div
+       [:div.box
+        [:div.start-game.ident.column
+         (when-let [url (image-url @my-ident)]
+           [:img {:src url :alt (:title @my-ident) :onLoad #(-> % .-target js/$ .show)}])]
+        [:div.column.contestants
+         [:div (:username @my-user)]
+         [:div.vs "VS"]
+         [:div (:username @op-user)]
+         [:div.intro-blurb
+          "Do these idealogues know what this planet would look like without us? Protect our investment or Mars will return to dust."]]
+        [:div.ident.column
+         (when-let [url (image-url @op-ident)]
+           [:img {:src url :alt (:title @op-ident) :onLoad #(-> % .-target js/$ .show)}])]]
+       [:div.start-hand
+        [:div {:class (when squeeze "squeeze")}
+         (doall (map-indexed
+                  (fn [i {title :title :as card}]
+                    [:div.start-card-frame {:style (when squeeze {:left (* (/ 610 (dec (count @my-hand))) i)
+                                                                  :position "absolute"})
+                                            :id (str "startcard" i)
+                                            :key (str (:cid card) "-" i)}
+                     [:div.flipper
+                      [:div.card-back
+                       [:img.start-card {:src (str "/img/" (.toLowerCase (:side @my-ident)) ".png")}]]
+                      [:div.card-front
+                       (when-let [url (image-url card)]
+                         [:div {:on-mouse-enter #(put! zoom-channel card)
+                                :on-mouse-leave #(put! zoom-channel false)}
+                          [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]
+                          ])]]
+                     (js/setTimeout (fn [] (.add (.-classList (.querySelector js/document (str "#startcard" i))) "flip"))
+                                    (+ 1000 (* i 300)))])
+                  @my-hand))]]
+       [:div.mulligan
+        [cond-button "Keep" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Keep"})]
+        [cond-button "Mulligan" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Mulligan"})]]]]
+     [:br]
+     [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]]))
 
 (defn gameboard []
   (let [audio-sfx (fn [name] (list (keyword name)
@@ -1556,10 +1547,18 @@
            [:div.gameboard
             (when (and (not (:start-shown @app-state))
                        (:username (:user @opponent)))
-              [build-start-box game-state])
+              (let [my-side (r/cursor game-state [:side])
+                    op-side (utils/other-side @my-side)
+                    my-ident (r/cursor game-state [@my-side :identity])
+                    my-user (r/cursor game-state [@my-side :user])
+                    my-hand (r/cursor game-state [@my-side :hand])
+                    my-prompt (r/cursor game-state [@my-side :prompt])
+                    op-ident (r/cursor game-state [op-side :identity])
+                    op-user (r/cursor game-state [op-side :user])]
+                [build-start-box my-ident my-user my-hand my-prompt op-ident op-user]))
 
-            (when (and (:winner @game-state) (not (:win-shown @app-state)))
-              (build-win-box game-state))
+            ;(when (and (:winner @game-state) (not (:win-shown @app-state)))
+            ;  (build-win-box game-state))
 
             [:div {:class (:background (:options @app-state))}]
 
