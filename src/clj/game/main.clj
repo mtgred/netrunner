@@ -22,7 +22,7 @@
    "concede" core/concede
    "continue" core/continue
    "corp-ability" core/play-corp-ability
-   "corp-phase-43" core/corp-phase-43
+   "corp-phase-53" core/corp-phase-53
    "credit" core/click-credit
    "derez" #(core/derez %1 %2 (:card %3))
    "draw" core/click-draw

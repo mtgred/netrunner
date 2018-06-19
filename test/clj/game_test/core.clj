@@ -183,10 +183,10 @@
   (core/no-action state :corp nil)
   (core/continue state :runner nil))
 
-(defn run-phase-43
-  "Ask for triggered abilities phase 4.3"
+(defn run-phase-53
+  "Ask for triggered abilities phase 5.3"
   [state]
-  (core/corp-phase-43 state :corp nil)
+  (core/corp-phase-53 state :corp nil)
   (core/successful-run state :runner nil))
 
 (defn run-successful

@@ -349,3 +349,13 @@
     (:rec-counter card 0)
     :else
     (get-in card [:counter counter] 0)))
+
+(defn get-current-ice
+  [state]
+  (let [run-state (:run @state)
+        run-pos (:position run-state 0)
+        run-server (when run-pos
+                     (get-in @state (concat [:corp :servers] (:server run-state))))]
+    (when (and (pos? run-pos)
+               (<= run-pos (count (:ices run-server))))
+      (nth (:ices run-server) (dec run-pos)))))

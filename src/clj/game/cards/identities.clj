@@ -710,7 +710,7 @@
                  :label "Install a piece of ice from HQ at the innermost position"
                  :req (req (and (:run @state)
                                 (zero? (:position run))
-                                (not (contains? run :corp-phase-43))
+                                (not (contains? run :corp-phase-53))
                                 (not (contains? run :successful))))
                  :prompt "Choose ICE to install from HQ"
                  :msg "install ice at the innermost position of this server. Runner is now approaching that ice"

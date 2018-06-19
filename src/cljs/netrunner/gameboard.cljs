@@ -1245,20 +1245,21 @@
                    server (if-let [n (second s)]
                             (get-in corp [:servers kw n])
                             (get-in corp [:servers kw]))]
-               (if (= side :runner)
-                 [:div.panel.blue-shade
-                  (when-not (:no-action run) [:h4 "Waiting for Corp's actions"])
-                  (if (zero? (:position run))
-                    (cond-button "Successful Run" (:no-action run) #(send-command "access"))
-                    (cond-button "Continue" (:no-action run) #(send-command "continue")))
-                  (cond-button "Jack Out" (not (:cannot-jack-out run))
-                               #(send-command "jack-out"))]
-                 [:div.panel.blue-shade
-                  (when (zero? (:position run))
-                    (cond-button "Action before access" (not (:no-action run))
-                                 #(send-command "corp-phase-43")))
-                  (cond-button "No more action" (not (:no-action run))
-                               #(send-command "no-action"))]))
+               ; (if (= side :runner)
+               ;   [:div.panel.blue-shade
+               ;    (when-not (:no-action run) [:h4 "Waiting for Corp's actions"])
+               ;    (if (zero? (:position run))
+               ;      (cond-button "Successful Run" (:no-action run) #(send-command "access"))
+               ;      (cond-button "Continue" (:no-action run) #(send-command "continue")))
+               ;    (cond-button "Jack Out" (not (:cannot-jack-out run))
+               ;                 #(send-command "jack-out"))]
+               ;   [:div.panel.blue-shade
+               ;    (when (zero? (:position run))
+               ;      (cond-button "Action before access" (not (:no-action run))
+               ;                   #(send-command "corp-phase-53")))
+               ;    (cond-button "No more action" (not (:no-action run))
+               ;                 #(send-command "no-action"))])
+               )
              [:div.panel.blue-shade
               (if (= (keyword active-player) side)
                 (when (and (zero? (:click me)) (not end-turn) (not runner-phase-12) (not corp-phase-12))

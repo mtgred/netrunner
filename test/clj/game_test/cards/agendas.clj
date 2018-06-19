@@ -1097,11 +1097,11 @@
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
       (take-credits state :corp)
       (run-empty-server state "R&D")
-      (run-phase-43 state)
+      (run-phase-53 state)
       (card-ability state :corp hok-scored 0)
       (is (= 1 (count (:discard (get-runner)))) "Runner should pay 1 net damage")
       (run-empty-server state "R&D")
-      (run-phase-43 state)
+      (run-phase-53 state)
       (card-ability state :corp hok-scored 0)
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
@@ -1207,7 +1207,7 @@
       (is (= 5 (:current-strength (refresh nh))) "Should gain 1 strength from 4 to 5")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-phase-43 state)
+      (run-phase-53 state)
       (card-subroutine state :corp nh 0)
       (is (= 1 (get-in @state [:bonus :trace])) "Should gain 1 bonus trace strength")
       (prompt-choice :corp 0)
@@ -1558,7 +1558,7 @@
     (is (= 1 (:brain-damage (get-runner))) "Runner should gain 1 brain damage")))
 
 (deftest nisei-mk-ii
-  ;; Nisei MK II - Remove hosted counter to ETR, check this works in 4.3
+  ;; Nisei MK II - Remove hosted counter to ETR, check this works in 5.3
   (do-game
     (new-game (default-corp ["Nisei MK II"])
               (default-runner))
@@ -1567,9 +1567,9 @@
       (is (= 1 (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has one counter")
       (take-credits state :corp)
       (run-on state "HQ")
-      (run-phase-43 state)
+      (run-phase-53 state)
       (card-ability state :corp (refresh scored-nisei) 0)
-      (prompt-choice :corp "Done") ; close 4.3 corp
+      (prompt-choice :corp "Done") ; close 5.3 corp
       (is (not (:run @state)) "Run ended by using Nisei counter")
       (is (zero? (get-counters (refresh scored-nisei) :agenda)) "Scored Nisei has no counters"))))
 
