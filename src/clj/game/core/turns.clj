@@ -39,7 +39,8 @@
                    ["Keep" "Mulligan"]
                    #(if (= % "Keep")
                       (keep-hand state side nil)
-                      (mulligan state side nil))))))
+                      (mulligan state side nil))
+                   {:prompt-type :mulligan}))))
 
 (defn- init-game-state
   "Initialises the game state"
