@@ -513,7 +513,7 @@ nav ul
   margin-left: -100px
   padding: 15px
   border: 1px solid #ffa500
-  z-index: 2
+  z-index: 30
   border-radius: 4px
 
 .win-right
@@ -1608,6 +1608,76 @@ nav ul
 
     &:hover .controls
       display: block
+
+  .start-game
+    width: 750px
+    .ident img
+      width: 214px
+
+    .vs
+      font-weight: bold
+      font-size: large
+      font-style: italic
+      margin: 1em
+
+    .contestants
+      font-size: xx-large
+      margin: 0
+      flex: 1
+
+    .intro-blurb
+      font-size: medium
+      font-style: italic
+      margin-top: 3ex
+
+    .start-hand
+      margin: 2ex 0 0 0
+      height: 150px
+      overflow: hidden
+      position: relative
+      width: auto
+
+
+      .card-back, .card-front
+        backface-visibility: hidden
+        position: absolute
+        top: 0
+        left: 0
+
+      .card-back
+        z-index: 2
+        transform: rotateY(0deg)
+      .card-front
+        transform: rotateY(180deg)
+
+      img.start-card
+        height: 140px
+        width: 100px
+
+      .start-card-frame
+        margin: 0 2px
+        display: inline-block
+        perspective: 1000px
+        width: 100px
+        height: 140px
+      .start-card-frame.flip .flipper
+        transform: rotateY(180deg)
+
+      .flipper
+        transition: 0.6s
+        transform-style : preserve-3d
+        position: relative
+
+
+  .box
+    display: flex
+    overflow: hidden
+
+    .column
+      flex-direction: column
+      align-content: stretch
+      align-self: center
+      flex: 1
 
   .hosted
     margin-left: 24px
