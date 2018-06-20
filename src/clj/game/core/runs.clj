@@ -13,35 +13,35 @@
   [state side eid]
   ;; "When approached" conditionals meet their trigger condition
   (prn "approach-server")
-  (wait-for (trigger-event-sync state side :approach-server (-> @state :run :server))
-            ;; [5.2] the runner chooses whether to jack out or declare a successful run
-            (show-wait-prompt state :corp "Runner actions. Paid abilities")
-            (wait-for (resolve-ability
-                        state :runner
-                        {:prompt "Complete a successful run, or jack out? Paid abilities"
-                         :choices ["Successful run" "Jack out"]
-                         :prompt-type :run
-                         :priority -1
-                         :async true
-                         :effect (req (clear-wait-prompt state :corp)
-                                      (if (= "Jack out" target)
-                                        (update-step state side eid :step7)
-                                        (effect-completed state side eid)))}
-                        nil nil)
-                      (when-not (:ended (:run @state))
-                        (show-wait-prompt state :runner "Corp may rez non-ice. Paid abilities")
-                        (wait-for (resolve-ability
-                                    state :corp
-                                    {:prompt "Act before access?"
-                                     :choices ["Action before access" "No more actions"]
-                                     :prompt-type :run
-                                     :priority -1
-                                     :async true
-                                     :effect (req (clear-wait-prompt state :runner)
-                                                  (when (= "Action before access" target)
-                                                    (corp-phase-53 state side))
-                                                  (update-step state side eid :step6))}
-                                    nil nil))))))
+  (trigger-event-sync state side (make-eid state) :approach-server (-> @state :run :server))
+  ;; [5.2] the runner chooses whether to jack out or declare a successful run
+  ; (show-wait-prompt state :corp "Runner actions. Paid abilities")
+  (wait-for (resolve-ability
+              state :runner
+              {:prompt "Complete a successful run, or jack out? Paid abilities"
+               :choices ["Successful run" "Jack out"]
+               :prompt-type :run
+               :priority -1
+               :async true
+               :effect (req ;(clear-wait-prompt state :corp)
+                            (if (= "Jack out" target)
+                              (update-step state side eid :step7)
+                              (effect-completed state side eid)))}
+              nil nil)
+            (when-not (:ended (:run @state))
+              ; (show-wait-prompt state :runner "Corp may rez non-ice. Paid abilities")
+              (wait-for (resolve-ability
+                          state :corp
+                          {:prompt "Act before access?"
+                           :choices ["Action before access" "No more actions"]
+                           :prompt-type :run
+                           :priority -1
+                           :async true
+                           :effect (req (clear-wait-prompt state :runner)
+                                        (when (= "Action before access" target)
+                                          (corp-phase-53 state side))
+                                        (update-step state side eid :step6))}
+                          nil nil)))))
 
 (defn pass-ice
   "[4]: the runner passes a piece of ice."
@@ -90,7 +90,7 @@
                  ;; [3.1]: the runner can interact with the encountered ice
                  (do (update-ice-strength state side ice)
                      (system-msg state side "encounters " title)
-                     (show-wait-prompt state :corp "Runner actions. Paid abilities")
+                     ; (show-wait-prompt state :corp "Runner actions. Paid abilities")
                      (wait-for (resolve-ability
                                  state :runner
                                  {:prompt (str "You encounter " title ". Paid abilities")
@@ -99,11 +99,11 @@
                                   :priority -1
                                   :async true
                                   :effect (effect (system-msg "has no further actions")
-                                                  (clear-wait-prompt :corp)
+                                                  ; (clear-wait-prompt :corp)
                                                   (effect-completed eid))}
                                  nil nil)
                                ;; [3.2]: resolve all subroutines not broken on the encountered ice (Manual by corp)
-                               (show-wait-prompt state :runner "Corp to resolve unbroken subroutines")
+                               ; (show-wait-prompt state :runner "Corp to resolve unbroken subroutines")
                                (wait-for (resolve-ability
                                            state :corp
                                            {:prompt (str "Resolve subroutines on " title ".")
@@ -112,7 +112,7 @@
                                             :priority -1
                                             :async true
                                             :effect (effect (system-msg "has no further actions")
-                                                            (clear-wait-prompt :runner)
+                                                            ; (clear-wait-prompt :runner)
                                                             (effect-completed eid))}
                                            nil nil)
                                          (update-step state side eid :step4))))
@@ -134,7 +134,7 @@
                ;; Make sure the runner did not bypass on approach
                (if (= (:cid cur-ice) (:cid ice))
                  ;; [2.1] & [2.2] Runner chooses to approach or jack out
-                 (do (show-wait-prompt state :corp "Runner to approach ice. Paid abilities")
+                 (do ; (show-wait-prompt state :corp "Runner to approach ice. Paid abilities")
                      (wait-for (resolve-ability
                                  state :runner
                                  {:prompt (str "[2.2]: You " (if first-ice "must" "may")
@@ -146,21 +146,21 @@
                                   :prompt-type :run
                                   :priority -1
                                   :async true
-                                  :effect (req (clear-wait-prompt state :corp)
+                                  :effect (req ;(clear-wait-prompt state :corp)
                                                (if (= target "Jack out")
                                                  (update-step state side eid :step7)
                                                  (effect-completed state side eid)))}
                                  nil nil)
                                (system-msg state side "approaches the next piece of ICE")
                                ;; [2.3] Corp may rez ice, everyone may use abilities
-                               (show-wait-prompt state :runner "Corp to rez ice, non-ice. Paid abilities")
+                               ; (show-wait-prompt state :runner "Corp to rez ice, non-ice. Paid abilities")
                                (wait-for (resolve-ability
                                            state :corp
                                            {:prompt "You may rez ice, non-ice. Paid abilities"
                                             :choices ["No more actions"]
                                             :prompt-type :run
                                             :priority -1
-                                            :effect (effect (clear-wait-prompt :runner)
+                                            :effect (effect ;(clear-wait-prompt :runner)
                                                             (effect-completed eid))}
                                            nil nil)
                                          ;; [2.4] Check rezzed status, move to next step
@@ -889,8 +889,7 @@
                      (do (swap! state assoc-in [:runner :register :accessed-cards] true)
                          (wait-for (resolve-ability state side (choose-access cards server) nil nil)
                                    (effect-completed state side eid))
-                         (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
-                 (handle-end-run state side)))))
+                         (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))))))
 
 (defn replace-access
   "Replaces the standard access routine with the :replace-access effect of the card"
@@ -916,40 +915,41 @@
   "The real 'successful run' trigger."
   ([state side] (successful-run-trigger state side (make-eid state)))
   ([state side eid]
-    (let [successful-run-effect (get-in @state [:run :run-effect :successful-run])
-          card (get-in @state [:run :run-effect :card])]
-      (when (and successful-run-effect
-                 (not (apply trigger-suppress state side :successful-run card)))
-        (resolve-ability state side successful-run-effect (:card successful-run-effect) nil)))
-    (wait-for (register-successful-run state side (get-in @state [:run :server]))
-              (let [the-run (:run @state)
-                    server (:server the-run) ; bind here as the server might have changed
-                    run-effect (:run-effect the-run)
-                    run-req (:req run-effect)
-                    card (:card run-effect)
-                    replace-effect (:replace-access run-effect)]
-                (if (:prevent-access the-run)
-                  (do (system-msg state :runner "is prevented from accessing any cards this run")
-                      (resolve-ability state :runner
-                                       {:prompt "You are prevented from accessing any cards this run."
-                                        :choices ["OK"]
-                                        :effect (effect (handle-end-run))}
-                                       nil nil))
-                  (if (and replace-effect
-                           (or (not run-req)
-                               (run-req state side (make-eid state) card [(first server)])))
-                    (if (:mandatory replace-effect)
-                      (replace-access state side replace-effect card)
-                      (swap! state update-in [side :prompt]
-                             (fn [p]
-                               (conj (vec p) {:msg "Use replacement effect instead of accessing cards?"
-                                              :choices ["Replacement effect" "Access cards"]
-                                              :effect #(if (= % "Replacement effect")
-                                                         (replace-access state side replace-effect card)
-                                                         (wait-for (do-access state side server)
-                                                                   (handle-end-run state side)))}))))
-                    (wait-for (do-access state side server)
-                              (handle-end-run state side))))))))
+   (prn "successful-run-trigger")
+   (let [successful-run-effect (get-in @state [:run :run-effect :successful-run])
+         card (get-in @state [:run :run-effect :card])]
+     (when (and successful-run-effect
+                (not (apply trigger-suppress state side :successful-run card)))
+       (resolve-ability state side successful-run-effect (:card successful-run-effect) nil)))
+   (wait-for (register-successful-run state side (get-in @state [:run :server]))
+             (let [the-run (:run @state)
+                   server (:server the-run) ; bind here as the server might have changed
+                   run-effect (:run-effect the-run)
+                   run-req (:req run-effect)
+                   card (:card run-effect)
+                   replace-effect (:replace-access run-effect)]
+               (if (:prevent-access the-run)
+                 (do (system-msg state :runner "is prevented from accessing any cards this run")
+                     (resolve-ability state :runner
+                                      {:prompt "You are prevented from accessing any cards this run."
+                                       :choices ["OK"]
+                                       :effect (effect (handle-end-run))}
+                                      nil nil))
+                 (if (and replace-effect
+                          (or (not run-req)
+                              (run-req state side (make-eid state) card [(first server)])))
+                   (if (:mandatory replace-effect)
+                     (replace-access state side replace-effect card)
+                     (swap! state update-in [side :prompt]
+                            (fn [p]
+                              (conj (vec p) {:msg "Use replacement effect instead of accessing cards?"
+                                             :choices ["Replacement effect" "Access cards"]
+                                             :effect #(if (= % "Replacement effect")
+                                                        (replace-access state side replace-effect card)
+                                                        (wait-for (do-access state side server)
+                                                                  (handle-end-run state side)))}))))
+                   (wait-for (do-access state side server)
+                             (handle-end-run state side))))))))
 
 (defn successful-run
   "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 5.3."
@@ -960,13 +960,14 @@
      ;; if corp requests phase 5.3, then we do NOT fire :successful-run yet, which does not happen until 5.4
      (do (swap! state dissoc :no-action)
          (system-msg state :corp "wants to act before the run is successful")
-         (show-wait-prompt state :runner "Corp's actions")
+         ; (show-wait-prompt state :runner "Corp's actions")
          (show-prompt state :corp nil "Rez and take actions before Successful Run" ["Done"]
                       (fn [args-corp]
-                        (clear-wait-prompt state :runner)
+                        ; (clear-wait-prompt state :runner)
                         (if-not (:ended (:run @state))
                           (show-prompt state :runner nil "The run is now successful" ["Continue"]
-                                       (fn [args-runner] (successful-run-trigger state :runner eid)))
+                                       (fn [args-runner]
+                                         (successful-run-trigger state :runner eid)))
                           (handle-end-run state side)))
                       {:priority -1}))
      (successful-run-trigger state :runner eid))
@@ -1064,26 +1065,27 @@
     (update-all-ice state side)
     (swap! state dissoc :access)
     (clear-run-register! state)
+    (let [corp-prompt (-> @state :corp :prompt first)
+          runner-prompt (-> @state :runner :prompt first)]
+      (when (= :run (:prompt-type corp-prompt))
+        (when (:eid corp-prompt)
+          (effect-completed state side eid))
+        (swap! state update-in [:corp :prompt] rest))
+      (when (= :run (:prompt-type runner-prompt))
+        (when (:eid runner-prompt)
+          (effect-completed state side eid))
+        (swap! state update-in [:runner :prompt] rest)))
     (trigger-run-end-events state side eid run)))
 
 (defn handle-end-run
   "Initiate run resolution."
   [state side]
   (prn "handle-end-run")
-  ; (do if-not (and (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
-  (let [corp-prompt (-> @state :corp :prompt first)
-        runner-prompt (-> @state :runner :prompt first)]
-    (when (= :run (or (:prompt-type corp-prompt)
-                      (:prompt-type runner-prompt)))
-      (swap! state update-in [:runner :prompt] rest)
-      (swap! state update-in [:corp :prompt] rest)
-      )
-    ; (when (= :run (:prompt-type runner-prompt))
-    ;   (swap! state update-in [:runner :prompt] rest)
-    ;   (swap! state update-in [:corp :prompt] rest)
-    ;   )
-    (swap! state assoc-in [:run :ended] true)
-    (run-cleanup state side)))
+  (do
+  ; (if-not (and (empty? (get-in @state [:runner :prompt]))
+  ;              (empty? (get-in @state [:corp :prompt])))
+      (swap! state assoc-in [:run :ended] true)
+      (run-cleanup state side)))
 
 (defn close-access-prompt
   "Closes a 'You accessed _' prompt through a non-standard card effect like Imp."
