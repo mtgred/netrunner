@@ -37,7 +37,7 @@
                            :prompt-type :run
                            :priority -1
                            :async true
-                           :effect (req (clear-wait-prompt state :runner)
+                           :effect (req ;(clear-wait-prompt state :runner)
                                         (when (= "Action before access" target)
                                           (corp-phase-53 state side))
                                         (update-step state side eid :step6))}
@@ -197,7 +197,7 @@
          (trigger-event state :runner :run-big s n))
        (if (pos? n)
          (update-step state side eid :step2)
-         (update-step state side eid :step6))
+         (update-step state side eid :step4))
      (effect-completed state side eid)))))
 
 (defn update-step
