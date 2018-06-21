@@ -709,6 +709,19 @@
      (is (= 2 (get-counters (refresh sg) :power)) "Has 2 power counters")
      (is (= 2 (:current-strength (refresh sg))) "2 strength"))))
 
+(deftest tycoon
+  ;; Tycoon
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Tycoon"]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tycoon")
+    (run-on state "HQ")
+    (let [tycoon (get-program state 0)]
+      ;; Put relevant stuff here
+  )))
+
 (deftest wyrm
   ;; Wyrm reduces strength of ice
   (do-game

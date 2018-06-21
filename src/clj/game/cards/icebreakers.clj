@@ -998,6 +998,12 @@
                     {:abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 1 1)]})
 
+   "Tycoon"
+   (auto-icebreaker ["Barrier"]
+                    {:implementation "Corp credit gain is manual"
+                     :abilities [(break-sub 1 2 "Barrier")
+                                 (strength-pump 2 3)]})
+
    "Vamadeva"
    (deva "Vamadeva")
 
