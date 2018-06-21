@@ -25,7 +25,7 @@
                :async true
                :effect (req ;(clear-wait-prompt state :corp)
                             (if (= "Jack out" target)
-                              (update-step state side eid :step7)
+                              (update-step state side eid :step5 :step7)
                               (effect-completed state side eid)))}
               nil nil)
             (when-not (:ended (:run @state))
@@ -40,7 +40,7 @@
                            :effect (req ;(clear-wait-prompt state :runner)
                                         (when (= "Action before access" target)
                                           (corp-phase-53 state side))
-                                        (update-step state side eid :step6))}
+                                        (update-step state side eid :step5 :step6))}
                           nil nil)))))
 
 (defn pass-ice
@@ -69,9 +69,9 @@
                  (update-breaker-strength state side p))
                (if next-ice
                  ;; If there is another piece of ice protecting the server, go to [2]
-                 (update-step state side eid :step2)
+                 (update-step state side eid :step4 :step2)
                  ;; If there are no more pieces of ice protecting the server, go to [5]
-                 (update-step state side eid :step5))))))
+                 (update-step state side eid :step4 :step5))))))
 
 (defn encounter-ice
   "[3]: the runner encounters a piece of ice."
@@ -115,8 +115,8 @@
                                                             ; (clear-wait-prompt :runner)
                                                             (effect-completed eid))}
                                            nil nil)
-                                         (update-step state side eid :step4))))
-                 (update-step state side eid :step4))))))
+                                         (update-step state side eid :step3 :step4))))
+                 (update-step state side eid :step3 :step4))))))
 
 (defn approach-ice
   "[2]: runner is approaching a piece of ice."
@@ -148,7 +148,7 @@
                                   :async true
                                   :effect (req ;(clear-wait-prompt state :corp)
                                                (if (= target "Jack out")
-                                                 (update-step state side eid :step7)
+                                                 (update-step state side eid :step2 :step7)
                                                  (effect-completed state side eid)))}
                                  nil nil)
                                (system-msg state side "approaches the next piece of ICE")
@@ -165,9 +165,9 @@
                                            nil nil)
                                          ;; [2.4] Check rezzed status, move to next step
                                          (if (rezzed? (get-card state ice))
-                                           (update-step state side eid :step3)
-                                           (update-step state side eid :step4)))))
-                 (update-step state side eid :step4))))))
+                                           (update-step state side eid :step2 :step3)
+                                           (update-step state side eid :step2 :step4)))))
+                 (update-step state side eid :step2 :step4))))))
 
 (defn run
   "[1]: Starts a run on the given server, with the given card as the cause."
@@ -185,6 +185,7 @@
               :run {:server s
                     :position n
                     :access-bonus 0
+                    :step :step1
                     :run-effect (assoc run-effect :card card)
                     :eid eid})
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity])
@@ -196,22 +197,31 @@
        (when (>= n 2)
          (trigger-event state :runner :run-big s n))
        (if (pos? n)
-         (update-step state side eid :step2)
-         (update-step state side eid :step4))
+         (update-step state side eid :step1 :step2)
+         (update-step state side eid :step1 :step4))
      (effect-completed state side eid)))))
 
-(defn update-step
-  [state side eid step]
-  (prn "update-step")
-  (when-not (:ended (:run @state))
-    (case step
-      :step2 (approach-ice state side eid)
-      :step3 (encounter-ice state side eid)
-      :step4 (pass-ice state side eid)
-      :step5 (approach-server state side eid)
-      :step6 (successful-run state side eid)
-      :step7 (jack-out state side eid)
-      (end-run state side eid))))
+(let [post-map {:step1 :post-initiate-run
+                :step2 :post-approach-ice
+                :step3 :post-encounter-ice
+                :step4 :post-pass-ice
+                :step5 :post-approach-server
+                :step6 :post-successful-run
+                :step7 :post-unsuccessful-run}]
+  (defn update-step
+    [state side eid from-step to-step]
+    (prn "update-step")
+    (when-not (:ended (:run @state))
+      (swap! state update-in [:run :step] to-step)
+      (trigger-event-sync state :runner (make-eid state) (:from-step post-map) from-step to-step)
+      (case to-step
+        :step2 (approach-ice state side eid)
+        :step3 (encounter-ice state side eid)
+        :step4 (pass-ice state side eid)
+        :step5 (approach-server state side eid)
+        :step6 (successful-run state side eid)
+        :step7 (jack-out state side eid)
+        (end-run state side eid)))))
 
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
