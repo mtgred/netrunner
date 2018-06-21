@@ -1000,9 +1000,10 @@
 
    "Tycoon"
    (auto-icebreaker ["Barrier"]
-                    {:implementation "Corp credit gain is manual"
-                     :abilities [(break-sub 1 2 "Barrier")
-                                 (strength-pump 2 3)]})
+                    {:abilities [(break-sub 1 2 "Barrier" (effect (update! (assoc-in card [:special :tycoon-used] true))))
+                                 (strength-pump 2 3)]
+                     :events {:pass-ice {:req (req (get-in card [:special :tycoon-used]))
+                                         :effect (effect (gain-credits :corp 2))}}})
 
    "Vamadeva"
    (deva "Vamadeva")
