@@ -33,7 +33,8 @@
                                :effect (req (wait-for (tag-runner state :runner 2)
                                                       (do (gain-credits state :runner (* 2 (min 5 (:credit corp))))
                                                           (lose-credits state :corp (min 5 (:credit corp)))
-                                                          (effect-completed state side eid))))}} card))}
+                                                          (effect-completed state side eid))))}}
+                         card))}
 
    "Amped Up"
    {:msg "gain [Click][Click][Click] and suffer 1 brain damage"
@@ -197,7 +198,8 @@
                                                 (if (pos? (count from))
                                                   (continue-ability state :corp (cbi-choice from '() (count from) from) card nil)
                                                   (do (clear-wait-prompt state :runner)
-                                                      (effect-completed state side eid)))))}} card))})
+                                                      (effect-completed state side eid)))))}}
+                                 card))})
 
    "Code Siphon"
    {:req (req rd-runnable)
@@ -724,7 +726,8 @@
                                                                                    " forcing the Corp to trash " target " cards"
                                                                                    " from the top of R&D"))))}
                                                  card nil)
-                                                (effect-completed state side eid))))}} card))}
+                                                (effect-completed state side eid))))}}
+                         card))}
 
    "Feint"
    {:req (req hq-runnable)
@@ -937,7 +940,8 @@
                                                 :msg (msg "trash " (card-str state target))
                                                 :effect (req (trash state :corp target)
                                                              (unregister-events state side card)
-                                                             (effect-completed state side eid))} card nil)))}
+                                                             (effect-completed state side eid))}
+                                               card nil)))}
                             card nil))}}}
 
    "Independent Thinking"
@@ -967,7 +971,8 @@
                                             (continue-ability state side (reorder-choice :corp :corp from '()
                                                                                          (count from) from) card nil)
                                             (do (clear-wait-prompt state :corp)
-                                                (effect-completed state side eid)))))}} card))}
+                                                (effect-completed state side eid)))))}}
+                         card))}
 
    "Infiltration"
    {:prompt "Gain 2 [Credits] or expose a card?" :choices ["Gain 2 [Credits]" "Expose a card"]

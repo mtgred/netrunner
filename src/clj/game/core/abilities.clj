@@ -553,7 +553,7 @@
                           (do (when-let [kicker (:kicker trace)]
                                 (when (>= corp-strength (:min kicker))
                                   (resolve-ability state :corp kicker card [corp-strength runner-strength])))
-                              (effect-completed state side eid nil)))))))
+                              (effect-completed state side eid)))))))
 
 (defn trace-reply
   "Shows a trace prompt to the second player, after the first has already spent credits to boost."

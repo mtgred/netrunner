@@ -214,7 +214,8 @@
                                                                (move state side c :deck))
                                                              (shuffle! state side :deck)
                                                              (clear-wait-prompt state :corp)
-                                                             (effect-completed state side eid))} card nil))}}}
+                                                             (effect-completed state side eid))}
+                                               card nil))}}}
 
    "Azmari EdTech: Shaping the Future"
    (let [choose-type {:prompt "Name a Runner card type"
@@ -1013,7 +1014,8 @@
                                                                                                      " to add " (:title c1) " to their Grip."
                                                                                                      " Corp removes " (:title c2) " from the game"))))
                                                                 (clear-wait-prompt state :runner)
-                                                                (effect-completed state side eid))} card nil)))}
+                                                                (effect-completed state side eid))}
+                                                  card nil)))}
                                card nil))}}}
 
    "Strategic Innovations: Future Forward"
