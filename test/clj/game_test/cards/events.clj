@@ -518,32 +518,72 @@
 (deftest ^{:card-title "compile"}
   compile-test
   ;; Compile - Make a run, and install a program for free which is shuffled back into stack
-  ;; test name is weird because clojure.core/compile exists - can't see it being
-  ;; a problem, but I got a warning
-  (do-game
-   (new-game (default-corp)
-              (default-runner ["Compile" "Clone Chip"
-                               (qty "Self-modifying Code" 3)]))
-    (starting-hand state :runner ["Compile" "Clone Chip"] )
-    (take-credits state :corp)
-    (core/gain state :runner :credit 10)
-    (play-from-hand state :runner "Clone Chip")
-    (play-from-hand state :runner "Compile")
-    (prompt-choice :runner "Archives")
-    (prompt-choice :runner "OK")  ; notification that Compile must be clicked to install
-    (let [compile-card (first (get-in @state [:runner :play-area]))
-          clone-chip (first (get-hardware state))]
-      (card-ability state :runner compile-card 0)
-      (prompt-choice :runner "Stack")
-      (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner))))
-      (let [smc (first (get-program state))]
-        (card-ability state :runner smc 0)
-        (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner)))))
-      (card-ability state :runner clone-chip 0)
-      (prompt-select :runner (find-card "Self-modifying code" (:discard (get-runner)))))
-    (let [num-in-deck (count (:deck (get-runner)))]
-      (run-jack-out state)
-      (is (= num-in-deck (count (:deck (get-runner)))) "No card was shuffled back into the stack"))))
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Compile" "Gordian Blade"]))
+      (starting-hand state :runner ["Compile"])
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Compile")
+      (prompt-choice :runner "Archives")
+      (prompt-choice :runner "OK")  ; notification that Compile must be clicked to install
+      (let [compile-card (first (get-in @state [:runner :play-area]))]
+        (card-ability state :runner compile-card 0)
+        (prompt-choice :runner "Stack")
+        (prompt-card :runner (find-card "Gordian Blade" (:deck (get-runner))))
+        (is (:installed (get-program state 0)) "Gordian Blade should be installed"))
+      (let [deck (count (:deck (get-runner)))]
+        (run-jack-out state)
+        (is (= (+ 1 deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
+        (is (nil? (get-program state 0))))))
+  (testing "with Self-modifying Code, neither SMC nor other card should be shuffled back in"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Compile" "Clone Chip"
+                                 (qty "Self-modifying Code" 3)]))
+      (starting-hand state :runner ["Compile" "Clone Chip"])
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Clone Chip")
+      (play-from-hand state :runner "Compile")
+      (prompt-choice :runner "Archives")
+      (prompt-choice :runner "OK")  ; notification that Compile must be clicked to install
+      (let [compile-card (first (get-in @state [:runner :play-area]))
+            clone-chip (get-hardware state 0)]
+        (card-ability state :runner compile-card 0)
+        (prompt-choice :runner "Stack")
+        (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner))))
+        (let [smc (get-program state 0)]
+          (card-ability state :runner smc 0)
+          (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner))))
+          (card-ability state :runner clone-chip 0)
+          (prompt-select :runner (find-card "Self-modifying code" (:discard (get-runner))))))
+      (let [deck (count (:deck (get-runner)))]
+        (run-jack-out state)
+        (is (= deck (count (:deck (get-runner)))) "No card was shuffled back into the stack"))))
+  (testing "vs ending the run via corp action. #3639"
+      (do-game
+        (new-game (default-corp ["Ice Wall"])
+                  (default-runner ["Compile" "Gordian Blade"]))
+        (starting-hand state :runner ["Compile"])
+        (play-from-hand state :corp "Ice Wall" "Archives")
+        (let [iw (get-ice state :archives 0)]
+          (core/rez state :corp iw)
+          (take-credits state :corp)
+          (core/gain state :runner :credit 10)
+          (play-from-hand state :runner "Compile")
+          (prompt-choice :runner "Archives")
+          (prompt-choice :runner "OK")  ; notification that Compile must be clicked to install
+          (let [compile-card (first (get-in @state [:runner :play-area]))]
+            (card-ability state :runner compile-card 0)
+            (prompt-choice :runner "Stack")
+            (prompt-card :runner (find-card "Gordian Blade" (:deck (get-runner))))
+            (is (:installed (get-program state 0)) "Gordian Blade should be installed"))
+          (let [deck (count (:deck (get-runner)))]
+            (card-subroutine state :corp iw 0)
+            (is (= (+ 1 deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
+            (is (nil? (get-program state 0))))))))
 
 (deftest contaminate
   ;; Contaminate - add 3 virus counters to an installed runner card with no virus counters
@@ -1696,6 +1736,42 @@
     (play-from-hand state :runner "Notoriety")
     (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
+
+(deftest on-the-lam
+  ;; On the Lam
+  (testing "vs tags"
+    (do-game
+      (new-game (default-corp ["SEA Source"])
+                (default-runner ["Daily Casts" "On the Lam"]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "On the Lam")
+      (prompt-select :runner (get-resource state 0))
+      (run-empty-server state "Archives")
+      (take-credits state :runner)
+      (play-from-hand state :corp "SEA Source")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (card-ability state :runner (-> (get-resource state 0) :hosted first) 0)
+      (prompt-choice :runner "Done")
+      (is (zero? (:tag (get-runner))) "Runner should avoid tag")
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap")))
+  (testing "vs damage"
+    (do-game
+      (new-game (default-corp ["Show of Force"])
+                (default-runner ["Daily Casts" "On the Lam"]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (play-from-hand state :runner "Daily Casts")
+      (play-from-hand state :runner "On the Lam")
+      (prompt-select :runner (get-resource state 0))
+      (take-credits state :runner)
+      (play-and-score state "Show of Force")
+      (card-ability state :runner (-> (get-resource state 0) :hosted first) 1)
+      (prompt-choice :runner "Done")
+      (is (zero? (:tag (get-runner))) "Runner should avoid all meat damage")
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap"))))
 
 (deftest out-of-the-ashes
   ;; Out of the Ashes - ensure card works when played/trashed/milled

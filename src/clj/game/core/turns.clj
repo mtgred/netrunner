@@ -100,10 +100,10 @@
     (init-identity state :runner runner-identity)
     ;(swap! game-states assoc gameid state)
     (let [side :corp]
-      (when-completed (trigger-event-sync state side :pre-start-game)
-                      (let [side :runner]
-                        (when-completed (trigger-event-sync state side :pre-start-game)
-                                        (init-hands state)))))
+      (wait-for (trigger-event-sync state side :pre-start-game)
+                (let [side :runner]
+                  (wait-for (trigger-event-sync state side :pre-start-game)
+                            (init-hands state)))))
     state))
 
 (defn server-card
@@ -186,23 +186,23 @@
    (turn-message state side true)
    (let [extra-clicks (get-in @state [side :extra-click-temp] 0)]
      (gain state side :click (get-in @state [side :click-per-turn]))
-     (when-completed (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
-                     (do (when (= side :corp)
-                           (draw state side)
-                           (trigger-event-simult state side eid :corp-mandatory-draw nil nil))
+     (wait-for (trigger-event-sync state side (if (= side :corp) :corp-turn-begins :runner-turn-begins))
+               (do (when (= side :corp)
+                     (wait-for (draw state side 1 nil)
+                               (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
 
-                         (cond
+                   (cond
 
-                          (neg? extra-clicks)
-                          (lose state side :click (abs extra-clicks))
+                     (neg? extra-clicks)
+                     (lose state side :click (abs extra-clicks))
 
-                          (pos? extra-clicks)
-                          (gain state side :click extra-clicks))
+                     (pos? extra-clicks)
+                     (gain state side :click extra-clicks))
 
-                         (swap! state dissoc-in [side :extra-click-temp])
-                         (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-                         (when (= side :corp)
-                           (update-all-advancement-costs state side)))))))
+                   (swap! state dissoc-in [side :extra-click-temp])
+                   (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
+                   (when (= side :corp)
+                     (update-all-advancement-costs state side)))))))
 
 (defn start-turn
   "Start turn."
@@ -244,7 +244,7 @@
        (when (and (= side :runner)
                   (neg? (hand-size state side)))
          (flatline state))
-       (when-completed
+       (wait-for
          (trigger-event-sync state side (if (= side :runner) :runner-turn-ends :corp-turn-ends))
          (do (when (= side :runner)
                (trigger-event state side :post-runner-turn-ends))

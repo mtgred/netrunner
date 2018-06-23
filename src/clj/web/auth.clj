@@ -50,7 +50,7 @@
           u (when user (mc/find-one-as-map db "users" {:_id (object-id _id) :emailhash emailhash}))]
       (if u
         (handler (-> req
-                     (assoc :user (select-keys u [:_id :username :emailhash :isadmin :special :options :stats]))
+                     (assoc :user (select-keys u [:_id :username :emailhash :isadmin :ismoderator :special :options :stats]))
                      (update-in [:user :_id] str)))
         (handler req)))))
 

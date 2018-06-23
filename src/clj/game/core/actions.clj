@@ -184,7 +184,7 @@
       (do (if-let [cancel-effect (:cancel-effect prompt)]
             ;; trigger the cancel effect
             (cancel-effect choice)
-            (effect-completed state side (:eid prompt) nil))
+            (effect-completed state side (:eid prompt)))
           (finish-prompt state side prompt card)))))
 
 (defn select
@@ -358,7 +358,7 @@
                (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
                    (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
-                            {:delayed-completion true
+                            {:async true
                              :effect (req (if (and (= target "Yes")
                                                    (can-pay? state side (:title card) altcost))
                                             (do (pay state side card altcost)
@@ -523,19 +523,19 @@
                     (get-card state (nth run-ice (dec pos))))
           next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
                      (get-card state (nth run-ice (- pos 2))))]
-      (when-completed (trigger-event-sync state side :pass-ice cur-ice)
-                      (do (update-ice-in-server
-                            state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-                          (swap! state update-in [:run :position] (fnil dec 1))
-                          (swap! state assoc-in [:run :no-action] false)
-                          (system-msg state side "continues the run")
-                          (when cur-ice
-                            (update-ice-strength state side cur-ice))
-                          (when next-ice
-                            (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
-                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                            (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-                            (update-breaker-strength state side p)))))))
+      (wait-for (trigger-event-sync state side :pass-ice cur-ice)
+                (do (update-ice-in-server
+                      state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
+                    (swap! state update-in [:run :position] (fnil dec 1))
+                    (swap! state assoc-in [:run :no-action] false)
+                    (system-msg state side "continues the run")
+                    (when cur-ice
+                      (update-ice-strength state side cur-ice))
+                    (when next-ice
+                      (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
+                    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+                      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+                      (update-breaker-strength state side p)))))))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."

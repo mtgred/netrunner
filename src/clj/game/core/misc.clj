@@ -3,27 +3,36 @@
 (declare set-prop get-nested-host get-nested-zone all-active-installed)
 
 (defn get-zones [state]
-  (keys (get-in state [:corp :servers])))
+  (keys (get-in @state [:corp :servers])))
 
 (defn get-remote-zones [state]
   (filter is-remote? (get-zones state)))
 
 (defn get-runnable-zones [state]
-  (let [restricted-zones (keys (get-in state [:runner :register :cannot-run-on-server]))]
+  (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))]
     (remove (set restricted-zones) (get-zones state))))
 
 (defn get-remotes [state]
-  (select-keys (get-in state [:corp :servers]) (get-remote-zones state)))
+  (select-keys (get-in @state [:corp :servers]) (get-remote-zones state)))
 
 (defn get-remote-names [state]
   (zones->sorted-names (get-remote-zones state)))
 
-(defn server-list [state card]
-  (concat
-    (if (#{"Asset" "Agenda"} (:type card))
-      (get-remote-names @state)
-      (zones->sorted-names (get-zones @state)))
-    ["New remote"]))
+(defn server-list
+  "Get a list of all servers (including centrals)"
+  [state]
+  (zones->sorted-names (get-zones state)))
+
+(defn installable-servers
+  "Get list of servers the specified card can be installed in"
+  [state card]
+  (let [base-list (concat (server-list state) ["New remote"])]
+    (if-let [install-req (-> card card-def :install-req)]
+      ;; Install req function overrides normal list of install locations
+      (install-req state :corp card (make-eid state) base-list)
+      ;; Standard list
+      base-list)))
+
 
 (defn server->zone [state server]
   (if (sequential? server)

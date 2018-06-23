@@ -745,21 +745,44 @@
 
 (deftest industrial-genomics:-growing-solutions
   ;; Industrial Genomics - Increase trash cost
-  (do-game
-    (new-game
-      (make-deck "Industrial Genomics: Growing Solutions" [(qty "PAD Campaign" 3)
-                                                           (qty "Hedge Fund" 3)])
-      (default-runner))
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (trash-from-hand state :corp "PAD Campaign")
-    (trash-from-hand state :corp "PAD Campaign")
-    (trash-from-hand state :corp "Hedge Fund")
-    (trash-from-hand state :corp "Hedge Fund")
-    (let [pad (get-content state :remote1 0)]
-      (core/rez state :corp pad)
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (is (= 8 (core/trash-cost state :runner (refresh pad)))))))
+  (testing "Basic test"
+    (do-game
+      (new-game
+        (make-deck "Industrial Genomics: Growing Solutions"
+                   [(qty "PAD Campaign" 3) (qty "Hedge Fund" 3)])
+        (default-runner))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (trash-from-hand state :corp "PAD Campaign")
+      (trash-from-hand state :corp "PAD Campaign")
+      (trash-from-hand state :corp "Hedge Fund")
+      (trash-from-hand state :corp "Hedge Fund")
+      (let [pad (get-content state :remote1 0)]
+        (core/rez state :corp pad)
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (is (= 8 (core/trash-cost state :runner (refresh pad)))))))
+  (testing "with Product Recall"
+    (do-game
+      (new-game
+        (make-deck "Industrial Genomics: Growing Solutions"
+                   ["Product Recall" (qty "PAD Campaign" 3) (qty "Hedge Fund" 2)])
+        (default-runner))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (trash-from-hand state :corp "PAD Campaign")
+      (trash-from-hand state :corp "PAD Campaign")
+      (trash-from-hand state :corp "Hedge Fund")
+      (trash-from-hand state :corp "Hedge Fund")
+      (let [pad (get-content state :remote1 0)]
+        (core/rez state :corp pad)
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (is (= 8 (core/trash-cost state :runner (refresh pad))))
+        (run-jack-out state)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Product Recall")
+        (let [credits (:credit (get-corp))]
+          (prompt-select :corp pad)
+          (is (= (+ credits 8) (:credit (get-corp))) "Gain 8 credits from trashing PAD Campaign"))))))
 
 (deftest jemison-astronautics:-sacrifice.-audacity.-success.
   ;; Jemison Astronautics - Place advancements when forfeiting agendas
@@ -814,7 +837,7 @@
         (is (= 2 (get-counters (refresh ice-wall) :advancement)) "Ice Wall has 2 advancement counters from HT forfeit"))
       (prompt-select :corp (get-scored state :corp 0)) ; select AI to trigger
       (prompt-choice :runner "Take 2 tags") ; First runner has prompt
-      (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the delayed-completion"))))
+      (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the async completion"))))
 
 (deftest jesminder-sareen:-girl-behind-the-curtain
   ;; Jesminder Sareen - avoid tags only during a run
@@ -1193,7 +1216,22 @@
       (prompt-select :corp (find-card "Enigma" (:hand (get-corp))))
       (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
       (is (= "Enigma" (:title (get-ice state :rd 0))) "Enigma was installed")
-      (is (empty? (:hand (get-corp))) "Enigma removed from HQ"))))
+      (is (empty? (:hand (get-corp))) "Enigma removed from HQ")))
+  (testing "with Kakugo, passing shouldn't fire net damage twice. #3588"
+    (do-game
+      (new-game (make-deck "Mti Mwekundu: Life Improved" ["Kakugo"])
+                (default-runner))
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (prompt-select :corp (find-card "Kakugo" (:hand (get-corp))))
+      (is (= 1 (get-in @state [:run :position])) "Now approaching new ice")
+      (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
+      (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (run-continue state)
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo"))))
 
 (deftest nasir-meidan:-cyber-explorer
   ;; Nasir

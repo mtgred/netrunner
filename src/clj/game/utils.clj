@@ -18,7 +18,7 @@
 (defn safe-inc-n
   "Helper function to safely update a value by n. Returns a function to use with `update` / `update-in`"
   [n]
-  #(+ (or % 0) n))
+  (partial (fnil + 0 0) n))
 
 (defn sub->0
   "Helper function for use in `update` or `update-in` to subtract for a value, to a minimum of 0."

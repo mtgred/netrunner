@@ -59,7 +59,9 @@
 (defn not-spectator?
   "Returns true if the specified user in the specified state is not a spectator"
   [state user]
-  (and state (#{(get-in @state [:corp :user :_id]) (get-in @state [:runner :user :_id])} (:_id user))))
+  (let [corp-id (get-in @state [:corp :user :_id])
+        runner-id (get-in @state [:runner :user :_id])]
+    (and state ((set [corp-id runner-id]) (:_id user)))))
 
 (defn- private-card-vector [state side cards]
   (vec (map (fn [card]

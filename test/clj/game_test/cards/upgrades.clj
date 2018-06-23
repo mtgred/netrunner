@@ -915,7 +915,9 @@
     (do-game
       (new-game (default-corp ["Mwanza City Grid" (qty "Hedge Fund" 5)])
                 (default-runner))
-      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (play-from-hand state :corp "Mwanza City Grid")
+      (is (= #{"R&D" "HQ"} (-> (get-corp) :prompt first :choices set)) "Mwanza can only be installed in root of HQ or R&D")
+      (prompt-choice :corp "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
       (let [mcg (get-content state :hq 0)]
@@ -1023,6 +1025,23 @@
       (play-from-hand state :corp "Ice Wall" "Server 1")
       (core/advance state :corp {:card (refresh (get-ice state :remote1 0))})
       (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
+
+(deftest oberth-protocol
+  ;; Oberth Protocol
+  (do-game
+    (new-game (default-corp ["Hostile Takeover" "Oberth Protocol" "Oaktown Renovation"])
+              (default-runner))
+    (play-and-score state "Hostile Takeover")
+    (play-from-hand state :corp "Oberth Protocol" "Server 1")
+    (play-from-hand state :corp "Oaktown Renovation" "Server 1")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (let [oberth (get-content state :remote1 0)
+          oak (get-content state :remote1 1) ]
+      (core/rez state :corp (refresh oberth))
+      (prompt-select :corp (get-scored state :corp 0))
+      (advance state oak)
+      (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on it"))))
 
 (deftest off-the-grid
   ;; Off the Grid run restriction - and interaction with RP
