@@ -1386,9 +1386,9 @@
     :effect (req (gain-credits state :runner 10)
                  (gain-credits state :corp 5)
                  (apply prevent-run-on-server
-                        state card (get-zones @state))
+                        state card (get-zones state))
                  (register-events state side
-                   {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones @state)))}}
+                   {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones state)))}}
                   (assoc card :zone '(:discard))))
     :events {:runner-turn-ends nil}}
 

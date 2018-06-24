@@ -1816,6 +1816,20 @@
     (is (zero? (count (:discard (get-runner)))))
     (is (= 6 (count (:rfg (get-runner)))))))
 
+(deftest peace-in-our-time
+  ;; Peace in Our Time - runner gains 10, corp gains 5. No runs allowed during turn.
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Peace in Our Time"]))
+    (take-credits state :corp)
+    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+    (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+    (play-from-hand state :runner "Peace in Our Time")
+    (is (= 13 (:credit (get-corp))) "Corp gains 5 credits")
+    (is (= 14 (:credit (get-runner))) "Runner gains 10 credits")
+    (run-on state "HQ")
+    (is (not (:run @state)) "Not allowed to make a run")))
+
 (deftest political-graffiti
   ;; Political Graffiti - swapping with Turntable works / purging viruses restores points
   (testing "Basic test"
