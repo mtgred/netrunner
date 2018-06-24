@@ -1113,7 +1113,7 @@
                                      :effect (effect (trash card)
                                                      (move :runner target :deck)
                                                      (clear-wait-prompt :runner)
-                                                     (effect-completed eid card))}
+                                                     (effect-completed eid))}
                        :no-ability {:effect (effect (clear-wait-prompt :runner)
-                                                    (effect-completed eid card))}}}
+                                                    (effect-completed eid))}}}
                     card nil))}}}})

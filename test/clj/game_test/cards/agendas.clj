@@ -1209,10 +1209,19 @@
       (run-on state "HQ")
       (run-phase-43 state)
       (card-subroutine state :corp nh 0)
-      (is (= 1 (get-in @state [:bonus :trace])) "Should gain 1 bonus trace strength")
+      (is (= 1 (-> (get-corp) :prompt first :bonus)) "Should gain 1 bonus trace strength")
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (= 1 (:tag (get-runner)))))))
+      (is (= 1 (:tag (get-runner))))
+      (run-jack-out state)
+      (run-on state "HQ")
+      (run-phase-43 state)
+      (card-subroutine state :corp nh 0)
+      (is (= 1 (-> (get-corp) :prompt first :bonus))
+          "Should gain only 1 bonus trace strength regardless of number of runs in a turn")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 2 (:tag (get-runner)))))))
 
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers
@@ -1502,20 +1511,20 @@
     (core/gain state :runner :link 1)
     (core/gain state :corp :click 3)
     (play-and-score state "Net Quarantine")
-    (is (= 5 (:credit (get-corp))) "Corp has 5 credits")
-    (is (= 1 (:link (get-runner))) "Runner has 1 link")
-    (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
-    (prompt-choice :corp 0)
-    (is (zero? (:link (get-runner))) "Runner has 0 link")
-    (prompt-choice :runner 3)
-    (is (= 1 (:link (get-runner))) "Runner has 1 link again")
-    (is (= 6 (:credit (get-corp))) "Corp gained a credit from NQ")
-    ; second trace of turn - no link reduction
-    (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
-    (prompt-choice :corp 0)
-    (is (= 1 (:link (get-runner))) "Runner has 1 link")
-    (prompt-choice :runner 2)
-    (is (= 7 (:credit (get-corp))) "Corp gained a credit from NQ")))
+    (let [credits (:credit (get-corp))]
+      (is (= credits (:credit (get-corp))) (str "Corp has " credits " credits"))
+      (is (= 1 (:link (get-runner))) "Runner has 1 link")
+      (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
+      (prompt-choice :corp 0)
+      (is (zero? (-> (get-runner) :prompt first :link)) "Runner has 0 link during first trace")
+      (prompt-choice :runner 3)
+      (is (= (+ credits 1) (:credit (get-corp))) "Corp gained a credit from NQ")
+      ; second trace of turn - no link reduction
+      (core/init-trace state :corp {:title "/trace command" :side :corp} {:base 1})
+      (prompt-choice :corp 0)
+      (is (= 1 (-> (get-runner) :prompt first :link)) "Runner has 1 link during later traces")
+      (prompt-choice :runner 2)
+      (is (= (+ credits 2) (:credit (get-corp))) "Corp gained a credit from NQ"))))
 
 (deftest new-construction
   ;; New Construction

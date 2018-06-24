@@ -497,6 +497,11 @@
 
 
 ;;; Traces
+(defn init-trace-bonus
+  "Applies a bonus base strength of n to the next trace attempt."
+  [state side n]
+  (swap! state update-in [:bonus :trace] (fnil #(+ % n) 0)))
+
 (defn determine-initiator
   [state {:keys [player] :as trace}]
   (let [constant-effect (get-in @state [:trace :player])]
@@ -518,7 +523,8 @@
                          ((fnil + 0 0 0) base bonus boost))
         runner-strength (if (corp-start? trace)
                          ((fnil + 0 0) link boost)
-                         strength)]
+                         strength)
+        trigger-trace (select-keys trace [:player :other :base :bonus :link :priority :ability :strength])]
     (system-msg state other (str " spends " boost
                                  "[Credits] to increase " (if (corp-start? trace) "link" "trace")
                                  " strength to " (if (corp-start? trace)
@@ -532,9 +538,16 @@
                                :eid (make-eid state))]
       (system-say state side (str "The trace was " (when-not successful "un") "successful."))
       (wait-for (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace)
-                                    {:runner-spent (if (corp-start? trace)
-                                                     boost
-                                                     (- strength link))})
+                                    (assoc trigger-trace
+                                           :corp-strength corp-strength
+                                           :runner-strength runner-strength
+                                           :successful successful
+                                           :corp-spent (if (corp-start? trace)
+                                                         (- strength (+ base bonus))
+                                                         boost)
+                                           :runner-spent (if (corp-start? trace)
+                                                           boost
+                                                           (- strength link))))
                 (wait-for (resolve-ability state :corp (:eid which-ability) which-ability
                                            card [corp-strength runner-strength])
                           (do (when-let [kicker (:kicker trace)]
@@ -560,8 +573,7 @@
                       {:priority priority})
     (show-trace-prompt state other card (str "Boost " other-type " strength?")
                        #(resolve-trace state side card trace %)
-                       trace)
-    (trigger-event state side :trace nil)))
+                       trace)))
 
 (defn trace-start
   "Starts the trace process by showing the boost prompt to the first player (normally corp)."
@@ -580,21 +592,30 @@
                      #(trace-reply state side card trace %)
                      trace))
 
+(defn reset-trace-modifications
+  [state]
+  (swap! state dissoc-in [:trace :force-base])
+  (swap! state dissoc-in [:trace :force-link])
+  (swap! state dissoc-in [:bonus :trace]))
+
 (defn init-trace
   [state side card {:keys [base priority] :as trace}]
+  (reset-trace-modifications state)
   (wait-for (trigger-event-sync state :corp :pre-init-trace card)
             (let [force-base (get-in @state [:trace :force-base])
+                  force-link (get-in @state [:trace :force-link])
                   base (cond force-base force-base
                              (fn? base) (base state :corp (make-eid state) card nil)
                              :else base)
+                  link (if force-link
+                         force-link
+                         (get-in @state [:runner :link] 0))
                   trace (merge trace {:player (determine-initiator state trace)
                                       :other (if (= :corp (determine-initiator state trace)) :runner :corp)
                                       :base base
                                       :bonus (get-in @state [:bonus :trace] 0)
-                                      :link (get-in @state [:runner :link] 0)
+                                      :link link
                                       :priority (or priority 2)})]
-              (when force-base
-                (swap! state dissoc-in [:trace :force-base]))
               (trace-start state side card trace))))
 
 (defn rfg-and-shuffle-rd-effect
