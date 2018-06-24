@@ -950,7 +950,7 @@
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain 2 [Credits] (start of turn)")
                   :async true
-                  :effect (req (gain-credits state :corp 2)
+                  :effect (req (take-credits state :corp 2)
                                (if (zero? (get-counters (get-card state card) :credit))
                                  (trash state :corp eid card {:unpreventable true})
                                  (effect-completed state :corp eid)))}]
@@ -991,11 +991,11 @@
                                    card nil))}]}
 
    "Marked Accounts"
-   (let [ability {:msg "gain 1 [Credits]"
-                  :label "Gain 1 [Credits] (start of turn)"
+   (let [ability {:msg "take 1 [Credits]"
+                  :label "Take 1 [Credits] (start of turn)"
                   :once :per-turn
                   :counter-cost [:credit 1]
-                  :effect (effect (gain-credits 1))}]
+                  :effect (effect (take-credits 1))}]
    {:abilities [ability
                 {:cost [:click 1]
                  :msg "store 3 [Credits]"
