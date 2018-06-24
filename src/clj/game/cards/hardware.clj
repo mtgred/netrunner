@@ -552,7 +552,7 @@
                                   state :runner
                                   (str "removes Hippo from the game to trash " (card-str state ice)))
                                 (move state :runner card :rfg)
-                                (trash state :corp eid ice nil)))}]}
+                                (trash state :runner eid ice nil)))}]}
 
    "HQ Interface"
    {:in-play [:hq-access 1]}
