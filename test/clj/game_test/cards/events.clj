@@ -1325,6 +1325,20 @@
       (core/rez state :corp jackson)
       (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active"))))
 
+(deftest high-stakes-job
+  ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["High-Stakes Job"]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 1)
+    (is (= 6 (:credit (get-runner))) "Runner starts with 6 credits")
+    (play-from-hand state :runner "High-Stakes Job")
+    (prompt-choice :runner "HQ")
+    (run-successful state)
+    (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))
+
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
   (do-game
