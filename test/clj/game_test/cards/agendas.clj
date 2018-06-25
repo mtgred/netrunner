@@ -362,6 +362,41 @@
     (take-credits state :corp)
     (is (zero? (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
 
+(deftest broad-daylight
+  ;; Broad Daylight
+  (testing "take bad pub"
+    (do-game
+      (new-game (default-corp [(qty "Broad Daylight" 3)])
+                (default-runner))
+      (is (zero? (:bad-publicity (get-corp))) "Corp start with no bad pub")
+      (play-and-score state "Broad Daylight")
+      (prompt-choice :corp "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
+      (play-and-score state "Broad Daylight")
+      (prompt-choice :corp "No")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp doesn't gain bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 1) :agenda)) "Should gain 1 agenda counter")
+      (play-and-score state "Broad Daylight")
+      (prompt-choice :corp "Yes")
+      (is (= 2 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 2 (get-counters (get-scored state :corp 2) :agenda)) "Should gain 2 agenda counters")
+      ))
+  (testing "deal damage"
+    (do-game
+      (new-game (default-corp ["Broad Daylight"])
+                (default-runner))
+      (core/gain state :corp :bad-publicity 3)
+      (play-and-score state "Broad Daylight")
+      (prompt-choice :corp "Yes")
+      (is (= 4 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 4 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
+      (is (empty? (:discard (get-runner))) "Runner has no discarded cards")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 damage")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (is (= 2 (count (:discard (get-runner)))) "Runner didn't take additional damage"))))
+
 (deftest cfc-excavation-contract
   ;; CFC Excavation Contract
   (dotimes [n 5]
