@@ -185,10 +185,13 @@
   (do-game
     (new-game (default-corp ["Building Blocks" "Ice Wall"])
               (default-runner))
+    (core/gain state :corp :credit 1)
     (play-from-hand state :corp "Building Blocks")
+    (is (= 1 (:credit (get-corp))) "Corp starts with 1 credit")
     (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
     (prompt-choice :corp "New remote")
     (let [iw (get-ice state :remote1 0)]
+      (is (= 1 (:credit (get-corp))) "Corp spent no credits")
       (is (:rezzed (refresh iw)) "Ice Wall is installed and rezzed"))))
 
 (deftest casting-call
