@@ -177,6 +177,28 @@
       (is (zero? (get-counters (refresh ar) :advancement)) "Anson Rose should lose all advancement counters")
       (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement counter"))))
 
+(deftest api-s-keeper-isobel
+   ;; API-S Keeper Isobel
+   (do-game
+     (new-game
+       (default-corp ["API-S Keeper Isobel" "Ice Wall"])
+       (default-runner))
+    (play-from-hand state :corp "API-S Keeper Isobel" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [ap (get-content state :remote1 0)
+          iw (get-ice state :hq 0)]
+      (core/rez state :corp (refresh ap))
+      (core/rez state :corp (refresh iw))
+      (core/advance state :corp {:card (refresh iw)})
+      (is (= 1 (get-counters (refresh iw) :advancement)) "Ice Wall has 1 advancement token")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 1 (:credit (get-corp))) "Corp starts with 1 credits")
+      (card-ability state :corp (refresh ap) 0)
+      (prompt-select :corp (refresh iw))
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall loses an advancement token")
+      (is (= 4 (:credit (get-corp))) "Corp gains 3 credits"))))
+
 (deftest aryabhata-tech
   ;; Aryabhata Tech
   (do-game
