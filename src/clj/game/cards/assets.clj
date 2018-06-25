@@ -861,6 +861,27 @@
                           :unsuccessful {:effect (effect (add-counter card :power 1)
                                                          (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]}
 
+   "Lady Liberty"
+   {:abilities [{:cost [:click 3]
+                 :label "Add agenda from HQ to score area"
+                 :req (req (let [counters (get-counters (get-card state card) :power)]
+                             (some #(and (is-type? % "Agenda")
+                                         (= counters (:agendapoints %)))
+                                  (:hand corp))))
+                 :async true
+                 :effect (req (show-wait-prompt state :runner "Corp to select an agenda for Lady Liberty")
+                              (continue-ability
+                                state side
+                                {:prompt "Select an Agenda in HQ to move to score area"
+                                 :choices {:req #(and (is-type? % "Agenda")
+                                                      (= (:agendapoints %) (get-counters (get-card state card) :power))
+                                                      (in-hand? %))}
+                                 :msg (msg "move " (:title target) " to score area")
+                                 :effect (req (wait-for (as-agenda state :corp target (:agendapoints target))
+                                                        (clear-wait-prompt state :runner)))}
+                                card nil))}]
+    :events {:corp-turn-begins {:effect (effect (add-counter card :power 1))}}}
+
    "Lakshmi Smartfabrics"
    {:events {:rez {:effect (effect (add-counter card :power 1))}}
     :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")
