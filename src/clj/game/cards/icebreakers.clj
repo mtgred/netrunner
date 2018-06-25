@@ -1003,7 +1003,7 @@
                     {:abilities [(break-sub 1 2 "Barrier" (effect (update! (assoc-in card [:special :tycoon-used] true))))
                                  (strength-pump 2 3)]
                      :events {:pass-ice {:req (req (get-in card [:special :tycoon-used]))
-                                         :effect (effect (update! (dissoc-ic card [:special :tycoon-used]))
+                                         :effect (effect (update! (dissoc-in card [:special :tycoon-used]))
                                                          (gain-credits :corp 2))}}})
 
    "Vamadeva"
