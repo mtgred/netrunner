@@ -498,6 +498,11 @@
                  :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1))}]}
 
+   "Fly on the Wall"
+   {:msg "give the runner 1 tag"
+    :async true
+    :effect (req (tag-runner state :runner eid 1))}
+
    "Genetic Resequencing"
    {:choices {:req #(= (last (:zone %)) :scored)}
     :msg (msg "add 1 agenda counter on " (:title target))

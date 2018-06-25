@@ -831,6 +831,15 @@
         (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
         (is (zero? (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
 
+(deftest fly-on-the-wall
+  ;; Fly on the Wall - give the runner 1 tag
+  (do-game
+    (new-game (default-corp ["Fly on the Wall"])
+              (default-runner))
+    (is (zero? (:tag (get-runner))) "Runner starts with no tags")
+    (play-and-score state "Fly on the Wall")
+    (is (= 1 (:tag (get-runner))) "Runner is tagged")))
+
 (deftest firmware-updates
   ;; Firmware Updates
   (do-game
