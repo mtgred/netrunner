@@ -180,6 +180,17 @@
     (is (= 1 (:click (get-corp))))
     (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")))
 
+(deftest building-blocks
+  ;; Building Blocks - install and rez a barrier from HQ at no cost
+  (do-game
+    (new-game (default-corp ["Building Blocks" "Ice Wall"])
+              (default-runner))
+    (play-from-hand state :corp "Building Blocks")
+    (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (let [iw (get-ice state :remote1 0)]
+      (is (:rezzed (refresh iw)) "Ice Wall is installed and rezzed"))))
+
 (deftest casting-call
   ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128
   (do-game
