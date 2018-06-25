@@ -545,7 +545,8 @@
       (is (= 1 (:current-strength (refresh inti))) "Strength reduced to default")
       (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
 
-(deftest mâché
+(deftest ^{:card-title "mâché"}
+  mache
   ;; Mâché
   (do-game
     (new-game (default-corp ["Ice Wall" "PAD Campaign"])

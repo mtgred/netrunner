@@ -620,8 +620,8 @@
                  :counter-cost [:power 3]
                  :effect (effect (draw :runner 1))}]
     :events {:runner-trash {:once :per-turn
-                            :async true
                             :req (req (and (card-is? target :side :corp)
+                                           (:access @state)
                                            (:trash target)))
                             :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
                                             (add-counter card :power (:trash target)))}}}
