@@ -886,7 +886,7 @@
    (run-event
     {:choices (req (let [unrezzed-ice #(seq (filter (complement rezzed?) (:ices (second %))))
                          bad-zones (keys (filter (complement unrezzed-ice) (get-in @state [:corp :servers])))]
-                     (zones->sorted-names (remove (set bad-zones) (get-runnable-zones @state)))))}
+                     (zones->sorted-names (remove (set bad-zones) (get-runnable-zones state)))))}
     {:end-run {:req (req (:successful run))
                :msg "gain 12 [Credits]"
                :effect (effect (gain-credits :runner 12))}})
@@ -1386,9 +1386,9 @@
     :effect (req (gain-credits state :runner 10)
                  (gain-credits state :corp 5)
                  (apply prevent-run-on-server
-                        state card (get-zones @state))
+                        state card (get-zones state))
                  (register-events state side
-                   {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones @state)))}}
+                   {:runner-turn-ends {:effect (req (apply enable-run-on-server state card (get-zones state)))}}
                   (assoc card :zone '(:discard))))
     :events {:runner-turn-ends nil}}
 
