@@ -1393,7 +1393,7 @@
                    :async true
                    :effect (req (show-wait-prompt state :corp "Runner to choose an option for Meridian")
                                 (continue-ability
-                                  state :corp
+                                  state :runner
                                   {:prompt "Choose one"
                                    :choices ["End the run" "Add Meridian to score area"]
                                    :player :runner
