@@ -163,7 +163,7 @@
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]
         (mul state side (make-eid state) card nil))))
-  (swap! state assoc-in [side :keep] true)
+  (swap! state assoc-in [side :keep] :mulligan)
   (system-msg state side "takes a mulligan")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
@@ -175,7 +175,7 @@
 (defn keep-hand
   "Choose not to mulligan."
   [state side args]
-  (swap! state assoc-in [side :keep] true)
+  (swap! state assoc-in [side :keep] :keep)
   (system-msg state side "keeps their hand")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))

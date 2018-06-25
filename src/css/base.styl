@@ -1611,7 +1611,54 @@ nav ul
   .start-game
     width: 750px
     .ident img
+      margin-top: 2px
       width: 214px
+      height: 298px
+
+    .ident img.selected
+      box-shadow(0 0 3px 3px limegreen)
+      border-radius: 9px
+
+    .mulligan-me:after, .mulligan-op:after, .keep-me:after, .keep-op:after
+      transition(all 0.2s ease-in-out)
+      position: absolute
+      z-index:1
+      font-family:Arial,sans-serif
+      font-size:40px
+      color:#c00
+      background: rgb(255, 255, 255, 0.5)
+      border:solid 4px #c00
+      padding: 12px
+      border-radius:5px
+      zoom:1
+      opacity:0.9
+      text-shadow: 0 0 2px #c00
+      box-shadow: 0 0 2px #c00
+
+    .keep-me:after, .keep-op:after
+      content: "KEEP"
+      transform: rotate(-54deg)
+
+    .mulligan-me:after, .mulligan-op:after
+      content: "MULLIGAN"
+      transform: rotate(-54deg)
+
+    .mulligan-me:after
+      top:156px
+      left:10px
+
+    .mulligan-op:after
+      top:156px
+      right:20px
+
+
+    .keep-me:after
+      top:156px
+      left:66px
+
+    .keep-op:after
+      top:156px
+      right:66px
 
     .vs
       font-weight: bold
