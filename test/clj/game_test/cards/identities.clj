@@ -1696,6 +1696,55 @@
       (is (= 12 (:credit (get-runner))) "Gained 4cr")
       (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin"))))
 
+(deftest sportsmetal:-go-big-or-go-home
+  ;; SportsMetal - gain 2 credits or draw 2 cards on agenda scored or stolen
+  (testing "Gain 2 credits on score"
+    (do-game
+      (new-game
+        (make-deck "Sportsmetal: Go Big or Go Home" ["Merger"])
+        (default-runner))
+      (play-from-hand state :corp "Merger" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+      (prompt-choice-partial :corp "credits")
+      (is (= 7 (:credit (get-corp))) "Corp gains 2 credits")))
+  (testing "Gain 2 credits on steal"
+    (do-game
+      (new-game
+        (make-deck "Sportsmetal: Go Big or Go Home" ["Merger"])
+        (default-runner))
+      (play-from-hand state :corp "Merger" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+      (prompt-choice :runner "Steal")
+      (prompt-choice-partial :corp "credits")
+      (is (= 9 (:credit (get-corp))) "Corp gains 2 credits")))
+  (testing "Gain 2 cards on score"
+    (do-game
+      (new-game
+        (make-deck "Sportsmetal: Go Big or Go Home" ["Merger" (qty "Hedge Fund" 2)])
+        (default-runner))
+      (starting-hand state :corp ["Merger"])
+      (play-from-hand state :corp "Merger" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (empty? (:hand (get-corp))) "Corp starts with no cards")
+      (prompt-choice-partial :corp "cards")
+      (is (= 2 (count (:hand (get-corp)))) "Corp draws 2 cards")))
+  (testing "Gain 2 cards on steal"
+    (do-game
+      (new-game
+        (make-deck "Sportsmetal: Go Big or Go Home" ["Merger" (qty "Hedge Fund" 2)])
+        (default-runner))
+      (starting-hand state :corp ["Merger"])
+      (play-from-hand state :corp "Merger" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (empty? (:hand (get-corp))) "Corp starts with no cards")
+      (prompt-choice :runner "Steal")
+      (prompt-choice-partial :corp "cards")
+      (is (= 2 (count (:hand (get-corp)))) "Corp draws 2 cards"))))
+
 (deftest spark-agency:-worldswide-reach
   ;; Spark Agency - Rezzing advertisements
   (do-game
