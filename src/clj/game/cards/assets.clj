@@ -191,7 +191,7 @@
        :abilities [{:req (req (and (:corp-phase-12 @state)
                                    (counters-available? state)))
                     :once :per-turn
-                    :label "Remove an advancement token from an installed card and gain 3 [Credits]"
+                    :label "Remove an advancement token (start of turn)"
                     :prompt "Select a card to remove an advancement token from"
                     :choices {:req #(and (pos? (get-counters % :advancement))
                                          (installed? %))}
@@ -199,7 +199,7 @@
                                    (set-prop state side target :advance-counter (dec cnt))
                                    (gain-credits state :corp 3)
                                    (system-msg state :corp (str "uses API-S Keeper Isobel to remove an advancement token from "
-                                                                (:title target) " and gains 3 [Credits]"))))}]})
+                                                                (card-str state target) " and gains 3 [Credits]"))))}]})
 
    "Aryabhata Tech"
    {:events {:successful-trace {:msg "gain 1 [Credit] and force the Runner to lose 1 [Credit]"
