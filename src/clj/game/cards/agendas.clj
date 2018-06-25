@@ -631,6 +631,12 @@
                  :once :per-run
                  :effect (effect (damage eid :net 1 {:card card}))}]}
 
+   "Hyperloop Extension"
+   (let [he (req (gain-credits state :corp 3)
+                 (system-msg state side (str "gains 3[Credits] from Hyperloop Extension")))]
+     {:effect he
+      :stolen {:effect he}})
+
    "Ikawah Project"
    {:steal-cost-bonus (req [:credit 2 :click 1])}
 
