@@ -687,6 +687,18 @@
       :events {:agenda-scored leela
                :agenda-stolen leela}})
 
+   "Liza Talking Thunder: Prominent Legislator"
+   {:events
+    {:successful-run
+     {:async true
+      :interactive (req true)
+      :msg "draw 2 cards and take 1 tag"
+      :req (req (and (is-central? (:server run))
+                     (first-event? state side :successful-run #(is-central? %))))
+      :effect (req (wait-for (tag-runner state :runner 1)
+                             (draw state :runner 2)
+                             (effect-completed state :runner eid)))}}}
+
    "Los: Data Hijacker"
    {:events {:rez {:once :per-turn
                    :req (req (ice? target))
