@@ -633,7 +633,7 @@
 
    "Hyperloop Extension"
    (let [he (req (gain-credits state :corp 3)
-                 (system-msg state side (str "gains 3[Credits] from Hyperloop Extension")))]
+                 (system-msg state side (str "uses Hyperloop Extension to gain 3 [Credits]")))]
      {:effect he
       :stolen {:effect he}})
 
