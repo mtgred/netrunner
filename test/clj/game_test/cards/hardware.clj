@@ -447,6 +447,46 @@
       (prompt-choice :runner "Done")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card"))))
 
+(deftest hijacked-router
+  (testing "Run on Archives"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Hijacked Router"]))
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-corp))) "Corp ends turn with 8 credits")
+      (play-from-hand state :runner "Hijacked Router")
+      (run-empty-server state :archives)
+      (is (not-empty (get-hardware state)) "Hijacked Router installed")
+      (is (-> (get-runner) :prompt first :card :title (= "Hijacked Router")) "Prompt for using Hijacked Router")
+      (prompt-choice :runner "Yes")
+      (is (empty? (get-hardware state)) "Hijacked Router is not installed")
+      (is (find-card "Hijacked Router" (:discard (get-runner))) "Hijacked Router was trashed")
+      (is (= 5 (:credit (get-corp))) "Corp lost 3 credits")
+      (is (not (:run @state)) "Run is finished")))
+  (testing "Run on HQ"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Hijacked Router"]))
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-corp))) "Corp ends turn with 8 credits")
+      (play-from-hand state :runner "Hijacked Router")
+      (run-empty-server state :hq)
+      (is (not-empty (get-hardware state)) "Hijacked Router installed")
+      (is (-> (get-runner) :prompt first :card :title (= "Hedge Fund")) "No prompt to use Hijacked Router")
+      (is (not-empty (get-hardware state)) "Hijacked Router is installed")
+      (is (not (find-card "Hijacked Router" (:discard (get-runner)))) "Hijacked Router was not trashed")
+      (is (= 8 (:credit (get-corp))) "Corp has not lost 3 credits")))
+  (testing "Credit gain on server creation"
+    (do-game
+      (new-game (default-corp ["Elective Upgrade"])
+                (default-runner ["Hijacked Router"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hijacked Router")
+      (take-credits state :runner)
+      (is (= 8 (:credit (get-corp))) "Corp starts turn with 8 credits")
+      (play-from-hand state :corp "Elective Upgrade" "New remote")
+      (is (= 7 (:credit (get-corp))) "Corp lost 1 credit from server creation"))))
+
 (deftest hippo
   ;; Hippo - remove from game to trash outermost piece of ice if all subs broken
   (testing "No ice"
