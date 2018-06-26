@@ -738,6 +738,11 @@
                                                               " [Credits] from the rez of " (:title current-ice)))
                                   (swap! state update-in [:bonus] dissoc :cost))))}]}
 
+   "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+   {:events {:runner-turn-begins {:msg "gain 1 credit"
+                                  :req (req (> 3 (count (:hand runner))))
+                                  :effect (effect (gain-credits :runner 1))}}}
+
    "NBN: Controlling the Message"
    (let [cleanup (effect (update! :corp (dissoc card :saw-trash)))]
    {:events {:corp-turn-ends {:effect cleanup}
