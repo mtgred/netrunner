@@ -182,17 +182,30 @@
 
 (deftest building-blocks
   ;; Building Blocks - install and rez a barrier from HQ at no cost
-  (do-game
-    (new-game (default-corp ["Building Blocks" "Ice Wall"])
-              (default-runner))
-    (core/gain state :corp :credit 1)
-    (play-from-hand state :corp "Building Blocks")
-    (is (= 1 (:credit (get-corp))) "Corp starts with 1 credit")
-    (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
-    (prompt-choice :corp "New remote")
-    (let [iw (get-ice state :remote1 0)]
-      (is (= 1 (:credit (get-corp))) "Corp spent no credits")
-      (is (:rezzed (refresh iw)) "Ice Wall is installed and rezzed"))))
+  (testing "Basic behavior"
+    (do-game
+      (new-game (default-corp ["Building Blocks" "Ice Wall"])
+                (default-runner))
+      (core/gain state :corp :credit 1)
+      (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
+      (play-from-hand state :corp "Building Blocks")
+      (is (= 1 (:credit (get-corp))) "Spent 5 credits on Building Blocks")
+      (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (prompt-choice :corp "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
+        (is (:rezzed (refresh iw)) "Ice Wall is installed and rezzed"))))
+  (testing "Select invalid card"
+    (do-game
+      (new-game (default-corp ["Building Blocks" "Hedge Fund" "Cortex Lock"])
+                (default-runner))
+      (core/gain state :corp :credit 1)
+      (play-from-hand state :corp "Building Blocks")
+      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Starting prompt is correct")
+      (prompt-select :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Cannot select non-ICE")
+      (prompt-select :corp (find-card "Cortex Lock" (:hand (get-corp))))
+      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Cannot select non-barrier ICE"))))
 
 (deftest casting-call
   ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128

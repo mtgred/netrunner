@@ -241,7 +241,6 @@
 
    "Building Blocks"
    {:choices {:req #(and (= (:side %) "Corp")
-                         (ice? %)
                          (has-subtype? % "Barrier")
                          (in-hand? %))}
     :async true
