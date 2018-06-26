@@ -1302,6 +1302,16 @@
       (is (= 1 (count (filter :seen discard))) "There is 1 seen card in Archives"))
     (is (zero? (count (:hand (get-corp)))) "There are no cards in hand")))
 
+(deftest guinea-pig
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Guinea Pig" (qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Guinea Pig")
+    (is (= 11 (:credit (get-runner))) "Gained +6 credits from playing Guinea Pig")
+    (is (empty? (:hand (get-runner))) "No cards left in grip, trashed all cards due to Guinea Pig")
+    (is (= 4 (count (:discard (get-runner)))) "3 cards trashed from Guinea Pig + Guinea Pig itself")))
+
 (deftest hacktivist-meeting
   ;; Trash a random card from corp hand while active
   ;; Make sure it is not active when hosted on Peddler
