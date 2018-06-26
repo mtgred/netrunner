@@ -1,5 +1,5 @@
 (in-ns 'game.core)
-(declare any-flag-fn? corp-trace-prompt optional-ability
+(declare any-flag-fn? init-trace optional-ability
          check-optional check-psi check-trace complete-ability
          do-choices do-ability
          psi-game resolve-ability-eid resolve-psi resolve-trace show-select)
@@ -113,7 +113,7 @@
 (defn- resolve-ability-eid
   ([state side {:keys [eid] :as ability} card targets]
    (if (= 1 (count ability)) ;; only has the eid, in effect a nil ability
-     (effect-completed state side eid card)
+     (effect-completed state side eid)
      (if (and ability (not eid))
        (resolve-ability-eid state side (assoc ability :eid (make-eid state)) card targets)
        (when-let [ability (if (and (:makes-run ability)
@@ -134,17 +134,17 @@
              (do-choices state side ability card targets)
              ;; Not a prompt. Trigger the ability.
              (do-ability state side ability card targets))
-           (effect-completed state side eid card))
+           (effect-completed state side eid))
          (complete-ability state side ability card))))))
 
 ;;; Checking functions for resolve-ability
 (defn- complete-ability
-  [state side {:keys [eid choices optional prompt delayed-completion psi trace] :as ability} card]
-  ;if it doesn't have choices and it doesn't have a true delayed-completion; or
-  ;if it does have choices and has false delayed-completion
-  (when (or (and (not choices) (not optional) (not psi) (not trace) (not delayed-completion))
-            (and (or optional psi choices trace) (false? delayed-completion)))
-    (effect-completed state side eid card)))
+  [state side {:keys [eid choices optional prompt async psi trace] :as ability} card]
+  ;; If it doesn't have choices and it doesn't have a true async or
+  ;; if it does have choices and has false async
+  (when (or (and (not choices) (not optional) (not psi) (not trace) (not async))
+            (and (or optional psi choices trace) (false? async)))
+    (effect-completed state side eid)))
 
 (defn- check-optional
   "Checks if there is an optional ability to resolve"
@@ -152,7 +152,7 @@
   (when-let [optional (:optional ability)]
     (if (can-trigger? state side optional card targets)
       (optional-ability state (or (:player optional) side) eid card (:prompt optional) optional targets)
-      (effect-completed state side eid card))))
+      (effect-completed state side eid))))
 
 (defn- check-psi
   "Checks if a psi-game is to be resolved"
@@ -160,15 +160,15 @@
   (when-let [psi (:psi ability)]
     (if (can-trigger? state side psi card targets)
       (psi-game state side eid card psi)
-      (effect-completed state side eid card))))
+      (effect-completed state side eid))))
 
 (defn- check-trace
   "Checks if there is a trace to resolve"
   [state side {:keys [eid] :as ability} card targets]
   (when-let [trace (:trace ability)]
     (if (can-trigger? state side ability card targets)
-      (corp-trace-prompt state card (assoc trace :eid (:eid ability)))
-      (effect-completed state side eid card))))
+      (init-trace state side card (assoc trace :eid (:eid ability)))
+      (effect-completed state side eid))))
 
 (defn- do-choices
   "Handle a choices ability"
@@ -290,7 +290,7 @@
                     (resolve-ability state side (assoc yes-ability :eid eid) card targets)
                     (if-let [no-ability (:no-ability ability)]
                       (resolve-ability state side (assoc no-ability :eid eid) card targets)
-                      (effect-completed state side eid card))))
+                      (effect-completed state side eid))))
                 ability)))
 
 
@@ -352,9 +352,9 @@
 
 (defn- show-trace-prompt
   "Specific function for displaying a trace prompt. Works like `show-prompt` with some extensions.
-  Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
+   Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
   ([state side card message f args] (show-trace-prompt state side (make-eid state) card message f args))
-  ([state side eid card message f {:keys [priority base bonus strength] :as args}]
+  ([state side eid card message f {:keys [priority player other base bonus strength link] :as args}]
    (let [prompt (if (string? message) message (message state side nil card nil))
          newitem {:eid eid
                   :msg prompt
@@ -362,9 +362,12 @@
                   :effect f
                   :card card
                   :priority priority
+                  :player player
+                  :other other
                   :base base
                   :bonus bonus
-                  :strength strength}]
+                  :strength strength
+                  :link link}]
      (add-to-prompt-queue state side newitem))))
 
 (defn show-select
@@ -414,7 +417,7 @@
           (resolve-ability state side (:ability selected) (:card curprompt) cards))
       (if-let [cancel-effect (:cancel-effect curprompt)]
         (cancel-effect nil)
-        (effect-completed state side (:eid (:ability selected)) nil)))))
+        (effect-completed state side (:eid (:ability selected)))))))
 
 (defn show-wait-prompt
   "Shows a 'Waiting for ...' prompt to the given side with the given message.
@@ -484,64 +487,136 @@
           (system-msg state side (str "spends " bet " [Credits]"))
           (trigger-event state side (keyword (str "psi-bet-" (name side))) bet)
           (trigger-event state side (keyword (str "psi-bet-" (name opponent))) opponent-bet)
-          (when-completed (trigger-event-sync state side :psi-game bet opponent-bet)
-                          (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
-                            (resolve-ability state (:side card) (assoc ability :eid eid :delayed-completion true) card nil)
-                            (effect-completed state side eid card)))
+          (wait-for (trigger-event-sync state side :psi-game bet opponent-bet)
+                    (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
+                      (resolve-ability state (:side card) (assoc ability :eid eid :async true) card nil)
+                      (effect-completed state side eid)))
           (trigger-event state side :psi-game-done bet opponent-bet))
       (show-wait-prompt
         state side (str (clojure.string/capitalize (name opponent)) " to choose psi game credits")))))
 
 
 ;;; Traces
-(defn- init-trace
-  "Shows a trace prompt to the runner, after the corp has already spent credits to boost."
-  [state side card {:keys [base eid priority] :as ability} boost]
-  (clear-wait-prompt state :runner)
-  (show-wait-prompt state :corp "Runner to boost Link strength" {:priority 2})
-  (let [bonus (get-in @state [:bonus :trace] 0)
-        base (if (fn? base) (base state side (make-eid state) card nil) base)
-        total (+ base boost bonus)
-        link (get-in @state [:runner :link] 0)]
-    (system-msg state :corp (str "uses " (:title card)
-                                 " to initiate a trace with strength " total
-                                 " (" base
-                                 (when (pos? bonus) (str " + " bonus " bonus"))
-                                 " + " boost " [Credits]) (" (make-label ability) ")"))
-    (swap! state update-in [:bonus] dissoc :trace)
-    (show-trace-prompt state :runner card "Boost link strength?"
-                       #(resolve-trace state side eid %)
-                       {:priority (or priority 2) :base link :strength total})
-    (swap! state assoc :trace {:strength total :ability ability :card card})
-    (trigger-event state side :trace nil)))
+(defn init-trace-bonus
+  "Applies a bonus base strength of n to the next trace attempt."
+  [state side n]
+  (swap! state update-in [:bonus :trace] (fnil #(+ % n) 0)))
+
+(defn determine-initiator
+  [state {:keys [player] :as trace}]
+  (let [constant-effect (get-in @state [:trace :player])]
+    (cond
+      (some? constant-effect) constant-effect
+      (some? player) player
+      :else :corp)))
+
+(defn corp-start?
+  [trace]
+  (= :corp (:player trace)))
 
 (defn resolve-trace
   "Compares trace strength and link strength and triggers the appropriate effects."
-  [state side eid boost]
+  [state side card {:keys [eid player other base bonus link priority ability strength] :as trace} boost]
   (clear-wait-prompt state :corp)
-  (let [link (get-in @state [:runner :link] 0)
-        runner-trace (+ link boost)
-        {:keys [strength ability card]} (:trace @state)]
-    (system-msg state :runner (str " spends " boost " [Credits] to increase link strength to " runner-trace))
-    (let [successful (> strength runner-trace)
-          which-ability (assoc (if successful ability (:unsuccessful ability)) :eid (make-eid state))]
-      (when-completed (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace) {:runner-spent boost})
-                      (when-completed (resolve-ability state :corp (:eid which-ability) which-ability
-                                                                   card [strength runner-trace])
-                                      (do (when-let [kicker (:kicker ability)]
-                                            (when (>= strength (:min kicker))
-                                              (resolve-ability state :corp kicker card [strength runner-trace])))
-                                          (effect-completed state side eid nil)))))))
+  (let [corp-strength (if (corp-start? trace)
+                         strength
+                         ((fnil + 0 0 0) base bonus boost))
+        runner-strength (if (corp-start? trace)
+                         ((fnil + 0 0) link boost)
+                         strength)
+        trigger-trace (select-keys trace [:player :other :base :bonus :link :priority :ability :strength])]
+    (system-msg state other (str " spends " boost
+                                 "[Credits] to increase " (if (corp-start? trace) "link" "trace")
+                                 " strength to " (if (corp-start? trace)
+                                                   runner-strength
+                                                   corp-strength)))
+    (clear-wait-prompt state player)
+    (let [successful (> corp-strength runner-strength)
+          which-ability (assoc (if successful
+                                 (:successful trace)
+                                 (:unsuccessful trace))
+                               :eid (make-eid state))]
+      (system-say state side (str "The trace was " (when-not successful "un") "successful."))
+      (wait-for (trigger-event-sync state :corp (if successful :successful-trace :unsuccessful-trace)
+                                    (assoc trigger-trace
+                                           :corp-strength corp-strength
+                                           :runner-strength runner-strength
+                                           :successful successful
+                                           :corp-spent (if (corp-start? trace)
+                                                         (- strength (+ base bonus))
+                                                         boost)
+                                           :runner-spent (if (corp-start? trace)
+                                                           boost
+                                                           (- strength link))))
+                (wait-for (resolve-ability state :corp (:eid which-ability) which-ability
+                                           card [corp-strength runner-strength])
+                          (do (when-let [kicker (:kicker trace)]
+                                (when (>= corp-strength (:min kicker))
+                                  (resolve-ability state :corp kicker card [corp-strength runner-strength])))
+                              (effect-completed state side eid)))))))
 
-(defn corp-trace-prompt
-  "Starts the trace process by showing the boost prompt to the corp."
-  [state card {:keys [base priority] :as trace}]
-  (trigger-event state :corp :pre-init-trace card)
-  (let [base-trace (if (fn? base) (base state :corp (make-eid state) card nil) base)
-        bonus (get-in @state [:bonus :trace] 0)]
-    (show-wait-prompt state :runner (str "Corp to initiate a trace from " (:title card)) {:priority (or priority 2)})
-    (show-trace-prompt state :corp card "Boost trace strength?"
-                       #(init-trace state :corp card trace %) {:priority (or priority 2) :base base-trace :bonus bonus})))
+(defn trace-reply
+  "Shows a trace prompt to the second player, after the first has already spent credits to boost."
+  [state side card {:keys [eid player other base bonus link priority] :as trace} boost]
+  (let [other-type (if (corp-start? trace) "link" "trace")
+        strength (if (corp-start? trace)
+                   ((fnil + 0 0 0) base bonus boost)
+                   ((fnil + 0 0) link boost))
+        trace (assoc trace :strength strength)]
+    (system-msg state player (str " spends " boost
+                                  "[Credits] to increase " (if (corp-start? trace) "trace" "link")
+                                  " strength to " strength))
+    (clear-wait-prompt state other)
+    (show-wait-prompt state player
+                      (str (if (corp-start? trace) "Runner" "Corp")
+                           " to boost " other-type " strength")
+                      {:priority priority})
+    (show-trace-prompt state other card (str "Boost " other-type " strength?")
+                       #(resolve-trace state side card trace %)
+                       trace)))
+
+(defn trace-start
+  "Starts the trace process by showing the boost prompt to the first player (normally corp)."
+  [state side card {:keys [player other base bonus priority] :as trace}]
+  (system-msg state :corp (str "uses " (:title card)
+                               " to initiate a trace with strength " ((fnil + 0 0) base bonus)
+                               " (" (make-label trace) ")"))
+  (show-wait-prompt state other
+                    (str (if (corp-start? trace) "Corp" "Runner")
+                         " to boost "
+                         (if (corp-start? trace) "trace" "link")
+                         " strength")
+                    {:priority priority})
+  (show-trace-prompt state player card
+                     (str "Boost " (if (corp-start? trace) "trace" "link") " strength?")
+                     #(trace-reply state side card trace %)
+                     trace))
+
+(defn reset-trace-modifications
+  [state]
+  (swap! state dissoc-in [:trace :force-base])
+  (swap! state dissoc-in [:trace :force-link])
+  (swap! state dissoc-in [:bonus :trace]))
+
+(defn init-trace
+  [state side card {:keys [base priority] :as trace}]
+  (reset-trace-modifications state)
+  (wait-for (trigger-event-sync state :corp :pre-init-trace card)
+            (let [force-base (get-in @state [:trace :force-base])
+                  force-link (get-in @state [:trace :force-link])
+                  base (cond force-base force-base
+                             (fn? base) (base state :corp (make-eid state) card nil)
+                             :else base)
+                  link (if force-link
+                         force-link
+                         (get-in @state [:runner :link] 0))
+                  trace (merge trace {:player (determine-initiator state trace)
+                                      :other (if (= :corp (determine-initiator state trace)) :runner :corp)
+                                      :base base
+                                      :bonus (get-in @state [:bonus :trace] 0)
+                                      :link link
+                                      :priority (or priority 2)})]
+              (trace-start state side card trace))))
 
 (defn rfg-and-shuffle-rd-effect
   ([state side card n] (rfg-and-shuffle-rd-effect state side (make-eid state) card n false))

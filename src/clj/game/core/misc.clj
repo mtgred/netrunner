@@ -3,27 +3,36 @@
 (declare set-prop get-nested-host get-nested-zone all-active-installed)
 
 (defn get-zones [state]
-  (keys (get-in state [:corp :servers])))
+  (keys (get-in @state [:corp :servers])))
 
 (defn get-remote-zones [state]
   (filter is-remote? (get-zones state)))
 
 (defn get-runnable-zones [state]
-  (let [restricted-zones (keys (get-in state [:runner :register :cannot-run-on-server]))]
+  (let [restricted-zones (keys (get-in @state [:runner :register :cannot-run-on-server]))]
     (remove (set restricted-zones) (get-zones state))))
 
 (defn get-remotes [state]
-  (select-keys (get-in state [:corp :servers]) (get-remote-zones state)))
+  (select-keys (get-in @state [:corp :servers]) (get-remote-zones state)))
 
 (defn get-remote-names [state]
   (zones->sorted-names (get-remote-zones state)))
 
-(defn server-list [state card]
-  (concat
-    (if (#{"Asset" "Agenda"} (:type card))
-      (get-remote-names @state)
-      (zones->sorted-names (get-zones @state)))
-    ["New remote"]))
+(defn server-list
+  "Get a list of all servers (including centrals)"
+  [state]
+  (zones->sorted-names (get-zones state)))
+
+(defn installable-servers
+  "Get list of servers the specified card can be installed in"
+  [state card]
+  (let [base-list (concat (server-list state) ["New remote"])]
+    (if-let [install-req (-> card card-def :install-req)]
+      ;; Install req function overrides normal list of install locations
+      (install-req state :corp card (make-eid state) base-list)
+      ;; Standard list
+      base-list)))
+
 
 (defn server->zone [state server]
   (if (sequential? server)
@@ -95,7 +104,7 @@
 (defn number-of-virus-counters
   "Returns number of actual virus counters (excluding virtual counters from Hivemind)"
   [state]
-  (reduce + (map #(get-in % [:counter :virus] 0) (all-installed state :runner))))
+  (reduce + (map #(get-counters % :virus) (all-installed state :runner))))
 
 (defn all-active
   "Returns a vector of all active cards for the given side. Active cards are either installed, the identity,
@@ -126,6 +135,8 @@
   [state card]
   (installed-byname state (to-keyword (:side card)) (:title card)))
 
+;;; Stuff for handling {:base x :mod y} data structures
+
 (defn base-mod-size
   "Returns the value of properties using the `base` and `mod` system"
   [state side prop]
@@ -137,6 +148,30 @@
   "Returns the current maximum hand-size of the specified side."
   [state side]
   (base-mod-size state side :hand-size))
+
+(defn available-mu
+  "Returns the available MU the runner has"
+  [state]
+  (- (base-mod-size state :runner :memory)
+     (get-in @state [:runner :memory :used] 0)))
+
+(defn toast-check-mu
+  "Check runner has not exceeded, toast if they have"
+  [state]
+  (when (neg? (available-mu state))
+    (toast state :runner "You have exceeded your memory units!")))
+
+(defn free-mu
+  "Frees up specified amount of mu (reduces :used)"
+  ([state _ n] (free-mu state n))
+  ([state n]
+   (deduct state :runner [:memory {:used n}])))
+
+(defn use-mu
+  "Increases amount of mu used (increased :used)"
+  ([state _ n] (use-mu state n))
+  ([state n]
+   (gain state :runner :memory {:used n})))
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"

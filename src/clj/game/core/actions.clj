@@ -2,16 +2,16 @@
 
 ;; These functions are called by main.clj in response to commands sent by users.
 
-(declare card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
+(declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?
-         can-run-server? can-score? say play-sfx base-mod-size)
+         can-run-server? can-score? say play-sfx base-mod-size free-mu)
 
 ;;; Neutral actions
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card server]}]
-  (let [card (get-card state card)]
+  (when-let [card (get-card state card)]
     (case (:type card)
       ("Event" "Operation") (play-instant state side card {:extra-cost [:click 1]})
       ("Hardware" "Resource" "Program") (runner-install state side (make-eid state) card {:extra-cost [:click 1]})
@@ -36,6 +36,7 @@
     (system-msg state side "spends [Click] to draw a card")
     (trigger-event state side (if (= side :corp) :corp-click-draw :runner-click-draw) (->> @state side :deck (take 1)))
     (draw state side)
+    (swap! state update-in [:stats side :click :draw] (fnil inc 0))
     (play-sfx state side "click-card")))
 
 (defn click-credit
@@ -43,7 +44,8 @@
   [state side args]
   (when (pay state side nil :click 1 {:action :corp-click-credit})
     (system-msg state side "spends [Click] to gain 1 [Credits]")
-    (gain state side :credit 1)
+    (gain-credits state side 1 (keyword (str (name side) "-click-credit")))
+    (swap! state update-in [:stats side :click :credit] (fnil inc 0))
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
     (play-sfx state side "click-credit")))
 
@@ -58,18 +60,34 @@
 (defn- change-map
   "Change a player's property using the :mod system"
   [state side key delta]
-  (gain state side key delta)
-  (change-msg state side key (base-mod-size state side key) (:mod delta)))
+  (gain state side key {:mod delta})
+  (change-msg state side key (base-mod-size state side key) delta))
+
+(defn- change-mu
+  "Send a system message indicating how mu was changed"
+  [state side delta]
+  (free-mu state delta)
+  (system-msg state side
+              (str "sets unused MU to " (available-mu state)
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
-  (if (map? delta)
+  (cond
+    ;; Memory needs special treatment and message
+    (= :memory key)
+    (change-mu state side delta)
+
+    ;; Hand size needs special treatment as it expects a map
+    (= :hand-size key)
     (change-map state side key delta)
+
+    :else
     (do (if (neg? delta)
           (deduct state side [key (- delta)])
           (swap! state update-in [side key] (partial + delta)))
-      (change-msg state side key (get-in @state [side key]) delta))))
+        (change-msg state side key (get-in @state [side key]) delta))))
 
 (defn move-card
   "Called when the user drags a card from one zone to another."
@@ -160,12 +178,13 @@
               ;; :Counter prompts deduct counters from the card
               (add-counter state side (:card prompt) (:counter choices) (- choice)))
             ;; trigger the prompt's effect function
-            ((:effect prompt) (or choice card))
+            (when-let [effect-prompt (:effect prompt)]
+              (effect-prompt (or choice card)))
             (finish-prompt state side prompt card)))
       (do (if-let [cancel-effect (:cancel-effect prompt)]
             ;; trigger the cancel effect
             (cancel-effect choice)
-            (effect-completed state side (:eid prompt) nil))
+            (effect-completed state side (:eid prompt)))
           (finish-prompt state side prompt card)))))
 
 (defn select
@@ -205,7 +224,7 @@
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]"
-              :req (req (pos? (:rec-counter card 0)))
+              :req (req (pos? (get-counters card :recurring)))
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)
                            (when (has-subtype? card "Stealth")
@@ -217,13 +236,18 @@
 (defn play-auto-pump
   "Use the 'match strength with ice' function of icebreakers."
   [state side args]
-  (let [run (:run @state) card (get-card state (:card args))
-        current-ice (when (and run (pos? (:position run 0))) (get-card state ((get-run-ices state) (dec (:position run)))))
+  (let [run (:run @state)
+        card (get-card state (:card args))
+        run-ice (get-run-ices state)
+        ice-cnt (count run-ice)
+        ice-idx (dec (:position run 0))
+        in-range (and (pos? ice-cnt) (< -1 ice-idx ice-cnt))
+        current-ice (when (and run in-range) (get-card state (run-ice ice-idx)))
         pumpabi (some #(when (:pump %) %) (:abilities (card-def card)))
         pumpcst (when pumpabi (second (drop-while #(and (not= % :credit) (not= % "credit")) (:cost pumpabi))))
         strdif (when current-ice (max 0 (- (or (:current-strength current-ice) (:strength current-ice))
                                            (or (:current-strength card) (:strength card)))))
-        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi)))))]
+        pumpnum (when strdif (int (Math/ceil (/ strdif (:pump pumpabi 1)))))]
     (when (and pumpnum pumpcst (>= (get-in @state [:runner :credit]) (* pumpnum pumpcst)))
       (dotimes [n pumpnum] (resolve-ability state side (dissoc pumpabi :msg) (get-card state card) nil))
       (system-msg state side (str "spends " (* pumpnum pumpcst) " [Credits] to increase the strength of "
@@ -248,6 +272,14 @@
   :abilities vector."
   [state side args]
   ((dynamic-abilities (:dynamic args)) state (keyword side) args))
+
+(defn play-corp-ability
+  "Triggers a runner card's corp-ability using its zero-based index into the card's card-def :corp-abilities vector."
+  [state side {:keys [card ability targets] :as args}]
+  (let [card (get-card state card)
+        cdef (card-def card)
+        ab (get-in cdef [:corp-abilities ability])]
+    (do-play-ability state side card ab targets)))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
@@ -326,7 +358,7 @@
                (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
                    (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
-                            {:delayed-completion true
+                            {:async true
                              :effect (req (if (and (= target "Yes")
                                                    (can-pay? state side (:title card) altcost))
                                             (do (pay state side card altcost)
@@ -370,6 +402,7 @@
                        (do (update-ice-strength state side card)
                            (play-sfx state side "rez-ice"))
                        (play-sfx state side "rez-other"))
+                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                      (trigger-event-sync state side eid :rez card)))))
            (effect-completed state side eid))
          (swap! state update-in [:bonus] dissoc :cost))
@@ -412,7 +445,8 @@
    (let [card (or (:card args) args)]
      (when (and (can-score? state side card)
                 (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
-                (>= (:advance-counter card 0) (or (:current-cost card) (:advancementcost card))))
+                (>= (get-counters card :advancement) (or (:current-cost card)
+                                                         (:advancementcost card))))
 
        ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
        (let [moved-card (move state :corp card :scored)
@@ -489,19 +523,19 @@
                     (get-card state (nth run-ice (dec pos))))
           next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
                      (get-card state (nth run-ice (- pos 2))))]
-      (when-completed (trigger-event-sync state side :pass-ice cur-ice)
-                      (do (update-ice-in-server
-                            state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-                          (swap! state update-in [:run :position] dec)
-                          (swap! state assoc-in [:run :no-action] false)
-                          (system-msg state side "continues the run")
-                          (when cur-ice
-                            (update-ice-strength state side cur-ice))
-                          (when next-ice
-                            (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
-                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                            (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-                            (update-breaker-strength state side p)))))))
+      (wait-for (trigger-event-sync state side :pass-ice cur-ice)
+                (do (update-ice-in-server
+                      state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
+                    (swap! state update-in [:run :position] (fnil dec 1))
+                    (swap! state assoc-in [:run :no-action] false)
+                    (system-msg state side "continues the run")
+                    (when cur-ice
+                      (update-ice-strength state side cur-ice))
+                    (when next-ice
+                      (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
+                    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+                      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+                      (update-breaker-strength state side p)))))))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."

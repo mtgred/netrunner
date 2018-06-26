@@ -5,12 +5,12 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards)
+(use-fixtures :once load-all-cards (partial reset-card-defs "upgrades"))
 
 (deftest amazon-industrial-zone
   ;; Amazon Industrial Zone - Immediately rez ICE installed over its server at 3 credit discount
   (do-game
-    (new-game (default-corp [(qty "Spiderweb" 1) (qty "Amazon Industrial Zone" 1)])
+    (new-game (default-corp ["Spiderweb" "Amazon Industrial Zone"])
               (default-runner))
     (take-credits state :corp 1)
     (play-from-hand state :corp "Amazon Industrial Zone" "New remote")
@@ -20,14 +20,31 @@
       (play-from-hand state :corp "Spiderweb" "Server 1")
       (prompt-choice :corp "Yes") ; optional ability
       (let [spid (get-ice state :remote1 0)]
-        (is (get-in (refresh spid) [:rezzed]) "Spiderweb rezzed")
+        (is (:rezzed (refresh spid)) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
+
+(deftest ash-2x3zb9cy
+  ;; Ash 2X3ZB9CY
+  (do-game
+    (new-game (default-corp ["Ash 2X3ZB9CY" (qty "Ice Wall" 10)])
+              (default-runner))
+    (starting-hand state :corp ["Ash 2X3ZB9CY" "Ice Wall"])
+    (play-from-hand state :corp "Ash 2X3ZB9CY" "HQ")
+    (take-credits state :corp)
+    (let [ash (get-content state :hq 0)]
+      (core/rez state :corp ash)
+      (run-empty-server state "HQ")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= "Ash 2X3ZB9CY" (-> (get-runner) :prompt first :card :title)) "Should access Ash")
+      (prompt-choice-partial :runner "Pay")
+      (is (not (:run @state)) "Accessing Ash then ends the run"))))
 
 (deftest ben-musashi
   ;; Ben Musashi
   (testing "Basic test - pay 2 net damage to steal from this server"
     (do-game
-      (new-game (default-corp [(qty "Ben Musashi" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Ben Musashi" "House of Knives"])
                 (default-runner))
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
@@ -43,7 +60,7 @@
             "Prompt to pay 2 net damage")
         (prompt-choice :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
-        (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
         (prompt-select :runner bm)
         (prompt-choice :runner "No action")
         (run-empty-server state "Server 1")
@@ -53,7 +70,7 @@
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "on R&D access"
     (do-game
-      (new-game (default-corp [(qty "Ben Musashi" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Ben Musashi" "House of Knives"])
                 (default-runner))
       (starting-hand state :corp ["Ben Musashi"])
       (play-from-hand state :corp "Ben Musashi" "R&D")
@@ -68,7 +85,7 @@
             "Prompt to pay 2 net damage")
         (prompt-choice :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
-        (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
         (prompt-choice :runner "Ben Musashi")
         (prompt-choice :runner "No action")
         (run-empty-server state "R&D")
@@ -98,7 +115,7 @@
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Check runner chooses order of payment"
     (do-game
-      (new-game (default-corp [(qty "Ben Musashi" 1) (qty "Obokata Protocol" 1)])
+      (new-game (default-corp ["Ben Musashi" "Obokata Protocol"])
                 (default-runner [(qty "Sure Gamble" 6)]))
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "Obokata Protocol" "Server 1")
@@ -115,13 +132,13 @@
         (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "2 net damage")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
-        (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
         (prompt-choice :runner "4 net damage")
         (is (= 5 (count (:discard (get-runner)))) "Runner took 4 net damage")
         (is (= 1 (count (:scored (get-runner)))) "Scored agenda"))))
   (testing "Check Fetal AI can be stolen, #2586"
     (do-game
-      (new-game (default-corp [(qty "Ben Musashi" 1) (qty "Fetal AI" 1)])
+      (new-game (default-corp ["Ben Musashi" "Fetal AI"])
                 (default-runner [(qty "Sure Gamble" 5)]))
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "Fetal AI" "Server 1")
@@ -138,7 +155,7 @@
         (prompt-choice-partial :runner "Pay")
         (prompt-choice :runner "2 [Credits]")
         (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
-        (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
         (prompt-choice :runner "2 net damage")
         (is (= 4 (count (:discard (get-runner)))) "Runner took 4 net damage - 2 from Fetal, 2 from Ben")
         (is (= 1 (count (:scored (get-runner)))) "Scored agenda")))))
@@ -175,7 +192,7 @@
       (is (:card (first (:prompt (get-runner)))) "Accessing a card from R&D; not showing Bernice Mai as possible access")))
   (testing "interaction with Dedicated Response Team"
     (do-game
-      (new-game (default-corp [(qty "Bernice Mai" 3) (qty "Dedicated Response Team" 1)])
+      (new-game (default-corp [(qty "Bernice Mai" 3) "Dedicated Response Team"])
                 (default-runner))
       (play-from-hand state :corp "Bernice Mai" "New remote")
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
@@ -193,11 +210,10 @@
 (deftest bio-vault
   ;; Bio Vault - 2 advancement tokens + trash to end the run
   (do-game
-    (new-game (default-corp [(qty "Bio Vault" 1)])
+    (new-game (default-corp ["Bio Vault"])
               (default-runner))
     (play-from-hand state :corp "Bio Vault" "New remote")
     (take-credits state :corp)
-
     (let [bv (get-content state :remote1 0)]
       (run-on state "Server 1")
       (core/rez state :corp (refresh bv))
@@ -206,10 +222,8 @@
       (run-successful state)
       (prompt-choice :runner "No action")
       (take-credits state :runner)
-
       (advance state (refresh bv) 2)
       (take-credits state :corp)
-
       (run-on state "Server 1")
       (card-ability state :corp (refresh bv) 0)
       (is (not (:run @state)) "Bio Vault fires with 2 advancement tokens")
@@ -218,7 +232,7 @@
 (deftest breaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
   (do-game
-   (new-game (default-corp [(qty "Breaker Bay Grid" 2) (qty "The Root" 1) (qty "Strongbox" 1)])
+   (new-game (default-corp [(qty "Breaker Bay Grid" 2) "The Root" "Strongbox"])
              (default-runner))
    (core/gain state :corp :click 1)
    (play-from-hand state :corp "Breaker Bay Grid" "New remote")
@@ -236,13 +250,13 @@
        (core/rez state :corp sbox)
        (is (= 1 (:credit (get-corp))) "Paid full 3 credits to rez Strongbox")))))
 
-(deftest bryan-stinson-current
+(deftest bryan-stinson
   ;; Bryan Stinson - play a transaction from archives and remove from game. Ensure Currents are RFG and not trashed.
   (do-game
-   (new-game (default-corp [(qty "Bryan Stinson" 1) (qty "Death and Taxes" 1)
-                            (qty "Paywall Implementation" 1) (qty "Global Food Initiative" 1)
-                            (qty "IPO" 1)])
-             (default-runner [(qty "Interdiction" 1)]))
+   (new-game (default-corp ["Bryan Stinson" "Death and Taxes"
+                            "Paywall Implementation" "Global Food Initiative"
+                            "IPO"])
+             (default-runner ["Interdiction"]))
     (trash-from-hand state :corp "Death and Taxes")
     (play-from-hand state :corp "Bryan Stinson" "New remote")
     (let [bs (get-content state :remote1 0)]
@@ -256,7 +270,6 @@
       (is (find-card "Death and Taxes" (:rfg (get-corp))) "Death and Taxes removed from game")
       (is (not= "Death and Taxes" (:title (first (:discard (get-corp))))) "Death and Taxes not moved to trash")
       (take-credits state :runner)
-
       (core/lose state :runner :credit 3)
       (trash-from-hand state :corp "Paywall Implementation")
       (card-ability state :corp (refresh bs) 0)
@@ -271,7 +284,6 @@
       (is (find-card "Paywall Implementation" (:rfg (get-corp))) "Paywall Implementation removed from game")
       (is (not= "Paywall Implementation" (:title (first (:discard (get-corp))))) "Paywall Implementation not moved to trash")
       (take-credits state :runner)
-
       (core/lose state :runner :credit 3)
       (card-ability state :corp (refresh bs) 0)
       (prompt-card :corp (find-card "IPO" (:discard (get-corp))))
@@ -280,7 +292,7 @@
 (deftest calibration-testing
   ;; Calibration Testing - advanceable / non-advanceable
   (do-game
-    (new-game (default-corp [(qty "Calibration Testing" 2) (qty "Project Junebug" 1) (qty "PAD Campaign" 1)])
+    (new-game (default-corp [(qty "Calibration Testing" 2) "Project Junebug" "PAD Campaign"])
               (default-runner))
     (core/gain state :corp :credit 10)
     (core/gain state :corp :click 1)
@@ -291,7 +303,7 @@
       (core/rez state :corp ct)
       (card-ability state :corp ct 0)
       (prompt-select :corp pj)
-      (is (= 1 (:advance-counter (refresh pj))) "Project Junebug advanced")
+      (is (= 1 (get-counters (refresh pj) :advancement)) "Project Junebug advanced")
       (is (= 1 (count (:discard (get-corp)))) "Calibration Testing trashed"))
     (play-from-hand state :corp "Calibration Testing" "New remote")
     (play-from-hand state :corp "PAD Campaign" "Server 2")
@@ -300,7 +312,7 @@
       (core/rez state :corp ct)
       (card-ability state :corp ct 0)
       (prompt-select :corp pad)
-      (is (= 1 (:advance-counter (refresh pad))) "PAD Campaign advanced")
+      (is (= 1 (get-counters (refresh pad) :advancement)) "PAD Campaign advanced")
       (is (= 2 (count (:discard (get-corp)))) "Calibration Testing trashed"))))
 
 (deftest caprice-nisei
@@ -342,7 +354,7 @@
 (deftest chilo-city-grid
   ;; ChiLo City Grid - Give 1 tag for successful traces during runs on its server
   (do-game
-    (new-game (default-corp [(qty "Caduceus" 2) (qty "ChiLo City Grid" 1)])
+    (new-game (default-corp [(qty "Caduceus" 2) "ChiLo City Grid"])
               (default-runner))
     (play-from-hand state :corp "ChiLo City Grid" "New remote")
     (play-from-hand state :corp "Caduceus" "Server 1")
@@ -356,7 +368,7 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (is (= 3 (:credit (get-corp))) "Trace was successful")
-      (is (= 0 (:tag (get-runner))) "No tags given for run on different server")
+      (is (zero? (:tag (get-runner))) "No tags given for run on different server")
       (run-successful state)
       (run-on state "Server 1")
       (card-subroutine state :corp cad 0)
@@ -369,7 +381,7 @@
 (deftest code-replicator
   ;; Code Replicator - trash to make runner approach passed (rezzed) ice again
   (do-game
-    (new-game (default-corp [(qty "Ice Wall" 3) (qty "Code Replicator" 1)])
+    (new-game (default-corp [(qty "Ice Wall" 3) "Code Replicator"])
               (default-runner))
     (core/gain state :corp :click 1)
     (core/gain state :corp :credit 5)
@@ -397,7 +409,7 @@
 (deftest corporate-troubleshooter
   ;; Corporate Troubleshooter - Pay X credits and trash to add X strength to a piece of rezzed ICE
   (do-game
-    (new-game (default-corp [(qty "Quandary" 2) (qty "Corporate Troubleshooter" 1)])
+    (new-game (default-corp [(qty "Quandary" 2) "Corporate Troubleshooter"])
               (default-runner))
     (core/gain state :corp :credit 5)
     (play-from-hand state :corp "Corporate Troubleshooter" "HQ")
@@ -418,7 +430,7 @@
       (is (empty? (get-content state :hq))
           "Corporate Troubleshooter trashed from root of HQ")
       (take-credits state :corp)
-      (is (= 0 (:current-strength (refresh q1)))
+      (is (zero? (:current-strength (refresh q1)))
           "Inner Quandary back to default 0 strength after turn ends"))))
 
 (deftest crisium-grid
@@ -426,7 +438,7 @@
   (testing "Basic test"
     (do-game
       (new-game (default-corp [(qty "Crisium Grid" 2)])
-                (default-runner [(qty "Desperado" 1) (qty "Temüjin Contract" 1)]))
+                (default-runner ["Desperado" "Temüjin Contract"]))
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (core/rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
@@ -441,7 +453,7 @@
   (testing "with Gauntlet, #3082"
     (do-game
       (new-game (default-corp [(qty "Crisium Grid" 2)(qty "Vanilla" 2)])
-                (default-runner [(qty "The Gauntlet" 1) (qty "Temüjin Contract" 1)]))
+                (default-runner ["The Gauntlet" "Temüjin Contract"]))
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (play-from-hand state :corp "Vanilla" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
@@ -458,14 +470,14 @@
   (testing "Purge ability"
     (do-game
       (new-game (default-corp [(qty "Cyberdex Virus Suite" 3)])
-                (default-runner [(qty "Cache" 1) (qty "Medium" 1)]))
+                (default-runner ["Cache" "Medium"]))
       (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
       (take-credits state :corp 2)
       ;; runner's turn
       ;; install cache and medium
       (play-from-hand state :runner "Cache")
       (let [virus-counters (fn [card] (core/get-virus-counters state :runner (refresh card)))
-            cache (find-card "Cache" (get-in @state [:runner :rig :program]))
+            cache (find-card "Cache" (get-program state))
             cvs (get-content state :hq 0)]
         (is (= 3 (virus-counters cache)))
         (play-from-hand state :runner "Medium")
@@ -477,19 +489,19 @@
         ;; purged counters
         (is (zero? (virus-counters cache))
             "Cache has no counters")
-        (is (zero? (virus-counters (find-card "Medium" (get-in @state [:runner :rig :program]))))
+        (is (zero? (virus-counters (find-card "Medium" (get-program state))))
             "Medium has no counters"))))
   (testing "Purge on access"
     (do-game
       (new-game (default-corp [(qty "Cyberdex Virus Suite" 3)])
-                (default-runner [(qty "Cache" 1) (qty "Medium" 1)]))
+                (default-runner ["Cache" "Medium"]))
       (play-from-hand state :corp "Cyberdex Virus Suite" "New remote")
       (take-credits state :corp 2)
       ;; runner's turn
       ;; install cache and medium
       (play-from-hand state :runner "Cache")
       (let [virus-counters (fn [card] (core/get-virus-counters state :runner (refresh card)))
-            cache (find-card "Cache" (get-in @state [:runner :rig :program]))
+            cache (find-card "Cache" (get-program state))
             cvs (get-content state :remote1 0)]
         (is (= 3 (virus-counters cache)))
         (play-from-hand state :runner "Medium")
@@ -501,12 +513,12 @@
         ;; purged counters
         (is (zero? (virus-counters cache))
             "Cache has no counters")
-        (is (zero? (virus-counters (find-card "Medium" (get-in @state [:runner :rig :program]))))
+        (is (zero? (virus-counters (find-card "Medium" (get-program state))))
             "Medium has no counters"))))
   (testing "Don't interrupt archives access, #1647"
     (do-game
-      (new-game (default-corp [(qty "Cyberdex Virus Suite" 1) (qty "Braintrust" 1)])
-                (default-runner [(qty "Cache" 1)]))
+      (new-game (default-corp ["Cyberdex Virus Suite" "Braintrust"])
+                (default-runner ["Cache"]))
       (trash-from-hand state :corp "Cyberdex Virus Suite")
       (trash-from-hand state :corp "Braintrust")
       (take-credits state :corp)
@@ -523,6 +535,22 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters")))))
 
+(deftest drone-screen
+  ;; Drone Screen
+  (do-game
+    (new-game (default-corp ["Drone Screen"])
+              (default-runner))
+    (play-from-hand state :corp "Drone Screen" "New remote")
+    (let [drone (get-content state :remote1 0)]
+      (core/rez state :corp drone)
+      (core/gain state :runner :tag 1)
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (is (zero? (-> (get-runner) :discard count)) "Heap should start empty")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 1 (-> (get-runner) :discard count)) "Runner should discard 1 card from meat damage from losing Drone Screen trace"))))
+
 (deftest forced-connection
   ;; Forced Connection - ambush, trace(3) give the runner 2 tags
   (do-game
@@ -531,7 +559,7 @@
     (starting-hand state :corp ["Forced Connection" "Forced Connection"])
     (play-from-hand state :corp "Forced Connection" "New remote")
     (take-credits state :corp)
-    (is (= 0 (:tag (get-runner))) "Runner starts with 0 tags")
+    (is (zero? (:tag (get-runner))) "Runner starts with 0 tags")
     (run-empty-server state :remote1)
     (prompt-choice :corp 0)
     (prompt-choice :runner 0)
@@ -545,33 +573,10 @@
     (prompt-choice-partial :runner "Pay") ; trash
     (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
 
-(deftest ghost-branch-dedicated-response-team
-  ;; Ghost Branch - with Dedicated Response Team
-  (do-game
-    (new-game (default-corp [(qty "Ghost Branch" 1) (qty "Dedicated Response Team" 1)])
-              (default-runner))
-    (play-from-hand state :corp "Ghost Branch" "New remote")
-    (play-from-hand state :corp "Dedicated Response Team" "New remote")
-    (core/gain state :corp :click 1)
-    (let [gb (get-content state :remote1 0)
-          drt (get-content state :remote2 0)]
-      (core/advance state :corp {:card gb})
-      (core/advance state :corp {:card (refresh gb)})
-      (is (= 2 (:advance-counter (refresh gb))) "Ghost Branch advanced twice")
-      (take-credits state :corp)
-      (run-on state "Server 1")
-      (core/rez state :corp drt)
-      (run-successful state)
-      (is (prompt-is-type? :runner :waiting) "Runner has prompt to wait for Ghost Branch")
-      (prompt-choice :corp "Yes")
-      (is (= 2 (:tag (get-runner))) "Runner has 2 tags")
-      (prompt-choice-partial :runner "Pay")
-      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage"))))
-
 (deftest georgia-emelyov
   ;; Georgia Emelyov
   (do-game
-    (new-game (default-corp [(qty "Georgia Emelyov" 1)])
+    (new-game (default-corp ["Georgia Emelyov"])
               (default-runner))
     (play-from-hand state :corp "Georgia Emelyov" "New remote")
     (let [geo (get-content state :remote1 0)]
@@ -594,8 +599,8 @@
 (deftest helheim-servers
   ;; Helheim Servers - Full test
   (do-game
-    (new-game (default-corp [(qty "Helheim Servers" 1) (qty "Gutenberg" 1) (qty "Vanilla" 1)
-                             (qty "Jackson Howard" 1) (qty "Hedge Fund" 1)])
+    (new-game (default-corp ["Helheim Servers" "Gutenberg" "Vanilla"
+                             "Jackson Howard" "Hedge Fund"])
               (default-runner))
     (play-from-hand state :corp "Helheim Servers" "R&D")
     (play-from-hand state :corp "Gutenberg" "R&D")
@@ -610,7 +615,7 @@
       (core/rez state :corp gutenberg)
       (core/rez state :corp vanilla)
       (is (= 6 (:current-strength (refresh gutenberg))))
-      (is (= 0 (:current-strength (refresh vanilla))))
+      (is (zero? (:current-strength (refresh vanilla))))
       (card-ability state :corp helheim 0)
       (prompt-select :corp (find-card "Jackson Howard" (:hand (get-corp))))
       (is (= 1 (count (:discard (get-corp)))))
@@ -624,12 +629,12 @@
       (run-jack-out state)
       (is (not (:run @state)))
       (is (= 6 (:current-strength (refresh gutenberg))))
-      (is (= 0 (:current-strength (refresh vanilla)))))))
+      (is (zero? (:current-strength (refresh vanilla)))))))
 
 (deftest hokusai-grid
   ;; Hokusai Grid - Do 1 net damage when run successful on its server
   (do-game
-    (new-game (default-corp [(qty "Hokusai Grid" 1)])
+    (new-game (default-corp ["Hokusai Grid"])
               (default-runner))
     (play-from-hand state :corp "Hokusai Grid" "HQ")
     (take-credits state :corp)
@@ -643,7 +648,7 @@
   ;; Intake - Trace4, add an installed program or virtual resource to the grip
   (do-game
     (new-game (default-corp [(qty "Intake" 3)])
-              (default-runner [(qty "Corroder" 1) (qty "Fester" 1) (qty "Daily Casts" 1)]))
+              (default-runner ["Corroder" "Fester" "Daily Casts"]))
     (starting-hand state :corp ["Intake" "Intake"])
     (play-from-hand state :corp "Intake" "New remote")
     (take-credits state :corp)
@@ -688,7 +693,7 @@
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
   (do-game
-    (new-game (default-corp [(qty "Jinja City Grid" 1) (qty "Vanilla" 3) (qty "Ice Wall" 3)])
+    (new-game (default-corp ["Jinja City Grid" (qty "Vanilla" 3) (qty "Ice Wall" 3)])
               (default-runner))
     (starting-hand state :corp ["Jinja City Grid"])
     (core/gain state :corp :click 6)
@@ -707,8 +712,8 @@
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program
   (do-game
-    (new-game (default-corp [(qty "Keegan Lane" 1)])
-              (default-runner [(qty "Corroder" 1)]))
+    (new-game (default-corp ["Keegan Lane"])
+              (default-runner ["Corroder"]))
     (play-from-hand state :corp "Keegan Lane" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
@@ -727,7 +732,7 @@
 (deftest manta-grid
   ;; If the Runner has fewer than 6 or no unspent clicks on successful run, corp gains a click next turn.
   (do-game
-    (new-game (default-corp [(qty "Manta Grid" 1)])
+    (new-game (default-corp ["Manta Grid"])
               (default-runner))
     (starting-hand state :runner [])
     (is (= 3 (:click (get-corp))) "Corp has 3 clicks")
@@ -753,31 +758,79 @@
     (take-credits state :runner)
     (is (= 4 (:click (get-corp))) "Corp gained a click due to running last click")))
 
-(deftest marcus-batty-security-nexus
-  ;; Marcus Batty - Simultaneous Interaction with Security Nexus
-  (do-game
-    (new-game (default-corp [(qty "Marcus Batty" 1) (qty "Enigma" 1)])
-              (default-runner [(qty "Security Nexus" 1)]))
-    (play-from-hand state :corp "Marcus Batty" "HQ")
-    (play-from-hand state :corp "Enigma" "HQ")
-    (take-credits state :corp)
-    (core/gain state :runner :credit 8)
-    (play-from-hand state :runner "Security Nexus")
-    (let [mb (get-content state :hq 0)
-          en (get-ice state :hq 0)
-          sn (-> @state :runner :rig :hardware first)]
-      (run-on state "HQ")
-      (core/rez state :corp mb)
-      (core/rez state :corp en)
-      (card-ability state :corp mb 0)
-      (card-ability state :runner sn 0)
-      ;; both prompts should be on Batty
-      (is (prompt-is-card? :corp mb) "Corp prompt is on Marcus Batty")
-      (is (prompt-is-card? :runner mb) "Runner prompt is on Marcus Batty")
-      (prompt-choice :corp "0")
-      (prompt-choice :runner "0")
-      (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
-      (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp"))))
+(deftest marcus-batty
+  ;; Marcus Batty
+  (testing "Simultaneous Interaction with Security Nexus"
+    (do-game
+      (new-game (default-corp ["Marcus Batty" "Enigma"])
+                (default-runner ["Security Nexus"]))
+      (play-from-hand state :corp "Marcus Batty" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 8)
+      (play-from-hand state :runner "Security Nexus")
+      (let [mb (get-content state :hq 0)
+            en (get-ice state :hq 0)
+            sn (-> @state :runner :rig :hardware first)]
+        (run-on state "HQ")
+        (core/rez state :corp mb)
+        (core/rez state :corp en)
+        (card-ability state :corp mb 0)
+        (card-ability state :runner sn 0)
+        ;; both prompts should be on Batty
+        (is (prompt-is-card? :corp mb) "Corp prompt is on Marcus Batty")
+        (is (prompt-is-card? :runner mb) "Runner prompt is on Marcus Batty")
+        (prompt-choice :corp "0")
+        (prompt-choice :runner "0")
+        (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
+        (is (prompt-is-type? :runner :waiting) "Runner prompt is waiting for Corp")))))
+
+(deftest mumbad-city-grid
+  ;; Mumbad City Grid - when runner passes a piece of ice, swap that ice with another from this server
+  (testing "1 ice"
+    (do-game
+      (new-game (default-corp ["Mumbad City Grid" "Quandary"])
+                (default-runner))
+      (play-from-hand state :corp "Mumbad City Grid" "New remote")
+      (play-from-hand state :corp "Quandary" "Server 1")
+      (let [mcg (get-content state :remote1 0)]
+        (core/rez state :corp mcg)
+        (take-credits state :corp)
+        (run-on state "Server 1")
+        (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "1 ice on server")
+        (card-ability state :corp (refresh mcg) 0)
+        (prompt-choice-partial :corp "No")
+        (prompt-choice-partial :runner "Continue")
+        (card-ability state :corp (refresh mcg) 0)
+        (prompt-choice-partial :corp "No")
+        (prompt-choice-partial :runner "Jack")
+        (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 1 ice on server"))))
+  (testing "fire before pass"
+    (do-game
+      (new-game (default-corp ["Mumbad City Grid" "Quandary" "Ice Wall"])
+                (default-runner))
+      (play-from-hand state :corp "Mumbad City Grid" "New remote")
+      (play-from-hand state :corp "Quandary" "Server 1")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (let [mcg (get-content state :remote1 0)]
+        (core/rez state :corp mcg)
+        (take-credits state :corp)
+        (run-on state "Server 1")
+        (is (= 2 (:position (:run @state))) "Runner at position 2")
+        (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "2 ice on server")
+        (is (= "Quandary" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Quandary inner ice")
+        (is (= "Ice Wall" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall outer ice")
+        (card-ability state :corp (refresh mcg) 0)
+        (run-continue state)
+        (is (= 1 (:position (:run @state))) "Runner at position 1")
+        (card-ability state :corp (refresh mcg) 0)
+        (prompt-select :corp (get-ice state :remote1 0))
+        (is (= 1 (:position (:run @state))) "Runner at position 1")
+        (is (= "Quandary" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Quandary outer ice")
+        (is (= "Ice Wall" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall inner ice")
+        (prompt-choice-partial :corp "No")
+        (prompt-choice-partial :runner "Jack")
+        (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server")))))
 
 (deftest mumbad-virtual-tour
   ;; Tests that Mumbad Virtual Tour forces trash when no :slow-trash
@@ -794,12 +847,12 @@
     (run-empty-server state "Server 1")
     (is (= 1 (count (->> @state :runner :prompt first :choices))) "Should only have a single option")
     (prompt-choice-partial :runner "Pay")
-    (is (= 0 (:credit (get-runner))) "Runner forced to trash MVT")
+    (is (zero? (:credit (get-runner))) "Runner forced to trash MVT")
     (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed"))
   (testing "interaction with Imp"
     (do-game
       (new-game (default-corp [(qty "Mumbad Virtual Tour" 2)])
-                (default-runner [(qty "Imp" 1)]))
+                (default-runner ["Imp"]))
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
@@ -860,9 +913,11 @@
   ;; Mwanza City Grid - runner accesses 3 additional cards, gain 2C for each card accessed
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Mwanza City Grid" 1) (qty "Hedge Fund" 5)])
+      (new-game (default-corp ["Mwanza City Grid" (qty "Hedge Fund" 5)])
                 (default-runner))
-      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (play-from-hand state :corp "Mwanza City Grid")
+      (is (= #{"R&D" "HQ"} (-> (get-corp) :prompt first :choices set)) "Mwanza can only be installed in root of HQ or R&D")
+      (prompt-choice :corp "HQ")
       (take-credits state :corp)
       (run-on state "HQ")
       (let [mcg (get-content state :hq 0)]
@@ -878,7 +933,7 @@
         (is (= 17 (:credit (get-corp))) "Corp gains 10 credits"))))
   (testing "effect persists through current run after trash"
     (do-game
-      (new-game (default-corp [(qty "Mwanza City Grid" 1) (qty "Hedge Fund" 5)])
+      (new-game (default-corp ["Mwanza City Grid" (qty "Hedge Fund" 5)])
                 (default-runner))
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
       (take-credits state :corp)
@@ -907,13 +962,50 @@
       (prompt-choice :runner "ICE")
       (is (zero? (count (:discard (get-corp)))) "No cards trashed from HQ")
       (is (not (:run @state)) "Run ended after Embezzle completed - no accesses from Mwanza")
-      (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza"))))
+      (is (= 7 (:credit (get-corp))) "Corp did not gain any money from Mwanza")))
+  (testing "interaction with Kitsune"
+    ;; Regression test for #3469
+    (do-game
+      (new-game (default-corp ["Mwanza City Grid" (qty "Kitsune" 2) (qty "Hedge Fund" 3) "Breached Dome"])
+                (default-runner))
+      (core/draw state :corp 1)                             ; Draw last card of deck
+      (play-from-hand state :corp "Mwanza City Grid" "HQ")
+      (play-from-hand state :corp "Kitsune" "HQ")
+      (play-from-hand state :corp "Kitsune" "R&D")
+      (take-credits state :corp)
+      (let [mwanza (get-content state :hq 0)
+            k-hq (get-ice state :hq 0)
+            k-rd (get-ice state :rd 0)]
+        (core/rez state :corp mwanza)
+        (core/rez state :corp k-hq)
+        (core/rez state :corp k-rd)
+        (run-on state "HQ")
+        (card-subroutine state :corp k-hq 0)
+        (prompt-select :corp (find-card "Breached Dome" (:hand (get-corp))))
+        (is (= 2 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
+        (prompt-choice :runner "No action")
+        ;; Access 3 more cards from HQ
+        (dotimes [c 3]
+          (prompt-choice :runner "Card from hand")
+          (prompt-choice :runner "No action"))
+        (run-jack-out state)
+        (run-on state "R&D")
+        (card-subroutine state :corp k-rd 0)
+        (prompt-select :corp (find-card "Breached Dome" (:hand (get-corp))))
+        (is (= 1 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
+        (prompt-choice :runner "No action")
+        ;; Access 3 more cards from HQ
+        (dotimes [c 3]
+          (prompt-choice :runner "Card from hand")
+          (prompt-choice :runner "No action"))
+        (run-jack-out state)
+        (is (= 2 (-> (get-corp) :discard count)) "Two Kitsunes trashed after resolving their subroutines")))))
 
 (deftest neotokyo-grid
   ;; NeoTokyo Grid - Gain 1c the first time per turn a card in this server gets an advancement
   (do-game
-    (new-game (default-corp [(qty "NeoTokyo Grid" 1) (qty "Nisei MK II" 1)
-                             (qty "Shipment from SanSan" 1) (qty "Ice Wall" 1)])
+    (new-game (default-corp ["NeoTokyo Grid" "Nisei MK II"
+                             "Shipment from SanSan" "Ice Wall"])
               (default-runner))
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "NeoTokyo Grid" "New remote")
@@ -923,16 +1015,33 @@
       (play-from-hand state :corp "Shipment from SanSan")
       (prompt-choice :corp "2")
       (prompt-select :corp nis)
-      (is (= 2 (:advance-counter (refresh nis))) "2 advancements on agenda")
+      (is (= 2 (get-counters (refresh nis) :advancement)) "2 advancements on agenda")
       (is (= 4 (:credit (get-corp))) "Gained 1 credit")
       (core/advance state :corp {:card (refresh nis)})
-      (is (= 3 (:advance-counter (refresh nis))) "3 advancements on agenda")
+      (is (= 3 (get-counters (refresh nis) :advancement)) "3 advancements on agenda")
       (is (= 3 (:credit (get-corp))) "No credit gained")
       (take-credits state :corp)
       (take-credits state :runner)
       (play-from-hand state :corp "Ice Wall" "Server 1")
       (core/advance state :corp {:card (refresh (get-ice state :remote1 0))})
       (is (= 2 (:credit (get-corp))) "No credit gained from advancing ICE"))))
+
+(deftest oberth-protocol
+  ;; Oberth Protocol
+  (do-game
+    (new-game (default-corp ["Hostile Takeover" "Oberth Protocol" "Oaktown Renovation"])
+              (default-runner))
+    (play-and-score state "Hostile Takeover")
+    (play-from-hand state :corp "Oberth Protocol" "Server 1")
+    (play-from-hand state :corp "Oaktown Renovation" "Server 1")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (let [oberth (get-content state :remote1 0)
+          oak (get-content state :remote1 1) ]
+      (core/rez state :corp (refresh oberth))
+      (prompt-select :corp (get-scored state :corp 0))
+      (advance state oak)
+      (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on it"))))
 
 (deftest off-the-grid
   ;; Off the Grid run restriction - and interaction with RP
@@ -960,7 +1069,7 @@
   ;; Old Hollywood Grid
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "House of Knives" 3)])
+      (new-game (default-corp ["Old Hollywood Grid" (qty "House of Knives" 3)])
                 (default-runner))
       (play-from-hand state :corp "Old Hollywood Grid" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
@@ -973,7 +1082,7 @@
         ;; runner now chooses which to access.
         (prompt-select :runner hok)
         (prompt-choice :runner "No action")
-        (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")
+        (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
         (prompt-select :runner ohg)
         (prompt-choice :runner "No action")
         (core/steal state :runner (find-card "House of Knives" (:hand (get-corp))))
@@ -983,7 +1092,7 @@
         (is (= 2 (count (:scored (get-runner)))) "2 stolen agendas"))))
   (testing "Central server"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "House of Knives" 3)])
+      (new-game (default-corp ["Old Hollywood Grid" (qty "House of Knives" 3)])
                 (default-runner))
       (play-from-hand state :corp "Old Hollywood Grid" "HQ")
       (take-credits state :corp 2)
@@ -994,7 +1103,7 @@
         ;; runner now chooses which to access.
         (prompt-choice :runner "Card from hand")
         (prompt-choice :runner "No action")
-        (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")
+        (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
         (prompt-choice :runner "Old Hollywood Grid")
         (prompt-choice-partial :runner "Pay") ;; trash OHG
         (run-empty-server state "HQ")
@@ -1002,8 +1111,8 @@
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
   (testing "Gang Sign interaction. Prevent the steal outside of a run. #2169"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 2)])
-                (default-runner [(qty "Gang Sign" 1)]))
+      (new-game (default-corp ["Old Hollywood Grid" (qty "Project Beale" 2)])
+                (default-runner ["Gang Sign"]))
       (play-from-hand state :corp "Old Hollywood Grid" "HQ")
       (play-from-hand state :corp "Project Beale" "New remote")
       (take-credits state :corp)
@@ -1014,10 +1123,10 @@
       ;; Gang sign fires
       (prompt-choice :runner "Card from hand")
       (prompt-choice :runner "No action")
-      (is (= 0 (count (:scored (get-runner)))) "No stolen agendas")))
+      (is (zero? (count (:scored (get-runner)))) "No stolen agendas")))
   (testing "Trash order"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 1)])
+      (new-game (default-corp ["Old Hollywood Grid" "Project Beale"])
                 (default-runner))
       (play-from-hand state :corp "Old Hollywood Grid" "New remote")
       (play-from-hand state :corp "Project Beale" "Server 1")
@@ -1034,13 +1143,12 @@
         (prompt-select :runner (refresh pb))
         (prompt-choice-partial :runner "No")
         (is (empty? (:scored (get-runner))) "End with no stolen agendas")
-
         (run-empty-server state "Server 1")
         (prompt-choice-partial :runner "Steal")
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
   (testing "Steal other agendas"
     (do-game
-      (new-game (default-corp [(qty "Old Hollywood Grid" 1) (qty "Project Beale" 2)])
+      (new-game (default-corp ["Old Hollywood Grid" (qty "Project Beale" 2)])
                 (default-runner))
       (play-from-hand state :corp "Old Hollywood Grid" "New remote")
       (play-from-hand state :corp "Project Beale" "Server 1")
@@ -1057,7 +1165,7 @@
   ;; Overseer Matrix - corp takes a tag when trashing a card in this server
   (testing "Basic functionality"
     (do-game
-      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 1)])
+      (new-game (default-corp ["Overseer Matrix" "Red Herrings"])
                 (default-runner))
       (play-from-hand state :corp "Overseer Matrix" "New remote")
       (play-from-hand state :corp "Red Herrings" "Server 1")
@@ -1067,7 +1175,7 @@
         (run-on state "Server 1")
         (core/rez state :corp om)
         (run-successful state)
-        (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+        (is (zero? (:tag (get-runner))) "Runner starts with no tags")
         (prompt-select :runner rh)
         (prompt-choice-partial :runner "Pay")
         (prompt-choice :corp "Yes")
@@ -1078,7 +1186,7 @@
         (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
   (testing "Effect persists after trash"
     (do-game
-      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 3)])
+      (new-game (default-corp ["Overseer Matrix" (qty "Red Herrings" 3)])
                 (default-runner))
       (play-from-hand state :corp "Overseer Matrix" "New remote")
       (play-from-hand state :corp "Red Herrings" "Server 1")
@@ -1088,7 +1196,7 @@
         (run-on state "Server 1")
         (core/rez state :corp om)
         (run-successful state)
-        (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+        (is (zero? (:tag (get-runner))) "Runner starts with no tags")
         (prompt-select :runner om)
         (prompt-choice-partial :runner "Pay")
         (prompt-choice :corp "Yes")
@@ -1099,7 +1207,7 @@
         (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
   (testing "Effect ends after current run"
     (do-game
-      (new-game (default-corp [(qty "Overseer Matrix" 1) (qty "Red Herrings" 3)])
+      (new-game (default-corp ["Overseer Matrix" (qty "Red Herrings" 3)])
                 (default-runner))
       (play-from-hand state :corp "Overseer Matrix" "New remote")
       (play-from-hand state :corp "Red Herrings" "Server 1")
@@ -1109,7 +1217,7 @@
         (run-on state "Server 1")
         (core/rez state :corp om)
         (run-successful state)
-        (is (= 0 (:tag (get-runner))) "Runner starts with no tags")
+        (is (zero? (:tag (get-runner))) "Runner starts with no tags")
         (prompt-select :runner om)
         (prompt-choice-partial :runner "Pay")
         (prompt-choice :corp "Yes")
@@ -1126,16 +1234,16 @@
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game
-    (new-game (default-corp [(qty "Port Anson Grid" 1) (qty "Data Raven" 1)])
-              (default-runner [(qty "Faerie" 1) (qty "Technical Writer" 1)]))
+    (new-game (default-corp ["Port Anson Grid" "Data Raven"])
+              (default-runner ["Faerie" "Technical Writer"]))
     (play-from-hand state :corp "Port Anson Grid" "New remote")
     (play-from-hand state :corp "Data Raven" "Server 1")
     (take-credits state :corp)
     (play-from-hand state :runner "Technical Writer")
     (play-from-hand state :runner "Faerie")
     (let [pag (get-content state :remote1 0)
-          fae (get-in @state [:runner :rig :program 0])
-          tw (get-in @state [:runner :rig :resource 0])]
+          fae (get-program state 0)
+          tw (get-resource state 0)]
       (run-on state "Server 1")
       (core/rez state :corp pag)
       (is (:cannot-jack-out (get-in @state [:run])) "Jack out disabled for Runner") ; UI button greyed out
@@ -1166,7 +1274,7 @@
       (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
   (testing "Multiple unrezzed upgrades in Archives interaction with DRT"
     (do-game
-      (new-game (default-corp [(qty "Prisec" 2) (qty "Dedicated Response Team" 1)])
+      (new-game (default-corp [(qty "Prisec" 2) "Dedicated Response Team"])
                 (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
       (play-from-hand state :corp "Prisec" "Archives")
@@ -1190,7 +1298,7 @@
 (deftest product-placement
   ;; Product Placement - Gain 2 credits when Runner accesses it
   (do-game
-    (new-game (default-corp [(qty "Product Placement" 1)])
+    (new-game (default-corp ["Product Placement"])
               (default-runner))
     (play-from-hand state :corp "Product Placement" "New remote")
     (take-credits state :corp)
@@ -1207,7 +1315,7 @@
   ;; Red Herrings
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Red Herrings" "House of Knives"])
                 (default-runner))
       (play-from-hand state :corp "Red Herrings" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
@@ -1223,13 +1331,13 @@
             "Prompt to pay 5cr")
         (prompt-choice :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner was not charged 5cr")
-        (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
         (prompt-select :runner rh)
         (prompt-choice :runner "No action")
         (run-empty-server state "Server 1")
         (prompt-select :runner hok)
         (prompt-choice-partial :runner "Pay")
-        (is (= 0 (:credit (get-runner))) "Runner was charged 5cr")
+        (is (zero? (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Cost increase even when trashed"
     (do-game
@@ -1249,11 +1357,11 @@
         (prompt-select :runner hok)
         ;; should now have prompt to pay 5cr for HoK
         (prompt-choice-partial :runner "Pay")
-        (is (= 0 (:credit (get-runner))) "Runner was charged 5cr")
+        (is (zero? (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Trashed from HQ"
     (do-game
-      (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Red Herrings" "House of Knives"])
                 (default-runner))
       (trash-from-hand state :corp "Red Herrings")
       (is (= 1 (count (:discard (get-corp)))) "1 card in Archives")
@@ -1264,7 +1372,7 @@
           "Runner being asked to Steal")))
   (testing "Don't affect runs on other servers"
     (do-game
-      (new-game (default-corp [(qty "Red Herrings" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Red Herrings" "House of Knives"])
                 (default-runner))
       (play-from-hand state :corp "Red Herrings" "New remote")
       (play-from-hand state :corp "House of Knives" "New remote")
@@ -1281,7 +1389,7 @@
   ;; Ruhr Valley
   (testing "Basic test - As an additional cost to make a run on this server, the Runner must spend a click."
     (do-game
-      (new-game (default-corp [(qty "Ruhr Valley" 1)])
+      (new-game (default-corp ["Ruhr Valley"])
                 (default-runner))
       (play-from-hand state :corp "Ruhr Valley" "HQ")
       (take-credits state :corp)
@@ -1308,7 +1416,7 @@
         (is (= 1 (:click (get-runner)))))))
   (testing "If the runner trashes with one click left, the ability to run is enabled"
     (do-game
-      (new-game (default-corp [(qty "Ruhr Valley" 1)])
+      (new-game (default-corp ["Ruhr Valley"])
                 (default-runner))
       (play-from-hand state :corp "Ruhr Valley" "HQ")
       (take-credits state :corp)
@@ -1327,7 +1435,7 @@
 (deftest ryon-knight
   ;; Ryon Knight - Trash during run to do 1 brain damage if Runner has no clicks remaining
   (do-game
-    (new-game (default-corp [(qty "Ryon Knight" 1)])
+    (new-game (default-corp ["Ryon Knight"])
               (default-runner))
     (play-from-hand state :corp "Ryon Knight" "HQ")
     (take-credits state :corp)
@@ -1336,20 +1444,20 @@
       (core/rez state :corp ryon)
       (card-ability state :corp ryon 0)
       (is (= 3 (:click (get-runner))))
-      (is (= 0 (:brain-damage (get-runner))))
+      (is (zero? (:brain-damage (get-runner))))
       (is (= 1 (count (get-content state :hq))) "Ryon ability didn't fire with 3 Runner clicks left")
       (run-jack-out state)
       (take-credits state :runner 2)
       (run-on state :hq)
       (card-ability state :corp ryon 0)
-      (is (= 0 (:click (get-runner))))
+      (is (zero? (:click (get-runner))))
       (is (= 1 (:brain-damage (get-runner))) "Did 1 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "Ryon trashed"))))
 
 (deftest satellite-grid
   ;; Satellite Grid - Add 1 fake advancement on all ICE protecting server
   (do-game
-    (new-game (default-corp [(qty "Satellite Grid" 1) (qty "Ice Wall" 2)])
+    (new-game (default-corp ["Satellite Grid" (qty "Ice Wall" 2)])
               (default-runner))
     (play-from-hand state :corp "Satellite Grid" "HQ")
     (play-from-hand state :corp "Ice Wall" "HQ")
@@ -1362,25 +1470,45 @@
       (core/rez state :corp sg)
       (core/rez state :corp (refresh iw1))
       (is (= 1 (:extra-advance-counter (refresh iw1))) "1 fake advancement token")
-      (is (= 1 (:advance-counter (refresh iw1))) "Only 1 real advancement token")
+      (is (= 1 (get-counters (refresh iw1) :advancement)) "Only 1 real advancement token")
       (is (= 3 (:current-strength (refresh iw1))) "Satellite Grid counter boosting strength by 1")
       (core/rez state :corp (refresh iw2))
       (is (= 1 (:current-strength (refresh iw2))) "Satellite Grid not impacting ICE elsewhere")
       (core/derez state :corp sg)
       (is (= 2 (:current-strength (refresh iw1))) "Ice Wall strength boost only from real advancement"))))
 
+(deftest self-destruct
+  ;; Self-destruct
+  (do-game
+    (new-game (default-corp ["Self-destruct" "Dedicated Response Team" "Ice Wall"])
+              (default-runner))
+    (core/gain state :corp :credit 100 :click 4)
+    (play-from-hand state :corp "Self-destruct" "New remote")
+    (play-from-hand state :corp "Dedicated Response Team" "Server 1")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (let [self (get-content state :remote1 0)]
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (card-ability state :corp self 0)
+      (is (= 3 (-> (get-corp) :discard count)) "All 3 cards from Server 1 should be in discard")
+      (is (= 2 (-> (get-corp) :prompt first :base)) "Self-destruct base trace should start at 2")
+      (is (zero? (-> (get-runner) :discard count)) "Runner should have no cards in heap")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (= 3 (-> (get-runner) :discard count)) "Runner should take 3 net damage from losing Self-destruct trace"))))
+
 (deftest signal-jamming
   ;; Trash to stop installs for the rest of the run
   (do-game
     (new-game (default-corp [(qty "Signal Jamming" 3)])
-              (default-runner [(qty "Self-modifying Code" 3) (qty "Reaver" 1)]))
+              (default-runner [(qty "Self-modifying Code" 3) "Reaver"]))
     (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
     (play-from-hand state :corp "Signal Jamming" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Self-modifying Code")
     (play-from-hand state :runner "Self-modifying Code")
-    (let [smc1 (get-in @state [:runner :rig :program 0])
-          smc2 (get-in @state [:runner :rig :program 1])
+    (let [smc1 (get-program state 0)
+          smc2 (get-program state 1)
           sj (get-content state :hq 0)]
       (core/rez state :corp sj)
       (run-on state "HQ")
@@ -1396,7 +1524,7 @@
   ;; Strongbox
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Strongbox" 1) (qty "House of Knives" 1)])
+      (new-game (default-corp ["Strongbox" "House of Knives"])
                 (default-runner))
       (play-from-hand state :corp "Strongbox" "New remote")
       (play-from-hand state :corp "House of Knives" "Server 1")
@@ -1410,7 +1538,7 @@
             "Prompt to pay 5cr")
         (prompt-choice :runner "No action")
         (is (= 3 (:click (get-runner))) "Runner was not charged 1click")
-        (is (= 0 (count (:scored (get-runner)))) "No scored agendas")
+        (is (zero? (count (:scored (get-runner)))) "No scored agendas")
         (prompt-select :runner sb)
         (prompt-choice :runner "No action")
         (run-empty-server state "Server 1")
@@ -1441,7 +1569,7 @@
   ;; Surat City Grid - Trigger on rez of a card in/protecting same server to rez another card at 2c discount
   (do-game
     (new-game (default-corp [(qty "Surat City Grid" 2) (qty "Cyberdex Virus Suite" 2)
-                             (qty "Enigma" 1) (qty "Wraparound" 1)])
+                             "Enigma" "Wraparound"])
               (default-runner))
     (core/gain state :corp :credit 15 :click 8)
     (play-from-hand state :corp "Surat City Grid" "New remote")
@@ -1456,7 +1584,7 @@
       (is (= (:cid scg1) (-> (get-corp) :prompt first :card :cid)) "Surat City Grid triggered from upgrade in same remote")
       (prompt-choice :corp "Yes")
       (prompt-select :corp wrap)
-      (is (get-in (refresh wrap) [:rezzed]) "Wraparound is rezzed")
+      (is (:rezzed (refresh wrap)) "Wraparound is rezzed")
       (is (= 15 (:credit (get-corp))) "Wraparound rezzed for free with 2c discount from SCG")
       (play-from-hand state :corp "Surat City Grid" "HQ")
       (play-from-hand state :corp "Enigma" "HQ")
@@ -1490,7 +1618,7 @@
     (run-on state "Server 1")
     (run-successful state)
     (prompt-choice :corp 0) ; trace
-    (is (= 0 (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
+    (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
     (prompt-choice :runner 0)
     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
     (prompt-choice-partial :runner "Pay") ; trash
@@ -1514,98 +1642,118 @@
     (prompt-choice :runner 4)
     (prompt-choice-partial :runner "Pay")))
 
+(deftest the-twins
+  ;; The Twins
+  (do-game
+    (new-game (default-corp ["The Twins" (qty "Ice Wall" 10)])
+              (default-runner ["Corroder"]))
+    (starting-hand state :corp ["The Twins" "Ice Wall" "Ice Wall"])
+    (play-from-hand state :corp "The Twins" "New remote")
+    (play-from-hand state :corp "Ice Wall" "Server 1")
+    (let [twins (get-content state :remote1 0)
+          iw (get-ice state :remote1 0)]
+      (core/rez state :corp twins)
+      (core/rez state :corp iw)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (let [cor (get-program state 0)]
+        (run-on state "Server 1")
+        (card-ability state :runner cor 0)
+        (run-continue state)
+        (is (zero? (-> @state :run :position)) "Run should be at position 0")
+        (card-ability state :corp twins 0)
+        (prompt-select :corp (-> (get-corp) :hand first))
+        (is (= 1 (-> @state :run :position)) "Run should be moved back to position 1")))))
+
 (deftest tori-hanzo
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
-  (do-game
-    (new-game (default-corp [(qty "Pup" 1) (qty "Tori Hanzō" 1)])
-              (default-runner [(qty "Sure Gamble" 3) (qty "Net Shield" 1)]))
-    (core/gain state :corp :credit 10)
-    (play-from-hand state :corp "Pup" "HQ")
-    (play-from-hand state :corp "Tori Hanzō" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "Net Shield")
-    (run-on state "HQ")
-    (let [pup (get-ice state :hq 0)
-          tori (get-content state :hq 0)
-          nshld (get-in @state [:runner :rig :program 0])]
-      (core/rez state :corp pup)
-      (core/rez state :corp tori)
-      (card-subroutine state :corp pup 0)
-      (card-ability state :runner nshld 0)
-      (prompt-choice :runner "Done")
-      (is (empty? (:discard (get-runner))) "1 net damage prevented")
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :runner "Done") ; decline to prevent
-      (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
-      (run-jack-out state)
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Pup" "Tori Hanzō"])
+                (default-runner [(qty "Sure Gamble" 3) "Net Shield"]))
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Pup" "HQ")
+      (play-from-hand state :corp "Tori Hanzō" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Net Shield")
       (run-on state "HQ")
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :runner "Done")
-      (prompt-choice :corp "Yes")
-      (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
-      (is (= 1 (:brain-damage (get-runner)))))))
-
-(deftest tori-hanzo-hokusai
-  ;; Tori Hanzō + Hokusai Grid: Issue #2702
-  (do-game
-    (new-game (default-corp [(qty "Tori Hanzō" 1) (qty "Hokusai Grid" 1)])
-              (default-runner))
-    (core/gain state :corp :credit 5)
-    (play-from-hand state :corp "Hokusai Grid" "Archives")
-    (play-from-hand state :corp "Tori Hanzō" "Archives")
-    (take-credits state :corp)
-    (run-on state "Archives")
-    (let [hg (get-content state :archives 0)
-          tori (get-content state :archives 1)]
-      (core/rez state :corp hg)
-      (core/rez state :corp tori)
-      (run-successful state)
-      (prompt-choice :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
-      (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
-      (prompt-choice :runner "Hokusai Grid")
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Tori Hanzō")
-      (prompt-choice :runner "No action")
-      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
-      (run-empty-server state "Archives")
-      (prompt-choice :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
-      (is (= 2 (count (:discard (get-runner)))))
-      (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
-      (prompt-choice :runner "Hokusai Grid")
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Tori Hanzō")
-      (prompt-choice :runner "No action")
-      (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
-
-(deftest tori-hanzo-net
-  ;; Tori Hanzō breaking subsequent net damage: Issue #3176
-  (do-game
-    (new-game (default-corp [(qty "Tori Hanzō" 1) (qty "Pup" 2) (qty "Neural EMP" 2)])
-              (default-runner))
-    (core/gain state :corp :credit 8)
-    (play-from-hand state :corp "Tori Hanzō" "New remote")
-    (play-from-hand state :corp "Pup" "Server 1")
-    (take-credits state :corp)
-    (run-on state "Server 1")
-    (let [tori (get-content state :remote1 0)
-          pup (get-ice state :remote1 0)]
-      (core/rez state :corp pup)
-      (core/rez state :corp tori)
-      (card-subroutine state :corp pup 0)
-      (prompt-choice :corp "Yes") ; pay 2c to replace 1 net with 1 brain
-      (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
-      (is (= 1 (:brain-damage (get-runner))))
-      (run-jack-out state)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Neural EMP")
-      (is (= 2 (count (:discard (get-runner)))) "Net damage processed correctly"))))
+      (let [pup (get-ice state :hq 0)
+            tori (get-content state :hq 0)
+            nshld (get-program state 0)]
+        (core/rez state :corp pup)
+        (core/rez state :corp tori)
+        (card-subroutine state :corp pup 0)
+        (card-ability state :runner nshld 0)
+        (prompt-choice :runner "Done")
+        (is (empty? (:discard (get-runner))) "1 net damage prevented")
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :runner "Done") ; decline to prevent
+        (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
+        (run-jack-out state)
+        (run-on state "HQ")
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :runner "Done")
+        (prompt-choice :corp "Yes")
+        (is (= 2 (count (:discard (get-runner)))) "1 brain damage suffered")
+        (is (= 1 (:brain-damage (get-runner)))))))
+  (testing "with Hokusai Grid: Issue #2702"
+    (do-game
+      (new-game (default-corp ["Tori Hanzō" "Hokusai Grid"])
+                (default-runner))
+      (core/gain state :corp :credit 5)
+      (play-from-hand state :corp "Hokusai Grid" "Archives")
+      (play-from-hand state :corp "Tori Hanzō" "Archives")
+      (take-credits state :corp)
+      (run-on state "Archives")
+      (let [hg (get-content state :archives 0)
+            tori (get-content state :archives 1)]
+        (core/rez state :corp hg)
+        (core/rez state :corp tori)
+        (run-successful state)
+        (prompt-choice :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
+        (prompt-choice :runner "Hokusai Grid")
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Tori Hanzō")
+        (prompt-choice :runner "No action")
+        (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended")
+        (run-empty-server state "Archives")
+        (prompt-choice :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (is (= 2 (count (:discard (get-runner)))))
+        (is (= 1 (:brain-damage (get-runner))) "1 brain damage suffered")
+        (prompt-choice :runner "Hokusai Grid")
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "Tori Hanzō")
+        (prompt-choice :runner "No action")
+        (is (and (empty (:prompt (get-runner))) (not (:run @state))) "No prompts, run ended"))))
+  (testing "breaking subsequent net damage: Issue #3176"
+    (do-game
+      (new-game (default-corp ["Tori Hanzō" (qty "Pup" 2) (qty "Neural EMP" 2)])
+                (default-runner))
+      (core/gain state :corp :credit 8)
+      (play-from-hand state :corp "Tori Hanzō" "New remote")
+      (play-from-hand state :corp "Pup" "Server 1")
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (let [tori (get-content state :remote1 0)
+            pup (get-ice state :remote1 0)]
+        (core/rez state :corp pup)
+        (core/rez state :corp tori)
+        (card-subroutine state :corp pup 0)
+        (prompt-choice :corp "Yes") ; pay 2c to replace 1 net with 1 brain
+        (is (= 1 (count (:discard (get-runner)))) "1 brain damage suffered")
+        (is (= 1 (:brain-damage (get-runner))))
+        (run-jack-out state)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Neural EMP")
+        (is (= 2 (count (:discard (get-runner)))) "Net damage processed correctly")))))
 
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game
-    (new-game (default-corp [(qty "Eve Campaign" 1)
-                             (qty "Underway Grid" 1)])
-              (default-runner [(qty "Drive By" 1)]))
+    (new-game (default-corp ["Eve Campaign"
+                             "Underway Grid"])
+              (default-runner ["Drive By"]))
     (play-from-hand state :corp "Underway Grid" "New remote")
     (play-from-hand state :corp "Eve Campaign" "Server 1")
     (take-credits state :corp)
@@ -1615,21 +1763,45 @@
       (prompt-select :runner eve1)
       (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
 
-(deftest valley-grid-trash
-  ;; Valley Grid - Reduce Runner max hand size and restore it even if trashed
+(deftest valley-grid
+  ;; Valley Grid
+  (testing "Reduce Runner max hand size and restore it even if trashed"
+    (do-game
+      (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
+                (default-runner))
+      (play-from-hand state :corp "Valley Grid" "New remote")
+      (take-credits state :corp 2)
+      (run-on state "Server 1")
+      (let [vg (get-content state :remote1 0)]
+        (core/rez state :corp vg)
+        (card-ability state :corp vg 0)
+        (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
+        (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
+        (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
+        (run-successful state)
+        (prompt-choice-partial :runner "Pay") ; pay to trash
+        (take-credits state :runner 3)
+        (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn")))))
+
+(deftest warroid-tracker
+  ;; Warroid Tracker
   (do-game
-    (new-game (default-corp [(qty "Valley Grid" 3) (qty "Ice Wall" 3)])
-              (default-runner))
-    (play-from-hand state :corp "Valley Grid" "New remote")
-    (take-credits state :corp 2)
-    (run-on state "Server 1")
-    (let [vg (get-content state :remote1 0)]
-      (core/rez state :corp vg)
-      (card-ability state :corp vg 0)
-      (card-ability state :corp vg 0) ; only need the run to exist for test, just pretending the Runner has broken all subs on 2 ice
-      (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
-      (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
-      (run-successful state)
-      (prompt-choice-partial :runner "Pay") ; pay to trash
-      (take-credits state :runner 3)
-      (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn"))))
+    (new-game (default-corp ["Warroid Tracker"])
+              (default-runner ["Corroder" "Dyson Mem Chip"]))
+    (play-from-hand state :corp "Warroid Tracker" "New remote")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 10)
+    (play-from-hand state :runner "Corroder")
+    (play-from-hand state :runner "Dyson Mem Chip")
+    (let [war (get-content state :remote1 0)
+          cor (get-program state 0)
+          mem (get-hardware state 0)]
+      (core/rez state :corp war)
+      (run-empty-server state "Server 1")
+      (prompt-choice-partial :runner "Pay")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
+      (prompt-select :runner cor)
+      (prompt-select :runner mem)
+      (is (= 2 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards"))))
