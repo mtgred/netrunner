@@ -876,9 +876,14 @@
                                  :choices {:req #(and (is-type? % "Agenda")
                                                       (= (:agendapoints %) (get-counters (get-card state card) :power))
                                                       (in-hand? %))}
-                                 :msg (msg "move " (:title target) " to score area")
+                                 :msg (msg "add " (:title target) " to score area")
+                                 :async true
                                  :effect (req (wait-for (as-agenda state :corp target (:agendapoints target))
-                                                        (clear-wait-prompt state :runner)))}
+                                                        (let [latest (find-latest state target)]
+                                                          (when-let [events (:events (card-def latest))]
+                                                            (register-events state side events latest))
+                                                          (clear-wait-prompt state :runner)
+                                                          (effect-completed state side eid))))}
                                 card nil))}]
     :events {:corp-turn-begins {:effect (effect (add-counter card :power 1))}}}
 
