@@ -476,7 +476,7 @@
       (is (not-empty (get-hardware state)) "Hijacked Router is installed")
       (is (not (find-card "Hijacked Router" (:discard (get-runner)))) "Hijacked Router was not trashed")
       (is (= 8 (:credit (get-corp))) "Corp has not lost 3 credits")))
-  (testing "Credit gain on server creation"
+  (testing "Credit loss on server creation"
     (do-game
       (new-game (default-corp ["Elective Upgrade"])
                 (default-runner ["Hijacked Router"]))
