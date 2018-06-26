@@ -31,6 +31,15 @@
    {:events {:jack-out {:effect (effect (gain-credits 1))
                         :msg "gain 1 [Credits]"}}}
 
+   "Bankroll"
+   {:implementation "Bankroll will trigger automatically, use \"/counter credit X\" if you want to not place a credit."
+    :events {:successful-run {:effect (effect (add-counter card :credit 1)
+                                              (system-msg "places 1 [Credit] on Bankroll."))}}
+    :abilities [{:label "[Trash]: Take all credits from Bankroll."
+                 :effect (effect (gain-credits :runner (get-counters card :credit))
+                                 (trash card {:cause :ability-cost})
+                                 (system-msg "trashes Bankroll and takes all credits from it."))}]}
+
    "Bishop"
    {:abilities [{:cost [:click 1]
                  :effect (req (let [b (get-card state card)
