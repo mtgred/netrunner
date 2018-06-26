@@ -380,8 +380,7 @@
       (play-and-score state "Broad Daylight")
       (prompt-choice :corp "Yes")
       (is (= 2 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
-      (is (= 2 (get-counters (get-scored state :corp 2) :agenda)) "Should gain 2 agenda counters")
-      ))
+      (is (= 2 (get-counters (get-scored state :corp 2) :agenda)) "Should gain 2 agenda counters")))
   (testing "deal damage"
     (do-game
       (new-game (default-corp ["Broad Daylight"])
