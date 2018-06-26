@@ -99,7 +99,6 @@
         runner-identity (get-in @state [:runner :identity])]
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
-    ;(swap! game-states assoc gameid state)
     (let [side :corp]
       (wait-for (trigger-event-sync state side :pre-start-game)
                 (let [side :runner]
