@@ -796,6 +796,37 @@
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
                                           (use-mu (:memoryunits target)))}}}
 
+   "Paragon"
+   {:in-play [:memory 1]
+    :events {:successful-run
+             {:once :per-turn
+              :async true
+              :effect (effect
+                        (show-wait-prompt :corp "Runner to decide if they will use Paragon")
+                        (continue-ability
+                          {:optional
+                           {:player :runner
+                            :prompt "Use Paragon?"
+                            :yes-ability
+                            {:msg "gain 1 [Credit] and look at the top card of Stack"
+                             :effect (effect
+                                       (gain-credits :runner 1)
+                                       (continue-ability
+                                         {:player :runner
+                                          :optional
+                                          {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
+                                           :yes-ability
+                                           {:msg "add the top card of Stack to the bottom"
+                                            :effect (effect (move :runner (first (:deck runner)) :deck)
+                                                            (clear-wait-prompt :corp)
+                                                            (effect-completed eid))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                                        (effect-completed eid))}}}
+                                         card nil))}
+                            :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                         (effect-completed eid))}}}
+                          card nil))}}}
+
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
     :interactions {:prevent [{:type #{:meat}
