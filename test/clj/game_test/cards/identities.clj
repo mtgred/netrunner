@@ -129,6 +129,25 @@
       (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "1 card in archives"))))
 
+(deftest alice-merchant:-clan-agitator
+  ;; Alice Merchant
+  (do-game
+    (new-game (default-corp [;"Hostile Takeover"
+                             (qty "Hedge Fund" 3)])
+              (make-deck "Alice Merchant: Clan Agitator"
+                         ["Security Testing"]))
+    ; (trash-from-hand state :corp "Hostile Takeover")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Security Testing")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "Archives")
+    (run-empty-server state "Archives")
+    (prompt-choice :runner "Alice Merchant: Clan Agitator")
+    (prompt-card :corp (find-card "Hedge Fund" (:hand (get-corp))))
+    (is (= 1 (-> (get-corp) :discard count)) "Alice ability should trash 1 card from HQ")
+    (is (-> (get-corp) :discard first :seen not) "Discarded card should be facedown when access is replaced")))
+
 (deftest andromeda:-dispossessed-ristie
   ;; Andromeda - 9 card starting hand, 1 link
   (testing "Basic test"
