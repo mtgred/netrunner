@@ -88,9 +88,9 @@
                                                      (game.core/run eid serv nil card))}
                        :no-ability {:async true
                                     :effect (req (clear-wait-prompt state :corp)
-                                                    (as-agenda state :corp eid (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
+                                                 (as-agenda state :corp eid (some #(when (= (:cid card) (:cid %)) %) (:discard corp)) 1))
                                     :msg "add it to their score area as an agenda worth 1 agenda point"}}}
-                    card nil)))}
+                     card nil)))}
 
    "Anonymous Tip"
    {:msg "draw 3 cards"
@@ -1175,7 +1175,8 @@
                                                               (doseq [c leftover]
                                                                 (move state side c :rfg))
                                                               (system-msg state side (str "removes " (count leftover) " copies of " (:title target) " from the game"))))
-                                                          (effect-completed state side eid))))} card nil))}
+                                                          (effect-completed state side eid))))}
+                                      card nil))}
 
    "Restoring Face"
    {:async true

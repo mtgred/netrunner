@@ -1325,6 +1325,20 @@
       (core/rez state :corp jackson)
       (is (= 1 (count (:discard (get-corp)))) "Card discarded to rez Jackson - Hacktivist active"))))
 
+(deftest high-stakes-job
+  ;; High Stakes Job - run on server with at least 1 piece of unrezzed ice, gains 12 credits if successful
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["High-Stakes Job"]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 1)
+    (is (= 6 (:credit (get-runner))) "Runner starts with 6 credits")
+    (play-from-hand state :runner "High-Stakes Job")
+    (prompt-choice :runner "HQ")
+    (run-successful state)
+    (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))
+
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
   (do-game
@@ -1815,6 +1829,20 @@
     (run-successful state)
     (is (zero? (count (:discard (get-runner)))))
     (is (= 6 (count (:rfg (get-runner)))))))
+
+(deftest peace-in-our-time
+  ;; Peace in Our Time - runner gains 10, corp gains 5. No runs allowed during turn.
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Peace in Our Time"]))
+    (take-credits state :corp)
+    (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
+    (is (= 5 (:credit (get-runner))) "Runner starts with 5 credits")
+    (play-from-hand state :runner "Peace in Our Time")
+    (is (= 13 (:credit (get-corp))) "Corp gains 5 credits")
+    (is (= 14 (:credit (get-runner))) "Runner gains 10 credits")
+    (run-on state "HQ")
+    (is (not (:run @state)) "Not allowed to make a run")))
 
 (deftest political-graffiti
   ;; Political Graffiti - swapping with Turntable works / purging viruses restores points
