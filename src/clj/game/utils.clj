@@ -64,9 +64,17 @@
   [card property value]
   (let [cv (property card)]
     (cond
-      (or (keyword? cv) (and (string? value) (string? cv))) (= value cv)
-      (and (keyword? value) (string? cv)) (= value (keyword (.toLowerCase cv)))
-      :else (= value cv))))
+      (or (keyword? cv)
+          (and (string? value)
+               (string? cv)))
+      (= value cv)
+
+      (and (keyword? value)
+           (string? cv))
+      (= value (keyword (.toLowerCase cv)))
+
+      :else
+      (= value cv))))
 
 (defn zone
   "Associate the specified zone to each item in the collection.
