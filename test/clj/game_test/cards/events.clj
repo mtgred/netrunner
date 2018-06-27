@@ -1486,6 +1486,29 @@
     (run-successful state)
     (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
 
+(deftest insight
+  ;; Insight
+  (do-game
+    (new-game (default-corp ["Caprice Nisei" "Elizabeth Mills" 
+                            "Jackson Howard" "Director Haas"])
+            (default-runner ["Insight"]))
+    (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (is (zero? (count (:hand (get-corp)))))
+    (is (= 4 (count (:deck (get-corp)))))
+    (play-from-hand state :runner "Insight")
+    (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner is waiting for Corp to reorder")
+    (prompt-card :corp (find-card "Director Haas" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Elizabeth Mills" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+    (prompt-choice :corp "Done")
+    (is (not= :waiting (-> (get-runner) :prompt first :prompt-type)) "Waiting prompt done")
+    (is (= "Caprice Nisei" (:title (nth (:deck (get-corp)) 0))))
+    (is (= "Jackson Howard" (:title (nth (:deck (get-corp)) 1))))
+    (is (= "Elizabeth Mills" (:title (nth (:deck (get-corp)) 2))))
+    (is (= "Director Haas" (:title (nth (:deck (get-corp)) 3))))))
+
 (deftest interdiction
   ;; Corp cannot rez non-ice cards during runner's turn
   (do-game
