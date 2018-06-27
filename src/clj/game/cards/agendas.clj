@@ -299,11 +299,11 @@
      {:prompt "Take 1 bad publicity?"
       :choices ["Yes" "No"]
       :async true
-      :effect (req (when (= target "Yes")
+      :effect (req (if (= target "Yes")
                      (wait-for (gain-bad-publicity state :corp 1)
                                (system-msg state :corp "used Broad Daylight to take 1 bad publicity")
-                               (add-counters state side card eid)))
-                (add-counters state side card eid))
+                               (add-counters state side card eid))
+                     (add-counters state side card eid)))
       :abilities [{:cost [:click 1] :counter-cost [:agenda 1]
                    :async true
                    :label "Do 2 meat damage"
