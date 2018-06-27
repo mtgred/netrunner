@@ -1326,6 +1326,18 @@
     :effect (req (as-agenda state :runner eid (first (:play-area runner)) 1))
     :msg "add it to their score area as an agenda worth 1 agenda point"}
 
+   "Office Supplies"
+   {:play-cost-bonus (req [:credit (- (:link runner 0))])
+    :effect (effect (continue-ability
+                      {:prompt "Gain 4 [Credits] or draw 4 cards?"
+                       :choices ["Gain 4 [Credits]" "Draw 4 cards"]
+                       :effect (req (cond
+                                      (= target "Gain 4 [Credits]")
+                                      (gain-credits state :runner 4)
+                                      (= target "Draw 4 cards")
+                                      (draw state :runner 4)))}
+                      card nil))}
+
    "On the Lam"
    {:req (req (some #(is-type? % "Resource") (all-active-installed state :runner)))
     :prompt "Choose a resource to host On the Lam"
