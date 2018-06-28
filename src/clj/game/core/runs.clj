@@ -664,6 +664,15 @@
       hosted-cards
       (concat hosted-cards (get-all-hosted hosted-cards)))))
 
+(def single-access-rd
+  (req (wait-for (trigger-event-sync state side :pre-access :rd)
+                 (let [total-cards (access-count state side :rd-access)]
+                   (when (:run @state)
+                     (swap! state assoc-in [:run :did-access] true)
+                     (swap! state assoc-in [:runner :register :accessed-cards] true))
+                   (doseq [c (take total-cards (:deck corp))] ;TODO: see if bacterial programming messes with this
+                     (wait-for (access-card state side c "an unseen card")))
+                   (when (:run @state) (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))))
 
 (defmulti cards-to-access
   "Gets the list of cards to access for the server"
