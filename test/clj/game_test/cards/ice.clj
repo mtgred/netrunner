@@ -1350,8 +1350,9 @@
           (dotimes [_ 5]
             (prompt-choice :runner "Card from deck")
             (prompt-choice :runner "No action"))
+          (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards before jack out")
           (run-jack-out state)
-          (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards total"))))))
+          (is (= (+ credits 10) (:credit (get-corp))) "Corp should only gain money once"))))))
 
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run
