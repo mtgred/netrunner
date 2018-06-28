@@ -32,13 +32,15 @@
                         :msg "gain 1 [Credits]"}}}
 
    "Bankroll"
-   {:implementation "Bankroll will trigger automatically, use \"/counter credit X\" if you want to not place a credit."
+   {:implementation "Bankroll gains credits automatically."
     :events {:successful-run {:effect (effect (add-counter card :credit 1)
                                               (system-msg "places 1 [Credit] on Bankroll."))}}
     :abilities [{:label "[Trash]: Take all credits from Bankroll."
-                 :effect (effect (gain-credits :runner (get-counters card :credit))
-                                 (trash card {:cause :ability-cost})
-                                 (system-msg "trashes Bankroll and takes all credits from it."))}]}
+                 :async true
+                 :effect (req (let [credits-on-bankroll (get-counters card :credit)]
+                                (wait-for (trash state :runner card {:cause :ability-cost})
+                                          (gain-credits state :runner credits-on-bankroll)
+                                          (system-msg state :runner "trashes Bankroll and takes all credits from it."))))}]}
 
    "Bishop"
    {:abilities [{:cost [:click 1]
