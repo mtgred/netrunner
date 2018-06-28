@@ -1544,6 +1544,30 @@
                  (doseq [c (-> @state :runner :temp-nvram)]
                    (host state side (get-in @state [:runner :identity]) c {:facedown true}))))}
 
+   "Reboot"
+   (letfn [(install-cards [state side eid card to-install]
+             (if (empty? to-install)
+               (do
+                 (move state side (find-latest state card) :rfg)
+                 (effect-completed state side eid))
+               (let [f (first to-install)]
+                 (system-msg state :runner (str "uses Reboot to install " (card-str state f) " facedown"))
+                 (wait-for (runner-install state :runner f {:facedown true :no-msg true})
+                           (install-cards state side eid card (rest to-install))))))]
+     {:req (req archives-runnable)
+      :effect (effect
+                (run :archives
+                     {:req (req (= target :archives))
+                      :replace-access
+                      {:prompt "Choose up to five cards to install"
+                       :choices {:max 5
+                                 :req #(and (in-discard? %) (= (:side %) "Runner") (not= (:cid %) (:cid card)))}
+                       :async true
+                       :cancel-effect (req (move state side (find-latest state card) :rfg)
+                                           (effect-completed state side eid))
+                       :effect (req (install-cards state side eid card targets))}}
+                     card))})
+
    "Recon"
    (run-event)
 

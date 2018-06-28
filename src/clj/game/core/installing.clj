@@ -399,7 +399,7 @@
   Params include extra-cost, no-cost, host-card, facedown and custom-message."
   ([state side card] (runner-install state side (make-eid state) card nil))
   ([state side card params] (runner-install state side (make-eid state) card params))
-  ([state side eid card {:keys [host-card facedown no-mu] :as params}]
+  ([state side eid card {:keys [host-card facedown no-mu no-msg] :as params}]
    (if (and (empty? (get-in @state [side :locked (-> card :zone first)]))
             (not (install-locked? state :runner)))
      (if-let [hosting (and (not host-card) (not facedown) (:hosting (card-def card)))]
@@ -422,7 +422,8 @@
                                         (update! state side c)
                                         (card-init state side c {:resolve-effect false
                                                                  :init-data true}))]
-                   (runner-install-message state side (:title card) cost-str params)
+                   (when-not no-msg
+                     (runner-install-message state side (:title card) cost-str params))
                    (play-sfx state side "install-runner")
                    (when (and (is-type? card "Program")
                               (not facedown)

@@ -2073,6 +2073,30 @@
                            (play-from-hand state :runner "Akamatsu Mem Chip"))
           "Discount not applied for 2nd install"))))
 
+(deftest reboot
+  ;; Reboot - run on Archives, install 5 cards from head facedown
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Reboot" "Sure Gamble" "Paperclip" "Clot"]))
+    (take-credits state :corp)
+    (trash-from-hand state :runner "Sure Gamble")
+    (trash-from-hand state :runner "Paperclip")
+    (trash-from-hand state :runner "Clot")
+    (is (empty? (core/all-installed state :runner)) "Runner starts with no installed cards")
+    (is (= 3 (count (:discard (get-runner)))) "Runner starts with 3 cards in trash")
+    (is (empty? (:rfg (get-runner))) "Runner starts with no discarded cards")
+    (play-from-hand state :runner "Reboot")
+    (run-successful state)
+    (prompt-choice-partial :runner "Replacement")
+    (prompt-select :runner (find-card "Sure Gamble" (:discard (get-runner))))
+    (prompt-select :runner (find-card "Paperclip" (:discard (get-runner))))
+    (prompt-select :runner (find-card "Clot" (:discard (get-runner))))
+    (prompt-choice-partial :runner "Done")
+    (is (= 3 (count (filter :facedown (core/all-installed state :runner)))) "Runner has 3 facedown cards")
+    (is (= 3 (count (core/all-installed state :runner))) "Runner has no other cards installed")
+    (is (empty? (:discard (get-runner))) "Runner has empty trash")
+    (is (= 1 (count (:rfg (get-runner)))) "Runner has 1 card in RFG")))
+
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
   (do-game
