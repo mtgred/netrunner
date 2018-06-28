@@ -1322,6 +1322,7 @@
         (is (= "Quandary" (:title (second (:deck (get-corp))))))
         (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
         (card-subroutine state :corp shiro 1)
+        (prompt-choice :runner "Card from deck")
         (is (= (:cid (first (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
         (prompt-choice :runner "No action")
@@ -1347,6 +1348,7 @@
           (card-subroutine state :corp shiro 1)
           (is (= 3 (-> @state :run :access-bonus)) "Should access an additional 3 cards")
           (dotimes [_ 5]
+            (prompt-choice :runner "Card from deck")
             (prompt-choice :runner "No action"))
           (run-jack-out state)
           (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards total"))))))

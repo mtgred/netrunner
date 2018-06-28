@@ -554,6 +554,13 @@
                           :title
                           already-accessed))
 
+(defn access-helper-rd
+  "This is a helper for cards to invoke R&D access without knowing how to use the full access method. See Mind's Eye."
+  [state from-rd already-accessed]
+  (access-helper-hq-or-rd state :rd "deck" from-rd
+                          (fn [already-accessed] (some #(when-not (already-accessed %) %)
+                                                       (-> @state :corp :deck)))
+                          :title already-accessed))
 
 (defn- get-archives-accessible [state]
   ;; only include agendas and cards with an :access ability whose :req is true
@@ -664,15 +671,31 @@
       hosted-cards
       (concat hosted-cards (get-all-hosted hosted-cards)))))
 
+;; (def single-access-rd
+;;   "Accesses a card from R&D without accessing the root. Applies any bonuses (e.g. R&D Interface)."
+;;   (req (wait-for (trigger-event-sync state side :pre-access :rd)
+;;                  (let [total-cards (access-count state side :rd-access)]
+;;                    (when (:run @state)
+;;                      (swap! state assoc-in [:run :did-access] true)
+;;                      (swap! state assoc-in [:runner :register :accessed-cards] true))
+;;                    (defn- access-n [n i]
+;;                      "Helper function for accessing n cards from r-d. i is next card to access"
+;;                      (if (> n 0)
+;;                        (wait-for (access-card state side (nth (:deck corp) i) "an unseen card")
+;;                                  (access-n (dec n) (+ i 1)))
+;;                        (when (:run @state) (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))
+;;                    (access-n total-cards 0)))))
+
 (def single-access-rd
+  "Accesses a card from R&D without accessing the root. Applies any bonuses (e.g. R&D Interface)."
   (req (wait-for (trigger-event-sync state side :pre-access :rd)
                  (let [total-cards (access-count state side :rd-access)]
-                   (when (:run @state)
-                     (swap! state assoc-in [:run :did-access] true)
-                     (swap! state assoc-in [:runner :register :accessed-cards] true))
-                   (doseq [c (take total-cards (:deck corp))] ;TODO: see if bacterial programming messes with this
-                     (wait-for (access-card state side c "an unseen card")))
-                   (when (:run @state) (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))))
+                   (continue-ability
+                    state :runner
+                    (access-helper-rd
+                     state total-cards
+                     (set (get-in @state [:corp :servers :rd :content])))
+                    card nil)))))
 
 (defmulti cards-to-access
   "Gets the list of cards to access for the server"

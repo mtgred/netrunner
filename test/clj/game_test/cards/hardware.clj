@@ -694,35 +694,31 @@
 
 (deftest minds-eye
   ;; Mind's Eye - Gain power tokens on R&D runs, and for 3 tokens and a click, access the top card of R&D
-  (do-game
-   (new-game (default-corp [(qty "Jackson Howard" 2)])
-             (default-runner ["Mind's Eye" "R&D Interface" "Aeneas Informant"]))
-   
-   (dotimes [_ 2]
-     (core/move state :corp (find-card "Jackson Howard" (:hand (get-corp))) :deck))
-   (take-credits state :corp)
-   (core/gain state :runner :credit 10 :click 20)
-   (play-from-hand state :runner "Mind's Eye")
-   (let [eye (get-hardware state 0)]
-     (is (= 0 (get-counters (refresh eye) :power)) "0 counters on install")
-     (dotimes [_ 3]
-       (run-empty-server state :rd)
-       (prompt-choice :runner "No action"))
-     (is (= 3 (get-counters (refresh eye) :power)) "3 counters after 3 runs")
-     (play-from-hand state :runner "R&D Interface")
-     (play-from-hand state :runner "Aeneas Informant")
-   
-     (card-ability state :runner (refresh eye) 0)
-     (let [num-creds (:credit (get-runner))]
-       (prompt-choice :runner "No action")
-
-       ;; todo: these two lines must be transposed, but they shouldn't 
-       (prompt-choice :runner "Yes")    ;Aeneas
-       (prompt-choice :runner "No action")
+  (testing "Interaction with RDI + Aeneas"
+    (do-game
+     (new-game (default-corp [(qty "Jackson Howard" 2)])
+               (default-runner ["Mind's Eye" "R&D Interface" "Aeneas Informant"]))
+     (dotimes [_ 2]
+       (core/move state :corp (find-card "Jackson Howard" (:hand (get-corp))) :deck))
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10 :click 20)
+     (play-from-hand state :runner "Mind's Eye")
+     (let [eye (get-hardware state 0)]
+       (is (= 0 (get-counters (refresh eye) :power)) "0 counters on install")
+       (dotimes [_ 3]
+         (run-empty-server state :rd)
+         (prompt-choice :runner "No action"))
+       (is (= 3 (get-counters (refresh eye) :power)) "3 counters after 3 runs")
+       (play-from-hand state :runner "R&D Interface")
+       (play-from-hand state :runner "Aeneas Informant")
        
-       (prompt-choice :runner "Yes")    ;Aeneas
-       
-       (is (= (+ num-creds 2) (:credit (get-runner))) "Runner has gained 2 from Aeneas")))))
+       (card-ability state :runner (refresh eye) 0)
+       (let [num-creds (:credit (get-runner))]
+         (dotimes [_ 2]
+           (prompt-choice :runner "Card from deck")
+           (prompt-choice :runner "No action")
+           (prompt-choice :runner "Yes")) ;Aeneas
+         (is (= (+ num-creds 2) (:credit (get-runner))) "Runner has gained 2 from Aeneas"))))))
 
 (deftest net-ready-eyes
   ;; Net-Ready Eyes
