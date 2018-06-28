@@ -124,8 +124,8 @@
                                  :player :corp
                                  :choices (req (:hand corp))
                                  :msg "force the Corp to trash 1 card from HQ"
-                                 :effect (effect (clear-wait-prompt :runner)
-                                                 (trash :corp eid (assoc target :seen false) nil))}
+                                 :effect (effect (trash :corp target)
+                                                 (clear-wait-prompt :runner))}
                                card nil))}}}
 
    "Andromeda: Dispossessed Ristie"

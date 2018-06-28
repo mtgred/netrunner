@@ -132,8 +132,7 @@
 (deftest alice-merchant:-clan-agitator
   ;; Alice Merchant
   (do-game
-    (new-game (default-corp [;"Hostile Takeover"
-                             (qty "Hedge Fund" 3)])
+    (new-game (default-corp)
               (make-deck "Alice Merchant: Clan Agitator"
                          ["Security Testing"]))
     ; (trash-from-hand state :corp "Hostile Takeover")
