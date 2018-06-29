@@ -1103,6 +1103,32 @@
       (is (= 3 (get-counters (refresh odu) :advancement)))
       (is (= 6 (get-counters (refresh eni) :advancement))))))
 
+(deftest peeping-tom
+  ;;Peeping Tom - Counts # of chosen card type in Runner grip
+  (do-game
+    (new-game (default-corp ["Peeping Tom"])
+              (default-runner [(qty "Sure Gamble" 5)]))
+    (play-from-hand state :corp "Peeping Tom" "HQ")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (let [tom (get-ice state :hq 0)]
+      (core/rez state :corp (refresh tom))
+      (card-ability state :corp tom 0)
+      (prompt-choice :corp "Hardware")
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
+          "Revealed Runner grip")
+      (is (last-log-contains? state "0") "Correctly counted Hardware in Runner grip")
+      (card-ability state :corp tom 0)
+      (prompt-choice :corp "Event")
+      (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (is (= 4 (:tag (get-runner))) "Tag ability sucessful")
+      (card-side-ability state :runner tom 0)
+      (is (not (:run @state)) "Run ended"))))
+
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
   (do-game
