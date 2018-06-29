@@ -890,6 +890,38 @@
                                 (trigger-event state side :ice-subtype-changed ice)))}]
     :events {:run-ends nil}}
 
+   "Saraswati Mnemonics: Endless Exploration"
+   (letfn [(install-card [chosen]
+                        {:prompt "Select a remote server"
+                         :choices (req (conj (vec (get-remote-names state)) "New remote"))
+                         :async true
+                         :effect (req (corp-install state side (assoc chosen :advance-counter 1) target)
+                                      (effect-completed state side eid)
+                                      (let [tgtcid (:cid chosen)]
+                                        (register-turn-flag! state side
+                                                             card :can-rez
+                                                             (fn [state side card]
+                                                               (if (= (:cid card) tgtcid)
+                                                                 ((constantly false) (toast state :corp "Cannot rez due to Saraswati Mnemonics: Endless Exploration." "warning"))
+                                                                 true)))
+                                        (register-turn-flag! state side
+                                                             card :can-score
+                                                             (fn [state side card]
+                                                               (if (and (= (:cid card) tgtcid)
+                                                                        (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
+                                                                 ((constantly false) (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
+                                                                 true)))))})]
+   {:abilities [{:async true
+                 :label "[Click], 1 [Credits]: Install a card from HQ in a remote server, then place 1 advancement token on it. You cannot score or rez that card until your next turn begins."
+                 :cost [:click 1 :credit 1]
+                 :prompt "Select a card to install from HQ"
+                 :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
+                                      (= (:side %) "Corp")
+                                      (in-hand? %))}
+                 :msg (msg "install a card in a remote server and place 1 advancement token on it")
+                 :effect (effect (continue-ability (install-card target) card nil))
+                 }]})
+
    "Seidr Laboratories: Destiny Defined"
    {:implementation "Manually triggered"
     :abilities [{:req (req (:run @state))
