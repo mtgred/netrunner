@@ -796,6 +796,30 @@
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
                                           (use-mu (:memoryunits target)))}}}
 
+   "Patchwork"
+   (letfn [(patchwork-discount [cost-type bonus-fn]
+             {:async true
+              :req (req (and (not (get-in @state [:per-turn (:cid card)])) ; manual once-per-turn check
+                             (= "Runner" (:side target))
+                             ;; The card being installed/played is still in the hand; we therefore need at least 2
+                             ;; cards for this effect to make sense.
+                             (< 1 (count (:hand runner)))))
+              :effect (req (let [playing target]
+                             (continue-ability
+                               state side
+                               {:prompt (str "Trash a card to lower the " cost-type " cost of " (:title playing) " by 2 [Credits]?")
+                                :choices {:req #(and (in-hand? %)
+                                                     (= "Runner" (:side %)))}
+                                :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
+                                          (:title playing) " by 2 [Credits]")
+                                :effect (req (trash state side card {:unpreventable true})
+                                             (bonus-fn state side [:credit -2])
+                                             (swap! state assoc-in [:per-turn (:cid card)] true))
+                                :cancel-effect (effect (effect-completed eid))}
+                               card nil)))})]
+     {:events {:pre-play-instant (patchwork-discount "play" play-cost-bonus)
+               :pre-install (patchwork-discount "install" install-cost-bonus)}})
+
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
     :interactions {:prevent [{:type #{:meat}

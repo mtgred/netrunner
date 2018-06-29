@@ -805,6 +805,36 @@
       (prompt-choice-partial :runner "No")
       (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run"))))
 
+(deftest patchwork
+  (testing "Play event"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Patchwork" (qty "Sure Gamble" 4)]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 4)
+      (play-from-hand state :runner "Patchwork")
+      (play-from-hand state :runner "Sure Gamble")
+      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
+      (is (empty? (:discard (get-runner))) "Sure Gamble is not in heap yet")
+      (prompt-select :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      (is (= 11 (:credit (get-runner))) "Runner was only charge 3 credits to play Sure Gamble")
+      (is (= 2 (count (:discard (get-runner)))) "2 cards now in heap")
+      (play-from-hand state :runner "Sure Gamble")
+      (is (= 15 (:credit (get-runner))) "Patchwork is once-per-turn")))
+
+  (testing "Install a card"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Patchwork" (qty "Cyberfeeder" 4)]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 4)
+      (play-from-hand state :runner "Patchwork")
+      (play-from-hand state :runner "Cyberfeeder")
+      (is (= 5 (:credit (get-runner))) "Runner has not been charged credits yet")
+      (is (empty? (:discard (get-runner))) "Cyberfeeder is not in heap yet")
+      (prompt-select :runner (find-card "Cyberfeeder" (:hand (get-runner))))
+      (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder"))))
+
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage
   (do-game
