@@ -799,26 +799,37 @@
    "Patchwork"
    (letfn [(patchwork-discount [cost-type bonus-fn]
              {:async true
-              :req (req (and (not (get-in @state [:per-turn (:cid card)])) ; manual once-per-turn check
-                             (= "Runner" (:side target))
+              :req (req (and (= "Runner" (:side target))
                              ;; The card being installed/played is still in the hand; we therefore need at least 2
                              ;; cards for this effect to make sense.
-                             (< 1 (count (:hand runner)))))
+                             (< 0 (count (remove (partial same-card? target) (:hand runner))))))
               :effect (req (let [playing target]
                              (continue-ability
                                state side
-                               {:prompt (str "Trash a card to lower the " cost-type " cost of " (:title playing) " by 2 [Credits]?")
+                               {:prompt (str "Trash a card to lower the " cost-type " cost of " (:title playing) " by 2 [Credits].")
                                 :choices {:req #(and (in-hand? %)
-                                                     (= "Runner" (:side %)))}
+                                                     (= "Runner" (:side %))
+                                                     (not (same-card? % playing)))}
                                 :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
                                           (:title playing) " by 2 [Credits]")
-                                :effect (req (trash state side card {:unpreventable true})
+                                :effect (req (trash state side target {:unpreventable true})
                                              (bonus-fn state side [:credit -2])
-                                             (swap! state assoc-in [:per-turn (:cid card)] true))
+                                             (unregister-events state side card))
                                 :cancel-effect (effect (effect-completed eid))}
                                card nil)))})]
-     {:events {:pre-play-instant (patchwork-discount "play" play-cost-bonus)
-               :pre-install (patchwork-discount "install" install-cost-bonus)}})
+     {:in-play [:memory 1]
+      :implementation "Click Patchwork before playing/installing a card."
+      :abilities [{:once :per-turn
+                   :effect (effect (register-events {:pre-play-instant (patchwork-discount "play" play-cost-bonus)
+                                                     :pre-install (patchwork-discount "install" install-cost-bonus)
+                                                     :runner-turn-ends {:effect (effect (unregister-events card))}
+                                                     :corp-turn-ends {:effect (effect (unregister-events card))}}
+                                                    card)
+                             (toast "Your next card played will trigger Patchwork." "info"))}]
+      :events {:pre-play-instant nil
+               :pre-install nil
+               :runner-turn-ends nil
+               :corp-turn-ends nil}})
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]
