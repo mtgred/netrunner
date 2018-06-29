@@ -895,8 +895,7 @@
                         {:prompt "Select a remote server"
                          :choices (req (conj (vec (get-remote-names state)) "New remote"))
                          :async true
-                         :effect (req
-                                      (let [tgtcid (:cid chosen)]
+                         :effect (req (let [tgtcid (:cid chosen)]
                                         (register-turn-flag! state side
                                                              card :can-rez
                                                              (fn [state side card]
