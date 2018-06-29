@@ -895,8 +895,7 @@
                         {:prompt "Select a remote server"
                          :choices (req (conj (vec (get-remote-names state)) "New remote"))
                          :async true
-                         :effect (req (corp-install state side (assoc chosen :advance-counter 1) target)
-                                      (effect-completed state side eid)
+                         :effect (req
                                       (let [tgtcid (:cid chosen)]
                                         (register-turn-flag! state side
                                                              card :can-rez
@@ -910,7 +909,8 @@
                                                                (if (and (= (:cid card) tgtcid)
                                                                         (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
                                                                  ((constantly false) (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
-                                                                 true)))))})]
+                                                                 true))))
+                                      (corp-install state side (assoc chosen :advance-counter 1) target))})]
    {:abilities [{:async true
                  :label "[Click], 1 [Credits]: Install a card from HQ in a remote server, then place 1 advancement token on it. You cannot score or rez that card until your next turn begins."
                  :cost [:click 1 :credit 1]
