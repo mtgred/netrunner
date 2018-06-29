@@ -1387,4 +1387,25 @@
         (is (= 1 (count (:hand (get-runner)))) "Zer0 has not yet resolved because Ribs prompt is open")
         (prompt-select :runner (first (:hand (get-runner))))
         (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
-        (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards")))))
+        (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards"))))
+  (testing "With Respirocytes"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Zer0" "Titanium Ribs" "Respirocytes"(qty "Sure Gamble" 7)]))
+      (starting-hand state :runner ["Zer0" "Titanium Ribs" "Respirocytes" "Sure Gamble" "Sure Gamble" "Sure Gamble" "Sure Gamble"])
+      (take-credits state :corp)
+      (play-from-hand state :runner "Zer0")
+      (play-from-hand state :runner "Titanium Ribs")
+      (prompt-select :runner (second (:hand (get-runner))))
+      (prompt-select :runner (nth (:hand (get-runner)) 2))
+      (play-from-hand state :runner "Respirocytes")
+      (prompt-select :runner (find-card "Sure Gamble" (:hand (get-runner))))
+      ;; Now 1 Gamble in hand
+      (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
+      (let  [z (get-hardware state 0)]
+        (card-ability state :runner z 0)
+        (is (= 3 (:credit (get-runner))) "Zer0 has not yet resolved because Ribs prompt is open")
+        (is (= 1 (count (:hand (get-runner)))) "Zer0 has not yet resolved because Ribs prompt is open")
+        (prompt-select :runner (first (:hand (get-runner))))
+        (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
+        (is (= 3 (count (:hand (get-runner)))) "Runner has 3 cards")))))
