@@ -911,7 +911,7 @@
                                                                  true))))
                                       (corp-install state side (assoc chosen :advance-counter 1) target))})]
    {:abilities [{:async true
-                 :label "[Click], 1 [Credits]: Install a card from HQ in a remote server, then place 1 advancement token on it. You cannot score or rez that card until your next turn begins."
+                 :label "Install a card from HQ"
                  :cost [:click 1 :credit 1]
                  :prompt "Select a card to install from HQ"
                  :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
