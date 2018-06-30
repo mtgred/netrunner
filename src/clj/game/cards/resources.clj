@@ -1946,8 +1946,10 @@
                              :silent (req true)}
              :pre-access {:req (req (and (pos? (get-in @state [:run :ttw-bonus] 0))
                                          (:run @state)
-                                         (not (#{:hq :rd} target))))
-                          :effect (effect (access-bonus (- (get-in @state [:run :ttw-bonus] 0))))
+                                         ; (not (#{:hq :rd} target))
+                                         ))
+                          :effect (req (when (#{:hq :rd} target)
+                                         (access-bonus state side (get-in @state [:run :ttw-bonus] 0))))
                           :silent (req true)}
              :run-ends {:effect (req (when (and (not (:agenda-stolen card))
                                                 (#{:hq :rd} target))
@@ -1959,7 +1961,8 @@
                  :req (req (:run @state))
                  :msg "access 1 additional card from HQ or R&D for the remainder of the run"
                  :effect  (req (swap! state update-in [:run :ttw-bonus] (fnil inc 0))
-                               (access-bonus state side 1))}]}
+                               ; (access-bonus state side 1)
+                               )}]}
 
    "Theophilius Bagbiter"
    {:effect (req (lose-credits state :runner :all)

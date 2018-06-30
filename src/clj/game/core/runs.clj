@@ -690,19 +690,21 @@
   ([state side eid server] (do-access state side eid server nil))
   ([state side eid server {:keys [hq-root-only] :as args}]
    (wait-for (trigger-event-sync state side :pre-access (first server))
-             (do (let [cards (cards-to-access state side server)
-                       cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
-                       n (count cards)]
-                   ;; Make `:did-access` true when reaching the access step (no replacement)
-                   (when (:run @state) (swap! state assoc-in [:run :did-access] true))
-                   (if (or (zero? n)
-                           (safe-zero? (get-in @state [:run :max-access])))
-                     (system-msg state side "accessed no cards during the run")
-                     (do (swap! state assoc-in [:runner :register :accessed-cards] true)
-                         (wait-for (resolve-ability state side (choose-access cards server) nil nil)
-                                   (effect-completed state side eid))
-                         (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
-                 (handle-end-run state side)))))
+             (let [cards (cards-to-access state side server)
+                   cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
+                   n (count cards)]
+               ;; Make `:did-access` true when reaching the access step (no replacement)
+               (when (:run @state)
+                 (swap! state assoc-in [:run :did-access] true))
+               (prn "do-access" (first server) n)
+               (if (or (zero? n)
+                       (safe-zero? (get-in @state [:run :max-access])))
+                 (do (system-msg state side "accessed no cards during the run")
+                     (effect-completed state side eid))
+                 (do (swap! state assoc-in [:runner :register :accessed-cards] true)
+                     (wait-for (resolve-ability state side (choose-access cards server) nil nil)
+                               (effect-completed state side eid))
+                     (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0))))))))
 
 (defn replace-access
   "Replaces the standard access routine with the :replace-access effect of the card"
@@ -849,33 +851,39 @@
     :else
     (effect-completed state side eid)))
 
+(defn run-cleanup-2
+  [state side run]
+  (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+  (swap! state assoc-in [:runner :run-credit] 0)
+  (swap! state assoc :run nil)
+  (update-all-ice state side)
+  (swap! state dissoc :access)
+  (clear-run-register! state)
+  (trigger-run-end-events state side (:eid run) run))
+
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
   (let [run (:run @state)
-        server (:server run)
-        eid (:eid run)]
+        server (-> run :server first)]
     (swap! state assoc-in [:run :ending] true)
-    (trigger-event state side :run-ends (first server))
+    (trigger-event state side :run-ends server)
     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
       (update-breaker-strength state side p))
     (let [run-effect (get-in @state [:run :run-effect])]
-      (when-let [end-run-effect (:end-run run-effect)]
-        (resolve-ability state side end-run-effect (:card run-effect) [(first server)])))
-    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-    (swap! state assoc-in [:runner :run-credit] 0)
-    (swap! state assoc :run nil)
-    (update-all-ice state side)
-    (swap! state dissoc :access)
-    (clear-run-register! state)
-    (trigger-run-end-events state side eid run)))
+      (if-let [end-run-effect (:end-run run-effect)]
+        (wait-for (resolve-ability state side end-run-effect (:card run-effect) [server])
+                  (run-cleanup-2 state side run))
+        (run-cleanup-2 state side run)
+))))
 
 (defn handle-end-run
   "Initiate run resolution."
   [state side]
-  (if-not (and (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
+  (if-not (and (empty? (get-in @state [:runner :prompt]))
+               (empty? (get-in @state [:corp :prompt])))
     (swap! state assoc-in [:run :ended] true)
     (run-cleanup state side)))
 
