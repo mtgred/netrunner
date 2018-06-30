@@ -692,7 +692,8 @@
 
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
-  (do-game
+  (testing "Single draws"
+    (do-game
     (new-game (default-corp ["Jinja City Grid" (qty "Vanilla" 3) (qty "Ice Wall" 3)])
               (default-runner))
     (starting-hand state :corp ["Jinja City Grid"])
@@ -708,6 +709,20 @@
     (prompt-choice :corp (-> (get-corp) :prompt first :choices first))
     (is (= 3 (:credit (get-corp))) "Charged to install ice")
     (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
+  (testing "Drawing non-ice on runner's turn"
+    (do-game
+      (new-game
+        (default-corp ["Jinja City Grid" (qty "Hedge Fund" 3)])
+        (make-deck "Laramy Fisk: Savvy Investor" ["Eden Shard"]))
+      (starting-hand state :corp ["Jinja City Grid"])
+      (play-from-hand state :corp "Jinja City Grid" "HQ")
+      (core/rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (run-empty-server state :rd)
+      (prompt-choice :runner "Yes")
+      (is (= :bogus (-> (get-corp) :prompt first :prompt-type)) "Corp has a bogus prompt to fake out the runner")
+      (prompt-choice :corp "Carry on!")
+      (prompt-choice :runner "No action"))))
 
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program

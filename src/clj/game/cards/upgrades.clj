@@ -469,21 +469,38 @@
                                                               ices grids)
                                                  card nil)))}))]
 
-     {:events {:corp-draw {:req (req (some #(is-type? % "ICE")
-                                           (:most-recent-drawn corp-reg)))
-                           ;; THIS IS A HACK: it prevents multiple Jinja from showing the "choose a server to install into" sequence
+     {:events {:corp-draw {;; THIS IS A HACK: it prevents multiple Jinja from showing the "choose a server to install into" sequence
                            :once :per-turn
                            :once-key :jinja-city-grid-draw
                            :async true
-                           :effect (req (let [ices (filter #(and (is-type? % "ICE")
-                                                                 (get-card state %))
-                                                           (:most-recent-drawn corp-reg))
-                                              grids (filterv #(= "Jinja City Grid" (:title %))
-                                                             (all-active-installed state :corp))]
-                                          (if (not-empty ices)
-                                            (continue-ability state side (choose-ice ices grids) card nil)
-                                            (effect-completed state side eid))))}
-               :post-corp-draw {:effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw]))}}})
+                           :effect (req (cond
+                                          ;; If ice were drawn, do the full routine.
+                                          (some #(is-type? % "ICE") (:most-recent-drawn corp-reg))
+                                          (let [ices (filter #(and (is-type? % "ICE")
+                                                                   (get-card state %))
+                                                             (:most-recent-drawn corp-reg))
+                                                grids (filterv #(= "Jinja City Grid" (:title %))
+                                                               (all-active-installed state :corp))]
+                                            (when (= :runner (:active-player @state))
+                                              (show-wait-prompt state :runner "Corp to resolve Jinja City Grid"))
+                                            (if (not-empty ices)
+                                              (continue-ability state side (choose-ice ices grids) card nil)
+                                              (effect-completed state side eid)))
+                                          ;; else, if it's the runner's turn, show a fake prompt so the runner can't infer that ice weren't drawn
+                                          (= :runner (:active-player @state))
+                                          (continue-ability
+                                            state :corp
+                                            {:prompt "This prompt is being shown so the Runner can't infer that you did not draw any ice"
+                                             :choices ["Carry on!"]
+                                             :prompt-type :bogus
+                                             :effect nil}
+                                            card nil)
+                                          ;; otherwise, we done
+                                          :else
+                                          (effect-completed state side eid)))}
+               :post-corp-draw {:effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw])
+                                             (when (= :runner (:active-player @state))
+                                               (clear-wait-prompt state :runner)))}}})
 
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
