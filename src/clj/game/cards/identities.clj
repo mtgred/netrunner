@@ -909,7 +909,7 @@
                                                                         (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
                                                                  ((constantly false) (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
                                                                  true))))
-                                      (corp-install state side (assoc chosen :advance-counter 1) target))})]
+                                      (corp-install state side eid (assoc chosen :advance-counter 1) target nil))})]
    {:abilities [{:async true
                  :label "Install a card from HQ"
                  :cost [:click 1 :credit 1]
