@@ -867,6 +867,47 @@
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")
       (is (not (:run @state)) "Run finished"))))
 
+(deftest divide-and-conquer
+  ;; Divide and Conquer
+  ; (testing "Basic test"
+  ;   (do-game
+  ;     (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
+  ;               (default-runner ["Divide and Conquer"]))
+  ;     (starting-hand state :corp ["Hostile Takeover" "Ice Wall" "Ice Wall"])
+  ;     (trash-from-hand state :corp "Ice Wall")
+  ;     (trash-from-hand state :corp "Ice Wall")
+  ;     (take-credits state :corp)
+  ;     (play-from-hand state :runner "Divide and Conquer")
+  ;     (run-successful state)
+  ;     (prompt-choice :runner "No action")
+  ;     (prompt-choice :runner "Steal")))
+  (testing "with The Turning Wheel counters"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
+                (default-runner ["Divide and Conquer" "The Turning Wheel"]))
+      (starting-hand state :corp (concat ["Hostile Takeover"]
+                                         (repeat 4 "Ice Wall")))
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (core/add-counter state :runner ttw :power 4)
+        (play-from-hand state :runner "Divide and Conquer")
+        (card-ability state :runner ttw 0)
+        (card-ability state :runner ttw 0)
+        (run-successful state)
+        (prompt-choice :runner "Card from deck")
+        (prn (prompt? :corp))
+        (prn (prompt? :runner))
+        (prompt-choice :runner "No action")
+        (prn (prompt? :corp))
+        (prn (prompt? :runner))
+        (prompt-choice :runner "Steal")
+        (prn (prompt? :corp))
+        (prn (prompt? :runner))
+        ))))
+
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
   (testing "Basic test"

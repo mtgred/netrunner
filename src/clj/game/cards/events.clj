@@ -501,6 +501,24 @@
                                              (gain-credits :runner (five-or-all corp)))})}
                       card))}
 
+   "Divide and Conquer"
+   {:req (req archives-runnable)
+    :makes-run true
+    :async true
+    :effect
+    (effect (run :archives
+                 {:end-run
+                  {:async true
+                   :effect
+                   (req (swap! state assoc-in [:run :no-root] true)
+                        (wait-for (do-access state side [:rd])
+                                  (prn "rd")
+                                  (wait-for (do-access state side [:hq])
+                                            (prn "hq")
+                                            (swap! state dissoc [:run :no-root])
+                                            (effect-completed state side eid))))}}
+                 card))}
+
    "Drive By"
    {:choices {:req #(let [topmost (get-nested-host %)]
                      (and (is-remote? (second (:zone topmost)))
