@@ -658,7 +658,11 @@
                       archives-count (+ (count (-> @state :corp :discard)) (count (-> @state :corp :servers :archives :content)))]
                   (if (not-empty cards)
                     (if (= 1 archives-count)
-                      (access-card state side eid (first cards))
+                      ;; (wait-for (access-card state side accessed)
+                      ;;           (if (must-continue? already-accessed)
+                      ;;             (next-access state side eid already-accessed card)
+                      ;;             (effect-completed state side eid)))
+                      (wait-for (access-card state side eid (first cards)))
                       (continue-ability state side (access-helper-archives state archives-count
                                                                            (if no-root
                                                                              (set (get-in @state [:corp :servers :archives :content]))
@@ -713,12 +717,8 @@
                  (do (swap! state assoc-in [:runner :register :accessed-cards] true)
                      (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
                                (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
-                                         (effect-completed state side eid))
-                               
-                               ;; 
-                               )
-                     (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
-             )))
+                                         (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0))
+                                         (effect-completed state side eid)))))))))
 
 (defn replace-access
   "Replaces the standard access routine with the :replace-access effect of the card"
