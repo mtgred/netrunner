@@ -611,12 +611,12 @@
    "Mwanza City Grid"
    (let [gain-creds-and-clear {:req (req (= (:from-server target) (second (:zone card))))
                                :silent (req true)
-                               :effect (req (let [cnt (:cards-accessed run) ; TODO: this fails if the run featured multiple access phases (e.g. shiro sub firing)
-                                                  total (* 2 cnt)]
+                               :effect (req (let [cnt (:cards-accessed run)]
                                               (access-bonus state :runner -3)
-                                              (gain-credits state :corp total)
-                                              (system-msg state :corp
-                                                          (str "gains " total " [Credits] from Mwanza City Grid"))))}
+                                              (if cnt ; TODO: this fails if the run featured multiple access phases (e.g. shiro sub firing)
+                                                (gain-credits state :corp (* 2 cnt))
+                                                (system-msg state :corp
+                                                            (str "gains " (* 2 cnt) " [Credits] from Mwanza City Grid")))))}
          boost-access-by-3 {:req (req (= target (second (:zone card))))
                             :msg "force the Runner to access 3 additional cards"
                             :effect (req (access-bonus state :runner 3))}]
