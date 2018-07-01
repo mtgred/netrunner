@@ -514,6 +514,7 @@
    {:effect (effect (add-counter card :power 3))
     :abilities [{:cost [:click 1]
                  :counter-cost [:power 1]
+                 :async true
                  :choices {:req #(and (is-type? % "Agenda")
                                       (or (in-hand? %)
                                           (in-discard? %)))}
@@ -525,8 +526,9 @@
                  :effect (req (gain-credits state :corp (get-agenda-points state :corp target))
                               (move state :corp target :deck)
                               (shuffle! state :corp :deck)
-                              (when (zero? (get-counters card :power))
-                                (trash state side card)))}]}
+                              (if (zero? (get-counters card :power))
+                                (trash state side eid card nil)
+                                (effect-completed state side eid)))}]}
 
    "Early Premiere"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
