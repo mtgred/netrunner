@@ -1942,7 +1942,8 @@
                                     (do (clear-wait-prompt state :runner)
                                         (effect-completed state side eid)))))}
                   {:label "Force the Runner to access the top card of R&D"
-                   :effect single-access-rd}]}
+                   :async true
+                   :effect (req (do-access state :runner eid [:rd] {:no-root true}))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"

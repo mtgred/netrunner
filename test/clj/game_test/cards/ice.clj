@@ -1326,6 +1326,7 @@
         (is (= (:cid (first (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
         (prompt-choice :runner "No action")
+        (prompt-choice :runner "Card from deck")
         (is (= (:cid (second (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
   (testing "with Mwanza City Grid, should access additional 3 cards"

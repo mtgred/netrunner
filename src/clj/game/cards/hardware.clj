@@ -675,9 +675,9 @@
                               :effect (effect (add-counter card :power 1))}}
     :abilities [{:async true
                  :cost [:click 1]
-                 ;; :counter-cost [:power 3]
+                 :counter-cost [:power 3]
                  :msg "access the top card of R&D"
-                 :effect single-access-rd}]}
+                 :effect (req (do-access state side eid [:rd] {:no-root true}))}]}
 
    "Mirror"
    {:in-play [:memory 2]

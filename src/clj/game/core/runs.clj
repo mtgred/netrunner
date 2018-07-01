@@ -406,7 +406,7 @@
 ;;; Methods for allowing user-controlled multi-access in servers.
 
 ;; choose-access implements game prompts allowing the runner to choose the order of access.
-(defmulti choose-access (fn [cards server] (get-server-type (first server))))
+(defmulti choose-access (fn [cards server args] (get-server-type (first server))))
 
 (defn access-helper-remote [cards]
   {:prompt "Click a card to access it. You must access all cards in this server."
@@ -418,7 +418,7 @@
                                               card nil)
                             (effect-completed state side eid))))})
 
-(defmethod choose-access :remote [cards server]
+(defmethod choose-access :remote [cards server args]
   {:async true
    :effect (req (if (and (>= 1 (count cards))
                          (not (any-flag-fn? state :runner :slow-remote-access true
@@ -509,7 +509,7 @@
                                     card nil)
                                   (effect-completed state side eid))))))}))
 
-(defmethod choose-access :rd [cards server]
+(defmethod choose-access :rd [cards server {:keys [no-root] :as args}]
   {:async true
    :effect (req (if (pos? (count cards))
                   (if (= 1 (count cards))
@@ -521,11 +521,14 @@
                                                      (fn [already-accessed] (first (drop-while already-accessed
                                                                                                (-> @state :corp :deck))))
                                                      (fn [_] "an unseen card")
-                                                     #{})
+                                                     (if no-root
+                                                       (do
+                                                         (set (get-in @state [:corp :servers :rd :content])))
+                                                       #{}))
                                         card nil)))
                   (effect-completed state side eid)))})
 
-(defmethod choose-access :hq [cards server]
+(defmethod choose-access :hq [cards server args]
   {:async true
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards))
@@ -554,13 +557,6 @@
                           :title
                           already-accessed))
 
-(defn access-helper-rd
-  "This is a helper for cards to invoke R&D access without knowing how to use the full access method. See Mind's Eye."
-  [state from-rd already-accessed]
-  (access-helper-hq-or-rd state :rd "deck" from-rd
-                          (fn [already-accessed] (some #(when-not (already-accessed %) %)
-                                                       (-> @state :corp :deck)))
-                          :title already-accessed))
 
 (defn- get-archives-accessible [state]
   ;; only include agendas and cards with an :access ability whose :req is true
@@ -671,31 +667,6 @@
       hosted-cards
       (concat hosted-cards (get-all-hosted hosted-cards)))))
 
-;; (def single-access-rd
-;;   "Accesses a card from R&D without accessing the root. Applies any bonuses (e.g. R&D Interface)."
-;;   (req (wait-for (trigger-event-sync state side :pre-access :rd)
-;;                  (let [total-cards (access-count state side :rd-access)]
-;;                    (when (:run @state)
-;;                      (swap! state assoc-in [:run :did-access] true)
-;;                      (swap! state assoc-in [:runner :register :accessed-cards] true))
-;;                    (defn- access-n [n i]
-;;                      "Helper function for accessing n cards from r-d. i is next card to access"
-;;                      (if (> n 0)
-;;                        (wait-for (access-card state side (nth (:deck corp) i) "an unseen card")
-;;                                  (access-n (dec n) (+ i 1)))
-;;                        (when (:run @state) (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))
-;;                    (access-n total-cards 0)))))
-
-(def single-access-rd
-  "Accesses a card from R&D without accessing the root. Applies any bonuses (e.g. R&D Interface)."
-  (req (wait-for (trigger-event-sync state side :pre-access :rd)
-                 (let [total-cards (access-count state side :rd-access)]
-                   (continue-ability
-                    state :runner
-                    (access-helper-rd
-                     state total-cards
-                     (set (get-in @state [:corp :servers :rd :content])))
-                    card nil)))))
 
 (defmulti cards-to-access
   "Gets the list of cards to access for the server"
@@ -719,22 +690,31 @@
 
 (defn do-access
   "Starts the access routines for the run's server."
+  ([state side server] (do-access state side (make-eid state) server))
   ([state side eid server] (do-access state side eid server nil))
-  ([state side eid server {:keys [hq-root-only] :as args}]
+  ([state side eid server {:keys [hq-root-only no-root] :as args}]
    (wait-for (trigger-event-sync state side :pre-access (first server))
-             (do (let [cards (cards-to-access state side server)
-                       cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
-                       n (count cards)]
-                   ;; Make `:did-access` true when reaching the access step (no replacement)
-                   (when (:run @state) (swap! state assoc-in [:run :did-access] true))
-                   (if (or (zero? n)
-                           (safe-zero? (get-in @state [:run :max-access])))
-                     (system-msg state side "accessed no cards during the run")
-                     (do (swap! state assoc-in [:runner :register :accessed-cards] true)
-                         (wait-for (resolve-ability state side (choose-access cards server) nil nil)
-                                   (effect-completed state side eid))
-                         (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
-                 (handle-end-run state side)))))
+             (let [cards (cards-to-access state side server)
+                   cards (if hq-root-only (remove #(= '[:hand] (:zone %)) cards) cards)
+                   cards (if no-root (remove #(or (= '[:servers :rd :content] (:zone %))
+                                                  (= '[:servers :hq :content] (:zone %))) cards) cards)
+                   n (count cards)]
+               ;; Make `:did-access` true when reaching the access step (no replacement)
+               (when (:run @state)
+                 (swap! state assoc-in [:run :did-access] true))
+               (if (or (zero? n)
+                       (safe-zero? (get-in @state [:run :max-access])))
+                 (do (system-msg state side "accessed no cards during the run")
+                     (effect-completed state side eid))
+                 (do (swap! state assoc-in [:runner :register :accessed-cards] true)
+                     (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
+                               (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
+                                         (effect-completed state side eid))
+                               
+                               ;; 
+                               )
+                     (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0)))))
+             )))
 
 (defn replace-access
   "Replaces the standard access routine with the :replace-access effect of the card"
@@ -881,33 +861,39 @@
     :else
     (effect-completed state side eid)))
 
+(defn run-cleanup-2
+  [state side run]
+  (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+  (swap! state assoc-in [:runner :run-credit] 0)
+  (swap! state assoc :run nil)
+  (update-all-ice state side)
+  (swap! state dissoc :access)
+  (clear-run-register! state)
+  (trigger-run-end-events state side (:eid run) run))
+
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
   (let [run (:run @state)
-        server (:server run)
-        eid (:eid run)]
+        server (-> run :server first)]
     (swap! state assoc-in [:run :ending] true)
-    (trigger-event state side :run-ends (first server))
+    (trigger-event state side :run-ends server)
     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
       (update-breaker-strength state side p))
     (let [run-effect (get-in @state [:run :run-effect])]
-      (when-let [end-run-effect (:end-run run-effect)]
-        (resolve-ability state side end-run-effect (:card run-effect) [(first server)])))
-    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-    (swap! state assoc-in [:runner :run-credit] 0)
-    (swap! state assoc :run nil)
-    (update-all-ice state side)
-    (swap! state dissoc :access)
-    (clear-run-register! state)
-    (trigger-run-end-events state side eid run)))
+      (if-let [end-run-effect (:end-run run-effect)]
+        (wait-for (resolve-ability state side end-run-effect (:card run-effect) [server])
+                  (run-cleanup-2 state side run))
+        (run-cleanup-2 state side run)
+))))
 
 (defn handle-end-run
   "Initiate run resolution."
   [state side]
-  (if-not (and (empty? (get-in @state [:runner :prompt])) (empty? (get-in @state [:corp :prompt])))
+  (if-not (and (empty? (get-in @state [:runner :prompt]))
+               (empty? (get-in @state [:corp :prompt])))
     (swap! state assoc-in [:run :ended] true)
     (run-cleanup state side)))
 
