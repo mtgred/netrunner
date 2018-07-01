@@ -510,6 +510,24 @@
                               :msg (msg "increase the install cost of " (:title target) " by " (get-counters card :power) " [Credits]")
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 
+   "Drudge Work"
+   {:effect (effect (add-counter card :power 3))
+    :abilities [{:cost [:click 1]
+                 :counter-cost [:power 1]
+                 :choices {:req #(and (is-type? % "Agenda")
+                                      (or (in-hand? %)
+                                          (in-discard? %)))}
+                 :msg (msg "reveal " (:title target)
+                           (let [target-agenda-points (get-agenda-points state :corp target)]
+                             (when (pos? target-agenda-points)
+                               (str ", gain " target-agenda-points " [Credits], ")))
+                           " and shuffle it into R&D")
+                 :effect (req (gain-credits state :corp (get-agenda-points state :corp target))
+                              (move state :corp target :deck)
+                              (shuffle! state :corp :deck)
+                              (when (zero? (get-counters card :power))
+                                (trash state side card)))}]}
+
    "Early Premiere"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :flags {:corp-phase-12 (req (some #(and (can-be-advanced? %)
