@@ -522,13 +522,12 @@
                                                                                                (-> @state :corp :deck))))
                                                      (fn [_] "an unseen card")
                                                      (if no-root
-                                                       (do
-                                                         (set (get-in @state [:corp :servers :rd :content])))
+                                                       (set (get-in @state [:corp :servers :rd :content]))
                                                        #{}))
                                         card nil)))
                   (effect-completed state side eid)))})
 
-(defmethod choose-access :hq [cards server args]
+(defmethod choose-access :hq [cards server {:keys [no-root] :as args}]
   {:async true
    :effect (req (if (pos? (count cards))
                   (if (and (= 1 (count cards))
@@ -543,7 +542,9 @@
                                                      (fn [already-accessed] (some #(when-not (already-accessed %) %)
                                                                                   (shuffle (-> @state :corp :hand))))
                                                      (fn [card] (:title card))
-                                                     #{})
+                                                     (if no-root
+                                                       (set (get-in @state [:corp :servers :hq :content]))
+                                                       #{}))
                                         card nil)))
                   (effect-completed state side eid)))})
 
@@ -651,14 +652,17 @@
                                   (next-access state side eid already-accessed card)
                                   (effect-completed state side eid))))))}))
 
-(defmethod choose-access :archives [cards server]
+(defmethod choose-access :archives [cards server {:keys [no-root] :as args}]
   {:async true
    :effect (req (let [cards (concat (get-archives-accessible state) (-> @state :corp :servers :archives :content))
                       archives-count (+ (count (-> @state :corp :discard)) (count (-> @state :corp :servers :archives :content)))]
                   (if (not-empty cards)
                     (if (= 1 archives-count)
                       (access-card state side eid (first cards))
-                      (continue-ability state side (access-helper-archives state archives-count #{}) card nil))
+                      (continue-ability state side (access-helper-archives state archives-count
+                                                                           (if no-root
+                                                                             (set (get-in @state [:corp :servers :archives :content]))
+                                                                             #{})) card nil))
                     (effect-completed state side eid))))})
 
 (defn get-all-hosted [hosts]

@@ -847,7 +847,7 @@
                            (wait-for (trigger-event-sync state side :pre-access :archives)
                                      (resolve-ability state :runner
                                                       (choose-access (get-in @state [:corp :discard])
-                                                                     '(:archives)) card nil))))
+                                                                     '(:archives) {:no-root true}) card nil))))
 
    "Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"
