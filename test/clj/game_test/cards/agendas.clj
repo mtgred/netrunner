@@ -1223,6 +1223,32 @@
       (prompt-choice :runner 0)
       (is (= 2 (:tag (get-runner)))))))
 
+(deftest jumon
+  ;; Jumon
+  (do-game
+    (new-game (default-corp ["Jumon" "Ice Wall" "Crisium Grid" "Project Atlas"])
+              (default-runner))
+    (play-and-score state "Jumon")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Project Atlas" "Server 2")
+    (core/end-turn state :corp nil)
+    (let [pa (get-content state :remote2 0)
+          iw (get-ice state :remote2 0)]
+      (is (zero? (get-counters (refresh pa) :advancement)) "Project Atlas starts with no counters")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall starts with no counters")
+      (prompt-select :corp iw)
+      (prompt-select :corp pa)
+      (is (= 2 (get-counters (refresh pa) :advancement)) "Project Atlas gains 2 counters")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall doesn't gain any counters")
+      (core/start-turn state :runner nil)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Crisium Grid" "Server 2")
+      (let [cg (get-content state :remote2 1)]
+        (is (zero? (get-counters (refresh cg) :advancement)) "Crisium Grid starts with no counters")
+        (core/end-turn state :corp nil)
+        (prompt-select :corp cg)
+        (is (= 2 (get-counters (refresh cg) :advancement)) "Crisium Grid gains 2 counters")))))
+
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers
   (do-game
