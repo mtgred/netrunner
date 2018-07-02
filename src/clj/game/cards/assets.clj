@@ -1142,6 +1142,22 @@
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
     :effect (effect (set-prop card :rec-counter (:link runner)))}
 
+   "Neurostasis"
+   (advance-ambush 3 {:req (req (pos? (get-counters (get-card state card) :advancement)))
+                      :effect (req (let [cnt (get-counters (get-card state card) :advancement)]
+                                     (continue-ability
+                                       state side
+                                       {:prompt (msg "Choose " (quantify cnt "installed card") " to shuffle into the stack")
+                                        :player :corp
+                                        :choices {:req #(and (installed? %)
+                                                             (= (:side %) "Runner"))
+                                                  :max cnt}
+                                        :msg (msg "shuffle " (join ", " (map :title targets)) " into the stack")
+                                        :effect (req (doseq [c targets]
+                                                       (move state :runner c :deck))
+                                                     (shuffle! state :runner :deck))}
+                                       card nil)))})
+
    "News Team"
    {:flags {:rd-reveal (req true)}
     :access {:msg (msg "force the Runner take 2 tags or add it to their score area as an agenda worth -1 agenda point")
