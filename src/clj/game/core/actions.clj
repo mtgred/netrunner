@@ -455,14 +455,7 @@
              points (get-agenda-points state :corp c)]
          (trigger-event-simult
            state :corp eid :agenda-scored
-           {:first-ability {:effect (req (when-let [current (first (get-in @state [:runner :current]))]
-                                           ;; TODO: Make this use remove-old-current
-                                           (system-say state side (str (:title current) " is trashed."))
-                                           ; This is to handle Employee Strike with damage IDs #2688
-                                           (when (:disable-id (card-def current))
-                                             (swap! state assoc-in [:corp :disable-id] true))
-                                           (trash state side current)))}
-            :card-ability (card-as-handler c)
+           {:card-ability (card-as-handler c)
             :after-active-player {:effect (req (let [c (get-card state c)
                                                      points (or (get-agenda-points state :corp c) points)]
                                                  (set-prop state :corp (get-card state moved-card) :advance-counter 0)
@@ -471,7 +464,14 @@
                                                  (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
                                                  (swap! state dissoc-in [:corp :disable-id])
                                                  (gain-agenda-point state :corp points)
-                                                 (play-sfx state side "agenda-score")))}}
+                                                 (play-sfx state side "agenda-score"))
+                                                 (when-let [current (first (get-in @state [:runner :current]))]
+                                                   ;; TODO: Make this use remove-old-current
+                                                   (system-say state side (str (:title current) " is trashed."))
+                                                   ; This is to handle Employee Strike with damage IDs #2688
+                                                   (when (:disable-id (card-def current))
+                                                     (swap! state assoc-in [:corp :disable-id] true))
+                                                   (trash state side current)))}}
            c))))))
 
 (defn no-action
