@@ -383,6 +383,25 @@
                                    :effect (req (if tagged
                                                   (damage state side eid :meat 1 {:card card})
                                                   (tag-runner state :runner eid 1)))}}}}}
+   
+   "Eavesdrop"
+    (let [new-sub {:label "[Eavesdrop]: Trace 3 - Give the runner 1 tag"}]
+      {:implementation "On encounter effect is manual"
+       :sub-effect {:label "Give the runner 1 tag"
+                   :delayed-completion true
+                   :trace {:base 3
+                           :successful {:msg "give the Runner 1 tag"
+                                        :delayed-completion true
+                                        :effect (effect (tag-runner :runner eid 1))}}}
+       :choices {:req #(and (ice? %)
+                            (installed? %))}
+       :msg (msg "give " (card-str state target {:visible false}) " additional text")
+       :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub)
+                    (update-ice-strength state side target)
+                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
+       :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+       :events {:rez {:req (req (= (:cid target) (:cid (:host card))))
+                      :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
 
    "Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
