@@ -19,7 +19,9 @@
            n (count ices)]
        ;; s is a keyword for the server, like :hq or :remote1
        (swap! state assoc :per-run nil
-              :run {:server s :position n :access-bonus 0
+              :run {:server s
+                    :position n
+                    :access-bonus 0
                     :run-effect (assoc run-effect :card card)
                     :eid eid})
        (gain-run-credits state side (+ (get-in @state [:corp :bad-publicity]) (get-in @state [:corp :has-bad-pub])))
@@ -501,7 +503,8 @@
                     :else
                     (let [accessed (some #(when (= (:title %) target) %) (get-root-content state))]
                       (wait-for (access-card state side accessed)
-                                (if (or (pos? amount) (< 1 (count (get-root-content state))))
+                                (if (or (pos? amount)
+                                        (< 1 (count (get-root-content state))))
                                   (continue-ability
                                     state side
                                     (access-helper-hq-or-rd state chosen-zone label amount select-fn title-fn
@@ -658,11 +661,13 @@
                       archives-count (+ (count (-> @state :corp :discard)) (count (-> @state :corp :servers :archives :content)))]
                   (if (not-empty cards)
                     (if (= 1 archives-count)
-                      (wait-for (access-card state side eid (first cards)))
-                      (continue-ability state side (access-helper-archives state archives-count
-                                                                           (if no-root
-                                                                             (set (get-in @state [:corp :servers :archives :content]))
-                                                                             #{})) card nil))
+                      (access-card state side eid (first cards))
+                      (continue-ability state side
+                                        (access-helper-archives state archives-count
+                                                                (if no-root
+                                                                  (set (get-in @state [:corp :servers :archives :content]))
+                                                                  #{}))
+                                        card nil))
                     (effect-completed state side eid))))})
 
 (defn get-all-hosted [hosts]
@@ -712,8 +717,8 @@
                      (effect-completed state side eid))
                  (do (swap! state assoc-in [:runner :register :accessed-cards] true)
                      (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
+                               (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0))
                                (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
-                                         (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0))
                                          (effect-completed state side eid)))))))))
 
 (defn replace-access
@@ -862,32 +867,32 @@
     (effect-completed state side eid)))
 
 (defn run-cleanup-2
-  [state side run]
-  (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
-  (swap! state assoc-in [:runner :run-credit] 0)
-  (swap! state assoc :run nil)
-  (update-all-ice state side)
-  (swap! state dissoc :access)
-  (clear-run-register! state)
-  (trigger-run-end-events state side (:eid run) run))
+  [state side]
+  (let [run (:run @state)]
+    (swap! state assoc-in [:runner :register :last-run] run)
+    (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))
+    (swap! state assoc-in [:runner :run-credit] 0)
+    (swap! state assoc :run nil)
+    (update-all-ice state side)
+    (swap! state dissoc :access)
+    (clear-run-register! state)
+    (trigger-run-end-events state side (:eid run) run)))
 
 (defn run-cleanup
   "Trigger appropriate events for the ending of a run."
   [state side]
-  (let [run (:run @state)
-        server (-> run :server first)]
+  (let [server (-> @state :run :server first)]
     (swap! state assoc-in [:run :ending] true)
     (trigger-event state side :run-ends server)
     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
       (update! state side (update-in (get-card state p) [:pump] dissoc :all-run))
-      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter ))
+      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
       (update-breaker-strength state side p))
     (let [run-effect (get-in @state [:run :run-effect])]
       (if-let [end-run-effect (:end-run run-effect)]
         (wait-for (resolve-ability state side end-run-effect (:card run-effect) [server])
-                  (run-cleanup-2 state side run))
-        (run-cleanup-2 state side run)
-))))
+                  (run-cleanup-2 state side))
+        (run-cleanup-2 state side)))))
 
 (defn handle-end-run
   "Initiate run resolution."

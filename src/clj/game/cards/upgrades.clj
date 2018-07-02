@@ -613,14 +613,13 @@
                                :silent (req true)
                                :effect (req (let [cnt (:cards-accessed run)]
                                               (access-bonus state :runner -3)
-                                              (if cnt ; TODO: this fails if the run featured multiple access phases (e.g. shiro sub firing)
+                                              (when cnt
                                                 (gain-credits state :corp (* 2 cnt))
                                                 (system-msg state :corp
                                                             (str "gains " (* 2 cnt) " [Credits] from Mwanza City Grid")))))}
          boost-access-by-3 {:req (req (= target (second (:zone card))))
                             :msg "force the Runner to access 3 additional cards"
                             :effect (req (access-bonus state :runner 3))}]
-
      {:install-req (req (filter #{"HQ" "R&D"} targets))
       :events {:pre-access boost-access-by-3
                :end-access-phase gain-creds-and-clear}
