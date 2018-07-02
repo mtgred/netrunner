@@ -1942,14 +1942,8 @@
                                     (do (clear-wait-prompt state :runner)
                                         (effect-completed state side eid)))))}
                   {:label "Force the Runner to access the top card of R&D"
-                   :effect (req (wait-for (trigger-event-sync state side :pre-access :rd)
-                                          (let [total-cards (access-count state side :rd-access)]
-                                            (swap! state assoc-in [:run :did-access] true)
-                                            (swap! state assoc-in [:runner :register :accessed-cards] true)
-                                            (doseq [c (take total-cards (:deck corp))]
-                                              (system-msg state :runner (str "accesses " (:title c)))
-                                              (access-card state side c))
-                                            (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
+                   :async true
+                   :effect (req (do-access state :runner eid [:rd] {:no-root true}))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"

@@ -847,7 +847,7 @@
                            (wait-for (trigger-event-sync state side :pre-access :archives)
                                      (resolve-ability state :runner
                                                       (choose-access (get-in @state [:corp :discard])
-                                                                     '(:archives)) card nil))))
+                                                                     '(:archives) {:no-root true}) card nil))))
 
    "Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"
@@ -1944,10 +1944,17 @@
    "The Turning Wheel"
    {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
                              :silent (req true)}
-             :pre-access {:req (req (and (pos? (get-in @state [:run :ttw-bonus] 0))
-                                         (:run @state)
-                                         (not (#{:hq :rd} target))))
-                          :effect (effect (access-bonus (- (get-in @state [:run :ttw-bonus] 0))))
+             :pre-access {:req (req (and (:run @state)
+                                         (pos? (get-in @state [:run :ttw-bonus] 0))))
+                          :effect (req (let [ttw-bonus (get-in @state [:run :ttw-bonus] 0)
+                                             deferred-bonus (get-in @state [:run :ttw-deferred-bonus] 0)]
+                                         (if (#{:hq :rd} target)
+                                           (when (pos? deferred-bonus)
+                                             (access-bonus state side ttw-bonus)
+                                             (swap! state assoc-in [:run :ttw-deferred-bonus] 0))
+                                           (when (zero? deferred-bonus)
+                                             (access-bonus state side (- ttw-bonus))
+                                             (swap! state assoc-in [:run :ttw-deferred-bonus] ttw-bonus)))))
                           :silent (req true)}
              :run-ends {:effect (req (when (and (not (:agenda-stolen card))
                                                 (#{:hq :rd} target))

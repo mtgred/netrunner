@@ -2536,7 +2536,7 @@
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (= 1 (-> @state :run :access-bonus)) "Runner should access 1 additional card")
         (run-successful state)
-        (is (zero? (-> @state :run :access-bonus)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ")))))
+        (is (zero? (-> (get-runner) :register :last-run :access-bonus)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool

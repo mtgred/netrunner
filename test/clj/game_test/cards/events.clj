@@ -867,6 +867,52 @@
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")
       (is (not (:run @state)) "Run finished"))))
 
+(deftest divide-and-conquer
+  ;; Divide and Conquer
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
+                (default-runner ["Divide and Conquer"]))
+      (starting-hand state :corp ["Hostile Takeover" "Ice Wall" "Ice Wall"])
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Divide and Conquer")
+      (run-successful state)
+      (prompt-choice :runner "No action")
+      (prompt-choice :runner "Steal")
+      (is (= 4 (-> (get-runner) :register :last-run :cards-accessed)) "Runner should access 2 cards in Archives, 1 in R&D, and 1 in HQ")))
+  (testing "with The Turning Wheel counters"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
+                (default-runner ["Divide and Conquer" "The Turning Wheel"]))
+      (starting-hand state :corp (concat ["Hostile Takeover"]
+                                         (repeat 4 "Ice Wall")))
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (core/add-counter state :runner ttw :power 4)
+        (play-from-hand state :runner "Divide and Conquer")
+        (card-ability state :runner ttw 0)
+        (card-ability state :runner ttw 0)
+        (run-successful state)
+        ;; Archives
+        (prompt-choice :runner "No action")
+        (prompt-choice :runner "No action")
+        ;; R&D
+        (dotimes [_ 3]
+          (prompt-choice :runner "Card from deck")
+          (prompt-choice :runner "No action"))
+        ;; HQ
+        (dotimes [_ 3]
+          (prompt-choice :runner "Card from hand")
+          (prompt-choice :runner (-> (prompt? :runner) :choices first)))
+        (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
+        (is (= 2 (-> (get-runner) :register :last-run :access-bonus)) "The Turning Wheel should provide 2 additional accesses")
+        (is (= 8 (-> (get-runner) :register :last-run :cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
+
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
   (testing "Basic test"
