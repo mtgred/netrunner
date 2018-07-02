@@ -1145,7 +1145,7 @@
     :abilities [{:counter-cost [:credit 1]
                  :msg "gain 1 [Credits] for trashing installed cards"
                  :async true
-                 :effect (req (gain-credits state :runner 1)
+                 :effect (req (take-credits state :runner 1)
                               (if (zero? (get-counters (get-card state card) :credit))
                                 (trash state :runner eid card {:unpreventable true})
                                 (effect-completed state :runner eid)))}]}
