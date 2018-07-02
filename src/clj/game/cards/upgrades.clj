@@ -490,7 +490,7 @@
                                           (= :runner (:active-player @state))
                                           (continue-ability
                                             state :corp
-                                            {:prompt "This prompt is being shown so the Runner can't infer that you did not draw any ice"
+                                            {:prompt "You did not draw any ice to use with Jinja City Grid"
                                              :choices ["Carry on!"]
                                              :prompt-type :bogus
                                              :effect nil}
