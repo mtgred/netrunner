@@ -385,9 +385,9 @@
                                                   (tag-runner state :runner eid 1)))}}}}}
    
    "Eavesdrop"
-    (let [new-sub {:label "[Eavesdrop]: Trace 3 - Give the runner 1 tag"}]
+    (let [new-sub {:label "[Eavesdrop]: Trace 3 - Give the Runner 1 tag"}]
       {:implementation "On encounter effect is manual"
-       :sub-effect {:label "Give the runner 1 tag"
+       :sub-effect {:label "Give the Runner 1 tag"
                    :delayed-completion true
                    :trace {:base 3
                            :successful {:msg "give the Runner 1 tag"
