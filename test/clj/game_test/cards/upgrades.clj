@@ -944,7 +944,6 @@
         (run-successful state)
         (prompt-choice :runner "Mwanza City Grid")
         (prompt-choice-partial :runner "Pay")
-        
         (dotimes [c 4]
           (prompt-choice :runner "Card from hand")
           (prompt-choice :runner "No action"))
