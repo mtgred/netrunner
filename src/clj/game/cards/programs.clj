@@ -40,7 +40,8 @@
                  :effect (req (let [credits-on-bankroll (get-counters card :credit)]
                                 (wait-for (trash state :runner card {:cause :ability-cost})
                                           (gain-credits state :runner credits-on-bankroll)
-                                          (system-msg state :runner "trashes Bankroll and takes all credits from it."))))}]}
+                                          (system-msg state :runner(str "trashes Bankroll and takes "
+                                                                        credits-on-bankroll " credits from it.")))))}]}
 
    "Bishop"
    {:abilities [{:cost [:click 1]
