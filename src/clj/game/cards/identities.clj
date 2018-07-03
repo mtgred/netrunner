@@ -667,7 +667,7 @@
      {:async true
       :interactive (req true)
       :req (req (and (is-central? (:server run))
-                     (first-event? state side :successful-run #(is-central? %))))
+                     (first-event? state side :successful-run is-central?)))
       :effect (effect (continue-ability
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
@@ -694,10 +694,9 @@
       :interactive (req true)
       :msg "draw 2 cards and take 1 tag"
       :req (req (and (is-central? (:server run))
-                     (first-event? state side :successful-run #(is-central? %))))
+                     (first-event? state side :successful-run is-central?)))
       :effect (req (wait-for (tag-runner state :runner 1)
-                             (draw state :runner 2)
-                             (effect-completed state :runner eid)))}}}
+                             (draw state :runner eid 2 nil)))}}}
 
    "Los: Data Hijacker"
    {:events {:rez {:once :per-turn
