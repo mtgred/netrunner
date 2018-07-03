@@ -24,6 +24,7 @@
 (def card-definitions
   {"Account Siphon"
    {:req (req hq-runnable)
+    :makes-run true
     :effect (effect (run :hq {:req (req (= target :hq))
                               :replace-access
                               {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
@@ -911,6 +912,7 @@
 
    "Hot Pursuit"
    {:req (req hq-runnable)
+    :makes-run true
     :effect (effect (run :hq {:req (req (= target :hq))
                               :successful-run {:async true
                                                :msg "gain 9 [Credits] and take 1 tag"
