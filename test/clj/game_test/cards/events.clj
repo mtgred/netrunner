@@ -2087,7 +2087,6 @@
     (is (empty? (:rfg (get-runner))) "Runner starts with no discarded cards")
     (play-from-hand state :runner "Reboot")
     (run-successful state)
-    (prompt-choice-partial :runner "Replacement")
     (prompt-select :runner (find-card "Sure Gamble" (:discard (get-runner))))
     (prompt-select :runner (find-card "Paperclip" (:discard (get-runner))))
     (prompt-select :runner (find-card "Clot" (:discard (get-runner))))
