@@ -1144,6 +1144,7 @@
 
    "Neurostasis"
    (advance-ambush 3 {:req (req (pos? (get-counters (get-card state card) :advancement)))
+                      :async true
                       :effect (req (let [cnt (get-counters (get-card state card) :advancement)]
                                      (continue-ability
                                        state side
