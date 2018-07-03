@@ -809,6 +809,7 @@
                             :prompt "Use Paragon?"
                             :yes-ability
                             {:msg "gain 1 [Credit] and look at the top card of Stack"
+                             :async true
                              :effect (effect
                                        (gain-credits :runner 1)
                                        (continue-ability
@@ -818,13 +819,10 @@
                                            :yes-ability
                                            {:msg "add the top card of Stack to the bottom"
                                             :effect (effect (move :runner (first (:deck runner)) :deck)
-                                                            (clear-wait-prompt :corp)
-                                                            (effect-completed eid))}
-                                           :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                                        (effect-completed eid))}}}
+                                                            (clear-wait-prompt :corp))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                                          card nil))}
-                            :no-ability {:effect (effect (clear-wait-prompt :corp)
-                                                         (effect-completed eid))}}}
+                            :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                           card nil))}}}
 
    "Plascrete Carapace"
