@@ -547,8 +547,8 @@
 
    "Kyuban"
    {:hosting {:req #(and (ice? %) (can-host? %))}
-    :events {:pass-ice {:req (req (= (:cid target) (:cid (:host card))))
-                        :effect (effect (gain-credits 2))}}}
+    :events {:pass-ice {:req (req (same-card? target (:host card)))
+                        :effect (effect (gain-credits :runner 2))}}}
 
    "Lamprey"
    {:events {:successful-run {:req (req (= target :hq)) :msg "force the Corp to lose 1 [Credits]"

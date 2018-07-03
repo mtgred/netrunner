@@ -516,7 +516,7 @@
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
 
 (deftest kyuban
-  (testing "Basic functionality: Gain 1 counter every Runner turn"
+  (testing "Gain creds when passing a piece of ice, both when rezzed and when unrezzed."
     (do-game
       (new-game (default-corp [(qty "Lockdown" 3)])
                 (default-runner [(qty "Kyuban" 1)]))
