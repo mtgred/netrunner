@@ -843,7 +843,7 @@
                       (req (trash state side card {:cause :ability-cost})
                            (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                            (when (:run @state)
-                             (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0)))
+                             (swap! state update-in [:run :cards-accessed :discard] (fnil #(+ % (count (:discard corp))) 0)))
                            (wait-for (trigger-event-sync state side :pre-access :archives)
                                      (resolve-ability state :runner
                                                       (choose-access (get-in @state [:corp :discard])
@@ -1457,6 +1457,12 @@
                  :msg "gain 1 [Credits] and draw 1 card"
                  :effect (effect (gain-credits 1)
                                  (draw))}]}
+
+   "Psych Mike"
+   {:events {:successful-run-ends
+             {:req (req (and (= [:rd] (:server target))
+                             (first-event? state side :successful-run-ends)))
+              :effect (effect (gain-credits :runner (total-cards-accessed target :deck)))}}}
 
    "Public Sympathy"
    {:in-play [:hand-size 2]}
