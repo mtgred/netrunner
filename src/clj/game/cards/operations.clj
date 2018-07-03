@@ -388,10 +388,9 @@
     (let [new-sub {:label "[Eavesdrop]: Trace 3 - Give the Runner 1 tag"}]
       {:implementation "On encounter effect is manual"
        :sub-effect {:label "Give the Runner 1 tag"
-                    :delayed-completion true
                     :trace {:base 3
                             :successful {:msg "give the Runner 1 tag"
-                                         :delayed-completion true
+                                         :async true
                                          :effect (effect (tag-runner :runner eid 1))}}}
        :choices {:req #(and (ice? %)
                             (installed? %))}
