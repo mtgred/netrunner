@@ -611,9 +611,9 @@
    "Mwanza City Grid"
    (let [gain-creds {:req (req (and installed
                                     this-server
-                                    (pos? (:cards-accessed run 0))))
+                                    (pos? (total-cards-accessed run))))
                      :silent (req true)
-                     :effect (req (let [cnt (:cards-accessed run)
+                     :effect (req (let [cnt (total-cards-accessed run)
                                         total (* 2 cnt)]
                                     (gain-credits state :corp total)
                                     (system-msg state :corp

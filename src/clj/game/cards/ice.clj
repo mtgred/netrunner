@@ -1948,8 +1948,7 @@
                                             (swap! state assoc-in [:runner :register :accessed-cards] true)
                                             (doseq [c (take total-cards (:deck corp))]
                                               (system-msg state :runner (str "accesses " (:title c)))
-                                              (access-card state side c))
-                                            (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
+                                              (access-card state side c)))))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"
