@@ -352,7 +352,8 @@
                  :effect (effect (mill :corp :runner 2))}]}
 
    "Georgia Emelyov"
-   {:events {:unsuccessful-run {:req (req (= (first (:server target)) (second (:zone card))))
+   {:events {:unsuccessful-run {:req (req (= (first (:server target))
+                                             (second (:zone card))))
                                 :async true
                                 :msg "do 1 net damage"
                                 :effect (effect (damage eid :net 1 {:card card}))}}
@@ -368,6 +369,31 @@
                                                    (unregister-events state side card)
                                                    (register-events state side (:events (card-def c)) c)))}
                                    card nil))}]}
+
+   "Giordano Memorial Field"
+   {:events
+    {:successful-run
+     {:interactive (req true)
+      :async true
+      :req (req this-server)
+      :effect (req (let [credits (:credit runner)
+                         cost (* 2 (count (:scored runner)))
+                         pay-str (str "Pay " cost " [Credits]")]
+                     (show-wait-prompt state :corp (str "Runner to pay " cost " [Credits]"))
+                     (continue-ability
+                       state :runner
+                       {:player :runner
+                        :async true
+                        :prompt (str pay-str " or end the run?")
+                        :choices (concat (when (>= credits cost)
+                                           [pay-str])
+                                         ["End the run"])
+                        :effect (req (clear-wait-prompt state :corp)
+                                     (if (= pay-str target)
+                                       (pay state :runner card :credit cost)
+                                       (end-run state side))
+                                     (effect-completed state side eid))}
+                       card nil)))}}}
 
    "Heinlein Grid"
    {:abilities [{:req (req this-server)
