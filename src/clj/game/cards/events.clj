@@ -1529,12 +1529,11 @@
                (lose state :runner :link (get-in @state [:runner :identity :baselink]))
 
                ;; Move the selected ID to [:runner :identity] and set the zone
-               (swap! state update-in [side :identity]
-                  (fn [x] (assoc (server-card (:title target) (get-in @state [:runner :user]))
-                            :zone [:identity])))
-
-               ;; enable-identity does not do everything that init-identity does
-               (init-identity state side (get-in @state [:runner :identity]))
+               (let [new-id (-> target :title server-card make-card (assoc :zone [:identity]))]
+                 (swap! state assoc-in [side :identity] new-id)
+                 ;; enable-identity does not do everything that init-identity does
+                 (init-identity state side new-id))
+               
                (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire
                 if their once per turn condition was met this turn before Rebirth was played.
                 Please adjust your game state manually for the rest of this turn if necessary")
