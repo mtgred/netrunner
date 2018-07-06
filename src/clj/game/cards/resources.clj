@@ -1984,8 +1984,7 @@
                                                               (system-msg state side "uses Thunder Art Gallery to install a card.")
                                                               (runner-install state side target)))}}}]
      {:events {:runner-lose-tag (assoc ability :req (req (= side :runner)))
-               :runner-prevent (assoc ability :req (req (seq (filter #(some #{:tag} %) targets))))
-               }})
+               :runner-prevent (assoc ability :req (req (seq (filter #(some #{:tag} %) targets))))}})
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
