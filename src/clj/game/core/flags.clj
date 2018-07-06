@@ -254,10 +254,12 @@
 
 (defn has-subtype?
   "Checks if the specified subtype is present in the card, ignoring case."
-  [{:keys [persistent subtype]} check-subtype]
-  ;; Check against "persistent subtypes" if they exist, otherwise just compare against normal subtypes
-  (when-let [card-subtypes (get persistent :subtype subtype)]
-    (includes? (lower-case card-subtypes) (lower-case check-subtype))))
+  [card subtype]
+  (letfn [(contains-sub? [card]
+            (when-let [subs (:subtype card)]
+              (includes? (lower-case subs) (lower-case subtype))))]
+    (or (contains-sub? card)
+        (contains-sub? (:persistent card)))))
 
 (defn can-host?
   "Checks if the specified card is able to host other cards"
