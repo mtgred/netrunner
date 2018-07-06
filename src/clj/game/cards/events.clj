@@ -1533,7 +1533,7 @@
                  (swap! state assoc-in [side :identity] new-id)
                  ;; enable-identity does not do everything that init-identity does
                  (init-identity state side new-id))
-               
+
                (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire
                 if their once per turn condition was met this turn before Rebirth was played.
                 Please adjust your game state manually for the rest of this turn if necessary")
