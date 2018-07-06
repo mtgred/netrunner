@@ -292,9 +292,10 @@
                              (is-type? % "Program")
                              (is-type? % "Resource"))
                          (in-hand? %))}
-    :effect (effect (install-cost-bonus [:credit -8])
-                    (runner-install target)
-                    (tag-runner 1))}
+    :async true
+    :effect (req (install-cost-bonus state :runner [:credit -8])
+                 (wait-for (runner-install state :runner target nil)
+                           (tag-runner state eid :runner 1)))}
 
    "Cyber Threat"
    {:prompt "Choose a server"
