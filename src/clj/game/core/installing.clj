@@ -347,25 +347,26 @@
 
 (defn runner-can-install?
   "Checks `runner-can-install-reason` if not true, toasts reason and returns false"
-  [state side card facedown]
-  (let [reason (runner-can-install-reason state side card facedown)
-        reason-toast #(do (toast state side % "warning") false)
-        title (:title card)]
-    (case reason
-      ;; pass on true value
-      true true
-      ;; failed unique check
-      :unique
-      (reason-toast (str "Cannot install a second copy of " title " since it is unique. Please trash currently"
-                         " installed copy first"))
-      ;; failed install lock check
-      :lock-install
-      (reason-toast (str "Unable to install " title " since installing is currently locked"))
-      ;; failed console check
-      :console
-      (reason-toast (str "Unable to install " title ": an installed console prevents the installation of a replacement"))
-      :req
-      (reason-toast (str "Installation requirements are not fulfilled for " title)))))
+  ([state side card] (runner-can-install? state side card false))
+  ([state side card facedown]
+   (let [reason (runner-can-install-reason state side card facedown)
+         reason-toast #(do (toast state side % "warning") false)
+         title (:title card)]
+     (case reason
+       ;; pass on true value
+       true true
+       ;; failed unique check
+       :unique
+       (reason-toast (str "Cannot install a second copy of " title " since it is unique. Please trash currently"
+                          " installed copy first"))
+       ;; failed install lock check
+       :lock-install
+       (reason-toast (str "Unable to install " title " since installing is currently locked"))
+       ;; failed console check
+       :console
+       (reason-toast (str "Unable to install " title ": an installed console prevents the installation of a replacement"))
+       :req
+       (reason-toast (str "Installation requirements are not fulfilled for " title))))))
 
 (defn- runner-get-cost
   "Get the total install cost for specified card"

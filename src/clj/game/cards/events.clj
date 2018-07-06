@@ -30,7 +30,7 @@
                                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
                                          " [Credits] and take 2 tags")
                                :async true
-                               :effect (req (wait-for (tag-runner state :runner 2)
+                               :effect (req (wait-for (gain-tags state :runner 2)
                                                       (do (gain-credits state :runner (* 2 (min 5 (:credit corp))))
                                                           (lose-credits state :corp (min 5 (:credit corp)))
                                                           (effect-completed state side eid))))}}
@@ -213,7 +213,7 @@
                                            (shuffle! :deck)
                                            (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target)
-                                           (tag-runner eid 1) )}} card))}
+                                           (gain-tags eid 1) )}} card))}
 
    "Cold Read"
    (let [end-effect {:prompt "Choose a program that was used during the run to trash "
@@ -294,7 +294,7 @@
                          (in-hand? %))}
     :effect (effect (install-cost-bonus [:credit -8])
                     (runner-install target)
-                    (tag-runner 1))}
+                    (gain-tags 1))}
 
    "Cyber Threat"
    {:prompt "Choose a server"
@@ -381,7 +381,7 @@
                :msg "gain 3 [Credits]"}
               {:effect (effect (draw 2))
                :msg "draw 2 cards"}
-              {:effect (effect (lose :tag 1))
+              {:effect (effect (lose-tags 1))
                :msg "remove 1 tag"}
               {:prompt "Select 1 piece of ice to expose"
                :msg "expose 1 ice and make a run"
@@ -1106,7 +1106,7 @@
 
    "Lawyer Up"
    {:msg "remove 2 tags and draw 3 cards"
-    :effect (effect (draw 3) (lose :tag 2))}
+    :effect (effect (draw 3) (lose-tags 2))}
 
    "Lean and Mean"
    {:prompt "Choose a server"
@@ -1312,7 +1312,7 @@
 
    "Networking"
    {:msg "remove 1 tag"
-    :effect (effect (lose :tag 1))
+    :effect (effect (lose-tags 1))
     :optional {:prompt "Pay 1 [Credits] to add Networking to Grip?"
                :yes-ability {:cost [:credit 1]
                              :msg "add it to their Grip"
@@ -1337,7 +1337,7 @@
                               :req (req true)}]}
     :abilities [{:label "[Trash]: Avoid 3 tags"
                  :msg "avoid up to 3 tags"
-                 :effect (effect (tag-prevent 3)
+                 :effect (effect (tag-prevent :runner 3)
                                  (trash card {:cause :ability-cost}))}
                 {:label "[Trash]: Prevent up to 3 damage"
                  :msg "prevent up to 3 damage"
@@ -1378,7 +1378,7 @@
     nil))
 
    "Paper Tripping"
-   {:msg "remove all tags" :effect (effect (lose :tag :all))}
+   {:msg "remove all tags" :effect (effect (lose-tags :all))}
 
    "Peace in Our Time"
    {:req (req (not (:scored-agenda corp-reg)))
@@ -1948,7 +1948,7 @@
                                :prompt "How many [Credits]?" :choices :credit
                                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
                                :effect (effect (lose-credits :corp target)
-                                               (tag-runner eid 1))}} card))}
+                                               (gain-tags eid 1))}} card))}
 
    "Wanton Destruction"
    {:req (req hq-runnable)

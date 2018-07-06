@@ -109,7 +109,7 @@
                               :trace {:base 5
                                       :successful {:msg "give the Runner 1 tag"
                                                    :async true
-                                                   :effect (effect (tag-runner :runner eid 1))}
+                                                   :effect (effect (gain-tags :corp eid 1))}
                                       :unsuccessful
                                       {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
                                                        (trash card))}}}}}
@@ -194,7 +194,7 @@
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
                                 :async true
-                                :effect (effect (tag-runner :runner eid 1))
+                                :effect (effect (gain-tags :corp eid 1))
                                 :msg "give the Runner 1 tag"}}}
 
    "Code Replicator"
@@ -340,7 +340,7 @@
              :trace {:base 3
                      :successful {:msg "give the Runner 2 tags"
                                   :async true
-                                  :effect (effect (tag-runner :runner eid 2))}}}}
+                                  :effect (effect (gain-tags :corp eid 2))}}}}
 
    "Fractal Threat Matrix"
    {:implementation "Manual trigger each time all subs are broken"
@@ -494,7 +494,7 @@
                  :msg (msg "remove 1 tag")
                  :effect (req (resolve-ability state side trash-program card nil)
                               (trash state side card {:cause :ability-cost})
-                              (lose state :runner :tag 1))}]}
+                              (lose-tags state :corp 1))}]}
 
    "Khondi Plaza"
    {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
@@ -505,7 +505,7 @@
               :player :runner
               :choices ["Take 1 tag" "End the run"]
               :effect (req (if (= target "Take 1 tag")
-                             (do (tag-runner state :runner 1)
+                             (do (gain-tags state :runner 1)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag")))
                              (do (end-run state side)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]
@@ -746,7 +746,7 @@
                                  :yes-ability {:cost [:credit 1]
                                                :msg "give the Runner 1 tag"
                                                :async true
-                                               :effect (req (tag-runner state :runner eid 1))}}}
+                                               :effect (req (gain-tags state :corp eid 1))}}}
                                card nil))}]
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card)))
@@ -787,7 +787,7 @@
                                                :msg "do 1 meat damage and give the Runner 1 tag"
                                                :async true
                                                :effect (req (wait-for (damage state side :meat 1 {:card card})
-                                                                      (tag-runner state :runner eid 1)))}}}
+                                                                      (gain-tags state :corp eid 1)))}}}
                                card nil))}}
 
    "Product Placement"

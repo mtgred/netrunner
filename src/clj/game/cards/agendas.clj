@@ -110,7 +110,7 @@
                             :async true
                             :req (req (some #(card-is? % :side :corp) targets))
                             :msg "give the Runner a tag for trashing a Corp card"
-                            :effect (effect (tag-runner :runner eid 1))}}}
+                            :effect (effect (gain-tags eid 1))}}}
 
    "Armed Intimidation"
    {:async true
@@ -125,7 +125,7 @@
                                       (do (damage state :runner eid :meat 5 {:card card :unboostable true})
                                           (system-msg state :runner "chooses to suffer 5 meat damage from Armed Intimidation"))
                                       "Take 2 tags"
-                                      (do (tag-runner state :runner eid 2 {:card card})
+                                      (do (gain-tags state :runner eid 2 {:card card})
                                           (system-msg state :runner "chooses to take 2 tags from Armed Intimidation"))))}
                       card nil))}
 
@@ -223,7 +223,7 @@
                          :yes-ability {:async true
                                        :msg (str "give the Runner a tag for " kind)
                                        :effect (req (swap! state assoc-in [:per-turn (:cid card)] true)
-                                                    (tag-runner state :runner eid 1))}
+                                                    (gain-tags state :corp eid 1))}
                          :end-effect (effect (clear-wait-prompt :runner))}}
                        card nil)))]
     {:events {:play-event {:req (req (and (first-event? state :runner :run)
@@ -285,7 +285,7 @@
 
    "Breaking News"
    {:async true
-    :effect (effect (tag-runner :runner eid 2))
+    :effect (effect (gain-tags :corp eid 2))
     :silent (req true)
     :msg "give the Runner 2 tags"
     :end-turn {:effect (effect (lose :runner :tag 2))
@@ -848,7 +848,7 @@
                :yes-ability {:msg "give the Runner 1 tag and take 1 bad publicity"
                              :async true
                              :effect (effect (gain-bad-publicity :corp eid 1)
-                                             (tag-runner :runner eid 1)
+                                             (gain-tags :corp eid 1)
                                              (forfeit card))}}}
 
    "Priority Requisition"
@@ -1081,7 +1081,7 @@
                  :trace {:base 2
                          :successful {:msg "give the Runner 1 tag"
                                       :async true
-                                      :effect (effect (tag-runner :runner eid 1))}}}]}
+                                      :effect (effect (gain-tags eid 1))}}}]}
 
    "Self-Destruct Chips"
    {:silent (req true)
@@ -1185,7 +1185,7 @@
    {:flags {:rd-reveal (req true)}
     :access {:msg "give the Runner 1 tag"
              :async true
-             :effect (effect (tag-runner :runner eid 1))}}
+             :effect (effect (gain-tags eid 1))}}
 
    "The Cleaners"
    {:events {:pre-damage {:req (req (and (= target :meat)

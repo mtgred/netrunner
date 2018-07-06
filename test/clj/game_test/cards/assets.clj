@@ -2157,9 +2157,9 @@
     (play-from-hand state :corp "Mr. Stone" "New remote")
     (let [stone (get-content state :remote1 0)]
       (core/rez state :corp stone)
-      (core/tag-runner state :runner 1)
+      (core/gain-tags state :runner 1)
       (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 meat damage from gaining 1 tag")
-      (core/tag-runner state :runner 5)
+      (core/gain-tags state :corp 5)
       (is (= 2 (-> (get-runner) :discard count)) "Runner should take 1 meat damage from gaining 5 tags"))))
 
 (deftest mumba-temple
@@ -2291,7 +2291,7 @@
       (is (zero? (:tag (get-runner))) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
-      (core/tag-runner state :runner 1)
+      (core/gain-tags state :runner 1)
       (prompt-choice :runner "Done") ; Don't prevent the tag
       (core/remove-tag state :runner 1)
       (prompt-choice :corp "Yes") ; Draw from Net Analytics

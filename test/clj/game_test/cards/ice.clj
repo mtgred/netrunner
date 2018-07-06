@@ -1112,7 +1112,7 @@
     (let [resistor (get-ice state :hq 0)]
       (core/rez state :corp resistor)
       (is (zero? (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
-      (core/tag-runner state :runner 2)
+      (core/gain-tags state :runner 2)
       (is (= 2 (:tag (get-runner))))
       (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
       (take-credits state :corp)

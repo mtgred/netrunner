@@ -211,7 +211,7 @@
    {:req (req tagged)
     :msg "give the Runner 2 tags"
     :async true
-    :effect (effect (tag-runner :runner eid 2))}
+    :effect (effect (gain-tags :corp eid 2))}
 
    "Bioroid Efficiency Research"
    {:implementation "Derez is manual"
@@ -259,7 +259,7 @@
                      card nil)))
     :events {:access {:req (req (= (:cid target) (:cid (:host card))))
                       :async true
-                      :effect (effect (tag-runner :runner eid 2)) :msg "give the Runner 2 tags"}}}
+                      :effect (effect (gain-tags :runner eid 2)) :msg "give the Runner 2 tags"}}}
 
    "Celebrity Gift"
    {:choices {:max 5
@@ -274,7 +274,7 @@
                       :choices ["1 tag" "1 brain damage"] :msg (msg "give the Runner " target)
                       :async true
                       :effect (req (if (= target "1 tag")
-                                     (tag-runner state side eid 1)
+                                     (gain-tags state :runner eid 1)
                                      (damage state side eid :brain 1 {:card card})))}}}
 
    "Cerebral Static"
@@ -390,7 +390,7 @@
                                    :async true
                                    :effect (req (if tagged
                                                   (damage state side eid :meat 1 {:card card})
-                                                  (tag-runner state :runner eid 1)))}}}}}
+                                                  (gain-tags state :corp eid 1)))}}}}}
 
    "Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
@@ -570,7 +570,7 @@
             :label "Give the Runner 4 tags"
             :successful {:async true
                          :msg "give the Runner 4 tags"
-                         :effect (effect (tag-runner :runner eid 4))}}}
+                         :effect (effect (gain-tags eid 4))}}}
 
    "Hasty Relocation"
    (letfn [(hr-final [chosen original]
@@ -791,7 +791,7 @@
                               :trace {:base 2
                                       :successful {:msg "give the Runner 1 tag"
                                                    :async true
-                                                   :effect (effect (tag-runner :runner eid 1))}}}}}
+                                                   :effect (effect (gain-tags eid 1))}}}}}
 
    "Market Forces"
    (letfn [(credit-diff [runner]
@@ -833,7 +833,7 @@
                          :async true
                          :effect (effect (system-msg
                                            (str "gives the Runner " (- target (second targets)) " tags"))
-                                         (tag-runner :runner eid (- target (second targets))))}}}
+                                         (gain-tags eid (- target (second targets))))}}}
 
    "Mushin No Shin"
    {:prompt "Select a card to install from HQ"
@@ -1316,7 +1316,7 @@
             :label "Trace 3 - Give the Runner 1 tag"
             :successful {:msg "give the Runner 1 tag"
                          :async true
-                         :effect (effect (tag-runner :runner eid 1))}}}
+                         :effect (effect (gain-tags :corp eid 1))}}}
 
    "Self-Growth Program"
    {:req (req tagged)
@@ -1420,7 +1420,7 @@
                                                    {:msg (msg "take 1 tag to prevent " (:title c)
                                                               " from being trashed")
                                                     :async true
-                                                    :effect (effect (tag-runner eid 1 {:unpreventable true}))}
+                                                    :effect (effect (gain-tags :runner eid 1 {:unpreventable true}))}
                                                    {:async true
                                                     :effect (effect (trash :corp eid c nil))
                                                     :msg (msg "trash " (:title c))})
@@ -1601,7 +1601,7 @@
                                                        (move state :runner chosen :deck {:front true})
                                                        (effect-completed state side eid))
                                                      (do (system-msg state side "chooses to take 2 tags")
-                                                       (tag-runner state :runner eid 2))))}
+                                                       (gain-tags state :runner eid 2))))}
                                      card nil)))}
 
    "Threat Level Alpha"
@@ -1611,11 +1611,11 @@
              :async true
              :effect (req (let [tags (-> @state :runner :tag)]
                             (if (pos? tags)
-                              (do (tag-runner state :runner eid tags)
+                              (do (gain-tags state :corp eid tags)
                                   (system-msg
                                     state side
                                     (str "uses Threat Level Alpha to give the Runner " tags " tags")))
-                              (do (tag-runner state :runner eid 1)
+                              (do (gain-tags state :corp eid 1)
                                   (system-msg
                                     state side
                                     "uses Threat Level Alpha to give the Runner a tag")))))}}}

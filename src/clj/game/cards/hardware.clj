@@ -178,7 +178,7 @@
                                     :choices ["Draw 1 card" "Remove 1 tag"]
                                     :effect (req (if (= target "Draw 1 card")
                                                    (draw state side)
-                                                   (lose state side :tag 1)))} card nil))}]}
+                                                   (lose-tags state :runner 1)))} card nil))}]}
 
    "Clone Chip"
    {:abilities [{:prompt "Select a program to install from your Heap"
@@ -344,7 +344,7 @@
                  :effect (effect (update! (assoc card :dorm-active true))
                                  (run target))}]
     :events {:pre-tag {:req (req (:dorm-active card))
-                       :effect (effect (tag-prevent Integer/MAX_VALUE))
+                       :effect (effect (tag-prevent :runner Integer/MAX_VALUE))
                        :msg "avoid all tags during the run"}
              :run-ends {:effect (effect (update! (dissoc card :dorm-active)))}}}
 
@@ -456,9 +456,9 @@
                               :req (req true)}]}
     :in-play [:link 1]
     :abilities [{:msg "avoid 1 tag" :label "[Trash]: Avoid 1 tag"
-                 :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}
+                 :effect (effect (tag-prevent :runner 1) (trash card {:cause :ability-cost}))}
                 {:msg "remove 1 tag" :label "[Trash]: Remove 1 tag"
-                 :effect (effect (trash card {:cause :ability-cost}) (lose :tag 1))}]}
+                 :effect (effect (trash card {:cause :ability-cost}) (lose-tags 1))}]}
 
    "Friday Chip"
    (let [ability {:msg (msg "move 1 virus counter to " (:title target))
@@ -643,7 +643,7 @@
                  :msg "move the card just accessed to the bottom of R&D"
                  :effect (req (let [accessed-card (-> @state :runner :prompt first :card)]
                                 (move state :corp accessed-card :deck)
-                                (wait-for (tag-runner state :runner (make-eid state) 1)
+                                (wait-for (gain-tags state :runner (make-eid state) 1)
                                           (close-access-prompt state side))))}
                 {:once :per-turn
                  :label "Move a previously accessed card to bottom of R&D"
@@ -655,7 +655,7 @@
                                                           (map first (turn-events state side :access)))}
                                     :msg (msg "move " (:title target) " to the bottom of R&D")
                                     :effect (req (move state :corp target :deck)
-                                                 (tag-runner state :runner eid 1)
+                                                 (gain-tags state :runner eid 1)
                                                  (swap! state update-in [side :prompt] rest)
                                                  (when-let [run (:run @state)]
                                                    (when (and (:ended run)
@@ -853,7 +853,7 @@
                                   :effect (effect (lose :click 1))}
              :pre-tag {:req (req (:qianju-active card))
                        :msg "avoid the first tag received"
-                       :effect (effect (tag-prevent 1)
+                       :effect (effect (tag-prevent :runner 1)
                                        (update! (dissoc card :qianju-active)))}}}
 
    "R&D Interface"
@@ -1010,7 +1010,7 @@
                  :label "Trace 5 - Give the Runner 1 tag and end the run"
                  :trace {:base 5
                          :successful {:msg "give the Runner 1 tag and end the run"
-                                      :effect (effect (tag-runner :runner eid 1)
+                                      :effect (effect (gain-tags :runner eid 1)
                                                       (end-run))}
                          :unsuccessful {:msg "bypass the current ICE"}}}]}
 

@@ -49,7 +49,7 @@
   {:label (str "Give the Runner " (quantify n "tag"))
    :msg (str "give the Runner " (quantify n "tag"))
    :async true
-   :effect (effect (tag-runner :runner eid n))})
+   :effect (effect (gain-tags :corp eid n))})
 
 (def add-power-counter
   "Adds 1 power counter to the card."
@@ -370,7 +370,7 @@
     :runner-abilities [{:label "Take 1 tag"
                         :async true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Authenticator to Bypass it")
-                                     (tag-runner state :runner eid 1 {:unpreventable true}))}]
+                                     (gain-tags state :runner eid 1 {:unpreventable true}))}]
     :subroutines [(gain-credits-sub 2)
                   end-the-run]}
 
@@ -382,9 +382,9 @@
    "Bandwidth"
    {:subroutines [{:msg "give the Runner 1 tag"
                    :async true
-                   :effect (effect (tag-runner :runner eid 1)
+                   :effect (effect (gain-tags :corp eid 1)
                                    (register-events
-                                     {:successful-run {:effect (effect (lose :runner :tag 1))
+                                     {:successful-run {:effect (effect (lose-tags :corp 1))
                                                        :msg "make the Runner lose 1 tag"}
                                       :run-ends {:effect (effect (unregister-events card))}}
                                      card))}]
@@ -602,7 +602,7 @@
     :subroutines [{:label "Give the Runner 1 tag (Give the Runner 2 tags)"
                    :async true
                    :msg (msg "give the Runner " (if (wonder-sub card 3) "2 tags" "1 tag"))
-                   :effect (effect (tag-runner :runner eid (if (wonder-sub card 3) 2 1)))}
+                   :effect (effect (gain-tags :corp eid (if (wonder-sub card 3) 2 1)))}
                   {:label "Trash 1 program (Trash 1 program and 1 resource)"
                    :async true
                    :msg (msg "trash 1 program" (when (wonder-sub card 3) " and 1 resource"))
@@ -723,7 +723,7 @@
                        {:label "Take 1 tag"
                         :async true
                         :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Raven")
-                                     (tag-runner state :runner eid 1))}]
+                                     (gain-tags state :runner eid 1))}]
     :subroutines [(trace-ability 3 add-power-counter)]}
 
    "Data Ward"
@@ -733,7 +733,7 @@
                        {:label "Take 1 tag"
                         :async true
                         :effect (req (system-msg state :runner "chooses to take 1 tag on encountering Data Ward")
-                                     (tag-runner state :runner eid 1))}]
+                                     (gain-tags state :runner eid 1))}]
     :subroutines [end-the-run-if-tagged]}
 
    "DNA Tracker"
@@ -751,7 +751,7 @@
     :subroutines [(trace-ability 2 {:label "Give the Runner 1 tag and end the run"
                                     :msg "give the Runner 1 tag and end the run"
                                     :async true
-                                    :effect (effect (tag-runner :runner eid 1)
+                                    :effect (effect (gain-tags :corp eid 1)
                                                     (end-run))})]}
 
    "Eli 1.0"
@@ -1085,7 +1085,7 @@
                                     :msg "give the Runner 1 tag and do 1 brain damage"
                                     :async true
                                     :effect (req (wait-for (damage state :runner :brain 1 {:card card})
-                                                           (tag-runner state :runner eid 1)))})]
+                                                           (gain-tags state :corp eid 1)))})]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Ichi 2.0"
@@ -1094,7 +1094,7 @@
                                     :msg "give the Runner 1 tag and do 1 brain damage"
                                     :async true
                                     :effect (req (wait-for (damage state :runner :brain 1 {:card card})
-                                                           (tag-runner state :runner eid 1)))})]
+                                                           (gain-tags state :corp eid 1)))})]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Inazuma"
@@ -1373,7 +1373,7 @@
                    :msg (msg "give the Runner 1 tag"
                              (when (wonder-sub card 3)
                                " and end the run"))
-                   :effect (req (tag-runner state :runner eid 1)
+                   :effect (req (gain-tags state :corp eid 1)
                                 (when (wonder-sub card 3)
                                   (end-run state side)))}]}
 
@@ -1918,7 +1918,7 @@
                   {:label "Give the Runner 1 tag"
                    :msg "give the Runner 1 tag"
                    :async true
-                   :effect (effect (tag-runner :runner eid 1))}]
+                   :effect (effect (gain-tags :corp eid 1))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Shinobi"
@@ -2050,7 +2050,7 @@
     :runner-abilities [{:label "Take 1 tag"
                         :async true
                         :effect (req (system-msg state :runner "takes 1 tag on encountering Thoth")
-                                     (tag-runner state :runner eid 1))}]
+                                     (gain-tags state :corp eid 1))}]
     :subroutines [(trace-ability 4 {:label "Do 1 net damage for each Runner tag"
                                     :async true
                                     :msg (msg "do " (:tag runner) " net damage")

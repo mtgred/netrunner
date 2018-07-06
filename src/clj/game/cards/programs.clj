@@ -622,7 +622,7 @@
                  :choices {:number (req (min (:credit runner) (:tag runner)))}
                  :msg (msg "spend " target " [Credits] and remove " target " tags")
                  :effect (effect (lose-credits target)
-                                 (lose :tag target))}]}
+                                 (lose-tags target))}]}
 
    "Multithreader"
    {:recurring 2}

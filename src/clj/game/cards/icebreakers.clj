@@ -643,7 +643,7 @@
                                   :msg "break 1 subroutine"}
                                  {:label "Take 1 tag to place 2 virus counters (start of turn)"
                                   :once :per-turn
-                                  :effect (req (wait-for (tag-runner state :runner 1)
+                                  :effect (req (wait-for (gain-tags state :runner 1)
                                                          (if (not (get-in @state [:tag :tag-prevent]))
                                                            (do (add-counter state side card :virus 2)
                                                                (system-msg state side
