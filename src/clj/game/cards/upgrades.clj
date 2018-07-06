@@ -376,29 +376,34 @@
      {:interactive (req true)
       :async true
       :req (req this-server)
+      :msg "force the Runner to pay or end the run"
       :effect (req (let [credits (:credit runner)
                          cost (* 2 (count (:scored runner)))
-                         pay-str (str "Pay " cost " [Credits]")]
-                     (show-wait-prompt state :corp (str "Runner to pay " cost " [Credits]"))
+                         pay-str (str "pay " cost " [Credits]")
+                         c-pay-str (capitalize pay-str)]
+                     (show-wait-prompt state :corp (str "Runner to " pay-str " or end the run"))
                      (continue-ability
                        state :runner
                        {:player :runner
                         :async true
-                        :prompt (str pay-str " or end the run?")
+                        :prompt (msg "You must " pay-str " or end the run")
                         :choices (concat (when (>= credits cost)
-                                           [pay-str])
+                                           [c-pay-str])
                                          ["End the run"])
                         :effect (req (clear-wait-prompt state :corp)
-                                     (if (= pay-str target)
-                                       (pay state :runner card :credit cost)
-                                       (end-run state side))
+                                     (if (= c-pay-str target)
+                                       (do (pay state :runner card :credit cost)
+                                           (system-msg state :runner (str "pays " cost " [Credits]")))
+                                       (do (end-run state side)
+                                           (system-msg state :corp "ends the run")))
                                      (effect-completed state side eid))}
                        card nil)))}}}
 
    "Heinlein Grid"
    {:abilities [{:req (req this-server)
                  :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
-                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
+                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]")
+                 :once :per-run
                  :effect (effect (lose-credits :runner :all)
                                  (lose :runner :run-credit :all))}]}
 
