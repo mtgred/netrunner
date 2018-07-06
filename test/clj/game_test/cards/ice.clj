@@ -422,7 +422,7 @@
           hostile (find-card "Hostile Takeover" (:hand (get-corp)))]
       (run-on state "Server 1")
       (core/rez state :corp gate)
-      (= 6 (:current-strength (refresh gate)))
+      (is (= 6 (:current-strength (refresh gate))))
       (card-subroutine state :corp gate 0)
       (prompt-choice :corp 3)
       (is (= (+ 3 hand) (-> (get-corp) :hand count)) "Corp should draw 3 cards")
@@ -432,7 +432,12 @@
       (is (= deck (-> (get-corp) :deck count)) "R&D should have same number of cards as start")
       (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
           "Corp should shuffle R&D")
-      (is (core/in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now"))))
+      (is (core/in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now")
+      (card-subroutine state :corp gate 1)
+      (is (not (:run @state)) "Gatekeeper subroutine should end the run")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (zero? (:current-strength (refresh gate))) "Gatekeeper strength should be reset"))))
 
 (deftest gemini
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success

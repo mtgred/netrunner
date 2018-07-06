@@ -261,11 +261,16 @@
                (when (has-subtype? card "Icebreaker")
                  (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
                  (update-breaker-strength state :runner card)))
+             (doseq [card (all-installed state :corp)]
+               ;; Clear :rezzed :this-turn as turn has ended
+               (when (= :this-turn (:rezzed card))
+                 (update! state side (assoc card :rezzed true)))
+               ;; Update strength of all ice every turn
+               (when (ice? card)
+                 (update-ice-strength state side card)))
              (swap! state assoc :end-turn true)
              (swap! state update-in [side :register] dissoc :cannot-draw)
              (swap! state update-in [side :register] dissoc :drawn-this-turn)
-             (doseq [c (filter #(= :this-turn (:rezzed %)) (all-installed state :corp))]
-               (update! state side (assoc c :rezzed true)))
              (clear-turn-register! state)
              (swap! state dissoc :turn-events)
              (when-let [extra-turns (get-in @state [side :extra-turns])]
