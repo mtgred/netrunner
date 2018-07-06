@@ -985,6 +985,67 @@
       (core/rez state :corp (get-ice state :hq 0))
       (is (zero? (:credit (get-corp))) "Corp spends 9 credits to rez"))))
 
+(deftest next-sapphire
+  ;; NEXT Sapphire
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["NEXT Bronze" "NEXT Sapphire" (qty "Ice Wall" 100)])
+                (default-runner))
+      (starting-hand state :corp ["NEXT Bronze" "NEXT Sapphire" "Ice Wall" "Ice Wall"])
+      (dotimes [_ 5]
+        (core/move state :corp (find-card "Ice Wall" (:deck (get-corp))) :discard))
+      (core/gain state :corp :credit 100)
+      (play-from-hand state :corp "NEXT Bronze" "HQ")
+      (play-from-hand state :corp "NEXT Sapphire" "R&D")
+      (let [bronze (get-ice state :hq 0)
+            sapphire (get-ice state :rd 0)]
+        (core/rez state :corp sapphire)
+        (take-credits state :corp)
+        (run-on state "R&D")
+        (let [hand (count (:hand (get-corp)))
+              deck (count (:deck (get-corp)))]
+          (card-subroutine state :corp sapphire 0)
+          (is (= 1 (-> (get-corp) :prompt first :choices :number)))
+          (prompt-choice :corp 1)
+          (is (= (inc hand) (count (:hand (get-corp)))) "Corp should draw 1 card from R&D")
+          (is (= (dec deck) (count (:deck (get-corp)))) "R&D should lose 1 card"))
+        (let [hand (count (:hand (get-corp)))
+              trash (count (:discard (get-corp)))]
+          (card-subroutine state :corp sapphire 1)
+          (prompt-select :corp (find-card "Ice Wall" (:discard (get-corp))))
+          (is (= (inc hand) (count (:hand (get-corp)))) "Corp should draw 1 card from Archives")
+          (is (= (dec trash) (count (:discard (get-corp)))) "Archives should lose 1 card"))
+        (let [hand (count (:hand (get-corp)))
+              deck (count (:deck (get-corp)))
+              num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
+          (card-subroutine state :corp sapphire 2)
+          (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+          (is (= (dec hand) (count (:hand (get-corp)))) "Corp should add 1 card from HQ to R&D")
+          (is (= (inc deck) (count (:deck (get-corp)))) "R&D should gain 1 card")
+          (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle"))
+        (core/rez state :corp bronze)
+        (card-subroutine state :corp sapphire 0)
+        (is (= 2 (-> (get-corp) :prompt first :choices :number)) "2 rezzed NEXT ice increases choice total"))))
+  (testing "Should shuffle even when choosing 0"
+    (do-game
+      (new-game (default-corp ["NEXT Sapphire" (qty "Ice Wall" 100)])
+                (default-runner))
+      (starting-hand state :corp ["NEXT Sapphire" "Ice Wall"])
+      (play-from-hand state :corp "NEXT Sapphire" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sapphire (get-ice state :hq 0)
+            hand (count (:hand (get-corp)))
+            deck (count (:deck (get-corp)))
+            num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
+        (core/rez state :corp sapphire)
+        (card-subroutine state :corp sapphire 2)
+        (prompt-choice :corp "Done")
+        (is (= hand (count (:hand (get-corp)))) "Nothing selected so HQ shouldn't change")
+        (is (= deck (count (:deck (get-corp)))) "Nothing selected so R&D shouldn't change")
+        (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
+            "Corp should shuffle even when selecting nothing")))))
+
 (deftest nightdancer
   ;; Nightdancer - Runner loses a click if able, corp gains a click on next turn
   (do-game

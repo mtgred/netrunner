@@ -129,6 +129,24 @@
       (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "1 card in archives"))))
 
+(deftest alice-merchant:-clan-agitator
+  ;; Alice Merchant
+  (do-game
+    (new-game (default-corp)
+              (make-deck "Alice Merchant: Clan Agitator"
+                         ["Security Testing"]))
+    ; (trash-from-hand state :corp "Hostile Takeover")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Security Testing")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (prompt-choice :runner "Archives")
+    (run-empty-server state "Archives")
+    (prompt-choice :runner "Alice Merchant: Clan Agitator")
+    (prompt-card :corp (find-card "Hedge Fund" (:hand (get-corp))))
+    (is (= 1 (-> (get-corp) :discard count)) "Alice ability should trash 1 card from HQ")
+    (is (-> (get-corp) :discard first :seen not) "Discarded card should be facedown when access is replaced")))
+
 (deftest andromeda:-dispossessed-ristie
   ;; Andromeda - 9 card starting hand, 1 link
   (testing "Basic test"
@@ -745,21 +763,44 @@
 
 (deftest industrial-genomics:-growing-solutions
   ;; Industrial Genomics - Increase trash cost
-  (do-game
-    (new-game
-      (make-deck "Industrial Genomics: Growing Solutions" [(qty "PAD Campaign" 3)
-                                                           (qty "Hedge Fund" 3)])
-      (default-runner))
-    (play-from-hand state :corp "PAD Campaign" "New remote")
-    (trash-from-hand state :corp "PAD Campaign")
-    (trash-from-hand state :corp "PAD Campaign")
-    (trash-from-hand state :corp "Hedge Fund")
-    (trash-from-hand state :corp "Hedge Fund")
-    (let [pad (get-content state :remote1 0)]
-      (core/rez state :corp pad)
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (is (= 8 (core/trash-cost state :runner (refresh pad)))))))
+  (testing "Basic test"
+    (do-game
+      (new-game
+        (make-deck "Industrial Genomics: Growing Solutions"
+                   [(qty "PAD Campaign" 3) (qty "Hedge Fund" 3)])
+        (default-runner))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (trash-from-hand state :corp "PAD Campaign")
+      (trash-from-hand state :corp "PAD Campaign")
+      (trash-from-hand state :corp "Hedge Fund")
+      (trash-from-hand state :corp "Hedge Fund")
+      (let [pad (get-content state :remote1 0)]
+        (core/rez state :corp pad)
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (is (= 8 (core/trash-cost state :runner (refresh pad)))))))
+  (testing "with Product Recall"
+    (do-game
+      (new-game
+        (make-deck "Industrial Genomics: Growing Solutions"
+                   ["Product Recall" (qty "PAD Campaign" 3) (qty "Hedge Fund" 2)])
+        (default-runner))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (trash-from-hand state :corp "PAD Campaign")
+      (trash-from-hand state :corp "PAD Campaign")
+      (trash-from-hand state :corp "Hedge Fund")
+      (trash-from-hand state :corp "Hedge Fund")
+      (let [pad (get-content state :remote1 0)]
+        (core/rez state :corp pad)
+        (take-credits state :corp)
+        (run-empty-server state "Server 1")
+        (is (= 8 (core/trash-cost state :runner (refresh pad))))
+        (run-jack-out state)
+        (take-credits state :runner)
+        (play-from-hand state :corp "Product Recall")
+        (let [credits (:credit (get-corp))]
+          (prompt-select :corp pad)
+          (is (= (+ credits 8) (:credit (get-corp))) "Gain 8 credits from trashing PAD Campaign"))))))
 
 (deftest jemison-astronautics:-sacrifice.-audacity.-success.
   ;; Jemison Astronautics - Place advancements when forfeiting agendas
@@ -814,7 +855,7 @@
         (is (= 2 (get-counters (refresh ice-wall) :advancement)) "Ice Wall has 2 advancement counters from HT forfeit"))
       (prompt-select :corp (get-scored state :corp 0)) ; select AI to trigger
       (prompt-choice :runner "Take 2 tags") ; First runner has prompt
-      (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the delayed-completion"))))
+      (is (= 4 (:tag (get-runner))) "Runner took 2 more tags from AI -- happens at the end of all the async completion"))))
 
 (deftest jesminder-sareen:-girl-behind-the-curtain
   ;; Jesminder Sareen - avoid tags only during a run

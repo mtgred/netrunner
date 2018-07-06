@@ -101,7 +101,9 @@
              hosted (seq (flatten (map
                       (if same-zone? update-hosted trash-hosted)
                       (:hosted card))))
-             c (if (and (= side :corp) (= (first dest) :discard) (rezzed? card))
+             c (if (and (= side :corp)
+                        (= (first dest) :discard)
+                        (rezzed? card))
                  (assoc card :seen true) card)
              c (if (and (or installed host (#{:servers :scored :current} (first zone)))
                         (or (#{:hand :deck :discard :rfg} (first dest)) to-facedown)
@@ -110,9 +112,12 @@
              c (if to-installed (assoc c :installed true) (dissoc c :installed))
              c (if to-facedown (assoc c :facedown true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted hosted :previous-zone (:zone c))
-             moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
-                          (dissoc moved-card :seen) moved-card)
-             moved-card (if (and (= (first (:zone moved-card)) :scored) (card-flag? moved-card :has-abilities-when-stolen true))
+             moved-card (if (and (= side :corp)
+                                 (#{:hand :deck} (first dest)))
+                          (dissoc moved-card :seen)
+                          moved-card)
+             moved-card (if (and (= (first (:zone moved-card)) :scored)
+                                 (card-flag? moved-card :has-abilities-when-stolen true))
                           (merge moved-card {:abilities (:abilities (card-def moved-card))}) moved-card)]
          (if front
            (swap! state update-in (cons side dest) #(into [] (cons moved-card (vec %))))
@@ -190,8 +195,8 @@
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
   [state side kw]
-  (when-completed (trigger-event-sync state side (keyword (str (name side) "-shuffle-deck")))
-                  (swap! state update-in [side kw] shuffle)))
+  (wait-for (trigger-event-sync state side (keyword (str (name side) "-shuffle-deck")))
+            (swap! state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck
   [state side & args]
