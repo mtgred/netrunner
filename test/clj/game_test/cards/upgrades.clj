@@ -23,6 +23,48 @@
         (is (:rezzed (refresh spid)) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest arella-salvatore
+  ;; Arella Salvatore - when an agenda is scored from this server, install a card from hq w/ advancement token
+  (testing "Install to server"
+    (do-game
+      (new-game (default-corp ["Arella Salvatore" "Bryan Stinson" (qty "TGTBT" 2)])
+                (default-runner))
+      (play-from-hand state :corp "Arella Salvatore" "New remote")
+      (play-from-hand state :corp "TGTBT" "Server 1")
+      (play-from-hand state :corp "TGTBT" "New remote")
+      (let [arella (get-content state :remote1 0)
+            same-tg (get-content state :remote1 1)
+            diff-tg (get-content state :remote2 0)]
+        (core/rez state :corp arella)
+        (score-agenda state :corp (refresh diff-tg))
+        (is (empty? (get-in @state [:corp :prompt])) "Arella not triggered for different remote score")
+        (is (= 1 (count (get-scored state :corp))) "1 Agenda scored")
+        (score-agenda state :corp (refresh same-tg))
+        (prompt-choice-partial :corp "Yes")
+        (prompt-select :corp (find-card "Bryan Stinson" (:hand (get-corp))))
+        (prompt-choice-partial :corp "New")
+        (is (= 2 (count (get-scored state :corp))) "2 Agendas scored")
+        (is (= 1 (count (get-content state :remote3))) "Bryan installed in new remote")
+        (is (= 1 (get-counters (get-content state :remote3 0) :advancement)) "Bryan has 1 advancement counter"))))
+  (testing "No cost"
+    (do-game
+      (new-game (default-corp ["Arella Salvatore" "TGTBT" (qty "Ice Wall" 2)])
+                (default-runner))
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "Arella Salvatore" "New remote")
+      (play-from-hand state :corp "TGTBT" "Server 1")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (is (= 1 (count (get-ice state :hq))) "One ice on hq")
+      (let [arella (get-content state :remote1 0)
+            tg (get-content state :remote1 1)]
+        (core/rez state :corp arella)
+        (score-agenda state :corp (refresh tg))
+        (prompt-choice-partial :corp "Yes")
+        (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+        (prompt-choice-partial :corp "HQ")
+        (is (= 2 (count (get-ice state :hq))) "Two ice on hq")
+        (is (= 1 (get-counters (get-ice state :hq 1) :advancement)) "Ice Wall has 1 counter")))))
+
 (deftest ash-2x3zb9cy
   ;; Ash 2X3ZB9CY
   (do-game

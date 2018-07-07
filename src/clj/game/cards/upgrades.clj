@@ -23,7 +23,7 @@
    "Arella Salvatore"
    {:events
     {:agenda-scored
-     {:req (req (from-same-server? target card))
+     {:req (req (= (:previous-zone target) (:zone card)))
       :interactive (req true)
       :optional {:prompt "Install a card from HQ?"
                  :yes-ability {:prompt "Select a card to install"
