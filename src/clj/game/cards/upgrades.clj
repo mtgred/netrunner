@@ -20,6 +20,25 @@
                                  :prompt "Rez ICE with rez cost lowered by 3?" :priority 2
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
+   "Arella Salvatore"
+   {:events
+    {:agenda-scored
+     {:req (req (from-same-server? target card))
+      :interactive (req true)
+      :optional {:prompt "Install a card from HQ?"
+                 :yes-ability {:prompt "Select a card to install"
+                               :choices {:req #(and (corp-installable-type? %)
+                                                    (in-hand? %)
+                                                    (= (:side %) "Corp"))}
+                               :async true
+                               :effect (req (wait-for (corp-install state :corp target nil {:no-install-cost true :display-message false})
+                                                      (let [inst-target (find-latest state target)]
+                                                        (add-prop state :corp inst-target :advance-counter 1 {:placed true})
+                                                        (system-msg state :corp
+                                                                    (str "uses Arella Salvatore to install and place a counter on "
+                                                                         (card-str state inst-target) ", ignoring all costs"))
+                                                        (effect-completed state side eid))))}}}}}
+
    "Ash 2X3ZB9CY"
    {:events {:successful-run {:interactive (req true)
                               :req (req this-server)
