@@ -180,8 +180,8 @@
 
 (defn- corp-install-message
   "Prints the correct install message."
-  [state side card server install-state cost-str params]
-  (when (:display-message params true)
+  [state side card server install-state cost-str args]
+  (when (:display-message args true)
     (let [card-name (if (or (= :rezzed-no-cost install-state)
                             (= :face-up install-state)
                             (:rezzed card))
