@@ -780,8 +780,8 @@
                                    :req (req (and (#{:rd :hq} (first (:server target)))
                                                   (first-event? state side :successful-run-ends
                                                                 #(#{:rd :hq} (first (:server (first %)))))))
-                                   :msg (msg "draw " (:cards-accessed target 0) " cards")
-                                   :effect (effect (draw (:cards-accessed target 0)))}}}
+                                   :msg (msg "draw " (total-cards-accessed target) " cards")
+                                   :effect (effect (draw (total-cards-accessed target)))}}}
 
    "Omni-drive"
    {:recurring 1

@@ -378,7 +378,11 @@
    (swap! state update-in [:bonus] dissoc :trash)
    (swap! state update-in [:bonus] dissoc :steal-cost)
    (swap! state update-in [:bonus] dissoc :access-cost)
-    ;; First trigger pre-access-card, then move to determining if we can trash or steal.
+   (when (:run @state)
+     (let [zone (#{:discard :deck :hq} (-> card :zone first))
+           zone (if zone zone (-> card :zone second))]
+       (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
+   ;; First trigger pre-access-card, then move to determining if we can trash or steal.
    (wait-for (trigger-event-sync state side :pre-access-card card)
              (access-pay state side eid card title))))
 
@@ -717,7 +721,6 @@
                      (effect-completed state side eid))
                  (do (swap! state assoc-in [:runner :register :accessed-cards] true)
                      (wait-for (resolve-ability state side (choose-access cards server args) nil nil)
-                               (swap! state update-in [:run :cards-accessed] (fnil #(+ % n) 0))
                                (wait-for (trigger-event-sync state side :end-access-phase {:from-server (first server)})
                                          (effect-completed state side eid)))))))))
 
@@ -916,3 +919,9 @@
 (defn get-run-ices
   [state]
   (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
+
+(defn total-cards-accessed
+  ([run]
+   (apply + (vals (:cards-accessed run {}))))
+  ([run server]
+   (get-in run [:cards-accessed server] 0)))

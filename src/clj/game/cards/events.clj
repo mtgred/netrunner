@@ -1006,11 +1006,11 @@
                              (access-card state side (first cards))
                              (if (< 1 (count cards))
                                (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
-                               (do (swap! state assoc-in [:run :cards-accessed] pile-size)
-                                   (effect-completed state side eid)))))})
+                               (effect-completed state side eid))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
-              :choices [(str "Pile 1 (" (count p1) " cards)") (str "Pile 2 (" (count p2) " cards)")]
+              :choices [(str "Pile 1 (" (count p1) " cards)")
+                        (str "Pile 2 (" (count p2) " cards)")]
               :async true
               :effect (req (let [choice (if (.startsWith target "Pile 1") 1 2)]
                              (clear-wait-prompt state :corp)
@@ -1036,8 +1036,8 @@
                                                     (which-pile (shuffle targets)
                                                                 (shuffle (vec (clojure.set/difference
                                                                                 (set (:hand corp)) (set targets)))))
-                                                    card nil))
-                                  } card nil))
+                                                    card nil))}
+                                 card nil))
                            (effect-completed state side eid)))}]
        {:req (req hq-runnable)
         :effect (effect (run :hq {:req (req (= target :hq))

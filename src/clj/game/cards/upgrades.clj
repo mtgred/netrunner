@@ -78,17 +78,16 @@
                               (move (first (get-in @state [:corp :play-area])) :deck {:front true})
                               (clear-wait-prompt :runner)
                               (effect-completed eid))})]
-
-   {:init {:root "R&D"}
-    :abilities [{:cost [:click 1]
-                 :req (req (>= (count (:deck corp)) 3))
-                 :async true
-                 :msg (msg (str "reveal " (join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
-                 :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
-                 :effect (req (doseq [c (take 3 (:deck corp))]
-                                (move state side c :play-area))
-                              (show-wait-prompt state :runner "Corp to use Bamboo Dome")
-                              (continue-ability state side (dome card) card nil))}]})
+    {:init {:root "R&D"}
+     :abilities [{:cost [:click 1]
+                  :req (req (>= (count (:deck corp)) 3))
+                  :async true
+                  :msg (msg (str "reveal " (join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
+                  :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
+                  :effect (req (doseq [c (take 3 (:deck corp))]
+                                 (move state side c :play-area))
+                            (show-wait-prompt state :runner "Corp to use Bamboo Dome")
+                            (continue-ability state side (dome card) card nil))}]})
 
    "Ben Musashi"
    (let [bm {:req (req (or (in-same-server? card target)
@@ -611,12 +610,13 @@
    "Mwanza City Grid"
    (let [gain-creds-and-clear {:req (req (= (:from-server target) (second (:zone card))))
                                :silent (req true)
-                               :effect (req (let [cnt (:cards-accessed run)]
+                               :effect (req (let [cnt (total-cards-accessed run)
+                                                  total (* 2 cnt)]
                                               (access-bonus state :runner -3)
                                               (when cnt
-                                                (gain-credits state :corp (* 2 cnt))
+                                                (gain-credits state :corp total)
                                                 (system-msg state :corp
-                                                            (str "gains " (* 2 cnt) " [Credits] from Mwanza City Grid")))))}
+                                                            (str "gains " total " [Credits] from Mwanza City Grid")))))}
          boost-access-by-3 {:req (req (= target (second (:zone card))))
                             :msg "force the Runner to access 3 additional cards"
                             :effect (req (access-bonus state :runner 3))}]

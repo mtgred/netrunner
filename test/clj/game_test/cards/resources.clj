@@ -1665,6 +1665,47 @@
       (is (= 2 (:credit (get-runner))) "Gained 1 credit")
       (is (= 6 (count (:hand (get-runner)))) "Drew 1 card"))))
 
+(deftest psych-mike
+  ;; Psych Mike
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 100)])
+                (default-runner ["Psych Mike" "Deep Data Mining"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Psych Mike")
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "R&D")
+        (prompt-choice :runner "No action")
+        (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "R&D")
+        (prompt-choice :runner "No action")
+        (is (= credits (:credit (get-runner))) "Psych Mike should give 0 credits for second run of the turn"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Deep Data Mining")
+      (let [credits (:credit (get-runner))]
+        (run-successful state)
+        (dotimes [_ 5]
+          (prompt-choice :runner "Card from deck")
+          (prompt-choice :runner "No action"))
+        (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))))
+  (testing "vs upgrades"
+    (do-game
+      (new-game (default-corp ["Bryan Stinson" (qty "Ice Wall" 100)])
+                (default-runner ["Psych Mike"]))
+      (starting-hand state :corp ["Bryan Stinson"])
+      (play-from-hand state :corp "Bryan Stinson" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Psych Mike")
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "R&D")
+        (prompt-choice :runner "Card from deck")
+        (prompt-choice :runner "No action")
+        (prompt-choice-partial :runner "Unrezzed")
+        (prompt-choice :runner "No action")
+        (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card")))))
+
 (deftest reclaim
   ;; Reclaim - trash Reclaim, trash card from grip, install program, hardware, or virtual resource from heap
   (testing "Basic behavior"
