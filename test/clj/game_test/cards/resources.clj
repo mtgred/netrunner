@@ -1220,7 +1220,7 @@
       (is (= 2 (:click (get-runner))) "Failed Darwin didn't use a click")
       (is (= 1 (count (:hand (get-runner)))))
       (card-ability state :runner lib 1) ; Add a program hosted on London Library to your Grip
-      (prompt-card :runner nil)
+      (prompt-choice :runner "Done")
       (prompt-select :runner (find-card "Study Guide" (:hosted (refresh lib))))
       (is (= 2 (count (:hand (get-runner)))) "Return Study Guide to hand")
       (is (= 2 (count (:hosted (refresh lib)))) "2 programs hosted")
@@ -2679,20 +2679,20 @@
     ; trash from hand first which should not trigger #2291
     (let [faust (get-program state 0)]
       (card-ability state :runner faust 1)
-      (prompt-card :runner (first (:hand (get-runner)))))
+      (prompt-select :runner (first (:hand (get-runner))))) ;discards a card
     (is (zero? (:credit (get-runner))) "Gained nothing from Wasteland")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
     (card-ability state :runner (get-resource state 1) 1)
-    (is (= 1 (count (:discard (get-runner)))) "Fall Guy trashed")
+    (is (= 2 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 3 (:credit (get-runner))) "Gained 2c from Fall Guy and 1c from Wasteland")
     (take-credits state :runner)
     (card-ability state :runner (get-resource state 1) 1)
-    (is (= 2 (count (:discard (get-runner)))) "Fall Guy trashed")
+    (is (= 3 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 6 (:credit (get-runner))) "Gained 2c from Fall Guy and 1c from Wasteland")
     (card-ability state :runner (get-resource state 1) 1)
-    (is (= 3 (count (:discard (get-runner)))) "Fall Guy trashed")
+    (is (= 4 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 8 (:credit (get-runner))) "Gained 2c from Fall Guy but no credits from Wasteland")))
 
 (deftest xanadu

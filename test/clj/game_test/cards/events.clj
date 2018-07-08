@@ -558,7 +558,7 @@
           (card-ability state :runner smc 0)
           (prompt-card :runner (find-card "Self-modifying Code" (:deck (get-runner))))
           (card-ability state :runner clone-chip 0)
-          (prompt-select :runner (find-card "Self-modifying code" (:discard (get-runner))))))
+          (prompt-select :runner (find-card "Self-modifying Code" (:discard (get-runner))))))
       (let [deck (count (:deck (get-runner)))]
         (run-jack-out state)
         (is (= deck (count (:deck (get-runner)))) "No card was shuffled back into the stack"))))
@@ -690,6 +690,7 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
     (run-empty-server state "Server 1")
+    (prompt-choice :runner "No action")
     (play-from-hand state :runner "Credit Kiting")
     (is (= 3 (:click (get-runner))) "Card not played, successful run on central not made")
     (run-empty-server state "HQ")

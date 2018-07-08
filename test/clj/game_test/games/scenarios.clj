@@ -41,7 +41,7 @@
           (is (= 1 (:tag (get-runner))) "Runner took tag from SEA Source")
           (is (= 7 (:credit (get-corp))))
           (core/trash-resource state :corp nil)
-          (prompt-select :corp (find-card "Off-Campus Apartment" (:rig (get-runner))))
+          (prompt-select :corp (get-resource state 0)) ;; (find-card "Off-Campus Apartment" (:rig (get-runner))) ; fails because (refresh) makes it nil )
           (is (= 3 (:credit (get-corp))) "WNP increased cost to trash a resource by 2")
           (card-ability state :runner fg 0)                   ; Trash Fall Guy to save the Apartment!
           (is (= (:title (get-resource state 0)) "Off-Campus Apartment")

@@ -3843,11 +3843,13 @@
       (is (:rezzed (refresh zai)) "Zaibatsu Loyalty should be rezzed")
       (let [credits (:credit (get-corp))]
         (card-ability state :corp zai 0)
-        (is (= (- credits 1) (:credit (get-corp))) "Corp should lose 1 credit for stopping the expose"))
+        (is (= (- credits 1) (:credit (get-corp))) "Corp should lose 1 credit for stopping the expose")
+        (prompt-choice :corp "Done"))
       (card-ability state :runner code 0)
       (prompt-select :runner (refresh iw))
-      (is (some? (-> (get-corp) :prompt first)) "Corp should get the option to rez Zaibatsu Loyalty before expose")
-      (card-ability state :runner zai 1)
+      (is (some? (-> (get-corp) :prompt first)) "Corp should be prompted to prevent")
+      (is (= 0 (-> (get-corp) :discard count)) "No trashed cards")
+      (card-ability state :corp zai 1)
       (is (= 1 (-> (get-corp) :discard count)) "Zaibatsu Loyalty should be in discard after using ability"))))
 
 (deftest zealous-judge

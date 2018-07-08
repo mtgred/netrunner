@@ -1123,7 +1123,7 @@
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip"
                  :cost [:click 1]
-                 :choices {:req #(:host %)}
+                 :choices {:req #(:host %)} ;TODO: this seems to allow all hosted cards to be bounced
                  :msg (msg "add " (:title target) " to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]

@@ -12,11 +12,11 @@
          ~'assert-prompt (fn [~'side]
                        (is (first (get-in @~'state [~'side :prompt]))
                            (str "Expected an open " (name ~'side) " prompt")))
-         ~'refresh (fn [~'card] 
+         ~'refresh (fn [~'card]
+                     ;; ;; uncommenting the below two assertions causes a looot of tests to fail
                      ;; (is ~'card "card passed to refresh should not be nil")
                      (let [~'ret (core/get-card ~'state ~'card)]
-                       
-                       ;; (is ~'ret "(refresh card) should not be nil - use (core/get-card state card) instead")
+                       ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
          
          ~'prompt-choice-partial (fn [~'side ~'choice]
@@ -24,27 +24,38 @@
                                      ~'state ~'side
                                      {:choice (~'refresh (first (filter #(.contains % ~'choice)
                                                                         (->> @~'state ~'side :prompt first :choices))))}))
+         ~'prompt-is-type? (fn [~'side ~'type]
+                             (= ~'type (-> @~'state ~'side :prompt first :prompt-type)))
          ~'prompt-choice (fn [~'side ~'choice]
-                           (is (or (number? ~'choice)
-                                   (string? ~'choice))
-                               "prompt-choice should only be called with strings or numbers")
+                           (is (or (number? ~'choice) (string? ~'choice))
+                               (str "prompt-choice should only be called with strings or numbers as argument - got "
+                                    (if (nil? ~'choice) "nil" ~'choice)))
                            (~'assert-prompt ~'side)
                            (core/resolve-prompt ~'state ~'side {:choice (~'refresh ~'choice)}))
 
          ~'prompt-card (fn [~'side ~'card]
                          (~'assert-prompt ~'side)
+                         (is (~'prompt-is-type? ~'side nil)
+                             (str  "prompt-card should only be used with prompts listing cards, not prompts of type "
+                                   (-> @~'state ~'side :prompt first :prompt-type)))
+                         (is (map? ~'card) (str "prompt-card should be called with card map as argument - got "
+                                                (if (nil? ~'card) "nil" ~'card)))
                          (core/resolve-prompt ~'state ~'side {:card (~'refresh ~'card)}))
          ~'prompt-select (fn [~'side ~'card]
                            (~'assert-prompt ~'side)
+                           (is (~'prompt-is-type? ~'side :select)
+                               (str "prompt-select should only be used with prompts "
+                                    "requiring the user to click on cards on grip/table, not "
+                                    (let [~'type (-> @~'state ~'side :prompt first :prompt-type)]
+                                      (if ~'type ~'type "nil"))))
+                           (is (map? ~'card) (str "prompt-select should be called with card map as argument - got "
+                                                  (if (nil? ~'card) "nil" ~'card)))
                            (core/select ~'state ~'side {:card (~'refresh ~'card)}))
          ~'prompt-is-card? (fn [~'side ~'card]
                              (~'assert-prompt ~'side)
                              (and (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid)
                                   (= (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid))))
-         ~'prompt-is-type? (fn [~'side ~'type]
-                             (~'assert-prompt ~'side)
-                             (and ~'type (-> @~'state ~'side :prompt first :prompt-type)
-                                  (= ~'type (-> @~'state ~'side :prompt first :prompt-type))))
+         
 
          ~'prompt-map (fn [side#] (first (get-in @~'state [side# :prompt])))
          ~'prompt-titles (fn [side#] (map #(:title %) (:choices (~'prompt-map side#))))
