@@ -1456,6 +1456,33 @@
                    :prompt "Choose an ICE to install from HQ"
                    :effect (req (corp-install state side target (zone->name (first (:server run))) {:no-install-cost true}))}]}
 
+   "Formicary"
+   {:req (req (and (:run @state)
+                   (zero? (:position run))
+                   (not (contains? run :corp-phase-43))
+                   (not (contains? run :successful))))
+    :effect (effect (resolve-ability
+                     {:optional
+                      {:prompt "Move Formicary?"
+                       :yes-ability {:msg "rez and move Formicary. The Runner is now approaching Formicary."
+                                     :effect (req
+                                              (move state side card
+                                                    [:servers (first (:server run)) :ices]
+                                                    {:front true})
+                                              (swap! state assoc-in [:run :position] 1))}
+                       :no-ability {:msg "rez Formicary without moving it"}}}
+                     card nil))
+    :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
+                   :effect (req (wait-for (resolve-ability
+                                           state :runner
+                                           {:optional
+                                            {:prompt "Suffer 2 net damage? (If not, end the run)"
+                                             :yes-ability {:async true
+                                                           :msg "let the Runner suffer 2 net damage"
+                                                           :effect (effect (damage eid :net 2 {:card card :unpreventable true}))}
+                                             :no-ability end-the-run}}
+                                           card nil)))}]}
+
    "Mirāju"
    {:abilities [{:label "Runner broke subroutine: Redirect run to Archives"
                  :msg "make the Runner continue the run on Archives. Mirāju is derezzed"
