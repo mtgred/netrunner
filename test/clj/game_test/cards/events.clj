@@ -881,7 +881,7 @@
       (run-successful state)
       (prompt-choice :runner "No action")
       (prompt-choice :runner "Steal")
-      (is (= 4 (-> (get-runner) :register :last-run :cards-accessed)) "Runner should access 2 cards in Archives, 1 in R&D, and 1 in HQ")))
+      (is (= 4 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 in R&D, and 1 in HQ")))
   (testing "with The Turning Wheel counters"
     (do-game
       (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
@@ -898,9 +898,6 @@
         (card-ability state :runner ttw 0)
         (card-ability state :runner ttw 0)
         (run-successful state)
-        ;; Archives
-        (prompt-choice :runner "No action")
-        (prompt-choice :runner "No action")
         ;; R&D
         (dotimes [_ 3]
           (prompt-choice :runner "Card from deck")
@@ -911,7 +908,7 @@
           (prompt-choice :runner (-> (prompt? :runner) :choices first)))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
         (is (= 2 (-> (get-runner) :register :last-run :access-bonus)) "The Turning Wheel should provide 2 additional accesses")
-        (is (= 8 (-> (get-runner) :register :last-run :cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
+        (is (= 8 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade

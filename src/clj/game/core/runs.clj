@@ -379,7 +379,7 @@
    (swap! state update-in [:bonus] dissoc :steal-cost)
    (swap! state update-in [:bonus] dissoc :access-cost)
    (when (:run @state)
-     (let [zone (#{:discard :deck :hq} (-> card :zone first))
+     (let [zone (#{:discard :deck :hand} (-> card :zone first))
            zone (if zone zone (-> card :zone second))]
        (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
    ;; First trigger pre-access-card, then move to determining if we can trash or steal.
@@ -663,6 +663,9 @@
   {:async true
    :effect (req (let [cards (concat (get-archives-accessible state) (-> @state :corp :servers :archives :content))
                       archives-count (+ (count (-> @state :corp :discard)) (count (-> @state :corp :servers :archives :content)))]
+                  ;; Because we don't "access" cards in Archives like normal,
+                  ;; we have to manually count all the cards we'd normally skip
+                  (swap! state update-in [:run :cards-accessed :discard] (fnil + 0 0) (- archives-count (count cards)))
                   (if (not-empty cards)
                     (if (= 1 archives-count)
                       (access-card state side eid (first cards))
