@@ -709,17 +709,15 @@
    "Ika"
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 2 "Sentry")
-                                 (strength-pump 2 3 :all-run)
+                                 (strength-pump 2 3)
                                  {:label "2 [Credits]: Host Ika on a piece of ICE"
-                                  :effect (req (let [ika (get-card state card)]
-                                                 (resolve-ability state side
-                                                                  {:prompt (msg "Host Ika on a piece of ICE")
-                                                                   :cost [:credit 2]
-                                                                   :choices {:req #(and (ice? %)
-                                                                                        (installed? %)
-                                                                                        (can-host? %))}
-                                                                   :msg (msg "host it on " (card-str state target))
-                                                                   :effect (effect (host target card))} card nil)))}]})
+                                  :prompt (msg "Host Ika on a piece of ICE")
+                                  :cost [:credit 2]
+                                  :choices {:req #(and (ice? %)
+                                                       (installed? %)
+                                                       (can-host? %))}
+                                  :msg (msg "host it on " (card-str state target))
+                                  :effect (effect (host target card))}]})
 
    "Knight"
    {:abilities [{:label "Host Knight on a piece of ICE"
