@@ -1765,7 +1765,7 @@
     (is (= 2 (:credit (get-runner))) "Starting with 2 credits")
     (card-ability state :runner (get-resource state 0) 0)
     (prompt-select :runner (get-program state 0))
-    (prompt-choice :runner (find-card "Gordian Blade" (:deck (get-runner))))
+    (prompt-card :runner (find-card "Gordian Blade" (:deck (get-runner))))
     (is (= 3 (core/available-mu state)) "Gordian cost 1 mu, Corroder freed")
     (is (zero? (:credit (get-runner))) "Ending with 0 credits")
     (is (= 1 (count (:rfg (get-runner)))) "Corroder removed from game")

@@ -2104,7 +2104,7 @@
     (run-successful state)
     (prompt-choice :runner "Replacement effect")
     (let [ms (first (:discard (get-runner)))]
-      (prompt-choice :runner ms)
+      (prompt-card :runner ms)
       (is (= "Morning Star" (:title (first (get-program state))))
           "Morning Star installed")
       (is (= 2 (:credit (get-runner))) "Morning Star installed at no cost")
@@ -2447,7 +2447,7 @@
         (play-from-hand state :runner "Leprechaun")
         (play-from-hand state :runner "Test Run")
         (prompt-choice :runner "Heap")
-        (prompt-choice :runner ms)
+        (prompt-card :runner ms)
         (let [lep (get-program state 0)
               ms (get-program state 1)]
           (card-ability state :runner lep 1)
@@ -2459,7 +2459,7 @@
           (let [kn (find-card "Knight" (:discard (get-runner)))]
             (play-from-hand state :runner "Test Run")
             (prompt-choice :runner "Heap")
-            (prompt-choice :runner kn)
+            (prompt-card :runner kn)
             (let [kn (get-program state 1)]
               (card-ability state :runner kn 0)
               (prompt-select :runner wrap)
@@ -2479,7 +2479,7 @@
       (play-from-hand state :runner "Test Run")
       (let [ms (find-card "Morning Star" (:discard (get-runner)))]
         (prompt-choice :runner "Heap")
-        (prompt-choice :runner ms)
+        (prompt-card :runner ms)
         (is (= 2 (:credit (get-runner))) "Program installed for free")
         (let [ms (get-program state 0)]
           (play-from-hand state :runner "Scavenge")

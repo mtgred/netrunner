@@ -307,7 +307,7 @@
         (card-subroutine state :corp pup 0)
         (prompt-choice :corp "Yes")
         (let [imp (find-card "Imp" (:hand (get-runner)))]
-          (prompt-choice :corp imp)
+          (prompt-card :corp imp)
           (is (= 1 (count (:discard (get-runner)))))
           (card-subroutine state :corp pup 0)
           (is (empty? (:prompt (get-corp))) "No choice on second net damage")

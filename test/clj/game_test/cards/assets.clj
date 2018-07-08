@@ -1109,7 +1109,8 @@
       (let [esf (get-content state :remote1 0)
             number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
         (card-ability state :corp esf 0)
-        (prompt-choice :corp (find-card card (:deck (get-corp))))
+
+        (prompt-card :corp (find-card card (:deck (get-corp))))
         (is (= card (-> (get-corp) :hand first :title)) (str card " should be in hand"))
         (core/move state :corp (find-card card (:hand (get-corp))) :deck)
         (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Should be shuffled")))))
@@ -1233,7 +1234,7 @@
           (is (= 4 (get-counters (refresh lc) :credit)) "4cr left on Launch Campaign")
           (play-from-hand state :corp "Interns")
           (prompt-select :corp (find-card "Launch Campaign" (:hand (get-corp))))
-          (prompt-choice :corp (refresh fir))
+          (prompt-card :corp (refresh fir))
           (is (= 2 (count (:hosted (refresh fir)))) "Interns installed onto FIR")))))
   (testing "hosting an asset with events does not double-register events. Issue #1827"
     (do-game
@@ -1613,7 +1614,7 @@
         (is (:corp-phase-12 @state) "Corp is in Step 1.2")
         (card-ability state :corp is 0)
         (prompt-choice :corp card-type)
-        (prompt-choice :corp (find-card card-name (:hand (get-runner))))
+        (prompt-card :corp (find-card card-name (:hand (get-runner))))
         (core/end-phase-12 state :corp nil)
         (is (= (inc i) (-> (get-runner) :discard count)))))))
 
@@ -3511,7 +3512,7 @@
       (is (= 3 (count (:scored (get-runner)))) "News Team added to Runner score area")
       (is (= -3 (:agenda-point (get-runner))) "Runner has -3 agenda points")
       (card-ability state :runner (get-resource state 0) 0)
-      (prompt-choice :runner (-> @state :runner :prompt first :choices first))
+      (prompt-card :runner (-> @state :runner :prompt first :choices first))
       (prompt-select :runner (first (:scored (get-runner))))
       (is (= 2 (count (:scored (get-runner)))) "Fan Site removed from Runner score area")
       (is (= -2 (:agenda-point (get-runner))) "Runner has -2 agenda points")

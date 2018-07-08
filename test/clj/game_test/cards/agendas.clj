@@ -2076,7 +2076,7 @@
    (play-and-score state "Remote Enforcement")
    (let [N (:credit (get-corp))]
      (prompt-choice :corp "Yes")
-     (prompt-choice :corp (find-card "Chiyashi" (:deck (get-corp))))
+     (prompt-card :corp (find-card "Chiyashi" (:deck (get-corp))))
      (prompt-choice :corp "New remote")
      (is (core/rezzed? (get-ice state :remote2 0)) "Chiyashi was installed rezzed")
      (is (= N (:credit (get-corp))) "Rezzing Chiyashi was free"))

@@ -9,27 +9,40 @@
          ~'get-run (fn [] (:run @~'state))
          ~'get-hand-size (fn [~'side] (+ (get-in @~'state [~'side :hand-size :base])
                                          (get-in @~'state [~'side :hand-size :mod])))
-         ~'refresh (fn [~'card] (core/get-card ~'state ~'card))
-         ~'prompt-choice (fn [~'side ~'choice]
-                           (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
-                           (core/resolve-prompt ~'state ~'side {:choice (~'refresh ~'choice)}))
+         ~'assert-prompt (fn [~'side]
+                       (is (first (get-in @~'state [~'side :prompt]))
+                           (str "Expected an open " (name ~'side) " prompt")))
+         ~'refresh (fn [~'card] 
+                     ;; (is ~'card "card passed to refresh should not be nil")
+                     (let [~'ret (core/get-card ~'state ~'card)]
+                       
+                       ;; (is ~'ret "(refresh card) should not be nil - use (core/get-card state card) instead")
+                       ~'ret))
+         
          ~'prompt-choice-partial (fn [~'side ~'choice]
                                    (core/resolve-prompt
                                      ~'state ~'side
                                      {:choice (~'refresh (first (filter #(.contains % ~'choice)
                                                                         (->> @~'state ~'side :prompt first :choices))))}))
+         ~'prompt-choice (fn [~'side ~'choice]
+                           (is (or (number? ~'choice)
+                                   (string? ~'choice))
+                               "prompt-choice should only be called with strings or numbers")
+                           (~'assert-prompt ~'side)
+                           (core/resolve-prompt ~'state ~'side {:choice (~'refresh ~'choice)}))
+
          ~'prompt-card (fn [~'side ~'card]
-                         (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
+                         (~'assert-prompt ~'side)
                          (core/resolve-prompt ~'state ~'side {:card (~'refresh ~'card)}))
          ~'prompt-select (fn [~'side ~'card]
-                           (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
+                           (~'assert-prompt ~'side)
                            (core/select ~'state ~'side {:card (~'refresh ~'card)}))
          ~'prompt-is-card? (fn [~'side ~'card]
-                             (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
+                             (~'assert-prompt ~'side)
                              (and (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid)
                                   (= (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid))))
          ~'prompt-is-type? (fn [~'side ~'type]
-                             (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
+                             (~'assert-prompt ~'side)
                              (and ~'type (-> @~'state ~'side :prompt first :prompt-type)
                                   (= ~'type (-> @~'state ~'side :prompt first :prompt-type))))
 
