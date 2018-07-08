@@ -192,7 +192,7 @@
       (play-from-hand state :corp "AstroScript Pilot Program" "New remote")
       (let [scored-astro (get-scored state :corp 0)
             installed-astro (get-content state :remote2 0)
-            hand-astro (find-card "AstroScript Pilot Program" (:hand get-corp))]
+            hand-astro (find-card "AstroScript Pilot Program" (:hand (get-corp)))]
         (should-not-place scored-astro hand-astro " in hand")
         (should-place scored-astro installed-astro " that is installed")
         (advance state installed-astro 2)
@@ -200,7 +200,7 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (let [no-token-astro (get-scored state :corp 0)
             token-astro (get-scored state :corp 1)
-            hand-ice-wall (find-card "Ice Wall" (:hand get-corp))
+            hand-ice-wall (find-card "Ice Wall" (:hand (get-corp)))
             installed-ice-wall (get-ice state :hq 0)]
         (should-not-place token-astro no-token-astro " that is scored")
         (should-not-place token-astro hand-ice-wall " in hand")
