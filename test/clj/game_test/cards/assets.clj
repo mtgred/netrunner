@@ -1109,7 +1109,6 @@
       (let [esf (get-content state :remote1 0)
             number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
         (card-ability state :corp esf 0)
-
         (prompt-card :corp (find-card card (:deck (get-corp))))
         (is (= card (-> (get-corp) :hand first :title)) (str card " should be in hand"))
         (core/move state :corp (find-card card (:hand (get-corp))) :deck)
