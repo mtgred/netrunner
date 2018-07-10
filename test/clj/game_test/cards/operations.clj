@@ -760,6 +760,31 @@
     (prompt-select :corp (get-resource state 0))
     (is (= 2 (-> (get-runner) :discard count)) "Corp should trash Ice Carver from winning Foxfire trace")))
 
+(deftest hangeki
+  ;; Hangeki
+  (doseq [choice ["Yes" "No"]]
+    (testing (str "choosing to " (when (= choice "No") "not ") "access card")
+      (do-game
+        (new-game (default-corp ["Hostile Takeover" "Dedicated Response Team" "Hangeki"])
+                  (default-runner))
+        (play-from-hand state :corp "Hostile Takeover" "New remote")
+        (play-from-hand state :corp "Dedicated Response Team" "New remote")
+        (take-credits state :corp)
+        (run-on state :remote2)
+        (run-successful state)
+        (prompt-choice-partial :runner "Pay")
+        (take-credits state :runner)
+        (play-from-hand state :corp "Hangeki")
+        (prompt-select :corp (get-content state :remote1 0))
+        (prompt-choice :runner choice)
+        (if (= "Yes" choice)
+          (do (prompt-choice :runner "Steal")
+              (is (= 1 (:agenda-point (get-runner))) "Runner should steal Hostile Takeover")
+              (is (= 1 (-> (get-corp) :rfg count)) "Hangeki should be removed from the game"))
+          (do (is (empty? (:prompt (get-runner))) "Runner should have no more prompts as access ended")
+              (is (= -1 (:agenda-point (get-runner))) "Runner should add Hangeki to their score area worth -1 agenda point")
+              (is (zero? (-> (get-corp) :rfg count)) "Hangeki shouldn't be removed from the game")))))))
+
 (deftest hard-hitting-news
   ;; Hard-Hitting News
   (do-game
