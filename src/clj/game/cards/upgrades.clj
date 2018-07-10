@@ -23,21 +23,20 @@
    "Arella Salvatore"
    {:events
     {:agenda-scored
-     {:req (req (= (:previous-zone target) (:zone card)))
+     {:req (req (and (= (:previous-zone target) (:zone card))
+                     (some #(corp-installable-type? %) (:hand corp))))
       :interactive (req true)
-      :optional {:prompt "Install a card from HQ?"
-                 :yes-ability {:prompt "Select a card to install"
-                               :choices {:req #(and (corp-installable-type? %)
-                                                    (in-hand? %)
-                                                    (= (:side %) "Corp"))}
-                               :async true
-                               :effect (req (wait-for (corp-install state :corp target nil {:no-install-cost true :display-message false})
-                                                      (let [inst-target (find-latest state target)]
-                                                        (add-prop state :corp inst-target :advance-counter 1 {:placed true})
-                                                        (system-msg state :corp
-                                                                    (str "uses Arella Salvatore to install and place a counter on "
-                                                                         (card-str state inst-target) ", ignoring all costs"))
-                                                        (effect-completed state side eid))))}}}}}
+      :prompt "Select a card to install with Arella Salvatore"
+      :choices (req (cancellable (filter #(corp-installable-type? %) (:hand corp))))
+      :async true
+      :cancel-effect (req (effect-completed state side eid))
+      :effect (req (wait-for (corp-install state :corp target nil {:no-install-cost true :display-message false})
+                             (let [inst-target (find-latest state target)]
+                               (add-prop state :corp inst-target :advance-counter 1 {:placed true})
+                               (system-msg state :corp
+                                           (str "uses Arella Salvatore to install and place a counter on "
+                                                (card-str state inst-target) ", ignoring all costs"))
+                               (effect-completed state side eid))))}}}
 
    "Ash 2X3ZB9CY"
    {:events {:successful-run {:interactive (req true)
