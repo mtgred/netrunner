@@ -710,7 +710,7 @@
    (auto-icebreaker ["Sentry"]
                     {:abilities [(break-sub 1 2 "Sentry")
                                  (strength-pump 2 3)
-                                 {:label "2 [Credits]: Host Ika on a piece of ICE"
+                                 {:label "Host Ika on a piece of ICE"
                                   :prompt (msg "Host Ika on a piece of ICE")
                                   :cost [:credit 2]
                                   :choices {:req #(and (ice? %)
