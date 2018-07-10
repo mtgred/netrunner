@@ -2061,7 +2061,7 @@
                                     :effect (effect (lose-credits :runner (:tag runner)))})]}
 
    "Thimblerig"
-   {:flags {:corp-phase-12 (req true)}
+   {:flags {:corp-phase-12 (req (>= (count (filter ice? (all-installed state :corp))) 2))}
     :implementation "Does not restrict usage of swap ability to start of turn or after pass"
     :abilities [{:label "Swap Thimblerig with a piece of ice"
                  :prompt "Swap Thimblerig with a piece of ice"
