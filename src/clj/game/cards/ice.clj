@@ -1457,21 +1457,17 @@
                    :effect (req (corp-install state side target (zone->name (first (:server run))) {:no-install-cost true}))}]}
 
    "Formicary"
-   {:req (req (and (:run @state)
+   {:optional {:prompt "Move Formicary?"
+               :req (req (and (:run @state)
                    (zero? (:position run))
                    (not (contains? run :corp-phase-43))
                    (not (contains? run :successful))))
-    :effect (effect (resolve-ability
-                     {:optional
-                      {:prompt "Move Formicary?"
-                       :yes-ability {:msg "rez and move Formicary. The Runner is now approaching Formicary."
-                                     :effect (req
-                                              (move state side card
-                                                    [:servers (first (:server run)) :ices]
-                                                    {:front true})
-                                              (swap! state assoc-in [:run :position] 1))}
-                       :no-ability {:msg "rez Formicary without moving it"}}}
-                     card nil))
+               :yes-ability {:msg "rez and move Formicary. The Runner is now approaching Formicary."
+                             :effect (req (move state side card
+                                                [:servers (first (:server run)) :ices]
+                                                {:front true})
+                                          (swap! state assoc-in [:run :position] 1))}
+               :no-ability {:msg "rez Formicary without moving it"}}
     :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
                    :effect (req (wait-for (resolve-ability
                                            state :runner
