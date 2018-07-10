@@ -1103,6 +1103,37 @@
       (is (= 3 (get-counters (refresh odu) :advancement)))
       (is (= 6 (get-counters (refresh eni) :advancement))))))
 
+(deftest otoroshi
+  ;; Otoroshi
+  (do-game
+    (new-game (default-corp ["Otoroshi" "Project Junebug" (qty "Ice Wall" 100)])
+              (default-runner))
+    (starting-hand state :corp ["Otoroshi" "Project Junebug"])
+    (play-from-hand state :corp "Otoroshi" "New remote")
+    (play-from-hand state :corp "Project Junebug" "New remote")
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (let [otoroshi (get-ice state :remote1 0)
+          junebug (get-content state :remote2 0)
+          credits (:credit (get-runner))]
+      (is (zero? (get-counters (refresh junebug) :advancement)) "Project Junebug should start with 0 advancement tokens")
+      (core/rez state :corp otoroshi)
+      (card-subroutine state :corp otoroshi 0)
+      (prompt-select :corp junebug)
+      (is (= 3 (get-counters (refresh junebug) :advancement)) "Project Junebug should have 3 advancement tokens from Otoroshi subroutine")
+      (is (= (list "Access card" "Pay 3 [Credits]") (-> (get-runner) :prompt first :choices)) "Runner should have 2 options")
+      (prompt-choice-partial :runner "Pay")
+      (is (= (- credits 3) (:credit (get-runner))) "Runner should pay 3 credits to Otoroshi subroutine")
+      (run-jack-out state)
+      (run-on state :remote1)
+      (card-subroutine state :corp otoroshi 0)
+      (prompt-select :corp otoroshi)
+      (is (= 3 (get-counters (refresh otoroshi) :advancement)) "Otoroshi should have 3 advancement tokens from Otoroshi subroutine")
+      (is (= (list "Access card") (-> (get-runner) :prompt first :choices)) "Runner should have 1 option")
+      (prompt-choice-partial :runner "Access")
+      (is (= "You accessed Otoroshi." (-> (get-runner) :prompt first :msg)) "Runner should access Otoroshi even tho it's an ice.")
+      (prompt-choice :runner "No action"))))
+
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
   (do-game
