@@ -2060,6 +2060,16 @@
                                     :msg (msg "force the Runner to lose " (:tag runner) " [Credits]")
                                     :effect (effect (lose-credits :runner (:tag runner)))})]}
 
+   "Thimblerig"
+   {:flags {:corp-phase-12 (req true)}
+    :implementation "Does not restrict usage of swap ability to start of turn or after pass"
+    :abilities [{:label "Swap Thimblerig with a piece of ice"
+                 :prompt "Swap Thimblerig with a piece of ice"
+                 :choices {:req ice?
+                           :not-self (req (:cid card))}
+                 :effect (effect (swap-ice card target))}]
+    :subroutines [end-the-run]}
+
    "Tithonium"
    {:alternative-cost [:forfeit]
     :implementation "Does not handle UFAQ for Pawn or Blackguard interaction"
