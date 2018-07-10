@@ -1469,6 +1469,7 @@
                                           (swap! state assoc-in [:run :position] 1))}
                :no-ability {:msg "rez Formicary without moving it"}}
     :subroutines [{:label "End the run unless the Runner suffers 2 net damage"
+                   :async true
                    :effect (req (wait-for (resolve-ability
                                            state :runner
                                            {:optional
