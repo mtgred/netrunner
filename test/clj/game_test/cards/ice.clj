@@ -419,7 +419,26 @@
        (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
        (card-subroutine state :corp (refresh form2) 0)
        (prompt-choice :runner "No")      ; ETR
-       (is (not (get-in @state [:run])) "Formicary ended the run")))))
+       (is (not (get-in @state [:run])) "Formicary ended the run"))))
+  (testing "Verifies that Formicary can be moved to the innermost positon of its own server"
+    (do-game
+     (new-game (default-corp ["Ice Wall" "Formicary"])
+               (default-runner))
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Formicary" "HQ")
+     (take-credits state :corp)
+     (let [form (get-ice state :hq 1)]
+       (run-on state "HQ")
+       (run-continue state)             ; pass the first ice
+       (run-continue state)             ; pass the second ice
+       (is (= 0 (get-in @state [:run :position])) "Now approaching server")
+       (core/rez state :corp form)
+       (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is the innermost piece of ice before swap")
+       (is (= "Formicary" (:title (get-ice state :hq 1))) "Formicary is the outermost piece of ice before swap")
+       (prompt-choice :corp "Yes")      ; Move Formicary
+       (is (= 1 (get-in @state [:run :position])) "Now approaching the innermost piece of ice")
+       (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is the innermost piece of ice after swap")
+       (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is the outermost piece of ice after swap")))))
 
 (deftest free-lunch
   ;; Free Lunch - Spend 1 power counter to make Runner lose 1c
