@@ -1599,6 +1599,20 @@
              :async true
              :effect (effect (damage eid :net 1 {:card card}))}}
 
+   "SIU"
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req true)}
+    :abilities [{:label "Trace 3 - Give the Runner 1 tag"
+                 :async true
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (resolve-ability
+                                  {:trace {:base 3
+                                           :label "Trace 3 - Give the Runner 1 tag"
+                                           :successful {:msg "give the Runner 1 tag"
+                                                        :async true
+                                                        :effect (effect (tag-runner :runner eid 1))}}}
+                                  card nil))}]}
+
    "Snare!"
    {:flags {:rd-reveal (req true)}
     :access {:req (req (not= (first (:zone card)) :discard))
