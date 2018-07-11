@@ -479,11 +479,11 @@
      (play-from-hand state :runner "Sure Gamble")
      (play-from-hand state :runner "District 99")
      (play-from-hand state :runner "Rebirth")
-     (let [fisk "Khan: Savvy Skiptracer"
-           fisk-choice (some #(when (= fisk (:title %)) %) (:choices (prompt-map :runner)))]
+     (let [khan "Khan: Savvy Skiptracer"
+           khan-choice (some #(when (= khan (:title %)) %) (:choices (prompt-map :runner)))]
        (core/resolve-prompt state :runner
-                            {:card fisk-choice})
-       (is (= fisk (-> (get-runner) :identity :title)) "Rebirthed into Fisk"))
+                            {:card khan-choice})
+       (is (= khan (-> (get-runner) :identity :title)) "Rebirthed into Khan"))
      (play-from-hand state :runner "Spy Camera")
      (play-from-hand state :runner "Faerie")
      (let [d99 (get-resource state 0)
