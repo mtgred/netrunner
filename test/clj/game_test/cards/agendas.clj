@@ -1788,7 +1788,7 @@
       (advance state ares 6)
       (is (= 6 (get-counters (refresh ares) :advancement)))
       (core/score state :corp {:card (refresh ares)})
-      (is (prompt-is-card? :runner ares) "Runner has Ares prompt to trash installed cards"))
+      (is (prompt-is-card? state :runner ares) "Runner has Ares prompt to trash installed cards"))
     (prompt-select state :runner (find-card "Clone Chip" (:hardware (:rig (get-runner)))))
     (is (empty? (get-in @state [:runner :prompt])) "Runner must trash 2 cards but only has 1 card in rig, prompt ended")
     (is (= 1 (count (:discard (get-runner)))))

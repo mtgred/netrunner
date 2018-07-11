@@ -326,9 +326,9 @@
      ;; Check Caprice triggers properly on no ice (and rezzed)
      (core/rez state :corp caprice)
      (run-on state "Server 1")
-     (is (prompt-is-card? :corp caprice)
+     (is (prompt-is-card? state :corp caprice)
          "Caprice prompt even with no ice, once runner makes run")
-     (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
+     (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
      (prompt-choice state :corp "0 [Credits]")
      (prompt-choice state :runner "1 [Credits]")
      (take-credits state :runner)
@@ -340,9 +340,9 @@
      (run-continue state)
      (is (empty? (get-in @state [:corp :prompt])) "Caprice not trigger on first ice")
      (run-continue state) ; Caprice prompt after this
-     (is (prompt-is-card? :corp caprice)
+     (is (prompt-is-card? state :corp caprice)
          "Corp has Caprice prompt (triggered automatically as runner passed last ice)")
-     (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
+     (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
      (prompt-choice state :corp "0 [Credits]")
      (prompt-choice state :runner "1 [Credits]")
      (is (not (:run @state)) "Run ended by Caprice")
@@ -778,11 +778,11 @@
         (card-ability state :corp mb 0)
         (card-ability state :runner sn 0)
         ;; both prompts should be on Batty
-        (is (prompt-is-card? :corp mb) "Corp prompt is on Marcus Batty")
-        (is (prompt-is-card? :runner mb) "Runner prompt is on Marcus Batty")
+        (is (prompt-is-card? state :corp mb) "Corp prompt is on Marcus Batty")
+        (is (prompt-is-card? state :runner mb) "Runner prompt is on Marcus Batty")
         (prompt-choice state :corp "0")
         (prompt-choice state :runner "0")
-        (is (prompt-is-card? :corp sn) "Corp prompt is on Security Nexus")
+        (is (prompt-is-card? state :corp sn) "Corp prompt is on Security Nexus")
         (is (prompt-is-type? state :runner :waiting) "Runner prompt is waiting for Corp")))))
 
 (deftest mumbad-city-grid

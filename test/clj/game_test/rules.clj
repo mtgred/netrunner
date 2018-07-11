@@ -513,8 +513,8 @@
     (let [caprice (get-content state :remote1 0)]
       (core/rez state :corp caprice)
       (run-on state "Server 1")
-      (is (prompt-is-card? :corp caprice) "Caprice prompt even with no ice, once runner makes run")
-      (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
+      (is (prompt-is-card? state :corp caprice) "Caprice prompt even with no ice, once runner makes run")
+      (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
       (prompt-choice state :corp "2 [Credits]")
       (prompt-choice state :runner "1 [Credits]")
       (is (= 5 (:credit (get-runner))) "Runner spend bad pub credit on psi game")

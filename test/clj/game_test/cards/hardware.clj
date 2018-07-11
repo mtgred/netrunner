@@ -1214,7 +1214,7 @@
       (score-agenda state :corp (get-content state :remote1 0))
       ;; Gang Sign should trigger, without The Gauntlet pop-up
       (let [gs (get-resource state 0)]
-        (prompt-is-card? :runner gs))
+        (prompt-is-card? state :runner gs))
       ;; This will throw error if The Gauntlet triggers.
       (prompt-choice state :runner "Card from hand"))))
 
@@ -1286,7 +1286,7 @@
           (run-empty-server state "HQ")
           (prompt-choice state :runner "Steal")
           (is (zero? (:agenda-point (get-runner))) "Stole Domestic Sleepers")
-          (is (prompt-is-card? :runner tt))
+          (is (prompt-is-card? state :runner tt))
           (prompt-choice state :runner "Yes")
           (prompt-select state :runner (find-card "Project Vitruvius" (:scored (get-corp))))
           (is (= 2 (:agenda-point (get-runner))) "Took Project Vitruvius from Corp")
@@ -1304,13 +1304,13 @@
       (let [tt (get-hardware state 0)]
         ;; steal Project Vitruvius and swap for Mandatory Upgrades
         (core/steal state :runner (find-card "Project Vitruvius" (:hand (get-corp))))
-        (is (prompt-is-card? :runner tt))
+        (is (prompt-is-card? state :runner tt))
         (prompt-choice state :runner "Yes")
         (prompt-select state :runner (find-card "Mandatory Upgrades" (:scored (get-corp))))
         (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn")
         ;; steal second Mandatory Upgrades and swap for Project Vitruvius
         (core/steal state :runner (find-card "Mandatory Upgrades" (:hand (get-corp))))
-        (is (prompt-is-card? :runner tt))
+        (is (prompt-is-card? state :runner tt))
         (prompt-choice state :runner "Yes")
         (prompt-select state :runner (find-card "Project Vitruvius" (:scored (get-corp))))
         (is (zero? (:click (get-corp))) "Corp doesn't gain a click on Runner's turn")

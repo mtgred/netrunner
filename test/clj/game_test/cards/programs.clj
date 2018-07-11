@@ -503,8 +503,8 @@
     (let [s (get-ice state :hq 0)]
       (core/rez state :corp s)
       (card-subroutine state :corp s 0)
-      (is (prompt-is-card? :corp s) "Corp prompt is on Snowflake")
-      (is (prompt-is-card? :runner s) "Runner prompt is on Snowflake")
+      (is (prompt-is-card? state :corp s) "Corp prompt is on Snowflake")
+      (is (prompt-is-card? state :runner s) "Runner prompt is on Snowflake")
       (is (= 6 (:credit (get-corp))) "Corp paid 1 credit to rezz Snowflake")
       (prompt-choice state :corp "1")
       (prompt-choice state :runner "1")
@@ -1070,7 +1070,7 @@
       ;; unrezzed ice scenario
       (run-on state "R&D")
       (card-ability state :runner snitch 0)
-      (is (prompt-is-card? :runner snitch) "Option to jack out")
+      (is (prompt-is-card? state :runner snitch) "Option to jack out")
       (prompt-choice state :runner "Yes")
       ;; rezzed ice scenario
       (run-on state "HQ")
