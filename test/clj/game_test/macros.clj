@@ -42,6 +42,12 @@
                        (if (nil? card) "nil" card)))
   (core/select state side {:card (core/get-card state card)}))
 
+(defn prompt-is-card? [state side card]
+  (assert-prompt state side)
+  (and (:cid card) (-> @state side :prompt first :card :cid)
+       (= (:cid card) (-> @state side :prompt first :card :cid))))
+
+
 (defmacro do-game [s & body]
   `(let [~'state ~s
          ~'get-corp (fn [] (:corp @~'state))
@@ -55,13 +61,6 @@
                      (let [~'ret (core/get-card ~'state ~'card)]
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
-         
-         ~'prompt-is-card? (fn [~'side ~'card]
-                             (~'assert-prompt ~'state ~'side)
-                             (and (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid)
-                                  (= (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid))))
-         
-
          ~'prompt-map (fn [side#] (first (get-in @~'state [side# :prompt])))
          ~'prompt-titles (fn [side#] (map #(:title %) (:choices (~'prompt-map side#))))
          ~'prompt? (fn [~'side] (-> @~'state ~'side :prompt first))]
