@@ -40,7 +40,7 @@
         (is (empty? (get-in @state [:corp :prompt])) "Arella not triggered for different remote score")
         (is (= 1 (count (get-scored state :corp))) "1 Agenda scored")
         (score-agenda state :corp (refresh same-tg))
-        (prompt-card :corp (find-card "Bryan Stinson" (:hand (get-corp))))
+        (prompt-select :corp (find-card "Bryan Stinson" (:hand (get-corp))))
         (prompt-choice-partial :corp "New")
         (is (= 2 (count (get-scored state :corp))) "2 Agendas scored")
         (is (= 1 (count (get-content state :remote3))) "Bryan installed in new remote")
@@ -58,7 +58,7 @@
             tg (get-content state :remote1 1)]
         (core/rez state :corp arella)
         (score-agenda state :corp (refresh tg))
-        (prompt-card :corp (find-card "Ice Wall" (:hand (get-corp))))
+        (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
         (prompt-choice-partial :corp "HQ")
         (is (= 2 (count (get-ice state :hq))) "Two ice on hq")
         (is (= 1 (get-counters (get-ice state :hq 1) :advancement)) "Ice Wall has 1 counter")))))

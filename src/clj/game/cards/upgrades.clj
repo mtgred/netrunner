@@ -27,7 +27,9 @@
                      (some #(corp-installable-type? %) (:hand corp))))
       :interactive (req true)
       :prompt "Select a card to install with Arella Salvatore"
-      :choices (req (cancellable (filter #(corp-installable-type? %) (:hand corp))))
+      :choices {:req #(and (corp-installable-type? %)
+                           (in-hand? %)
+                           (= (:side %) "Corp"))}
       :async true
       :cancel-effect (req (effect-completed state side eid))
       :effect (req (wait-for (corp-install state :corp target nil {:no-install-cost true :display-message false})
