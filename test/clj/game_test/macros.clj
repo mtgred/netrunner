@@ -2,6 +2,46 @@
   (:require [game.core :as core]
             [clojure.test :refer :all]))
 
+(defn assert-prompt [state side]
+  (is (first (get-in @state [side :prompt]))
+      (str "Expected an open " (name side) " prompt")))
+
+(defn prompt-is-type? [state side type]
+  (= type (-> @state side :prompt first :prompt-type)))
+
+(defn prompt-choice [state side choice]
+  (is (or (number? choice) (string? choice))
+      (str "prompt-choice should only be called with strings or numbers as argument - got "
+           (if (nil? choice) "nil" choice)))
+  (assert-prompt state side)
+  (core/resolve-prompt state side {:choice (core/get-card state choice)}))
+
+;start here
+(defn prompt-choice-partial [state side choice]
+  (core/resolve-prompt state side
+                       {:choice (core/get-card state (first (filter #(.contains % choice)
+                                                                    (->> @state side :prompt first :choices))))}))
+
+(defn prompt-card [state side card]
+  (assert-prompt state side)
+  (is (prompt-is-type? side nil)
+      (str  "prompt-card should only be used with prompts listing cards, not prompts of type "
+            (-> @state side :prompt first :prompt-type)))
+  (is (map? card) (str "prompt-card should be called with card map as argument - got "
+                       (if (nil? card) "nil" card)))
+  (core/resolve-prompt state side {:card (core/get-card state card)}))
+
+(defn prompt-select [state side card]
+  (assert-prompt state side)
+  (is (prompt-is-type? side :select)
+      (str "prompt-select should only be used with prompts "
+           "requiring the user to click on cards on grip/table, not "
+           (let [type (-> @state side :prompt first :prompt-type)]
+             (if type type "nil"))))
+  (is (map? card) (str "prompt-select should be called with card map as argument - got "
+                       (if (nil? card) "nil" card)))
+  (core/select state side {:card (core/get-card state card)}))
+
 (defmacro do-game [s & body]
   `(let [~'state ~s
          ~'get-corp (fn [] (:corp @~'state))
@@ -9,9 +49,6 @@
          ~'get-run (fn [] (:run @~'state))
          ~'get-hand-size (fn [~'side] (+ (get-in @~'state [~'side :hand-size :base])
                                          (get-in @~'state [~'side :hand-size :mod])))
-         ~'assert-prompt (fn [~'side]
-                       (is (first (get-in @~'state [~'side :prompt]))
-                           (str "Expected an open " (name ~'side) " prompt")))
          ~'refresh (fn [~'card]
                      ;; ;; uncommenting the below two assertions causes a looot of tests to fail
                      ;; (is ~'card "card passed to refresh should not be nil")
@@ -19,40 +56,8 @@
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
          
-         ~'prompt-choice-partial (fn [~'side ~'choice]
-                                   (core/resolve-prompt
-                                     ~'state ~'side
-                                     {:choice (~'refresh (first (filter #(.contains % ~'choice)
-                                                                        (->> @~'state ~'side :prompt first :choices))))}))
-         ~'prompt-is-type? (fn [~'side ~'type]
-                             (= ~'type (-> @~'state ~'side :prompt first :prompt-type)))
-         ~'prompt-choice (fn [~'side ~'choice]
-                           (is (or (number? ~'choice) (string? ~'choice))
-                               (str "prompt-choice should only be called with strings or numbers as argument - got "
-                                    (if (nil? ~'choice) "nil" ~'choice)))
-                           (~'assert-prompt ~'side)
-                           (core/resolve-prompt ~'state ~'side {:choice (~'refresh ~'choice)}))
-
-         ~'prompt-card (fn [~'side ~'card]
-                         (~'assert-prompt ~'side)
-                         (is (~'prompt-is-type? ~'side nil)
-                             (str  "prompt-card should only be used with prompts listing cards, not prompts of type "
-                                   (-> @~'state ~'side :prompt first :prompt-type)))
-                         (is (map? ~'card) (str "prompt-card should be called with card map as argument - got "
-                                                (if (nil? ~'card) "nil" ~'card)))
-                         (core/resolve-prompt ~'state ~'side {:card (~'refresh ~'card)}))
-         ~'prompt-select (fn [~'side ~'card]
-                           (~'assert-prompt ~'side)
-                           (is (~'prompt-is-type? ~'side :select)
-                               (str "prompt-select should only be used with prompts "
-                                    "requiring the user to click on cards on grip/table, not "
-                                    (let [~'type (-> @~'state ~'side :prompt first :prompt-type)]
-                                      (if ~'type ~'type "nil"))))
-                           (is (map? ~'card) (str "prompt-select should be called with card map as argument - got "
-                                                  (if (nil? ~'card) "nil" ~'card)))
-                           (core/select ~'state ~'side {:card (~'refresh ~'card)}))
          ~'prompt-is-card? (fn [~'side ~'card]
-                             (~'assert-prompt ~'side)
+                             (~'assert-prompt ~'state ~'side)
                              (and (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid)
                                   (= (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid))))
          
