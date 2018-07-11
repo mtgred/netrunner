@@ -552,7 +552,7 @@
                                  true)))
                            (trash card {:cause :ability-cost}))}]}
 
-   "Dean Lister"
+   "Den Lister"
    {:abilities [{:req (req (:run @state))
                  :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
                  :choices {:req #(and (has-subtype? % "Icebreaker")
@@ -575,6 +575,19 @@
                               :req (req true)}]}
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
+   "District 99"
+   {:abilities [{:req (req (seq (filter #(= (:faction (:identity runner)) (:faction %)) (:discard runner))))
+                 :counter-cost [:power 3] :cost [:click 1]
+                 :prompt (msg "Which card to add to grip?")
+                 :choices (req (filter #(= (:faction (:identity runner)) (:faction %)) (:discard runner)))
+                 :effect (effect (move target :hand))
+                 :msg (msg "Add " (:title target) " to grip")}]
+    :events (let [f (fn [t] (some #(or (is-type? % "Program") (is-type? % "Hardware")) t))
+                  ab {:req (req (and (first-event? state :corp :corp-trash f)
+                                     (first-event? state :runner :runner-trash f)))
+                      :effect (effect (add-counter card :power 1))}]
+              {:corp-trash ab :runner-trash ab})}
+ 
    "DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
          can-host? (fn [runner c] (and (is-type? c "Identity")
