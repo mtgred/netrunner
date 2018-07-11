@@ -24,7 +24,7 @@
 
 (defn prompt-card [state side card]
   (assert-prompt state side)
-  (is (prompt-is-type? side nil)
+  (is (prompt-is-type? state side nil)
       (str  "prompt-card should only be used with prompts listing cards, not prompts of type "
             (-> @state side :prompt first :prompt-type)))
   (is (map? card) (str "prompt-card should be called with card map as argument - got "
@@ -33,7 +33,7 @@
 
 (defn prompt-select [state side card]
   (assert-prompt state side)
-  (is (prompt-is-type? side :select)
+  (is (prompt-is-type? state side :select)
       (str "prompt-select should only be used with prompts "
            "requiring the user to click on cards on grip/table, not "
            (let [type (-> @state side :prompt first :prompt-type)]
