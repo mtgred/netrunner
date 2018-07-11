@@ -576,18 +576,25 @@
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent 1) (trash card {:cause :ability-cost}))}]}
 
    "District 99"
-   {:abilities [{:req (req (seq (filter #(= (:faction (:identity runner)) (:faction %)) (:discard runner))))
+   {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
+    :abilities [{:label "Add a card from your heap to your grip"
+                 :req (req (seq (filter #(= (:faction (:identity runner)) (:faction %)) (:discard runner))))
                  :counter-cost [:power 3] :cost [:click 1]
                  :prompt (msg "Which card to add to grip?")
                  :choices (req (filter #(= (:faction (:identity runner)) (:faction %)) (:discard runner)))
                  :effect (effect (move target :hand))
-                 :msg (msg "Add " (:title target) " to grip")}]
-    :events (let [f (fn [t] (some #(or (is-type? % "Program") (is-type? % "Hardware")) t))
-                  ab {:req (req (and (first-event? state :corp :corp-trash f)
-                                     (first-event? state :runner :runner-trash f)))
-                      :effect (effect (add-counter card :power 1))}]
-              {:corp-trash ab :runner-trash ab})}
- 
+                 :msg (msg "Add " (:title target) " to grip")}
+                {:label "Add a power counter manually"
+                 :once :per-turn
+                 :effect (effect (add-counter card :power 1))
+                 :msg (msg "manually add a power counter.")}]
+    :events (let [prog-or-hw (fn [t] (or (program? (first t)) (hardware? (first t))))
+                  trash-event (fn [side-trash] {:once :per-turn
+                                                :req (req (first-event? state side side-trash prog-or-hw))
+                                                :effect (effect (add-counter card :power 1))})]
+              {:corp-trash (trash-event :corp-trash)
+               :runner-trash (trash-event :runner-trash)})}
+   
    "DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
          can-host? (fn [runner c] (and (is-type? c "Identity")
