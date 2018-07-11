@@ -324,7 +324,7 @@
          (swap! state assoc-in [:runner :tag] 0))
      (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
          (deduct state :runner [:tag n])))
-   (trigger-event-sync state side eid :runner-lose-tag n)))
+   (trigger-event-sync state side eid :runner-lose-tag n side)))
 
 
 ;;;; Bad Publicity

@@ -912,7 +912,7 @@
                                 (shuffle! state :corp :deck)
                                 (move state :corp c :deck {:front true})
                                 (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D"))))
-                 :cancel-effect (effect (lose :runner :tag 1)
+                 :cancel-effect (effect (lose-tags :corp 1)
                                         (shuffle! :corp :deck)
                                         (system-msg (str "uses Lily Lockwell, but did not find an Operation in R&D")))}]}
 

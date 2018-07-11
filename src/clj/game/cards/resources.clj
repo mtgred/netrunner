@@ -1975,16 +1975,17 @@
                      (swap! state assoc-in [:runner :hand-size :base] 5))}
 
    "Thunder Art Gallery"
-   (let [ability {:once :per-turn
-                  :optional {:prompt (msg "Use Thunder Art Gallery to install a card?")
-                             :yes-ability {:choices (req (cancellable (remove #(is-type? % "Event") (:hand runner))))
-                                           :prompt (msg "Which card to install?")
-                                           :effect (req (install-cost-bonus state side [:credit -1])
-                                                        (when (runner-can-install? state side target)
-                                                              (system-msg state side "uses Thunder Art Gallery to install a card.")
-                                                              (runner-install state side target)))}}}]
-     {:events {:runner-lose-tag (assoc ability :req (req (= side :runner)))
-               :runner-prevent (assoc ability :req (req (seq (filter #(some #{:tag} %) targets))))}})
+   (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
+                                            (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
+         ability {:choices (req (cancellable (remove #(is-type? % "Event") (:hand runner))))
+                  :async true
+                  :prompt (msg "Which card to install?")
+                  :effect (req (install-cost-bonus state side [:credit -1])
+                               (if (runner-can-install? state side target)
+                                 (do (system-msg state side "uses Thunder Art Gallery to install a card.")
+                                     (runner-install state side eid target nil))))}]
+     {:events {:runner-lose-tag (assoc ability :req (req (and (first-event-check state first-event? no-event?) (= side :runner))))
+               :runner-prevent (assoc ability :req (req (and (first-event-check state no-event? first-event?) (seq (filter #(some #{:tag} %) targets)))))}})
 
    "Tri-maf Contact"
    {:abilities [{:cost [:click 1] :msg "gain 2 [Credits]" :once :per-turn
