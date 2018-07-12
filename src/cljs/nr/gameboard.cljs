@@ -718,15 +718,13 @@
                     :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]
              [:div {:key i
                     :on-click #(do (send-command "ability" {:card card
-                                                            :ability (- i dynabi-count)})
-                                   (swap! c-state dissoc :abilities))
+                                                            :ability (- i dynabi-count)}))
                     :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}]))
          abilities)
        (map-indexed
          (fn [i sub]
            [:div {:key i
-                  :on-click #(do (send-command "subroutine" {:card card :subroutine i})
-                                 (swap! c-state dissoc :abilities))
+                  :on-click #(do (send-command "subroutine" {:card card :subroutine i}))
                   :dangerouslySetInnerHTML #js {:__html (add-symbols (str "[Subroutine]" (:label sub)))}}])
          subroutines)])))
 
