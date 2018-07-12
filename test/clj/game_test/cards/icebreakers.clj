@@ -206,6 +206,30 @@
       (take-credits state :runner)
       (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2"))))
 
+(deftest cradle
+  ;; Cradle
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Cradle" (qty "Cache" 100)]))
+    (starting-hand state :runner ["Cradle"])
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100 :click 100)
+    (play-from-hand state :runner "Cradle")
+    (run-on state "HQ")
+    (let [cradle (get-program state 0)
+          strength (:strength (refresh cradle))]
+      (dotimes [n 5]
+        (when (pos? n)
+          (core/draw state :runner n))
+        (is (= (- strength n) (:current-strength (refresh cradle))) (str "Cradle should lose " n " strength"))
+        (starting-hand state :runner [])
+        (is (= strength (:current-strength (refresh cradle))) (str "Cradle should be back to original strength")))
+      (core/draw state :runner 1)
+      (is (= (dec strength) (:current-strength (refresh cradle))) "Cradle should lose 1 strength")
+      (play-from-hand state :runner "Cache")
+      (is (= strength (:current-strength (refresh cradle))) (str "Cradle should be back to original strength")))))
+
 (deftest crypsis
   ;; Crypsis - Loses a virus counter after encountering ice it broke
   (do-game
