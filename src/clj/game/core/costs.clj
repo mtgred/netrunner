@@ -238,7 +238,7 @@
       ;; Else assume amount is a number and try to increment type by it.
       :else
       (do (swap! state update-in [side type] (safe-inc-n amount))
-          (swap! state update-in [:stats side :gain type] (fnil + 0) amount)))))
+          (swap! state update-in [:stats side :gain type] (fnil + 0 0) amount)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]

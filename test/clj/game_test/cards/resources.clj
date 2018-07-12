@@ -437,6 +437,94 @@
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
     (is (zero? (:tag (get-runner))) "Tag avoided")))
 
+(deftest district-99
+  ;; District 99 - Gains power counters on hardware/program trashes, can spend 3 power counters to recur a card matching identity
+  (testing "Trashes by both sides and manual triggers"
+    (do-game
+     (new-game (default-corp ["Bio-Ethics Association"])
+               (default-runner ["District 99" (qty "Spy Camera" 2) "Faerie"]))
+     (play-from-hand state :corp "Bio-Ethics Association" "New remote")
+     (take-credits state :corp)
+     (play-from-hand state :runner "District 99")
+     (let [d99 (get-resource state 0)
+           bea (get-content state :remote1 0)]
+       (card-ability state :runner (refresh d99) 1) ; manually add power counter
+       (is (= 1 (get-counters (refresh d99) :power)) "1 power counter was added manually")
+       (card-ability state :runner (refresh d99) 1) ; try to manually add power counter twice
+       (is (= 1 (get-counters (refresh d99) :power)) "Manual power counter addition is only possible once per turn")
+       (play-from-hand state :runner "Spy Camera")
+       (card-ability state :runner (get-hardware state 0) 1) ; pop spy camera
+       (prompt-choice :runner "OK")
+       (is (= 1 (get-counters (refresh d99) :power)) "Manual power counter addition suppressed later trigger")
+       (play-from-hand state :runner "Spy Camera")
+       (is (= 1 (count (:hand (get-runner)))) "Faerie in hand")
+       (is (= "Faerie" (:title (first (:hand (get-runner))))))
+       (core/rez state :corp bea)
+       (take-credits state :runner)
+       (is (= 0 (count (:hand (get-runner)))) "Faerie was trashed")
+       (is (= 2 (get-counters (refresh d99) :power)) "Trashing Faerie from grip placed a counter")
+       (card-ability state :runner (get-hardware state 0) 1) ; pop spy camera
+       (prompt-choice :runner "OK")
+       (is (= 2 (get-counters (refresh d99) :power)) "Trashing Spy Camera after Faerie did not place a counter"))))
+  (testing "Rebirth interaction, basic functionality"
+    (do-game
+     (new-game (default-corp ["Grim"])
+               (make-deck "Armand \"Geist\" Walker: Tech Lord"
+                          ["District 99" (qty "Spy Camera" 3) "Faerie" "Rebirth" "Sure Gamble"]))
+     (play-from-hand state :corp "Grim" "HQ")
+     (take-credits state :corp)
+     (core/gain state :runner :click 10)
+     (core/click-draw state :runner nil)
+     (core/click-draw state :runner nil)
+     (play-from-hand state :runner "Sure Gamble")
+     (play-from-hand state :runner "District 99")
+     (play-from-hand state :runner "Rebirth")
+     (let [khan "Khan: Savvy Skiptracer"
+           khan-choice (some #(when (= khan (:title %)) %) (:choices (prompt-map :runner)))]
+       (core/resolve-prompt state :runner
+                            {:card khan-choice})
+       (is (= khan (-> (get-runner) :identity :title)) "Rebirthed into Khan"))
+     (play-from-hand state :runner "Spy Camera")
+     (play-from-hand state :runner "Faerie")
+     (let [d99 (get-resource state 0)
+           faerie (get-program state 0)
+           spycam (get-hardware state 0)
+           grim (get-ice state :hq 0)]
+       (run-on state :hq)
+       (core/rez state :corp grim)
+       (card-subroutine state :corp (refresh grim) 0)
+       (is (= 0 (get-counters (refresh d99) :power)) "No power counters before Faerie is trashed")
+       (prompt-select :corp faerie)
+       (is (= 1 (get-counters (refresh d99) :power)) "1 power counter was added for Faerie being trashed")
+       (card-ability state :runner spycam 1) ; pop spycam
+       (prompt-choice :runner "OK")
+       (is (= 1 (get-counters (refresh d99) :power)) "Trashing Spy Camera after Faerie did not add a second power counter")
+       (card-ability state :runner (refresh d99) 2) ; manually add counter
+       (is (= 1 (get-counters (refresh d99) :power)) "Can't manually add power counter after one has already been added") 
+       (run-jack-out state)
+       (play-from-hand state :runner "Spy Camera")
+       (take-credits state :runner)
+       (card-ability state :runner (get-hardware state 0) 1) ; pop spycam
+       (prompt-choice :runner "OK")
+       (is (= 2 (get-counters (refresh d99) :power)) "Trashing Spy Camera on Corp turn added a second power counter")
+       (take-credits state :corp)
+       (play-from-hand state :runner "Spy Camera")
+       (take-credits state :runner)
+       (card-ability state :runner (get-hardware state 0) 1) ; pop spycam
+       (prompt-choice :runner "OK")
+       (take-credits state :corp)
+       (is (= 3 (get-counters (refresh d99) :power)) "Trashing Spy Camera on Runner turn added a third power counter")
+       (let [faerie (first (filter #(= (:title %) "Faerie") (:discard (get-runner))))]
+         (doseq [c ["Sure Gamble" "Faerie" "Spy Camera"]]
+           (is (some? (filter #(= (:title %) c) (:hand (get-runner)))) (str c " is in the discard")))
+         (is (zero? (count (:hand (get-runner)))) "Faerie is not in hand")
+         (card-ability state :runner (refresh d99) 0)  ; Retrieve card from Archives
+         (is (= 2 (count (:choices (prompt-map :runner)))) "Runner can choose between Spy Camera and Faerie only")
+         (prompt-card :runner faerie)
+         (is (= 1 (count (:hand (get-runner)))) "1 card added to hand")
+         (is (= "Faerie" (-> (get-runner) :hand first :title)) "Faerie added to hand")
+         (is (zero? (get-counters (refresh d99) :power)) "Picking up Faerie removed 3 counters"))))))
+
 (let [choose-runner
       (fn [name state prompt-map]
                       (let [the-choice (some #(when (= name (:title %)) %) (:choices (prompt-map :runner)))]
@@ -615,7 +703,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
-      (core/tag-runner state :runner 1)
+      (core/gain-tags state :runner 1)
       (play-from-hand state :corp "Exchange of Information")
       (prompt-select :corp (find-card "Fan Site" (:scored (get-runner))))
       (prompt-select :corp (find-card "Hostile Takeover" (:scored (get-corp))))
@@ -1232,6 +1320,26 @@
       (is (zero? (count (:hosted (refresh lib)))) "All programs trashed when turn ends")
       (is (= 2 (count (:hand (get-runner)))) "Darwin never got played, Chameleon returned to hand")
       (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))
+
+(deftest miss-bones
+  ;; Miss Bones - credits for trashing installed cards, trash when empty
+  (do-game
+    (new-game
+      (default-corp)
+      (default-runner ["Miss Bones"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Miss Bones")
+    (let [mb (get-resource state 0)]
+      (is (= 12 (get-counters (refresh mb) :credit)) "Miss Bones starts with 12 credits")
+      (is (= 3 (:credit (get-runner))) "Runner starts with 3 credits")
+      (card-ability state :runner mb 0)
+      (is (= 11 (get-counters (refresh mb) :credit)) "Miss Bones loses a credit")
+      (is (= 4 (:credit (get-runner))) "Runner gains a credit")
+      (dotimes [_ 11]
+        (card-ability state :runner mb 0))
+      (is (= 1 (count (:discard (get-runner)))) "Miss Bones in discard pile")
+      (is (empty? (get-resource state)) "Miss Bones not installed")
+      (is (= 15 (:credit (get-runner))) "Runner gained all 12 credits from Miss Bones"))))
 
 (deftest muertos-gang-member
   ;; Muertos Gang Member - Install and Trash
@@ -2377,6 +2485,28 @@
         (prompt-select :corp (get-resource state 0))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= 4 (core/available-mu state)) "Runner has 4 MU")))))
+
+(deftest thunder-art-gallery
+  (testing "Works when removing/avoiding tags"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Thunder Art Gallery" "New Angeles City Hall" "Corroder"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (core/gain-credits state :runner 1)
+      (core/gain-tags state :corp 1)
+      (core/remove-tag state :runner nil)
+      (prompt-card :runner (find-card "New Angeles City Hall" (:hand (get-runner))))
+      (is (= 1 (:credit (get-runner))) "Runner paid one less to install (but 2 to remove tag)")
+      (is (= "New Angeles City Hall" (:title (get-resource state 1))) "NACH is installed")
+      (take-credits state :runner)
+      (is (= 3 (:credit (get-runner))) "Runner is now at 3 credits")
+      (core/gain-tags state :corp 1)
+      (card-ability state :runner (get-resource state 1) 0)
+      (prompt-choice :runner "Done")
+      (prompt-card :runner (find-card "Corroder" (:hand (get-runner))))
+      (is (= 0 (:credit (get-runner))) "Runner paid one less to install")
+      (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
 
 (deftest tech-trader
   ;; Basic test
