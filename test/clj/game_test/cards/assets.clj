@@ -2453,6 +2453,43 @@
       (take-credits state :runner)
       (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link"))))
 
+(deftest neurostasis
+  ;; Neurostasis - ambush, shuffle cards into the stack
+  (do-game
+    (new-game
+      (default-corp ["Neurostasis"])
+      (default-runner [(qty "Cache" 3)]))
+    (play-from-hand state :corp "Neurostasis" "New remote")
+    (let [neuro (get-content state :remote1 0)]
+      ;; Single advance Neurostasis
+      (core/advance state :corp {:card (refresh neuro)})
+      (take-credits state :corp)
+      ;; Run on Neurostasis with 3 programs
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (run-empty-server state "Server 1")
+      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+      (prompt-choice :corp "Yes")
+      ;; Corp can shuffle one program
+      (prompt-select :corp (get-program state 1))
+      ;; There should be two Caches left
+      (is (= 2 (:credit (get-corp))) "Spent 3 credits to fire ambush")
+      (is (= 2 (count (get-program state))) "Removed one installed program")
+      (is (= 1 (count (:deck (get-runner)))) "Shuffled one program into the stack")
+      (take-credits state :runner)
+      (core/advance state :corp {:card (refresh neuro)})
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 3 (:credit (get-corp))) "Corp starts with 3 credits")
+      (prompt-choice :corp "Yes")
+      ;; Corp can shuffle two programs
+      (prompt-select :corp (get-program state 1))
+      (prompt-select :corp (get-program state 0))
+      (is (= 0 (:credit (get-corp))) "Spent 3 credits to fire ambush")
+      (is (empty? (get-program state)) "Removed one installed program")
+      (is (= 3 (count (:deck (get-runner)))) "Shuffled two programs into the stack"))))
+
 (deftest news-team
   ;; News Team - on access take 2 tags or take as agenda worth -1
   (do-game
