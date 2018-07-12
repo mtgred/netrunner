@@ -383,6 +383,63 @@
       (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
       (is (not (:run @state)) "Run ended"))))
 
+(deftest formicary
+  ;; Formicary - when approaching server, may rez and move to innermost
+  (testing "Verifies basic functionality and that First Responders may trigger"
+    (do-game
+     (new-game (default-corp [(qty "Ice Wall" 2) (qty "Formicary" 3)])
+               (default-runner [(qty "First Responders" 6)]))
+     (play-from-hand state :corp "Ice Wall" "HQ") 
+     (play-from-hand state :corp "Formicary" "Archives")
+     (play-from-hand state :corp "Formicary" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "First Responders")
+     (let [iw (get-ice state :hq 0)
+           form1 (get-ice state :rd 0)
+           form2 (get-ice state :archives 0)
+           responders (get-resource state 0)]
+       (run-on state "HQ")
+       (run-continue state)             ; pass the first ice
+       (is (= 0 (get-in @state [:run :position])) "Now approaching server")
+       (core/rez state :corp form1)
+       (prompt-choice :corp "Yes")      ; Move Formicary
+       (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
+       (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
+       (card-subroutine state :corp (get-ice state :hq 0) 0)
+       (prompt-choice :runner "Yes")      ; take 2 net
+       (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
+       (run-jack-out state)
+       (let [cards-in-hand (count (:hand (get-runner)))]
+         (card-ability state :runner responders 0)
+         (is (= (inc cards-in-hand) (count (:hand (get-runner)))) "First Responders was able to trigger"))
+       (run-on state "Archives")
+       (run-continue state)
+       (core/rez state :corp form2)
+       (prompt-choice :corp "Yes")      ; Move Formicary
+       (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
+       (card-subroutine state :corp (refresh form2) 0)
+       (prompt-choice :runner "No")      ; ETR
+       (is (not (get-in @state [:run])) "Formicary ended the run"))))
+  (testing "Verifies that Formicary can be moved to the innermost positon of its own server"
+    (do-game
+     (new-game (default-corp ["Ice Wall" "Formicary"])
+               (default-runner))
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Formicary" "HQ")
+     (take-credits state :corp)
+     (let [form (get-ice state :hq 1)]
+       (run-on state "HQ")
+       (run-continue state)             ; pass the first ice
+       (run-continue state)             ; pass the second ice
+       (is (= 0 (get-in @state [:run :position])) "Now approaching server")
+       (core/rez state :corp form)
+       (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is the innermost piece of ice before swap")
+       (is (= "Formicary" (:title (get-ice state :hq 1))) "Formicary is the outermost piece of ice before swap")
+       (prompt-choice :corp "Yes")      ; Move Formicary
+       (is (= 1 (get-in @state [:run :position])) "Now approaching the innermost piece of ice")
+       (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is the innermost piece of ice after swap")
+       (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is the outermost piece of ice after swap")))))
+
 (deftest free-lunch
   ;; Free Lunch - Spend 1 power counter to make Runner lose 1c
   (do-game
@@ -504,6 +561,43 @@
       ;; Prompt for "you cannot access any card this run"
       (prompt-choice :runner "No action")
       (is (not (accessing state "Hostile Takeover"))))))
+
+(deftest hydra
+  ;; Hydra - do an effect Runner is tagged, otherwise give Runner 1 tag
+  (do-game
+    (new-game (default-corp ["Hydra"])
+              (default-runner))
+    (play-from-hand state :corp "Hydra" "HQ")
+    (take-credits state :corp)
+    (core/gain-credits state :corp 10)
+    (run-on state :hq)
+    (let [hydra (get-ice state :hq 0)
+          corp-creds (:credit (get-corp))]
+      (core/rez state :corp hydra)
+      (is (= (- corp-creds 10) (:credit (get-corp))) "Cost 10 credits to rez Hydra")
+      (is (not (core/is-tagged? @state)) "Runner is not tagged approaching Hydra")
+
+      (testing "Hydra subroutines give tags if Runner is not tagged"
+        (doseq [n (range 3)]
+          (card-subroutine state :corp hydra n)
+          (is (= 1 (:tag (get-runner))) (str "Hydra sub " (inc n) " gave Runner 1 tag"))
+          (core/lose state :runner :tag 1)))
+
+      (testing "Hydra subroutines do their effect if the Runner is tagged"
+        ;; Gain 1 tag to turn on main effect of subroutines
+        (core/gain state :runner :tag 1)
+        (is (core/is-tagged? @state) "Runner is tagged")
+
+        (is (= 3 (count (:hand (get-runner)))) "3 cards in Runner grip before Hydra damage")
+        (card-subroutine state :corp hydra 0)
+        (is (= 0 (count (:hand (get-runner)))) "Hydra sub 1 did 3 damage when Runner is tagged")
+
+        (card-subroutine state :corp hydra 1)
+        (is (= (- corp-creds 5) (:credit (get-corp))) "Hydra sub 2 gave 5 credits to Corp when Runner is tagged")
+
+        (is (:run @state) "Still a run going on before resolving last subroutine")
+        (card-subroutine state :corp hydra 2)
+        (is (not (:run @state)) "Hydra sub 3 ended the run when Runner is tagged")))))
 
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
@@ -888,6 +982,37 @@
       (card-subroutine state :corp mas 0)
       (is (not (:run @state)) "Run is ended"))))
 
+(deftest meridian
+  (testing "ETR"
+    (do-game
+      (new-game (default-corp ["Meridian"])
+                (default-runner))
+      (play-from-hand state :corp "Meridian" "HQ")
+      (take-credits state :corp)
+      (let [mer (get-ice state :hq 0)]
+        (core/rez state :corp (refresh mer))
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh mer) 0)
+        (prompt-choice-partial :runner "End")
+        (is (not (:run @state)) "Run is ended")
+        (is (empty? (:scored (get-runner))) "Not in runner score area")
+        (is (= 1 (count (get-ice state :hq))) "ICE still installed"))))
+  (testing "Score as -1 point agenda"
+    (do-game
+      (new-game (default-corp ["Meridian"])
+                (default-runner))
+      (play-from-hand state :corp "Meridian" "HQ")
+      (take-credits state :corp)
+      (let [mer (get-ice state :hq 0)]
+        (core/rez state :corp (refresh mer))
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh mer) 0)
+        (prompt-choice-partial :runner "Add")
+        (is (:run @state) "Run is still live")
+        (is (= 1 (count (:scored (get-runner)))) "In runner score area")
+        (is (= -1 (:agenda-point (get-runner))) "Worth -1 agenda points")
+        (is (empty? (get-ice state :hq)) "ICE uninstalled")))))
+
 (deftest meru-mati
   (do-game
     (new-game (default-corp [(qty "Meru Mati" 2)])
@@ -1142,6 +1267,32 @@
       (is (= 3 (get-counters (refresh odu) :advancement)))
       (is (= 6 (get-counters (refresh eni) :advancement))))))
 
+(deftest peeping-tom
+  ;;Peeping Tom - Counts # of chosen card type in Runner grip
+  (do-game
+    (new-game (default-corp ["Peeping Tom"])
+              (default-runner [(qty "Sure Gamble" 5)]))
+    (play-from-hand state :corp "Peeping Tom" "HQ")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (let [tom (get-ice state :hq 0)]
+      (core/rez state :corp (refresh tom))
+      (card-ability state :corp tom 0)
+      (prompt-choice :corp "Hardware")
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
+          "Revealed Runner grip")
+      (is (last-log-contains? state "0") "Correctly counted Hardware in Runner grip")
+      (card-ability state :corp tom 0)
+      (prompt-choice :corp "Event")
+      (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (is (= 4 (:tag (get-runner))) "Tag ability sucessful")
+      (card-side-ability state :runner tom 0)
+      (is (not (:run @state)) "Run ended"))))
+
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
   (do-game
@@ -1151,7 +1302,7 @@
     (let [resistor (get-ice state :hq 0)]
       (core/rez state :corp resistor)
       (is (zero? (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
-      (core/tag-runner state :runner 2)
+      (core/gain-tags state :runner 2)
       (is (= 2 (:tag (get-runner))))
       (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
       (take-credits state :corp)
@@ -1470,6 +1621,47 @@
       (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6")
       (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
+
+(deftest thimblerig
+  (testing "Thimblerig does not flag phase 1.2 if it's the only piece of ice"
+    (do-game
+      (new-game (default-corp ["Thimblerig" "Guard"])
+                (default-runner))
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (not (:corp-phase-12 @state)) "Corp not in phase 1.2 when Thimblerig is the only piece of ice")
+      (play-from-hand state :corp "Guard" "New remote")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp in phase 1.2 when there are 2 pieces of ice")))
+  (testing "Basic of swap ability - usable both during and outside runs"
+    (do-game
+      (new-game (default-corp ["Vanilla" "Pup" "Thimblerig"])
+                (default-runner))
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (play-from-hand state :corp "Pup" "HQ")
+      (play-from-hand state :corp "Vanilla" "New remote")
+      (let [thimble (get-ice state :hq 0)
+            pup (get-ice state :hq 1)]
+        (core/rez state :corp thimble)
+        (core/rez state :corp pup)
+        (is (= "Thimblerig" (:title (get-ice state :hq 0))) "Thimblerig innermost ice on HQ")
+        (is (= "Pup" (:title (get-ice state :hq 1))) "Pup outermost ice on HQ")
+        (card-ability state :corp (refresh thimble) 0)
+        (prompt-select :corp (refresh pup))
+        (is (= "Pup" (:title (get-ice state :hq 0))) "Pup innermost ice on HQ after swap")
+        (is (= "Thimblerig" (:title (get-ice state :hq 1))) "Thimblerig outermost ice on HQ after swap"))
+      (let [thimble (get-ice state :hq 1)
+            vanilla (get-ice state :remote1 0)]
+        (run-on state "Server 1")
+        (is (= "Thimblerig" (:title (get-ice state :hq 1))) "Thimblerig outermost ice on HQ")
+        (is (= "Vanilla" (:title (get-ice state :remote1 0))) "Vanilla ice on remote")
+        (card-ability state :corp thimble 0)
+        (prompt-select :corp vanilla)
+        (is (= "Vanilla" (:title (get-ice state :hq 1))) "Vanilla outermost ice on HQ after swap during run")
+        (is (= "Thimblerig" (:title (get-ice state :remote1 0))) "Thimblerig ice on remote after swap during run")))))
 
 (deftest tithonium
   ;; Forfeit option as rez cost, can have hosted condition counters

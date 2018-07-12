@@ -739,28 +739,30 @@
                   run-req (:req run-effect)
                   card (:card run-effect)
                   replace-effect (:replace-access run-effect)]
-              (if (:prevent-access the-run)
-                (do (system-msg state :runner "is prevented from accessing any cards this run")
-                    (resolve-ability state :runner
-                                     {:prompt "You are prevented from accessing any cards this run."
-                                      :choices ["OK"]
-                                      :effect (effect (handle-end-run))}
-                                     nil nil))
-                (if (and replace-effect
-                         (or (not run-req)
-                             (run-req state side (make-eid state) card [(first server)])))
-                  (if (:mandatory replace-effect)
-                    (replace-access state side replace-effect card)
-                    (swap! state update-in [side :prompt]
-                           (fn [p]
-                             (conj (vec p) {:msg "Use replacement effect instead of accessing cards?"
-                                            :choices ["Replacement effect" "Access cards"]
-                                            :effect #(if (= % "Replacement effect")
-                                                       (replace-access state side replace-effect card)
-                                                       (wait-for (do-access state side server)
-                                                                 (handle-end-run state side)))}))))
-                  (wait-for (do-access state side server)
-                            (handle-end-run state side)))))))
+              (if (:ended (:run @state))
+                (run-cleanup state side)
+                (if (:prevent-access the-run)
+                  (do (system-msg state :runner "is prevented from accessing any cards this run")
+                      (resolve-ability state :runner
+                                       {:prompt "You are prevented from accessing any cards this run."
+                                        :choices ["OK"]
+                                        :effect (effect (handle-end-run))}
+                                       nil nil))
+                  (if (and replace-effect
+                           (or (not run-req)
+                               (run-req state side (make-eid state) card [(first server)])))
+                    (if (:mandatory replace-effect)
+                      (replace-access state side replace-effect card)
+                      (swap! state update-in [side :prompt]
+                             (fn [p]
+                               (conj (vec p) {:msg "Use replacement effect instead of accessing cards?"
+                                              :choices ["Replacement effect" "Access cards"]
+                                              :effect #(if (= % "Replacement effect")
+                                                         (replace-access state side replace-effect card)
+                                                         (wait-for (do-access state side server)
+                                                                   (handle-end-run state side)))}))))
+                    (wait-for (do-access state side server)
+                              (handle-end-run state side))))))))
 
 (defn successful-run
   "Run when a run has passed all ice and the runner decides to access. The corp may still get to act in 4.3."
