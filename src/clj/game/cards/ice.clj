@@ -1081,7 +1081,7 @@
               :async true
               :effect (req (if (is-tagged? @state)
                              (ability state :runner eid card nil)
-                             (tag-runner state :runner eid 1)))})]
+                             (gain-tags state :runner eid 1)))})]
      {:subroutines [(otherwise-tag "do 3 net damage"
                                    (req (damage state :runner :net 3 {:card card})))
                     (otherwise-tag "gain 5 [Credits]"
@@ -1771,7 +1771,7 @@
                        {:label "Take 1 tag"
                         :async true
                         :effect (req (system-msg state :runner "chooses to take 1 tag from Peeping Tom")
-                                     (tag-runner state :runner eid 1))}]}
+                                     (gain-tags state :runner eid 1))}]}
 
    "Pop-up Window"
    {:implementation "Encounter effect is manual. Runner choice is not implemented"
