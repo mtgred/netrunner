@@ -733,6 +733,23 @@
      (is (= 2 (get-counters (refresh sg) :power)) "Has 2 power counters")
      (is (= 2 (:current-strength (refresh sg))) "2 strength"))))
 
+(deftest tycoon
+  ;; Tycoon
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Tycoon"]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tycoon")
+    (let [tycoon (get-program state 0)
+          credits (:credit (get-corp))]
+      (run-on state "HQ")
+      (card-ability state :runner tycoon 0)
+      (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
+      (run-continue state)
+      (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used"))))
+
 (deftest wyrm
   ;; Wyrm reduces strength of ice
   (do-game
