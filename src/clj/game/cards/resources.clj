@@ -552,7 +552,7 @@
                                  true)))
                            (trash card {:cause :ability-cost}))}]}
 
-   "Den Lister"
+   "Dean Lister"
    {:abilities [{:req (req (:run @state))
                  :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
                  :choices {:req #(and (has-subtype? % "Icebreaker")
