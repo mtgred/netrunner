@@ -42,41 +42,41 @@
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost extra-cost no-additional-cost]}]
    (swap! state update-in [:bonus] dissoc :play-cost)
-   (trigger-event state side :pre-play-instant card)
-   (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
-     (let [cdef (card-def card)
-           additional-cost (if (has-subtype? card "Triple")
-                             (concat (:additional-cost cdef) [:click 2])
-                             (:additional-cost cdef))
-           additional-cost (if (and (has-subtype? card "Double")
-                                    (not (get-in @state [side :register :double-ignore-additional])))
-                             (concat (:additional-cost cdef) [:click 1])
-                             additional-cost)
-           additional-cost (if (and (has-subtype? card "Run")
-                                    (get-in @state [:bonus :run-cost]))
-                             (concat additional-cost (get-in @state [:bonus :run-cost]))
-                             additional-cost)
-           total-cost (play-cost state side card
-                                 (concat (when-not no-additional-cost additional-cost) extra-cost
-                                         [:credit (:cost card)]))
-           eid (if-not eid (make-eid state) eid)]
-       ;; ensure the instant can be played
-       (if (and (if-let [cdef-req (:req cdef)]
-                  (cdef-req state side eid card targets) true) ; req is satisfied
-                (not (and (has-subtype? card "Current")
-                          (get-in @state [side :register :cannot-play-current])))
-                (not (and (has-subtype? card "Run")
-                          (not (can-run? state :runner))))
-                (not (and (has-subtype? card "Priority")
-                          (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
-         ;; Wait on pay-sync to finish before triggering instant-effect
-         (wait-for (pay-sync state side card (if ignore-cost 0 total-cost) {:action :play-instant})
-                   (if-let [cost-str async-result]
-                     (complete-play-instant state side eid card cost-str ignore-cost)
-                     ;; could not pay the card's price; mark the effect as being over.
-                     (effect-completed state side eid)))
-         ;; card's req was not satisfied; mark the effect as being over.
-         (effect-completed state side eid))))))
+   (wait-for (trigger-event-simult state side :pre-play-instant nil card)
+             (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
+               (let [cdef (card-def card)
+                     additional-cost (if (has-subtype? card "Triple")
+                                       (concat (:additional-cost cdef) [:click 2])
+                                       (:additional-cost cdef))
+                     additional-cost (if (and (has-subtype? card "Double")
+                                              (not (get-in @state [side :register :double-ignore-additional])))
+                                       (concat (:additional-cost cdef) [:click 1])
+                                       additional-cost)
+                     additional-cost (if (and (has-subtype? card "Run")
+                                              (get-in @state [:bonus :run-cost]))
+                                       (concat additional-cost (get-in @state [:bonus :run-cost]))
+                                       additional-cost)
+                     total-cost (play-cost state side card
+                                           (concat (when-not no-additional-cost additional-cost) extra-cost
+                                                   [:credit (:cost card)]))
+                     eid (if-not eid (make-eid state) eid)]
+                 ;; ensure the instant can be played
+                 (if (and (if-let [cdef-req (:req cdef)]
+                            (cdef-req state side eid card targets) true) ; req is satisfied
+                          (not (and (has-subtype? card "Current")
+                                    (get-in @state [side :register :cannot-play-current])))
+                          (not (and (has-subtype? card "Run")
+                                    (not (can-run? state :runner))))
+                          (not (and (has-subtype? card "Priority")
+                                    (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
+                   ;; Wait on pay-sync to finish before triggering instant-effect
+                   (wait-for (pay-sync state side card (if ignore-cost 0 total-cost) {:action :play-instant})
+                             (if-let [cost-str async-result]
+                               (complete-play-instant state side eid card cost-str ignore-cost)
+                               ;; could not pay the card's price; mark the effect as being over.
+                               (effect-completed state side eid)))
+                   ;; card's req was not satisfied; mark the effect as being over.
+                   (effect-completed state side eid)))))))
 
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."

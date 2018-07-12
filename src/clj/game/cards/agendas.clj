@@ -291,6 +291,26 @@
     :end-turn {:effect (effect (lose :runner :tag 2))
                :msg "make the Runner lose 2 tags"}}
 
+   "Broad Daylight"
+   (letfn [(add-counters [state side card eid]
+             (let [bp (get-in @state [:corp :bad-publicity] 0)]
+               (add-counter state :corp card :agenda bp)
+               (effect-completed state side eid)))]
+     {:prompt "Take 1 bad publicity?"
+      :choices ["Yes" "No"]
+      :async true
+      :effect (req (if (= target "Yes")
+                     (wait-for (gain-bad-publicity state :corp 1)
+                               (system-msg state :corp "used Broad Daylight to take 1 bad publicity")
+                               (add-counters state side card eid))
+                     (add-counters state side card eid)))
+      :abilities [{:cost [:click 1] :counter-cost [:agenda 1]
+                   :async true
+                   :label "Do 2 meat damage"
+                   :once :per-turn
+                   :msg "do 2 meat damage"
+                   :effect (effect (damage eid :meat 2 {:card card}))}]})
+
    "CFC Excavation Contract"
    {:effect (req (let [bios (count (filter #(has-subtype? % "Bioroid") (all-active-installed state :corp)))
                        bucks (* bios 2)]
@@ -498,6 +518,11 @@
                  :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1))}]}
 
+   "Fly on the Wall"
+   {:msg "give the runner 1 tag"
+    :async true
+    :effect (req (tag-runner state :runner eid 1))}
+
    "Genetic Resequencing"
    {:choices {:req #(= (last (:zone %)) :scored)}
     :msg (msg "add 1 agenda counter on " (:title target))
@@ -631,6 +656,12 @@
                  :once :per-run
                  :effect (effect (damage eid :net 1 {:card card}))}]}
 
+   "Hyperloop Extension"
+   (let [he (req (gain-credits state :corp 3)
+                 (system-msg state side (str "uses Hyperloop Extension to gain 3 [Credits]")))]
+     {:effect he
+      :stolen {:effect he}})
+
    "Ikawah Project"
    {:steal-cost-bonus (req [:credit 2 :click 1])}
 
@@ -663,6 +694,19 @@
                                 :effect (effect (ice-strength-bonus 1 target))}
              :pre-init-trace {:req (req (has-subtype? target "Tracer"))
                               :effect (effect (init-trace-bonus 1))}}}
+
+   "Jumon"
+   {:events
+    {:corp-turn-ends
+     {:req (req (some #(and (= (last (:zone %)) :content)
+                            (is-remote? (second (:zone %))))
+                      (all-installed state :corp)))
+      :prompt "Select a card to place 2 advancement tokens on"
+      :player :corp
+      :choices {:req #(and (= (last (:zone %)) :content)
+                           (is-remote? (second (:zone %))))}
+      :msg (msg "place 2 advancement token on " (card-str state target))
+      :effect (effect (add-prop :corp target :advance-counter 2 {:placed true}))}}}
 
    "Labyrinthine Servers"
    {:interactions {:prevent [{:type #{:jack-out}

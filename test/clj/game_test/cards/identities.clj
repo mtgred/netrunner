@@ -1156,6 +1156,16 @@
       (is (not (get-content state :archives 0)) "Upgrade returned to hand")
       (is (not (:run @state)) "Run ended, no more accesses"))))
 
+(deftest liza-talking-thunder:-prominent-legislator
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Liza Talking Thunder: Prominent Legislator" [(qty "Sure Gamble" 7)]))
+    (take-credits state :corp)
+    (run-empty-server state "R&D")
+    (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
+    (is (= 1 (:tag (get-runner))) "Took 1 tag from successful run on Archives")))
+
 (deftest maxx:-maximum-punk-rock
   ;; MaxX
   (testing "Basic test"
@@ -1283,6 +1293,19 @@
         (is (= 3 (:credit (get-runner))) "Pay 3 to install Xanadu")
         (card-ability state :runner nasir 0)
         (is (= 2 (:credit (get-runner))) "Gain 1 more credit due to Xanadu")))))
+
+(deftest ^{:card-title "nathaniel-\"gnat\"-hall:-One-of-a-Kind"} gnat
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Nathaniel \"Gnat\" Hall: One-of-a-Kind" [(qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))) "Did not gain a credit when Gnat is on 3 cards")
+    (play-from-hand state :runner "Sure Gamble")
+    (take-credits state :runner)
+    (let [runner-credits (:credit (get-runner))]
+      (take-credits state :corp)
+      (is (= (inc runner-credits) (:credit (get-runner)))) "Gained 1 credits when on 2 cards")))
 
 (deftest nbn:-controlling-the-message
   ;; NBN: Controlling the Message
@@ -1622,6 +1645,37 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
 
+(deftest saraswati-mnemonics:-endless-exploration
+  ;; Saraswati Mnemonics
+  (do-game
+    (new-game
+      (make-deck "Saraswati Mnemonics: Endless Exploration" ["Gene Splicer" "House of Knives"])
+      (default-runner))
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (prompt-select :corp (find-card "Gene Splicer" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (let [splicer (get-content state :remote1 0)]
+      (is (= 1 (get-counters (refresh splicer) :advancement)) "1 advancements placed on Gene Splicer")
+      (core/rez state :corp (refresh splicer))
+      (is (not (:rezzed (refresh splicer))) "Gene Splicer did not rez")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/rez state :corp (refresh splicer))
+      (is (:rezzed (refresh splicer)) "Gene Splicer now rezzed")
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (prompt-select :corp (find-card "House of Knives" (:hand (get-corp))))
+      (prompt-choice :corp "New remote")
+      (let [house (get-content state :remote2 0)]
+        (advance state house)
+        (advance state house)
+        (core/score state :corp (refresh house))
+        (is (empty? (:scored (get-corp))) "House of Knives not scored")
+        (is (zero? (:agenda-point (get-corp))))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/score state :corp (refresh house))
+        (is (= 1 (:agenda-point (get-corp))) "House of Knives was able to be scored")))))
+
 (deftest skorpios-defense-systems:-persuasive-power
   ; Remove a card from game when it moves to discard once per round
   (do-game
@@ -1713,6 +1767,55 @@
       (is (= "HQ" (:server-target (get-resource state 0))) "Temujin still targeting HQ")
       (is (= 12 (:credit (get-runner))) "Gained 4cr")
       (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin"))))
+
+(deftest sportsmetal:-go-big-or-go-home
+  ;; SportsMetal - gain 2 credits or draw 2 cards on agenda scored or stolen
+  (testing "Gain 2 credits on score"
+    (do-game
+      (new-game
+        (make-deck "Sportsmetal: Go Big or Go Home" ["Merger"])
+        (default-runner))
+      (play-from-hand state :corp "Merger" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+      (prompt-choice-partial :corp "credits")
+      (is (= 7 (:credit (get-corp))) "Corp gains 2 credits")))
+  (testing "Gain 2 credits on steal"
+    (do-game
+      (new-game
+        (make-deck "Sportsmetal: Go Big or Go Home" ["Merger"])
+        (default-runner))
+      (play-from-hand state :corp "Merger" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
+      (prompt-choice :runner "Steal")
+      (prompt-choice-partial :corp "credits")
+      (is (= 9 (:credit (get-corp))) "Corp gains 2 credits")))
+  (testing "Gain 2 cards on score"
+    (do-game
+      (new-game
+        (make-deck "Sportsmetal: Go Big or Go Home" ["Merger" (qty "Hedge Fund" 2)])
+        (default-runner))
+      (starting-hand state :corp ["Merger"])
+      (play-from-hand state :corp "Merger" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (empty? (:hand (get-corp))) "Corp starts with no cards")
+      (prompt-choice-partial :corp "cards")
+      (is (= 2 (count (:hand (get-corp)))) "Corp draws 2 cards")))
+  (testing "Gain 2 cards on steal"
+    (do-game
+      (new-game
+        (make-deck "Sportsmetal: Go Big or Go Home" ["Merger" (qty "Hedge Fund" 2)])
+        (default-runner))
+      (starting-hand state :corp ["Merger"])
+      (play-from-hand state :corp "Merger" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (empty? (:hand (get-corp))) "Corp starts with no cards")
+      (prompt-choice :runner "Steal")
+      (prompt-choice-partial :corp "cards")
+      (is (= 2 (count (:hand (get-corp)))) "Corp draws 2 cards"))))
 
 (deftest spark-agency:-worldswide-reach
   ;; Spark Agency - Rezzing advertisements

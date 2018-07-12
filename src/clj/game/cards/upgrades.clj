@@ -80,6 +80,7 @@
                               (effect-completed eid))})]
 
    {:init {:root "R&D"}
+    :install-req (req (filter #{"R&D"} targets))
     :abilities [{:cost [:click 1]
                  :req (req (>= (count (:deck corp)) 3))
                  :async true
@@ -352,7 +353,8 @@
                  :effect (effect (mill :corp :runner 2))}]}
 
    "Georgia Emelyov"
-   {:events {:unsuccessful-run {:req (req (= (first (:server target)) (second (:zone card))))
+   {:events {:unsuccessful-run {:req (req (= (first (:server target))
+                                             (second (:zone card))))
                                 :async true
                                 :msg "do 1 net damage"
                                 :effect (effect (damage eid :net 1 {:card card}))}}
@@ -369,10 +371,40 @@
                                                    (register-events state side (:events (card-def c)) c)))}
                                    card nil))}]}
 
+   "Giordano Memorial Field"
+   {:events
+    {:successful-run
+     {:interactive (req true)
+      :async true
+      :req (req this-server)
+      :msg "force the Runner to pay or end the run"
+      :effect (req (let [credits (:credit runner)
+                         cost (* 2 (count (:scored runner)))
+                         pay-str (str "pay " cost " [Credits]")
+                         c-pay-str (capitalize pay-str)]
+                     (show-wait-prompt state :corp (str "Runner to " pay-str " or end the run"))
+                     (continue-ability
+                       state :runner
+                       {:player :runner
+                        :async true
+                        :prompt (msg "You must " pay-str " or end the run")
+                        :choices (concat (when (>= credits cost)
+                                           [c-pay-str])
+                                         ["End the run"])
+                        :effect (req (clear-wait-prompt state :corp)
+                                     (if (= c-pay-str target)
+                                       (do (pay state :runner card :credit cost)
+                                           (system-msg state :runner (str "pays " cost " [Credits]")))
+                                       (do (end-run state side)
+                                           (system-msg state :corp "ends the run")))
+                                     (effect-completed state side eid))}
+                       card nil)))}}}
+
    "Heinlein Grid"
    {:abilities [{:req (req this-server)
                  :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
-                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
+                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]")
+                 :once :per-run
                  :effect (effect (lose-credits :runner :all)
                                  (lose :runner :run-credit :all))}]}
 
@@ -469,21 +501,38 @@
                                                               ices grids)
                                                  card nil)))}))]
 
-     {:events {:corp-draw {:req (req (some #(is-type? % "ICE")
-                                           (:most-recent-drawn corp-reg)))
-                           ;; THIS IS A HACK: it prevents multiple Jinja from showing the "choose a server to install into" sequence
+     {:events {:corp-draw {;; THIS IS A HACK: it prevents multiple Jinja from showing the "choose a server to install into" sequence
                            :once :per-turn
                            :once-key :jinja-city-grid-draw
                            :async true
-                           :effect (req (let [ices (filter #(and (is-type? % "ICE")
-                                                                 (get-card state %))
-                                                           (:most-recent-drawn corp-reg))
-                                              grids (filterv #(= "Jinja City Grid" (:title %))
-                                                             (all-active-installed state :corp))]
-                                          (if (not-empty ices)
-                                            (continue-ability state side (choose-ice ices grids) card nil)
-                                            (effect-completed state side eid))))}
-               :post-corp-draw {:effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw]))}}})
+                           :effect (req (cond
+                                          ;; If ice were drawn, do the full routine.
+                                          (some #(is-type? % "ICE") (:most-recent-drawn corp-reg))
+                                          (let [ices (filter #(and (is-type? % "ICE")
+                                                                   (get-card state %))
+                                                             (:most-recent-drawn corp-reg))
+                                                grids (filterv #(= "Jinja City Grid" (:title %))
+                                                               (all-active-installed state :corp))]
+                                            (when (= :runner (:active-player @state))
+                                              (show-wait-prompt state :runner "Corp to resolve Jinja City Grid"))
+                                            (if (not-empty ices)
+                                              (continue-ability state side (choose-ice ices grids) card nil)
+                                              (effect-completed state side eid)))
+                                          ;; else, if it's the runner's turn, show a fake prompt so the runner can't infer that ice weren't drawn
+                                          (= :runner (:active-player @state))
+                                          (continue-ability
+                                            state :corp
+                                            {:prompt "You did not draw any ice to use with Jinja City Grid"
+                                             :choices ["Carry on!"]
+                                             :prompt-type :bogus
+                                             :effect nil}
+                                            card nil)
+                                          ;; otherwise, we done
+                                          :else
+                                          (effect-completed state side eid)))}
+               :post-corp-draw {:effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw])
+                                             (when (= :runner (:active-player @state))
+                                               (clear-wait-prompt state :runner)))}}})
 
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
@@ -613,7 +662,7 @@
                                     this-server
                                     (pos? (:cards-accessed run 0))))
                      :silent (req true)
-                     :effect (req (let [cnt (:cards-accessed run)
+                     :effect (req (let [cnt (:cards-accessed run 0)
                                         total (* 2 cnt)]
                                     (gain-credits state :corp total)
                                     (system-msg state :corp
@@ -762,6 +811,7 @@
 
    "Panic Button"
    {:init {:root "HQ"}
+    :install-req (req (filter #{"HQ"} targets))
     :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
                  :req (req (and run (= (first (:server run)) :hq)))}]}
 
@@ -810,6 +860,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
+    :install-req (req (filter #{"HQ"} targets))
     :in-play [:hand-size 2]}
 
    "Ruhr Valley"

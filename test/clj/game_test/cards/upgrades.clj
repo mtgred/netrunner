@@ -596,6 +596,31 @@
         (run-jack-out state)
         (is (= 2 (count (:discard (get-runner)))) "Runner did not take damage")))))
 
+(deftest giordano-memorial-field
+  ;; Giordano Memorial Field
+  (do-game
+    (new-game (default-corp ["Giordano Memorial Field" "Hostile Takeover"])
+              (default-corp [(qty "Fan Site" 3)]))
+    (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fan Site")
+    (play-from-hand state :runner "Fan Site")
+    (play-from-hand state :runner "Fan Site")
+    (take-credits state :runner)
+    (play-and-score state "Hostile Takeover")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (let [credits (:credit (get-runner))]
+      (prompt-choice-partial :runner "Pay")
+      (is (= (- credits 6) (:credit (get-runner))) "Runner pays 6 credits to not end the run"))
+    (prompt-choice :runner "No action")
+    (run-empty-server state "Server 1")
+    (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner should only get 1 choice")
+    (is (= "End the run" (-> (get-runner) :prompt first :choices first)) "Only choice should be End the run")
+    (prompt-choice :runner "End the run")
+    (is (not (:run @state)) "Run should be ended from Giordano Memorial Field ability")))
+
 (deftest helheim-servers
   ;; Helheim Servers - Full test
   (do-game
@@ -692,7 +717,8 @@
 
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
-  (do-game
+  (testing "Single draws"
+    (do-game
     (new-game (default-corp ["Jinja City Grid" (qty "Vanilla" 3) (qty "Ice Wall" 3)])
               (default-runner))
     (starting-hand state :corp ["Jinja City Grid"])
@@ -708,6 +734,20 @@
     (prompt-choice :corp (-> (get-corp) :prompt first :choices first))
     (is (= 3 (:credit (get-corp))) "Charged to install ice")
     (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
+  (testing "Drawing non-ice on runner's turn"
+    (do-game
+      (new-game
+        (default-corp ["Jinja City Grid" (qty "Hedge Fund" 3)])
+        (make-deck "Laramy Fisk: Savvy Investor" ["Eden Shard"]))
+      (starting-hand state :corp ["Jinja City Grid"])
+      (play-from-hand state :corp "Jinja City Grid" "HQ")
+      (core/rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (run-empty-server state :rd)
+      (prompt-choice :runner "Yes")
+      (is (= :bogus (-> (get-corp) :prompt first :prompt-type)) "Corp has a bogus prompt to fake out the runner")
+      (prompt-choice :corp "Carry on!")
+      (prompt-choice :runner "No action"))))
 
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program

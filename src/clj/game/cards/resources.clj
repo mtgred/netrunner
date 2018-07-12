@@ -79,7 +79,7 @@
                                                  :effect (effect (gain-credits 1))}}}}}
 
    "Aesops Pawnshop"
-   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
+   {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
     :abilities [{:effect (req (resolve-ability
                                 state side
                                 {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
@@ -578,7 +578,7 @@
    "DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
          can-host? (fn [runner c] (and (is-type? c "Identity")
-                                       (has-subtype? c "G-Mod")
+                                       (has-subtype? c "g-mod")
                                        (not= (-> runner :identity :faction) (:faction c))
                                        (not (is-draft-id? c))))
          fenris-effect {:prompt "Choose a g-mod identity to host on DJ Fenris"
@@ -1139,6 +1139,17 @@
                  :effect (effect (derez target)
                                  (trash card {:cause :ability-cost}))}]}
 
+   "Miss Bones"
+   {:data {:counter {:credit 12}}
+    :implementation "Credit use restriction not enforced"
+    :abilities [{:counter-cost [:credit 1]
+                 :msg "gain 1 [Credits] for trashing installed cards"
+                 :async true
+                 :effect (req (take-credits state :runner 1)
+                              (if (zero? (get-counters (get-card state card) :credit))
+                                (trash state :runner eid card {:unpreventable true})
+                                (effect-completed state :runner eid)))}]}
+
    "Motivation"
    (let [ability {:msg "look at the top card of their Stack"
                   :label "Look at the top card of Stack (start of turn)"
@@ -1446,7 +1457,7 @@
                                      :effect (effect (lose-credits cost)
                                                      (trash card {:cause :ability-cost})
                                                      (trash target))}
-                                    card nil))))}]}
+                                    card targets))))}]}
 
    "Power Tap"
    {:events {:pre-init-trace {:msg "gain 1[Credits]"
