@@ -521,7 +521,7 @@
    "Fly on the Wall"
    {:msg "give the runner 1 tag"
     :async true
-    :effect (req (tag-runner state :runner eid 1))}
+    :effect (req (gain-tags state :runner eid 1))}
 
    "Genetic Resequencing"
    {:choices {:req #(= (last (:zone %)) :scored)}
