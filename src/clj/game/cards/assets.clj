@@ -1603,6 +1603,7 @@
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
     :flags {:corp-phase-12 (req true)}
     :abilities [{:label "Trace 3 - Give the Runner 1 tag"
+                 :req (req (:corp-phase-12 @state))
                  :async true
                  :effect (effect (trash card {:cause :ability-cost})
                                  (resolve-ability

@@ -3160,8 +3160,10 @@
                (default-runner))
      (play-from-hand state :corp "SIU" "New remote")
      (let [siu (get-content state :remote1 0)]
-       (take-credits state :corp)
        (core/rez state :corp siu)
+       (card-ability state :corp (refresh siu) 0) ; try to trigger SIU outside phase 1.2
+       (is (= 0 (-> (get-corp) :discard count)) "SIU should not trigger because it's not 1.2")
+       (take-credits state :corp)
        (take-credits state :runner)
        (is (:corp-phase-12 @state) "Corp is in Step 1.2 because SIU is on the table")
        (card-ability state :corp (refresh siu) 0)
