@@ -586,6 +586,10 @@
      {:async true
       :effect (effect (continue-ability (fhelper 1) card nil))})
 
+   "Game Changer"
+   {:effect (req (gain state side :click (count (:scored runner)))
+                 (move state side (first (:play-area corp)) :rfg))}
+
    "Genotyping"
    {:async true
     :effect (effect (mill :corp 2)
