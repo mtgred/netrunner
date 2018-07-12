@@ -645,7 +645,7 @@
                                     this-server
                                     (pos? (:cards-accessed run 0))))
                      :silent (req true)
-                     :effect (req (let [cnt (:cards-accessed run)
+                     :effect (req (let [cnt (:cards-accessed run 0)
                                         total (* 2 cnt)]
                                     (gain-credits state :corp total)
                                     (system-msg state :corp
