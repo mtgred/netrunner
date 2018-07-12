@@ -180,17 +180,18 @@
 
 (defn- corp-install-message
   "Prints the correct install message."
-  [state side card server install-state cost-str]
-  (let [card-name (if (or (= :rezzed-no-cost install-state)
-                          (= :face-up install-state)
-                          (:rezzed card))
-                    (:title card)
-                    (if (ice? card) "ICE" "a card"))
-        server-name (if (= server "New remote")
-                      (str (remote-num->name (get-in @state [:rid])) " (new remote)")
-                      server)]
-    (system-msg state side (str (build-spend-msg cost-str "install") card-name
-                                (if (ice? card) " protecting " " in ") server-name))))
+  [state side card server install-state cost-str args]
+  (when (:display-message args true)
+    (let [card-name (if (or (= :rezzed-no-cost install-state)
+                            (= :face-up install-state)
+                            (:rezzed card))
+                      (:title card)
+                      (if (ice? card) "ICE" "a card"))
+          server-name (if (= server "New remote")
+                        (str (remote-num->name (get-in @state [:rid])) " (new remote)")
+                        server)]
+      (system-msg state side (str (build-spend-msg cost-str "install") card-name
+                                  (if (ice? card) " protecting " " in ") server-name)))))
 
 (defn corp-install-list
   "Returns a list of targets for where a given card can be installed."
@@ -213,7 +214,7 @@
               (dissoc :seen :disabled))]
     (clear-install-cost-bonus state side)
     (when-not host-card
-      (corp-install-message state side c server install-state cost-str))
+      (corp-install-message state side c server install-state cost-str args))
     (play-sfx state side "install-corp")
 
     (let [moved-card (if host-card
@@ -289,7 +290,8 @@
   :extra-cost - Extra install costs
   :no-install-cost - true if install costs should be ignored
   :action - What type of action installed the card
-  :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :faceup"
+  :install-state - Can be :rezzed-no-cost, :rezzed-no-rez-cost, :rezzed, or :faceup
+  :display-message - Print descriptive text to the log window [default=true]"
   ([state side card server] (corp-install state side (make-eid state) card server nil))
   ([state side card server args] (corp-install state side (make-eid state) card server args))
   ([state side eid card server {:keys [host-card] :as args}]
