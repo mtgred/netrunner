@@ -614,6 +614,18 @@
     :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
     :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))}
 
+   "Mâché"
+   {:abilities [{:label "Draw 1 card"
+                 :msg "draw 1 card"
+                 :counter-cost [:power 3]
+                 :effect (effect (draw :runner 1))}]
+    :events {:runner-trash {:once :per-turn
+                            :req (req (and (card-is? target :side :corp)
+                                           (:access @state)
+                                           (:trash target)))
+                            :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
+                                            (add-counter card :power (:trash target)))}}}
+
    "Maw"
    (let [ability {:label "Trash a card from HQ"
                   :req (req (and (= 1 (get-in @state [:runner :register :no-trash-or-steal]))

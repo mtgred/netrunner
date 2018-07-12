@@ -1446,7 +1446,7 @@
                                      :effect (effect (lose-credits cost)
                                                      (trash card {:cause :ability-cost})
                                                      (trash target))}
-                                    card nil))))}]}
+                                    card targets))))}]}
 
    "Power Tap"
    {:events {:pre-init-trace {:msg "gain 1[Credits]"
