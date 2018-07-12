@@ -333,11 +333,13 @@
         gameid (:gameid game)
 
         map-card (fn [c] (update-in c [:card] @all-cards))
+        unknown-card (fn [c] (nil? (:card c)))
         deck (as-> (mc/find-one-as-map db "decks" {:_id (object-id deck-id) :username username}) d
                    (update-in d [:cards] #(mapv map-card %))
+                   (update-in d [:cards] #(vec (remove unknown-card %)))
                    (update-in d [:identity] #(@all-cards (:title %)))
                    (assoc d :status (decks/calculate-deck-status d)))]
-    (when (and deck (player? client-id gameid))
+    (when (and (:identity deck) (player? client-id gameid))
       (swap! all-games update-in [gameid :players
                               (if (= client-id (:ws-id fplayer)) 0 1)]
              (fn [p] (assoc p :deck deck)))

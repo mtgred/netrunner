@@ -252,6 +252,8 @@
                                         (-> (om/get-node owner "servers") js/$ .toggle))
                    (send-command "play" {:card card}))
           ("servers" "scored" "current" "onhost") (handle-abilities card owner)
+          "rig" (when (:corp-abilities card)
+                  (-> (om/get-node owner "corp-abilities") js/$ .toggle))
           nil)))))
 
 (defn in-play? [card]
@@ -651,7 +653,8 @@
 
 (defn card-view [{:keys [zone code type abilities counter advance-counter advancementcost current-cost subtype
                          advanceable rezzed strength current-strength title remotes selected hosted
-                         side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines]
+                         side rec-counter facedown server-target subtype-target icon new runner-abilities subroutines
+                         corp-abilities]
                   :as cursor}
                  owner {:keys [flipped] :as opts}]
   (om/component
@@ -736,6 +739,14 @@
                                                            "\" subroutine on " title)})
                        :dangerouslySetInnerHTML #js {:__html (add-symbols (str "Let fire: \"" (:label sub) "\""))}}])
               subroutines)])
+      (when (pos? (count corp-abilities))
+        [:div.panel.blue-shade.corp-abilities {:ref "corp-abilities"}
+         (map-indexed
+           (fn [i ab]
+             [:div {:on-click #(do (send-command "corp-ability" {:card @cursor
+                                                                 :ability i}))
+                    :dangerouslySetInnerHTML #js {:__html (add-symbols (str (ability-costs ab) (:label ab)))}}])
+           corp-abilities)])
       (let [actions (action-list cursor)
             dynabi-count (count (filter :dynamic abilities))]
         (when (or (> (+ (count actions) (count abilities) (count subroutines)) 1)
@@ -1169,7 +1180,7 @@
                    (if (nil? (:strength prompt))
                      (if (= "corp" (:player prompt))
                        ;; This is a trace prompt for the corp, show runner link + credits
-                       [:div.info "Runner: " (:link runner) [:span {:class "anr-icon link"}]
+                       [:div.info "Runner: " (:link prompt) [:span {:class "anr-icon link"}]
                         " + " (:credit runner) [:span {:class "anr-icon credit"}]]
                        ;; Trace in which the runner pays first, showing base trace strength and corp credits
                        [:div.info "Trace: " (when (:bonus prompt) (+ base (:bonus prompt)) base)
@@ -1185,9 +1196,9 @@
                       (if (= "corp" (:player prompt))
                         (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
                           [:span (str strength " + ")])
-                        [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )])
+                        [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )])
                       (if (= "corp" (:player prompt))
-                        [:span (:link runner) " " [:span {:class "anr-icon link"}] (str " + " )]
+                        [:span (:link prompt) " " [:span {:class "anr-icon link"}] (str " + " )]
                         (let [strength (when (:bonus prompt) (+ base (:bonus prompt)) base)]
                           [:span (str strength " + ")]))))
                   [:select#credit (for [i (range (inc (:credit me)))]

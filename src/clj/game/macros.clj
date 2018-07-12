@@ -38,12 +38,12 @@
             'runner-reg-last '(get-in @state [:runner :register-last-turn])
             'target '(first targets)
             'installed '(#{:rig :servers} (first (:zone (get-nested-host card))))
-            'remotes '(get-remote-names @state)
-            'servers '(zones->sorted-names (get-zones @state))
+            'remotes '(get-remote-names state)
+            'servers '(zones->sorted-names (get-zones state))
             'unprotected '(let [server (second (:zone (if (:host card)
                                                         (get-card state (:host card)) card)))]
                             (empty? (get-in @state [:corp :servers server :ices])))
-            'runnable-servers '(zones->sorted-names (get-runnable-zones @state))
+            'runnable-servers '(zones->sorted-names (get-runnable-zones state))
             'hq-runnable '(not (:hq (get-in runner [:register :cannot-run-on-server])))
             'rd-runnable '(not (:rd (get-in runner [:register :cannot-run-on-server])))
             'archives-runnable '(not (:archives (get-in runner [:register :cannot-run-on-server])))
@@ -74,11 +74,11 @@
             'tagged '(or (pos? (:tagged runner)) (pos? (:tag runner)))]
        (str ~@expr))))
 
-(defmacro when-completed
-  ([action expr]
+(defmacro wait-for
+  ([action & expr]
    (let [reqmac `(fn [~'state1 ~'side1 ~'eid1 ~'card1 ~'target1]
                    (let [~'async-result (:result ~'eid1)]
-                     ~expr))
+                     ~@expr))
    ;; this creates a five-argument function to be resolved later,
    ;; without overriding any local variables name state, card, etc.
          totake (if (= 'apply (first action)) 4 3)
@@ -89,9 +89,6 @@
         (if ~'use-eid
           ~(concat (take totake action) (list 'new-eid) (drop (inc totake) action))
           ~(concat (take totake action) (list 'new-eid) (drop totake action)))))))
-
-(defmacro final-effect [& expr]
-  (macroexpand (apply list `(effect ~@expr ~(list (quote effect-completed) 'eid 'card)))))
 
 (defmacro continue-ability
   [state side ability card targets]

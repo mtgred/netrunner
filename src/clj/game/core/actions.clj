@@ -5,7 +5,7 @@
 (declare available-mu card-str can-rez? can-advance? corp-install effect-as-handler enforce-msg gain-agenda-point get-remote-names
          get-run-ices jack-out move name-zone play-instant purge resolve-select run has-subtype?
          runner-install trash update-breaker-strength update-ice-in-server update-run-ice win can-run?
-         can-run-server? can-score? say play-sfx base-mod-size)
+         can-run-server? can-score? say play-sfx base-mod-size free-mu)
 
 ;;; Neutral actions
 (defn play
@@ -44,7 +44,7 @@
   [state side args]
   (when (pay state side nil :click 1 {:action :corp-click-credit})
     (system-msg state side "spends [Click] to gain 1 [Credits]")
-    (gain state side :credit 1)
+    (gain-credits state side 1 (keyword (str (name side) "-click-credit")))
     (swap! state update-in [:stats side :click :credit] (fnil inc 0))
     (trigger-event state side (if (= side :corp) :corp-click-credit :runner-click-credit))
     (play-sfx state side "click-credit")))
@@ -184,7 +184,7 @@
       (do (if-let [cancel-effect (:cancel-effect prompt)]
             ;; trigger the cancel effect
             (cancel-effect choice)
-            (effect-completed state side (:eid prompt) nil))
+            (effect-completed state side (:eid prompt)))
           (finish-prompt state side prompt card)))))
 
 (defn select
@@ -224,7 +224,7 @@
         ab (if (= ability (count abilities))
              ;; recurring credit abilities are not in the :abilities map and are implicit
              {:msg "take 1 [Recurring Credits]"
-              :req (req (pos? (:rec-counter card 0)))
+              :req (req (pos? (get-counters card :recurring)))
               :effect (req (add-prop state side card :rec-counter -1)
                            (gain state side :credit 1)
                            (when (has-subtype? card "Stealth")
@@ -272,6 +272,14 @@
   :abilities vector."
   [state side args]
   ((dynamic-abilities (:dynamic args)) state (keyword side) args))
+
+(defn play-corp-ability
+  "Triggers a runner card's corp-ability using its zero-based index into the card's card-def :corp-abilities vector."
+  [state side {:keys [card ability targets] :as args}]
+  (let [card (get-card state card)
+        cdef (card-def card)
+        ab (get-in cdef [:corp-abilities ability])]
+    (do-play-ability state side card ab targets)))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
@@ -350,7 +358,7 @@
                (if (and altcost (can-pay? state side nil altcost)(not ignore-cost))
                  (let [curr-bonus (get-rez-cost-bonus state side)]
                    (prompt! state side card (str "Pay the alternative Rez cost?") ["Yes" "No"]
-                            {:delayed-completion true
+                            {:async true
                              :effect (req (if (and (= target "Yes")
                                                    (can-pay? state side (:title card) altcost))
                                             (do (pay state side card altcost)
@@ -437,7 +445,8 @@
    (let [card (or (:card args) args)]
      (when (and (can-score? state side card)
                 (empty? (filter #(= (:cid card) (:cid %)) (get-in @state [:corp :register :cannot-score])))
-                (>= (:advance-counter card 0) (or (:current-cost card) (:advancementcost card))))
+                (>= (get-counters card :advancement) (or (:current-cost card)
+                                                         (:advancementcost card))))
 
        ;; do not card-init necessarily. if card-def has :effect, wrap a fake event
        (let [moved-card (move state :corp card :scored)
@@ -514,19 +523,19 @@
                     (get-card state (nth run-ice (dec pos))))
           next-ice (when (and pos (< 1 pos) (<= (dec pos) (count run-ice)))
                      (get-card state (nth run-ice (- pos 2))))]
-      (when-completed (trigger-event-sync state side :pass-ice cur-ice)
-                      (do (update-ice-in-server
-                            state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
-                          (swap! state update-in [:run :position] (fnil dec 1))
-                          (swap! state assoc-in [:run :no-action] false)
-                          (system-msg state side "continues the run")
-                          (when cur-ice
-                            (update-ice-strength state side cur-ice))
-                          (when next-ice
-                            (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
-                          (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
-                            (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
-                            (update-breaker-strength state side p)))))))
+      (wait-for (trigger-event-sync state side :pass-ice cur-ice)
+                (do (update-ice-in-server
+                      state side (get-in @state (concat [:corp :servers] (get-in @state [:run :server]))))
+                    (swap! state update-in [:run :position] (fnil dec 1))
+                    (swap! state assoc-in [:run :no-action] false)
+                    (system-msg state side "continues the run")
+                    (when cur-ice
+                      (update-ice-strength state side cur-ice))
+                    (when next-ice
+                      (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
+                    (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
+                      (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
+                      (update-breaker-strength state side p)))))))
 
 (defn view-deck
   "Allows the player to view their deck by making the cards in the deck public."

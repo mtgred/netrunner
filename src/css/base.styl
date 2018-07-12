@@ -1484,12 +1484,12 @@ nav ul
     &.sentry
       background-color: criminal-blue
 
-  .abilities, .servers-menu, .menu, .runner-abilities, .popup
+  .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities, .popup
     left: 0
     bottom: 100%
     margin: 6px -1px
 
-  .abilities, .servers-menu, .menu, .runner-abilities
+  .abilities, .servers-menu, .menu, .runner-abilities, .corp-abilities
     display: none
     position: absolute
     z-index: 30
@@ -1814,7 +1814,7 @@ nav ul
               .counters
                 transform(rotate(-90deg))
 
-              .abilities, .runner-abilities
+              .abilities, .runner-abilities, .corp-abilities
                 top: auto
                 bottom: 100%
                 left: 0
@@ -1834,7 +1834,7 @@ nav ul
           .counter
             transform(rotate(90deg))
 
-          .abilities, .runner-abilities
+          .abilities, .runner-abilities, .corp-abilities
             left: 100%
             margin: -1px 6px
 
@@ -1844,7 +1844,7 @@ nav ul
             transform(rotate(90deg) translateY(-100%))
             transform-origin(0 0)
 
-          .runner-abilities
+          .runner-abilities, .corp-abilities
             bottom: 0
             transform(rotate(-90deg) translateY(100%))
             transform-origin(0 100%)
@@ -1880,7 +1880,7 @@ nav ul
           .counters
             transform(rotate(90deg))
 
-          .abilities, .runner-abilities
+          .abilities, .runner-abilities, .corp-abilities
             top: 100%
             bottom: auto
 

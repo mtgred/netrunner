@@ -1,6 +1,6 @@
 (in-ns 'game.core)
 
-(declare active? all-installed all-active-installed cards card-init deactivate card-flag? free-mu gain lose get-card-hosted
+(declare active? all-installed all-active-installed cards card-init deactivate card-flag? gain lose get-card-hosted
          handle-end-run hardware? has-subtype? ice? is-type? make-eid program? register-events remove-from-host
          remove-icon reset-card resource? rezzed? toast toast-check-mu trash trigger-event update-breaker-strength
          update-hosted! update-ice-strength unregister-events use-mu)
@@ -22,7 +22,7 @@
   [state card]
   (let [side (-> card :side to-keyword)]
     (find-cid (:cid card) (concat (all-installed state side)
-                                  (-> (map #(-> @state side %) [:hand :discard :deck :rfg]) concat flatten)))))
+                                  (-> (map #(-> @state side %) [:hand :discard :deck :rfg :scored]) concat flatten)))))
 
 (defn get-scoring-owner
   "Returns the owner of the scoring area the card is in"
@@ -101,7 +101,9 @@
              hosted (seq (flatten (map
                       (if same-zone? update-hosted trash-hosted)
                       (:hosted card))))
-             c (if (and (= side :corp) (= (first dest) :discard) (rezzed? card))
+             c (if (and (= side :corp)
+                        (= (first dest) :discard)
+                        (rezzed? card))
                  (assoc card :seen true) card)
              c (if (and (or installed host (#{:servers :scored :current} (first zone)))
                         (or (#{:hand :deck :discard :rfg} (first dest)) to-facedown)
@@ -110,17 +112,20 @@
              c (if to-installed (assoc c :installed true) (dissoc c :installed))
              c (if to-facedown (assoc c :facedown true) (dissoc c :facedown))
              moved-card (assoc c :zone dest :host nil :hosted hosted :previous-zone (:zone c))
-             moved-card (if (and (= side :corp) (#{:hand :deck} (first dest)))
-                          (dissoc moved-card :seen) moved-card)
-             moved-card (if (and (= (first (:zone moved-card)) :scored) (card-flag? moved-card :has-abilities-when-stolen true))
+             moved-card (if (and (= side :corp)
+                                 (#{:hand :deck} (first dest)))
+                          (dissoc moved-card :seen)
+                          moved-card)
+             moved-card (if (and (= (first (:zone moved-card)) :scored)
+                                 (card-flag? moved-card :has-abilities-when-stolen true))
                           (merge moved-card {:abilities (:abilities (card-def moved-card))}) moved-card)]
-         (if front
-           (swap! state update-in (cons side dest) #(cons moved-card (vec %)))
-           (swap! state update-in (cons side dest) #(conj (vec %) moved-card)))
          (doseq [s [:runner :corp]]
            (if host
              (remove-from-host state side card)
              (swap! state update-in (cons s (vec zone)) (fn [coll] (remove-once #(= (:cid %) cid) coll)))))
+         (if front
+           (swap! state update-in (cons side dest) #(into [] (cons moved-card (vec %))))
+           (swap! state update-in (cons side dest) #(into [] (conj (vec %) moved-card))))
          (let [z (vec (cons :corp (butlast zone)))]
            (when (and (not keep-server-alive)
                       (is-remote? z)
@@ -190,8 +195,8 @@
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
   [state side kw]
-  (when-completed (trigger-event-sync state side (keyword (str (name side) "-shuffle-deck")))
-                  (swap! state update-in [side kw] shuffle)))
+  (wait-for (trigger-event-sync state side (keyword (str (name side) "-shuffle-deck")))
+            (swap! state update-in [side kw] shuffle)))
 
 (defn shuffle-into-deck
   [state side & args]
@@ -213,7 +218,7 @@
   [state side card]
   (let [hiveminds (when (is-virus-program? card)
                     (filter #(= (:title %) "Hivemind") (all-active-installed state :runner)))]
-    (reduce + (map #(get-in % [:counter :virus] 0) (cons card hiveminds)))))
+    (reduce + (map #(get-counters % :virus) (cons card hiveminds)))))
 
 (defn count-virus-programs
   "Calculate the number of virus programs in play"

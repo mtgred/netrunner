@@ -1,6 +1,6 @@
 (ns game-test.cards.ice
   (:require [game.core :as core]
-            [game.utils :refer :all]
+            [game.utils :refer [has?]]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
@@ -39,7 +39,7 @@
       (card-subroutine state :corp aim 0)
       (is (= 3 (count (:discard (get-runner)))) "Runner trashed 3 cards")
       (is (= 1 (count (:deck (get-runner)))) "Runner has 1 card in deck"))
-    (is (= 0 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
+    (is (zero? (count (get-in @state [:corp :servers :hq :ices]))) "Aimor trashed")))
 
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
@@ -86,7 +86,7 @@
       (core/advance state :corp {:card (refresh ab)})
       (core/advance state :corp {:card (refresh ab)})
       (is (= 8 (:credit (get-corp))))
-      (is (= 2 (:advance-counter (refresh ab))))
+      (is (= 2 (get-counters (refresh ab) :advancement)))
       (core/rez state :corp (refresh ab))
       (is (= 5 (:credit (get-corp))) "Paid 3 credits to rez; 2 advancments on Asteroid Belt"))))
 
@@ -103,7 +103,7 @@
       (card-subroutine state :corp bw 0)
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
       (run-successful state)
-      (is (= 0 (:tag (get-runner))) "Run successful; Runner lost 1 tag")
+      (is (zero? (:tag (get-runner))) "Run successful; Runner lost 1 tag")
       (run-on state "Archives")
       (card-subroutine state :corp bw 0)
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
@@ -149,7 +149,7 @@
       (core/rez state :corp cp)
       (card-subroutine state :corp cp 0)
       (is (= 3 (get-in @state [:run :position])) "Run back at outermost position")
-      (is (not (get-in (refresh cp) [:rezzed])) "Cell Portal derezzed"))))
+      (is (not (:rezzed (refresh cp))) "Cell Portal derezzed"))))
 
 (deftest chimera
   ;; Chimera - Gains chosen subtype
@@ -310,7 +310,7 @@
     (let [envl (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp envl)
-      (is (= 0 (count (:discard (get-runner)))) "No discarded cards")
+      (is (zero? (count (:discard (get-runner)))) "No discarded cards")
       (card-subroutine state :corp envl 0)
       (is (= 1 (count (:discard (get-runner)))) "1 card in discard pile")
       (is (:run @state) "Run still ongoing")
@@ -377,11 +377,68 @@
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
       (prompt-select :corp cc)
-      (is (= 1 (count (get-in @state [:runner :rig :hardware]))) "Clone Chip trashed")
+      (is (= 1 (count (get-hardware state))) "Clone Chip trashed")
       (is (empty? (:prompt (get-runner))) "Plascrete didn't try preventing meat damage")
       (is (= 1 (count (:hand (get-runner)))))
       (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
       (is (not (:run @state)) "Run ended"))))
+
+(deftest formicary
+  ;; Formicary - when approaching server, may rez and move to innermost
+  (testing "Verifies basic functionality and that First Responders may trigger"
+    (do-game
+     (new-game (default-corp [(qty "Ice Wall" 2) (qty "Formicary" 3)])
+               (default-runner [(qty "First Responders" 6)]))
+     (play-from-hand state :corp "Ice Wall" "HQ") 
+     (play-from-hand state :corp "Formicary" "Archives")
+     (play-from-hand state :corp "Formicary" "R&D")
+     (take-credits state :corp)
+     (play-from-hand state :runner "First Responders")
+     (let [iw (get-ice state :hq 0)
+           form1 (get-ice state :rd 0)
+           form2 (get-ice state :archives 0)
+           responders (get-resource state 0)]
+       (run-on state "HQ")
+       (run-continue state)             ; pass the first ice
+       (is (= 0 (get-in @state [:run :position])) "Now approaching server")
+       (core/rez state :corp form1)
+       (prompt-choice :corp "Yes")      ; Move Formicary
+       (is (= 2 (count (get-in @state [:corp :servers :hq :ices]))) "2 ICE protecting HQ")
+       (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
+       (card-subroutine state :corp (get-ice state :hq 0) 0)
+       (prompt-choice :runner "Yes")      ; take 2 net
+       (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
+       (run-jack-out state)
+       (let [cards-in-hand (count (:hand (get-runner)))]
+         (card-ability state :runner responders 0)
+         (is (= (inc cards-in-hand) (count (:hand (get-runner)))) "First Responders was able to trigger"))
+       (run-on state "Archives")
+       (run-continue state)
+       (core/rez state :corp form2)
+       (prompt-choice :corp "Yes")      ; Move Formicary
+       (is (= 1 (get-in @state [:run :position])) "Now approaching Formicary")
+       (card-subroutine state :corp (refresh form2) 0)
+       (prompt-choice :runner "No")      ; ETR
+       (is (not (get-in @state [:run])) "Formicary ended the run"))))
+  (testing "Verifies that Formicary can be moved to the innermost positon of its own server"
+    (do-game
+     (new-game (default-corp ["Ice Wall" "Formicary"])
+               (default-runner))
+     (play-from-hand state :corp "Ice Wall" "HQ")
+     (play-from-hand state :corp "Formicary" "HQ")
+     (take-credits state :corp)
+     (let [form (get-ice state :hq 1)]
+       (run-on state "HQ")
+       (run-continue state)             ; pass the first ice
+       (run-continue state)             ; pass the second ice
+       (is (= 0 (get-in @state [:run :position])) "Now approaching server")
+       (core/rez state :corp form)
+       (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice Wall is the innermost piece of ice before swap")
+       (is (= "Formicary" (:title (get-ice state :hq 1))) "Formicary is the outermost piece of ice before swap")
+       (prompt-choice :corp "Yes")      ; Move Formicary
+       (is (= 1 (get-in @state [:run :position])) "Now approaching the innermost piece of ice")
+       (is (= "Formicary" (:title (get-ice state :hq 0))) "Formicary is the innermost piece of ice after swap")
+       (is (= "Ice Wall" (:title (get-ice state :hq 1))) "Ice Wall is the outermost piece of ice after swap")))))
 
 (deftest free-lunch
   ;; Free Lunch - Spend 1 power counter to make Runner lose 1c
@@ -466,6 +523,43 @@
       (prompt-choice :runner "No action")
       (is (not (accessing state "Hostile Takeover"))))))
 
+(deftest hydra
+  ;; Hydra - do an effect Runner is tagged, otherwise give Runner 1 tag
+  (do-game
+    (new-game (default-corp ["Hydra"])
+              (default-runner))
+    (play-from-hand state :corp "Hydra" "HQ")
+    (take-credits state :corp)
+    (core/gain-credits state :corp 10)
+    (run-on state :hq)
+    (let [hydra (get-ice state :hq 0)
+          corp-creds (:credit (get-corp))]
+      (core/rez state :corp hydra)
+      (is (= (- corp-creds 10) (:credit (get-corp))) "Cost 10 credits to rez Hydra")
+      (is (not (core/is-tagged? @state)) "Runner is not tagged approaching Hydra")
+
+      (testing "Hydra subroutines give tags if Runner is not tagged"
+        (doseq [n (range 3)]
+          (card-subroutine state :corp hydra n)
+          (is (= 1 (:tag (get-runner))) (str "Hydra sub " (inc n) " gave Runner 1 tag"))
+          (core/lose state :runner :tag 1)))
+
+      (testing "Hydra subroutines do their effect if the Runner is tagged"
+        ;; Gain 1 tag to turn on main effect of subroutines
+        (core/gain state :runner :tag 1)
+        (is (core/is-tagged? @state) "Runner is tagged")
+
+        (is (= 3 (count (:hand (get-runner)))) "3 cards in Runner grip before Hydra damage")
+        (card-subroutine state :corp hydra 0)
+        (is (= 0 (count (:hand (get-runner)))) "Hydra sub 1 did 3 damage when Runner is tagged")
+
+        (card-subroutine state :corp hydra 1)
+        (is (= (- corp-creds 5) (:credit (get-corp))) "Hydra sub 2 gave 5 credits to Corp when Runner is tagged")
+
+        (is (:run @state) "Still a run going on before resolving last subroutine")
+        (card-subroutine state :corp hydra 2)
+        (is (not (:run @state)) "Hydra sub 3 ended the run when Runner is tagged")))))
+
 (deftest iq
   ;; IQ - Rez cost and strength equal to cards in HQ
   (do-game
@@ -508,6 +602,7 @@
       (is (= 1 (count (:discard (get-corp)))) "It's a Trap trashed"))))
 
 (deftest jua
+  ;; Jua
   (testing "Encounter effect - Prevent Runner from installing cards for the rest of the turn"
     (do-game
       (new-game (default-corp ["Jua"])
@@ -528,7 +623,7 @@
         (take-credits state :corp)
         (is (= 1 (count (:hand (get-runner)))) "Runner starts with 1 cards in hand")
         (play-from-hand state :runner "Desperado")
-        (is (= 0 (count (:hand (get-runner)))) "Card installed"))))
+        (is (zero? (count (:hand (get-runner)))) "Card installed"))))
   (testing "Subroutine effect - Select 2 runner cards, runner moves one to the stack"
     (do-game
       (new-game (default-corp ["Jua"])
@@ -550,7 +645,31 @@
         (prompt-select :corp (get-hardware state 0))
         (prompt-card :runner (get-program state 0))
         (is (nil? (get-program state 0)) "Card is uninstalled")
-        (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck")))))
+        (is (= 1 (count (:deck (get-runner)))) "Runner puts card in deck"))))
+ (testing "Should only lock installing for Runner, not for both sides"
+    (do-game
+      (new-game (make-deck "Mti Mwekundu: Life Improved" ["Jua" "Kakugo"])
+                (default-runner ["Paperclip"]))
+      (play-from-hand state :corp "Jua" "HQ")
+      (let [mti (get-in @state [:corp :identity])
+            jua (get-ice state :hq 0)]
+        (core/rez state :corp jua)
+        (take-credits state :corp)
+        (trash-from-hand state :runner "Paperclip")
+        (run-on state "HQ")
+        (is (= 1 (get-in @state [:run :position])) "Now approaching Jua")
+        (card-ability state :corp jua 0)
+        (run-continue state)
+        (is (zero? (get-in @state [:run :position])) "Initial position approaching server")
+        (card-ability state :corp mti 0)
+        (prompt-select :corp (find-card "Kakugo" (:hand (get-corp))))
+        (is (= 1 (get-in @state [:run :position])) "Now approaching Kakugo")
+        (is (= "Kakugo" (:title (get-ice state :hq 0))) "Kakugo was installed")
+        (is (empty? (:hand (get-corp))) "Kakugo removed from HQ")
+        (core/rez state :corp (get-ice state :hq 0))
+        (is (empty? (:prompt (get-runner))) "Runner can't install Paperclip because of Jua encounter ability")
+        (run-continue state)
+        (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))))
 
 (deftest kakugo
   ;; Kakugo
@@ -597,13 +716,13 @@
      (is (empty? (:discard (get-runner))) "Runner starts with no discarded cards")
      (prompt-choice :runner "Trash an installed piece of hardware")
      (prompt-select :runner (get-hardware state 0))
-     (is (empty? (get-in @state [:runner :rig :hardware])) "Astrolabe trashed")
+     (is (empty? (get-hardware state)) "Astrolabe trashed")
      (is (= 1 (count (:discard (get-runner)))) "Runner trashed 1 card")
      (card-subroutine state :corp kamali 2)
      (is (= 1 (count (:discard (get-runner)))) "Runner starts with 1 discarded card")
      (prompt-choice :runner "Trash an installed program")
      (prompt-select :runner (get-program state 0))
-     (is (empty? (get-in @state [:runner :rig :program])) "Cache trashed")
+     (is (empty? (get-program state)) "Cache trashed")
      (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
 
 (deftest kitsune
@@ -784,8 +903,8 @@
       (take-credits state :corp)
       (run-on state :hq)
       (is (= 3 (:credit (get-corp))) "corp starts encounter with 3 crs")
-      (is (= 0 (count (:discard (get-runner)))) "runner starts encounter with no cards in heap")
-      (is (= 0 (:tag (get-runner))) "runner starts encounter with 0 tags")
+      (is (zero? (count (:discard (get-runner)))) "runner starts encounter with no cards in heap")
+      (is (zero? (:tag (get-runner))) "runner starts encounter with 0 tags")
       (card-subroutine state :corp mau 0)
       (card-subroutine state :corp mau 1)
       (card-subroutine state :corp mau 2)
@@ -816,13 +935,44 @@
               (default-runner))
     (play-from-hand state :corp "Masvingo" "HQ")
     (let [mas (get-ice state :hq 0)]
-      (is (= 0 (:advance-counter (refresh mas) 0)) "Should install with 0 counter")
+      (is (zero? (get-counters (refresh mas) :advancement)) "Should install with 0 counter")
       (core/rez state :corp (refresh mas))
-      (is (= 1 (:advance-counter (refresh mas))) "Should rez with 1 counter")
+      (is (= 1 (get-counters (refresh mas) :advancement)) "Should rez with 1 counter")
       (take-credits state :corp)
       (run-on state :hq)
       (card-subroutine state :corp mas 0)
       (is (not (:run @state)) "Run is ended"))))
+
+(deftest meridian
+  (testing "ETR"
+    (do-game
+      (new-game (default-corp ["Meridian"])
+                (default-runner))
+      (play-from-hand state :corp "Meridian" "HQ")
+      (take-credits state :corp)
+      (let [mer (get-ice state :hq 0)]
+        (core/rez state :corp (refresh mer))
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh mer) 0)
+        (prompt-choice-partial :runner "End")
+        (is (not (:run @state)) "Run is ended")
+        (is (empty? (:scored (get-runner))) "Not in runner score area")
+        (is (= 1 (count (get-ice state :hq))) "ICE still installed"))))
+  (testing "Score as -1 point agenda"
+    (do-game
+      (new-game (default-corp ["Meridian"])
+                (default-runner))
+      (play-from-hand state :corp "Meridian" "HQ")
+      (take-credits state :corp)
+      (let [mer (get-ice state :hq 0)]
+        (core/rez state :corp (refresh mer))
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh mer) 0)
+        (prompt-choice-partial :runner "Add")
+        (is (:run @state) "Run is still live")
+        (is (= 1 (count (:scored (get-runner)))) "In runner score area")
+        (is (= -1 (:agenda-point (get-runner))) "Worth -1 agenda points")
+        (is (empty? (get-ice state :hq)) "ICE uninstalled")))))
 
 (deftest meru-mati
   (do-game
@@ -958,7 +1108,68 @@
       (core/rez state :corp (get-ice state :archives 0))
       (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
       (core/rez state :corp (get-ice state :hq 0))
-      (is (= 0 (:credit (get-corp))) "Corp spends 9 credits to rez"))))
+      (is (zero? (:credit (get-corp))) "Corp spends 9 credits to rez"))))
+
+(deftest next-sapphire
+  ;; NEXT Sapphire
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["NEXT Bronze" "NEXT Sapphire" (qty "Ice Wall" 100)])
+                (default-runner))
+      (starting-hand state :corp ["NEXT Bronze" "NEXT Sapphire" "Ice Wall" "Ice Wall"])
+      (dotimes [_ 5]
+        (core/move state :corp (find-card "Ice Wall" (:deck (get-corp))) :discard))
+      (core/gain state :corp :credit 100)
+      (play-from-hand state :corp "NEXT Bronze" "HQ")
+      (play-from-hand state :corp "NEXT Sapphire" "R&D")
+      (let [bronze (get-ice state :hq 0)
+            sapphire (get-ice state :rd 0)]
+        (core/rez state :corp sapphire)
+        (take-credits state :corp)
+        (run-on state "R&D")
+        (let [hand (count (:hand (get-corp)))
+              deck (count (:deck (get-corp)))]
+          (card-subroutine state :corp sapphire 0)
+          (is (= 1 (-> (get-corp) :prompt first :choices :number)))
+          (prompt-choice :corp 1)
+          (is (= (inc hand) (count (:hand (get-corp)))) "Corp should draw 1 card from R&D")
+          (is (= (dec deck) (count (:deck (get-corp)))) "R&D should lose 1 card"))
+        (let [hand (count (:hand (get-corp)))
+              trash (count (:discard (get-corp)))]
+          (card-subroutine state :corp sapphire 1)
+          (prompt-select :corp (find-card "Ice Wall" (:discard (get-corp))))
+          (is (= (inc hand) (count (:hand (get-corp)))) "Corp should draw 1 card from Archives")
+          (is (= (dec trash) (count (:discard (get-corp)))) "Archives should lose 1 card"))
+        (let [hand (count (:hand (get-corp)))
+              deck (count (:deck (get-corp)))
+              num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
+          (card-subroutine state :corp sapphire 2)
+          (prompt-select :corp (find-card "Ice Wall" (:hand (get-corp))))
+          (is (= (dec hand) (count (:hand (get-corp)))) "Corp should add 1 card from HQ to R&D")
+          (is (= (inc deck) (count (:deck (get-corp)))) "R&D should gain 1 card")
+          (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle"))
+        (core/rez state :corp bronze)
+        (card-subroutine state :corp sapphire 0)
+        (is (= 2 (-> (get-corp) :prompt first :choices :number)) "2 rezzed NEXT ice increases choice total"))))
+  (testing "Should shuffle even when choosing 0"
+    (do-game
+      (new-game (default-corp ["NEXT Sapphire" (qty "Ice Wall" 100)])
+                (default-runner))
+      (starting-hand state :corp ["NEXT Sapphire" "Ice Wall"])
+      (play-from-hand state :corp "NEXT Sapphire" "HQ")
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (let [sapphire (get-ice state :hq 0)
+            hand (count (:hand (get-corp)))
+            deck (count (:deck (get-corp)))
+            num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
+        (core/rez state :corp sapphire)
+        (card-subroutine state :corp sapphire 2)
+        (prompt-choice :corp "Done")
+        (is (= hand (count (:hand (get-corp)))) "Nothing selected so HQ shouldn't change")
+        (is (= deck (count (:deck (get-corp)))) "Nothing selected so R&D shouldn't change")
+        (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
+            "Corp should shuffle even when selecting nothing")))))
 
 (deftest nightdancer
   ;; Nightdancer - Runner loses a click if able, corp gains a click on next turn
@@ -996,8 +1207,8 @@
       (card-ability state :corp (refresh odu) 0)
       (card-ability state :corp (refresh odu) 1)
       (prompt-select :corp (refresh eni))
-      (is (= 1 (:advance-counter (refresh odu))))
-      (is (= 1 (:advance-counter (refresh eni))))
+      (is (= 1 (get-counters (refresh odu) :advancement)))
+      (is (= 1 (get-counters (refresh eni) :advancement)))
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1005,8 +1216,8 @@
       (card-ability state :corp (refresh odu) 0)
       (card-ability state :corp (refresh odu) 1)
       (prompt-select :corp (refresh eni))
-      (is (= 2 (:advance-counter (refresh odu))))
-      (is (= 3 (:advance-counter (refresh eni))))
+      (is (= 2 (get-counters (refresh odu) :advancement)))
+      (is (= 3 (get-counters (refresh eni) :advancement)))
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1014,8 +1225,34 @@
       (card-ability state :corp (refresh odu) 0)
       (card-ability state :corp (refresh odu) 1)
       (prompt-select :corp (refresh eni))
-      (is (= 3 (:advance-counter (refresh odu))))
-      (is (= 6 (:advance-counter (refresh eni)))))))
+      (is (= 3 (get-counters (refresh odu) :advancement)))
+      (is (= 6 (get-counters (refresh eni) :advancement))))))
+
+(deftest peeping-tom
+  ;;Peeping Tom - Counts # of chosen card type in Runner grip
+  (do-game
+    (new-game (default-corp ["Peeping Tom"])
+              (default-runner [(qty "Sure Gamble" 5)]))
+    (play-from-hand state :corp "Peeping Tom" "HQ")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (let [tom (get-ice state :hq 0)]
+      (core/rez state :corp (refresh tom))
+      (card-ability state :corp tom 0)
+      (prompt-choice :corp "Hardware")
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
+          "Revealed Runner grip")
+      (is (last-log-contains? state "0") "Correctly counted Hardware in Runner grip")
+      (card-ability state :corp tom 0)
+      (prompt-choice :corp "Event")
+      (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (is (= 4 (:tag (get-runner))) "Tag ability sucessful")
+      (card-side-ability state :runner tom 0)
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag
@@ -1025,7 +1262,7 @@
     (play-from-hand state :corp "Resistor" "HQ")
     (let [resistor (get-ice state :hq 0)]
       (core/rez state :corp resistor)
-      (is (= 0 (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
+      (is (zero? (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
       (core/tag-runner state :runner 2)
       (is (= 2 (:tag (get-runner))))
       (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
@@ -1045,7 +1282,7 @@
         (take-credits state :corp)
         (run-on state "archives")
         (core/rez state :corp sadaka)
-        (is (= 0 (count (:hand (get-corp)))) "Corp starts with empty hand")
+        (is (zero? (count (:hand (get-corp)))) "Corp starts with empty hand")
         (card-subroutine state :corp (refresh sadaka) 0)
         (prompt-choice :corp "Shuffle R&D")
         (prompt-choice :corp "Yes")
@@ -1067,7 +1304,7 @@
         (run-on state "archives")
         (core/rez state :corp sadaka)
         (is (= 3 (count (:hand (get-corp)))) "Corp starts with 3 cards in hand")
-        (is (= 0 (count (:discard (get-corp)))) "Corps starts with 0 cards in archives")
+        (is (zero? (count (:discard (get-corp)))) "Corps starts with 0 cards in archives")
         (card-subroutine state :corp (refresh sadaka) 1)
         (prompt-card :corp (find-card "Enigma" (:hand (get-corp))))
         (is (= 2 (count (:hand (get-corp)))) "Corp discards 1 card")
@@ -1079,7 +1316,7 @@
         (core/rez state :corp sadakaHQ)
         (is (= 2 (count (:hand (get-corp)))) "Corp starts with 2 cards in hand")
         (is (= 2 (count (:discard (get-corp)))) "Corps starts with 2 cards in archives")
-        (is (= 0 (count (:discard (get-runner)))) "Runner starts with 0 cards in discard")
+        (is (zero? (count (:discard (get-runner)))) "Runner starts with 0 cards in discard")
         (card-subroutine state :corp (refresh sadakaHQ) 1)
         (prompt-card :corp (find-card "Enigma" (:hand (get-corp))))
         (is (= 1 (count (:hand (get-corp)))) "Corp discards 1 card")
@@ -1121,8 +1358,8 @@
       (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
-      (is (= 0 (:tag (get-runner))) "Trace failed with 0 advancements")
-      (core/advance state :corp {:card (refresh searchlight)})
+      (is (zero? (:tag (get-runner))) "Trace failed with 0 advancements")
+      (advance state searchlight 1)
       (card-subroutine state :corp (refresh searchlight) 0)
       (prompt-choice :corp 0)
       (prompt-choice :runner 0)
@@ -1141,7 +1378,9 @@
       (play-from-hand state :corp "Ice Wall" "HQ")
       (is (= 4 (:current-strength (refresh sab))) "+2 strength for 2 pieces of ICE")
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (is (= 5 (:current-strength (refresh sab))) "+3 strength for 3 pieces of ICE"))))
+      (is (= 5 (:current-strength (refresh sab))) "+3 strength for 3 pieces of ICE")
+      (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (is (= 4 (:current-strength (refresh sab))) "+2 strength for 2 pieces of ICE"))))
 
 (deftest self-adapting-code-wall
   ;; Self-Adapting Code Wall
@@ -1177,48 +1416,91 @@
               (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
     (play-from-hand state :corp "Sherlock 1.0" "HQ")
     (take-credits state :corp)
-    (play-from-hand state :runner "Gordian Blade")
-    (run-on state :hq)
-    (core/rez state :corp (get-ice state :hq 0))
-    (card-subroutine state :corp (get-ice state :hq 0) 0)
-    (prompt-choice :corp 0)
-    (prompt-choice :runner 0)
-    (prompt-select :corp (get-in @state [:runner :rig :program 0]))
-    (is (empty? (get-in @state [:runner :rig :program])) "Gordian uninstalled")
-    (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack")))
+    (let [sherlock (get-ice state :hq 0)]
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state :hq)
+      (core/rez state :corp sherlock)
+      (card-subroutine state :corp sherlock 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-program state 0))
+      (is (empty? (get-program state)) "Gordian uninstalled")
+      (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack"))))
+
+(deftest sherlock-2.0
+  ;; Sherlock 2.0 - Trace to add an installed program to the bottom of Runner's Stack
+  (do-game
+    (new-game (default-corp [(qty "Sherlock 2.0" 1)])
+              (default-runner [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]))
+    (play-from-hand state :corp "Sherlock 2.0" "HQ")
+    (take-credits state :corp)
+    (let [sherlock (get-ice state :hq 0)]
+      (play-from-hand state :runner "Gordian Blade")
+      (run-on state :hq)
+      (core/rez state :corp sherlock)
+      (card-subroutine state :corp sherlock 0)
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 0)
+      (prompt-select :corp (get-program state 0))
+      (is (empty? (get-program state)) "Gordian uninstalled")
+      (is (= "Gordian Blade" (:title (last (:deck (get-runner))))) "Gordian on bottom of Stack"))))
 
 (deftest shiro
-  ;; Shiro - Full test
-  (do-game
-    (new-game (default-corp ["Shiro" "Caprice Nisei"
-                             "Quandary" "Jackson Howard"])
-              (default-runner ["R&D Interface"]))
-    (starting-hand state :corp ["Shiro"])
-    (play-from-hand state :corp "Shiro" "HQ")
-    (take-credits state :corp)
-    (play-from-hand state :runner "R&D Interface")
-    (let [shiro (get-ice state :hq 0)]
-      (run-on state :hq)
-      (core/rez state :corp shiro)
-      (card-subroutine state :corp shiro 0)
-      (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
-      (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
-      (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
-      ;; try starting over
-      (prompt-choice :corp "Start over")
-      (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
-      (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
-      (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
-      (prompt-choice :corp "Done")
-      (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
-      (is (= "Quandary" (:title (second (:deck (get-corp))))))
-      (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
-      (card-subroutine state :corp shiro 1)
-      (is (= (:cid (first (:deck (get-corp))))
-             (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
-      (prompt-choice :runner "No")
-      (is (= (:cid (second (:deck (get-corp))))
-             (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
+  ;; Shiro
+  (testing "Full test"
+    (do-game
+      (new-game (default-corp ["Shiro" "Caprice Nisei"
+                               "Quandary" "Jackson Howard"])
+                (default-runner ["R&D Interface"]))
+      (starting-hand state :corp ["Shiro"])
+      (play-from-hand state :corp "Shiro" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "R&D Interface")
+      (let [shiro (get-ice state :hq 0)]
+        (run-on state :hq)
+        (core/rez state :corp shiro)
+        (card-subroutine state :corp shiro 0)
+        (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+        (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
+        (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+        ;; try starting over
+        (prompt-choice :corp "Start over")
+        (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+        (prompt-card :corp (find-card "Quandary" (:deck (get-corp))))
+        (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
+        (prompt-choice :corp "Done")
+        (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
+        (is (= "Quandary" (:title (second (:deck (get-corp))))))
+        (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
+        (card-subroutine state :corp shiro 1)
+        (is (= (:cid (first (:deck (get-corp))))
+               (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
+        (prompt-choice :runner "No action")
+        (is (= (:cid (second (:deck (get-corp))))
+               (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
+  (testing "with Mwanza City Grid, should access additional 3 cards"
+    (do-game
+      (new-game (default-corp ["Shiro" "Mwanza City Grid"
+                               (qty "Ice Wall" 10)])
+                (default-runner ["R&D Interface"]))
+      (starting-hand state :corp ["Shiro" "Mwanza City Grid"])
+      (play-from-hand state :corp "Mwanza City Grid" "R&D")
+      (play-from-hand state :corp "Shiro" "R&D")
+      (take-credits state :corp)
+      (core/gain state :corp :credit 100)
+      (play-from-hand state :runner "R&D Interface")
+      (let [shiro (get-ice state :rd 0)
+            mwanza (get-content state :rd 0)]
+        (run-on state :rd)
+        (core/rez state :corp shiro)
+        (core/rez state :corp mwanza)
+        (let [credits (:credit (get-corp))]
+          (card-subroutine state :corp shiro 1)
+          (is (= 3 (-> @state :run :access-bonus)) "Should access an additional 3 cards")
+          (dotimes [_ 5]
+            (prompt-choice :runner "No action"))
+          (run-jack-out state)
+          (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards total"))))))
 
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run
@@ -1289,13 +1571,58 @@
       (is (= 6 (:current-strength (refresh surv))) "Surveyor has 6 strength for 3 pieces of ICE")
       (run-on state "HQ")
       (card-subroutine state :corp surv 0)
-      (prompt-choice :corp 0)                               ; Should be Trace - 6
+      (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
+      (prompt-choice :corp 0)
       (prompt-choice :runner 5)
       (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Surveyor Trace 6 with boost 5")
       (card-subroutine state :corp surv 0)
-      (prompt-choice :corp 0)                               ; Should be Trace - 6
+      (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
+      (prompt-choice :corp 0)
       (prompt-choice :runner 6)
-      (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6"))))
+      (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6")
+      (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
+
+(deftest thimblerig
+  (testing "Thimblerig does not flag phase 1.2 if it's the only piece of ice"
+    (do-game
+      (new-game (default-corp ["Thimblerig" "Guard"])
+                (default-runner))
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (core/rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (not (:corp-phase-12 @state)) "Corp not in phase 1.2 when Thimblerig is the only piece of ice")
+      (play-from-hand state :corp "Guard" "New remote")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp in phase 1.2 when there are 2 pieces of ice")))
+  (testing "Basic of swap ability - usable both during and outside runs"
+    (do-game
+      (new-game (default-corp ["Vanilla" "Pup" "Thimblerig"])
+                (default-runner))
+      (play-from-hand state :corp "Thimblerig" "HQ")
+      (play-from-hand state :corp "Pup" "HQ")
+      (play-from-hand state :corp "Vanilla" "New remote")
+      (let [thimble (get-ice state :hq 0)
+            pup (get-ice state :hq 1)]
+        (core/rez state :corp thimble)
+        (core/rez state :corp pup)
+        (is (= "Thimblerig" (:title (get-ice state :hq 0))) "Thimblerig innermost ice on HQ")
+        (is (= "Pup" (:title (get-ice state :hq 1))) "Pup outermost ice on HQ")
+        (card-ability state :corp (refresh thimble) 0)
+        (prompt-select :corp (refresh pup))
+        (is (= "Pup" (:title (get-ice state :hq 0))) "Pup innermost ice on HQ after swap")
+        (is (= "Thimblerig" (:title (get-ice state :hq 1))) "Thimblerig outermost ice on HQ after swap"))
+      (let [thimble (get-ice state :hq 1)
+            vanilla (get-ice state :remote1 0)]
+        (run-on state "Server 1")
+        (is (= "Thimblerig" (:title (get-ice state :hq 1))) "Thimblerig outermost ice on HQ")
+        (is (= "Vanilla" (:title (get-ice state :remote1 0))) "Vanilla ice on remote")
+        (card-ability state :corp thimble 0)
+        (prompt-select :corp vanilla)
+        (is (= "Vanilla" (:title (get-ice state :hq 1))) "Vanilla outermost ice on HQ after swap during run")
+        (is (= "Thimblerig" (:title (get-ice state :remote1 0))) "Thimblerig ice on remote after swap during run")))))
 
 (deftest tithonium
   ;; Forfeit option as rez cost, can have hosted condition counters
@@ -1319,7 +1646,7 @@
         (prompt-choice :corp "Yes") ; use alternative cost
         (prompt-select :corp (get-in (get-corp) [:scored 0]))
         (is (= 3 (:credit (get-corp))) "Still on 3c")
-        (is (= 0 (count (:scored (get-corp)))) "Agenda forfeited")
+        (is (zero? (count (:scored (get-corp)))) "Agenda forfeited")
         ;; Can Host Conditions Counters
         (play-from-hand state :corp "Patch")
         (prompt-select :corp (refresh ti))
@@ -1353,32 +1680,50 @@
         (score-agenda state :corp ht)
         (play-from-hand state :corp "Oversight AI")
         (prompt-select :corp ti)
-        (is (get-in (refresh ti) [:rezzed]))
+        (is (:rezzed (refresh ti)))
         (is (= "Oversight AI" (:title (first (:hosted (refresh ti)))))
             "Tithonium hosting OAI as a condition")))))
 
 (deftest tmi
-  ;; TMI ICE test
+  ;; TMI
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "TMI" 3)])
+      (new-game (default-corp ["TMI"])
                 (default-runner))
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (get-in (refresh tmi) [:rezzed])))))
+        (is (:rezzed (refresh tmi))))))
   (testing "Losing trace derezzes TMI"
     (do-game
-      (new-game (default-corp [(qty "TMI" 3)])
+      (new-game (default-corp ["TMI"])
                 (make-deck "Sunny Lebeau: Security Specialist" [(qty "Blackmail" 3)]))
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
         (prompt-choice :corp 0)
         (prompt-choice :runner 0)
-        (is (not (get-in (refresh tmi) [:rezzed])))))))
+        (is (not (:rezzed (refresh tmi))))))))
+
+(deftest troll
+  ;; Troll
+  (testing "Giving the runner a choice on successful trace shouldn't make runner pay trace first. #5335"
+    (do-game
+      (new-game (default-corp ["Troll"])
+                (default-runner))
+      (play-from-hand state :corp "Troll" "HQ")
+      (take-credits state :corp)
+      (let [troll (get-ice state :hq 0)]
+        (core/rez state :corp troll)
+        (run-on state "HQ")
+        (card-ability state :corp troll 0)
+        (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
+        (prompt-choice :corp 0)
+        (prompt-choice :runner 0)
+        (prompt-choice :runner "End the run")
+        (is (not (:run @state)) "Run is ended")))))
 
 (deftest turing
   ;; Turing - Strength boosted when protecting a remote server
@@ -1449,5 +1794,5 @@
           "Wraparound +7 strength with no fracter in play")
       (take-credits state :corp)
       (play-from-hand state :runner "Corroder")
-      (is (= 0 (:current-strength (refresh wrap)))
+      (is (zero? (:current-strength (refresh wrap)))
           "Wraparound 0 strength after Corroder installed"))))

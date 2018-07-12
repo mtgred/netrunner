@@ -46,7 +46,8 @@
 (defn update-ice-strength
   "Updates the given ice's strength by triggering strength events and updating the card."
   [state side ice]
-  (let [ice (get-card state ice) oldstren (or (:current-strength ice) (:strength ice))]
+  (let [ice (get-card state ice)
+        oldstren (or (:current-strength ice) (:strength ice))]
     (when (:rezzed ice)
       (swap! state update-in [:bonus] dissoc :ice-strength)
       (trigger-event state side :pre-ice-strength ice)

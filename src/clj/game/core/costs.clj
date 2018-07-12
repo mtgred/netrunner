@@ -42,7 +42,6 @@
   (let [cost-type (first cost)
         amount (last cost)
         computer-says-no "Unable to pay"]
-
     (cond
 
       (flag-stops-pay? state side cost-type)
@@ -56,7 +55,7 @@
                (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
                (and (= cost-type :connection) (>= (- (count (filter #(has-subtype? % "Connection")
-                                                               (all-active-installed state :runner))) amount) 0))
+                                                                    (all-active-installed state :runner))) amount) 0))
                (and (= cost-type :shuffle-installed-to-stack) (>= (- (count (all-installed state :runner)) amount) 0))
                (>= (- (get-in @state [side cost-type] -1) amount) 0)))
       computer-says-no)))
@@ -73,6 +72,16 @@
       costs
       (when title (toast state side (str cost-msg " for " title ".")) false))))
 
+(defn can-pay-with-recurring?
+  "Returns true if the player can pay the cost factoring in available recurring credits"
+  [state side cost]
+  (>= (+ (- (get-in @state [side :credit] -1) cost)
+         (->> (all-installed state side)
+              (map #(+ (get-counters % :recurring)
+                       (get-counters % :credit)))
+              (reduce +)))
+      0))
+
 (defn pay-forfeit
   "Forfeit agenda as part of paying for a card or ability
   Amount is always 1 but can be extend if we ever need more than a single forfeit"
@@ -81,13 +90,13 @@
   [state side eid card n]
   (let [cost-name (cost-names n :forfeit)]
     (continue-ability state side
-                    {:prompt "Choose an Agenda to forfeit"
-                     :delayed-completion true
-                     :choices {:max n
-                               :req #(is-scored? state side %)}
-                     :effect (req (when-completed (forfeit state side target)
-                                                  (effect-completed state side (make-result eid cost-name))))}
-                    card nil)
+                      {:prompt "Choose an Agenda to forfeit"
+                       :async true
+                       :choices {:max n
+                                 :req #(is-scored? state side %)}
+                       :effect (req (wait-for (forfeit state side target)
+                                              (effect-completed state side (make-result eid cost-name))))}
+                      card nil)
     cost-name))
 
 (defn pay-trash
@@ -101,9 +110,9 @@
                        {:prompt (str "Choose a " type " to trash")
                         :choices {:max amount
                                   :req select-fn}
-                        :delayed-completion true
-                        :effect (req (when-completed (trash state side target (merge args {:unpreventable true}))
-                                                     (effect-completed state side (make-result eid cost-name))))}
+                        :async true
+                        :effect (req (wait-for (trash state side target (merge args {:unpreventable true}))
+                                               (effect-completed state side (make-result eid cost-name))))}
                        card nil)
      cost-name)))
 
@@ -123,7 +132,7 @@
                      :choices {:max amount
                                :all true
                                :req #(and (installed? %) (= (:side %) "Runner"))}
-                     :delayed-completion true
+                     :async true
                      :effect (req
                                (doseq [c targets]
                                  (move state :runner c :deck))
@@ -194,21 +203,21 @@
   [state side eid costs card action msgs]
   (if (empty? costs)
     (effect-completed state side (make-result eid msgs))
-    (when-completed (cost-handler state side card action costs (first costs))
-                    (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
+    (wait-for (cost-handler state side card action costs (first costs))
+              (pay-sync-next state side eid (next costs) card action (conj msgs async-result)))))
 
 (defn pay-sync
-  "Same as pay, but awaitable with when-completed. "
+  "Same as pay, but awaitable. "
   [state side eid card & args]
   (let [raw-costs (not-empty (remove map? args))
         action (not-empty (filter map? args))]
     (if-let [costs (apply can-pay? state side (:title card) raw-costs)]
-      (when-completed (pay-sync-next state side costs card action [])
-                      (effect-completed state side
-                                        (make-result eid (->> async-result
-                                                              (filter some?)
-                                                              (interpose " and ")
-                                                              (apply str)))))
+      (wait-for (pay-sync-next state side costs card action [])
+                (effect-completed state side
+                                  (make-result eid (->> async-result
+                                                        (filter some?)
+                                                        (interpose " and ")
+                                                        (apply str)))))
       (effect-completed state side (make-result eid nil)))))
 
 (defn gain [state side & args]
@@ -219,7 +228,7 @@
       (doseq [[subtype amount] amount]
         (swap! state update-in [side type subtype] (safe-inc-n amount))
         (swap! state update-in [:stats side :gain type subtype] (fnil + 0) amount))
-    
+
       ;; Default cases for the types that expect a map
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})
@@ -227,7 +236,7 @@
       ;; Else assume amount is a number and try to increment type by it.
       :else
       (do (swap! state update-in [side type] (safe-inc-n amount))
-          (swap! state update-in [:stats side :gain type] (fnil + 0) amount)))))
+          (swap! state update-in [:stats side :gain type] (fnil + 0 0) amount)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]
@@ -238,6 +247,32 @@
       (do (when (number? (second r))
             (swap! state update-in [:stats side :lose (first r)] (fnil + 0) (second r)))
           (deduct state side r)))))
+
+(defn take-credits
+  "Like gain-credits, but does not trigger gain events."
+  [state side amount & args]
+  (when (and amount
+             (pos? amount))
+    (gain state side :credit amount)))
+
+(defn gain-credits
+  "Utility function for triggering events"
+  [state side amount & args]
+  (when (and amount
+             (pos? amount))
+    (gain state side :credit amount)
+    (let [kw (keyword (str (name side) "-credit-gain"))]
+      (apply trigger-event-sync state side (make-eid state) kw args))))
+
+(defn lose-credits
+  "Utility function for triggering events"
+  [state side amount & args]
+  (when (and amount
+             (or (= :all amount)
+                 (pos? amount)))
+    (lose state side :credit amount)
+    (let [kw (keyword (str (name side) "-credit-loss"))]
+      (apply trigger-event-sync state side (make-eid state) kw args))))
 
 (defn play-cost-bonus [state side costs]
   (swap! state update-in [:bonus :play-cost] #(merge-costs (concat % costs))))
@@ -279,6 +314,16 @@
           trash)
         (+ (get-in @state [:bonus :trash] 0))
         (max 0))))
+
+(defn modified-trash-cost
+  "Returns the numbe of credits required to trash the given card, after modification effects.
+  Allows cards like Product Recall to pre-calculate trash costs without manually triggering the effects."
+  [state side card]
+  (swap! state update-in [:bonus] dissoc :trash)
+  (trigger-event state side :pre-trash card)
+  (let [tcost (trash-cost state side card)]
+    (swap! state update-in [:bonus] dissoc :trash)
+    tcost))
 
 (defn install-cost-bonus [state side n]
   (swap! state update-in [:bonus :install-cost] #(merge-costs (concat % n))))
