@@ -1007,13 +1007,13 @@
          [label @cards {:opts {:name name}}]]))))
 
 (defn scored-view [{:keys [scored]}]
-  (let [size (count scored)]
+  (let [size (count @scored)]
     [:div.panel.blue-shade.scored.squeeze
      (map-indexed (fn [i card]
                     [:div.card-wrapper {:key i
                                         :style {:left (when (> size 1) (* (/ 128 (dec size)) i))}}
                      [:div [card-view card]]])
-                  scored)
+                  @scored)
      [label scored {:opts {:name "Scored Area"}}]]))
 
 (defn controls
