@@ -14,7 +14,7 @@
     [:div.news-box.panel.blue-shade
      [:ul.list
       (doall
-        (for [d (:news @news)]
+        (for [d @news]
           [:li.news-item
            [:span.date (-> (:date d) js/Date. js/moment (.format "dddd MMM Do - HH:mm"))]
            [:span.title {:dangerouslySetInnerHTML #js {:__html (cb/add-symbols (js/marked (:title d)))}}]]))]]))
