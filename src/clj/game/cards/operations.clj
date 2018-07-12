@@ -433,7 +433,7 @@
                     :trace {:base 3
                             :successful {:msg "give the Runner 1 tag"
                                          :async true
-                                         :effect (effect (tag-runner :runner eid 1))}}}
+                                         :effect (effect (gain-tags :runner eid 1))}}}
        :choices {:req #(and (ice? %)
                             (installed? %))}
        :msg (msg "give " (card-str state target {:visible false}) " additional text")
