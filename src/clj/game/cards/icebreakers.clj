@@ -253,7 +253,7 @@
   {:events {:successful-run {:silent (req true)
                              :effect (effect (system-msg "adds 1 virus counter to " (:title card))
                                              (add-counter card :virus 1))}}
-   :abilities [{:label (str  "Break " ice-type "subroutine(s)")
+   :abilities [{:label (str  "Break " ice-type " subroutine(s)")
                 :effect (req (wait-for (resolve-ability
                                          state side (pick-virus-counters-to-spend) card nil)
                                        (do (if-let [msg (:msg async-result)]
