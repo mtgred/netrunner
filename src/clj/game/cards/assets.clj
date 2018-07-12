@@ -185,6 +185,22 @@
                                       card nil)))}}
       :abilities [ability]})
 
+   "API-S Keeper Isobel"
+    (letfn [(counters-available? [state] (some #(pos? (get-counters % :advancement)) (all-installed state :corp)))]
+      {:flags {:corp-phase-12 (req (counters-available? state))}
+       :abilities [{:req (req (and (:corp-phase-12 @state)
+                                   (counters-available? state)))
+                    :once :per-turn
+                    :label "Remove an advancement token (start of turn)"
+                    :prompt "Select a card to remove an advancement token from"
+                    :choices {:req #(and (pos? (get-counters % :advancement))
+                                         (installed? %))}
+                    :effect (req (let [cnt (get-counters target :advancement)]
+                                   (set-prop state side target :advance-counter (dec cnt))
+                                   (gain-credits state :corp 3)
+                                   (system-msg state :corp (str "uses API-S Keeper Isobel to remove an advancement token from "
+                                                                (card-str state target) " and gains 3 [Credits]"))))}]})
+
    "Aryabhata Tech"
    {:events {:successful-trace {:msg "gain 1 [Credit] and force the Runner to lose 1 [Credit]"
                                 :effect (effect (gain-credits 1)
@@ -509,6 +525,26 @@
                                              (not (get-in @state [:per-turn (:cid card)]))))
                               :msg (msg "increase the install cost of " (:title target) " by " (get-counters card :power) " [Credits]")
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
+
+   "Drudge Work"
+   {:effect (effect (add-counter card :power 3))
+    :abilities [{:cost [:click 1]
+                 :counter-cost [:power 1]
+                 :async true
+                 :choices {:req #(and (is-type? % "Agenda")
+                                      (or (in-hand? %)
+                                          (in-discard? %)))}
+                 :msg (msg "reveal " (:title target)
+                           (let [target-agenda-points (get-agenda-points state :corp target)]
+                             (when (pos? target-agenda-points)
+                               (str ", gain " target-agenda-points " [Credits], ")))
+                           " and shuffle it into R&D")
+                 :effect (req (gain-credits state :corp (get-agenda-points state :corp target))
+                              (move state :corp target :deck)
+                              (shuffle! state :corp :deck)
+                              (if (zero? (get-counters card :power))
+                                (trash state side eid card nil)
+                                (effect-completed state side eid)))}]}
 
    "Early Premiere"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -861,6 +897,32 @@
                           :unsuccessful {:effect (effect (add-counter card :power 1)
                                                          (system-msg "adds 1 power counter to Kuwinda K4H1U3"))}}}]}
 
+   "Lady Liberty"
+   {:abilities [{:cost [:click 3]
+                 :label "Add agenda from HQ to score area"
+                 :req (req (let [counters (get-counters (get-card state card) :power)]
+                             (some #(and (is-type? % "Agenda")
+                                         (= counters (:agendapoints %)))
+                                  (:hand corp))))
+                 :async true
+                 :effect (req (show-wait-prompt state :runner "Corp to select an agenda for Lady Liberty")
+                              (continue-ability
+                                state side
+                                {:prompt "Select an Agenda in HQ to move to score area"
+                                 :choices {:req #(and (is-type? % "Agenda")
+                                                      (= (:agendapoints %) (get-counters (get-card state card) :power))
+                                                      (in-hand? %))}
+                                 :msg (msg "add " (:title target) " to score area")
+                                 :async true
+                                 :effect (req (wait-for (as-agenda state :corp target (:agendapoints target))
+                                                        (let [latest (find-latest state target)]
+                                                          (when-let [events (:events (card-def latest))]
+                                                            (register-events state side events latest))
+                                                          (clear-wait-prompt state :runner)
+                                                          (effect-completed state side eid))))}
+                                card nil))}]
+    :events {:corp-turn-begins {:effect (effect (add-counter card :power 1))}}}
+
    "Lakshmi Smartfabrics"
    {:events {:rez {:effect (effect (add-counter card :power 1))}}
     :abilities [{:req (req (seq (filter #(and (is-type? % "Agenda")
@@ -1141,6 +1203,23 @@
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
     :effect (effect (set-prop card :rec-counter (:link runner)))}
+
+   "Neurostasis"
+   (advance-ambush 3 {:req (req (pos? (get-counters (get-card state card) :advancement)))
+                      :async true
+                      :effect (req (let [cnt (get-counters (get-card state card) :advancement)]
+                                     (continue-ability
+                                       state side
+                                       {:prompt (msg "Choose " (quantify cnt "installed card") " to shuffle into the stack")
+                                        :player :corp
+                                        :choices {:req #(and (installed? %)
+                                                             (= (:side %) "Runner"))
+                                                  :max cnt}
+                                        :msg (msg "shuffle " (join ", " (map :title targets)) " into the stack")
+                                        :effect (req (doseq [c targets]
+                                                       (move state :runner c :deck))
+                                                     (shuffle! state :runner :deck))}
+                                       card nil)))})
 
    "News Team"
    {:flags {:rd-reveal (req true)}

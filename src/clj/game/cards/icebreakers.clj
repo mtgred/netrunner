@@ -253,7 +253,7 @@
   {:events {:successful-run {:silent (req true)
                              :effect (effect (system-msg "adds 1 virus counter to " (:title card))
                                              (add-counter card :virus 1))}}
-   :abilities [{:label (str  "Break " ice-type "subroutine(s)")
+   :abilities [{:label (str  "Break " ice-type " subroutine(s)")
                 :effect (req (wait-for (resolve-ability
                                          state side (pick-virus-counters-to-spend) card nil)
                                        (do (if-let [msg (:msg async-result)]
@@ -470,6 +470,20 @@
                     {:abilities [(break-sub 1 1 "Barrier")
                                  (strength-pump 1 1)]})
 
+   "Cradle"
+   {:abilities [(break-sub 2 0 "Code Gate")]
+    :events {:card-moved {:silent (req true)
+                          :req (req (and (= "Runner" (:side target))
+                                         (= [:hand] (or (:zone target)
+                                                        (:previous-zone target)))))
+                          :effect (effect (update-breaker-strength card))}
+             :runner-draw {:silent (req true)
+                           :req (req (when-let [drawn (-> @state :runner :register :most-recent-drawn first)]
+                                       (= [:hand] (or (:zone drawn)
+                                                      (:previous-zone drawn)))))
+                           :effect (effect (update-breaker-strength card))} }
+    :strength-bonus (req (-> @state :runner :hand count -))}
+
    "Creeper"
    (cloud-icebreaker
      (auto-icebreaker ["Sentry"]
@@ -607,8 +621,7 @@
                     {:prompt "Select a piece of ICE to target for bypassing"
                      :choices {:req ice?}
                      :leave-play (req (remove-icon state side card))
-                     :effect (req (let [ice target
-                                        serv (zone->name (second (:zone ice)))]
+                     :effect (req (let [ice target]
                                     (add-icon state side card ice "F" "blue")
                                     (system-msg state side
                                                 (str "selects " (card-str state ice)
@@ -705,6 +718,19 @@
                                                  (swap-ice state side (first targets) (second targets))))}
                                  (break-sub 1 1 "Code Gate")
                                  (strength-pump 1 1)]})
+
+   "Ika"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(break-sub 1 2 "Sentry")
+                                 (strength-pump 2 3)
+                                 {:label "Host Ika on a piece of ICE"
+                                  :prompt (msg "Host Ika on a piece of ICE")
+                                  :cost [:credit 2]
+                                  :choices {:req #(and (ice? %)
+                                                       (installed? %)
+                                                       (can-host? %))}
+                                  :msg (msg "host it on " (card-str state target))
+                                  :effect (effect (host target card))}]})
 
    "Knight"
    {:abilities [{:label "Host Knight on a piece of ICE"
@@ -997,6 +1023,14 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 1 1)]})
+
+   "Tycoon"
+   (auto-icebreaker ["Barrier"]
+                    {:abilities [(break-sub 1 2 "Barrier" (effect (update! (assoc-in card [:special :tycoon-used] true))))
+                                 (strength-pump 2 3)]
+                     :events {:pass-ice {:req (req (get-in card [:special :tycoon-used]))
+                                         :effect (effect (update! (dissoc-in card [:special :tycoon-used]))
+                                                         (gain-credits :corp 2))}}})
 
    "Vamadeva"
    (deva "Vamadeva")

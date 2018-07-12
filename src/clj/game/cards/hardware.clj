@@ -171,7 +171,7 @@
    {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
     :abilities [{:msg (msg "trash " (:title target))
                  :choices {:req #(and (= (:side %) "Runner") (:installed %))
-                           :not-self (req (:cid card))}
+                           :not-self true}
                  :effect (effect (trash target)
                                  (resolve-ability
                                    {:prompt "Draw 1 card or remove 1 tag" :msg (msg (.toLowerCase target))
@@ -541,6 +541,17 @@
                                  (damage-prevent :meat 1)
                                  (damage-prevent :net 1))}]}
 
+   "Hijacked Router"
+   {:events {:server-created {:effect (effect (lose-credits :corp 1))
+                              :msg "force the Corp to lose 1 [Credits]"}
+             :successful-run {:req (req (= target :archives))
+                              :optional {:prompt "Trash Hijacked Router to force the Corp to lose 3 [Credits]?"
+                                         :yes-ability {:async true
+                                                       :effect (req (system-msg state :runner "trashes Hijacked Router to force the Corp to lose 3 [Credits]")
+                                                                    (wait-for (trash state :runner card {:unpreventable true})
+                                                                              (lose-credits state :corp 3)
+                                                                              (effect-completed state side eid)))}}}}}
+
    "Hippo"
    {:implementation "Subroutine and first encounter requirements not enforced"
     :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
@@ -613,6 +624,18 @@
    {:in-play [:memory 2]
     :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
     :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))}
+
+   "Mâché"
+   {:abilities [{:label "Draw 1 card"
+                 :msg "draw 1 card"
+                 :counter-cost [:power 3]
+                 :effect (effect (draw :runner 1))}]
+    :events {:runner-trash {:once :per-turn
+                            :req (req (and (card-is? target :side :corp)
+                                           (:access @state)
+                                           (:trash target)))
+                            :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
+                                            (add-counter card :power (:trash target)))}}}
 
    "Maw"
    (let [ability {:label "Trash a card from HQ"
@@ -795,6 +818,67 @@
    :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
                                           (use-mu (:memoryunits target)))}}}
+
+   "Paragon"
+   {:in-play [:memory 1]
+    :events {:successful-run
+             {:once :per-turn
+              :async true
+              :effect (effect
+                        (show-wait-prompt :corp "Runner to decide if they will use Paragon")
+                        (continue-ability
+                          {:optional
+                           {:player :runner
+                            :prompt "Use Paragon?"
+                            :yes-ability
+                            {:msg "gain 1 [Credit] and look at the top card of Stack"
+                             :async true
+                             :effect (effect
+                                       (gain-credits :runner 1)
+                                       (continue-ability
+                                         {:player :runner
+                                          :optional
+                                          {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
+                                           :yes-ability
+                                           {:msg "add the top card of Stack to the bottom"
+                                            :effect (effect (move :runner (first (:deck runner)) :deck)
+                                                            (clear-wait-prompt :corp))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                         card nil))}
+                            :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                          card nil))}}}
+
+   "Patchwork"
+   (letfn [(patchwork-discount [cost-type bonus-fn]
+             {:async true
+              :req (req (and (get-in card [:special :patchwork])
+                             (= "Runner" (:side target))
+                             ;; We need at least one card (that is not the card played) in hand
+                             (not-empty (remove (partial same-card? target) (:hand runner)))))
+              :effect (req (let [playing target]
+                             (continue-ability
+                               state side
+                               {:prompt (str "Trash a card to lower the " cost-type " cost of " (:title playing) " by 2 [Credits].")
+                                :priority 2
+                                :choices {:req #(and (in-hand? %)
+                                                     (= "Runner" (:side %))
+                                                     (not (same-card? % playing)))}
+                                :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
+                                          (:title playing) " by 2 [Credits]")
+                                :effect (effect (trash target {:unpreventable true})
+                                             (bonus-fn [:credit -2])
+                                             (update! (dissoc-in card [:special :patchwork])))
+                                :cancel-effect (effect (effect-completed eid))}
+                               card nil)))})]
+     {:in-play [:memory 1]
+      :implementation "Click Patchwork before playing/installing a card."
+      :abilities [{:once :per-turn
+                   :effect (effect (update! (assoc-in card [:special :patchwork] true))
+                             (toast "Your next card played will trigger Patchwork." "info"))}]
+      :events {:pre-play-instant (patchwork-discount "play" play-cost-bonus)
+               :pre-install (patchwork-discount "install" install-cost-bonus)
+               :runner-turn-ends {:effect (effect (update! (dissoc-in card [:special :patchwork])))}
+               :corp-turn-ends {:effect (effect (update! (dissoc-in card [:special :patchwork])))}}})
 
    "Plascrete Carapace"
    {:data [:counter {:power 4}]

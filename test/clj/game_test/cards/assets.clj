@@ -177,6 +177,28 @@
       (is (zero? (get-counters (refresh ar) :advancement)) "Anson Rose should lose all advancement counters")
       (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement counter"))))
 
+(deftest api-s-keeper-isobel
+   ;; API-S Keeper Isobel
+   (do-game
+     (new-game
+       (default-corp ["API-S Keeper Isobel" "Ice Wall"])
+       (default-runner))
+    (play-from-hand state :corp "API-S Keeper Isobel" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [ap (get-content state :remote1 0)
+          iw (get-ice state :hq 0)]
+      (core/rez state :corp (refresh ap))
+      (core/rez state :corp (refresh iw))
+      (core/advance state :corp {:card (refresh iw)})
+      (is (= 1 (get-counters (refresh iw) :advancement)) "Ice Wall has 1 advancement token")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 1 (:credit (get-corp))) "Corp starts with 1 credits")
+      (card-ability state :corp (refresh ap) 0)
+      (prompt-select :corp (refresh iw))
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall loses an advancement token")
+      (is (= 4 (:credit (get-corp))) "Corp gains 3 credits"))))
+
 (deftest aryabhata-tech
   ;; Aryabhata Tech
   (do-game
@@ -882,6 +904,71 @@
                 (play-from-hand state :runner "Cache")
                 (is (= (- 4 number) (:credit (get-runner)))))))]
     (doall (map dlcd-test [0 1 2 3 4]))))
+
+(deftest drudge-work
+  ;; Drudge Work - Shuffle agenda from HQ or Archives into R&D, and gain credits = to agenda points
+  ;; TODO: do some Noah magic on this test to test several agendas from several locations
+  (do-game
+    (new-game (default-corp ["Drudge Work"
+                             "Hostile Takeover" "Standoff" "Global Food Initiative" "Armed Intimidation"
+                             "Hedge Fund"])
+              (default-runner))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Drudge Work" "New remote")
+    (play-from-hand state :corp "Armed Intimidation" "New remote")
+    (trash-from-hand state :corp "Hostile Takeover")
+    (let [hand (:hand (get-corp))
+          drudge-work (get-content state :remote1 0)
+          ai (find-card "Armed Intimidation" (get-content state :remote2 0))
+          ht (find-card "Hostile Takeover" (:discard (get-corp)))
+          standoff (find-card "Standoff" hand)
+          gfi (find-card "Global Food Initiative" hand)
+          hf (find-card "Hedge Fund" hand)]
+      (core/rez state :corp drudge-work)
+
+      (testing "Rez cost and placing counters on Drudge Work on rez"
+        (is (= (- 5 2) (:credit (get-corp))) "Cost 2 credits to rez Drudge Work")
+        (is (= 3 (get-counters (refresh drudge-work) :power)) "Drudge Work gained 3 power counters on rez"))
+
+      (testing "Selecting installed agenda, or Operation in hand"
+        (card-ability state :corp (refresh drudge-work) 0)
+        (prompt-select :corp ai)
+        (is (some? (get-content state :remote2 0)) "Armed Intimidation still installed in a remote server")
+        (is (= 3 (get-counters (refresh drudge-work) :power)) "Did not use a counter when selecting incorrect target")
+        (is (= (- 5 2) (:credit (get-corp))) "Did not gain credits when selecting installed Agenda")
+        (is (empty? (:deck (get-corp))) "No cards in R&D")
+
+        (prompt-select :corp hf)
+        (is (= 3 (count (:hand (get-corp)))) "Hedge Fund still in HQ")
+        (is (= 3 (get-counters (refresh drudge-work) :power)) "Did not use a counter when selecting incorrect target")
+        (is (= (- 5 2) (:credit (get-corp))) "Did not gain credits when selecting operation")
+        (is (empty? (:deck (get-corp))) "No cards in R&D"))
+
+      (testing "Gaining credits and shuffling in agenda from HQ"
+        (prompt-select :corp gfi)
+        (is (= 1 (count (:deck (get-corp)))) "One card (the GFI) shuffled into R&D")
+        (is (= 2 (count (:hand (get-corp)))) "Two cards left in HQ (Standoff and Hedge Fund)")
+        (is (= 2 (:click (get-corp))) "Used a click to activate Drudge Work")
+        (is (= 2 (get-counters (refresh drudge-work) :power)) "Used a counter when selecting GFI from HQ")
+        (is (= (+ 5 -2 3) (:credit (get-corp))) "Gained 3 credits when revealing GFI"))
+
+      (testing "Gaining credits and shuffling in agenda from Archives"
+        (card-ability state :corp (refresh drudge-work) 0)
+        (prompt-select :corp ht)
+        (is (= 2 (count (:deck (get-corp)))) "One more card (the Hostile Takeover) shuffled into R&D")
+        (is (= 2 (count (:hand (get-corp)))) "Two cards left in HQ (Standoff and Hedge Fund)")
+        (is (= 1 (:click (get-corp))) "Used a click to activate Drudge Work")
+        (is (= 1 (get-counters (refresh drudge-work) :power)) "Used a counter when selecting Hostile Takeover from Archives")
+        (is (= (+ 5 -2 3 1) (:credit (get-corp))) "Gained 1 credits when revealing Hostile Takeover"))
+
+      (testing "Gain 0 credits when shuffling in Standoff, trashing Drudge Work after 3 uses"
+        (card-ability state :corp (refresh drudge-work) 0)
+        (prompt-select :corp standoff)
+        (is (= 3 (count (:deck (get-corp)))) "One more card (the Standoff) shuffled into R&D")
+        (is (= 1 (count (:hand (get-corp)))) "Only the Hedge Fund left in HQ")
+        (is (= 0 (:click (get-corp))) "Used a click to activate Drudge Work")
+        (is (= "Drudge Work" (-> (get-corp) :discard first :title)) "Drudge Work trashed after no counters left")
+        (is (= (+ 5 -2 3 1) (:credit (get-corp))) "Gained 0 credits when revealing Standoff")))))
 
 (deftest early-premiere
   ;; Early Premiere - Pay 1c at start of turn to place an advancement on a card in a server
@@ -1853,6 +1940,54 @@
       (is (= "Kuwinda K4H1U3" (-> (get-corp) :discard first :title)) "Kuwinda should be in Archives")
       (core/end-phase-12 state :corp nil))))
 
+(deftest lady-liberty
+  ;; Lady Liberty - Score agenda from hand equal to number of power counters on Lady Libery
+  (testing "Basic behavior"
+    (do-game
+      (new-game (default-corp ["Lady Liberty" "Breaking News" "Ikawah Project"])
+                (default-runner))
+      (play-from-hand state :corp "Lady Liberty" "New remote")
+      (let [ll (get-content state :remote1 0)]
+        (core/rez state :corp ll)
+        (take-credits state :corp)
+        (is (zero? (get-counters (refresh ll) :power)) "Lady Liberty starts with 0 counters")
+        (take-credits state :runner)
+        (is (= 1 (get-counters (refresh ll) :power)) "Lady Liberty gains a power counter on start of turn")
+        (is (= 2 (count (:hand (get-corp)))) "Two cards in hand")
+        (card-ability state :corp (refresh ll) 0)
+        (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
+        (is (= 1 (count (:hand (get-corp)))) "One card in hand")
+        (is (= 1 (count (:scored (get-corp)))) "One card in score area")
+        (is (= 1 (:agenda-point (get-corp))) "Gained agenda point")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (card-ability state :corp (refresh ll) 0)
+        (is (empty? (:prompt (get-corp))) "No prompt if no matching agenda")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (card-ability state :corp (refresh ll) 0)
+        (prompt-select :corp (find-card "Ikawah Project" (:hand (get-corp))))
+        (is (empty? (:hand (get-corp))) "No cards in hand")
+        (is (= 2 (count (:scored (get-corp)))) "Two cards in score area")
+        (is (= 4 (:agenda-point (get-corp))) "Gained 3 agenda points"))))
+  (testing "Agenda events"
+    (do-game
+      (new-game (default-corp ["Lady Liberty" "Puppet Master"])
+                (default-runner))
+      (play-from-hand state :corp "Lady Liberty" "New remote")
+      (let [ll (get-content state :remote1 0)]
+        (core/rez state :corp ll)
+        (dotimes [i 3]
+          (take-credits state :corp)
+          (take-credits state :runner))
+        (card-ability state :corp (refresh ll) 0)
+        (prompt-select :corp (find-card "Puppet Master" (:hand (get-corp))))
+        (is (= 3 (:agenda-point (get-corp))) "Gained 3 agenda points")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (run-successful state)
+        (is (= "Select a card to place 1 advancement token on" (:msg (first (:prompt (get-corp))))) "Puppet Master event fired")))))
+
 (deftest lakshmi-smartfabrics
   ;; Lakshmi Smartfabrics - Gain power counter when rezzing a card; use counters to protect agenda in HQ
   (do-game
@@ -2317,6 +2452,43 @@
       (play-from-hand state :runner "Access to Globalsec")
       (take-credits state :runner)
       (is (= 4 (get-counters (refresh netpol) :recurring)) "4 recurring for Runner's 4 link"))))
+
+(deftest neurostasis
+  ;; Neurostasis - ambush, shuffle cards into the stack
+  (do-game
+    (new-game
+      (default-corp ["Neurostasis"])
+      (default-runner [(qty "Cache" 3)]))
+    (play-from-hand state :corp "Neurostasis" "New remote")
+    (let [neuro (get-content state :remote1 0)]
+      ;; Single advance Neurostasis
+      (core/advance state :corp {:card (refresh neuro)})
+      (take-credits state :corp)
+      ;; Run on Neurostasis with 3 programs
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (play-from-hand state :runner "Cache")
+      (run-empty-server state "Server 1")
+      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+      (prompt-choice :corp "Yes")
+      ;; Corp can shuffle one program
+      (prompt-select :corp (get-program state 1))
+      ;; There should be two Caches left
+      (is (= 2 (:credit (get-corp))) "Spent 3 credits to fire ambush")
+      (is (= 2 (count (get-program state))) "Removed one installed program")
+      (is (= 1 (count (:deck (get-runner)))) "Shuffled one program into the stack")
+      (take-credits state :runner)
+      (core/advance state :corp {:card (refresh neuro)})
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 3 (:credit (get-corp))) "Corp starts with 3 credits")
+      (prompt-choice :corp "Yes")
+      ;; Corp can shuffle two programs
+      (prompt-select :corp (get-program state 1))
+      (prompt-select :corp (get-program state 0))
+      (is (= 0 (:credit (get-corp))) "Spent 3 credits to fire ambush")
+      (is (empty? (get-program state)) "Removed one installed program")
+      (is (= 3 (count (:deck (get-runner)))) "Shuffled two programs into the stack"))))
 
 (deftest news-team
   ;; News Team - on access take 2 tags or take as agenda worth -1
