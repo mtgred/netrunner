@@ -447,6 +447,46 @@
       (prompt-choice :runner "Done")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card"))))
 
+(deftest hijacked-router
+  (testing "Run on Archives"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Hijacked Router"]))
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-corp))) "Corp ends turn with 8 credits")
+      (play-from-hand state :runner "Hijacked Router")
+      (run-empty-server state :archives)
+      (is (not-empty (get-hardware state)) "Hijacked Router installed")
+      (is (-> (get-runner) :prompt first :card :title (= "Hijacked Router")) "Prompt for using Hijacked Router")
+      (prompt-choice :runner "Yes")
+      (is (empty? (get-hardware state)) "Hijacked Router is not installed")
+      (is (find-card "Hijacked Router" (:discard (get-runner))) "Hijacked Router was trashed")
+      (is (= 5 (:credit (get-corp))) "Corp lost 3 credits")
+      (is (not (:run @state)) "Run is finished")))
+  (testing "Run on HQ"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Hijacked Router"]))
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-corp))) "Corp ends turn with 8 credits")
+      (play-from-hand state :runner "Hijacked Router")
+      (run-empty-server state :hq)
+      (is (not-empty (get-hardware state)) "Hijacked Router installed")
+      (is (-> (get-runner) :prompt first :card :title (= "Hedge Fund")) "No prompt to use Hijacked Router")
+      (is (not-empty (get-hardware state)) "Hijacked Router is installed")
+      (is (not (find-card "Hijacked Router" (:discard (get-runner)))) "Hijacked Router was not trashed")
+      (is (= 8 (:credit (get-corp))) "Corp has not lost 3 credits")))
+  (testing "Credit loss on server creation"
+    (do-game
+      (new-game (default-corp ["Elective Upgrade"])
+                (default-runner ["Hijacked Router"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Hijacked Router")
+      (take-credits state :runner)
+      (is (= 8 (:credit (get-corp))) "Corp starts turn with 8 credits")
+      (play-from-hand state :corp "Elective Upgrade" "New remote")
+      (is (= 7 (:credit (get-corp))) "Corp lost 1 credit from server creation"))))
+
 (deftest hippo
   ;; Hippo - remove from game to trash outermost piece of ice if all subs broken
   (testing "No ice"
@@ -544,6 +584,53 @@
       (take-credits state :runner)
       (is (= 1 (:current-strength (refresh inti))) "Strength reduced to default")
       (is (= 2 (:current-strength (refresh pass))) "Strength reduced to default"))))
+
+(deftest ^{:card-title "mâché"}
+  mache
+  ;; Mâché
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Ice Wall" "PAD Campaign"])
+                (default-runner ["Imp" "Mâché" "Cache"]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (take-credits state :corp)
+      (core/gain state :runner :credit 10)
+      (starting-hand state :runner ["Imp" "Mâché"])
+      (play-from-hand state :runner "Imp")
+      (play-from-hand state :runner "Mâché")
+      (let [imp (get-program state 0)
+            mache (get-hardware state 0)
+            counters (get-counters (refresh mache) :power)
+            hand (-> (get-runner) :hand count)]
+        (run-empty-server state :hq)
+        (prompt-choice-partial :runner "Imp")
+        (is (= counters (get-counters (refresh mache) :power)) "Mache should gain no counters from trashing a card with no trash cost")
+        (run-empty-server state :remote1)
+        (prompt-choice-partial :runner "Pay")
+        (is (= (+ counters 4) (get-counters (refresh mache) :power)) "Mache should gain 4 counters for trashing a card with a trash cost of 4")
+        (card-ability state :runner mache 0)
+        (is (= (inc hand) (-> (get-runner) :hand count)) "Runner should draw one card for using Mache's ability")
+        (is (= 1 (get-counters (refresh mache) :power)) "Mache ability should cost 3 counters"))))
+  (testing "with Political Operative"
+    (do-game
+      (new-game (default-corp ["Ice Wall" "PAD Campaign"])
+                (default-runner ["Mâché" "Political Operative" "Cache"]))
+      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 100)
+      (starting-hand state :runner ["Mâché" "Political Operative"])
+      (play-from-hand state :runner "Mâché")
+      (run-empty-server state :hq)
+      (prompt-choice :runner "No action")
+      (play-from-hand state :runner "Political Operative")
+      (take-credits state :runner)
+      (let [pad (get-content state :remote1 0)
+            mache (get-hardware state 0)
+            polop (get-resource state 0)]
+        (card-ability state :runner polop 0)
+        (prompt-select :runner (refresh pad))
+        (is (zero? (get-counters (refresh mache) :power)) "Mache should gain no counters from a trash outside of an access")))))
 
 (deftest maw
   ;; Maw - Once per turn, first time runner declines to steal or trash, trash a HQ card at random
@@ -805,6 +892,25 @@
       (prompt-choice-partial :runner "No")
       (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run"))))
 
+(deftest paragon
+  ;; Gain 1 credit and may look at and move top card of Stack to bottom
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Paragon" "Easy Mark" "Sure Gamble"]))
+    (starting-hand state :runner ["Paragon"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paragon")
+    (run-empty-server state "HQ")
+    (is (prompt-is-card? :runner (get-hardware state 0)) "Prompt from Paragon")
+    (prompt-choice :runner "Yes")
+    (is (= (+ 5 -3 1) (:credit (get-runner))) "Gained 1 credit from Paragon")
+    (is (prompt-is-card? :runner (get-hardware state 0)) "Prompt from Paragon")
+    (let [top-cid (:cid (first (:deck (get-runner))))]
+      (prompt-choice :runner "Yes")
+      (is (= top-cid (:cid (last (:deck (get-runner))))) "Moved top card to bottom"))
+    (run-empty-server state "HQ")
+    (is (not (prompt-is-card? :runner (get-hardware state 0))) "No prompt from Paragon")))
+
 (deftest patchwork
   (testing "Play event"
     (do-game
@@ -836,6 +942,7 @@
       (is (empty? (:discard (get-runner))) "Cyberfeeder is not in heap yet")
       (prompt-select :runner (find-card "Easy Mark" (:hand (get-runner))))
       (is (= 5 (:credit (get-runner))) "Runner was charged 0 credits to play Cyberfeeder"))))
+
 
 (deftest plascrete-carapace
   ;; Plascrete Carapace - Prevent meat damage

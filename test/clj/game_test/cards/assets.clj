@@ -177,6 +177,28 @@
       (is (zero? (get-counters (refresh ar) :advancement)) "Anson Rose should lose all advancement counters")
       (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement counter"))))
 
+(deftest api-s-keeper-isobel
+   ;; API-S Keeper Isobel
+   (do-game
+     (new-game
+       (default-corp ["API-S Keeper Isobel" "Ice Wall"])
+       (default-runner))
+    (play-from-hand state :corp "API-S Keeper Isobel" "New remote")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (let [ap (get-content state :remote1 0)
+          iw (get-ice state :hq 0)]
+      (core/rez state :corp (refresh ap))
+      (core/rez state :corp (refresh iw))
+      (core/advance state :corp {:card (refresh iw)})
+      (is (= 1 (get-counters (refresh iw) :advancement)) "Ice Wall has 1 advancement token")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 1 (:credit (get-corp))) "Corp starts with 1 credits")
+      (card-ability state :corp (refresh ap) 0)
+      (prompt-select :corp (refresh iw))
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall loses an advancement token")
+      (is (= 4 (:credit (get-corp))) "Corp gains 3 credits"))))
+
 (deftest aryabhata-tech
   ;; Aryabhata Tech
   (do-game
@@ -1852,6 +1874,54 @@
       (is (= 1 (-> (get-corp) :discard count)) "Kuwinda should be in Archives")
       (is (= "Kuwinda K4H1U3" (-> (get-corp) :discard first :title)) "Kuwinda should be in Archives")
       (core/end-phase-12 state :corp nil))))
+
+(deftest lady-liberty
+  ;; Lady Liberty - Score agenda from hand equal to number of power counters on Lady Libery
+  (testing "Basic behavior"
+    (do-game
+      (new-game (default-corp ["Lady Liberty" "Breaking News" "Ikawah Project"])
+                (default-runner))
+      (play-from-hand state :corp "Lady Liberty" "New remote")
+      (let [ll (get-content state :remote1 0)]
+        (core/rez state :corp ll)
+        (take-credits state :corp)
+        (is (zero? (get-counters (refresh ll) :power)) "Lady Liberty starts with 0 counters")
+        (take-credits state :runner)
+        (is (= 1 (get-counters (refresh ll) :power)) "Lady Liberty gains a power counter on start of turn")
+        (is (= 2 (count (:hand (get-corp)))) "Two cards in hand")
+        (card-ability state :corp (refresh ll) 0)
+        (prompt-select :corp (find-card "Breaking News" (:hand (get-corp))))
+        (is (= 1 (count (:hand (get-corp)))) "One card in hand")
+        (is (= 1 (count (:scored (get-corp)))) "One card in score area")
+        (is (= 1 (:agenda-point (get-corp))) "Gained agenda point")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (card-ability state :corp (refresh ll) 0)
+        (is (empty? (:prompt (get-corp))) "No prompt if no matching agenda")
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (card-ability state :corp (refresh ll) 0)
+        (prompt-select :corp (find-card "Ikawah Project" (:hand (get-corp))))
+        (is (empty? (:hand (get-corp))) "No cards in hand")
+        (is (= 2 (count (:scored (get-corp)))) "Two cards in score area")
+        (is (= 4 (:agenda-point (get-corp))) "Gained 3 agenda points"))))
+  (testing "Agenda events"
+    (do-game
+      (new-game (default-corp ["Lady Liberty" "Puppet Master"])
+                (default-runner))
+      (play-from-hand state :corp "Lady Liberty" "New remote")
+      (let [ll (get-content state :remote1 0)]
+        (core/rez state :corp ll)
+        (dotimes [i 3]
+          (take-credits state :corp)
+          (take-credits state :runner))
+        (card-ability state :corp (refresh ll) 0)
+        (prompt-select :corp (find-card "Puppet Master" (:hand (get-corp))))
+        (is (= 3 (:agenda-point (get-corp))) "Gained 3 agenda points")
+        (take-credits state :corp)
+        (run-on state "HQ")
+        (run-successful state)
+        (is (= "Select a card to place 1 advancement token on" (:msg (first (:prompt (get-corp))))) "Puppet Master event fired")))))
 
 (deftest lakshmi-smartfabrics
   ;; Lakshmi Smartfabrics - Gain power counter when rezzing a card; use counters to protect agenda in HQ

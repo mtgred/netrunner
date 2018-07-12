@@ -541,6 +541,17 @@
                                  (damage-prevent :meat 1)
                                  (damage-prevent :net 1))}]}
 
+   "Hijacked Router"
+   {:events {:server-created {:effect (effect (lose-credits :corp 1))
+                              :msg "force the Corp to lose 1 [Credits]"}
+             :successful-run {:req (req (= target :archives))
+                              :optional {:prompt "Trash Hijacked Router to force the Corp to lose 3 [Credits]?"
+                                         :yes-ability {:async true
+                                                       :effect (req (system-msg state :runner "trashes Hijacked Router to force the Corp to lose 3 [Credits]")
+                                                                    (wait-for (trash state :runner card {:unpreventable true})
+                                                                              (lose-credits state :corp 3)
+                                                                              (effect-completed state side eid)))}}}}}
+
    "Hippo"
    {:implementation "Subroutine and first encounter requirements not enforced"
     :abilities [{:label "Remove Hippo from the game: trash outermost piece of ICE if all subroutines were broken"
@@ -613,6 +624,18 @@
    {:in-play [:memory 2]
     :recurring (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))
     :effect (effect (set-prop card :rec-counter (count (:ices (get-in @state [:corp :servers :hq])))))}
+
+   "Mâché"
+   {:abilities [{:label "Draw 1 card"
+                 :msg "draw 1 card"
+                 :counter-cost [:power 3]
+                 :effect (effect (draw :runner 1))}]
+    :events {:runner-trash {:once :per-turn
+                            :req (req (and (card-is? target :side :corp)
+                                           (:access @state)
+                                           (:trash target)))
+                            :effect (effect (system-msg (str "places " (:trash target) " power counters on Mâché"))
+                                            (add-counter card :power (:trash target)))}}}
 
    "Maw"
    (let [ability {:label "Trash a card from HQ"
@@ -795,6 +818,35 @@
    :events {:card-moved {:req (req (= (:cid target) (:Omnidrive-prog (get-card state card))))
                           :effect (effect (update! (dissoc card :Omnidrive-prog))
                                           (use-mu (:memoryunits target)))}}}
+
+   "Paragon"
+   {:in-play [:memory 1]
+    :events {:successful-run
+             {:once :per-turn
+              :async true
+              :effect (effect
+                        (show-wait-prompt :corp "Runner to decide if they will use Paragon")
+                        (continue-ability
+                          {:optional
+                           {:player :runner
+                            :prompt "Use Paragon?"
+                            :yes-ability
+                            {:msg "gain 1 [Credit] and look at the top card of Stack"
+                             :async true
+                             :effect (effect
+                                       (gain-credits :runner 1)
+                                       (continue-ability
+                                         {:player :runner
+                                          :optional
+                                          {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
+                                           :yes-ability
+                                           {:msg "add the top card of Stack to the bottom"
+                                            :effect (effect (move :runner (first (:deck runner)) :deck)
+                                                            (clear-wait-prompt :corp))}
+                                           :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                                         card nil))}
+                            :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                          card nil))}}}
 
    "Patchwork"
    (letfn [(patchwork-discount [cost-type bonus-fn]

@@ -77,7 +77,7 @@
               :effect (effect (move target :deck {:front true})
                               (move (first (get-in @state [:corp :play-area])) :deck {:front true})
                               (clear-wait-prompt :runner)
-                              (effect-completed eid dcard))})]
+                              (effect-completed eid))})]
 
    {:init {:root "R&D"}
     :abilities [{:cost [:click 1]

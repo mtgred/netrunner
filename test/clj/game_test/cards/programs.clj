@@ -8,6 +8,63 @@
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "programs"))
 
+(deftest algernon
+  ;; Algernon - pay 2 credits to gain a click, trash if no successful run
+  (testing "Use, successful run"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Algernon"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Algernon")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-runner))) "Runner starts with 8 credits")
+      (is (= 4 (:click (get-runner))) "Runner starts with 4 clicks")
+      (prompt-choice :runner "Yes")
+      (is (= 6 (:credit (get-runner))) "Runner pays 2 credits")
+      (is (= 5 (:click (get-runner))) "Runner gains 1 click")
+      (run-on state "Archives")
+      (run-successful state)
+      (take-credits state :runner)
+      (is (empty? (:discard (get-runner))) "No cards trashed")
+      (is (= "Algernon" (:title (get-program state 0))) "Algernon still installed")))
+  (testing "Use, no successful run"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Algernon"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Algernon")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-runner))) "Runner starts with 8 credits")
+      (is (= 4 (:click (get-runner))) "Runner starts with 4 clicks")
+      (prompt-choice :runner "Yes")
+      (is (= 6 (:credit (get-runner))) "Runner pays 2 credits")
+      (is (= 5 (:click (get-runner))) "Runner gains 1 click")
+      (run-on state "Archives")
+      (core/jack-out state :runner nil)
+      (take-credits state :runner)
+      (is (= 1 (count (:discard (get-runner)))) "Algernon trashed")
+      (is (empty? (get-program state)) "No programs installed")))
+  (testing "Not used, no successful run"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Algernon"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Algernon")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-runner))) "Runner starts with 8 credits")
+      (is (= 4 (:click (get-runner))) "Runner starts with 4 clicks")
+      (prompt-choice :runner "No")
+      (is (= 8 (:credit (get-runner))) "No credits spent")
+      (is (= 4 (:click (get-runner))) "No clicks gained")
+      (run-on state "Archives")
+      (core/jack-out state :runner nil)
+      (take-credits state :runner)
+      (is (empty? (:discard (get-runner))) "No cards trashed")
+      (is (= "Algernon" (:title (get-program state 0))) "Algernon still installed"))))
+
 (deftest au-revoir
   ;; Au Revoir - Gain 1 credit every time you jack out
   (do-game
@@ -24,6 +81,27 @@
     (core/no-action state :corp nil)
     (core/jack-out state :runner nil)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
+
+(deftest bankroll
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Bankroll"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bankroll")
+    (is (= 3 (core/available-mu state)) "Bankroll uses up 1 MU")
+    (is (= 4 (:credit (get-runner))) "Bankroll cost 1 to install")
+    (let [bankroll (get-program state 0)
+          hosted-credits #(get-counters (refresh bankroll) :credit)]
+      (is (= 0 (hosted-credits)) "No counters on Bankroll on install")
+      (run-empty-server state "Archives")
+      (is (= 1 (hosted-credits)) "One credit counter on Bankroll after one successful run")
+      (run-empty-server state "R&D")
+      (is (= 2 (hosted-credits)) "Two credit counter on Bankroll after two successful runs")
+      (run-empty-server state "HQ")
+      (is (= 3 (hosted-credits)) "Three credit counter on Bankroll after three successful runs")
+      (card-ability state :runner bankroll 0)
+      (is (= (+ 4 3) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll")
+      (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.

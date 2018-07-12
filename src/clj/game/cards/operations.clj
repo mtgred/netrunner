@@ -182,30 +182,36 @@
                     card nil)))}
 
    "Biased Reporting"
-   {:async true
-    :req (req (not-empty (all-active-installed state :runner)))
-    :prompt "Choose a card type"
-    :choices ["Resource" "Hardware" "Program"]
-    :effect (req (let [t target
-                       num (count (filter #(is-type? % t) (all-active-installed state :runner)))]
-                   (show-wait-prompt state :corp "Runner to choose cards to trash")
-                   (wait-for
-                     (resolve-ability state :runner
-                       {:prompt (msg "Choose any number of cards of type " t " to trash")
-                        :choices {:max num :req #(and (installed? %) (is-type? % t))}
-                        :cancel-effect (effect (clear-wait-prompt :corp))
-                        :effect (req (doseq [c targets]
-                                       (trash state :runner c {:unpreventable true}))
-                                     (gain-credits state :runner (count targets))
-                                     (system-msg state :runner (str "trashes " (join ", " (map :title (sort-by :title targets)))
-                                                                    " and gains " (count targets) " [Credits]"))
-                                     (clear-wait-prompt state :corp))}
-                      card nil)
-                     (do (let [n (* 2 (count (filter #(is-type? % t) (all-active-installed state :runner))))]
-                           (when (pos? n)
-                             (gain-credits state :corp n)
-                             (system-msg state :corp (str "uses Biased Reporting to gain " n " [Credits]")))
-                           (effect-completed state side eid))))))}
+   (letfn [(num-installed [state t]
+             (count (filter #(is-type? % t) (all-active-installed state :runner))))]
+     {:async true
+      :req (req (not-empty (all-active-installed state :runner)))
+      :prompt "Choose a card type"
+      :choices ["Resource" "Hardware" "Program"]
+      :effect (req (let [t target
+                         n (num-installed state t)]
+                     (show-wait-prompt state :corp "Runner to choose cards to trash")
+                     (wait-for
+                       (resolve-ability
+                         state :runner
+                         {:prompt (msg "Choose any number of cards of type " t " to trash")
+                          :choices {:max n
+                                    :req #(and (installed? %) (is-type? % t))}
+                          :effect (req (doseq [c targets]
+                                         (trash state :runner c {:unpreventable true}))
+                                       (gain-credits state :runner (count targets))
+                                       (system-msg state :runner
+                                                   (str "trashes "
+                                                        (join ", " (map :title (sort-by :title targets)))
+                                                        " and gains " (count targets) " [Credits]"))
+                                       (effect-completed state side eid))}
+                         card nil)
+                       (clear-wait-prompt state :corp)
+                       (let [n (* 2 (num-installed state t))]
+                         (when (pos? n)
+                           (gain-credits state :corp n)
+                           (system-msg state :corp (str "uses Biased Reporting to gain " n " [Credits]")))
+                         (effect-completed state side eid)))))})
 
    "Big Brother"
    {:req (req tagged)
@@ -238,6 +244,13 @@
     :async true
     :msg "do 7 meat damage"
     :effect (effect (damage eid :meat 7 {:card card}))}
+
+   "Building Blocks"
+   {:choices {:req #(and (= (:side %) "Corp")
+                         (has-subtype? % "Barrier")
+                         (in-hand? %))}
+    :async true
+    :effect (req (corp-install state side eid target nil {:no-install-cost true :install-state :rezzed-no-cost}))}
 
    "Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
@@ -379,6 +392,27 @@
      {:msg (msg "gain " (number-of-non-empty-remotes state)
                 " [Credits]")
       :effect (effect (gain-credits (number-of-non-empty-remotes state)))})
+
+   "Divert Power"
+   {:async true
+    :prompt "Select any number of cards to derez"
+    :choices {:req #(and (installed? %)
+                         (rezzed? %))
+              :max (req (count (filter rezzed? (all-installed state :corp))))}
+    :effect (req (doseq [c targets]
+                   (derez state side c))
+                 (let [discount (* -3 (count targets))]
+                   (continue-ability
+                     state side
+                     {:async true
+                      :prompt "Select a card to rez"
+                      :choices {:req #(and (installed? %)
+                                           (= (:side %) "Corp")
+                                           (not (rezzed? %))
+                                           (not (is-type? % "Agenda")))}
+                      :effect (effect (rez-cost-bonus discount)
+                                      (rez eid target nil))}
+                     card nil)))}
 
    "Door to Door"
    {:events {:runner-turn-begins
@@ -551,6 +585,10 @@
                                                    (effect-completed state side eid)))))})]
      {:async true
       :effect (effect (continue-ability (fhelper 1) card nil))})
+
+   "Game Changer"
+   {:effect (req (gain state side :click (count (:scored runner)))
+                 (move state side (first (:play-area corp)) :rfg))}
 
    "Genotyping"
    {:async true
@@ -1697,6 +1735,22 @@
                                               :cancel-effect (req (effect-completed state side eid))
                                               :effect (effect (corp-install target nil))}
                                              card nil)))}
+
+   "Under the Bus"
+   {:req (req (and (last-turn? state :runner :accessed-cards)
+                   (not-empty (filter
+                                #(and (is-type? % "Resource")
+                                      (has-subtype? % "Connection"))
+                                (all-active-installed state :runner)))))
+    :prompt "Choose a connection to trash"
+    :choices {:req #(and (= (:side %) "Runner")
+                         (is-type? % "Resource")
+                         (has-subtype? % "Connection")
+                         (installed? %))}
+    :msg (msg "trash " (:title target) " and take 1 bad publicity")
+    :async true
+    :effect (req (wait-for (trash state side target nil)
+                           (gain-bad-publicity state :corp eid 1)))}
 
    "Violet Level Clearance"
    {:msg "gain 8 [Credits] and draw 4 cards"

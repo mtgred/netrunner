@@ -206,6 +206,30 @@
       (take-credits state :runner)
       (is (= 2 (count (:hand (get-runner)))) "Both Chameleons returned to hand - hand size 2"))))
 
+(deftest cradle
+  ;; Cradle
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Cradle" (qty "Cache" 100)]))
+    (starting-hand state :runner ["Cradle"])
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :credit 100 :click 100)
+    (play-from-hand state :runner "Cradle")
+    (run-on state "HQ")
+    (let [cradle (get-program state 0)
+          strength (:strength (refresh cradle))]
+      (dotimes [n 5]
+        (when (pos? n)
+          (core/draw state :runner n))
+        (is (= (- strength n) (:current-strength (refresh cradle))) (str "Cradle should lose " n " strength"))
+        (starting-hand state :runner [])
+        (is (= strength (:current-strength (refresh cradle))) (str "Cradle should be back to original strength")))
+      (core/draw state :runner 1)
+      (is (= (dec strength) (:current-strength (refresh cradle))) "Cradle should lose 1 strength")
+      (play-from-hand state :runner "Cache")
+      (is (= strength (:current-strength (refresh cradle))) (str "Cradle should be back to original strength")))))
+
 (deftest crypsis
   ;; Crypsis - Loses a virus counter after encountering ice it broke
   (do-game
@@ -708,6 +732,23 @@
      (is (= 2 (:credit (get-runner))) "Paid 2c")
      (is (= 2 (get-counters (refresh sg) :power)) "Has 2 power counters")
      (is (= 2 (:current-strength (refresh sg))) "2 strength"))))
+
+(deftest tycoon
+  ;; Tycoon
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Tycoon"]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tycoon")
+    (let [tycoon (get-program state 0)
+          credits (:credit (get-corp))]
+      (run-on state "HQ")
+      (card-ability state :runner tycoon 0)
+      (is (= credits (:credit (get-corp))) "Corp doesn't gain credits until encounter is over")
+      (run-continue state)
+      (is (= (+ credits 2) (:credit (get-corp))) "Corp gains 2 credits from Tycoon being used"))))
 
 (deftest wyrm
   ;; Wyrm reduces strength of ice

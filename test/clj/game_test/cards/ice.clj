@@ -849,6 +849,37 @@
       (card-subroutine state :corp mas 0)
       (is (not (:run @state)) "Run is ended"))))
 
+(deftest meridian
+  (testing "ETR"
+    (do-game
+      (new-game (default-corp ["Meridian"])
+                (default-runner))
+      (play-from-hand state :corp "Meridian" "HQ")
+      (take-credits state :corp)
+      (let [mer (get-ice state :hq 0)]
+        (core/rez state :corp (refresh mer))
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh mer) 0)
+        (prompt-choice-partial :runner "End")
+        (is (not (:run @state)) "Run is ended")
+        (is (empty? (:scored (get-runner))) "Not in runner score area")
+        (is (= 1 (count (get-ice state :hq))) "ICE still installed"))))
+  (testing "Score as -1 point agenda"
+    (do-game
+      (new-game (default-corp ["Meridian"])
+                (default-runner))
+      (play-from-hand state :corp "Meridian" "HQ")
+      (take-credits state :corp)
+      (let [mer (get-ice state :hq 0)]
+        (core/rez state :corp (refresh mer))
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh mer) 0)
+        (prompt-choice-partial :runner "Add")
+        (is (:run @state) "Run is still live")
+        (is (= 1 (count (:scored (get-runner)))) "In runner score area")
+        (is (= -1 (:agenda-point (get-runner))) "Worth -1 agenda points")
+        (is (empty? (get-ice state :hq)) "ICE uninstalled")))))
+
 (deftest meru-mati
   (do-game
     (new-game (default-corp [(qty "Meru Mati" 2)])
@@ -1102,6 +1133,32 @@
       (prompt-select :corp (refresh eni))
       (is (= 3 (get-counters (refresh odu) :advancement)))
       (is (= 6 (get-counters (refresh eni) :advancement))))))
+
+(deftest peeping-tom
+  ;;Peeping Tom - Counts # of chosen card type in Runner grip
+  (do-game
+    (new-game (default-corp ["Peeping Tom"])
+              (default-runner [(qty "Sure Gamble" 5)]))
+    (play-from-hand state :corp "Peeping Tom" "HQ")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (let [tom (get-ice state :hq 0)]
+      (core/rez state :corp (refresh tom))
+      (card-ability state :corp tom 0)
+      (prompt-choice :corp "Hardware")
+      (is (last-log-contains? state "Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble, Sure Gamble")
+          "Revealed Runner grip")
+      (is (last-log-contains? state "0") "Correctly counted Hardware in Runner grip")
+      (card-ability state :corp tom 0)
+      (prompt-choice :corp "Event")
+      (is (last-log-contains? state "5") "Correctly counted Events in Runner grip")
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (card-side-ability state :runner tom 1)
+      (is (= 4 (:tag (get-runner))) "Tag ability sucessful")
+      (card-side-ability state :runner tom 0)
+      (is (not (:run @state)) "Run ended"))))
 
 (deftest resistor
   ;; Resistor - Strength equal to Runner tags, lose strength when Runner removes a tag

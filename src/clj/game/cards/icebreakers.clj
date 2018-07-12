@@ -253,7 +253,7 @@
   {:events {:successful-run {:silent (req true)
                              :effect (effect (system-msg "adds 1 virus counter to " (:title card))
                                              (add-counter card :virus 1))}}
-   :abilities [{:label (str  "Break " ice-type "subroutine(s)")
+   :abilities [{:label (str  "Break " ice-type " subroutine(s)")
                 :effect (req (wait-for (resolve-ability
                                          state side (pick-virus-counters-to-spend) card nil)
                                        (do (if-let [msg (:msg async-result)]
@@ -469,6 +469,20 @@
    (auto-icebreaker ["Barrier"]
                     {:abilities [(break-sub 1 1 "Barrier")
                                  (strength-pump 1 1)]})
+
+   "Cradle"
+   {:abilities [(break-sub 2 0 "Code Gate")]
+    :events {:card-moved {:silent (req true)
+                          :req (req (and (= "Runner" (:side target))
+                                         (= [:hand] (or (:zone target)
+                                                        (:previous-zone target)))))
+                          :effect (effect (update-breaker-strength card))}
+             :runner-draw {:silent (req true)
+                           :req (req (when-let [drawn (-> @state :runner :register :most-recent-drawn first)]
+                                       (= [:hand] (or (:zone drawn)
+                                                      (:previous-zone drawn)))))
+                           :effect (effect (update-breaker-strength card))} }
+    :strength-bonus (req (-> @state :runner :hand count -))}
 
    "Creeper"
    (cloud-icebreaker
@@ -997,6 +1011,14 @@
    (auto-icebreaker ["Code Gate"]
                     {:abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 1 1)]})
+
+   "Tycoon"
+   (auto-icebreaker ["Barrier"]
+                    {:abilities [(break-sub 1 2 "Barrier" (effect (update! (assoc-in card [:special :tycoon-used] true))))
+                                 (strength-pump 2 3)]
+                     :events {:pass-ice {:req (req (get-in card [:special :tycoon-used]))
+                                         :effect (effect (update! (dissoc-in card [:special :tycoon-used]))
+                                                         (gain-credits :corp 2))}}})
 
    "Vamadeva"
    (deva "Vamadeva")

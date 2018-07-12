@@ -667,7 +667,7 @@
      {:async true
       :interactive (req true)
       :req (req (and (is-central? (:server run))
-                     (first-event? state side :successful-run #(is-central? %))))
+                     (first-event? state side :successful-run is-central?)))
       :effect (effect (continue-ability
                         {:optional
                          {:prompt "Force the Corp to draw a card?"
@@ -686,6 +686,17 @@
      {:flags {:slow-hq-access (req true)}
       :events {:agenda-scored leela
                :agenda-stolen leela}})
+
+   "Liza Talking Thunder: Prominent Legislator"
+   {:events
+    {:successful-run
+     {:async true
+      :interactive (req true)
+      :msg "draw 2 cards and take 1 tag"
+      :req (req (and (is-central? (:server run))
+                     (first-event? state side :successful-run is-central?)))
+      :effect (req (wait-for (tag-runner state :runner 1)
+                             (draw state :runner eid 2 nil)))}}}
 
    "Los: Data Hijacker"
    {:events {:rez {:once :per-turn
@@ -737,6 +748,17 @@
                                   (system-msg state side (str "loses all credits and gains " cost
                                                               " [Credits] from the rez of " (:title current-ice)))
                                   (swap! state update-in [:bonus] dissoc :cost))))}]}
+
+   "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+   (let [ability {:label "Gain 1 [Credits] (start of turn)"
+                  :once :per-turn
+                  :effect (req (when (and (> 3 (count (:hand runner)))
+                                          (:runner-phase-12 @state))
+                                 (system-msg state :runner (str "uses " (:title card) " to gain 1 [Credits]"))
+                                 (gain-credits state :runner 1)))}]
+     {:flags {:drip-economy true}
+      :abilities [ability]
+      :events {:runner-turn-begins ability}})
 
    "NBN: Controlling the Message"
    (let [cleanup (effect (update! :corp (dissoc card :saw-trash)))]
@@ -890,6 +912,37 @@
                                 (trigger-event state side :ice-subtype-changed ice)))}]
     :events {:run-ends nil}}
 
+   "Saraswati Mnemonics: Endless Exploration"
+   (letfn [(install-card [chosen]
+                        {:prompt "Select a remote server"
+                         :choices (req (conj (vec (get-remote-names state)) "New remote"))
+                         :async true
+                         :effect (req (let [tgtcid (:cid chosen)]
+                                        (register-turn-flag! state side
+                                                             card :can-rez
+                                                             (fn [state side card]
+                                                               (if (= (:cid card) tgtcid)
+                                                                 ((constantly false) (toast state :corp "Cannot rez due to Saraswati Mnemonics: Endless Exploration." "warning"))
+                                                                 true)))
+                                        (register-turn-flag! state side
+                                                             card :can-score
+                                                             (fn [state side card]
+                                                               (if (and (= (:cid card) tgtcid)
+                                                                        (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
+                                                                 ((constantly false) (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
+                                                                 true))))
+                                      (corp-install state side eid (assoc chosen :advance-counter 1) target nil))})]
+   {:abilities [{:async true
+                 :label "Install a card from HQ"
+                 :cost [:click 1 :credit 1]
+                 :prompt "Select a card to install from HQ"
+                 :choices {:req #(and (#{"Asset" "Agenda" "Upgrade"} (:type %))
+                                      (= (:side %) "Corp")
+                                      (in-hand? %))}
+                 :msg (msg "install a card in a remote server and place 1 advancement token on it")
+                 :effect (effect (continue-ability (install-card target) card nil))
+                 }]})
+
    "Seidr Laboratories: Destiny Defined"
    {:implementation "Manually triggered"
     :abilities [{:req (req (:run @state))
@@ -930,6 +983,21 @@
                                                               :cancel-effect (req (clear-wait-prompt state :runner)
                                                                                   (effect-completed state side eid))}
                                                   card nil)))}]}
+
+   "Sportsmetal: Go Big or Go Home"
+   (let [ab {:prompt "Gain 2 credits or draw 2 cards?"
+             :player :corp
+             :choices ["2 credits" "2 cards"]
+             :msg "gain 2 [Credits] or draw 2 cards"
+             :async true
+             :effect (req (if (= target "2 credits")
+                            (do (system-msg state side "chooses to take 2 [Credits]")
+                                (gain-credits state :corp 2)
+                                (effect-completed state side eid))
+                            (do (system-msg state side "chooses to draw 2 cards")
+                                (draw state :corp eid 2 nil))))}]
+     {:events {:agenda-scored ab
+               :agenda-stolen ab}})
 
    "Spark Agency: Worldswide Reach"
    {:events
