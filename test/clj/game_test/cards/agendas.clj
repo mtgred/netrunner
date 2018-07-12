@@ -1179,6 +1179,27 @@
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
 
+(deftest hyperloop-extension
+  ;; Hyperloop Extension
+  (testing "Score"
+    (do-game
+      (new-game (default-corp ["Hyperloop Extension"])
+                (default-runner))
+      (play-from-hand state :corp "Hyperloop Extension" "New remote")
+      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")))
+  (testing "Steal"
+    (do-game
+      (new-game (default-corp ["Hyperloop Extension"])
+                (default-runner))
+      (play-from-hand state :corp "Hyperloop Extension" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 5 credits")
+      (prompt-choice :runner "Steal")
+      (is (= 10 (:credit (get-corp))) "Corp gains 3 credits"))))
+
 (deftest ikawah-project
   ;; Ikawah Project
   (testing "Basic test"
