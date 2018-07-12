@@ -849,6 +849,37 @@
       (card-subroutine state :corp mas 0)
       (is (not (:run @state)) "Run is ended"))))
 
+(deftest meridian
+  (testing "ETR"
+    (do-game
+      (new-game (default-corp ["Meridian"])
+                (default-runner))
+      (play-from-hand state :corp "Meridian" "HQ")
+      (take-credits state :corp)
+      (let [mer (get-ice state :hq 0)]
+        (core/rez state :corp (refresh mer))
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh mer) 0)
+        (prompt-choice-partial :runner "End")
+        (is (not (:run @state)) "Run is ended")
+        (is (empty? (:scored (get-runner))) "Not in runner score area")
+        (is (= 1 (count (get-ice state :hq))) "ICE still installed"))))
+  (testing "Score as -1 point agenda"
+    (do-game
+      (new-game (default-corp ["Meridian"])
+                (default-runner))
+      (play-from-hand state :corp "Meridian" "HQ")
+      (take-credits state :corp)
+      (let [mer (get-ice state :hq 0)]
+        (core/rez state :corp (refresh mer))
+        (run-on state :hq)
+        (card-subroutine state :corp (refresh mer) 0)
+        (prompt-choice-partial :runner "Add")
+        (is (:run @state) "Run is still live")
+        (is (= 1 (count (:scored (get-runner)))) "In runner score area")
+        (is (= -1 (:agenda-point (get-runner))) "Worth -1 agenda points")
+        (is (empty? (get-ice state :hq)) "ICE uninstalled")))))
+
 (deftest meru-mati
   (do-game
     (new-game (default-corp [(qty "Meru Mati" 2)])
