@@ -703,7 +703,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
-      (core/tag-runner state :runner 1)
+      (core/gain-tags state :runner 1)
       (play-from-hand state :corp "Exchange of Information")
       (prompt-select :corp (find-card "Fan Site" (:scored (get-runner))))
       (prompt-select :corp (find-card "Hostile Takeover" (:scored (get-corp))))
@@ -2485,6 +2485,28 @@
         (prompt-select :corp (get-resource state 0))
         (is (= 2 (count (:discard (get-runner)))))
         (is (= 4 (core/available-mu state)) "Runner has 4 MU")))))
+
+(deftest thunder-art-gallery
+  (testing "Works when removing/avoiding tags"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Thunder Art Gallery" "New Angeles City Hall" "Corroder"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (core/gain-credits state :runner 1)
+      (core/gain-tags state :corp 1)
+      (core/remove-tag state :runner nil)
+      (prompt-card :runner (find-card "New Angeles City Hall" (:hand (get-runner))))
+      (is (= 1 (:credit (get-runner))) "Runner paid one less to install (but 2 to remove tag)")
+      (is (= "New Angeles City Hall" (:title (get-resource state 1))) "NACH is installed")
+      (take-credits state :runner)
+      (is (= 3 (:credit (get-runner))) "Runner is now at 3 credits")
+      (core/gain-tags state :corp 1)
+      (card-ability state :runner (get-resource state 1) 0)
+      (prompt-choice :runner "Done")
+      (prompt-card :runner (find-card "Corroder" (:hand (get-runner))))
+      (is (= 0 (:credit (get-runner))) "Runner paid one less to install")
+      (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
 
 (deftest tech-trader
   ;; Basic test

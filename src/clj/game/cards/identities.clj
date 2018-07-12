@@ -163,7 +163,7 @@
               :msg "make the Runner take 1 tag or suffer 2 meat damage"
               :effect (req (if (= target "1 tag")
                              (do (system-msg state side "chooses to take 1 tag")
-                                 (tag-runner state :runner eid 1))
+                                 (gain-tags state :runner eid 1))
                              (do (system-msg state side "chooses to suffer 2 meat damage")
                                  (damage state :runner eid :meat 2 {:unboostable true :card card}))))}}}
 
@@ -254,7 +254,7 @@
              :runner-turn-begins {:req (req (and (has-most-faction? state :runner "Criminal")
                                                  (pos? (:tag runner))))
                                   :msg "remove 1 tag"
-                                  :effect (effect (lose :tag 1))}}}
+                                  :effect (effect (lose-tags 1))}}}
 
    "Cerebral Imaging: Infinite Frontiers"
    {:effect (req (when (> (:turn @state) 1)
@@ -515,7 +515,7 @@
                                       (has-most-faction? state :corp "NBN")))
                        :msg "give the Runner 1 tag"
                        :async true
-                       :effect (effect (tag-runner :runner eid 1))}]
+                       :effect (effect (gain-tags :corp eid 1))}]
               {:pre-start-game {:effect draft-points-target}
                :agenda-scored inf :agenda-stolen inf})}
 
@@ -546,7 +546,7 @@
    {:events {:pre-tag {:once :per-run
                        :req (req (:run @state))
                        :msg "avoid the first tag during this run"
-                       :effect (effect (tag-prevent 1))}}}
+                       :effect (effect (tag-prevent :runner 1))}}}
 
    "Jinteki: Personal Evolution"
    {:events {:agenda-scored {:interactive (req true)
@@ -703,7 +703,7 @@
       :msg "draw 2 cards and take 1 tag"
       :req (req (and (is-central? (:server run))
                      (first-event? state side :successful-run is-central?)))
-      :effect (req (wait-for (tag-runner state :runner 1)
+      :effect (req (wait-for (gain-tags state :runner 1)
                              (draw state :runner eid 2 nil)))}}}
 
    "Los: Data Hijacker"
@@ -787,7 +787,7 @@
                                                      :successful
                                                      {:msg "give the Runner 1 tag"
                                                       :async true
-                                                      :effect (effect (tag-runner :runner eid 1 {:unpreventable true}))}}}
+                                                      :effect (effect (gain-tags :corp eid 1 {:unpreventable true}))}}}
                                :end-effect (effect (clear-wait-prompt :runner))}}
                              card nil))}}})
 

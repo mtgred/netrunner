@@ -321,7 +321,7 @@
                                  (effect-completed state side eid))
 
                              (do (system-msg state :runner "takes 1 tag")
-                                 (tag-runner state side eid 1))))}}}
+                                 (gain-tags state :corp eid 1))))}}}
 
    "Clone Suffrage Movement"
    {:derezzed-events {:runner-turn-ends corp-rez-toast}
@@ -664,7 +664,7 @@
       :access {:req (req (pos? (get-counters (get-card state card) :advancement)))
                :msg (msg "give the runner " (quantify (tag-count (get-card state card)) "tag"))
                :async true
-               :effect (effect (tag-runner :runner eid (tag-count (get-card state card))))}
+               :effect (effect (gain-tags :corp eid (tag-count (get-card state card))))}
       :abilities [{:cost [:click 1]
                    :advance-counter-cost 7
                    :label "Add False Flag to your score area as an agenda worth 3 agenda points"
@@ -732,7 +732,7 @@
    (advance-ambush 0 {:async true
                       :req (req (pos? (get-counters (get-card state card) :advancement)))
                       :msg (msg "give the Runner " (quantify (get-counters (get-card state card) :advancement) "tag"))
-                      :effect (effect (tag-runner :runner eid (get-counters (get-card state card) :advancement)))})
+                      :effect (effect (gain-tags :corp eid (get-counters (get-card state card) :advancement)))})
 
    "GRNDL Refinery"
    {:advanceable :always
@@ -969,12 +969,12 @@
                  :cost [:click 1]
                  :choices (req (cancellable (filter #(is-type? % "Operation") (:deck corp)) :sorted))
                  :req (req (pos? (get-in @state [:runner :tag])))
-                 :effect (req (lose state :runner :tag 1)
+                 :effect (req (lose-tags state :corp 1)
                               (let [c (move state :corp target :play-area)]
                                 (shuffle! state :corp :deck)
                                 (move state :corp c :deck {:front true})
                                 (system-msg state side (str "uses Lily Lockwell to put " (:title c) " on top of R&D"))))
-                 :cancel-effect (effect (lose :runner :tag 1)
+                 :cancel-effect (effect (lose-tags :corp 1)
                                         (shuffle! :corp :deck)
                                         (system-msg (str "uses Lily Lockwell, but did not find an Operation in R&D")))}]}
 
@@ -1197,8 +1197,8 @@
                                                     :effect (effect (draw :corp 1))}
                                       :end-effect (effect (clear-wait-prompt :runner))}}
                                     card nil))}]
-     {:events {:runner-loss ability
-               :runner-prevent ability}})
+     {:events {:runner-lose-tag (assoc ability :req (req (= side :runner)))
+               :runner-prevent (assoc ability :req (req (seq (filter #(some #{:tag} %) targets))))}})
 
    "Net Police"
    {:recurring (effect (set-prop card :rec-counter (:link runner)))
@@ -1235,7 +1235,7 @@
                                                    (trigger-event state side :no-trash card)
                                                    (as-trashed-agenda state :runner eid card -1 {:force true}))
                                                (do (system-msg state :runner (str "takes 2 tags from News Team"))
-                                                   (tag-runner state :runner eid 2))))}
+                                                   (gain-tags state :runner eid 2))))}
                                card targets))}}
 
    "NGO Front"
@@ -1691,7 +1691,7 @@
                                                :cost [:credit 4]
                                                :msg "do 3 net damage and give the Runner 1 tag"
                                                :effect (req (wait-for (damage state side :net 3 {:card card})
-                                                                      (tag-runner state :runner eid 1)))}}}
+                                                                      (gain-tags state :corp eid 1)))}}}
                                card nil))}}
 
    "Space Camp"
@@ -1991,4 +1991,4 @@
                  :label "Give the Runner 1 tag"
                  :cost [:click 1 :credit 1]
                  :msg (msg "give the Runner 1 tag")
-                 :effect (effect (tag-runner eid 1))}]}})
+                 :effect (effect (gain-tags eid 1))}]}})

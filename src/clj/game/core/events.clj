@@ -245,15 +245,24 @@
     :else
     true))
 
+(defn no-event?
+  "Returns true if the given event has not happened yet this turn.
+  Filters on events satisfying (pred targets) if given pred."
+  ([state side ev] (no-event? state side ev (constantly true)))
+  ([state side ev pred]
+   (empty? (filter pred (turn-events state side ev)))))
+
 (defn first-event?
-  "Returns true if the given event has not occurred yet this turn.
+  "Returns true if the given event has only occured once this turn.
+  Includes itself if this is checked in the requirement for an event ability.
   Filters on events satisfying (pred targets) if given pred."
   ([state side ev] (first-event? state side ev (constantly true)))
   ([state side ev pred]
    (= 1 (count (filter pred (turn-events state side ev))))))
 
 (defn second-event?
-  "Returns true if the given event has occurred exactly once this turn.
+  "Returns true if the given event has occurred twice this turn.
+  Includese itself if this is checked in the requirement for an event ability.
   Filters on events satisfying (pred targets) if given pred."
   ([state side ev] (second-event? state side ev (constantly true)))
   ([state side ev pred]

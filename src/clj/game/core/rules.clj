@@ -266,9 +266,11 @@
       (- (or (when-not unpreventable (get-in @state [:tag :tag-prevent])) 0))
       (max 0)))
 
-(defn tag-prevent [state side n]
-  (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
-  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:tag ~n)))
+(defn tag-prevent 
+  ([state side n] (tag-prevent state side (make-eid state) n))
+  ([state side eid n]
+   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
+   (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) `(:tag ~n))))
 
 (defn tag-remove-bonus
   "Applies a cost increase of n to removing tags with the click action. (SYNC.)"
@@ -283,10 +285,10 @@
         (trigger-event-sync state side eid :runner-gain-tag n))
     (effect-completed state side eid)))
 
-(defn tag-runner
+(defn gain-tags
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
-  ([state side n] (tag-runner state side (make-eid state) n nil))
-  ([state side eid n] (tag-runner state side eid n nil))
+  ([state side n] (gain-tags state side (make-eid state) n nil))
+  ([state side eid n] (gain-tags state side eid n nil))
   ([state side eid n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
    (trigger-event state side :pre-tag card)
@@ -302,17 +304,27 @@
              state :runner nil
              (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
              (fn [_]
-               (let [prevent (get-in @state [:tag :tag-prevent])]
-                 (system-msg state :runner
-                             (if prevent
-                               (str "avoids "
-                                    (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                    (if (< 1 prevent) " tags" " tag"))
-                               "will not avoid tags"))
+               (let [prevent (get-in @state [:tag :tag-prevent])
+                     prevent-msg (if prevent
+                                   (str "avoids "
+                                        (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                        (if (< 1 prevent) " tags" " tag"))
+                                   "will not avoid tags")]
+                 (system-msg state :runner prevent-msg)
                  (clear-wait-prompt state :corp)
                  (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
              {:priority 10}))
        (resolve-tag state side eid n args)))))
+
+(defn lose-tags
+  ([state side n] (lose-tags state side (make-eid state) n))
+  ([state side eid n]
+   (if (= n :all)
+     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0 0) (get-in @state [:runner :tag]))
+         (swap! state assoc-in [:runner :tag] 0))
+     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
+         (deduct state :runner [:tag n])))
+   (trigger-event-sync state side eid :runner-lose-tag n side)))
 
 
 ;;;; Bad Publicity
