@@ -148,6 +148,26 @@
     (is (= 1 (count (:discard (get-corp)))))
     (is (find-card "Celebrity Gift" (:discard (get-corp))))))
 
+(deftest biased-reporting
+  ;; Biased Reporting
+  (do-game
+    (new-game (default-corp ["Biased Reporting"])
+              (default-runner [(qty "Fan Site" 5)]))
+    (take-credits state :corp)
+    (starting-hand state :runner (repeat 5 "Fan Site"))
+    (core/gain state :runner :click 10)
+    (dotimes [_ 5]
+      (play-from-hand state :runner "Fan Site"))
+    (take-credits state :runner)
+    (play-from-hand state :corp "Biased Reporting")
+    (let [cc (:credit (get-corp))
+          rc (:credit (get-runner))]
+      (prompt-choice :corp "Resource")
+      (prompt-select :runner (get-resource state 0))
+      (prompt-choice :runner "Done")
+      (is (= (inc rc) (:credit (get-runner))) "Runner should gain 1 credit for trashing a Fan Site")
+      (is (= (+ (* 4 2) cc) (:credit (get-corp))) "Corp should gain 8 credits for remaining 4 Fan Sites"))))
+
 (deftest big-brother
   ;; Big Brother - Give the Runner 2 tags if already tagged
   (do-game
