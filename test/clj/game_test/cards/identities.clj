@@ -1294,6 +1294,19 @@
         (card-ability state :runner nasir 0)
         (is (= 2 (:credit (get-runner))) "Gain 1 more credit due to Xanadu")))))
 
+(deftest ^{:card-title "nathaniel-\"gnat\"-hall:-One-of-a-Kind"} gnat
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Nathaniel \"Gnat\" Hall: One-of-a-Kind" [(qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))) "Did not gain a credit when Gnat is on 3 cards")
+    (play-from-hand state :runner "Sure Gamble")
+    (take-credits state :runner)
+    (let [runner-credits (:credit (get-runner))]
+      (take-credits state :corp)
+      (is (= (inc runner-credits) (:credit (get-runner)))) "Gained 1 credits when on 2 cards")))
+
 (deftest nbn:-controlling-the-message
   ;; NBN: Controlling the Message
   (testing "Trace to tag Runner when first installed Corp card is trashed"

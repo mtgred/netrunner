@@ -875,6 +875,12 @@
    "Government Investigations"
    {:flags {:psi-prevent-spend (req 2)}}
 
+   "Guinea Pig"
+   {:msg "trash all cards in the grip and gain 10 [credits]"
+    :effect (req (doseq [c (:hand runner)]
+                   (trash state :runner c {:unpreventable true}))
+                 (gain-credits state :runner 10))}
+
    "Hacktivist Meeting"
    {:implementation "Does not prevent rez if HQ is empty"
     :events {:rez {:req (req (and (not (ice? target))
