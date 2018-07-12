@@ -1,5 +1,6 @@
 (ns game-test.cards.events
   (:require [game.core :as core]
+            [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
@@ -683,11 +684,12 @@
       (is (zero? (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
 
 (deftest credit-kiting
-  ;; After successful central run lower install cost by 8 and gain a tag
+  ;; Credit Kiting - After successful central run lower install cost by 8 and gain a tag
   (do-game
-    (new-game (default-corp ["PAD Campaign"])
+    (new-game (default-corp ["PAD Campaign" "Ice Wall"])
               (default-runner ["Credit Kiting" "Femme Fatale"]))
     (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Ice Wall" "R&D")
     (take-credits state :corp)
     (run-empty-server state "Server 1")
     (play-from-hand state :runner "Credit Kiting")
@@ -696,6 +698,10 @@
     (play-from-hand state :runner "Credit Kiting")
     (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
     (is (= 4 (:credit (get-runner))) "Femme Fatale only cost 1 credit")
+    (testing "Femme Fatale can still target ice when installed with Credit Kiting, issue #3715"
+      (let [iw (get-ice state :rd 0)]
+        (prompt-select :runner iw)
+        (is (:icon (refresh iw)) "Ice Wall has an icon")))
     (is (= 1 (:tag (get-runner))) "Runner gained a tag")))
 
 (deftest data-breach
@@ -1345,7 +1351,19 @@
       (is (= 1 (count (filter :seen discard))) "There is 1 seen card in Archives"))
     (is (zero? (count (:hand (get-corp)))) "There are no cards in hand")))
 
+(deftest guinea-pig
+  ;; Guinea Pig
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Guinea Pig" (qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Guinea Pig")
+    (is (= 11 (:credit (get-runner))) "Gained +6 credits from playing Guinea Pig")
+    (is (empty? (:hand (get-runner))) "No cards left in grip, trashed all cards due to Guinea Pig")
+    (is (= 4 (count (:discard (get-runner)))) "3 cards trashed from Guinea Pig + Guinea Pig itself")))
+
 (deftest hacktivist-meeting
+  ;; Hacktivist Meeting
   ;; Trash a random card from corp hand while active
   ;; Make sure it is not active when hosted on Peddler
   (do-game
@@ -1381,6 +1399,17 @@
     (prompt-choice :runner "HQ")
     (run-successful state)
     (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))
+
+(deftest hot-pursuit
+  ;; Hot Pursuit
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Hot Pursuit"]))
+    (take-credits state :corp)
+    (play-run-event state (first (:hand (get-runner))) :hq)
+    (is (= (+ 5 -2 9) (:credit (get-runner))) "Gained 9 credits on successful run")
+    (is (= 1 (:tag (get-runner))) "Took 1 tag on successful run")
+    (is (prompt? :runner) "Still have access prompt")))
 
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
@@ -1528,6 +1557,29 @@
     (run-continue state)
     (run-successful state)
     (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
+
+(deftest insight
+  ;; Insight
+  (do-game
+    (new-game (default-corp ["Caprice Nisei" "Elizabeth Mills"
+                            "Jackson Howard" "Director Haas"])
+            (default-runner ["Insight"]))
+    (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (is (zero? (count (:hand (get-corp)))))
+    (is (= 4 (count (:deck (get-corp)))))
+    (play-from-hand state :runner "Insight")
+    (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner is waiting for Corp to reorder")
+    (prompt-card :corp (find-card "Director Haas" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Elizabeth Mills" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (prompt-card :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+    (prompt-choice :corp "Done")
+    (is (not= :waiting (-> (get-runner) :prompt first :prompt-type)) "Waiting prompt done")
+    (is (= "Caprice Nisei" (:title (nth (:deck (get-corp)) 0))))
+    (is (= "Jackson Howard" (:title (nth (:deck (get-corp)) 1))))
+    (is (= "Elizabeth Mills" (:title (nth (:deck (get-corp)) 2))))
+    (is (= "Director Haas" (:title (nth (:deck (get-corp)) 3))))))
 
 (deftest interdiction
   ;; Corp cannot rez non-ice cards during runner's turn
@@ -1793,6 +1845,31 @@
     (play-from-hand state :runner "Notoriety")
     (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
+
+(deftest office-supplies
+  ;; Office Supplies
+  (letfn [(office-supplies-test [link]
+            (do-game
+              (new-game (default-corp)
+                        (default-runner [(qty "Office Supplies" 2)
+                                         (qty "Access to Globalsec" 100)]))
+              (take-credits state :corp)
+              (core/gain state :runner :credit 1000 :click link)
+              (starting-hand state :runner (concat (repeat 2 "Office Supplies")
+                                                   (repeat 4 "Access to Globalsec")))
+              (dotimes [_ link]
+                (play-from-hand state :runner "Access to Globalsec"))
+              (let [credits (:credit (get-runner))]
+                (play-from-hand state :runner "Office Supplies")
+                (is (= (- credits (- 4 link)) (:credit (get-runner)))))
+              (let [credits (:credit (get-runner))]
+                (prompt-choice-partial :runner "Gain")
+                (is (= (+ 4 credits) (:credit (get-runner))) (str "Runner should gain " (utils/quantify link "credit"))))
+              (play-from-hand state :runner "Office Supplies")
+              (let [grip (-> (get-runner) :hand count)]
+                (prompt-choice-partial :runner "Draw")
+                (is (= (+ 4 grip) (-> (get-runner) :hand count)) "Runner should draw 4 cards"))))]
+    (doall (map office-supplies-test (range 5)))))
 
 (deftest on-the-lam
   ;; On the Lam
@@ -2102,7 +2179,15 @@
         (is (= 1 (:link (get-runner))) "1 link before rebirth")
         (play-from-hand state :runner "Rebirth")
         (choose-runner kate state prompt-map)
-        (is (= 2 (:link (get-runner))) "2 link after rebirth"))))
+        (is (= 2 (:link (get-runner))) "2 link after rebirth")))
+    (testing "Implementation notes are kept, regression test for #3722"
+      (do-game
+        (new-game (default-corp)
+                  (default-runner ["Rebirth"])
+                  {:start-as :runner})
+        (play-from-hand state :runner "Rebirth")
+        (choose-runner chaos state prompt-map)
+        (is (= :full (get-in (get-runner) [:identity :implementation])) "Implementation note kept as `:full`"))))
   (deftest-pending rebirth-kate-twice
     ;; Rebirth - Kate's discount does not after rebirth if something already installed
     (do-game
@@ -2115,6 +2200,29 @@
       (is (changes-credits (get-corp) -1
                            (play-from-hand state :runner "Akamatsu Mem Chip"))
           "Discount not applied for 2nd install"))))
+
+(deftest reboot
+  ;; Reboot - run on Archives, install 5 cards from head facedown
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Reboot" "Sure Gamble" "Paperclip" "Clot"]))
+    (take-credits state :corp)
+    (trash-from-hand state :runner "Sure Gamble")
+    (trash-from-hand state :runner "Paperclip")
+    (trash-from-hand state :runner "Clot")
+    (is (empty? (core/all-installed state :runner)) "Runner starts with no installed cards")
+    (is (= 3 (count (:discard (get-runner)))) "Runner starts with 3 cards in trash")
+    (is (empty? (:rfg (get-runner))) "Runner starts with no discarded cards")
+    (play-from-hand state :runner "Reboot")
+    (run-successful state)
+    (prompt-select :runner (find-card "Sure Gamble" (:discard (get-runner))))
+    (prompt-select :runner (find-card "Paperclip" (:discard (get-runner))))
+    (prompt-select :runner (find-card "Clot" (:discard (get-runner))))
+    (prompt-choice-partial :runner "Done")
+    (is (= 3 (count (filter :facedown (core/all-installed state :runner)))) "Runner has 3 facedown cards")
+    (is (= 3 (count (core/all-installed state :runner))) "Runner has no other cards installed")
+    (is (empty? (:discard (get-runner))) "Runner has empty trash")
+    (is (= 1 (count (:rfg (get-runner)))) "Runner has 1 card in RFG")))
 
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
