@@ -243,7 +243,7 @@
           [:div.chat-container
            [:div.chat-card-zoom
             (when-let [card (:zoom @s)]
-              [card-zoom card])]
+              [card-zoom (r/atom card)])]
            [:div.chat-box
             [:div.blue-shade.panel.message-list {:ref #(swap! chat-state assoc :message-list %)
                                                  :on-scroll #(let [currElt (.-currentTarget %)
