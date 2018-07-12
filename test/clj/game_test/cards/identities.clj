@@ -1645,6 +1645,37 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (core/has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
 
+(deftest saraswati-mnemonics:-endless-exploration
+  ;; Saraswati Mnemonics
+  (do-game
+    (new-game
+      (make-deck "Saraswati Mnemonics: Endless Exploration" ["Gene Splicer" "House of Knives"])
+      (default-runner))
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (prompt-select :corp (find-card "Gene Splicer" (:hand (get-corp))))
+    (prompt-choice :corp "New remote")
+    (let [splicer (get-content state :remote1 0)]
+      (is (= 1 (get-counters (refresh splicer) :advancement)) "1 advancements placed on Gene Splicer")
+      (core/rez state :corp (refresh splicer))
+      (is (not (:rezzed (refresh splicer))) "Gene Splicer did not rez")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/rez state :corp (refresh splicer))
+      (is (:rezzed (refresh splicer)) "Gene Splicer now rezzed")
+      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (prompt-select :corp (find-card "House of Knives" (:hand (get-corp))))
+      (prompt-choice :corp "New remote")
+      (let [house (get-content state :remote2 0)]
+        (advance state house)
+        (advance state house)
+        (core/score state :corp (refresh house))
+        (is (empty? (:scored (get-corp))) "House of Knives not scored")
+        (is (zero? (:agenda-point (get-corp))))
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (core/score state :corp (refresh house))
+        (is (= 1 (:agenda-point (get-corp))) "House of Knives was able to be scored")))))
+
 (deftest skorpios-defense-systems:-persuasive-power
   ; Remove a card from game when it moves to discard once per round
   (do-game
