@@ -172,11 +172,11 @@
 
 (defn- do-choices
   "Handle a choices ability"
-  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid] :as ability}
+  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid prompt-type] :as ability}
    card targets]
   (let [s (or player side)
         ab (dissoc ability :choices)
-        args {:priority priority :cancel-effect cancel-effect}]
+        args {:priority priority :cancel-effect cancel-effect :prompt-type prompt-type}]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
      (cond
