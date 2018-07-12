@@ -1006,7 +1006,7 @@
                       @cards)
          [label @cards {:opts {:name name}}]]))))
 
-(defn scored-view [{:keys [scored]}]
+(defn scored-view [scored]
   (let [size (count @scored)]
     [:div.panel.blue-shade.scored.squeeze
      (map-indexed (fn [i card]
@@ -1014,7 +1014,7 @@
                                         :style {:left (when (> size 1) (* (/ 128 (dec size)) i))}}
                      [:div [card-view card]]])
                   @scored)
-     [label scored {:opts {:name "Scored Area"}}]]))
+     [label @scored {:opts {:name "Scored Area"}}]]))
 
 (defn controls
   "Create the control buttons for the side displays."
@@ -1124,20 +1124,20 @@
              :let [num (remote->num (first server))]]
          [server-view {:key num
                        :server (second server)
-                       :run (when (= server-type (str "remote" num)) run)}
+                       :run (when (= server-type (str "remote" num)) @run)}
           {:opts {:name (remote->name (first server))}}]))
      [server-view {:key "hq"
                    :server (:hq @servers)
                    :central-view [identity-view identity]
-                   :run (when (= server-type "hq") run)}]
+                   :run (when (= server-type "hq") @run)}]
      [server-view {:key "rd"
                    :server (:rd @servers)
                    :central-view [deck-view :corp player-side identity deck]
-                   :run (when (= server-type "rd") run)}]
+                   :run (when (= server-type "rd") @run)}]
      [server-view {:key "archives"
                    :server (:archives @servers)
                    :central-view [discard-view-corp player-side discard]
-                   :run (when (= server-type "archives") run)}]]))
+                   :run (when (= server-type "archives") @run)}]]))
 
 (defn board-view-runner [player-side identity deck discard rig run]
   (let [is-me (= player-side :runner)]
@@ -1575,6 +1575,8 @@
                  op-prompt (r/cursor game-state [op-side :prompt])
                  me-ident (r/cursor game-state [me-side :identity])
                  op-ident (r/cursor game-state [op-side :identity])
+                 me-scored (r/cursor game-state [me-side :scored])
+                 op-scored (r/cursor game-state [op-side :scored])
                  corp-servers (r/cursor game-state [:corp :servers])
                  corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
                  runner-rig (r/cursor game-state [:runner :rig])]
@@ -1614,9 +1616,9 @@
                 [:div.left-inner-leftpane
                  [:div
                   [stats-view opponent]
-                  [scored-view opponent]]
+                  [scored-view op-scored]]
                  [:div
-                  [scored-view me]
+                  [scored-view me-scored]
                   [stats-view me]]]
 
                 [:div.right-inner-leftpane
