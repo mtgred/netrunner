@@ -523,7 +523,7 @@
        (prompt-choice :runner "OK")
        (is (= 1 (get-counters (refresh d99) :power)) "Trashing Spy Camera after Faerie did not add a second power counter")
        (card-ability state :runner (refresh d99) 2) ; manually add counter
-       (is (= 1 (get-counters (refresh d99) :power)) "Can't manually add power counter after one has already been added") 
+       (is (= 1 (get-counters (refresh d99) :power)) "Can't manually add power counter after one has already been added")
        (run-jack-out state)
        (play-from-hand state :runner "Spy Camera")
        (take-credits state :runner)
@@ -1796,6 +1796,47 @@
       (is (= 2 (:credit (get-runner))) "Gained 1 credit")
       (is (= 6 (count (:hand (get-runner)))) "Drew 1 card"))))
 
+(deftest psych-mike
+  ;; Psych Mike
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Ice Wall" 100)])
+                (default-runner ["Psych Mike" "Deep Data Mining"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Psych Mike")
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "R&D")
+        (prompt-choice :runner "No action")
+        (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "R&D")
+        (prompt-choice :runner "No action")
+        (is (= credits (:credit (get-runner))) "Psych Mike should give 0 credits for second run of the turn"))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Deep Data Mining")
+      (let [credits (:credit (get-runner))]
+        (run-successful state)
+        (dotimes [_ 5]
+          (prompt-choice :runner "Card from deck")
+          (prompt-choice :runner "No action"))
+        (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))))
+  (testing "vs upgrades"
+    (do-game
+      (new-game (default-corp ["Bryan Stinson" (qty "Ice Wall" 100)])
+                (default-runner ["Psych Mike"]))
+      (starting-hand state :corp ["Bryan Stinson"])
+      (play-from-hand state :corp "Bryan Stinson" "R&D")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Psych Mike")
+      (let [credits (:credit (get-runner))]
+        (run-empty-server state "R&D")
+        (prompt-choice :runner "Card from deck")
+        (prompt-choice :runner "No action")
+        (prompt-choice-partial :runner "Unrezzed")
+        (prompt-choice :runner "No action")
+        (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card")))))
+
 (deftest reclaim
   ;; Reclaim - trash Reclaim, trash card from grip, install program, hardware, or virtual resource from heap
   (testing "Basic behavior"
@@ -2510,6 +2551,7 @@
         (is (= 4 (core/available-mu state)) "Runner has 4 MU")))))
 
 (deftest thunder-art-gallery
+  ;; Thunder Art Gallery
   (testing "Works when removing/avoiding tags"
     (do-game
       (new-game (default-corp)
@@ -2689,7 +2731,7 @@
         (is (zero? (get-counters (refresh ttw) :power)) "Using The Turning Wheel ability costs 2 counters")
         (is (= 1 (-> @state :run :access-bonus)) "Runner should access 1 additional card")
         (run-successful state)
-        (is (zero? (-> @state :run :access-bonus)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ")))))
+        (is (zero? (-> (get-runner) :register :last-run :access-bonus)) "Access bonuses are zeroed out when attacked server isn't R&D or HQ")))))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool

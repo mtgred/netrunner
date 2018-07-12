@@ -389,7 +389,7 @@
     (do-game
      (new-game (default-corp [(qty "Ice Wall" 2) (qty "Formicary" 3)])
                (default-runner [(qty "First Responders" 6)]))
-     (play-from-hand state :corp "Ice Wall" "HQ") 
+     (play-from-hand state :corp "Ice Wall" "HQ")
      (play-from-hand state :corp "Formicary" "Archives")
      (play-from-hand state :corp "Formicary" "R&D")
      (take-credits state :corp)
@@ -1267,6 +1267,37 @@
       (is (= 3 (get-counters (refresh odu) :advancement)))
       (is (= 6 (get-counters (refresh eni) :advancement))))))
 
+(deftest otoroshi
+  ;; Otoroshi
+  (do-game
+    (new-game (default-corp ["Otoroshi" "Project Junebug" (qty "Ice Wall" 100)])
+              (default-runner))
+    (starting-hand state :corp ["Otoroshi" "Project Junebug"])
+    (play-from-hand state :corp "Otoroshi" "New remote")
+    (play-from-hand state :corp "Project Junebug" "New remote")
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (let [otoroshi (get-ice state :remote1 0)
+          junebug (get-content state :remote2 0)
+          credits (:credit (get-runner))]
+      (is (zero? (get-counters (refresh junebug) :advancement)) "Project Junebug should start with 0 advancement tokens")
+      (core/rez state :corp otoroshi)
+      (card-subroutine state :corp otoroshi 0)
+      (prompt-select :corp junebug)
+      (is (= 3 (get-counters (refresh junebug) :advancement)) "Project Junebug should have 3 advancement tokens from Otoroshi subroutine")
+      (is (= (list "Access card" "Pay 3 [Credits]") (-> (get-runner) :prompt first :choices)) "Runner should have 2 options")
+      (prompt-choice-partial :runner "Pay")
+      (is (= (- credits 3) (:credit (get-runner))) "Runner should pay 3 credits to Otoroshi subroutine")
+      (run-jack-out state)
+      (run-on state :remote1)
+      (card-subroutine state :corp otoroshi 0)
+      (prompt-select :corp otoroshi)
+      (is (= 3 (get-counters (refresh otoroshi) :advancement)) "Otoroshi should have 3 advancement tokens from Otoroshi subroutine")
+      (is (= (list "Access card") (-> (get-runner) :prompt first :choices)) "Runner should have 1 option")
+      (prompt-choice-partial :runner "Access")
+      (is (= "You accessed Otoroshi." (-> (get-runner) :prompt first :msg)) "Runner should access Otoroshi even tho it's an ice.")
+      (prompt-choice :runner "No action"))))
+
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
@@ -1512,9 +1543,11 @@
         (is (= "Quandary" (:title (second (:deck (get-corp))))))
         (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
         (card-subroutine state :corp shiro 1)
+        (prompt-choice :runner "Card from deck")
         (is (= (:cid (first (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
         (prompt-choice :runner "No action")
+        (prompt-choice :runner "Card from deck")
         (is (= (:cid (second (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
   (testing "with Mwanza City Grid, should access additional 3 cards"
@@ -1537,9 +1570,11 @@
           (card-subroutine state :corp shiro 1)
           (is (= 3 (-> @state :run :access-bonus)) "Should access an additional 3 cards")
           (dotimes [_ 5]
+            (prompt-choice :runner "Card from deck")
             (prompt-choice :runner "No action"))
+          (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards before jack out")
           (run-jack-out state)
-          (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards total"))))))
+          (is (= (+ credits 10) (:credit (get-corp))) "Corp should only gain money once"))))))
 
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run

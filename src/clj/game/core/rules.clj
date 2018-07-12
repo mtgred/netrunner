@@ -266,7 +266,7 @@
       (- (or (when-not unpreventable (get-in @state [:tag :tag-prevent])) 0))
       (max 0)))
 
-(defn tag-prevent 
+(defn tag-prevent
   ([state side n] (tag-prevent state side (make-eid state) n))
   ([state side eid n]
    (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))

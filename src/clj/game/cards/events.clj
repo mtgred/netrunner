@@ -503,6 +503,20 @@
                                              (gain-credits :runner (five-or-all corp)))})}
                       card))}
 
+   "Divide and Conquer"
+   {:req (req archives-runnable)
+    :makes-run true
+    :async true
+    :effect
+    (effect (run :archives
+                 {:end-run
+                  {:async true
+                   :effect
+                   (req (wait-for (do-access state side [:rd] {:no-root true})
+                                  (wait-for (do-access state side [:hq] {:no-root true})
+                                            (effect-completed state side eid))))}}
+                 card))}
+
    "Drive By"
    {:choices {:req #(let [topmost (get-nested-host %)]
                      (and (is-remote? (second (:zone topmost)))
@@ -1010,11 +1024,11 @@
                              (access-card state side (first cards))
                              (if (< 1 (count cards))
                                (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
-                               (do (swap! state assoc-in [:run :cards-accessed] pile-size)
-                                   (effect-completed state side eid)))))})
+                               (effect-completed state side eid))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
-              :choices [(str "Pile 1 (" (count p1) " cards)") (str "Pile 2 (" (count p2) " cards)")]
+              :choices [(str "Pile 1 (" (count p1) " cards)")
+                        (str "Pile 2 (" (count p2) " cards)")]
               :async true
               :effect (req (let [choice (if (.startsWith target "Pile 1") 1 2)]
                              (clear-wait-prompt state :corp)
@@ -1040,8 +1054,8 @@
                                                     (which-pile (shuffle targets)
                                                                 (shuffle (vec (clojure.set/difference
                                                                                 (set (:hand corp)) (set targets)))))
-                                                    card nil))
-                                  } card nil))
+                                                    card nil))}
+                                 card nil))
                            (effect-completed state side eid)))}]
        {:req (req hq-runnable)
         :effect (effect (run :hq {:req (req (= target :hq))

@@ -1198,6 +1198,7 @@
       (is (not (:run @state)) "Run ended, no more accesses"))))
 
 (deftest liza-talking-thunder:-prominent-legislator
+  ;; Liza Talking Thunder: Prominent Legislator
   (do-game
     (new-game
       (default-corp)
@@ -1335,7 +1336,8 @@
         (card-ability state :runner nasir 0)
         (is (= 2 (:credit (get-runner))) "Gain 1 more credit due to Xanadu")))))
 
-(deftest ^{:card-title "nathaniel-\"gnat\"-hall:-One-of-a-Kind"} gnat
+(deftest ^{:card-title "nathaniel-\"gnat\"-hall:-one-of-a-kind"} gnat
+  ;; Nathaniel "Gnat" Hall: One-of-a-Kind
   (do-game
     (new-game
       (default-corp)

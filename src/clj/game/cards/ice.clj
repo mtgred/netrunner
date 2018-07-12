@@ -1770,6 +1770,37 @@
    (implementation-note "\"Resolve a subroutine...\" subroutine is not implemented"
                         (space-ice trash-program end-the-run))
 
+   "Otoroshi"
+   {:subroutines [{:async true
+                   :label "Place 3 advancement tokens on installed card"
+                   :msg "place 3 advancement tokens on installed card"
+                   :prompt "Choose an installed Corp card"
+                   :choices {:req #(and (= (:side %) "Corp")
+                                        (installed? %))}
+                   :effect (req (let [c target
+                                      title (if (:rezzed c)
+                                              (:title c)
+                                              "selected unrezzed card")]
+                                  (add-counter state side c :advancement 3)
+                                  (show-wait-prompt state side "Runner to resolve Otoroshi")
+                                  (continue-ability
+                                    state side
+                                    {:player :runner
+                                     :async true
+                                     :prompt (str "Access " title " or pay 3 [Credits]?")
+                                     :choices (concat ["Access card"]
+                                                      (when (>= (:credit runner) 3)
+                                                        ["Pay 3 [Credits]"]))
+                                     :msg (msg "force the Runner to "
+                                               (if (= target "Access card")
+                                                 (str "access " title)
+                                                 "pay 3 [Credits]"))
+                                     :effect (req (clear-wait-prompt state :corp)
+                                                  (if (= target "Access card")
+                                                    (access-card state :runner eid c)
+                                                    (pay-sync state :runner eid card :credit 3)))}
+                                    card nil)))}]}
+
    "Owl"
    {:subroutines [{:choices {:req #(and (installed? %)
                                         (is-type? % "Program"))}
@@ -2054,14 +2085,8 @@
                                     (do (clear-wait-prompt state :runner)
                                         (effect-completed state side eid)))))}
                   {:label "Force the Runner to access the top card of R&D"
-                   :effect (req (wait-for (trigger-event-sync state side :pre-access :rd)
-                                          (let [total-cards (access-count state side :rd-access)]
-                                            (swap! state assoc-in [:run :did-access] true)
-                                            (swap! state assoc-in [:runner :register :accessed-cards] true)
-                                            (doseq [c (take total-cards (:deck corp))]
-                                              (system-msg state :runner (str "accesses " (:title c)))
-                                              (access-card state side c))
-                                            (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
+                   :async true
+                   :effect (req (do-access state :runner eid [:rd] {:no-root true}))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"
