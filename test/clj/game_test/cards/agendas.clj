@@ -220,7 +220,7 @@
       (run-on state :remote1)
       (run-successful state)
       (prompt-choice state :corp "2")
-      (prompt-select state :corp (refresh iw))
+      (click-card state :corp "Ice Wall")
       (prompt-choice state :runner "Steal")
       (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement tokens")
       (run-on state :rd)
@@ -321,7 +321,7 @@
     (let [ht-scored (get-scored state :corp 0)]
       (play-and-score state "Bifrost Array")
       (prompt-choice state :corp "Yes")
-      (prompt-select state :corp (refresh ht-scored))
+      (click-card state :corp "Hostile Takeover")
       (is (= 19 (:credit (get-corp))) "Should gain 7 credits from 12 to 19")
       (is (= 2 (:bad-publicity (get-corp))) "Should gain 1 bad publicity"))))
 

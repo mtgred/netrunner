@@ -148,7 +148,7 @@
         (core/rez state :corp spider)
         (core/rez state :corp wrap)
         (play-from-hand state :runner "Parasite")
-        (prompt-select state :runner (refresh spider))
+        (click-card state :runner "Spiderweb")
         (run-on state "HQ")
         (run-continue state)
         (card-ability state :runner (refresh sucker) 0)
