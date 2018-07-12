@@ -593,6 +593,38 @@
       (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
 
+(deftest kyuban
+  (testing "Gain creds when passing a piece of ice, both when rezzed and when unrezzed."
+    (do-game
+      (new-game (default-corp [(qty "Lockdown" 3)])
+                (default-runner [(qty "Kyuban" 1)]))
+      (play-from-hand state :corp "Lockdown" "HQ")
+      (play-from-hand state :corp "Lockdown" "Archives")
+      (let [ld1 (get-ice state :archives 0)
+            ld2 (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Kyuban")
+        (prompt-select :runner ld1)
+        (let [starting-creds (:credit (get-runner))]
+          (run-on state "HQ")
+          (core/no-action state :corp nil)
+          (run-continue state)
+          (is (= starting-creds (:credit (get-runner))) "Gained no money for passing other ice")
+          (core/jack-out state :runner nil)
+          (run-on state "Archives")
+          (core/no-action state :corp nil)
+          (run-continue state)
+          (is (= (+ starting-creds 2) (:credit (get-runner)))
+              "Gained 2 creds for passing unrezzed host ice"))
+        (let [starting-creds-2 (:credit (get-runner))]
+          (core/jack-out state :runner nil)
+          (run-on state "Archives")
+          (core/rez state :corp ld1)
+          (core/no-action state :corp nil)
+          (run-continue state)
+          (is (= (+ starting-creds-2 2) (:credit (get-runner)))
+              "Gained 2 creds for passing rezzed host ice"))))))
+
 (deftest lamprey
   ;; Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge
   (do-game
