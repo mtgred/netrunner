@@ -129,6 +129,47 @@
       (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "1 card in archives"))))
 
+(deftest akiko-nisei:-head-case
+  ;; Akiko Nisei
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp [(qty "Hedge Fund" 10)])
+                (make-deck "Akiko Nisei: Head Case" [(qty "Sure Gamble" 3)]))
+      (take-credits state :corp)
+      (run-on state :rd)
+      (run-successful state)
+      (prompt-choice :corp "0 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (is (= 2 (core/access-count state :runner :rd-access)) "Should access additional card from ability")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (run-on state :rd)
+      (run-successful state)
+      (prompt-choice :corp "1 [Credits]")
+      (prompt-choice :runner "0 [Credits]")
+      (is (= 1 (core/access-count state :runner :rd-access)) "Should only access 1 from missed psi game")))
+  (testing "Shiro interaction: second sub should give Akiko 2 accesses"
+    (do-game
+      (new-game (default-corp [(qty "Hedge Fund" 10) "Shiro"])
+                (make-deck "Akiko Nisei: Head Case" [(qty "Sure Gamble" 3)]))
+      (starting-hand state :corp ["Shiro"])
+      (play-from-hand state :corp "Shiro" "New remote")
+      (let [shiro (get-ice state :remote1 0)]
+        (core/rez state :corp shiro)
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (card-subroutine state :corp shiro 1)
+        (prompt-choice :corp "0 [Credits]")
+        (prompt-choice :runner "0 [Credits]")
+        (is (= 2 (core/access-count state :runner :rd-access)) "Should access additional card from ability")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (run-on state :remote1)
+        (card-subroutine state :corp shiro 1)
+        (prompt-choice :corp "1 [Credits]")
+        (prompt-choice :runner "0 [Credits]")
+        (is (= 1 (core/access-count state :runner :rd-access)) "Should only access 1 from missed psi game")))))
+
 (deftest alice-merchant:-clan-agitator
   ;; Alice Merchant
   (do-game
