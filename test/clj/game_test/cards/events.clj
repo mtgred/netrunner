@@ -686,9 +686,10 @@
 (deftest credit-kiting
   ;; After successful central run lower install cost by 8 and gain a tag
   (do-game
-    (new-game (default-corp ["PAD Campaign"])
+    (new-game (default-corp ["PAD Campaign" "Ice Wall"])
               (default-runner ["Credit Kiting" "Femme Fatale"]))
     (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Ice Wall" "R&D")
     (take-credits state :corp)
     (run-empty-server state "Server 1")
     (play-from-hand state :runner "Credit Kiting")
@@ -697,6 +698,12 @@
     (play-from-hand state :runner "Credit Kiting")
     (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
     (is (= 4 (:credit (get-runner))) "Femme Fatale only cost 1 credit")
+
+    (testing "Femme Fatale can still target ice when installed with Credit Kiting, issue #3715"
+      (let [iw (get-ice state :rd 0)]
+        (prompt-select :runner iw)
+        (is (:icon (refresh iw)) "Ice Wall has an icon")))
+
     (is (= 1 (:tag (get-runner))) "Runner gained a tag")))
 
 (deftest data-breach

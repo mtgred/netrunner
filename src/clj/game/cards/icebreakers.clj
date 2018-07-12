@@ -621,8 +621,7 @@
                     {:prompt "Select a piece of ICE to target for bypassing"
                      :choices {:req ice?}
                      :leave-play (req (remove-icon state side card))
-                     :effect (req (let [ice target
-                                        serv (zone->name (second (:zone ice)))]
+                     :effect (req (let [ice target]
                                     (add-icon state side card ice "F" "blue")
                                     (system-msg state side
                                                 (str "selects " (card-str state ice)
