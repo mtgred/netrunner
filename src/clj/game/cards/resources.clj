@@ -578,7 +578,7 @@
    "DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
          can-host? (fn [runner c] (and (is-type? c "Identity")
-                                       (has-subtype? c "G-Mod")
+                                       (has-subtype? c "g-mod")
                                        (not= (-> runner :identity :faction) (:faction c))
                                        (not (is-draft-id? c))))
          fenris-effect {:prompt "Choose a g-mod identity to host on DJ Fenris"

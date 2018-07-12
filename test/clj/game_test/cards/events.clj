@@ -2127,7 +2127,15 @@
         (is (= 1 (:link (get-runner))) "1 link before rebirth")
         (play-from-hand state :runner "Rebirth")
         (choose-runner kate state prompt-map)
-        (is (= 2 (:link (get-runner))) "2 link after rebirth"))))
+        (is (= 2 (:link (get-runner))) "2 link after rebirth")))
+    (testing "Implementation notes are kept, regression test for #3722"
+      (do-game
+        (new-game (default-corp)
+                  (default-runner ["Rebirth"])
+                  {:start-as :runner})
+        (play-from-hand state :runner "Rebirth")
+        (choose-runner chaos state prompt-map)
+        (is (= :full (get-in (get-runner) [:identity :implementation])) "Implementation note kept as `:full`"))))
   (deftest-pending rebirth-kate-twice
     ;; Rebirth - Kate's discount does not after rebirth if something already installed
     (do-game
