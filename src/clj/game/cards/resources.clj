@@ -79,7 +79,7 @@
                                                  :effect (effect (gain-credits 1))}}}}}
 
    "Aesops Pawnshop"
-   {:flags {:runner-phase-12 (req (>= 2 (count (all-installed state :runner))))}
+   {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
     :abilities [{:effect (req (resolve-ability
                                 state side
                                 {:msg (msg "trash " (:title target) " and gain 3 [Credits]")
