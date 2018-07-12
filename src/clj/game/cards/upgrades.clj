@@ -352,7 +352,8 @@
                  :effect (effect (mill :corp :runner 2))}]}
 
    "Georgia Emelyov"
-   {:events {:unsuccessful-run {:req (req (= (first (:server target)) (second (:zone card))))
+   {:events {:unsuccessful-run {:req (req (= (first (:server target))
+                                             (second (:zone card))))
                                 :async true
                                 :msg "do 1 net damage"
                                 :effect (effect (damage eid :net 1 {:card card}))}}
@@ -369,10 +370,40 @@
                                                    (register-events state side (:events (card-def c)) c)))}
                                    card nil))}]}
 
+   "Giordano Memorial Field"
+   {:events
+    {:successful-run
+     {:interactive (req true)
+      :async true
+      :req (req this-server)
+      :msg "force the Runner to pay or end the run"
+      :effect (req (let [credits (:credit runner)
+                         cost (* 2 (count (:scored runner)))
+                         pay-str (str "pay " cost " [Credits]")
+                         c-pay-str (capitalize pay-str)]
+                     (show-wait-prompt state :corp (str "Runner to " pay-str " or end the run"))
+                     (continue-ability
+                       state :runner
+                       {:player :runner
+                        :async true
+                        :prompt (msg "You must " pay-str " or end the run")
+                        :choices (concat (when (>= credits cost)
+                                           [c-pay-str])
+                                         ["End the run"])
+                        :effect (req (clear-wait-prompt state :corp)
+                                     (if (= c-pay-str target)
+                                       (do (pay state :runner card :credit cost)
+                                           (system-msg state :runner (str "pays " cost " [Credits]")))
+                                       (do (end-run state side)
+                                           (system-msg state :corp "ends the run")))
+                                     (effect-completed state side eid))}
+                       card nil)))}}}
+
    "Heinlein Grid"
    {:abilities [{:req (req this-server)
                  :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
-                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
+                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]")
+                 :once :per-run
                  :effect (effect (lose-credits :runner :all)
                                  (lose :runner :run-credit :all))}]}
 
