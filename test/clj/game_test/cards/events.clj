@@ -1,5 +1,6 @@
 (ns game-test.cards.events
   (:require [game.core :as core]
+            [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
@@ -1793,6 +1794,30 @@
     (play-from-hand state :runner "Notoriety")
     (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
+
+(deftest office-supplies
+  (letfn [(office-supplies-test [link]
+            (do-game
+              (new-game (default-corp)
+                        (default-runner [(qty "Office Supplies" 2)
+                                         (qty "Access to Globalsec" 100)]))
+              (take-credits state :corp)
+              (core/gain state :runner :credit 1000 :click link)
+              (starting-hand state :runner (concat (repeat 2 "Office Supplies")
+                                                   (repeat 4 "Access to Globalsec")))
+              (dotimes [_ link]
+                (play-from-hand state :runner "Access to Globalsec"))
+              (let [credits (:credit (get-runner))]
+                (play-from-hand state :runner "Office Supplies")
+                (is (= (- credits (- 4 link)) (:credit (get-runner)))))
+              (let [credits (:credit (get-runner))]
+                (prompt-choice-partial :runner "Gain")
+                (is (= (+ 4 credits) (:credit (get-runner))) (str "Runner should gain " (utils/quantify link "credit"))))
+              (play-from-hand state :runner "Office Supplies")
+              (let [grip (-> (get-runner) :hand count)]
+                (prompt-choice-partial :runner "Draw")
+                (is (= (+ 4 grip) (-> (get-runner) :hand count)) "Runner should draw 4 cards"))))]
+    (doall (map office-supplies-test (range 5)))))
 
 (deftest on-the-lam
   ;; On the Lam
