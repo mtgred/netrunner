@@ -80,6 +80,7 @@
                               (effect-completed eid))})]
 
    {:init {:root "R&D"}
+    :install-req (req (filter #{"R&D"} targets))
     :abilities [{:cost [:click 1]
                  :req (req (>= (count (:deck corp)) 3))
                  :async true
@@ -793,6 +794,7 @@
 
    "Panic Button"
    {:init {:root "HQ"}
+    :install-req (req (filter #{"HQ"} targets))
     :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
                  :req (req (and run (= (first (:server run)) :hq)))}]}
 
@@ -841,6 +843,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
+    :install-req (req (filter #{"HQ"} targets))
     :in-play [:hand-size 2]}
 
    "Ruhr Valley"
