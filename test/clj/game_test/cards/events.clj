@@ -1339,6 +1339,16 @@
     (run-successful state)
     (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))
 
+(deftest hot-pursuit
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Hot Pursuit"]))
+    (take-credits state :corp)
+    (play-run-event state (first (:hand (get-runner))) :hq)
+    (is (= (+ 5 -2 9) (:credit (get-runner))) "Gained 9 credits on successful run")
+    (is (= 1 (:tag (get-runner))) "Took 1 tag on successful run")
+    (is (prompt? :runner) "Still have access prompt")))
+
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
   (do-game

@@ -1156,6 +1156,16 @@
       (is (not (get-content state :archives 0)) "Upgrade returned to hand")
       (is (not (:run @state)) "Run ended, no more accesses"))))
 
+(deftest liza-talking-thunder:-prominent-legislator
+  (do-game
+    (new-game
+      (default-corp)
+      (make-deck "Liza Talking Thunder: Prominent Legislator" [(qty "Sure Gamble" 7)]))
+    (take-credits state :corp)
+    (run-empty-server state "R&D")
+    (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
+    (is (= 1 (:tag (get-runner))) "Took 1 tag from successful run on Archives")))
+
 (deftest maxx:-maximum-punk-rock
   ;; MaxX
   (testing "Basic test"

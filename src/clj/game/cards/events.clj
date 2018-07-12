@@ -24,6 +24,7 @@
 (def card-definitions
   {"Account Siphon"
    {:req (req hq-runnable)
+    :makes-run true
     :effect (effect (run :hq {:req (req (= target :hq))
                               :replace-access
                               {:msg (msg "force the Corp to lose " (min 5 (:credit corp))
@@ -908,6 +909,16 @@
                                                        (runner-install state side connection)
                                                        (move state side connection :hand)))} card nil)))}
                      card nil)))}
+
+   "Hot Pursuit"
+   {:req (req hq-runnable)
+    :makes-run true
+    :effect (effect (run :hq {:req (req (= target :hq))
+                              :successful-run {:async true
+                                               :msg "gain 9 [Credits] and take 1 tag"
+                                               :effect (req (wait-for (tag-runner state :runner 1)
+                                                                      (gain-credits state :runner 9)
+                                                                      (effect-completed state side eid)))}} card))}
 
    "Ive Had Worse"
    {:effect (effect (draw 3))
