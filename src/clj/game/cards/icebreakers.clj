@@ -720,6 +720,19 @@
                                  (break-sub 1 1 "Code Gate")
                                  (strength-pump 1 1)]})
 
+   "Ika"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(break-sub 1 2 "Sentry")
+                                 (strength-pump 2 3)
+                                 {:label "Host Ika on a piece of ICE"
+                                  :prompt (msg "Host Ika on a piece of ICE")
+                                  :cost [:credit 2]
+                                  :choices {:req #(and (ice? %)
+                                                       (installed? %)
+                                                       (can-host? %))}
+                                  :msg (msg "host it on " (card-str state target))
+                                  :effect (effect (host target card))}]})
+
    "Knight"
    {:abilities [{:label "Host Knight on a piece of ICE"
                  :effect (req (let [k (get-card state card)
