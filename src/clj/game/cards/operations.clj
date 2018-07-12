@@ -239,6 +239,13 @@
     :msg "do 7 meat damage"
     :effect (effect (damage eid :meat 7 {:card card}))}
 
+   "Building Blocks"
+   {:choices {:req #(and (= (:side %) "Corp")
+                         (has-subtype? % "Barrier")
+                         (in-hand? %))}
+    :async true
+    :effect (req (corp-install state side eid target nil {:no-install-cost true :install-state :rezzed-no-cost}))}
+
    "Casting Call"
    {:choices {:req #(and (is-type? % "Agenda")
                          (in-hand? %))}
