@@ -117,3 +117,41 @@
                ", but found " (count matching-cards)
                ". Try passing card maps instead of card name."))
       (core/select state side {:card (first matching-cards)}))))
+
+(defn click-button
+  "Clicks a button in a prompt. Analogous to prompt-choice or prompt"
+  [state side button-name-or-num]
+  (if (#{"0 [Credits]" "1 [Credits]" "2 [Credits]"} button-name-or-num)
+    (click-button state side (read-string (first (clojure.string/split button-name-or-num #" "))))
+    (letfn [(choice-to-name [c]
+              (cond (string? c) (if (#{"0 [Credits]" "1 [Credits]" "2 [Credits]"} c)
+                                  (read-string (first (clojure.string/split c #" ")))
+                                  c)
+                    (map? c) (:title c) ;cards
+                    (int? c) c))]
+      (let [prompt (first (get-in @state [side :prompt]))
+            choices (:choices prompt)
+            button-name (if (not (string? button-name-or-num))
+                          (str button-name-or-num)
+                          button-name-or-num)]
+        (cond (or (= choices :credit)
+                  (and (map? choices)
+                       (or (:number choices)
+                           (:counter choices))))
+              (core/resolve-prompt state side {:choice (read-string button-name-or-num)})
+
+              (and (map? choices)       ; Targeted Marketing only, hopefully
+                   (:card-title choices))
+              (core/resolve-prompt state side {:choice button-name-or-num})
+              
+              true                      ; old prompt-card 
+              (let [choice-titles (map choice-to-name choices)
+                    correct-choice-name-pairs (filter #(= button-name (second %))
+                                                      (map vector choices choice-titles))
+                    correct-choice (first (first correct-choice-name-pairs))]
+                (is (= 1 (count correct-choice-name-pairs)) (str "Current prompt has choices " choice-titles
+                                                                 " , making argument " button-name " ambiguous or impossible"))
+                (if (or (string? correct-choice) (int? correct-choice))
+                  (core/resolve-prompt state side {:choice correct-choice})
+                  (core/resolve-prompt state side {:card correct-choice})))))))
+  nil)
