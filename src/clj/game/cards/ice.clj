@@ -890,12 +890,13 @@
    (grail-ice end-the-run)
 
    "Gatekeeper"
-   (let [draw {:prompt "Draw how many cards?"
+   (let [draw {:async true
+               :prompt "Draw how many cards?"
                :choices {:number (req 3)
                          :max (req 3)
                          :default (req 1)}
                :msg (msg "draw " target "cards")
-               :effect (effect (draw target nil))}
+               :effect (effect (draw eid target nil))}
          reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas"
                              :show-discard true
                              :choices {:req #(and (= "Corp" (:side %))
