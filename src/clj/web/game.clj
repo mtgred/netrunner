@@ -114,7 +114,7 @@
     reply-fn                            :?reply-fn}]
   (let [{:keys [original-players started players state] :as game} (lobby/game-for-id gameid)]
     (if (and started
-             (< (count players) 2)
+             (< (count (filter #(not= _id (-> % :user :_id)) players)) 2)
              (some #(= _id (:_id %)) (map :user original-players)))
       (let [player (lobby/join-game user client-id gameid)
             side (keyword (str (.toLowerCase (:side player)) "-state"))]
