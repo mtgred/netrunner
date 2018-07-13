@@ -83,6 +83,7 @@
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
 
 (deftest bankroll
+  ;; Bankroll
   (do-game
     (new-game (default-corp)
               (default-runner ["Bankroll"]))
@@ -594,6 +595,7 @@
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
 
 (deftest kyuban
+  ;; Kyuban
   (testing "Gain creds when passing a piece of ice, both when rezzed and when unrezzed."
     (do-game
       (new-game (default-corp [(qty "Lockdown" 3)])

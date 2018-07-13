@@ -448,6 +448,7 @@
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card"))))
 
 (deftest hijacked-router
+  ;; Hijacked Router
   (testing "Run on Archives"
     (do-game
       (new-game (default-corp)
@@ -779,6 +780,33 @@
         (is (= (:cid accessed) (:cid (last (:deck (get-corp))))) "Maya moved the accessed card to the bottom of R&D")
         (is (:prompt (get-runner)) "Runner has next access prompt")))))
 
+(deftest minds-eye
+  ;; Mind's Eye - Gain power tokens on R&D runs, and for 3 tokens and a click, access the top card of R&D
+  (testing "Interaction with RDI + Aeneas"
+    (do-game
+     (new-game (default-corp [(qty "Jackson Howard" 2)])
+               (default-runner ["Mind's Eye" "R&D Interface" "Aeneas Informant"]))
+     (dotimes [_ 2]
+       (core/move state :corp (find-card "Jackson Howard" (:hand (get-corp))) :deck))
+     (take-credits state :corp)
+     (core/gain state :runner :credit 10 :click 20)
+     (play-from-hand state :runner "Mind's Eye")
+     (let [eye (get-hardware state 0)]
+       (is (= 0 (get-counters (refresh eye) :power)) "0 counters on install")
+       (dotimes [_ 3]
+         (run-empty-server state :rd)
+         (prompt-choice :runner "No action"))
+       (is (= 3 (get-counters (refresh eye) :power)) "3 counters after 3 runs")
+       (play-from-hand state :runner "R&D Interface")
+       (play-from-hand state :runner "Aeneas Informant")
+       (card-ability state :runner (refresh eye) 0)
+       (let [num-creds (:credit (get-runner))]
+         (dotimes [_ 2]
+           (prompt-choice :runner "Card from deck")
+           (prompt-choice :runner "No action")
+           (prompt-choice :runner "Yes")) ;Aeneas
+         (is (= (+ num-creds 2) (:credit (get-runner))) "Runner has gained 2 from Aeneas"))))))
+
 (deftest net-ready-eyes
   ;; Net-Ready Eyes
   (do-game
@@ -893,7 +921,7 @@
       (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run"))))
 
 (deftest paragon
-  ;; Gain 1 credit and may look at and move top card of Stack to bottom
+  ;; Paragon - Gain 1 credit and may look at and move top card of Stack to bottom
   (do-game
     (new-game (default-corp)
               (default-runner ["Paragon" "Easy Mark" "Sure Gamble"]))
@@ -912,6 +940,7 @@
     (is (not (prompt-is-card? :runner (get-hardware state 0))) "No prompt from Paragon")))
 
 (deftest patchwork
+  ;; Patchwork
   (testing "Play event"
     (do-game
       (new-game (default-corp)
@@ -928,7 +957,6 @@
       (is (= 2 (count (:discard (get-runner)))) "2 cards now in heap")
       (play-from-hand state :runner "Sure Gamble")
       (is (= 15 (:credit (get-runner))) "Patchwork is once-per-turn")))
-
   (testing "Install a card"
     (do-game
       (new-game (default-corp)
@@ -1524,6 +1552,7 @@
    (is (= 3 (:credit (get-runner))) "Gained 1 more credit from exposing")))
 
 (deftest zer0
+  ;; Zer0
   (testing "Basic ability"
     (do-game
       (new-game (default-corp)

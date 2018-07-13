@@ -396,6 +396,19 @@
    "Battlement"
    {:subroutines [end-the-run]}
 
+   "Blockchain"
+   (letfn [(sub-count [corp] (int (/ (count (filter #(and (is-type? % "Operation") (has-subtype? % "Transaction"))
+                                                    (:discard corp)))
+                                     2)))]
+     {:abilities [{:label "Gain subroutines"
+                   :msg (msg (let [c (sub-count corp)]
+                               (str "gain " c (pluralize " subroutine" c))))}]
+      :subroutines [{:label "Gain 1 [credits], Runner loses 1 [credits]"
+                     :msg "gain 1 [credits] and force the Runner to lose 1 [credits]"
+                     :effect (effect (gain-credits 1)
+                                     (lose-credits :runner 1))}
+                    end-the-run]})
+
    "Bloodletter"
    {:subroutines [{:label "Runner trashes 1 program or top 2 cards of their Stack"
                    :effect (req (if (empty? (filter #(is-type? % "Program") (all-active-installed state :runner)))
@@ -888,6 +901,36 @@
 
    "Galahad"
    (grail-ice end-the-run)
+
+   "Gatekeeper"
+   (let [draw {:async true
+               :prompt "Draw how many cards?"
+               :choices {:number (req 3)
+                         :max (req 3)
+                         :default (req 1)}
+               :msg (msg "draw " target "cards")
+               :effect (effect (draw eid target nil))}
+         reveal-and-shuffle {:prompt "Reveal and shuffle up to 3 agendas"
+                             :show-discard true
+                             :choices {:req #(and (= "Corp" (:side %))
+                                                  (or (= [:discard] (:zone %))
+                                                      (= [:hand] (:zone %)))
+                                                  (is-type? % "Agenda"))
+                                       :max (req 3)}
+                             :effect (req (doseq [c targets]
+                                            (move state :corp c :deck))
+                                          (shuffle! state :corp :deck))
+                             :cancel-effect (effect (shuffle! :deck))
+                             :msg (msg "add "
+                                       (str (join ", " (map :title targets)))
+                                       " to R&D")}
+         draw-reveal-shuffle {:async true
+                              :label "Draw cards, reveal and shuffle agendas"
+                              :effect (req (wait-for (resolve-ability state side draw card nil)
+                                                     (continue-ability state side reveal-and-shuffle card nil)))}]
+    {:strength-bonus (req (if (= :this-turn (:rezzed card)) 6 0))
+     :subroutines [draw-reveal-shuffle
+                   end-the-run]})
 
    "Gemini"
    (constellation-ice (do-net-damage 1))
@@ -1740,6 +1783,37 @@
    (implementation-note "\"Resolve a subroutine...\" subroutine is not implemented"
                         (space-ice trash-program end-the-run))
 
+   "Otoroshi"
+   {:subroutines [{:async true
+                   :label "Place 3 advancement tokens on installed card"
+                   :msg "place 3 advancement tokens on installed card"
+                   :prompt "Choose an installed Corp card"
+                   :choices {:req #(and (= (:side %) "Corp")
+                                        (installed? %))}
+                   :effect (req (let [c target
+                                      title (if (:rezzed c)
+                                              (:title c)
+                                              "selected unrezzed card")]
+                                  (add-counter state side c :advancement 3)
+                                  (show-wait-prompt state side "Runner to resolve Otoroshi")
+                                  (continue-ability
+                                    state side
+                                    {:player :runner
+                                     :async true
+                                     :prompt (str "Access " title " or pay 3 [Credits]?")
+                                     :choices (concat ["Access card"]
+                                                      (when (>= (:credit runner) 3)
+                                                        ["Pay 3 [Credits]"]))
+                                     :msg (msg "force the Runner to "
+                                               (if (= target "Access card")
+                                                 (str "access " title)
+                                                 "pay 3 [Credits]"))
+                                     :effect (req (clear-wait-prompt state :corp)
+                                                  (if (= target "Access card")
+                                                    (access-card state :runner eid c)
+                                                    (pay-sync state :runner eid card :credit 3)))}
+                                    card nil)))}]}
+
    "Owl"
    {:subroutines [{:choices {:req #(and (installed? %)
                                         (is-type? % "Program"))}
@@ -2024,14 +2098,8 @@
                                     (do (clear-wait-prompt state :runner)
                                         (effect-completed state side eid)))))}
                   {:label "Force the Runner to access the top card of R&D"
-                   :effect (req (wait-for (trigger-event-sync state side :pre-access :rd)
-                                          (let [total-cards (access-count state side :rd-access)]
-                                            (swap! state assoc-in [:run :did-access] true)
-                                            (swap! state assoc-in [:runner :register :accessed-cards] true)
-                                            (doseq [c (take total-cards (:deck corp))]
-                                              (system-msg state :runner (str "accesses " (:title c)))
-                                              (access-card state side c))
-                                            (swap! state update-in [:run :cards-accessed] (fnil #(+ % total-cards) 0)))))}]}
+                   :async true
+                   :effect (req (do-access state :runner eid [:rd] {:no-root true}))}]}
 
    "Snoop"
    {:implementation "Encounter effect is manual"

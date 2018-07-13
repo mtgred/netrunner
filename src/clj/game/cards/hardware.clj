@@ -690,6 +690,18 @@
    {:implementation "MU usage restriction not enforced"
     :in-play [:memory 3]}
 
+   "Minds Eye"
+   {:in-play [:memory 1]
+    :implementation "Power counters added automatically"
+    :events {:successful-run {:silent (req true)
+                              :req (req (= target :rd))
+                              :effect (effect (add-counter card :power 1))}}
+    :abilities [{:async true
+                 :cost [:click 1]
+                 :counter-cost [:power 3]
+                 :msg "access the top card of R&D"
+                 :effect (req (do-access state side eid [:rd] {:no-root true}))}]}
+
    "Mirror"
    {:in-play [:memory 2]
     :events {:successful-run
@@ -791,8 +803,8 @@
                                    :req (req (and (#{:rd :hq} (first (:server target)))
                                                   (first-event? state side :successful-run-ends
                                                                 #(#{:rd :hq} (first (:server (first %)))))))
-                                   :msg (msg "draw " (:cards-accessed target 0) " cards")
-                                   :effect (effect (draw (:cards-accessed target 0)))}}}
+                                   :msg (msg "draw " (total-cards-accessed target) " cards")
+                                   :effect (effect (draw (total-cards-accessed target)))}}}
 
    "Omni-drive"
    {:recurring 1

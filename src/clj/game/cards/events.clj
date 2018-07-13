@@ -503,6 +503,20 @@
                                              (gain-credits :runner (five-or-all corp)))})}
                       card))}
 
+   "Divide and Conquer"
+   {:req (req archives-runnable)
+    :makes-run true
+    :async true
+    :effect
+    (effect (run :archives
+                 {:end-run
+                  {:async true
+                   :effect
+                   (req (wait-for (do-access state side [:rd] {:no-root true})
+                                  (wait-for (do-access state side [:hq] {:no-root true})
+                                            (effect-completed state side eid))))}}
+                 card))}
+
    "Drive By"
    {:choices {:req #(let [topmost (get-nested-host %)]
                      (and (is-remote? (second (:zone topmost)))
@@ -1010,11 +1024,11 @@
                              (access-card state side (first cards))
                              (if (< 1 (count cards))
                                (continue-ability state side (access-pile (next cards) pile pile-size) card nil)
-                               (do (swap! state assoc-in [:run :cards-accessed] pile-size)
-                                   (effect-completed state side eid)))))})
+                               (effect-completed state side eid))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
-              :choices [(str "Pile 1 (" (count p1) " cards)") (str "Pile 2 (" (count p2) " cards)")]
+              :choices [(str "Pile 1 (" (count p1) " cards)")
+                        (str "Pile 2 (" (count p2) " cards)")]
               :async true
               :effect (req (let [choice (if (.startsWith target "Pile 1") 1 2)]
                              (clear-wait-prompt state :corp)
@@ -1040,8 +1054,8 @@
                                                     (which-pile (shuffle targets)
                                                                 (shuffle (vec (clojure.set/difference
                                                                                 (set (:hand corp)) (set targets)))))
-                                                    card nil))
-                                  } card nil))
+                                                    card nil))}
+                                 card nil))
                            (effect-completed state side eid)))}]
        {:req (req hq-runnable)
         :effect (effect (run :hq {:req (req (= target :hq))
@@ -1969,18 +1983,22 @@
     :events {:runner-turn-ends nil}}
 
    "Trade-In"
-   {:additional-cost [:hardware 1]
-    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-    :events {:runner-trash {:effect (effect (gain-credits (quot (:cost target) 2))
-                                            (system-msg (str "trashes " (:title target) " and gains " (quot (:cost target) 2) " [Credits]"))
-                                            (continue-ability {:prompt "Choose a Hardware to add to your Grip from your Stack"
-                                                               :choices (req (filter #(is-type? % "Hardware")
-                                                                                     (:deck runner)))
-                                                               :msg (msg "add " (:title target) " to their Grip")
-                                                               :effect (effect (trigger-event :searched-stack nil)
-                                                                               (shuffle! :deck)
-                                                                               (move target :hand)
-                                                                               (unregister-events card))} card nil))}}}
+   ;; Basically a hack. Ideally the additional cost cause the cost trash to be passed in as targets
+   (letfn [(trashed-hw [state] (last (get-in @state [:runner :discard])))]
+     {:additional-cost [:hardware 1]
+      :msg (msg (let [{:keys [title cost]} (trashed-hw state)]
+                  (str "trash " title " and gain " (quot cost 2) " [Credits]")))
+      :effect (req (let [{:keys [cost]} (trashed-hw state)]
+                     (gain-credits state :runner (quot cost 2))
+                     (continue-ability state :runner
+                                       {:prompt "Choose a Hardware to add to your Grip from your Stack"
+                                        :choices (req (filter #(is-type? % "Hardware")
+                                                              (:deck runner)))
+                                        :msg (msg "add " (:title target) " to their Grip (and shuffle their Stack)")
+                                        :effect (effect (trigger-event :searched-stack nil)
+                                                        (shuffle! :deck)
+                                                        (move target :hand))}
+                                       card nil)))})
 
    "Traffic Jam"
    {:effect (effect (update-all-advancement-costs))

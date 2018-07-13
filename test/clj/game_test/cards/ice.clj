@@ -110,6 +110,34 @@
       (run-jack-out state)
       (is (= 1 (:tag (get-runner))) "Run unsuccessful; Runner kept 1 tag"))))
 
+(deftest blockchain
+  (do-game
+    (new-game (default-corp ["Blockchain" (qty "Beanstalk Royalties" 5)])
+              (default-runner))
+    (core/gain state :corp :credit 2 :click 5)
+    (play-from-hand state :corp "Blockchain" "HQ")
+    (let [bc (get-ice state :hq 0)]
+      (core/rez state :corp bc)
+      (card-ability state :corp bc 0)
+      (is (last-log-contains? state "uses Blockchain to gain 0 subroutines") "No subroutines gained because no Transactions are in Archives")
+      (play-from-hand state :corp "Beanstalk Royalties")
+      (card-ability state :corp bc 0)
+      (is (last-log-contains? state "uses Blockchain to gain 0 subroutines") "No subroutines gained because only 1 Transaction is in Archives")
+      (play-from-hand state :corp "Beanstalk Royalties")
+      (card-ability state :corp bc 0)
+      (is (last-log-contains? state "uses Blockchain to gain 1 subroutine") "1 subroutine gained because 2 Transactions are in Archives")
+      (play-from-hand state :corp "Beanstalk Royalties")
+      (card-ability state :corp bc 0)
+      (is (last-log-contains? state "uses Blockchain to gain 1 subroutine") "1 subroutine gained because 3 Transactions are in Archives")
+      (play-from-hand state :corp "Beanstalk Royalties")
+      (card-ability state :corp bc 0)
+      (is (last-log-contains? state "uses Blockchain to gain 2 subroutines") "2 subroutines gained because 4 Transactions are in Archives")
+
+      (is (= 12 (:credit (get-corp))) "Corp has 12 credits from four Beanstalks")
+      (card-subroutine state :corp bc 0)
+      (is (= 13 (:credit (get-corp))) "Corp gained 1 credit from Blockchain")
+      (is (= 4 (:credit (get-runner))) "Runner lost 1 credit from Blockchain"))))
+
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
   (do-game
@@ -389,7 +417,7 @@
     (do-game
      (new-game (default-corp [(qty "Ice Wall" 2) (qty "Formicary" 3)])
                (default-runner [(qty "First Responders" 6)]))
-     (play-from-hand state :corp "Ice Wall" "HQ") 
+     (play-from-hand state :corp "Ice Wall" "HQ")
      (play-from-hand state :corp "Formicary" "Archives")
      (play-from-hand state :corp "Formicary" "R&D")
      (take-credits state :corp)
@@ -456,6 +484,45 @@
       (card-ability state :corp (refresh fl) 0)
       (is (= 1 (get-counters (refresh fl) :power)) "Free Lunch has 1 power counter")
       (is (= 4 (:credit (get-runner))) "Runner lost 1 credit"))))
+
+(deftest gatekeeper
+  ;; Gatekeeper
+  (do-game
+    (new-game (default-corp ["Gatekeeper" "Posted Bounty"
+                             (qty "Hostile Takeover" 2) (qty "Ice Wall" 10)])
+              (default-runner))
+    ;; Set up
+    (starting-hand state :corp ["Gatekeeper" "Ice Wall" "Ice Wall"
+                                "Posted Bounty" "Hostile Takeover" "Hostile Takeover"])
+    (trash-from-hand state :corp "Ice Wall")
+    (trash-from-hand state :corp "Ice Wall")
+    (trash-from-hand state :corp "Hostile Takeover")
+    ;; Actual test
+    (play-from-hand state :corp "Gatekeeper" "New remote")
+    (take-credits state :corp)
+    (let [gate (get-ice state :remote1 0)
+          hand (-> (get-corp) :hand count)
+          deck (-> (get-corp) :deck count)
+          num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
+          hostile (find-card "Hostile Takeover" (:hand (get-corp)))]
+      (run-on state "Server 1")
+      (core/rez state :corp gate)
+      (is (= 6 (:current-strength (refresh gate))))
+      (card-subroutine state :corp gate 0)
+      (prompt-choice :corp 3)
+      (is (= (+ 3 hand) (-> (get-corp) :hand count)) "Corp should draw 3 cards")
+      (prompt-select :corp hostile)
+      (prompt-select :corp (find-card "Hostile Takeover" (:discard (get-corp))))
+      (prompt-select :corp (find-card "Posted Bounty" (:hand (get-corp))))
+      (is (= deck (-> (get-corp) :deck count)) "R&D should have same number of cards as start")
+      (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
+          "Corp should shuffle R&D")
+      (is (core/in-deck? (core/find-latest state hostile)) "Hostile Takeover should be in deck now")
+      (card-subroutine state :corp gate 1)
+      (is (not (:run @state)) "Gatekeeper subroutine should end the run")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (zero? (:current-strength (refresh gate))) "Gatekeeper strength should be reset"))))
 
 (deftest gemini
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success
@@ -1228,6 +1295,37 @@
       (is (= 3 (get-counters (refresh odu) :advancement)))
       (is (= 6 (get-counters (refresh eni) :advancement))))))
 
+(deftest otoroshi
+  ;; Otoroshi
+  (do-game
+    (new-game (default-corp ["Otoroshi" "Project Junebug" (qty "Ice Wall" 100)])
+              (default-runner))
+    (starting-hand state :corp ["Otoroshi" "Project Junebug"])
+    (play-from-hand state :corp "Otoroshi" "New remote")
+    (play-from-hand state :corp "Project Junebug" "New remote")
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (let [otoroshi (get-ice state :remote1 0)
+          junebug (get-content state :remote2 0)
+          credits (:credit (get-runner))]
+      (is (zero? (get-counters (refresh junebug) :advancement)) "Project Junebug should start with 0 advancement tokens")
+      (core/rez state :corp otoroshi)
+      (card-subroutine state :corp otoroshi 0)
+      (prompt-select :corp junebug)
+      (is (= 3 (get-counters (refresh junebug) :advancement)) "Project Junebug should have 3 advancement tokens from Otoroshi subroutine")
+      (is (= (list "Access card" "Pay 3 [Credits]") (-> (get-runner) :prompt first :choices)) "Runner should have 2 options")
+      (prompt-choice-partial :runner "Pay")
+      (is (= (- credits 3) (:credit (get-runner))) "Runner should pay 3 credits to Otoroshi subroutine")
+      (run-jack-out state)
+      (run-on state :remote1)
+      (card-subroutine state :corp otoroshi 0)
+      (prompt-select :corp otoroshi)
+      (is (= 3 (get-counters (refresh otoroshi) :advancement)) "Otoroshi should have 3 advancement tokens from Otoroshi subroutine")
+      (is (= (list "Access card") (-> (get-runner) :prompt first :choices)) "Runner should have 1 option")
+      (prompt-choice-partial :runner "Access")
+      (is (= "You accessed Otoroshi." (-> (get-runner) :prompt first :msg)) "Runner should access Otoroshi even tho it's an ice.")
+      (prompt-choice :runner "No action"))))
+
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
@@ -1473,9 +1571,11 @@
         (is (= "Quandary" (:title (second (:deck (get-corp))))))
         (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
         (card-subroutine state :corp shiro 1)
+        (prompt-choice :runner "Card from deck")
         (is (= (:cid (first (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
         (prompt-choice :runner "No action")
+        (prompt-choice :runner "Card from deck")
         (is (= (:cid (second (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
   (testing "with Mwanza City Grid, should access additional 3 cards"
@@ -1498,9 +1598,11 @@
           (card-subroutine state :corp shiro 1)
           (is (= 3 (-> @state :run :access-bonus)) "Should access an additional 3 cards")
           (dotimes [_ 5]
+            (prompt-choice :runner "Card from deck")
             (prompt-choice :runner "No action"))
+          (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards before jack out")
           (run-jack-out state)
-          (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards total"))))))
+          (is (= (+ credits 10) (:credit (get-corp))) "Corp should only gain money once"))))))
 
 (deftest snowflake
   ;; Snowflake - Win a psi game to end the run

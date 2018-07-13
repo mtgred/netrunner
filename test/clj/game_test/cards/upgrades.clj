@@ -822,10 +822,10 @@
     (core/click-draw state :runner nil)
     (core/click-draw state :runner nil)
     (run-empty-server state "HQ")
-    (prompt-choice :runner "No") ; don't trash Manta Grid
+    (prompt-choice :runner "No action") ; don't trash Manta Grid
     (is (= 1 (:click (get-runner))) "Running last click")
     (run-empty-server state "HQ")
-    (prompt-choice :runner "No") ; don't trash Manta Grid
+    (prompt-choice :runner "No action") ; don't trash Manta Grid
     (take-credits state :runner)
     (is (= 5 (:click (get-corp))) "Corp gained 2 clicks due to 2 runs with < 6 Runner credits")
     (take-credits state :corp)
@@ -834,7 +834,7 @@
     (take-credits state :corp)
     (take-credits state :runner 3)
     (run-empty-server state "HQ")
-    (prompt-choice :runner "No") ; don't trash Manta Grid
+    (prompt-choice :runner "No action") ; don't trash Manta Grid
     (take-credits state :runner)
     (is (= 4 (:click (get-corp))) "Corp gained a click due to running last click")))
 

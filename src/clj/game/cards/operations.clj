@@ -425,24 +425,24 @@
                                    :effect (req (if tagged
                                                   (damage state side eid :meat 1 {:card card})
                                                   (gain-tags state :corp eid 1)))}}}}}
-   
+
    "Eavesdrop"
-    (let [new-sub {:label "[Eavesdrop]: Trace 3 - Give the Runner 1 tag"}]
-      {:implementation "On encounter effect is manual"
-       :sub-effect {:label "Give the Runner 1 tag"
-                    :trace {:base 3
-                            :successful {:msg "give the Runner 1 tag"
-                                         :async true
-                                         :effect (effect (gain-tags :runner eid 1))}}}
-       :choices {:req #(and (ice? %)
-                            (installed? %))}
-       :msg (msg "give " (card-str state target {:visible false}) " additional text")
-       :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub)
-                    (update-ice-strength state side target)
-                    (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
-       :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
-       :events {:rez {:req (req (= (:cid target) (:cid (:host card))))
-                      :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
+   (let [new-sub {:label "[Eavesdrop]: Trace 3 - Give the Runner 1 tag"}]
+     {:implementation "On encounter effect is manual"
+      :sub-effect {:label "Give the Runner 1 tag"
+                   :trace {:base 3
+                           :successful {:msg "give the Runner 1 tag"
+                                        :async true
+                                        :effect (effect (gain-tags :runner eid 1))}}}
+      :choices {:req #(and (ice? %)
+                           (installed? %))}
+      :msg (msg "give " (card-str state target {:visible false}) " additional text")
+      :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub)
+                   (update-ice-strength state side target)
+                   (host state side (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))
+      :leave-play (req (remove-extra-subs state :corp (:cid card) (:host card)))
+      :events {:rez {:req (req (= (:cid target) (:cid (:host card))))
+                     :effect (req (add-extra-sub state :corp (:cid card) (get-card state target) -1 new-sub))}}})
 
    "Economic Warfare"
    {:req (req (and (last-turn? state :runner :successful-run)
@@ -656,6 +656,30 @@
     :async true
     :effect (effect (gain-credits 3)
                     (draw eid 1 nil))}
+
+   "Hangeki"
+   {:req (req (last-turn? state :runner :trashed-card))
+    :async true
+    :prompt "Choose an installed Corp card"
+    :choices {:req #(and (= (:side %) "Corp")
+                         (installed? %))}
+    :effect (effect (show-wait-prompt :corp "Runner to resolve Hangeki")
+                    (continue-ability
+                      {:optional
+                       {:player :runner
+                        :async true
+                        :prompt "Access card? (If not, add Hangeki to your score area worth -1 agenda point)"
+                        :yes-ability
+                        {:effect (req (clear-wait-prompt state :corp)
+                                      (wait-for (access-card state side target)
+                                                (move state :corp (find-latest state card) :rfg)
+                                                (system-msg state :corp "removes Hangeki from the game")
+                                                (effect-completed state side eid)))}
+                        :no-ability
+                        {:msg "add it to the Runner's score area as an agenda worth -1 agenda point"
+                         :effect (effect (clear-wait-prompt :corp)
+                                         (as-agenda :runner eid (find-latest state card) -1))}}}
+                      card targets))}
 
    "Hard-Hitting News"
    {:req (req (last-turn? state :runner :made-run))
@@ -1682,20 +1706,21 @@
     :async true
     :effect (req (let [chosen target]
                    (show-wait-prompt state side "Runner to resolve Threat Assessment")
-                   (continue-ability state :runner
-                                     {:prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
-                                      :choices [(str "Move " (:title chosen))
-                                                "2 tags"]
-                                      :async true
-                                      :effect (req (clear-wait-prompt state :corp)
-                                                   (move state :corp (last (:discard corp)) :rfg)
-                                                   (if (.startsWith target "Move")
-                                                     (do (system-msg state side (str "chooses to move " (:title chosen) " to the Stack"))
-                                                       (move state :runner chosen :deck {:front true})
-                                                       (effect-completed state side eid))
-                                                     (do (system-msg state side "chooses to take 2 tags")
-                                                       (gain-tags state :runner eid 2))))}
-                                     card nil)))}
+                   (continue-ability
+                     state :runner
+                     {:prompt (str "Add " (:title chosen) " to the top of the Stack or take 2 tags?")
+                      :choices [(str "Move " (:title chosen))
+                                "2 tags"]
+                      :async true
+                      :effect (req (clear-wait-prompt state :corp)
+                                   (move state :corp (last (:discard corp)) :rfg)
+                                   (if (.startsWith target "Move")
+                                     (do (system-msg state side (str "chooses to move " (:title chosen) " to the Stack"))
+                                         (move state :runner chosen :deck {:front true})
+                                         (effect-completed state side eid))
+                                     (do (system-msg state side "chooses to take 2 tags")
+                                         (gain-tags state :runner eid 2))))}
+                     card nil)))}
 
    "Threat Level Alpha"
    {:trace {:base 1

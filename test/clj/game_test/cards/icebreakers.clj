@@ -421,6 +421,7 @@
      (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
 
 (deftest ika
+  ;; Ika
   (testing "Can be hosted on both rezzed/unrezzed ice, respects no-host, is blanked by Magnet"
     (do-game
       (new-game (default-corp ["Tithonium" "Enigma" "Magnet"])

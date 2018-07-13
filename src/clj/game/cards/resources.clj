@@ -552,7 +552,7 @@
                                  true)))
                            (trash card {:cause :ability-cost}))}]}
 
-   "Den Lister"
+   "Dean Lister"
    {:abilities [{:req (req (:run @state))
                  :msg (msg "add +1 strength for each card in their Grip to " (:title target) " until the end of the run")
                  :choices {:req #(and (has-subtype? % "Icebreaker")
@@ -594,7 +594,7 @@
                                                 :effect (effect (add-counter card :power 1))})]
               {:corp-trash (trash-event :corp-trash)
                :runner-trash (trash-event :runner-trash)})}
-   
+
    "DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
          can-host? (fn [runner c] (and (is-type? c "Identity")
@@ -862,12 +862,10 @@
    (shard-constructor :archives "access all cards in Archives" {:async true}
                       (req (trash state side card {:cause :ability-cost})
                            (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                           (when (:run @state)
-                             (swap! state update-in [:run :cards-accessed] (fnil #(+ % (count (:discard corp))) 0)))
                            (wait-for (trigger-event-sync state side :pre-access :archives)
                                      (resolve-ability state :runner
                                                       (choose-access (get-in @state [:corp :discard])
-                                                                     '(:archives)) card nil))))
+                                                                     '(:archives) {:no-root true}) card nil))))
 
    "Hard at Work"
    (let [ability {:msg "gain 2 [Credits] and lose [Click]"
@@ -1489,6 +1487,12 @@
                  :effect (effect (gain-credits 1)
                                  (draw))}]}
 
+   "Psych Mike"
+   {:events {:successful-run-ends
+             {:req (req (and (= [:rd] (:server target))
+                             (first-event? state side :successful-run-ends)))
+              :effect (effect (gain-credits :runner (total-cards-accessed target :deck)))}}}
+
    "Public Sympathy"
    {:in-play [:hand-size 2]}
 
@@ -1976,10 +1980,17 @@
    "The Turning Wheel"
    {:events {:agenda-stolen {:effect (effect (update! (assoc card :agenda-stolen true)))
                              :silent (req true)}
-             :pre-access {:req (req (and (pos? (get-in @state [:run :ttw-bonus] 0))
-                                         (:run @state)
-                                         (not (#{:hq :rd} target))))
-                          :effect (effect (access-bonus (- (get-in @state [:run :ttw-bonus] 0))))
+             :pre-access {:req (req (and (:run @state)
+                                         (pos? (get-in @state [:run :ttw-bonus] 0))))
+                          :effect (req (let [ttw-bonus (get-in @state [:run :ttw-bonus] 0)
+                                             deferred-bonus (get-in @state [:run :ttw-deferred-bonus] 0)]
+                                         (if (#{:hq :rd} target)
+                                           (when (pos? deferred-bonus)
+                                             (access-bonus state side ttw-bonus)
+                                             (swap! state assoc-in [:run :ttw-deferred-bonus] 0))
+                                           (when (zero? deferred-bonus)
+                                             (access-bonus state side (- ttw-bonus))
+                                             (swap! state assoc-in [:run :ttw-deferred-bonus] ttw-bonus)))))
                           :silent (req true)}
              :run-ends {:effect (req (when (and (not (:agenda-stolen card))
                                                 (#{:hq :rd} target))
@@ -2012,7 +2023,7 @@
                   :async true
                   :prompt (msg "Which card to install?")
                   :effect (req (if (and (runner-can-install? state side target)
-                                        (can-pay? state side target 
+                                        (can-pay? state side target
                                                   (install-cost state side target [:credit (dec (:cost target))])))
                                  (do (install-cost-bonus state side [:credit -1])
                                      (system-msg state side "uses Thunder Art Gallery to install a card.")

@@ -684,7 +684,7 @@
       (is (zero? (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
 
 (deftest credit-kiting
-  ;; After successful central run lower install cost by 8 and gain a tag
+  ;; Credit Kiting - After successful central run lower install cost by 8 and gain a tag
   (do-game
     (new-game (default-corp ["PAD Campaign" "Ice Wall"])
               (default-runner ["Credit Kiting" "Femme Fatale"]))
@@ -698,12 +698,10 @@
     (play-from-hand state :runner "Credit Kiting")
     (prompt-select :runner (find-card "Femme Fatale" (:hand (get-runner))))
     (is (= 4 (:credit (get-runner))) "Femme Fatale only cost 1 credit")
-
     (testing "Femme Fatale can still target ice when installed with Credit Kiting, issue #3715"
       (let [iw (get-ice state :rd 0)]
         (prompt-select :runner iw)
         (is (:icon (refresh iw)) "Ice Wall has an icon")))
-
     (is (= 1 (:tag (get-runner))) "Runner gained a tag")))
 
 (deftest data-breach
@@ -874,6 +872,49 @@
       (is (= 4 (:credit (get-runner))) "Runner is down a credit")
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")
       (is (not (:run @state)) "Run finished"))))
+
+(deftest divide-and-conquer
+  ;; Divide and Conquer
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
+                (default-runner ["Divide and Conquer"]))
+      (starting-hand state :corp ["Hostile Takeover" "Ice Wall" "Ice Wall"])
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Divide and Conquer")
+      (run-successful state)
+      (prompt-choice :runner "No action")
+      (prompt-choice :runner "Steal")
+      (is (= 4 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 in R&D, and 1 in HQ")))
+  (testing "with The Turning Wheel counters"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
+                (default-runner ["Divide and Conquer" "The Turning Wheel"]))
+      (starting-hand state :corp (concat ["Hostile Takeover"]
+                                         (repeat 4 "Ice Wall")))
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (core/add-counter state :runner ttw :power 4)
+        (play-from-hand state :runner "Divide and Conquer")
+        (card-ability state :runner ttw 0)
+        (card-ability state :runner ttw 0)
+        (run-successful state)
+        ;; R&D
+        (dotimes [_ 3]
+          (prompt-choice :runner "Card from deck")
+          (prompt-choice :runner "No action"))
+        ;; HQ
+        (dotimes [_ 3]
+          (prompt-choice :runner "Card from hand")
+          (prompt-choice :runner (-> (prompt? :runner) :choices first)))
+        (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
+        (is (= 2 (-> (get-runner) :register :last-run :access-bonus)) "The Turning Wheel should provide 2 additional accesses")
+        (is (= 8 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
@@ -1311,6 +1352,7 @@
     (is (zero? (count (:hand (get-corp)))) "There are no cards in hand")))
 
 (deftest guinea-pig
+  ;; Guinea Pig
   (do-game
     (new-game (default-corp)
               (default-runner ["Guinea Pig" (qty "Sure Gamble" 3)]))
@@ -1321,6 +1363,7 @@
     (is (= 4 (count (:discard (get-runner)))) "3 cards trashed from Guinea Pig + Guinea Pig itself")))
 
 (deftest hacktivist-meeting
+  ;; Hacktivist Meeting
   ;; Trash a random card from corp hand while active
   ;; Make sure it is not active when hosted on Peddler
   (do-game
@@ -1358,6 +1401,7 @@
     (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))
 
 (deftest hot-pursuit
+  ;; Hot Pursuit
   (do-game
     (new-game (default-corp)
               (default-runner ["Hot Pursuit"]))
@@ -1517,7 +1561,7 @@
 (deftest insight
   ;; Insight
   (do-game
-    (new-game (default-corp ["Caprice Nisei" "Elizabeth Mills" 
+    (new-game (default-corp ["Caprice Nisei" "Elizabeth Mills"
                             "Jackson Howard" "Director Haas"])
             (default-runner ["Insight"]))
     (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
@@ -1803,6 +1847,7 @@
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
 
 (deftest office-supplies
+  ;; Office Supplies
   (letfn [(office-supplies-test [link]
             (do-game
               (new-game (default-corp)
@@ -2668,6 +2713,41 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
       (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))
+
+(deftest trade-in
+  ;; Trade-in - trash an installed Hardware, gain credits equal to half of install cost,
+  ;;            search stack for Hardware and add to grip
+  (do-game
+    (new-game
+      (default-corp)
+      (default-runner [(qty "Trade-In" 3) (qty "Astrolabe" 2) (qty "Sports Hopper" 2)])
+      {:start-as :runner})
+    (starting-hand state :runner ["Trade-In" "Trade-In" "Astrolabe" "Sports Hopper"])
+    (core/gain state :runner :click 5 :credit 5)
+    (play-from-hand state :runner "Astrolabe")
+    (play-from-hand state :runner "Sports Hopper")
+
+    (testing "Trade-in works with Hardware costing 0 or 1 credits (issue #3750)"
+      (let [runner-credits (:credit (get-runner))]
+        (play-from-hand state :runner "Trade-In")
+        (prompt-select :runner (get-hardware state 0))
+        (is (= 2 (count (:discard (get-runner)))) "Trade-In and Astrolabe in discard")
+        (is (= (- runner-credits 1) (:credit (get-runner)))
+            "Paid 1 credit to play Trade-In and gained 0 credits from trashing Astrolabe")))
+
+    (testing "Trade-In lets runner search for Hardware and add it to Grip"
+      (is (= 1 (count (:hand (get-runner)))) "Only 1 Trade-In in Grip")
+      ;; Add sports hopper to hand
+      (prompt-card :runner (-> (get-runner) :prompt first :choices first))
+      (is (= 2 (count (:hand (get-runner)))) "Sports Hopper added to Grip"))
+
+    (testing "Gain credits when install cost is greater than 1"
+      (let [runner-credits (:credit (get-runner))]
+        (play-from-hand state :runner "Trade-In")
+        (prompt-select :runner (get-hardware state 0))
+        (is (= (+ runner-credits -1 1) (:credit (get-runner)))
+            "Paid 1 credit to play Trade-In and gained 1 credits from trashing Sports Hopper")
+        (is (= 4 (count (:discard (get-runner)))) "2 Trade-In, 1 Astrolabe and 1 Sports Hopper in discard")))))
 
 (deftest traffic-jam
   ;; Traffic Jam - Increase adv requirement based on previously scored copies
