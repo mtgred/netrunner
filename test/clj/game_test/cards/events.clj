@@ -2747,9 +2747,7 @@
         (prompt-select :runner (get-hardware state 0))
         (is (= (+ runner-credits -1 1) (:credit (get-runner)))
             "Paid 1 credit to play Trade-In and gained 1 credits from trashing Sports Hopper")
-        (is (= 4 (count (:discard (get-runner)))) "2 Trade-In, 1 Astrolabe and 1 Sports Hopper in discard")))
-
-    (clojure.pprint/pprint (:log @state))))
+        (is (= 4 (count (:discard (get-runner)))) "2 Trade-In, 1 Astrolabe and 1 Sports Hopper in discard")))))
 
 (deftest traffic-jam
   ;; Traffic Jam - Increase adv requirement based on previously scored copies
