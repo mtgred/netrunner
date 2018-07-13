@@ -1690,7 +1690,7 @@
                                            :label "Trace 3 - Give the Runner 1 tag"
                                            :successful {:msg "give the Runner 1 tag"
                                                         :async true
-                                                        :effect (effect (tag-runner :runner eid 1))}}}
+                                                        :effect (effect (gain-tags :runner eid 1))}}}
                                   card nil))}]}
 
    "Snare!"
