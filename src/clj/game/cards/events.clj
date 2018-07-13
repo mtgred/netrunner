@@ -1983,18 +1983,22 @@
     :events {:runner-turn-ends nil}}
 
    "Trade-In"
-   {:additional-cost [:hardware 1]
-    :effect (effect (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
-    :events {:runner-trash {:effect (effect (gain-credits (quot (:cost target) 2))
-                                            (system-msg (str "trashes " (:title target) " and gains " (quot (:cost target) 2) " [Credits]"))
-                                            (continue-ability {:prompt "Choose a Hardware to add to your Grip from your Stack"
-                                                               :choices (req (filter #(is-type? % "Hardware")
-                                                                                     (:deck runner)))
-                                                               :msg (msg "add " (:title target) " to their Grip")
-                                                               :effect (effect (trigger-event :searched-stack nil)
-                                                                               (shuffle! :deck)
-                                                                               (move target :hand)
-                                                                               (unregister-events card))} card nil))}}}
+   ;; Basically a hack. Ideally the additional cost cause the cost trash to be passed in as targets
+   (letfn [(trashed-hw [state] (last (get-in @state [:runner :discard])))]
+     {:additional-cost [:hardware 1]
+      :msg (msg (let [{:keys [title cost]} (trashed-hw state)]
+                  (str "trash " title " and gain " (quot cost 2) " [Credits]")))
+      :effect (req (let [{:keys [cost]} (trashed-hw state)]
+                     (gain-credits state :runner (quot cost 2))
+                     (continue-ability state :runner
+                                       {:prompt "Choose a Hardware to add to your Grip from your Stack"
+                                        :choices (req (filter #(is-type? % "Hardware")
+                                                              (:deck runner)))
+                                        :msg (msg "add " (:title target) " to their Grip (and shuffle their Stack)")
+                                        :effect (effect (trigger-event :searched-stack nil)
+                                                        (shuffle! :deck)
+                                                        (move target :hand))}
+                                       card nil)))})
 
    "Traffic Jam"
    {:effect (effect (update-all-advancement-costs))
