@@ -216,8 +216,7 @@
                 (effect-completed state side
                                   (make-result eid (->> async-result
                                                         (filter some?)
-                                                        (interpose " and ")
-                                                        (apply str)))))
+                                                        (join " and ")))))
       (effect-completed state side (make-result eid nil)))))
 
 (defn gain [state side & args]
