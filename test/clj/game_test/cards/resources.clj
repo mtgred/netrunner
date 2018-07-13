@@ -232,6 +232,29 @@
     (play-from-hand state :corp "Traffic Accident")
     (is (= 3 (count (:discard (get-runner)))) "Conventional meat damage not prevented by Parlor")))
 
+(deftest citadel-sanctuary
+  (testing "Interaction with Corporate Grant and Thunder Art Gallery"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Citadel Sanctuary" "Thunder Art Gallery" "Corroder" "Corporate \"Grant\""]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 5)
+      (play-from-hand state :runner "Citadel Sanctuary")
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (play-from-hand state :runner "Corporate \"Grant\"")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/gain-tags state :runner 1)
+      (core/lose state :runner :click 3)
+      (core/end-turn state :runner nil)
+      (is (= 11 (:credit (get-corp))) "Corp has 11 credits before Corporate Grant")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 1)
+      (is (not (:end-turn @state)) "Runner turn has not yet ended")
+      (prompt-select :runner (find-card "Corroder" (:hand (get-runner))))
+      (is (:end-turn @state) "Runner turn has now ended")
+      (is (= 10 (:credit (get-corp))) "Corp lost 1 credit to Corporate Grant"))))
+
 (deftest compromised-employee
   ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
   (do-game
@@ -2561,7 +2584,7 @@
       (core/gain-credits state :runner 1)
       (core/gain-tags state :corp 1)
       (core/remove-tag state :runner nil)
-      (prompt-card :runner (find-card "New Angeles City Hall" (:hand (get-runner))))
+      (prompt-select :runner (find-card "New Angeles City Hall" (:hand (get-runner))))
       (is (= 1 (:credit (get-runner))) "Runner paid one less to install (but 2 to remove tag)")
       (is (= "New Angeles City Hall" (:title (get-resource state 1))) "NACH is installed")
       (take-credits state :runner)
@@ -2569,7 +2592,7 @@
       (core/gain-tags state :corp 1)
       (card-ability state :runner (get-resource state 1) 0)
       (prompt-choice :runner "Done")
-      (prompt-card :runner (find-card "Corroder" (:hand (get-runner))))
+      (prompt-select :runner (find-card "Corroder" (:hand (get-runner))))
       (is (= 0 (:credit (get-runner))) "Runner paid one less to install")
       (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
 
