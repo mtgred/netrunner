@@ -34,10 +34,10 @@
               fg (first (:hosted (refresh apt)))]
           (card-ability state :runner ns 0)
           (is (= 5 (:credit (get-runner))) "Runner paid 1c to survive Neural EMP")
-          (prompt-choice state :runner "Done")
+          (click-prompt state :runner "Done")
           (play-from-hand state :corp "SEA Source")
-          (prompt-choice state :corp 3) ; boost trace to 6
-          (prompt-choice state :runner 0)
+          (click-prompt state :corp "3") ; boost trace to 6
+          (click-prompt state :runner "0")
           (is (= 1 (:tag (get-runner))) "Runner took tag from SEA Source")
           (is (= 7 (:credit (get-corp))))
           (core/trash-resource state :corp nil)
@@ -89,11 +89,11 @@
         (run-on state "HQ")
         (core/rez state :corp ash)
         (run-successful state)
-        (prompt-choice state :corp 0)
-        (prompt-choice state :runner 0)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
         (is (and (= 2 (:credit (get-runner))) (= 7 (:credit (get-corp))))
             "Desperado paid 1 to Runner, Lamprey took 1 from Corp")
-        (prompt-choice state :runner "No action") ; can't afford to trash Ash
+        (click-prompt state :runner "No action") ; can't afford to trash Ash
         (take-credits state :runner)
         (play-from-hand state :corp "Caprice Nisei" "Server 1")
         (is (= 11 (:credit (get-corp))) "Gained 3 from Adonis and 1 from HB:EtF")
@@ -102,16 +102,16 @@
         (is (= 3 (:credit (get-runner))) "Gained 1 from Data Folding")
         (core/gain state :runner :click 2)
         (run-empty-server state "HQ")
-        (prompt-choice state :corp 0)
-        (prompt-choice state :runner 0)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
         (is (= "Pay" (:choices (prompt? :runner))))
-        (prompt-choice-partial state :runner "Pay") ; trash Ash
+        (click-prompt state :runner "Pay 1 [Credits] to trash") ; trash Ash
         (is (and (= 1 (:credit (get-runner))) (= 11 (:credit (get-corp)))))
         (core/gain state :runner :credit 1)
         (play-from-hand state :runner "Dirty Laundry")
-        (prompt-choice state :runner "HQ")
+        (click-prompt state :runner "HQ")
         (run-successful state)
-        (prompt-choice state :runner "Steal")
+        (click-prompt state :runner "Steal")
         (is (= 2 (:agenda-point (get-runner))) "Stole Global Food Initiative")
         (is (and (= 6 (:credit (get-runner))) (= 10 (:credit (get-corp))))
             "Desperado plus Dirty Laundry, Lamprey took 1 from Corp")
@@ -128,6 +128,6 @@
           (core/rez state :corp cap)
           (run-continue state)
           ;; Caprice psi game started automatically
-          (prompt-choice state :corp "1 [Credits]")
-          (prompt-choice state :runner "2 [Credits]")
+          (click-prompt state :corp "1 [Credits]")
+          (click-prompt state :runner "2 [Credits]")
           (is (not (:run @state)) "Corp won Caprice psi game and ended the run"))))))

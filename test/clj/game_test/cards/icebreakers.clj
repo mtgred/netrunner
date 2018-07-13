@@ -64,7 +64,7 @@
       (new-game (default-corp) (default-runner ["Atman"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Atman")
-      (prompt-choice state :runner 0)
+      (click-prompt state :runner "0")
       (is (= 3 (core/available-mu state)))
       (let [atman (get-program state 0)]
         (is (zero? (get-counters atman :power)) "0 power counters")
@@ -75,7 +75,7 @@
                 (default-runner ["Atman"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Atman")
-      (prompt-choice state :runner 2)
+      (click-prompt state :runner "2")
       (is (= 3 (core/available-mu state)))
       (let [atman (get-program state 0)]
         (is (= 2 (get-counters atman :power)) "2 power counters")
@@ -91,12 +91,12 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state "Server 1")
-      (prompt-choice state :runner "No action")
+      (click-prompt state :runner "No action")
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
       (core/gain state :runner :credit 5)
       (run-empty-server state "Server 1")
       (is (= "Pay" (:choices (prompt? :runner))))
-      (prompt-choice-partial state :runner "Pay")
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
   (testing "Gain counters on empty archives"
     (do-game
@@ -179,7 +179,7 @@
       (let [chip (get-hardware state 0)]
         (card-ability state :runner chip 0)
         (click-card state :runner (find-card "Chameleon" (:discard (get-runner))))
-        (prompt-choice state :runner "Sentry"))
+        (click-prompt state :runner "Sentry"))
       (take-credits state :corp)
       (is (zero? (count (:hand (get-runner)))) "Chameleon not returned to hand at end of corp turn")
       (take-credits state :runner)
@@ -189,7 +189,7 @@
       (new-game (default-corp) (default-runner [(qty "Chameleon" 2) "Scheherazade"]))
       (take-credits state :corp)
       (play-from-hand state :runner "Chameleon")
-      (prompt-choice state :runner "Barrier")
+      (click-prompt state :runner "Barrier")
       (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon")
       ;; Host the Chameleon on Scheherazade that was just played (as in Personal Workshop/Hayley ability scenarios)
       (play-from-hand state :runner "Scheherazade")
@@ -200,7 +200,7 @@
         ;; Install another Chameleon directly onto Scheherazade
         (card-ability state :runner scheherazade 0) ; Install and host a program from Grip
         (click-card state :runner (find-card "Chameleon" (:hand (get-runner))))
-        (prompt-choice state :runner "Code Gate")
+        (click-prompt state :runner "Code Gate")
         (is (= 2 (count (:hosted (refresh scheherazade)))) "2 Chameleons hosted on Scheherazade")
         (is (= 3 (:credit (get-runner))) "-2 from playing Chameleon, +1 from installing onto Scheherazade"))
       (is (zero? (count (:hand (get-runner)))) "Both Chameleons in play - hand size 0")
@@ -287,10 +287,10 @@
       (play-from-hand state :runner "Deus X")
       (run-empty-server state "Server 1")
       (is (= "Pay" (:choices (prompt? :runner))))
-      (prompt-choice-partial state :runner "Pay")
+      (click-prompt state :runner "Pay 1 [Credits] to trash")
       (let [dx (get-program state 0)]
         (card-ability state :runner dx 1)
-        (prompt-choice state :runner "Done")
+        (click-prompt state :runner "Done")
         (is (= 2 (count (:hand (get-runner)))) "Deus X prevented one Hostile net damage"))))
   (testing "vs Multiple sources of net damage"
     (do-game
@@ -304,9 +304,9 @@
       (run-empty-server state "Server 1")
       (let [dx (get-program state 0)]
         (card-ability state :runner dx 1)
-        (prompt-choice state :runner "Done")
+        (click-prompt state :runner "Done")
         (is (= "Pay" (:choices (prompt? :runner))))
-        (prompt-choice-partial state :runner "Pay")
+        (click-prompt state :runner "Pay 1 [Credits] to trash")
         (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
         (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen")))))
 
@@ -435,7 +435,7 @@
    (take-credits state :corp)
    (let [mam (get-program state 0)]
      (card-ability state :runner mam 0)
-     (prompt-choice state :runner 3)
+     (click-prompt state :runner "3")
      (is (= 2 (:credit (get-runner))) "Spent 3 credits")
      (is (= 3 (get-counters (refresh mam) :power)) "Mammon has 3 power counters")
      (take-credits state :runner)
@@ -467,7 +467,7 @@
       (card-ability state :runner musaazi 0)
       (click-card state :runner musaazi)
       (click-card state :runner imp)
-      (prompt-choice state :runner "Done")
+      (click-prompt state :runner "Done")
       (is (= 0 (get-counters (refresh imp) :virus)) "Imp lost its final virus counter")
       (is (= 0 (get-counters (refresh imp) :virus)) "Musaazi lost its virus counter"))))
 
@@ -488,7 +488,7 @@
         (is (= 2 (:current-strength (refresh nanotk))) "1 ice on HQ")
         (card-subroutine state :corp (refresh architect) 1)
         (click-card state :corp (find-card "Eli 1.0" (:hand (get-corp))))
-        (prompt-choice state :corp "HQ")
+        (click-prompt state :corp "HQ")
         (is (= 3 (:current-strength (refresh nanotk))) "2 ice on HQ")
         (run-jack-out state)
         (is (= 1 (:current-strength (refresh nanotk))) "Back to default strength"))))
@@ -538,7 +538,7 @@
       (trash-from-hand state :runner "Paperclip")
       (run-on state "Archives")
       (core/rez state :corp (get-ice state :archives 0))
-      (prompt-choice state :runner "Yes") ; install paperclip
+      (click-prompt state :runner "Yes") ; install paperclip
       (run-continue state)
       (run-successful state)
       (is (not (:run @state)) "Run ended")
@@ -554,7 +554,7 @@
       (play-from-hand state :runner "Paperclip")
       (run-on state "Archives")
       (card-ability state :runner (get-program state 0) 0)
-      (prompt-choice state :runner 0)))
+      (click-prompt state :runner "0")))
   (testing "do not show a second install prompt if user said No to first, when multiple are in heap"
     (do-game
       (new-game (default-corp [(qty "Vanilla" 2)])
@@ -567,17 +567,17 @@
       (trash-from-hand state :runner "Paperclip")
       (run-on state "Archives")
       (core/rez state :corp (get-ice state :archives 1))
-      (prompt-choice state :runner "No")
+      (click-prompt state :runner "No")
       (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")
       (run-continue state)
       ;; we should get the prompt on a second ice even after denying the first.
       (core/rez state :corp (get-ice state :archives 0))
-      (prompt-choice state :runner "No")
+      (click-prompt state :runner "No")
       (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip")
       (core/jack-out state :runner)
       ;; Run again, make sure we get the prompt to install again.
       (run-on state "Archives")
-      (prompt-choice state :runner "No")
+      (click-prompt state :runner "No")
       (is (empty? (:prompt (get-runner))) "No additional prompts to rez other copies of Paperclip"))))
 
 (deftest peregrine
@@ -625,8 +625,8 @@
     (play-from-hand state :runner "Persephone")
     (run-on state "Archives")
     (run-continue state)
-    (prompt-choice state :runner "Yes")
-    (prompt-choice state :runner 2)
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "2")
     (is (= 1 (:tag (get-runner))) "Runner took 1 tag from using Persephone's ability while AR-Enhanced Security is scored")
     (take-credits state :runner)
     ;; Gotta move the discarded cards back to the deck
@@ -635,8 +635,8 @@
     (take-credits state :corp)
     (run-on state "Archives")
     (run-continue state)
-    (prompt-choice state :runner "Yes")
-    (prompt-choice state :runner 2)
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "2")
     (is (= 2 (:tag (get-runner))) "Runner took 1 tag from using Persephone's ability while AR-Enhanced Security is scored")))
 
 (deftest shiv
@@ -756,5 +756,5 @@
       (is (empty? (:prompt (get-runner))) "No prompt open")
       (card-ability state :runner yusuf 0)
       (click-card state :runner cache)
-      (prompt-choice state :runner "Done")
+      (click-prompt state :runner "Done")
       (is (= 1 (get-counters (refresh cache) :virus)) "Cache lost its final virus counter"))))

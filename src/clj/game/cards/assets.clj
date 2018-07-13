@@ -285,22 +285,22 @@
                                  (take-credits (get-counters card :credit)))}]
     :events {:corp-turn-begins {:req (req (>= (get-counters card :credit) 6))
                                 :effect (effect (add-counter card :credit 2)
-                                                (system-msg (str "adds 2[Credits] to C.I. Fund")))}}}
+                                                (system-msg (str "adds 2 [Credits] to C.I. Fund")))}}}
 
    "City Surveillance"
    {:derezzed-events {:corp-turn-ends corp-rez-toast}
     :flags {:runner-phase-12 (req (pos? (:credit runner)))}
     :events {:runner-turn-begins
              {:player :runner
-              :prompt "Pay 1[Credits] or take 1 tag"
-              :choices (req [(when (pos? (:credit runner))
-                              "Pay 1[Credits]")
-                             "Take 1 tag"])
-              :msg "make the Runner pay 1[Credits] or take 1 tag"
+              :prompt "Pay 1 [Credits] or take 1 tag"
+              :choices (req (concat (when (pos? (:credit runner))
+                                      ["Pay 1 [Credits]"])
+                                    ["Take 1 tag"]))
+              :msg "make the Runner pay 1 [Credits] or take 1 tag"
               :async true
               :effect (req (case target
-                             "Pay 1[Credits]"
-                             (do (system-msg state :runner "pays 1[Credits]")
+                             "Pay 1 [Credits]"
+                             (do (system-msg state :runner "pays 1 [Credits]")
                                  (pay state :runner card :credit 1)
                                  (effect-completed state side eid))
 
@@ -333,15 +333,15 @@
                                 (pos? (count (:deck runner)))))
                   :player :runner
                   :once :per-turn
-                  :prompt "Pay 1[Credits] or trash the top card of the Stack"
+                  :prompt "Pay 1 [Credits] or trash the top card of the Stack"
                   :choices (req (concat (when (pos? (:credit runner))
-                                          ["Pay 1[Credits]"])
+                                          ["Pay 1 [Credits]"])
                                         (when (pos? (count (:deck runner)))
                                           ["Trash top card"])))
-                  :msg "make the Runner pay 1[Credits] or trash the top card of the Stack"
+                  :msg "make the Runner pay 1 [Credits] or trash the top card of the Stack"
                   :effect (req (case target
-                                 "Pay 1[Credits]"
-                                 (do (system-msg state side "pays 1[Credits]")
+                                 "Pay 1 [Credits]"
+                                 (do (system-msg state side "pays 1 [Credits]")
                                      (pay state side card :credit 1))
                                  "Trash top card"
                                  (do (system-msg state side "trashes the top card of the Stack")
@@ -353,9 +353,9 @@
 
    "Commercial Bankers Group"
    (let [ability {:req (req unprotected)
-                  :label "Gain 3[Credits] (start of turn)"
+                  :label "Gain 3 [Credits] (start of turn)"
                   :once :per-turn
-                  :msg "gain 3[Credits]"
+                  :msg "gain 3 [Credits]"
                   :effect (effect (gain-credits 3))}]
      {:derezzed-events {:runner-turn-ends corp-rez-toast}
       :events {:corp-turn-begins ability}
@@ -582,7 +582,7 @@
     :events {:corp-turn-ends {:req (req (:ebc-rezzed card))
                               :effect (effect (update! (dissoc card :ebc-rezzed)))}}
     :abilities [{:choices {:req (complement rezzed?)}
-                 :label "Rez a card, lowering the cost by 1[Credits]"
+                 :label "Rez a card, lowering the cost by 1 [Credits]"
                  :msg (msg "rez " (:title target))
                  :async true
                  :effect (req (rez-cost-bonus state side -1)
@@ -1103,8 +1103,8 @@
                               (shuffle! state side :deck))}]}
 
    "NASX"
-   (let [ability {:msg "gain 1[Credits]"
-                  :label "Gain 1[Credits] (start of turn)"
+   (let [ability {:msg "gain 1 [Credits]"
+                  :label "Gain 1 [Credits] (start of turn)"
                   :once :per-turn
                   :effect (effect (gain-credits 1))}]
      {:implementation "Manual - click NASX to add power counters"

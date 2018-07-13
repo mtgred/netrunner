@@ -1,7 +1,8 @@
 (ns game-test.utils
   (:require [game.core :as core]
+            [game.utils :as utils :refer [side-str]]
             [clojure.test :refer :all]
-            [clojure.string :refer [lower-case]]
+            [clojure.string :refer [lower-case split]]
             [monger.core :as mg]
             [monger.collection :as mc]
             [jinteki.cards :refer [all-cards]]))
@@ -40,21 +41,19 @@
   ([deck] (make-deck "The Professor: Keeper of Knowledge" deck)))
 
 
-
 ;;; helper functions for prompt interaction
-
-(defn prompt-is-type? [state side prompt-type]
-  (= prompt-type (-> @state side :prompt first :prompt-type)))
-
-
-
-;;; everything below here is deprecated. sorta.
 
 (defn assert-prompt [state side]
   (let [prompt (-> @state side :prompt)]
     (is (first prompt) (str "Expected an open " (name side) " prompt"))
     (first (seq prompt))))
 
+(defn prompt-is-type? [state side prompt-type]
+  (let [prompt (-> @state side :prompt first)]
+    (= prompt-type (:prompt-type prompt))))
+
+
+;;; everything below here is deprecated. sorta.
 
 (defn prompt-choice [state side choice]
   (is (or (number? choice) (string? choice))
@@ -131,9 +130,10 @@
 
       ;; Prompt isn't a select so click-card shouldn't be used
       (not (prompt-is-type? state side :select))
-      (is false ;; (prompt-is-type? state side :select)
-          (str "click-card should only be used with prompts "
-               "requiring the user to click on cards on table"))
+      (let [prompt (prompt-is-type? state side :select)]
+        (is prompt
+            (str "click-card should only be used with prompts "
+                 "requiring the user to click on cards on table")))
       ;; Prompt is a select, but card isn't correct type
       (not (or (map? card)
                (string? card)))
@@ -143,8 +143,13 @@
                " of type " (type card) ".")))))
 
 
+(defn expect-type
+  [type-name choice]
+  (str "Expected a " type-name ", received [ " choice
+       " ] of type " (type choice) "."))
+
 (defn click-prompt
-  "Clicks a button in a prompt. Analogous to prompt-choice or prompt"
+  "Clicks a button in a prompt. {choice} is a string or map only, no numbers."
   [state side choice]
   (when-let* [prompt (assert-prompt state side)
               choices (:choices prompt)]
@@ -152,12 +157,20 @@
       ;; Integer prompts
       (or (= choices :credit)
           (:counter choices)
-          (:number choices))
-      (if (number? (Integer/parseInt choice))
+          (:number choices)
+          (= :psi (:prompt-type prompt)))
+      (cond
+        ;; Psi games
+        (= :psi (:prompt-type prompt))
+        (let [choice (-> (str choice) (split #" ") first)]
+          (core/resolve-prompt state side {:choice choice}))
+        ;; All others
+        (number? (Integer/parseInt choice))
         (core/resolve-prompt state side {:choice (Integer/parseInt choice)})
+        ;; Incorrect input
+        :else
         (is (number? (Integer/parseInt choice))
-            (str "Expected a number string, received " choice
-                 " of type " (type choice) ".")))
+            (expect-type "number string" choice)))
 
       ;; List of card titles for auto-completion
       (:card-title choices)
@@ -166,7 +179,7 @@
         (core/resolve-prompt state side {:choice choice})
         (is (or (map? choice)
                 (string? choice))
-            (str "Expected a card string or map, received " choice " of type " (type choice) ".")))
+            (expect-type "card string or map" choice)))
 
       ;; Default text prompt
       :else
@@ -177,11 +190,13 @@
             button (first buttons)]
         (cond
           (and (= button choice)
-               (= 1 (count buttons)))
+               ; (= 1 (count buttons))
+               )
           (core/resolve-prompt state side {kw button})
-          (not= 1 (count buttons))
-          (is (= 1 (count buttons)) (str "Expected to click " (if (string? choice) choice (:title choice)) " but found ambiguous choices. "
-                                         "Current prompt is: " prompt))
+          ; (not= 1 (count buttons))
+          ; (is (= 1 (count buttons)) (str "Expected to click " (if (string? choice) choice (:title choice)) " but found ambiguous choices. "
+          ;                                "Current prompt is: " prompt))
           (not= button choice)
-          (is (= button choice) (str "Expected to click " (if (string? choice) choice (:title choice)) " but couldn't find it. "
-                                     "Current prompt is: " prompt)))))))
+          (is (= button choice) (str (side-str side) " expected to click [ "
+                                     (if (string? choice) choice (:title choice))
+                                     " ] but couldn't find it. Current prompt is: " prompt)))))))

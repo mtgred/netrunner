@@ -50,12 +50,12 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Bank Job")
     (run-empty-server state :rd)
-    (prompt-choice state :corp "Yes")
-    (prompt-choice state :runner "Yes")
-    (prompt-choice state :corp 0)
-    (prompt-choice state :runner 0)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "0")
+    (click-prompt state :runner "0")
     (click-card state :corp (get-resource state 0))
-    (prompt-choice state :runner "No action")
+    (click-prompt state :runner "No action")
     (is (not (:run @state)) "Run ended")))
 
 (deftest architect
@@ -124,9 +124,9 @@
       (core/rez state :corp frog)
       (is (= :hq (first (get-in @state [:run :server]))))
       (card-subroutine state :corp frog 0)
-      (prompt-choice state :corp "0 [Credits]")
-      (prompt-choice state :runner "1 [Credits]")
-      (prompt-choice state :corp "R&D")
+      (click-prompt state :corp "0 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
+      (click-prompt state :corp "R&D")
       (is (= :rd (first (get-in @state [:run :server]))) "Run redirected to R&D")
       (is (= 2 (get-in @state [:run :position])) "Passed Bullfrog")
       (is (= "Bullfrog" (:title (get-ice state :rd 2))) "Bullfrog at outermost position of R&D"))))
@@ -159,7 +159,7 @@
     (play-from-hand state :corp "Chimera" "HQ")
     (let [ch (get-ice state :hq 0)]
       (core/rez state :corp ch)
-      (prompt-choice state :corp "Barrier")
+      (click-prompt state :corp "Barrier")
       (is (core/has-subtype? (refresh ch) "Barrier") "Chimera has Barrier")
       (take-credits state :corp)
       (is (not (core/has-subtype? (refresh ch) "Barrier")) "Chimera does not have Barrier"))))
@@ -196,7 +196,7 @@
       (is (= 6 (:current-strength (refresh cr2))) "+3 strength over Archives")
       (card-subroutine state :corp cr2 0)
       (click-card state :corp (find-card "Ice Wall" (:discard (get-corp))))
-      (prompt-choice state :corp "HQ")
+      (click-prompt state :corp "HQ")
       (is (= 3 (:credit (get-corp))) "Paid 1 credit to install as 2nd ICE over HQ"))))
 
 (deftest curtain-wall
@@ -228,8 +228,8 @@
       (run-on state "HQ")
       (core/rez state :corp dh)
       (card-subroutine state :corp dh 0)
-      (prompt-choice state :corp 2)
-      (prompt-choice state :runner 0)
+      (click-prompt state :corp "2")
+      (click-prompt state :runner "0")
       ;; trash 1 card and rearrange the other 3
       (click-prompt state :corp (find-card "Desperado" (:deck (get-runner))))
       (is (= 1 (count (:discard (get-runner)))))
@@ -237,19 +237,19 @@
       (click-prompt state :corp (find-card "Corroder" (:deck (get-runner))))
       (click-prompt state :corp (find-card "Patron" (:deck (get-runner))))
       ;; try starting over
-      (prompt-choice state :corp "Start over")
+      (click-prompt state :corp "Start over")
       (click-prompt state :corp (find-card "Patron" (:deck (get-runner))))
       (click-prompt state :corp (find-card "Corroder" (:deck (get-runner))))
       (click-prompt state :corp (find-card "Sure Gamble" (:deck (get-runner)))) ;this is the top card on stack
-      (prompt-choice state :corp "Done")
+      (click-prompt state :corp "Done")
       (is (= "Sure Gamble" (:title (first (:deck (get-runner))))))
       (is (= "Corroder" (:title (second (:deck (get-runner))))))
       (is (= "Patron" (:title (second (rest (:deck (get-runner)))))))
       (run-jack-out state)
       (run-on state "HQ")
       (card-subroutine state :corp dh 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 1)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "1")
       ;; trash the only card automatically
       (is (= 2 (count (:discard (get-runner)))))
       (is (= "Corroder" (:title (first (:deck (get-runner)))))))))
@@ -277,12 +277,12 @@
     (let [drac (get-ice state :hq 0)]
       (run-on state "HQ")
       (core/rez state :corp drac)
-      (prompt-choice state :corp 4)
+      (click-prompt state :corp "4")
       (is (= 4 (get-counters (refresh drac) :power)) "Dracō has 4 power counters")
       (is (= 4 (:current-strength (refresh drac))) "Dracō is 4 strength")
       (card-subroutine state :corp drac 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
       (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
       (is (nil? (get-in @state [:run])) "Run was ended"))))
 
@@ -374,8 +374,8 @@
       (run-on state :hq)
       (core/rez state :corp flare)
       (card-subroutine state :corp flare 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
       (click-card state :corp cc)
       (is (= 1 (count (get-hardware state))) "Clone Chip trashed")
       (is (empty? (:prompt (get-runner))) "Plascrete didn't try preventing meat damage")
@@ -414,12 +414,12 @@
         (run-on state "HQ")
         (core/rez state :corp gem)
         (card-subroutine state :corp gem 0)
-        (prompt-choice state :corp 3) ; boost to trace strength 5
-        (prompt-choice state :runner 0)
+        (click-prompt state :corp "3") ; boost to trace strength 5
+        (click-prompt state :runner "0")
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")
         (card-subroutine state :corp gem 0)
-        (prompt-choice state :corp 3) ; boost to trace strength 5
-        (prompt-choice state :runner 5) ; match trace
+        (click-prompt state :corp "3") ; boost to trace strength 5
+        (click-prompt state :runner "5") ; match trace
         (is (= 3 (count (:discard (get-runner)))) "Did only 1 net damage for having trace strength 5 or more"))))
   (testing "Interaction with Chronos Protocol and kicker"
     (do-game
@@ -433,9 +433,9 @@
         (run-on state "HQ")
         (core/rez state :corp gem)
         (card-subroutine state :corp gem 0)
-        (prompt-choice state :corp 3) ; boost to trace strength 5
-        (prompt-choice state :runner 0)
-        (prompt-choice state :corp "Yes")
+        (click-prompt state :corp "3") ; boost to trace strength 5
+        (click-prompt state :runner "0")
+        (click-prompt state :corp "Yes")
         (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage")))))
 
@@ -453,8 +453,8 @@
       (play-from-hand state :runner "Cache")
       (run-on state "HQ")
       (card-subroutine state :corp holm 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
       (card-subroutine state :corp holm 1)
       (click-card state :corp (get-program state 1))
       (is (empty? (:discard (get-runner))) "Can't target non-icebreaker program")
@@ -463,7 +463,7 @@
       (run-continue state)
       (run-successful state)
       ;; Prompt for "you cannot access any card this run"
-      (prompt-choice state :runner "No action")
+      (click-prompt state :runner "No action")
       (is (not (accessing state "Hostile Takeover"))))))
 
 (deftest iq
@@ -496,7 +496,7 @@
     (let [iat (get-ice state :archives 0)]
       (take-credits state :corp)
       (play-from-hand state :runner "Infiltration")
-      (prompt-choice state :runner "Expose a card")
+      (click-prompt state :runner "Expose a card")
       (click-card state :runner iat)
       (is (= 3 (count (:discard (get-runner)))) "Did 2 net damage on expose")
       (play-from-hand state :runner "Cache")
@@ -616,17 +616,17 @@
      (core/rez state :corp kamali)
      (card-subroutine state :corp kamali 0)
      (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
-     (prompt-choice state :runner "Take 1 brain damage")
+     (click-prompt state :runner "Take 1 brain damage")
      (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
      (card-subroutine state :corp kamali 1)
      (is (empty? (:discard (get-runner))) "Runner starts with no discarded cards")
-     (prompt-choice state :runner "Trash an installed piece of hardware")
+     (click-prompt state :runner "Trash an installed piece of hardware")
      (click-card state :runner (get-hardware state 0))
      (is (empty? (get-hardware state)) "Astrolabe trashed")
      (is (= 1 (count (:discard (get-runner)))) "Runner trashed 1 card")
      (card-subroutine state :corp kamali 2)
      (is (= 1 (count (:discard (get-runner)))) "Runner starts with 1 discarded card")
-     (prompt-choice state :runner "Trash an installed program")
+     (click-prompt state :runner "Trash an installed program")
      (click-card state :runner (get-program state 0))
      (is (empty? (get-program state)) "Cache trashed")
      (is (= 2 (count (:discard (get-runner)))) "Runner trashed 1 card"))))
@@ -646,7 +646,7 @@
         ;; Runner access Snare! corp has prompt
         (is (= :waiting (-> @state :runner :prompt first :prompt-type))
             "Runner has prompt to wait for Corp to use Snare!")
-        (prompt-choice state :corp "Yes")
+        (click-prompt state :corp "Yes")
         (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use")))))
 
 (deftest lockdown
@@ -720,7 +720,7 @@
         (is (empty? (:hosted (refresh e))) "Enigma not hosting Parasite")
         (is (= 1 (count (:hosted (refresh m)))) "Parasite hosted on Magnet")
         (is (= "Pay" (:choices (prompt? :runner))))
-        (prompt-choice-partial state :runner "Jack")
+        (click-prompt state :runner "Jack")
         (take-credits state :runner)
         (take-credits state :corp)
         (is (zero? (core/get-virus-counters state :runner (first (:hosted (refresh m)))))
@@ -743,7 +743,7 @@
         (is (empty? (:hosted (refresh e))) "Enigma not hosting Trypano")
         (is (= 1 (count (:hosted (refresh m)))) "Trypano hosted on Magnet")
         (is (= "Pay" (:choices (prompt? :runner))))
-        (prompt-choice-partial state :runner "Jack")
+        (click-prompt state :runner "Jack")
         (take-credits state :runner)
         (take-credits state :corp)
         (is (empty? (:prompt (get-runner))) "No Trypano prompt")
@@ -768,7 +768,7 @@
         (is (empty? (:hosted (refresh e))) "Enigma not hosting Parasite")
         (is (= 1 (count (:hosted (refresh m)))) "Parasite hosted on Magnet")
         (is (= "Pay" (:choices (prompt? :runner))))
-        (prompt-choice-partial state :runner "Jack")
+        (click-prompt state :runner "Jack")
         (take-credits state :runner)
         (take-credits state :corp)
         (is (zero? (core/get-virus-counters state :runner (first (:hosted (refresh m)))))
@@ -787,7 +787,7 @@
         (is (empty? (:hosted (refresh e))) "Enigma not hosting Parasite")
         (is (= 2 (count (:hosted (refresh m)))) "Parasites hosted on Magnet")
         (is (= "Pay" (:choices (prompt? :runner))))
-        (prompt-choice-partial state :runner "Jack")
+        (click-prompt state :runner "Jack")
         (take-credits state :runner)
         (take-credits state :corp)
         (is (= 1 (core/get-virus-counters state :runner (first (:hosted (refresh m)))))
@@ -875,10 +875,10 @@
     (let [mindgame (get-ice state :hq 0)]
       (core/rez state :corp mindgame)
       (card-subroutine state :corp mindgame 0))
-    (prompt-choice state :corp "1 [Credits]")
-    (prompt-choice state :runner "0 [Credits]")
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
     (is (= (set ["R&D" "Archives"]) (set (:choices (prompt-map :corp)))) "Corp cannot choose server Runner is on")
-    (prompt-choice state :corp "Archives")
+    (click-prompt state :corp "Archives")
     (is (= [:archives] (get-in @state [:run :server])) "Runner now running on Archives")))
 
 (deftest minelayer
@@ -910,13 +910,13 @@
       (card-subroutine state :corp (refresh ml) 0)
       (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
       (is (= "Pay" (:choices (prompt? :runner))))
-      (prompt-choice-partial state :runner "Take")
+      (click-prompt state :runner "Take")
       (is (= 1 (count (:discard (get-runner)))) "Runner trashed 1 card")
       (is (empty? (:hand (get-runner))) "Runner trashed card from hand")
       (card-subroutine state :corp (refresh ml) 0)
       (is (= 2 (count (:deck (get-runner)))) "Runner has 2 cards in stack")
       (is (= "Pay" (:choices (prompt? :runner))))
-      (prompt-choice-partial state :runner "Trash")
+      (click-prompt state :runner "Trash")
       (is (= 3 (count (:discard (get-runner)))) "Runner trashed 2 cards")
       (is (empty? (:deck (get-runner))) "Runner trashed card from stack"))))
 
@@ -1012,7 +1012,7 @@
               deck (count (:deck (get-corp)))]
           (card-subroutine state :corp sapphire 0)
           (is (= 1 (-> (get-corp) :prompt first :choices :number)))
-          (prompt-choice state :corp 1)
+          (click-prompt state :corp "1")
           (is (= (inc hand) (count (:hand (get-corp)))) "Corp should draw 1 card from R&D")
           (is (= (dec deck) (count (:deck (get-corp)))) "R&D should lose 1 card"))
         (let [hand (count (:hand (get-corp)))
@@ -1046,7 +1046,7 @@
             num-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))]
         (core/rez state :corp sapphire)
         (card-subroutine state :corp sapphire 2)
-        (prompt-choice state :corp "Done")
+        (click-prompt state :corp "Done")
         (is (= hand (count (:hand (get-corp)))) "Nothing selected so HQ shouldn't change")
         (is (= deck (count (:deck (get-corp)))) "Nothing selected so R&D shouldn't change")
         (is (= (inc num-shuffles) (count (core/turn-events state :corp :corp-shuffle-deck)))
@@ -1139,12 +1139,12 @@
         (core/rez state :corp sadaka)
         (is (zero? (count (:hand (get-corp)))) "Corp starts with empty hand")
         (card-subroutine state :corp (refresh sadaka) 0)
-        (prompt-choice state :corp "Shuffle R&D")
-        (prompt-choice state :corp "Yes")
+        (click-prompt state :corp "Shuffle R&D")
+        (click-prompt state :corp "Yes")
         (is (= 1 (count (:hand (get-corp)))) "Corp draws a card")
         (card-subroutine state :corp (refresh sadaka) 0)
-        (prompt-choice state :corp "Shuffle R&D")
-        (prompt-choice state :corp "No")
+        (click-prompt state :corp "Shuffle R&D")
+        (click-prompt state :corp "No")
         (is (= 1 (count (:hand (get-corp)))) "Corp doesn't draw a card"))))
   (testing "Sub 2 - You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka."
     (do-game
@@ -1164,7 +1164,7 @@
         (click-prompt state :corp (find-card "Enigma" (:hand (get-corp))))
         (is (= 2 (count (:hand (get-corp)))) "Corp discards 1 card")
         (is (= 1 (count (:discard (get-corp)))) "1 card trashed")
-        (prompt-choice state :corp "Done")
+        (click-prompt state :corp "Done")
         (is (= 2 (count (:discard (get-corp)))) "Sadaka trashed")
         (run-jack-out state)
         (run-on state "archives")
@@ -1211,13 +1211,13 @@
     (let [searchlight (get-ice state :hq 0)]
       (core/rez state :corp searchlight)
       (card-subroutine state :corp (refresh searchlight) 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
       (is (zero? (:tag (get-runner))) "Trace failed with 0 advancements")
       (advance state searchlight 1)
       (card-subroutine state :corp (refresh searchlight) 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
       (is (= 1 (:tag (get-runner))) "Trace succeeds with 1 advancement"))))
 
 (deftest seidr-adaptive-barrier
@@ -1276,8 +1276,8 @@
       (run-on state :hq)
       (core/rez state :corp sherlock)
       (card-subroutine state :corp sherlock 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
       (click-card state :corp (get-program state 0))
       (is (empty? (get-program state)) "Gordian uninstalled")
       (is (= "Gordian Blade" (:title (first (:deck (get-runner))))) "Gordian on top of Stack"))))
@@ -1294,8 +1294,8 @@
       (run-on state :hq)
       (core/rez state :corp sherlock)
       (card-subroutine state :corp sherlock 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 0)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
       (click-card state :corp (get-program state 0))
       (is (empty? (get-program state)) "Gordian uninstalled")
       (is (= "Gordian Blade" (:title (last (:deck (get-runner))))) "Gordian on bottom of Stack"))))
@@ -1319,18 +1319,18 @@
         (click-prompt state :corp (find-card "Quandary" (:deck (get-corp))))
         (click-prompt state :corp (find-card "Jackson Howard" (:deck (get-corp))))
         ;; try starting over
-        (prompt-choice state :corp "Start over")
+        (click-prompt state :corp "Start over")
         (click-prompt state :corp (find-card "Jackson Howard" (:deck (get-corp))))
         (click-prompt state :corp (find-card "Quandary" (:deck (get-corp))))
         (click-prompt state :corp (find-card "Caprice Nisei" (:deck (get-corp)))) ;this is the top card of R&D
-        (prompt-choice state :corp "Done")
+        (click-prompt state :corp "Done")
         (is (= "Caprice Nisei" (:title (first (:deck (get-corp))))))
         (is (= "Quandary" (:title (second (:deck (get-corp))))))
         (is (= "Jackson Howard" (:title (second (rest (:deck (get-corp)))))))
         (card-subroutine state :corp shiro 1)
         (is (= (:cid (first (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access the top card of R&D")
-        (prompt-choice state :runner "No action")
+        (click-prompt state :runner "No action")
         (is (= (:cid (second (:deck (get-corp))))
                (:cid (:card (first (:prompt (get-runner)))))) "Access another card due to R&D Interface"))))
   (testing "with Mwanza City Grid, should access additional 3 cards"
@@ -1353,7 +1353,7 @@
           (card-subroutine state :corp shiro 1)
           (is (= 3 (-> @state :run :access-bonus)) "Should access an additional 3 cards")
           (dotimes [_ 5]
-            (prompt-choice state :runner "No action"))
+            (click-prompt state :runner "No action"))
           (run-jack-out state)
           (is (= (+ credits 10) (:credit (get-corp))) "Corp should gain 10 credits from accessing 5 cards total"))))))
 
@@ -1368,12 +1368,12 @@
     (let [sf (get-ice state :hq 0)]
       (core/rez state :corp sf)
       (card-subroutine state :corp sf 0)
-      (prompt-choice state :corp "0 [Credits]")
-      (prompt-choice state :runner "0 [Credits]")
+      (click-prompt state :corp "0 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
       (is (:run @state) "Runner won psi, run continues")
       (card-subroutine state :corp sf 0)
-      (prompt-choice state :corp "0 [Credits]")
-      (prompt-choice state :runner "1 [Credits]")
+      (click-prompt state :corp "0 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest special-offer
@@ -1406,7 +1406,7 @@
     (let [sand-storm (get-ice state :remote1 0)]
       (core/rez state :corp sand-storm)
       (card-subroutine state :corp sand-storm 0)
-      (prompt-choice state :corp "Server 2")
+      (click-prompt state :corp "Server 2")
       (is (=  (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
 
 (deftest surveyor
@@ -1427,13 +1427,13 @@
       (run-on state "HQ")
       (card-subroutine state :corp surv 0)
       (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 5)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "5")
       (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Surveyor Trace 6 with boost 5")
       (card-subroutine state :corp surv 0)
       (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 6)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "6")
       (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6")
       (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
@@ -1453,11 +1453,11 @@
         (is (= 1 (count (:scored (get-corp)))) "Agenda scored")
         (is (= 12 (:credit (get-corp))) "Gained 7 credits")
         (core/rez state :corp ti)
-        (prompt-choice state :corp "No") ; don't use alternative cost
+        (click-prompt state :corp "No") ; don't use alternative cost
         (is (= 3 (:credit (get-corp))) "Spent 9 to Rez")
         (core/derez state :corp (refresh ti))
         (core/rez state :corp ti)
-        (prompt-choice state :corp "Yes") ; use alternative cost
+        (click-prompt state :corp "Yes") ; use alternative cost
         (click-card state :corp (get-in (get-corp) [:scored 0]))
         (is (= 3 (:credit (get-corp))) "Still on 3c")
         (is (zero? (count (:scored (get-corp)))) "Agenda forfeited")
@@ -1507,8 +1507,8 @@
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
-        (prompt-choice state :corp 0)
-        (prompt-choice state :runner 0)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
         (is (:rezzed (refresh tmi))))))
   (testing "Losing trace derezzes TMI"
     (do-game
@@ -1517,8 +1517,8 @@
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
         (core/rez state :corp tmi)
-        (prompt-choice state :corp 0)
-        (prompt-choice state :runner 0)
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
         (is (not (:rezzed (refresh tmi))))))))
 
 (deftest troll
@@ -1534,9 +1534,9 @@
         (run-on state "HQ")
         (card-ability state :corp troll 0)
         (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner waits for Corp to boost first")
-        (prompt-choice state :corp 0)
-        (prompt-choice state :runner 0)
-        (prompt-choice state :runner "End the run")
+        (click-prompt state :corp "0")
+        (click-prompt state :runner "0")
+        (click-prompt state :runner "End the run")
         (is (not (:run @state)) "Run is ended")))))
 
 (deftest turing
@@ -1565,8 +1565,8 @@
     (let [waiv (get-ice state :hq 0)]
       (core/rez state :corp waiv)
       (card-subroutine state :corp waiv 0)
-      (prompt-choice state :corp 0)
-      (prompt-choice state :runner 3)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "3")
       (is (empty? (filter #(= "Ubax" (:title %)) (:discard (get-runner)))) "Ubax not trashed")
       (is (empty? (filter #(= "Caldera" (:title %)) (:discard (get-runner)))) "Caldera not trashed")
       (is (= 2 (count (:discard (get-runner)))) "2 cards trashed"))))
@@ -1590,7 +1590,7 @@
         (is (= false (has? (refresh wend) :subtype "Code Gate")) "Wendigo lost Code Gate")
         (is (= 5 (:current-strength (refresh wend))) "Wendigo boosted to 5 strength by scored Superior Cyberwalls")
         (play-from-hand state :corp "Shipment from SanSan")
-        (prompt-choice state :corp "1")
+        (click-prompt state :corp "1")
         (click-card state :corp wend)
         (is (= false (has? (refresh wend) :subtype "Barrier")) "Wendigo lost Barrier")
         (is (= true (has? (refresh wend) :subtype "Code Gate")) "Wendigo gained Code Gate")
