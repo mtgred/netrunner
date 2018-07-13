@@ -31,6 +31,7 @@
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (run-empty-server state :remote1)
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay")
     (prompt-choice state :runner "[Click]")
     (prompt-choice state :runner "2 [Credits]")
@@ -248,6 +249,7 @@
           (take-credits state :corp)
           (run-empty-server state "Server 1")
           (prompt-select state :runner dh)
+          (is (= "Pay" (:choices (prompt? :runner))))
           (prompt-choice-partial state :runner "Pay") ; trash Director Haas
           (prompt-choice state :runner "Done")
           (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn"))))))
@@ -262,6 +264,7 @@
     (play-from-hand state :runner "Imp")
     (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Imp")
       (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
       (run-empty-server state "HQ")
@@ -273,6 +276,7 @@
     (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
       (run-empty-server state "HQ")
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Imp"))
     (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
@@ -288,6 +292,7 @@
     (prompt-choice state :runner "No action")
     ;; run and trash the second asset
     (run-empty-server state "Server 2")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay")
     (take-credits state :runner 2)
     (play-from-hand state :corp "PAD Campaign" "Server 1")
@@ -307,6 +312,7 @@
     (take-credits state :corp 2)
     ;; run and trash the asset
     (run-empty-server state "Server 1")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay")
     (is (:seen (first (get-in @state [:corp :discard]))) "Asset trashed by runner is Seen")
     (take-credits state :runner 3)
@@ -491,14 +497,17 @@
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (prompt-choice state :corp "No")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :hq)
     (prompt-choice state :corp "No")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :rd)
     (prompt-choice state :corp "No")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))
 

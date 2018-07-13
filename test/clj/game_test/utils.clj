@@ -1,6 +1,7 @@
 (ns game-test.utils
   (:require [game.core :as core]
             [clojure.test :refer :all]
+            [clojure.string :refer [lower-case]]
             [monger.core :as mg]
             [monger.collection :as mc]
             [jinteki.cards :refer [all-cards]]))
@@ -42,16 +43,17 @@
 
 ;;; helper functions for prompt interaction
 
-(defn prompt-is-type? [state side type]
-  (= type (-> @state side :prompt first :prompt-type)))
+(defn prompt-is-type? [state side prompt-type]
+  (= prompt-type (-> @state side :prompt first :prompt-type)))
 
 
 
 ;;; everything below here is deprecated. sorta.
 
 (defn assert-prompt [state side]
-  (is (first (get-in @state [side :prompt]))
-      (str "Expected an open " (name side) " prompt")))
+  (let [prompt (-> @state side :prompt)]
+    (is (first prompt) (str "Expected an open " (name side) " prompt"))
+    (first (seq prompt))))
 
 
 (defn prompt-choice [state side choice]
@@ -88,70 +90,98 @@
   (core/select state side {:card (core/get-card state card)}))
 
 (defn prompt-is-card? [state side card]
-  (assert-prompt state side)
-  (and (:cid card) (-> @state side :prompt first :card :cid)
-       (= (:cid card) (-> @state side :prompt first :card :cid))))
+  (when-let [prompt (assert-prompt state side)]
+    (and (:cid card)
+         (-> prompt :card :cid)
+         (= (:cid card) (-> prompt :card :cid)))))
 
+
+(defmacro when-let*
+  "Multiple binding version of when-let, from https://stackoverflow.com/a/36160972/3023252"
+  [bindings & body]
+  (if (seq bindings)
+    `(when-let [~(first bindings) ~(second bindings)]
+       (when-let* ~(vec (drop 2 bindings)) ~@body))
+    `(do ~@body)))
 
 ;;; stops here
 
 (defn click-card [state side card]
-  "Resolves a 'select prompt' by clicking a card. Can take a card map or a card name. Analogous to prompt-select."
-  (assert-prompt state side)
-  (is (prompt-is-type? state side :select)
-      (str "click-card should only be used with prompts "
-           "requiring the user to click on cards on grip/table"))
+  "Resolves a 'select prompt' by clicking a card. Can take a card map or a card name."
+  (when-let [prompt (assert-prompt state side)]
+    (cond
+      ;; Card and prompt types are correct
+      (and (prompt-is-type? state side :select)
+           (or (map? card)
+               (string? card)))
+      (if (map? card)
+        (core/select state side {:card card})
+        (let [all-cards (concat (core/get-all-installed state)
+                                (mapcat (fn [side]
+                                          (mapcat #(-> @state side %)
+                                                  [:hand :discard :deck :rfg :scored :play-area]))
+                                        [:corp :runner]))
+              matching-cards (filter #(= card (:title %)) all-cards)]
+          (if (= (count matching-cards) 1)
+            (core/select state side {:card (first matching-cards)})
+            (is (= (count matching-cards) 1)
+                (str "Expected to click card with name " card
+                     ", but found " (count matching-cards)
+                     ". Current prompt is: " prompt)))))
 
-  (is (or (map? card) (string? card)) "click-card expects a card name or card map")
-  (if (map? card)
-    (core/select state side {:card card})
-    (let [all-cards (flatten (concat (core/get-all-installed state)
-                                     (concat (map (fn [side]
-                                                    (-> (map #(-> @state side %)
-                                                             [:hand :discard :deck :rfg :scored])
-                                                        concat flatten))
-                                          [:corp :runner]))))
-          matching-cards (filter #(= card (:title %)) all-cards)]
-      (is (= (count matching-cards) 1)
-          (str "Expected to find 1 card with name " card
-               ", but found " (count matching-cards)
-               ". Try passing card maps instead of card name."))
-      (core/select state side {:card (first matching-cards)}))))
+      ;; Prompt isn't a select so click-card shouldn't be used
+      (not (prompt-is-type? state side :select))
+      (is false ;; (prompt-is-type? state side :select)
+          (str "click-card should only be used with prompts "
+               "requiring the user to click on cards on table"))
+      ;; Prompt is a select, but card isn't correct type
+      (not (or (map? card)
+               (string? card)))
+      (is (or (map? card)
+              (string? card))
+          (str "click-card expects a card name or card map, received " card
+               " of type " (type card) ".")))))
 
-(defn click-button
+
+(defn click-prompt
   "Clicks a button in a prompt. Analogous to prompt-choice or prompt"
-  [state side button-name-or-num]
-  (if (#{"0 [Credits]" "1 [Credits]" "2 [Credits]"} button-name-or-num)
-    (click-button state side (read-string (first (clojure.string/split button-name-or-num #" "))))
-    (letfn [(choice-to-name [c]
-              (cond (string? c) (if (#{"0 [Credits]" "1 [Credits]" "2 [Credits]"} c)
-                                  (read-string (first (clojure.string/split c #" ")))
-                                  c)
-                    (map? c) (:title c) ;cards
-                    (int? c) c))]
-      (let [prompt (first (get-in @state [side :prompt]))
-            choices (:choices prompt)
-            button-name (if (not (string? button-name-or-num))
-                          (str button-name-or-num)
-                          button-name-or-num)]
-        (cond (or (= choices :credit)
-                  (and (map? choices)
-                       (or (:number choices)
-                           (:counter choices))))
-              (core/resolve-prompt state side {:choice (read-string button-name-or-num)})
+  [state side choice]
+  (when-let* [prompt (assert-prompt state side)
+              choices (:choices prompt)]
+    (cond
+      ;; Integer prompts
+      (or (= choices :credit)
+          (:counter choices)
+          (:number choices))
+      (if (number? (Integer/parseInt choice))
+        (core/resolve-prompt state side {:choice (Integer/parseInt choice)})
+        (is (number? (Integer/parseInt choice))
+            (str "Expected a number string, received " choice
+                 " of type " (type choice) ".")))
 
-              (and (map? choices)       ; Targeted Marketing only, hopefully
-                   (:card-title choices))
-              (core/resolve-prompt state side {:choice button-name-or-num})
-              
-              true                      ; old prompt-card 
-              (let [choice-titles (map choice-to-name choices)
-                    correct-choice-name-pairs (filter #(= button-name (second %))
-                                                      (map vector choices choice-titles))
-                    correct-choice (first (first correct-choice-name-pairs))]
-                (is (= 1 (count correct-choice-name-pairs)) (str "Current prompt has choices " choice-titles
-                                                                 " , making argument " button-name " ambiguous or impossible"))
-                (if (or (string? correct-choice) (int? correct-choice))
-                  (core/resolve-prompt state side {:choice correct-choice})
-                  (core/resolve-prompt state side {:card correct-choice})))))))
-  nil)
+      ;; List of card titles for auto-completion
+      (:card-title choices)
+      (if (or (map? choice)
+              (string? choice))
+        (core/resolve-prompt state side {:choice choice})
+        (is (or (map? choice)
+                (string? choice))
+            (str "Expected a card string or map, received " choice " of type " (type choice) ".")))
+
+      ;; Default text prompt
+      :else
+      (let [kw (if (string? (first choices)) :choice :card)
+            buttons (filter #(or (= (lower-case choice) (lower-case %))
+                                 (= (lower-case choice) (lower-case (:title % ""))))
+                            choices)
+            button (first buttons)]
+        (cond
+          (and (= button choice)
+               (= 1 (count buttons)))
+          (core/resolve-prompt state side {kw button})
+          (not= 1 (count buttons))
+          (is (= 1 (count buttons)) (str "Expected to click " (if (string? choice) choice (:title choice)) " but found ambiguous choices. "
+                                         "Current prompt is: " prompt))
+          (not= button choice)
+          (is (= button choice) (str "Expected to click " (if (string? choice) choice (:title choice)) " but couldn't find it. "
+                                     "Current prompt is: " prompt)))))))

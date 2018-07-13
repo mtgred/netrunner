@@ -194,12 +194,11 @@
                  0)]
          (prompt! state s card prompt {:number n :default d} ab args))
        (:card-title choices)
-       (prompt!
-         state s card prompt
-         (assoc choices :autocomplete
-                        (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
-                                                  (vals @all-cards)))))
-         ab (assoc args :prompt-type :card-title))
+       (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
+                                                   (vals @all-cards))))
+             choices (assoc choices :autocomplete card-titles)
+             args (assoc args :prompt-type :card-title)]
+         (prompt! state s card prompt choices ab args))
        ;; unknown choice
        :else nil)
      ;; Not a map; either :credit, :counter, or a vector of cards or strings.

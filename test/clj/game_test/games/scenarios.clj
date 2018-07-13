@@ -104,6 +104,7 @@
         (run-empty-server state "HQ")
         (prompt-choice state :corp 0)
         (prompt-choice state :runner 0)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ; trash Ash
         (is (and (= 1 (:credit (get-runner))) (= 11 (:credit (get-corp)))))
         (core/gain state :runner :credit 1)

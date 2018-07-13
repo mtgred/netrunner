@@ -37,6 +37,7 @@
       (prompt-choice state :corp 0)
       (prompt-choice state :runner 0)
       (is (= "Ash 2X3ZB9CY" (-> (get-runner) :prompt first :card :title)) "Should access Ash")
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Pay")
       (is (not (:run @state)) "Accessing Ash then ends the run"))))
 
@@ -54,17 +55,18 @@
         (core/rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
         ;; prompt should be asking for the 2 net damage cost
         (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay 2 net damage")
         (prompt-choice state :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner did not pay 2 net damage")
         (is (zero? (count (:scored (get-runner)))) "No scored agendas")
-        (prompt-select state :runner bm)
+        (click-card state :runner bm)
         (prompt-choice state :runner "No action")
         (run-empty-server state "Server 1")
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
@@ -90,6 +92,7 @@
         (prompt-choice state :runner "No action")
         (run-empty-server state "R&D")
         (prompt-choice state :runner "Card from deck")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
@@ -106,10 +109,12 @@
         (core/rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
-        (prompt-select state :runner bm)
+        (click-card state :runner bm)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ; pay to trash
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
         ;; should now have prompt to pay 2 net for HoK
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
@@ -125,10 +130,11 @@
         (core/rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
-        (prompt-select state :runner op)
+        (click-card state :runner op)
         ;; prompt should be asking for the net damage costs
         (is (= "Obokata Protocol" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (prompt-choice state :runner "2 net damage")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 net damage")
@@ -148,10 +154,11 @@
         (core/rez state :corp bm)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
-        (prompt-select state :runner fai)
+        (click-card state :runner fai)
         ;; prompt should be asking for the net damage costs
         (is (= "Fetal AI" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay steal costs")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (prompt-choice state :runner "2 [Credits]")
         (is (= 3 (:credit (get-runner))) "Runner paid 2 credits")
@@ -175,6 +182,7 @@
       (run-empty-server state :remote1)
       (prompt-choice state :corp 0)
       (prompt-choice state :runner 0)
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Pay")
       (is (= 1 (:tag (get-runner))))
       (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
@@ -202,6 +210,7 @@
       (run-empty-server state :remote1)
       (prompt-choice state :corp 0)
       (prompt-choice state :runner 0)
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Pay")
       (is (= 1 (:tag (get-runner))))
       (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
@@ -262,7 +271,7 @@
     (let [bs (get-content state :remote1 0)]
       (core/rez state :corp (refresh bs))
       (card-ability state :corp (refresh bs) 0)
-      (prompt-card state :corp (find-card "Death and Taxes" (:discard (get-corp))))
+      (click-prompt state :corp (find-card "Death and Taxes" (:discard (get-corp))))
       (is (find-card "Death and Taxes" (:current (get-corp))) "Death and Taxes is active Current")
       (take-credits state :corp)
       (play-from-hand state :runner "Interdiction")
@@ -273,7 +282,7 @@
       (core/lose state :runner :credit 3)
       (trash-from-hand state :corp "Paywall Implementation")
       (card-ability state :corp (refresh bs) 0)
-      (prompt-card state :corp (find-card "Paywall Implementation" (:discard (get-corp))))
+      (click-prompt state :corp (find-card "Paywall Implementation" (:discard (get-corp))))
       (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall Implementation is active Current")
       (is (find-card "Interdiction" (:discard (get-runner))) "Interdiction is trashed")
       (trash-from-hand state :corp "IPO")
@@ -286,7 +295,7 @@
       (take-credits state :runner)
       (core/lose state :runner :credit 3)
       (card-ability state :corp (refresh bs) 0)
-      (prompt-card state :corp (find-card "IPO" (:discard (get-corp))))
+      (click-prompt state :corp (find-card "IPO" (:discard (get-corp))))
       (is (find-card "IPO" (:rfg (get-corp))) "IPO is removed from game"))))
 
 (deftest calibration-testing
@@ -302,7 +311,7 @@
           pj (get-content state :remote1 1)]
       (core/rez state :corp ct)
       (card-ability state :corp ct 0)
-      (prompt-select state :corp pj)
+      (click-card state :corp pj)
       (is (= 1 (get-counters (refresh pj) :advancement)) "Project Junebug advanced")
       (is (= 1 (count (:discard (get-corp)))) "Calibration Testing trashed"))
     (play-from-hand state :corp "Calibration Testing" "New remote")
@@ -311,7 +320,7 @@
           pad (get-content state :remote2 1)]
       (core/rez state :corp ct)
       (card-ability state :corp ct 0)
-      (prompt-select state :corp pad)
+      (click-card state :corp pad)
       (is (= 1 (get-counters (refresh pad) :advancement)) "PAD Campaign advanced")
       (is (= 2 (count (:discard (get-corp)))) "Calibration Testing trashed"))))
 
@@ -423,9 +432,9 @@
       (core/rez state :corp ct)
       (card-ability state :corp ct 0)
       (prompt-choice state :corp 5)
-      (prompt-select state :corp q2)
+      (click-card state :corp q2)
       (is (nil? (:current-strength (refresh q2))) "Outer Quandary unrezzed; can't be targeted")
-      (prompt-select state :corp q1)
+      (click-card state :corp q1)
       (is (= 5 (:current-strength (refresh q1))) "Inner Quandary boosted to 5 strength")
       (is (empty? (get-content state :hq))
           "Corporate Troubleshooter trashed from root of HQ")
@@ -509,6 +518,7 @@
         ;; corp now has optional prompt to trigger virus purge
         (prompt-choice state :corp "Yes")
         ;; runner has prompt to trash CVS
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         ;; purged counters
         (is (zero? (virus-counters cache))
@@ -563,6 +573,7 @@
     (run-empty-server state :remote1)
     (prompt-choice state :corp 0)
     (prompt-choice state :runner 0)
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay") ; trash
     (is (= 2 (:tag (get-runner))) "Runner took two tags")
     (run-empty-server state "Archives")
@@ -570,6 +581,7 @@
     (run-empty-server state "HQ")
     (prompt-choice state :corp 0)
     (prompt-choice state :runner 3)
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay") ; trash
     (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
 
@@ -617,12 +629,12 @@
       (is (= 6 (:current-strength (refresh gutenberg))))
       (is (zero? (:current-strength (refresh vanilla))))
       (card-ability state :corp helheim 0)
-      (prompt-select state :corp (find-card "Jackson Howard" (:hand (get-corp))))
+      (click-card state :corp (find-card "Jackson Howard" (:hand (get-corp))))
       (is (= 1 (count (:discard (get-corp)))))
       (is (= 8 (:current-strength (refresh gutenberg))))
       (is (= 2 (:current-strength (refresh vanilla))))
       (card-ability state :corp helheim 0)
-      (prompt-select state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
       (is (= 2 (count (:discard (get-corp)))))
       (is (= 10 (:current-strength (refresh gutenberg))))
       (is (= 4 (:current-strength (refresh vanilla))))
@@ -661,8 +673,9 @@
     (prompt-choice state :corp 0) ; trace
     (prompt-choice state :runner 0)
     (is (empty? (:hand (get-runner))) "Runner starts with no cards in hand")
-    (prompt-select state :corp (get-program state 0))
+    (click-card state :corp (get-program state 0))
     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay") ; trash
     (run-on state "Archives")
     (run-successful state)
@@ -673,7 +686,7 @@
     (prompt-choice state :corp 0) ; trace
     (prompt-choice state :runner 0)
     (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
-    (prompt-select state :corp (get-resource state 0))
+    (click-card state :corp (get-resource state 0))
     (is (= 2 (count (:hand (get-runner)))) "Runner has 2 cards in hand")
     (prompt-choice state :runner "No action") ; trash
     (run-on state "HQ")
@@ -724,7 +737,7 @@
       (is (= 1 (count (get-content state :hq))) "Keegan didn't fire, Runner has no tags")
       (core/gain state :runner :tag 2)
       (card-ability state :corp keeg 0)
-      (prompt-select state :corp (get-program state 0))
+      (click-card state :corp (get-program state 0))
       (is (= 1 (:tag (get-runner))) "1 tag removed")
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
@@ -799,10 +812,14 @@
         (run-on state "Server 1")
         (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "1 ice on server")
         (card-ability state :corp (refresh mcg) 0)
+        (is (= "Pay" (:choices (prompt? :corp))))
         (prompt-choice-partial state :corp "No")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Continue")
         (card-ability state :corp (refresh mcg) 0)
+        (is (= "Pay" (:choices (prompt? :corp))))
         (prompt-choice-partial state :corp "No")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Jack")
         (is (= 1 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 1 ice on server"))))
   (testing "fire before pass"
@@ -824,11 +841,13 @@
         (run-continue state)
         (is (= 1 (:position (:run @state))) "Runner at position 1")
         (card-ability state :corp (refresh mcg) 0)
-        (prompt-select state :corp (get-ice state :remote1 0))
+        (click-card state :corp (get-ice state :remote1 0))
         (is (= 1 (:position (:run @state))) "Runner at position 1")
         (is (= "Quandary" (:title (second (get-in @state [:corp :servers :remote1 :ices])))) "Quandary outer ice")
         (is (= "Ice Wall" (:title (first (get-in @state [:corp :servers :remote1 :ices])))) "Ice Wall inner ice")
+        (is (= "Pay" (:choices (prompt? :corp))))
         (prompt-choice-partial state :corp "No")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Jack")
         (is (= 2 (count (get-in @state [:corp :servers :remote1 :ices]))) "Still 2 ice on server")))))
 
@@ -846,6 +865,7 @@
     (is (empty? (:discard (get-corp))) "MVT in HQ is not trashed")
     (run-empty-server state "Server 1")
     (is (= 1 (count (->> @state :runner :prompt first :choices))) "Should only have a single option")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay")
     (is (zero? (:credit (get-runner))) "Runner forced to trash MVT")
     (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed"))
@@ -865,6 +885,7 @@
       (is (= 5 (:credit (get-runner))) "Runner not forced to trash MVT when Imp installed")
       (is (empty? (:discard (get-corp))) "MVT is not force-trashed when Imp installed")
       (let [imp (get-program state 0)]
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed with Imp")
         ;; Trash Imp to reset :slow-trash flag
@@ -882,6 +903,7 @@
       (run-empty-server state "Server 1")
       (is (= #{"[Imp]: Trash card" "Pay 5[Credits] to trash"}
              (->> (get-runner) :prompt first :choices (into #{}))) "Should have Imp and MVT options")
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Imp")
       (take-credits state :runner)
       (core/lose state :runner :credit (:credit (get-runner)))
@@ -889,6 +911,7 @@
       (take-credits state :corp)
       (run-empty-server state "Server 2")
       (is (= ["[Imp]: Trash card"] (->> (get-runner) :prompt first :choices)) "Should only have Imp option")
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Imp")
       (take-credits state :runner)
       (core/lose state :runner :credit (:credit (get-runner)))
@@ -943,6 +966,7 @@
         (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
         (run-successful state)
         (prompt-choice state :runner "Mwanza City Grid")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (dotimes [c 4]
           (prompt-choice state :runner "Card from hand")
@@ -981,7 +1005,7 @@
         (core/rez state :corp k-rd)
         (run-on state "HQ")
         (card-subroutine state :corp k-hq 0)
-        (prompt-select state :corp (find-card "Breached Dome" (:hand (get-corp))))
+        (click-card state :corp (find-card "Breached Dome" (:hand (get-corp))))
         (is (= 2 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
         (prompt-choice state :runner "No action")
         ;; Access 3 more cards from HQ
@@ -991,7 +1015,7 @@
         (run-jack-out state)
         (run-on state "R&D")
         (card-subroutine state :corp k-rd 0)
-        (prompt-select state :corp (find-card "Breached Dome" (:hand (get-corp))))
+        (click-card state :corp (find-card "Breached Dome" (:hand (get-corp))))
         (is (= 1 (-> (get-runner) :hand count)) "Runner took 1 meat from Breached Dome access from Kitsune")
         (prompt-choice state :runner "No action")
         ;; Access 3 more cards from HQ
@@ -1014,7 +1038,7 @@
     (let [nis (get-content state :remote1 1)]
       (play-from-hand state :corp "Shipment from SanSan")
       (prompt-choice state :corp "2")
-      (prompt-select state :corp nis)
+      (click-card state :corp nis)
       (is (= 2 (get-counters (refresh nis) :advancement)) "2 advancements on agenda")
       (is (= 4 (:credit (get-corp))) "Gained 1 credit")
       (core/advance state :corp {:card (refresh nis)})
@@ -1039,7 +1063,7 @@
     (let [oberth (get-content state :remote1 0)
           oak (get-content state :remote1 1) ]
       (core/rez state :corp (refresh oberth))
-      (prompt-select state :corp (get-scored state :corp 0))
+      (click-card state :corp (get-scored state :corp 0))
       (advance state oak)
       (is (= 2 (get-counters (refresh oak) :advancement)) "Oaktown should have 2 advancement tokens on it"))))
 
@@ -1080,14 +1104,14 @@
         (core/rez state :corp ohg)
         (run-successful state)
         ;; runner now chooses which to access.
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
         (prompt-choice state :runner "No action")
         (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
-        (prompt-select state :runner ohg)
+        (click-card state :runner ohg)
         (prompt-choice state :runner "No action")
         (core/steal state :runner (find-card "House of Knives" (:hand (get-corp))))
         (run-empty-server state "Server 1")
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
         (prompt-choice state :runner "Steal")
         (is (= 2 (count (:scored (get-runner)))) "2 stolen agendas"))))
   (testing "Central server"
@@ -1105,6 +1129,7 @@
         (prompt-choice state :runner "No action")
         (is (zero? (count (:scored (get-runner)))) "No stolen agendas")
         (prompt-choice state :runner "Old Hollywood Grid")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ;; trash OHG
         (run-empty-server state "HQ")
         (prompt-choice state :runner "Steal")
@@ -1138,12 +1163,15 @@
         (run-successful state)
         (is (empty? (:scored (get-runner))) "Start with no stolen agendas")
         ;; runner now chooses which to access.
-        (prompt-select state :runner (refresh ohg))
+        (click-card state :runner (refresh ohg))
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ;; trash OHG
-        (prompt-select state :runner (refresh pb))
+        (click-card state :runner (refresh pb))
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "No")
         (is (empty? (:scored (get-runner))) "End with no stolen agendas")
         (run-empty-server state "Server 1")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Steal")
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
   (testing "Steal other agendas"
@@ -1158,6 +1186,7 @@
             pb (get-content state :remote1 1)]
         (core/rez state :corp ohg)
         (run-empty-server state "Server 2")
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Steal")
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda")))))
 
@@ -1176,11 +1205,13 @@
         (core/rez state :corp om)
         (run-successful state)
         (is (zero? (:tag (get-runner))) "Runner starts with no tags")
-        (prompt-select state :runner rh)
+        (click-card state :runner rh)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (prompt-choice state :corp "Yes")
         (is (= 1 (:tag (get-runner))) "Runner takes a tag")
-        (prompt-select state :runner om)
+        (click-card state :runner om)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (prompt-choice state :corp "Yes")
         (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
@@ -1197,11 +1228,13 @@
         (core/rez state :corp om)
         (run-successful state)
         (is (zero? (:tag (get-runner))) "Runner starts with no tags")
-        (prompt-select state :runner om)
+        (click-card state :runner om)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (prompt-choice state :corp "Yes")
         (is (= 1 (:tag (get-runner))) "Runner takes a tag")
-        (prompt-select state :runner rh)
+        (click-card state :runner rh)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (prompt-choice state :corp "Yes")
         (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
@@ -1218,15 +1251,17 @@
         (core/rez state :corp om)
         (run-successful state)
         (is (zero? (:tag (get-runner))) "Runner starts with no tags")
-        (prompt-select state :runner om)
+        (click-card state :runner om)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (prompt-choice state :corp "Yes")
         (is (= 1 (:tag (get-runner))) "Runner takes a tag")
-        (prompt-select state :runner rh)
+        (click-card state :runner rh)
         (prompt-choice state :runner "No action")
         (is (= 1 (:tag (get-runner))) "Runner doesn't take a tag")
         (run-on state "Server 1")
         (run-successful state)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (empty? (:prompt (get-corp))) "No prompt for Overseer Matrix")
         (is (= 1 (:tag (get-runner))) "Runner doesn't take a tag")))))
@@ -1269,6 +1304,7 @@
       (is (= 1 (:tag (get-runner))) "Give runner 1 tag")
       (is (= 1 (count (:discard (get-runner)))) "Prisec does 1 damage")
       ;; Runner trashes Prisec
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Pay")
       (run-empty-server state "HQ")
       (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
@@ -1285,7 +1321,7 @@
       (run-empty-server state :archives)
       (is (:run @state) "Run still active")
       (prompt-choice state :runner "Unrezzed upgrade in Archives")
-      (prompt-select state :runner (get-content state :archives 0))
+      (click-card state :runner (get-content state :archives 0))
       (prompt-choice state :corp "Yes") ; corp pay for PriSec
       (prompt-choice state :runner "No action") ; runner don't pay to trash
       (is (:run @state) "Run still active")
@@ -1306,6 +1342,7 @@
     (let [pp (get-content state :remote1 0)]
       (run-empty-server state "Server 1")
       (is (= 9 (:credit (get-corp))) "Gained 2 credits from Runner accessing Product Placement")
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Pay") ; Runner trashes PP
       (run-empty-server state "Archives")
       (is (= 9 (:credit (get-corp)))
@@ -1325,17 +1362,18 @@
         (core/rez state :corp rh)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
         ;; prompt should be asking for the 5cr cost
         (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay 5cr")
         (prompt-choice state :runner "No action")
         (is (= 5 (:credit (get-runner))) "Runner was not charged 5cr")
         (is (zero? (count (:scored (get-runner)))) "No scored agendas")
-        (prompt-select state :runner rh)
+        (click-card state :runner rh)
         (prompt-choice state :runner "No action")
         (run-empty-server state "Server 1")
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (zero? (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
@@ -1352,10 +1390,12 @@
         (core/rez state :corp rh)
         (run-empty-server state "Server 1")
         ;; runner now chooses which to access.
-        (prompt-select state :runner rh)
+        (click-card state :runner rh)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ; pay to trash
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
         ;; should now have prompt to pay 5cr for HoK
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (zero? (:credit (get-runner))) "Runner was charged 5cr")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
@@ -1408,6 +1448,7 @@
         (is (= 7 (:credit (get-runner))))
         (run-on state :hq)
         (run-successful state)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ; pay to trash / 7 cr - 4 cr
         (is (= 2 (:click (get-runner))))
         (is (= 3 (:credit (get-runner))))
@@ -1428,6 +1469,7 @@
         (is (= 3 (:click (get-runner))))
         (run-on state :hq)
         (run-successful state)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ; pay to trash / 6 cr - 4 cr
         (is (= 1 (:click (get-runner))))
         (run-on state :hq)))))
@@ -1518,7 +1560,7 @@
       (is (empty? (:prompt (get-runner))) "SJ blocking SMC")
       (run-jack-out state)
       (card-ability state :runner smc2 0)
-      (prompt-card state :runner (find-card "Reaver" (:deck (get-runner)))))))
+      (click-prompt state :runner (find-card "Reaver" (:deck (get-runner)))))))
 
 (deftest strongbox
   ;; Strongbox
@@ -1533,16 +1575,17 @@
             hok (get-content state :remote1 1)]
         (core/rez state :corp sb)
         (run-empty-server state "Server 1")
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
         (is (= "House of Knives" (:title (:card (first (:prompt (get-runner))))))
             "Prompt to pay 5cr")
         (prompt-choice state :runner "No action")
         (is (= 3 (:click (get-runner))) "Runner was not charged 1click")
         (is (zero? (count (:scored (get-runner)))) "No scored agendas")
-        (prompt-select state :runner sb)
+        (click-card state :runner sb)
         (prompt-choice state :runner "No action")
         (run-empty-server state "Server 1")
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (= 1 (:click (get-runner))) "Runner was charged 1click")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
@@ -1558,9 +1601,11 @@
             hok (get-content state :remote1 1)]
         (core/rez state :corp sb)
         (run-empty-server state "Server 1")
-        (prompt-select state :runner sb)
+        (click-card state :runner sb)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ; pay to trash
-        (prompt-select state :runner hok)
+        (click-card state :runner hok)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay")
         (is (= 2 (:click (get-runner))) "Runner was charged 1click")
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda")))))
@@ -1583,7 +1628,7 @@
       (is (= 15 (:credit (get-corp))))
       (is (= (:cid scg1) (-> (get-corp) :prompt first :card :cid)) "Surat City Grid triggered from upgrade in same remote")
       (prompt-choice state :corp "Yes")
-      (prompt-select state :corp wrap)
+      (click-card state :corp wrap)
       (is (:rezzed (refresh wrap)) "Wraparound is rezzed")
       (is (= 15 (:credit (get-corp))) "Wraparound rezzed for free with 2c discount from SCG")
       (play-from-hand state :corp "Surat City Grid" "HQ")
@@ -1614,6 +1659,7 @@
     (is (= 3 (:click (get-runner))) "Runner starts with 3 clicks")
     (prompt-choice state :runner "Lose [Click][Click]")
     (is (= 1 (:click (get-runner))) "Runner loses 2 clicks")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay") ; trash
     (run-on state "Server 1")
     (run-successful state)
@@ -1621,6 +1667,7 @@
     (is (zero? (:brain-damage (get-runner))) "Runner starts with 0 brain damage")
     (prompt-choice state :runner 0)
     (is (= 1 (:brain-damage (get-runner))) "Runner took 1 brain damage")
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay") ; trash
     (take-credits state :runner)
     (take-credits state :corp)
@@ -1640,6 +1687,7 @@
     (run-successful state)
     (prompt-choice state :corp 0) ; trace
     (prompt-choice state :runner 4)
+    (is (= "Pay" (:choices (prompt? :runner))))
     (prompt-choice-partial state :runner "Pay")))
 
 (deftest the-twins
@@ -1662,7 +1710,7 @@
         (run-continue state)
         (is (zero? (-> @state :run :position)) "Run should be at position 0")
         (card-ability state :corp twins 0)
-        (prompt-select state :corp (-> (get-corp) :hand first))
+        (click-card state :corp (-> (get-corp) :hand first))
         (is (= 1 (-> @state :run :position)) "Run should be moved back to position 1")))))
 
 (deftest tori-hanzo
@@ -1760,7 +1808,7 @@
     (core/rez state :corp (get-content state :remote1 0))
     (let [eve1 (get-content state :remote1 1)]
       (play-from-hand state :runner "Drive By")
-      (prompt-select state :runner eve1)
+      (click-card state :runner eve1)
       (is (empty? (:discard (get-corp))) "Expose and trash prevented"))))
 
 (deftest valley-grid
@@ -1779,6 +1827,7 @@
         (is (= 3 (core/hand-size state :runner)) "Runner max hand size reduced by 2")
         (is (= 2 (get-in (refresh vg) [:times-used])) "Saved number of times Valley Grid used")
         (run-successful state)
+        (is (= "Pay" (:choices (prompt? :runner))))
         (prompt-choice-partial state :runner "Pay") ; pay to trash
         (take-credits state :runner 3)
         (is (= 5 (core/hand-size state :runner)) "Runner max hand size increased by 2 at start of Corp turn")))))
@@ -1798,10 +1847,11 @@
           mem (get-hardware state 0)]
       (core/rez state :corp war)
       (run-empty-server state "Server 1")
+      (is (= "Pay" (:choices (prompt? :runner))))
       (prompt-choice-partial state :runner "Pay")
       (prompt-choice state :corp 0)
       (prompt-choice state :runner 0)
       (is (zero? (-> (get-runner) :discard count)) "Runner should start with 0 cards in heap")
-      (prompt-select state :runner cor)
-      (prompt-select state :runner mem)
+      (click-card state :runner cor)
+      (click-card state :runner mem)
       (is (= 2 (-> (get-runner) :discard count)) "Runner should trash 2 installed cards"))))
