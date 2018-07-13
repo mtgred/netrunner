@@ -1559,7 +1559,7 @@
        :reagent-render
        (fn []
          (when @@render-board?
-           (let [me-side @side
+           (let [me-side (if (= :spectator @side) :corp @side)
                  op-side (utils/other-side me-side)
                  me (r/cursor game-state [me-side])
                  opponent (r/cursor game-state [op-side])
@@ -1609,7 +1609,7 @@
               [:div.leftpane
                [:div.opponent
                 [hand-view op-user (if (= :corp op-side) "HQ" "Grip") op-hand op-prompt corp-remotes
-                 (= me-side :spectator) "opponent"]]
+                 (= @side :spectator) "opponent"]]
 
                [:div.inner-leftpane
 
@@ -1635,7 +1635,7 @@
                     [play-area-view me-user "Temporary Zone" me-play-area]
                     [rfg-view op-current "Current" false]
                     [rfg-view me-current "Current" false]])
-                 (when-not (= me-side :spectator)
+                 (when-not (= @side :spectator)
                    [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
                                  :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
                                  :corp corp :runner runner :me me :opponent opponent}])]]
