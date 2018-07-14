@@ -95,8 +95,7 @@
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from no-trash")
       (core/gain state :runner :credit 5)
       (run-empty-server state "Server 1")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 4 [Credits] to trash")
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
   (testing "Gain counters on empty archives"
     (do-game
@@ -286,8 +285,7 @@
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Deus X")
       (run-empty-server state "Server 1")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 5 [Credits] to trash")
       (let [dx (get-program state 0)]
         (card-ability state :runner dx 1)
         (click-prompt state :runner "Done")
@@ -305,8 +303,7 @@
       (let [dx (get-program state 0)]
         (card-ability state :runner dx 1)
         (click-prompt state :runner "Done")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Pay 1 [Credits] to trash")
+        (click-prompt state :runner "Pay 2 [Credits] to steal")
         (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
         (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen")))))
 

@@ -743,7 +743,7 @@
       (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
       (click-prompt state :runner "Yes")
       (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card on R&D")
-      (click-prompt state :runner "Yes")))
+      (click-prompt state :runner "OK")))
   (testing "Equivocation & FTT - should get order of choice"
     (do-game
       (new-game
@@ -758,7 +758,7 @@
       (is (= "Use Find the Truth to look at the top card of R&D?" (-> @state :runner :prompt first :msg)) "FTT prompt")
       (click-prompt state :runner "Yes")
       (is (= "The top card of R&D is Restructure" (-> @state :runner :prompt first :msg)) "FTT shows card")
-      (click-prompt state :runner "Yes") ; Equivocation prompt
+      (click-prompt state :runner "OK") ; Equivocation prompt
       (is (= "Reveal the top card of R&D?" (-> @state :runner :prompt first :msg)) "Equivocation Prompt")
       (click-prompt state :runner "Yes")))
   (testing "Find The Truth should completed before Marilyn trash is forced"
@@ -780,9 +780,8 @@
       (click-prompt state :runner "Yes")
       (is (= "The top card of R&D is Vanilla" (-> @state :runner :prompt first :msg)) "FTT shows card")
       (is (= "Waiting for Runner to resolve successful-run triggers" (-> @state :corp :prompt first :msg)) "No Marilyn Shuffle Prompt")
-      (click-prompt state :runner "No action")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "OK")
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= "Waiting for Corp to use Marilyn Campaign" (-> @state :runner :prompt first :msg)) "Now Corp gets shuffle choice")
       (is (= "Shuffle Marilyn Campaign into R&D?" (-> @state :corp :prompt first :msg)) "Now Corp gets shuffle choice")
       (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn)))
@@ -1026,8 +1025,7 @@
         (take-credits state :corp)
         (is (= 1 (get-counters (refresh jak) :credit)) "Jackpot! gains 1 credit per turn")
         (run-empty-server state "Server 1")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Pay 1 [Credits] to trash") ;trash CH
+        (click-prompt state :runner "Pay 6 [Credits] to trash") ;trash CH
         (click-prompt state :runner "Yes") ;trash Jackpot!
         (click-prompt state :runner "1")
         (is (= 3 (:credit (get-runner))) "Runner gains 1 credit")
@@ -1070,8 +1068,7 @@
     (play-from-hand state :runner "John Masanori")
     (is (= 4 (count (:hand (get-runner)))))
     (run-empty-server state "HQ")
-    (is (= "Pay" (:choices (prompt? :runner))))
-    (click-prompt state :runner "Pay 1 [Credits] to trash") ; trash crisium #2433
+    (click-prompt state :runner "Pay 5 [Credits] to trash") ; trash crisium #2433
     (run-empty-server state "Archives")
     (is (= 5 (count (:hand (get-runner)))) "1 card drawn from first successful run")
     (run-empty-server state "Archives")
@@ -1357,8 +1354,7 @@
     (click-prompt state :runner "Card from hand")
     (click-prompt state :runner "No action") ; access second Hedge Fund
     (run-empty-server state "Server 1")
-    (is (= "Pay" (:choices (prompt? :runner))))
-    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (click-prompt state :runner "Pay 2 [Credits] to trash")
     (is (= 3 (:credit (get-runner))) "Forced to pay 2c to trash BBG")
     (is (= 1 (count (:discard (get-corp)))) "Breaker Bay Grid trashed")
     (run-empty-server state "Server 2")
@@ -1562,7 +1558,7 @@
       (take-credits state :runner) ; now 8 credits
       (take-credits state :corp)
       (play-from-hand state :runner "Frantic Coding")
-      (click-prompt state :runner "No action")
+      (click-prompt state :runner "OK")
       (click-prompt state :runner (find-card "Gordian Blade" (:deck (get-runner))))
       (is (= 1 (count (get-program state))) "Installed Gordian Blade")
       (click-prompt state :runner "Yes")
@@ -1571,7 +1567,7 @@
       (is (= 5 (:credit (get-runner))) "No charge to install Gordian")
       ;; a second Frantic Coding will not trigger Paige (once per turn)
       (play-from-hand state :runner "Frantic Coding")
-      (click-prompt state :runner "No action")
+      (click-prompt state :runner "OK")
       (click-prompt state :runner (find-card "Ninja" (:deck (get-runner))))
       (is (= 2 (count (get-program state))) "Installed Ninja")
       (is (= 11 (count (:discard (get-runner)))) "11 cards in heap")
@@ -1594,7 +1590,7 @@
         (run-empty-server state "Server 1")
         (is (= 6 (count (:hand (get-runner)))) "Drew 2 cards")
         (run-empty-server state "Server 1")
-        (click-prompt state :runner "No")
+        (click-prompt state :runner "No action")
         (is (= 6 (count (:hand (get-runner)))) "Drew no cards")
         (play-from-hand state :runner "Easy Mark")
         (take-credits state :runner)
@@ -1835,8 +1831,7 @@
       (let [scrubber (get-resource state 0)]
         (card-ability state :runner scrubber 0)
         (card-ability state :runner scrubber 0))
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 7 [Credits] to trash")
       (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points")))
   (testing "when under trash cost but can up with recurring credits"
     (do-game
@@ -1856,15 +1851,13 @@
       (run-empty-server state "Server 1")
       (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "The Board should cost 6 to trash")
       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash") ;; Whoops, runner forgot to actually get the credits from Scrubber
+      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Whoops, runner forgot to actually get the credits from Scrubber
       (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "Skulljack shouldn't trigger a second time")
       (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can still use Scrubber credits the second time around")
       (let [scrubber (get-resource state 0)]
         (card-ability state :runner scrubber 0)
         (card-ability state :runner scrubber 0))
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash") ;; Now the runner has actually gained the Scrubber credits
+      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Now the runner has actually gained the Scrubber credits
       (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points"))))
 
 (deftest salsette-slums
@@ -1913,7 +1906,6 @@
       (click-prompt state :runner "No action")
       ;; Test the "oops I forgot" ability (runner feels bad that they forgot to use Slums when a Hostile is out)
       (run-empty-server state :remote3)
-      (is (= "Pay" (:choices (prompt? :runner))))
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       ;; Can only use that first Slums once
       (card-ability state :runner salsette1 1)
@@ -1926,8 +1918,7 @@
     ;; Set things up so we can trash the Hostile and then make sure we can't "oops I forgot on a later turn"
     (core/gain state :runner :credit 5)
     (run-empty-server state :remote2)
-    (is (= "Pay" (:choices (prompt? :runner))))
-    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (click-prompt state :runner "Pay 5 [Credits] to trash")
     (take-credits state :runner)
     (take-credits state :corp)
     (let [salsette1 (get-resource state 0)
@@ -1952,7 +1943,7 @@
         (run-empty-server state "Server 1")
         (is (= 10 (:credit (get-runner))) "Gained 2 credits from Security Testing")
         (run-empty-server state "Server 1")
-        (click-prompt state :runner "No")
+        (click-prompt state :runner "No action")
         (is (= 10 (:credit (get-runner))) "Did not gain credits on second run")
         (take-credits state :runner 2)
         (take-credits state :corp)
@@ -2301,8 +2292,7 @@
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "The Source")
     (run-empty-server state :remote1)
-    (is (= "Pay" (:choices (prompt? :runner))))
-    (click-prompt state :runner "Pay 1 [Credits] to trash") ; pay 3c extra to steal
+    (click-prompt state :runner "Pay 3 [Credits] to steal") ; pay 3c extra to steal
     (is (= 4 (:credit (get-runner))) "Paid 3c to steal")
     (is (= 2 (count (:discard (get-runner)))) "The Source is trashed")
     (play-from-hand state :runner "The Source")
@@ -2683,8 +2673,7 @@
     (play-from-hand state :runner "Wasteland")
     (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
     (run-empty-server state "Server 1")
-    (is (= "Pay" (:choices (prompt? :runner))))
-    (click-prompt state :runner "Pay 1 [Credits] to trash") ; Trash PAD campaign
+    (click-prompt state :runner "Pay 4 [Credits] to trash") ; Trash PAD campaign
     (is (zero? (:credit (get-runner))) "Gained nothing from Wasteland on corp trash")
     ; trash from hand first which should not trigger #2291
     (let [faust (get-program state 0)]

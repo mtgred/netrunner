@@ -1487,9 +1487,9 @@
               :effect (req (show-wait-prompt state :corp "Runner to choose an option for Mlinzi")
                            (resolve-ability
                              state :runner
-                             {:prompt "Take net damage or trash cards from the Stack?"
+                             {:prompt "Take net damage or trash cards from the stack?"
                               :choices [(str "Take " net-dmg " net damage")
-                                        (str "Trash the top " mill-cnt " cards of the Stack")]
+                                        (str "Trash the top " mill-cnt " cards of the stack")]
                               :effect (req (if (.startsWith target "Take")
                                              (do (system-msg state :corp
                                                              (str "uses Mlinzi to do "
@@ -1499,7 +1499,7 @@
                                              (do (system-msg state :corp
                                                              (str "uses Mlinzi to trash "
                                                                   (join ", " (map :title (take mill-cnt (:deck runner))))
-                                                                  " from the Runner's Stack"))
+                                                                  " from the runner's stack"))
                                                  (clear-wait-prompt state :corp)
                                                  (mill state :runner mill-cnt))))}
                              card nil))})]

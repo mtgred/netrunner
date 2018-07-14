@@ -125,8 +125,7 @@
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :corp "Yes")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 0 [Credits] to trash")
       (is (= 2 (:brain-damage (get-runner))) "Runner took 2 brain damage")
       (is (= 1 (count (:discard (get-corp)))) "1 card in archives"))))
 
@@ -331,8 +330,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Feedback Filter")
       (run-empty-server state "Server 1")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 4 net damage to steal")
       (click-prompt state :corp "Yes")
       (click-prompt state :corp (find-card "Inti" (:hand (get-runner))))
       (is (empty? (:prompt (get-runner))) "Feedback Filter net damage prevention opportunity not given")
@@ -435,8 +433,7 @@
                 (take-credits state :corp)
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
-                (is (= "Pay" (:choices (prompt? :runner))))
-                (click-prompt state :runner "Freedom")
+                (click-prompt state :runner "[Freedom]: Trash card")
                 (click-card state :runner (get-program state 0))
                 (click-card state :runner (get-program state 0))
                 (is (= 1 (count (:discard (get-corp))))
@@ -455,8 +452,7 @@
                 (play-from-hand state :runner "Cache")
                 (run-empty-server state "HQ")
                 (let [cost (->> (get-corp) :hand first :cost)]
-                  (is (= "Pay" (:choices (prompt? :runner))))
-                  (click-prompt state :runner "Freedom")
+                  (click-prompt state :runner "[Freedom]: Trash card")
                   (when (pos? cost)
                     (dotimes [_ cost]
                       (click-card state :runner (get-program state 0))))
@@ -493,8 +489,7 @@
       (take-credits state :runner)
       (take-credits state :corp)
       (run-empty-server state "HQ")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Freedom")
+      (click-prompt state :runner "[Freedom]: Trash card")
       (click-card state :runner (get-program state 0))
       (click-card state :runner (get-resource state 0))
       (is (= 1 (count (:discard (get-corp))))
@@ -512,8 +507,7 @@
         (take-credits state :corp)
         (click-prompt state :runner "Yes")
         (run-empty-server state "HQ")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Freedom")
+        (click-prompt state :runner "[Freedom]: Trash card")
         (click-card state :runner (-> (refresh iw) :hosted first)))
       (is (= 1 (count (:discard (get-corp)))) "Accessed Ice Wall should be discarded after selecting 1 virus counter")))
   (testing "Doesn't trigger when accessing an Agenda"
@@ -544,15 +538,13 @@
       (play-from-hand state :runner "Cache")
       (run-empty-server state "HQ")
       (is (= 3 (->> @state :runner :prompt first :choices count)) "Should have 3 choices: Freedom, Trash, No action")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Freedom")
+      (click-prompt state :runner "[Freedom]: Trash card")
       (click-card state :runner (get-program state 0))
       (click-prompt state :runner "Done")
       (is (= 3 (-> @state :runner :prompt first :choices count))
           (str "Should go back to access prompts, with 3 choices: Freedom, Trash, No action. "
                "Choices seen: " (-> @state :runner :prompt first :choices)))
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Freedom")
+      (click-prompt state :runner "[Freedom]: Trash card")
       (click-card state :runner (get-program state 0))
       (click-card state :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Card should now be properly discarded")))
@@ -563,8 +555,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
       (run-empty-server state "R&D")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Freedom")
+      (click-prompt state :runner "[Freedom]: Trash card")
       (click-card state :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Accessed Ice Wall should be discarded now")
       (is (not (:run @state)) "Run ended")))
@@ -577,8 +568,7 @@
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state "R&D")
       (is (zero? (get-counters (get-program state 1) :virus)) "Aumakuma shouldn't have any virus counters yet.")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Freedom")
+      (click-prompt state :runner "[Freedom]: Trash card")
       (click-card state :runner (get-program state 0))
       (is (= 1 (count (:discard (get-corp)))) "Ice Wall should be discarded now")
       (is (zero? (get-counters (get-program state 1) :virus)) "Aumakua doesn't gain any virus counters from trash ability.")
@@ -600,14 +590,12 @@
       (run-empty-server state "Server 1")
       (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "The Board should cost 6 to trash")
       (is (= 3 (-> (get-runner) :prompt first :choices count)) "Runner can use Freedom or Imp to trash")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Freedom")
+      (click-prompt state :runner "[Freedom]: Trash card")
       (click-card state :runner (get-program state 0))
       (click-prompt state :runner "Done")
       (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "Skulljack shouldn't trigger a second time")
       (is (= 3 (-> (get-runner) :prompt first :choices count)) "Runner can still use Freedom or Imp the second time around")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Imp")
+      (click-prompt state :runner "[Imp]: Trash card")
       (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board with Imp and gain 2 agenda points"))))
 
 (deftest gabriel-santiago:-consummate-professional
@@ -637,15 +625,15 @@
     (run-empty-server state :remote1)
     (click-card state :runner (get-content state :remote1 0))
     (is (zero? (:credit (get-runner))) "Paid 1 credit to access")
-    (click-prompt state :runner "No") ; Dismiss trash prompt
+    (click-prompt state :runner "No action") ; Dismiss trash prompt
     (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")
     (run-empty-server state :remote1)
     (click-card state :runner (get-content state :remote1 0))
-    (click-prompt state :runner "No action") ; Could not afford message dismissed
+    (click-prompt state :runner "OK") ; Could not afford message dismissed
     (is (empty? (:prompt (get-runner))) "Runner cannot access so no trash prompt")
     (is (not (last-log-contains? state "PAD Campaign")) "No card name was logged")
     (run-empty-server state :hq)
-    (click-prompt state :runner "No") ; Dismiss trash prompt
+    (click-prompt state :runner "No action") ; Dismiss trash prompt
     (is (last-log-contains? state "Caprice") "Accessed card name was logged")))
 
 (deftest grndl:-power-unleashed
@@ -1309,11 +1297,9 @@
       (play-from-hand state :runner "Forger")
       ; trash from HQ first - #2321
       (run-empty-server state "HQ")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
       (run-empty-server state "Server 1")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
       (click-prompt state :corp "Yes")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
@@ -1321,8 +1307,7 @@
       (is (= 1 (:tag (get-runner))) "Runner took 1 unpreventable tag")
       (core/gain state :runner :credit 2)
       (run-empty-server state "Server 2")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
       (is (empty? (:prompt (get-corp))) "No trace chance on 2nd trashed card of turn")))
   (testing "Interaction with Dedicated Response Team"
     (do-game
@@ -1334,8 +1319,7 @@
       (core/rez state :corp (get-content state :remote2 0))
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
       (click-prompt state :corp "Yes")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
@@ -1830,7 +1814,7 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Eli 1.0" (:play-area (get-corp))))
       (click-prompt state :corp "Archives")
-      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Done")
       (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D"))))
 
 (deftest the-outfit:-family-owned-and-operated
@@ -1973,8 +1957,7 @@
     (play-from-hand state :runner "Easy Mark")
     (play-from-hand state :runner "Corroder")
     (run-empty-server state "Server 1")
-    (is (= "Pay" (:choices (prompt? :runner))))
-    (click-prompt state :runner "Pay 1 [Credits] to trash")  ;; trash Launch Campaign, should trigger wyvern
+    (click-prompt state :runner "Pay 2 [Credits] to trash")  ;; trash Launch Campaign, should trigger wyvern
     (is (= "Sure Gamble" (:title (last (:discard (get-runner)))))
         "Sure Gamble still in Wyvern's discard")
     (is (some #(= "Easy Mark" (:title %)) (:deck (get-runner))) "Easy Mark moved to deck")
@@ -1982,6 +1965,5 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Clone Chip")
     (run-empty-server state "Server 2")
-    (is (= "Pay" (:choices (prompt? :runner))))
-    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (click-prompt state :runner "Pay 2 [Credits] to trash")
     (is (= "Sure Gamble" (:title (last (:discard (get-runner))))) "Sure Gamble still in Wyvern's discard")))

@@ -327,8 +327,7 @@
         (click-prompt state :corp "Yes") ; pay 3 to fire Overwriter
         (card-ability state :runner ff 1)
         (click-prompt state :runner "Done")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Pay 1 [Credits] to trash") ; trash Overwriter for 0
+        (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash Overwriter for 0
         (is (= 1 (:brain-damage (get-runner))) "2 of the 3 brain damage prevented")
         (is (= 2 (count (:hand (get-runner)))))
         (is (empty? (get-hardware state)) "Feedback Filter trashed")
@@ -390,8 +389,7 @@
       (is (zero? (get-counters aum :virus)) "Auakua starts with 0 counters")
       (run-on state "Server 1")
       (run-successful state)
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash") ; trash Adonis Campaing
+      (click-prompt state :runner "Pay 3 [Credits] to trash") ; trash Adonis Campaing
       (click-prompt state :runner "Yes") ; gain virus counter
       (is (= 1 (get-counters (refresh fc) :virus)) "Friday Chip gains a counter on trash")
       (is (zero? (get-counters (refresh aum) :virus)) "Aumakua doesn't gain a counter")
@@ -622,7 +620,6 @@
       (click-prompt state :runner "Cyberdex Virus Suite")
       (click-prompt state :corp "Yes")
       (run-empty-server state :rd)
-      (is (= "Pay" (:choices (prompt? :runner))))
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (= 3 (count (:discard (get-corp)))) "Ice Wall, CVS, and Rashida")
       (is (empty? (:prompt (get-runner))) "No more prompts for runner")))
@@ -769,16 +766,12 @@
       (is (empty? (:hand (get-runner))) "No cards in hand")
       (run-empty-server state "R&D")
       (click-prompt state :runner "Crisium Grid")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Card")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Pay 5 [Credits] to trash")
+      (click-prompt state :runner "Card from deck")
+      (click-prompt state :runner "No action")
       (is (empty? (:hand (get-runner))) "Crisium Grid blocked successful run")
       (run-empty-server state "R&D")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "No action")
       (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run")))
   (testing "using Hades Shard during run to increase draw"
     (do-game
@@ -808,11 +801,9 @@
       (play-from-hand state :runner "Obelus")
       (is (empty? (:hand (get-runner))) "No cards in hand")
       (run-empty-server state "Server 1")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "No action")
       (run-empty-server state "R&D")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "No action")
       (is (= 1 (count (:hand (get-runner)))) "Obelus drew a card on first successful run"))))
 
 (deftest plascrete-carapace
@@ -967,8 +958,7 @@
       (is (= 1 (:number (:choices (first (:prompt (get-runner)))))) "Recon Drone choice limited to runner credits")
       (click-prompt state :runner "1")
       (click-prompt state :runner "Done")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 0 [Credits] to trash")
       (is (= 2 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
       (core/gain state :runner :credit 100)
       (run-empty-server state "Server 3")
@@ -978,8 +968,7 @@
       (is (= 1 (:number (:choices (first (:prompt (get-runner)))))) "Recon Drone choice limited to 1 meat")
       (click-prompt state :runner "1")
       (click-prompt state :runner "Done")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash")
+      (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= 2 (count (:hand (get-runner)))) "Runner took no meat damage")
       (run-empty-server state "Server 4")
       (is (= :waiting (-> @state :runner :prompt first :prompt-type)) "Runner has prompt to wait for Cerebral Overwriter")

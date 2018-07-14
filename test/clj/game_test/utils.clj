@@ -1,6 +1,6 @@
 (ns game-test.utils
   (:require [game.core :as core]
-            [game.utils :as utils :refer [side-str]]
+            [game.utils :as utils :refer [side-str when-let*]]
             [clojure.test :refer :all]
             [clojure.string :refer [lower-case split]]
             [monger.core :as mg]
@@ -52,61 +52,20 @@
   (let [prompt (-> @state side :prompt first)]
     (= prompt-type (:prompt-type prompt))))
 
-
-;;; everything below here is deprecated. sorta.
-
-(defn prompt-choice [state side choice]
-  (is (or (number? choice) (string? choice))
-      (str "prompt-choice should only be called with strings or numbers as argument - got "
-           (if (nil? choice) "nil" choice)))
-  (assert-prompt state side)
-  (core/resolve-prompt state side {:choice (core/get-card state choice)}))
-
-
-(defn prompt-choice-partial [state side choice]
-  (core/resolve-prompt state side
-                       {:choice (core/get-card state (first (filter #(.contains % choice)
-                                                                    (->> @state side :prompt first :choices))))}))
-
-(defn prompt-card [state side card]
-  (assert-prompt state side)
-  (is (prompt-is-type? state side nil)
-      (str  "prompt-card should only be used with prompts listing cards, not prompts of type "
-            (-> @state side :prompt first :prompt-type)))
-  (is (map? card) (str "prompt-card should be called with card map as argument - got "
-                       (if (nil? card) "nil" card)))
-  (core/resolve-prompt state side {:card (core/get-card state card)}))
-
-(defn prompt-select [state side card]
-  (assert-prompt state side)
-  (is (prompt-is-type? state side :select)
-      (str "prompt-select should only be used with prompts "
-           "requiring the user to click on cards on grip/table, not "
-           (let [type (-> @state side :prompt first :prompt-type)]
-             (if type type "nil"))))
-  (is (map? card) (str "prompt-select should be called with card map as argument - got "
-                       (if (nil? card) "nil" card)))
-  (core/select state side {:card (core/get-card state card)}))
-
 (defn prompt-is-card? [state side card]
   (when-let [prompt (assert-prompt state side)]
     (and (:cid card)
          (-> prompt :card :cid)
          (= (:cid card) (-> prompt :card :cid)))))
 
+(defn expect-type
+  [type-name choice]
+  (str "Expected a " type-name ", received [ " choice
+       " ] of type " (type choice) "."))
 
-(defmacro when-let*
-  "Multiple binding version of when-let, from https://stackoverflow.com/a/36160972/3023252"
-  [bindings & body]
-  (if (seq bindings)
-    `(when-let [~(first bindings) ~(second bindings)]
-       (when-let* ~(vec (drop 2 bindings)) ~@body))
-    `(do ~@body)))
-
-;;; stops here
-
-(defn click-card [state side card]
-  "Resolves a 'select prompt' by clicking a card. Can take a card map or a card name."
+(defn click-card
+  "Resolves a 'select prompt' by clicking a card. Takes a card map or a card name."
+  [state side card]
   (when-let [prompt (assert-prompt state side)]
     (cond
       ;; Card and prompt types are correct
@@ -124,29 +83,21 @@
           (if (= (count matching-cards) 1)
             (core/select state side {:card (first matching-cards)})
             (is (= (count matching-cards) 1)
-                (str "Expected to click card with name " card
-                     ", but found " (count matching-cards)
+                (str "Expected to click card [ " card
+                     " ] but found " (count matching-cards)
                      ". Current prompt is: " prompt)))))
 
       ;; Prompt isn't a select so click-card shouldn't be used
       (not (prompt-is-type? state side :select))
       (let [prompt (prompt-is-type? state side :select)]
-        (is prompt
-            (str "click-card should only be used with prompts "
-                 "requiring the user to click on cards on table")))
+        (is prompt (str "click-card should only be used with prompts "
+                        "requiring the user to click on cards on table")))
       ;; Prompt is a select, but card isn't correct type
       (not (or (map? card)
                (string? card)))
       (is (or (map? card)
               (string? card))
-          (str "click-card expects a card name or card map, received " card
-               " of type " (type card) ".")))))
-
-
-(defn expect-type
-  [type-name choice]
-  (str "Expected a " type-name ", received [ " choice
-       " ] of type " (type choice) "."))
+          (expect-type "card string or map" card)))))
 
 (defn click-prompt
   "Clicks a button in a prompt. {choice} is a string or map only, no numbers."
@@ -183,20 +134,13 @@
 
       ;; Default text prompt
       :else
-      (let [kw (if (string? (first choices)) :choice :card)
+      (let [kw (if (string? choice) :choice :card)
             buttons (filter #(or (= (lower-case choice) (lower-case %))
                                  (= (lower-case choice) (lower-case (:title % ""))))
                             choices)
             button (first buttons)]
-        (cond
-          (and (= button choice)
-               ; (= 1 (count buttons))
-               )
+        (if (= choice button)
           (core/resolve-prompt state side {kw button})
-          ; (not= 1 (count buttons))
-          ; (is (= 1 (count buttons)) (str "Expected to click " (if (string? choice) choice (:title choice)) " but found ambiguous choices. "
-          ;                                "Current prompt is: " prompt))
-          (not= button choice)
-          (is (= button choice) (str (side-str side) " expected to click [ "
-                                     (if (string? choice) choice (:title choice))
-                                     " ] but couldn't find it. Current prompt is: " prompt)))))))
+          (is (= choice choices) (str (side-str side) " expected to click [ "
+                                      (if (string? choice) choice (:title choice))
+                                      " ] but couldn't find it. Current prompt is: " prompt)))))))

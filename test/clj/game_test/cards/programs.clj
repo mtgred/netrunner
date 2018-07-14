@@ -37,9 +37,7 @@
       (let [c (get-program state 0)]
         (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
         (run-empty-server state "Server 1")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Pay 1 [Credits] to trash")
-        (is (= "Pay" (:choices (prompt? :runner))))
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
         (click-prompt state :runner "Yes")
         (is (= 1 (count (:discard (get-corp)))) "Adonis Campaign trashed")
         (is (= 1 (get-counters (refresh c) :virus)) "Consume gains a counter")
@@ -61,9 +59,7 @@
         (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
         (is (= 1 (get-counters (refresh h) :virus)) "Hivemind starts with a counter")
         (run-empty-server state "Server 1")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Pay 1 [Credits] to trash")
-        (is (= "Pay" (:choices (prompt? :runner))))
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
         (click-prompt state :runner "Yes")
         (is (= 1 (count (:discard (get-corp)))) "Adonis Campaign trashed")
         (is (= 1 (get-counters (refresh c) :virus)) "Consume gains a counter")
@@ -405,8 +401,7 @@
                 (take-credits state :corp)
                 (play-from-hand state :runner "Imp")
                 (run-empty-server state "HQ")
-                (is (= "Pay" (:choices (prompt? :runner))))
-                (click-prompt state :runner "Imp")
+                (click-prompt state :runner "[Imp]: Trash card")
                 (is (= 1 (count (:discard (get-corp)))))))]
       (doall (map imp-test
                   ["Hostile Takeover"
@@ -427,8 +422,7 @@
         (play-from-hand state :runner "Imp")
         (run-empty-server state :remote1)
         (click-prompt state :corp "Yes")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Imp")
+        (click-prompt state :runner "[Imp]: Trash card")
         (is (= 2 (- credits (:credit (get-corp)))) "Corp paid 2 for Prisec")
         (is (= 1 (- (:tag (get-runner)) tags)) "Runner has 1 tag")
         (is (= 2 (- grip (count (:hand (get-runner))))) "Runner took 1 meat damage")
@@ -445,8 +439,7 @@
         ;; Should access TFP at this point
         (click-prompt state :corp "1 [Credits]")
         (click-prompt state :runner "0 [Credits]")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Imp")
+        (click-prompt state :runner "[Imp]: Trash card")
         (take-credits state :runner)
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
         (is (zero? (:agenda-point (get-runner))) "Runner did not steal TFP")
@@ -459,8 +452,7 @@
         (click-prompt state :corp "0 [Credits]")
         (click-prompt state :runner "0 [Credits]")
         ;; Fail psi game
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Imp")
+        (click-prompt state :runner "[Imp]: Trash card")
         (is (= "The Future Perfect" (get-in @state [:corp :discard 0 :title])) "TFP trashed")
         (is (zero? (:agenda-point (get-runner))) "Runner did not steal TFP"))))
   (testing "vs cards in Archives"
@@ -849,8 +841,7 @@
       (play-from-hand state :runner "Reaver")
       (is (= 1 (count (:hand (get-runner)))) "One card in hand")
       (run-empty-server state "Server 1")
-      (is (= "Pay" (:choices (prompt? :runner))))
-      (click-prompt state :runner "Pay 1 [Credits] to trash") ; Trash PAD campaign
+      (click-prompt state :runner "Pay 4 [Credits] to trash") ; Trash PAD campaign
       (is (= 2 (count (:hand (get-runner)))) "Drew a card from trash of corp card")
       (play-from-hand state :runner "Fall Guy")
       (play-from-hand state :runner "Fall Guy")
@@ -872,8 +863,8 @@
       (is (= 3 (count (:hand (get-runner)))) "Four cards in hand")
       (is (= 3 (:credit (get-runner))) "3 credits")
       (play-from-hand state :runner "Freelance Coding Contract")
-      (click-card state :runner (find-card "Snitch" (:hand (get-runner))))
-      (click-card state :runner (find-card "Imp" (:hand (get-runner))))
+      (click-card state :runner "Snitch")
+      (click-card state :runner "Imp")
       (click-prompt state :runner "Done")
       (is (= 7 (:credit (get-runner))) "7 credits - FCC fired")
       (is (zero? (count (:hand (get-runner)))) "No cards in hand"))))

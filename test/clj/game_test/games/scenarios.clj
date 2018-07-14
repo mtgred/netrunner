@@ -26,7 +26,7 @@
       (play-from-hand state :runner "Net Shield")
       (let [apt (get-resource state 0)]
         (card-ability state :runner apt 0)
-        (prompt-select state :runner (find-card "Fall Guy" (:hand (get-runner))))
+        (click-card state :runner (find-card "Fall Guy" (:hand (get-runner))))
         (take-credits state :runner)
         (is (= 6 (:credit (get-runner))))
         (play-from-hand state :corp "Neural EMP")
@@ -41,9 +41,9 @@
           (is (= 1 (:tag (get-runner))) "Runner took tag from SEA Source")
           (is (= 7 (:credit (get-corp))))
           (core/trash-resource state :corp nil)
-          (prompt-select state :corp (get-resource state 0)) ;; (find-card "Off-Campus Apartment" (:rig (get-runner))) ; fails because (refresh) makes it nil )
+          (click-card state :corp "Off-Campus Apartment")
           (is (= 3 (:credit (get-corp))) "WNP increased cost to trash a resource by 2")
-          (card-ability state :runner fg 0)                   ; Trash Fall Guy to save the Apartment!
+          (card-ability state :runner fg 0) ; Trash Fall Guy to save the Apartment!
           (is (= (:title (get-resource state 0)) "Off-Campus Apartment")
               "Apartment still standing")
           (is (= (:title (last (:discard (get-runner)))) "Fall Guy") "Fall Guy trashed"))))))
@@ -81,7 +81,7 @@
         (take-credits state :corp)
         (core/draw state :runner 1)
         (play-from-hand state :runner "Career Fair")
-        (prompt-select state :runner (find-card "Data Folding" (:hand (get-runner))))
+        (click-card state :runner (find-card "Data Folding" (:hand (get-runner))))
         (is (= 5 (:credit (get-runner))) "Data Folding installed for free by Career Fair")
         (play-from-hand state :runner "Lamprey")
         (play-from-hand state :runner "Desperado")
@@ -104,8 +104,7 @@
         (run-empty-server state "HQ")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (= "Pay" (:choices (prompt? :runner))))
-        (click-prompt state :runner "Pay 1 [Credits] to trash") ; trash Ash
+        (click-prompt state :runner "Pay 3 [Credits] to trash") ; trash Ash
         (is (and (= 1 (:credit (get-runner))) (= 11 (:credit (get-corp)))))
         (core/gain state :runner :credit 1)
         (play-from-hand state :runner "Dirty Laundry")
@@ -122,7 +121,7 @@
           (is (= 5 (:current-strength (refresh tur))) "Turing +3 strength protecting a remote")
           (card-subroutine state :corp tur 0) ; end the run
           (play-from-hand state :runner "Emergency Shutdown")
-          (prompt-select state :runner tur)
+          (click-card state :runner tur)
           (is (not (:rezzed (refresh tur))) "Turing derezzed")
           (run-on state "Server 1") ; letting Runner in this time to use Caprice
           (core/rez state :corp cap)
