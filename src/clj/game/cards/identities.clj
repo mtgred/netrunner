@@ -940,7 +940,8 @@
                                                                  ((constantly false) (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
                                                                  true))))
                                       (wait-for (corp-install state side chosen target nil)
-                                                (add-prop state :corp (find-latest state chosen) :advance-counter 1 {:placed true}))})]
+                                                (add-prop state :corp (find-latest state chosen) :advance-counter 1 {:placed true})
+                                                (effect-completed state side eid)))})]
    {:abilities [{:async true
                  :label "Install a card from HQ"
                  :cost [:click 1 :credit 1]
