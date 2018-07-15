@@ -162,9 +162,9 @@
 
 (defn join-game
   "Adds the given user as a player in the given gameid."
-  [{options :options :as user} client-id gameid]
+  [{options :options _id :_id :as user} client-id gameid]
   (let [{players :players :as game} (game-for-id gameid)]
-    (when (< (count players) 2)
+    (when (< (count (filter #(not= _id (get-in % [:user :_id])) players)) 2)
       (let [{side :side :as fplayer} (first players)
             new-side (if (= "Corp" side) "Runner" "Corp")
             new-player {:user    user
