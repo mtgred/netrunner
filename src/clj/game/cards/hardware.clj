@@ -405,12 +405,12 @@
                                   (effect-completed state side eid)))}]
    {:implementation "Credit usage restriction not enforced"
     :data {:counter {:credit 9}}
-    :abilities [{:label "Take 1[Credits] from Flame-out"
+    :abilities [{:label "Take 1 [Credits] from Flame-out"
                  :req (req (and (not-empty (:hosted card))
                                 (pos? (get-counters card :credit))))
                  :counter-cost [:credit 1]
                  :effect (req (gain-credits state :runner 1)
-                              (system-msg state :runner "takes 1[Credits] from Flame-out")
+                              (system-msg state :runner "takes 1 [Credits] from Flame-out")
                               (register-events
                                 state :runner
                                 {:runner-turn-ends turn-end

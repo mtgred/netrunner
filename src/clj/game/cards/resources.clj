@@ -1449,7 +1449,7 @@
                                     card nil))))}]}
 
    "Power Tap"
-   {:events {:pre-init-trace {:msg "gain 1[Credits]"
+   {:events {:pre-init-trace {:msg "gain 1 [Credits]"
                               :effect (effect (gain-credits :runner 1))}}}
 
    "Professional Contacts"

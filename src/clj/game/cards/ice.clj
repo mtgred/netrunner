@@ -255,12 +255,12 @@
                                    (continue-ability state side
                                                      {:player :runner
                                                       :optional
-                                                      {:prompt "Pay 2[Credits] to draw 1 card?"
+                                                      {:prompt "Pay 2 [Credits] to draw 1 card?"
                                                        :no-ability {:effect (effect (system-msg :runner "does not draw 1 card")
                                                                                     (clear-wait-prompt :corp))}
                                                        :yes-ability {:async true
                                                                      :effect (effect
-                                                                               (system-msg :runner "pays 2[Credits] to draw 1 card")
+                                                                               (system-msg :runner "pays 2 [Credits] to draw 1 card")
                                                                                (lose-credits 2)
                                                                                (clear-wait-prompt :corp)
                                                                                (draw eid 1 nil))}}}
@@ -1361,7 +1361,7 @@
 
    "Mausolus"
    {:advanceable :always
-    :subroutines [{:label "Gain 1 [Credits] (Gain 3[Credits])"
+    :subroutines [{:label "Gain 1 [Credits] (Gain 3 [Credits])"
                    :msg (msg "gain " (if (wonder-sub card 3) 3 1) "[Credits]")
                    :effect (effect (gain-credits (if (wonder-sub card 3) 3 1)))}
                   {:label "Do 1 net damage (Do 3 net damage)"
@@ -1487,9 +1487,9 @@
               :effect (req (show-wait-prompt state :corp "Runner to choose an option for Mlinzi")
                            (resolve-ability
                              state :runner
-                             {:prompt "Take net damage or trash cards from the Stack?"
+                             {:prompt "Take net damage or trash cards from the stack?"
                               :choices [(str "Take " net-dmg " net damage")
-                                        (str "Trash the top " mill-cnt " cards of the Stack")]
+                                        (str "Trash the top " mill-cnt " cards of the stack")]
                               :effect (req (if (.startsWith target "Take")
                                              (do (system-msg state :corp
                                                              (str "uses Mlinzi to do "
@@ -1499,7 +1499,7 @@
                                              (do (system-msg state :corp
                                                              (str "uses Mlinzi to trash "
                                                                   (join ", " (map :title (take mill-cnt (:deck runner))))
-                                                                  " from the Runner's Stack"))
+                                                                  " from the runner's stack"))
                                                  (clear-wait-prompt state :corp)
                                                  (mill state :runner mill-cnt))))}
                              card nil))})]

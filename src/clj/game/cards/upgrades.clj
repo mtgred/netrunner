@@ -419,21 +419,20 @@
                      :label "add an installed program or virtual resource to the Grip"
                      :successful
                      {:async true
-                      :effect (req (show-wait-prompt state :runner "Corp to resolve Intake")
-                                   (continue-ability
-                                     state :corp
-                                     {:prompt "Select a program or virtual resource"
-                                      :player :corp
-                                      :choices {:req #(and (installed? %)
-                                                           (or (program? %)
-                                                               (and (resource? %)
-                                                                    (has-subtype? % "Virtual"))))}
-                                      :async true
-                                      :msg (msg "move " (:title target) " to the Grip")
-                                      :effect (effect (move :runner target :hand))
-                                      :end-effect (effect (clear-wait-prompt :runner)
-                                                          (effect-completed eid))}
-                                     card nil))}}}}
+                      :effect (effect (show-wait-prompt :runner "Corp to resolve Intake")
+                                      (continue-ability
+                                        {:prompt "Select a program or virtual resource"
+                                         :player :corp
+                                         :choices {:req #(and (installed? %)
+                                                              (or (program? %)
+                                                                  (and (resource? %)
+                                                                       (has-subtype? % "Virtual"))))}
+                                         :msg (msg "move " (:title target) " to the Grip")
+                                         :effect (effect (move :runner target :hand))
+                                         :end-effect (req (prn "end")
+                                                          (clear-wait-prompt state :runner)
+                                                          (effect-completed state side eid))}
+                                        card nil))}}}}
 
    "Jinja City Grid"
    (letfn [(install-ice [ice ices grids server]

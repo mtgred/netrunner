@@ -194,12 +194,11 @@
                  0)]
          (prompt! state s card prompt {:number n :default d} ab args))
        (:card-title choices)
-       (prompt!
-         state s card prompt
-         (assoc choices :autocomplete
-                        (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
-                                                  (vals @all-cards)))))
-         ab (assoc args :prompt-type :card-title))
+       (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
+                                                   (vals @all-cards))))
+             choices (assoc choices :autocomplete card-titles)
+             args (assoc args :prompt-type :card-title)]
+         (prompt! state s card prompt choices ab args))
        ;; unknown choice
        :else nil)
      ;; Not a map; either :credit, :counter, or a vector of cards or strings.
@@ -359,6 +358,7 @@
          newitem {:eid eid
                   :msg prompt
                   :choices :credit
+                  :prompt-type :trace
                   :effect f
                   :card card
                   :priority priority
@@ -436,7 +436,6 @@
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))
 
 ;;; Psi games
-
 (defn show-prompt-with-dice
   "Calls show-prompt normally, but appends a 'roll d6' button to choices.
   If user chooses to roll d6, reveal the result to user and re-display
@@ -471,7 +470,8 @@
        (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
                               (map #(str % " [Credits]") valid-amounts)
                               #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
-                    {:priority 2})))))
+                    {:priority 2
+                     :prompt-type :psi})))))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate

@@ -996,7 +996,8 @@
                                    (effect-completed state side eid)))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
-              :choices [(str "Pile 1 (" (count p1) " cards)") (str "Pile 2 (" (count p2) " cards)")]
+              :choices [(str "Pile 1 (" (quantify (count p1) "card") ")")
+                        (str "Pile 2 (" (quantify (count p2) "card") ")")]
               :async true
               :effect (req (let [choice (if (.startsWith target "Pile 1") 1 2)]
                              (clear-wait-prompt state :corp)
