@@ -56,7 +56,9 @@
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
         corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
-        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))]
+        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
+        corp-quote (quotes/make-quote corp-identity runner-identity)
+        runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom
       {:gameid gameid :log [] :active-player :runner :end-turn true
        :room room
@@ -75,7 +77,8 @@
               :toast []
               :hand-size {:base 5 :mod 0}
               :agenda-point 0
-              :click-per-turn 3 :agenda-point-req 7 :keep false}
+              :click-per-turn 3 :agenda-point-req 7 :keep false
+              :quote corp-quote}
        :runner {:user (:user runner) :identity runner-identity
                 :options runner-options
                 :deck (zone :deck runner-deck)
@@ -89,7 +92,8 @@
                 :hand-size {:base 5 :mod 0}
                 :agenda-point 0
                 :hq-access 1 :rd-access 1 :tagged 0
-                :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})))
+                :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false
+                :quote runner-quote}})))
 
 (defn init-game
   "Initializes a new game with the given players vector."

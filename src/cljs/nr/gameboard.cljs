@@ -1286,10 +1286,10 @@
 
 (defn build-start-box
   "Builds the start-of-game pop up box"
-  [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep]
+  [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote]
   (let [visible-quote (r/atom true)
         start-shown (r/cursor app-state [:start-shown])]
-    (fn [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep]
+    (fn [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote]
       (when (and (not @start-shown)
                  (:username @op-user)
                  (pos? (count @my-hand)))
@@ -1310,8 +1310,8 @@
                [:div (:username @op-user)]
                [:div.intro-blurb
                 (if @visible-quote
-                  "Do these ideologues not know what this planet would look like without us? Protect our investment or Mars will return to dust."
-                  "For today's demonstration, we'll test the defenses of the Martian food supply. After all, if you can't secure your food, you can't secure your future."
+                  @me-quote
+                  @op-quote
                   )]]
               [:div.start-game.ident.column
                {:class (case @op-keep "mulligan" "mulligan-op" "keep" "keep-op" "")}
@@ -1340,8 +1340,10 @@
                                           (+ 1000 (* i 300)))])
                         @my-hand))]]
              [:div.mulligan
-              [cond-button "Keep" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Keep"})]
-              [cond-button "Mulligan" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Mulligan"})]]]]
+              (if (and @my-keep @op-keep)
+                [cond-button "Start Game" true #(swap! app-state assoc :start-shown true)]
+                (list ^{:key "keepbtn"} [cond-button "Keep" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Keep"})]
+                      ^{:key "mullbtn"} [cond-button "Mulligan" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Mulligan"})]))]]]
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
 
@@ -1582,9 +1584,11 @@
                  runner-rig (r/cursor game-state [:runner :rig])]
              [:div.gameboard
               (let [me-keep (r/cursor game-state [me-side :keep])
-                    op-keep (r/cursor game-state [op-side :keep])]
+                    op-keep (r/cursor game-state [op-side :keep])
+                    me-quote (r/cursor game-state [me-side :quote])
+                    op-quote (r/cursor game-state [op-side :quote])]
                 ; TODO: STILL WIP
-                ;[build-start-box me-ident me-user me-hand me-prompt me-keep op-ident op-user op-keep]
+                [build-start-box me-ident me-user me-hand me-prompt me-keep op-ident op-user op-keep me-quote op-quote]
                 )
 
               [build-win-box game-state]

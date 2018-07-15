@@ -7,7 +7,8 @@
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side]]
-            [jinteki.cards :refer [all-cards]]))
+            [jinteki.cards :refer [all-cards]]
+            [game.quotes :as quotes]))
 
 (load "core/events")    ; triggering of events
 (load "core/cards")     ; retrieving and updating cards
