@@ -108,27 +108,21 @@
       (or (= choices :credit)
           (:counter choices)
           (:number choices))
-      (try
-        (core/resolve-prompt state side {:choice (Integer/parseInt choice)})
-        (catch Exception e
-          (is (number? (Integer/parseInt choice))
-              (expect-type "number string" choice))))
+      (when-not (core/resolve-prompt state side {:choice (Integer/parseInt choice)})
+        (is (number? (Integer/parseInt choice))
+            (expect-type "number string" choice)))
 
       ;; List of card titles for auto-completion
       (:card-title choices)
-      (try
-        (core/resolve-prompt state side {:choice choice})
-        (catch Exception e
-          (is (or (map? choice)
-                  (string? choice))
-              (expect-type "card string or map" choice))))
+      (when-not (core/resolve-prompt state side {:choice choice})
+        (is (or (map? choice)
+                (string? choice))
+            (expect-type "card string or map" choice)))
 
       ;; Default text prompt
       :else
-      (try
-        (core/resolve-prompt state side {(if (string? choice) :choice :card) choice})
-        (catch Exception e
-          (is (= choice (first choices))
-              (str (side-str side) " expected to click [ "
-                   (if (string? choice) choice (:title choice ""))
-                   " ] but couldn't find it. Current prompt is: \n" prompt)))))))
+      (when-not (core/resolve-prompt state side {(if (string? choice) :choice :card) choice})
+        (is (= choice (first choices))
+            (str (side-str side) " expected to click [ "
+                 (if (string? choice) choice (:title choice ""))
+                 " ] but couldn't find it. Current prompt is: \n" prompt))))))

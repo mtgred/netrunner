@@ -182,7 +182,7 @@
             (when-let [effect-prompt (:effect prompt)]
               (effect-prompt (or choice card)))
             (finish-prompt state side prompt card))
-        (throw (Exception. "Error in an Integer prompt")))
+        (.println *err* "Error in an integer prompt"))
 
       ;; List of card titles for auto-completion
       (:card-title choices)
@@ -196,7 +196,7 @@
                   (finish-prompt state side prompt card))
               (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
             (toast state side (str "Could not find a card named " choice ".") "warning")))
-        (throw (Exception. "Error in a card-title prompt")))
+        (.println *err* "Error in a card-title prompt"))
 
       ;; Default text prompt
       :else
@@ -213,7 +213,7 @@
           (do (when-let [effect-prompt (:effect prompt)]
                 (effect-prompt button))
               (finish-prompt state side prompt card))
-          (throw (Exception. "Error in a text prompt")))))))
+          (.println *err* "Error in a text prompt"))))))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
