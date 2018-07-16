@@ -149,9 +149,7 @@
       (run-on state :archives)
       (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
       (run-continue state)
-      (is (not (core/is-tagged? @state)) "Runner is not tagged when encountering second ice")))
-
-  )
+      (is (not (core/is-tagged? @state)) "Runner is not tagged when encountering second ice"))))
 
 (deftest adam:-compulsive-hacker
   ;; Adam
