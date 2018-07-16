@@ -1869,7 +1869,7 @@
                                                          (fn [coll] (remove-once #(= (:cid %) (:cid newcard)) coll)))
                                                        (trigger-event state side :corp-install newcard)
                                                        (move state side card :hand))} card nil)
-                                       (resolve-prompt state :runner {:choice "No"})
+                                       (resolve-prompt state :runner {:choice "No action"})
                                        ; gets rid of prompt to trash Toshiyuki since it's back in HQ now
                                        (resolve-ability state :runner
                                          {:optional

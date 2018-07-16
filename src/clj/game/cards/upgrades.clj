@@ -480,8 +480,7 @@
                                                                        (has-subtype? % "Virtual"))))}
                                          :msg (msg "move " (:title target) " to the Grip")
                                          :effect (effect (move :runner target :hand))
-                                         :end-effect (req (prn "end")
-                                                          (clear-wait-prompt state :runner)
+                                         :end-effect (req (clear-wait-prompt state :runner)
                                                           (effect-completed state side eid))}
                                         card nil))}}}}
 

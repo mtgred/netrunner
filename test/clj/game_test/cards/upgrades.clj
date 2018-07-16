@@ -860,8 +860,8 @@
         ;; both prompts should be on Batty
         (is (prompt-is-card? state :corp mb) "Corp prompt is on Marcus Batty")
         (is (prompt-is-card? state :runner mb) "Runner prompt is on Marcus Batty")
-        (click-prompt state :corp "0")
-        (click-prompt state :runner "0")
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
         (is (prompt-is-card? state :corp sn) "Corp prompt is on Security Nexus")
         (is (prompt-is-type? state :runner :waiting) "Runner prompt is waiting for Corp")))))
 
@@ -1596,7 +1596,7 @@
       (is (empty? (:prompt (get-runner))) "SJ blocking SMC")
       (run-jack-out state)
       (card-ability state :runner smc2 0)
-      (click-prompt state :runner (find-card "Reaver" (:deck (get-runner)))))))
+      (click-prompt state :runner "Reaver"))))
 
 (deftest strongbox
   ;; Strongbox

@@ -470,7 +470,6 @@
     (play-from-hand state :runner "CBI Raid")
     (is (= :hq (get-in @state [:run :server 0])))
     (run-successful state)
-    (click-prompt state :runner "Replacement effect")
     (click-prompt state :corp (find-card "Caprice Nisei" (:hand (get-corp))))
     (click-prompt state :corp (find-card "Adonis Campaign" (:hand (get-corp))))
     (click-prompt state :corp (find-card "Quandary" (:hand (get-corp))))
@@ -821,8 +820,8 @@
     (run-continue state)
     (run-successful state)
     (is (= 2 (count (:prompt (get-runner)))) "Deuces prompt not queued")
-    (click-prompt state :corp "0")
-    (click-prompt state :runner "0")
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
     (click-prompt state :runner "Steal")
     (is (= 1 (count (:scored (get-runner)))) "TFP stolen")
     (core/gain state :runner :tag 1)
@@ -912,7 +911,7 @@
         ;; HQ
         (dotimes [_ 3]
           (click-prompt state :runner "Card from hand")
-          (click-prompt state :runner (-> (prompt? :runner) :choices first)))
+          (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
         (is (= 2 (-> (get-runner) :register :last-run :access-bonus)) "The Turning Wheel should provide 2 additional accesses")
         (is (= 8 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
@@ -1410,7 +1409,7 @@
     (play-run-event state (first (:hand (get-runner))) :hq)
     (is (= (+ 5 -2 9) (:credit (get-runner))) "Gained 9 credits on successful run")
     (is (= 1 (:tag (get-runner))) "Took 1 tag on successful run")
-    (is (prompt? :runner) "Still have access prompt")))
+    (is (prompt-map :runner) "Still have access prompt")))
 
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
@@ -1494,14 +1493,15 @@
               (card-ability state :runner (get-program state 0) 1)
               (click-prompt state :runner "Done")
               (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
-              (click-prompt state :runner (-> (prompt? :runner) :choices first))
-              (click-prompt state :runner "Done") ; don't prevent Hostile dmg
+              (click-prompt state :runner (-> (prompt-map :runner) :choices first))
+              (when (-> (prompt-map :runner) :choices first)
+                (click-prompt state :runner "Done")) ; don't prevent Hostile dmg
               ;; chronos prompt
               (click-prompt state :corp "Yes")
               (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
               (is (= (+ 2 existing-dmg) (count (:discard (get-runner)))) "Damage from Hostile Inf not prevented"))
             (allow-pad [existing-dmg]
-              (click-prompt state :runner (-> (prompt? :runner) :choices first))
+              (click-prompt state :runner (-> (prompt-map :runner) :choices first))
               (card-ability state :runner (get-program state 0) 1)
               (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf")
               (click-prompt state :runner "Done"))]

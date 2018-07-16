@@ -382,7 +382,8 @@
      (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))
            all (get-in ability [:choices :all])]
        (swap! state update-in [side :selected]
-              #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+              #(conj (vec %) {:ability (dissoc ability :choices)
+                              :req (get-in ability [:choices :req])
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
                               :max (get-in ability [:choices :max])
                               :all all}))
@@ -399,7 +400,8 @@
                         (show-select state side card ability args))
                       (fn [choice] (resolve-select state side)))
                     (-> args
-                        (assoc :prompt-type :select :show-discard (:show-discard ability))
+                        (assoc :prompt-type :select
+                               :show-discard (:show-discard ability))
                         (wrap-function :cancel-effect)))))))
 
 (defn resolve-select

@@ -357,11 +357,3 @@
     (:rec-counter card 0)
     :else
     (get-in card [:counter counter] 0)))
-
-(defmacro when-let*
-  "Multiple binding version of when-let, from https://stackoverflow.com/a/36160972/3023252"
-  [bindings & body]
-  (if (seq bindings)
-    `(when-let [~(first bindings) ~(second bindings)]
-       (when-let* ~(vec (drop 2 bindings)) ~@body))
-    `(do ~@body)))

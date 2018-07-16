@@ -862,7 +862,7 @@
           credits (:credit (get-corp))]
       (click-prompt state :corp "0")
       (is (= hand (-> (get-corp) :hand count)) "Corp should draw no cards as they're allowed to draw no cards")
-      (is (some #{"Server 2"} (:choices (prompt? :corp))) "Corp should be able to choose existing remotes")
+      (is (some #{"Server 2"} (:choices (prompt-map :corp))) "Corp should be able to choose existing remotes")
       (click-prompt state :corp "Server 2")
       (click-card state :corp (find-card "Haas Arcology AI" (:hand (get-corp))))
       (click-card state :corp (find-card "Research Station" (:hand (get-corp))))
