@@ -1196,7 +1196,7 @@
    {:events {:pre-start-game
              {:req (req (and (= side :runner)
                              (zero? (get-in @state [:corp :bad-publicity]))))
-              :effect (effect (gain-bad-publicity :corp 1))}}}
+              :effect (effect (gain :corp :bad-publicity 1))}}}
 
    "Weyland Consortium: Because We Built It"
    {:recurring 1}
