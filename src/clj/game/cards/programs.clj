@@ -583,10 +583,12 @@
    "Kyuban"
    {:hosting {:req #(and (ice? %) (can-host? %))}
     :events {:pass-ice {:req (req (same-card? target (:host card)))
+                        :msg "gain 2 credits"
                         :effect (effect (gain-credits :runner 2))}}}
 
    "Lamprey"
-   {:events {:successful-run {:req (req (= target :hq)) :msg "force the Corp to lose 1 [Credits]"
+   {:events {:successful-run {:req (req (= target :hq))
+                              :msg "force the Corp to lose 1 [Credits]"
                               :effect (effect (lose-credits :corp 1))}
              :purge {:effect (effect (trash card {:cause :purge}))}}}
 
