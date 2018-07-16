@@ -153,12 +153,25 @@
                                                 (is-type? % "Agenda")
                                                 (or (in-hand? %)
                                                     (in-discard? %)))}
-                           :msg (msg "reveal " (join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
                            :effect (req (gain-credits state side (* 2 (count targets)))
                                         (doseq [c targets]
                                           (move state :corp c :deck))
                                         (shuffle! state :corp :deck)
-                                        (effect-completed state side eid))} card nil)))}
+                                        (let [from-hq (map :title (filter #(= [:hand] (:zone %)) targets))
+                                              from-archives (map :title (filter #(= [:discard] (:zone %)) targets))]
+                                          (system-msg
+                                            state side
+                                            (str "uses Attitude Adjustment to shuffle "
+                                                 (join " and "
+                                                       (filter identity
+                                                               [(when (not-empty from-hq)
+                                                                  (str (join " and " from-hq)
+                                                                       " from HQ"))
+                                                                (when (not-empty from-archives)
+                                                                  (str (join " and " from-archives)
+                                                                       " from Archives"))]))
+                                                 " into R&D and gain " (* 2 (count targets)) " [Credits]"))))}
+                                          card nil)))}
    "Back Channels"
    {:async true
     :prompt "Select an installed card in a server to trash"
