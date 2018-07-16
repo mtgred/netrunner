@@ -362,6 +362,70 @@
     (take-credits state :corp)
     (is (zero? (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
 
+(deftest broad-daylight
+  ;; Broad Daylight
+  (testing "take bad pub"
+    (do-game
+      (new-game (default-corp [(qty "Broad Daylight" 3)])
+                (default-runner))
+      (is (zero? (:bad-publicity (get-corp))) "Corp start with no bad pub")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "No")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp doesn't gain bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 1) :agenda)) "Should gain 1 agenda counter")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 2 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 2 (get-counters (get-scored state :corp 2) :agenda)) "Should gain 2 agenda counters")))
+  (testing "deal damage"
+    (do-game
+      (new-game (default-corp ["Broad Daylight"])
+                (default-runner))
+      (core/gain state :corp :bad-publicity 3)
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 4 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 4 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
+      (is (empty? (:discard (get-runner))) "Runner has no discarded cards")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 damage")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (is (= 2 (count (:discard (get-runner)))) "Runner didn't take additional damage")))
+  (testing "bad pub triggers"
+    (do-game
+      (new-game (default-corp ["Broad Daylight" "Broadcast Square"])
+                (default-runner))
+      (core/gain state :corp :bad-publicity 1)
+      (play-from-hand state :corp "Broadcast Square" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 1 (:bad-publicity (get-corp))) "Corp start with one bad pub")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Doesn't gain additional bad pub yet")
+      (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
+      (click-prompt state :runner "0")  ;; Runner doesn't pump trace; loses trace
+      (is (= 1 (:bad-publicity (get-corp))) "Blocks gaining additional bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")))
+  (testing "bad pub triggers - more cases"
+    (do-game
+      (new-game (default-corp ["Broad Daylight" "Broadcast Square"])
+                (default-runner))
+      (core/gain state :corp :bad-publicity 1)
+      (play-from-hand state :corp "Broadcast Square" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 1 (:bad-publicity (get-corp))) "Corp start with one bad pub")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Doesn't gain additional bad pub yet")
+      (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
+      (click-prompt state :runner "5")  ;; Runner pumps trace; wins trace
+      (is (= 2 (:bad-publicity (get-corp))) "Gains additional bad pub")
+      (is (= 2 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 2 agenda counter"))))
+
 (deftest cfc-excavation-contract
   ;; CFC Excavation Contract
   (dotimes [n 5]
@@ -832,6 +896,15 @@
         (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
         (is (zero? (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
 
+(deftest fly-on-the-wall
+  ;; Fly on the Wall - give the runner 1 tag
+  (do-game
+    (new-game (default-corp ["Fly on the Wall"])
+              (default-runner))
+    (is (zero? (:tag (get-runner))) "Runner starts with no tags")
+    (play-and-score state "Fly on the Wall")
+    (is (= 1 (:tag (get-runner))) "Runner is tagged")))
+
 (deftest firmware-updates
   ;; Firmware Updates
   (do-game
@@ -1107,6 +1180,27 @@
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
 
+(deftest hyperloop-extension
+  ;; Hyperloop Extension
+  (testing "Score"
+    (do-game
+      (new-game (default-corp ["Hyperloop Extension"])
+                (default-runner))
+      (play-from-hand state :corp "Hyperloop Extension" "New remote")
+      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")))
+  (testing "Steal"
+    (do-game
+      (new-game (default-corp ["Hyperloop Extension"])
+                (default-runner))
+      (play-from-hand state :corp "Hyperloop Extension" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 5 credits")
+      (click-prompt state :runner "Steal")
+      (is (= 10 (:credit (get-corp))) "Corp gains 3 credits"))))
+
 (deftest ikawah-project
   ;; Ikawah Project
   (testing "Basic test"
@@ -1223,6 +1317,32 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 2 (:tag (get-runner)))))))
+
+(deftest jumon
+  ;; Jumon
+  (do-game
+    (new-game (default-corp ["Jumon" "Ice Wall" "Crisium Grid" "Project Atlas"])
+              (default-runner))
+    (play-and-score state "Jumon")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Project Atlas" "Server 2")
+    (core/end-turn state :corp nil)
+    (let [pa (get-content state :remote2 0)
+          iw (get-ice state :remote2 0)]
+      (is (zero? (get-counters (refresh pa) :advancement)) "Project Atlas starts with no counters")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall starts with no counters")
+      (click-card state :corp iw)
+      (click-card state :corp pa)
+      (is (= 2 (get-counters (refresh pa) :advancement)) "Project Atlas gains 2 counters")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall doesn't gain any counters")
+      (core/start-turn state :runner nil)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Crisium Grid" "Server 2")
+      (let [cg (get-content state :remote2 1)]
+        (is (zero? (get-counters (refresh cg) :advancement)) "Crisium Grid starts with no counters")
+        (core/end-turn state :corp nil)
+        (click-card state :corp cg)
+        (is (= 2 (get-counters (refresh cg) :advancement)) "Crisium Grid gains 2 counters")))))
 
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers

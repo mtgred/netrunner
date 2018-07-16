@@ -1,5 +1,6 @@
 (ns game-test.cards.operations
   (:require [game.core :as core]
+            [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
@@ -148,6 +149,26 @@
     (is (= 1 (count (:discard (get-corp)))))
     (is (find-card "Celebrity Gift" (:discard (get-corp))))))
 
+(deftest biased-reporting
+  ;; Biased Reporting
+  (do-game
+    (new-game (default-corp ["Biased Reporting"])
+              (default-runner [(qty "Fan Site" 5)]))
+    (take-credits state :corp)
+    (starting-hand state :runner (repeat 5 "Fan Site"))
+    (core/gain state :runner :click 10)
+    (dotimes [_ 5]
+      (play-from-hand state :runner "Fan Site"))
+    (take-credits state :runner)
+    (play-from-hand state :corp "Biased Reporting")
+    (let [cc (:credit (get-corp))
+          rc (:credit (get-runner))]
+      (click-prompt state :corp "Resource")
+      (click-card state :runner (get-resource state 0))
+      (click-prompt state :runner "Done")
+      (is (= (inc rc) (:credit (get-runner))) "Runner should gain 1 credit for trashing a Fan Site")
+      (is (= (+ (* 4 2) cc) (:credit (get-corp))) "Corp should gain 8 credits for remaining 4 Fan Sites"))))
+
 (deftest big-brother
   ;; Big Brother - Give the Runner 2 tags if already tagged
   (do-game
@@ -179,6 +200,33 @@
     (is (= 8 (:credit (get-corp))) "Gained 5 credits")
     (is (= 1 (:click (get-corp))))
     (is (= 7 (count (:hand (get-corp)))) "Drew 2 cards")))
+
+(deftest building-blocks
+  ;; Building Blocks - install and rez a barrier from HQ at no cost
+  (testing "Basic behavior"
+    (do-game
+      (new-game (default-corp ["Building Blocks" "Ice Wall"])
+                (default-runner))
+      (core/gain state :corp :credit 1)
+      (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
+      (play-from-hand state :corp "Building Blocks")
+      (is (= 1 (:credit (get-corp))) "Spent 5 credits on Building Blocks")
+      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (click-prompt state :corp "New remote")
+      (let [iw (get-ice state :remote1 0)]
+        (is (= 1 (:credit (get-corp))) "Corp spent no credits installing ice")
+        (is (:rezzed (refresh iw)) "Ice Wall is installed and rezzed"))))
+  (testing "Select invalid card"
+    (do-game
+      (new-game (default-corp ["Building Blocks" "Hedge Fund" "Cortex Lock"])
+                (default-runner))
+      (core/gain state :corp :credit 1)
+      (play-from-hand state :corp "Building Blocks")
+      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Starting prompt is correct")
+      (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
+      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Cannot select non-ICE")
+      (click-card state :corp (find-card "Cortex Lock" (:hand (get-corp))))
+      (is (= "Select a target for Building Blocks" (:msg (first (:prompt (get-corp))))) "Cannot select non-barrier ICE"))))
 
 (deftest casting-call
   ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128
@@ -413,6 +461,51 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (play-from-hand state :corp "Diversified Portfolio")
     (is (= 7 (:credit (get-corp))) "Ignored remote with ICE but no server contents")))
+
+(deftest divert-power
+  (do-game
+    (new-game (default-corp [(qty "Divert Power" 2) "Paper Wall" (qty "Eve Campaign" 3) ])
+              (default-runner))
+    (core/gain state :corp :click 3 :credit 11)
+    (play-from-hand state :corp "Paper Wall" "HQ")
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (play-from-hand state :corp "Eve Campaign" "New remote")
+    (let [pw (get-ice state :hq 0)
+          ec1 (get-content state :remote1 0)
+          ec2 (get-content state :remote2 0)
+          ec3 (get-content state :remote3 0)]
+      (core/rez state :corp pw)
+      (core/rez state :corp ec1)
+      (core/rez state :corp ec2)
+      (play-from-hand state :corp "Divert Power")
+      (is (= 4 (:credit (get-corp))) "Corp has 4 credits after rezzes and playing Divert Power")
+      (testing "Choose 2 targets to derez"
+        (click-card state :corp (refresh pw))
+        (click-card state :corp (refresh ec1))
+        (click-prompt state :corp "Done"))
+
+      (testing "Choose a target to rez for -6 cost"
+        (click-card state :corp (refresh ec3)))
+
+      (is (core/rezzed? (refresh ec3)) "Eve Campaign was rezzed")
+      (is (= 4 (:credit (get-corp))) "Rezzed Eve Campaign for 0 credits")
+      (is (not (core/rezzed? (refresh pw))) "Paper Wall was derezzed")
+      (is (not (core/rezzed? (refresh ec1))) "First Eve Campaign was derezzed")
+      (is (= 16 (get-counters (refresh ec3) :credit)) "Eve gained 16 credits on rez")
+
+      (play-from-hand state :corp "Divert Power")
+      (testing "Choose 1 target to derez"
+        (click-card state :corp (refresh ec2))
+        (click-prompt state :corp "Done"))
+
+      (testing "Choose a target to rez for -3 cost"
+        (click-card state :corp (refresh ec1)))
+
+      (is (core/rezzed? (refresh ec1)) "First Eve Campaign was rezzed")
+      (is (= 0 (:credit (get-corp))) "Rezzed Eve Campaign for 2 credits")
+      (is (not (core/rezzed? (refresh ec2))) "Second Eve Campaign was derezzed")
+      (is (= 32 (get-counters (refresh ec1) :credit)) "First Eve gained 16  more credits on rez"))))
 
 (deftest door-to-door
   ;; Door to Door
@@ -739,6 +832,46 @@
       (is (= 3 (:click (get-corp))))
       (is (= 3 (:click-per-turn (get-corp)))))))
 
+(deftest fast-break
+  ;; Fast Break
+  (do-game
+    (new-game (default-corp ["Fast Break" "Hostile Takeover" "Keegan Lane" "Haas Arcology AI"
+                             "Research Station" (qty "Ice Wall" 10)])
+              (default-runner [(qty "Fan Site" 3)]))
+    (starting-hand state :corp ["Fast Break" "Hostile Takeover" "Keegan Lane"
+                                "Haas Arcology AI" "Research Station"])
+    (take-credits state :corp)
+    (dotimes [_ 3]
+      (play-from-hand state :runner "Fan Site"))
+    (take-credits state :runner)
+    (play-and-score state "Hostile Takeover")
+    (is (= 3 (count (get-scored state :runner))) "Runner should have 3 agendas in score area")
+    (play-from-hand state :corp "Fast Break")
+    (let [hand (-> (get-corp) :hand count)
+          credits (:credit (get-corp))]
+      (click-prompt state :corp "3")
+      (is (= (+ hand 3) (-> (get-corp) :hand count)) "Corp should draw 3 cards from Fast Break")
+      (click-prompt state :corp "New remote")
+      (click-card state :corp (find-card "Keegan Lane" (:hand (get-corp))))
+      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (is (= (dec credits) (:credit (get-corp))) "Corp should pay 1 credit to install second Ice Wall"))
+    (core/move state :corp (find-card "Fast Break" (:discard (get-corp))) :hand)
+    (play-from-hand state :corp "Fast Break")
+    (let [hand (-> (get-corp) :hand count)
+          credits (:credit (get-corp))]
+      (click-prompt state :corp "0")
+      (is (= hand (-> (get-corp) :hand count)) "Corp should draw no cards as they're allowed to draw no cards")
+      (is (some #{"Server 2"} (:choices (prompt? :corp))) "Corp should be able to choose existing remotes")
+      (click-prompt state :corp "Server 2")
+      (click-card state :corp (find-card "Haas Arcology AI" (:hand (get-corp))))
+      (click-card state :corp (find-card "Research Station" (:hand (get-corp))))
+      (is (= 2 (count (get-content state :remote2))) "Corp can't choose Research Station to install in a remote")
+      (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+      (click-prompt state :corp "Done")
+      (is (= (- credits 2) (:credit (get-corp))) "Corp should pay 2 credits to install third Ice Wall")
+      (is (empty? (:prompt (get-corp))) "Corp should be able to stop installing early"))))
+
 (deftest foxfire
   ;; Foxfire
   (do-game
@@ -759,6 +892,50 @@
     (click-prompt state :runner "0")
     (click-card state :corp (get-resource state 0))
     (is (= 2 (-> (get-runner) :discard count)) "Corp should trash Ice Carver from winning Foxfire trace")))
+
+(deftest game-changer
+  (letfn [(game-changer-test [num-agenda]
+            (do-game
+              (new-game (default-corp ["Game Changer" "Hostile Takeover"])
+                        (default-corp [(qty "Fan Site" num-agenda)]))
+              (take-credits state :corp)
+              (core/gain state :runner :click num-agenda)
+              (dotimes [_ num-agenda]
+                (play-from-hand state :runner "Fan Site"))
+              (take-credits state :runner)
+              (play-and-score state "Hostile Takeover")
+              (is (= num-agenda (count (get-scored state :runner))) (str "Runner should have " (utils/quantify num-agenda "Fan Site") " in play"))
+              (let [clicks (:click (get-corp))
+                    n (dec num-agenda)]
+                (play-from-hand state :corp "Game Changer")
+                (is (= (+ n clicks) (:click (get-corp))) (str "Corp should gain " (utils/quantify n "click")))
+                (is (= 1 (-> (get-corp) :rfg count)) "Game Changer should be in rfg zone now"))))]
+    (doall (map game-changer-test (range 5)))))
+
+(deftest hangeki
+  ;; Hangeki
+  (doseq [choice ["Yes" "No"]]
+    (testing (str "choosing to " (when (= choice "No") "not ") "access card")
+      (do-game
+        (new-game (default-corp ["Hostile Takeover" "Dedicated Response Team" "Hangeki"])
+                  (default-runner))
+        (play-from-hand state :corp "Hostile Takeover" "New remote")
+        (play-from-hand state :corp "Dedicated Response Team" "New remote")
+        (take-credits state :corp)
+        (run-on state :remote2)
+        (run-successful state)
+        (click-prompt state :runner "Pay 3 [Credits] to trash")
+        (take-credits state :runner)
+        (play-from-hand state :corp "Hangeki")
+        (click-card state :corp (get-content state :remote1 0))
+        (click-prompt state :runner choice)
+        (if (= "Yes" choice)
+          (do (click-prompt state :runner "Steal")
+              (is (= 1 (:agenda-point (get-runner))) "Runner should steal Hostile Takeover")
+              (is (= 1 (-> (get-corp) :rfg count)) "Hangeki should be removed from the game"))
+          (do (is (empty? (:prompt (get-runner))) "Runner should have no more prompts as access ended")
+              (is (= -1 (:agenda-point (get-runner))) "Runner should add Hangeki to their score area worth -1 agenda point")
+              (is (zero? (-> (get-corp) :rfg count)) "Hangeki shouldn't be removed from the game")))))))
 
 (deftest hard-hitting-news
   ;; Hard-Hitting News
@@ -2313,6 +2490,25 @@
     (click-prompt state :runner "0")
     (click-card state :corp (get-program state 0))
     (is (= 1 (-> (get-runner) :discard count)) "Wyrm should be in heap after Runner loses Trojan Horse trace")))
+
+(deftest under-the-bus
+  ;; Under the Bus
+  (do-game
+    (new-game (default-corp ["Under the Bus"])
+              (default-runner ["Film Critic"]))
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-successful state)
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Film Critic")
+    (take-credits state :runner)
+    (is (= 1 (count (get-resource state))) "Runner has 1 resource installed")
+    (is (zero? (:bad-publicity (get-corp))) "Corp has no bad pub")
+    (play-from-hand state :corp "Under the Bus")
+    (click-card state :corp (get-resource state 0))
+    (is (empty? (get-resource state)) "Runner has no resource installed")
+    (is (= 1 (count (:discard (get-runner)))) "Runner has 1 trashed card")
+    (is (= 1 (:bad-publicity (get-corp))) "Corp takes 1 bad pub")))
 
 (deftest wake-up-call
   ;; Wake Up Call

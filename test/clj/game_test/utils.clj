@@ -85,7 +85,7 @@
             (is (= (count matching-cards) 1)
                 (str "Expected to click card [ " card
                      " ] but found " (count matching-cards)
-                     ". Current prompt is: " prompt)))))
+                     " matching cards. Current prompt is: \n" prompt)))))
 
       ;; Prompt isn't a select so click-card shouldn't be used
       (not (prompt-is-type? state side :select))
@@ -134,13 +134,16 @@
 
       ;; Default text prompt
       :else
-      (let [kw (if (string? choice) :choice :card)
-            buttons (filter #(or (= (lower-case choice) (lower-case %))
-                                 (= (lower-case choice) (lower-case (:title % ""))))
-                            choices)
+      (let [buttons (filter #(or (= choice %)
+                                 (let [choice-str (if (string? choice)
+                                                    (lower-case choice)
+                                                    (lower-case (:title choice "do-not-match")))]
+                                   (or (= choice-str (lower-case %))
+                                       (= choice-str (lower-case (:title % ""))))))
+                                 choices)
             button (first buttons)]
-        (if (= choice button)
-          (core/resolve-prompt state side {kw button})
-          (is (= choice choices) (str (side-str side) " expected to click [ "
-                                      (if (string? choice) choice (:title choice))
-                                      " ] but couldn't find it. Current prompt is: " prompt)))))))
+        (if button
+          (core/resolve-prompt state side {(if (string? button) :choice :card) button})
+          (is (= choice button) (str (side-str side) " expected to click [ "
+                                     (if (string? choice) choice (:title choice ""))
+                                     " ] but couldn't find it. Current prompt is: \n" prompt)))))))

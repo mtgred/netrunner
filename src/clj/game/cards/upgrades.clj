@@ -20,6 +20,26 @@
                                  :prompt "Rez ICE with rez cost lowered by 3?" :priority 2
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
+   "Arella Salvatore"
+   {:events
+    {:agenda-scored
+     {:req (req (and (= (:previous-zone target) (:zone card))
+                     (some #(corp-installable-type? %) (:hand corp))))
+      :interactive (req true)
+      :prompt "Select a card to install with Arella Salvatore"
+      :choices {:req #(and (corp-installable-type? %)
+                           (in-hand? %)
+                           (= (:side %) "Corp"))}
+      :async true
+      :cancel-effect (req (effect-completed state side eid))
+      :effect (req (wait-for (corp-install state :corp target nil {:no-install-cost true :display-message false})
+                             (let [inst-target (find-latest state target)]
+                               (add-prop state :corp inst-target :advance-counter 1 {:placed true})
+                               (system-msg state :corp
+                                           (str "uses Arella Salvatore to install and place a counter on "
+                                                (card-str state inst-target) ", ignoring all costs"))
+                               (effect-completed state side eid))))}}}
+
    "Ash 2X3ZB9CY"
    {:events {:successful-run {:interactive (req true)
                               :req (req this-server)
@@ -78,17 +98,17 @@
                               (move (first (get-in @state [:corp :play-area])) :deck {:front true})
                               (clear-wait-prompt :runner)
                               (effect-completed eid))})]
-
-   {:init {:root "R&D"}
-    :abilities [{:cost [:click 1]
-                 :req (req (>= (count (:deck corp)) 3))
-                 :async true
-                 :msg (msg (str "reveal " (join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
-                 :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
-                 :effect (req (doseq [c (take 3 (:deck corp))]
-                                (move state side c :play-area))
-                              (show-wait-prompt state :runner "Corp to use Bamboo Dome")
-                              (continue-ability state side (dome card) card nil))}]})
+    {:init {:root "R&D"}
+     :install-req (req (filter #{"R&D"} targets))
+     :abilities [{:cost [:click 1]
+                  :req (req (>= (count (:deck corp)) 3))
+                  :async true
+                  :msg (msg (str "reveal " (join ", " (map :title (take 3 (:deck corp)))) " from R&D"))
+                  :label "Reveal the top 3 cards of R&D. Secretly choose 1 to add to HQ. Return the others to the top of R&D, in any order."
+                  :effect (req (doseq [c (take 3 (:deck corp))]
+                                 (move state side c :play-area))
+                            (show-wait-prompt state :runner "Corp to use Bamboo Dome")
+                            (continue-ability state side (dome card) card nil))}]})
 
    "Ben Musashi"
    (let [bm {:req (req (or (in-same-server? card target)
@@ -109,7 +129,7 @@
                               :trace {:base 5
                                       :successful {:msg "give the Runner 1 tag"
                                                    :async true
-                                                   :effect (effect (tag-runner :runner eid 1))}
+                                                   :effect (effect (gain-tags :corp eid 1))}
                                       :unsuccessful
                                       {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
                                                        (trash card))}}}}}
@@ -194,7 +214,7 @@
    "ChiLo City Grid"
    {:events {:successful-trace {:req (req this-server)
                                 :async true
-                                :effect (effect (tag-runner :runner eid 1))
+                                :effect (effect (gain-tags :corp eid 1))
                                 :msg "give the Runner 1 tag"}}}
 
    "Code Replicator"
@@ -340,7 +360,7 @@
              :trace {:base 3
                      :successful {:msg "give the Runner 2 tags"
                                   :async true
-                                  :effect (effect (tag-runner :runner eid 2))}}}}
+                                  :effect (effect (gain-tags :corp eid 2))}}}}
 
    "Fractal Threat Matrix"
    {:implementation "Manual trigger each time all subs are broken"
@@ -352,7 +372,8 @@
                  :effect (effect (mill :corp :runner 2))}]}
 
    "Georgia Emelyov"
-   {:events {:unsuccessful-run {:req (req (= (first (:server target)) (second (:zone card))))
+   {:events {:unsuccessful-run {:req (req (= (first (:server target))
+                                             (second (:zone card))))
                                 :async true
                                 :msg "do 1 net damage"
                                 :effect (effect (damage eid :net 1 {:card card}))}}
@@ -369,10 +390,40 @@
                                                    (register-events state side (:events (card-def c)) c)))}
                                    card nil))}]}
 
+   "Giordano Memorial Field"
+   {:events
+    {:successful-run
+     {:interactive (req true)
+      :async true
+      :req (req this-server)
+      :msg "force the Runner to pay or end the run"
+      :effect (req (let [credits (:credit runner)
+                         cost (* 2 (count (:scored runner)))
+                         pay-str (str "pay " cost " [Credits]")
+                         c-pay-str (capitalize pay-str)]
+                     (show-wait-prompt state :corp (str "Runner to " pay-str " or end the run"))
+                     (continue-ability
+                       state :runner
+                       {:player :runner
+                        :async true
+                        :prompt (msg "You must " pay-str " or end the run")
+                        :choices (concat (when (>= credits cost)
+                                           [c-pay-str])
+                                         ["End the run"])
+                        :effect (req (clear-wait-prompt state :corp)
+                                     (if (= c-pay-str target)
+                                       (do (pay state :runner card :credit cost)
+                                           (system-msg state :runner (str "pays " cost " [Credits]")))
+                                       (do (end-run state side)
+                                           (system-msg state :corp "ends the run")))
+                                     (effect-completed state side eid))}
+                       card nil)))}}}
+
    "Heinlein Grid"
    {:abilities [{:req (req this-server)
                  :label "Force the Runner to lose all [Credits] from spending or losing a [Click]"
-                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]") :once :per-run
+                 :msg (msg "force the Runner to lose all " (:credit runner) " [Credits]")
+                 :once :per-run
                  :effect (effect (lose-credits :runner :all)
                                  (lose :runner :run-credit :all))}]}
 
@@ -468,21 +519,38 @@
                                                               ices grids)
                                                  card nil)))}))]
 
-     {:events {:corp-draw {:req (req (some #(is-type? % "ICE")
-                                           (:most-recent-drawn corp-reg)))
-                           ;; THIS IS A HACK: it prevents multiple Jinja from showing the "choose a server to install into" sequence
+     {:events {:corp-draw {;; THIS IS A HACK: it prevents multiple Jinja from showing the "choose a server to install into" sequence
                            :once :per-turn
                            :once-key :jinja-city-grid-draw
                            :async true
-                           :effect (req (let [ices (filter #(and (is-type? % "ICE")
-                                                                 (get-card state %))
-                                                           (:most-recent-drawn corp-reg))
-                                              grids (filterv #(= "Jinja City Grid" (:title %))
-                                                             (all-active-installed state :corp))]
-                                          (if (not-empty ices)
-                                            (continue-ability state side (choose-ice ices grids) card nil)
-                                            (effect-completed state side eid))))}
-               :post-corp-draw {:effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw]))}}})
+                           :effect (req (cond
+                                          ;; If ice were drawn, do the full routine.
+                                          (some #(is-type? % "ICE") (:most-recent-drawn corp-reg))
+                                          (let [ices (filter #(and (is-type? % "ICE")
+                                                                   (get-card state %))
+                                                             (:most-recent-drawn corp-reg))
+                                                grids (filterv #(= "Jinja City Grid" (:title %))
+                                                               (all-active-installed state :corp))]
+                                            (when (= :runner (:active-player @state))
+                                              (show-wait-prompt state :runner "Corp to resolve Jinja City Grid"))
+                                            (if (not-empty ices)
+                                              (continue-ability state side (choose-ice ices grids) card nil)
+                                              (effect-completed state side eid)))
+                                          ;; else, if it's the runner's turn, show a fake prompt so the runner can't infer that ice weren't drawn
+                                          (= :runner (:active-player @state))
+                                          (continue-ability
+                                            state :corp
+                                            {:prompt "You did not draw any ice to use with Jinja City Grid"
+                                             :choices ["Carry on!"]
+                                             :prompt-type :bogus
+                                             :effect nil}
+                                            card nil)
+                                          ;; otherwise, we done
+                                          :else
+                                          (effect-completed state side eid)))}
+               :post-corp-draw {:effect (req (swap! state dissoc-in [:per-turn :jinja-city-grid-draw])
+                                             (when (= :runner (:active-player @state))
+                                               (clear-wait-prompt state :runner)))}}})
 
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
@@ -493,7 +561,7 @@
                  :msg (msg "remove 1 tag")
                  :effect (req (resolve-ability state side trash-program card nil)
                               (trash state side card {:cause :ability-cost})
-                              (lose state :runner :tag 1))}]}
+                              (lose-tags state :corp 1))}]}
 
    "Khondi Plaza"
    {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
@@ -504,7 +572,7 @@
               :player :runner
               :choices ["Take 1 tag" "End the run"]
               :effect (req (if (= target "Take 1 tag")
-                             (do (tag-runner state :runner 1)
+                             (do (gain-tags state :runner 1)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to take 1 tag")))
                              (do (end-run state side)
                                  (system-msg state :corp (str "uses K. P. Lynn. Runner chooses to end the run")))))}]
@@ -608,27 +676,28 @@
                    :effect (req (swap! state assoc-in [:runner :register :force-trash] false))}}
 
    "Mwanza City Grid"
-   (let [gain-creds {:req (req (and installed
-                                    this-server
-                                    (pos? (:cards-accessed run 0))))
-                     :silent (req true)
-                     :effect (req (let [cnt (:cards-accessed run)
-                                        total (* 2 cnt)]
-                                    (gain-credits state :corp total)
-                                    (system-msg state :corp
-                                                (str "gains " total " [Credits] from Mwanza City Grid"))))}]
-     {:install-req (req (filter #{"HQ" "R&D"} targets))
-      :events {:pre-access {:req (req (and installed
-                                           ;; Pre-access server is same server as that Mwanza is in the root of
-                                           (= target (second  (:zone card)))))
+   (let [gain-creds-and-clear {:req (req (= (:from-server target) (second (:zone card))))
+                               :silent (req true)
+                               :effect (req (let [cnt (total-cards-accessed run)
+                                                  total (* 2 cnt)]
+                                              (access-bonus state :runner -3)
+                                              (when cnt
+                                                (gain-credits state :corp total)
+                                                (system-msg state :corp
+                                                            (str "gains " total " [Credits] from Mwanza City Grid")))))}
+         boost-access-by-3 {:req (req (= target (second (:zone card))))
                             :msg "force the Runner to access 3 additional cards"
-                            :effect (effect (access-bonus 3))}
-               :run-ends gain-creds}
-      :trash-effect
-      {:req (req (and (= :servers (first (:previous-zone card))) (:run @state)))
-       :effect (effect (register-events {:run-ends
-                                         (assoc gain-creds :req (req (= (first (:server run))
-                                                                        (second (:previous-zone card)))))
+                            :effect (req (access-bonus state :runner 3))}]
+     {:install-req (req (filter #{"HQ" "R&D"} targets))
+      :events {:pre-access boost-access-by-3
+               :end-access-phase gain-creds-and-clear}
+      ;; TODO: as written, this may fail if mwanza is trashed outside of a run on its server
+      ;; (e.g. mwanza on R&D, run HQ, use polop to trash mwanza mid-run, shiro fires to cause RD
+      :trash-effect                     ; if there is a run, mark mwanza effects to remain active until the end of the run
+      {:req (req (:run @state))
+       :effect (effect (register-events {:pre-access (assoc boost-access-by-3 :req (req (= target (second (:previous-zone card)))))
+                                         :end-access-phase (assoc gain-creds-and-clear :req (req (= (:from-server target) (second (:previous-zone card)))))
+                                         :unsuccessful-run-ends {:effect (effect (unregister-events card))}
                                          :successful-run-ends {:effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard))))}})
 
@@ -745,7 +814,7 @@
                                  :yes-ability {:cost [:credit 1]
                                                :msg "give the Runner 1 tag"
                                                :async true
-                                               :effect (req (tag-runner state :runner eid 1))}}}
+                                               :effect (req (gain-tags state :corp eid 1))}}}
                                card nil))}]
      {:trash-effect
       {:req (req (and (= :servers (first (:previous-zone card)))
@@ -761,6 +830,7 @@
 
    "Panic Button"
    {:init {:root "HQ"}
+    :install-req (req (filter #{"HQ"} targets))
     :abilities [{:cost [:credit 1] :label "Draw 1 card" :effect (effect (draw))
                  :req (req (and run (= (first (:server run)) :hq)))}]}
 
@@ -786,7 +856,7 @@
                                                :msg "do 1 meat damage and give the Runner 1 tag"
                                                :async true
                                                :effect (req (wait-for (damage state side :meat 1 {:card card})
-                                                                      (tag-runner state :runner eid 1)))}}}
+                                                                      (gain-tags state :corp eid 1)))}}}
                                card nil))}}
 
    "Product Placement"
@@ -809,6 +879,7 @@
 
    "Research Station"
    {:init {:root "HQ"}
+    :install-req (req (filter #{"HQ"} targets))
     :in-play [:hand-size 2]}
 
    "Ruhr Valley"

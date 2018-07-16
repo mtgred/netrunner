@@ -172,11 +172,11 @@
 
 (defn- do-choices
   "Handle a choices ability"
-  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid] :as ability}
+  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid prompt-type] :as ability}
    card targets]
   (let [s (or player side)
         ab (dissoc ability :choices)
-        args {:priority priority :cancel-effect cancel-effect}]
+        args {:priority priority :cancel-effect cancel-effect :prompt-type prompt-type}]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
      (cond
@@ -221,27 +221,27 @@
              (or (not advance-counter-cost)
                  (<= advance-counter-cost (or advance-counter 0))))
     ;; Ensure that any costs can be paid
-    (when-let [cost-str (apply pay (concat [state side card] cost [{:action (:cid card)}]))]
-      (let [c (if counter-cost
-                (update-in card [:counter (first counter-cost)]
-                           #(- (or % 0) (or (second counter-cost) 0)))
-                card)
-            c (if advance-counter-cost
-                (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
-                c)]
-        ;; Remove any counters
-        (when (or counter-cost advance-counter-cost)
-          (update! state side c)
-          (when (is-type? card "Agenda")
-            (trigger-event state side :agenda-counter-spent card)))
-        ;; Print the message
-        (print-msg state side ability card targets cost-str)
-        ;; Trigger the effect
-        (do-effect state side ability c targets)
-        ;; Record the :end-turn effect
-        (register-end-turn state side ability card targets))
-      ;; Record the ability has been triggered if it is restricted to happening once
-      (register-once state ability card))))
+    (wait-for
+      (pay-sync state side card cost {:action (:cid card)})
+      (if-let [cost-str async-result]
+        (let [c (if counter-cost
+                  (update-in card [:counter (first counter-cost)]
+                             #(- (or % 0) (or (second counter-cost) 0)))
+                  card)
+              c (if advance-counter-cost
+                  (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
+                  c)]
+          ;; Remove any counters
+          (when (or counter-cost advance-counter-cost)
+            (update! state side c)
+            (when (is-type? card "Agenda")
+              (trigger-event state side :agenda-counter-spent card)))
+          ;; Print the message
+          (print-msg state side ability card targets cost-str)
+          ;; Trigger the effect
+          (do-effect state side ability c targets)
+          (register-end-turn state side ability card targets)
+          (register-once state ability card))))))
 
 (defn- print-msg
   "Prints the ability message"
@@ -460,7 +460,7 @@
   ([state side eid card psi]
    (swap! state assoc :psi {})
    (register-once state psi card)
-   (system-msg state :corp (str "uses " (:title card) " to start a psi game"))
+   (system-msg state (:player psi :corp) (str "uses " (:title card) " to start a psi game"))
    (doseq [s [:corp :runner]]
      (let [all-amounts (range (min 3 (inc (get-in @state [s :credit]))))
            valid-amounts (remove #(or (any-flag-fn? state :corp :psi-prevent-spend %)
