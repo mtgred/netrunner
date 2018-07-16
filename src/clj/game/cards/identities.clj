@@ -1157,12 +1157,7 @@
    "The Foundry: Refining the Process"
    {:events
     {:rez {:req (req (and (ice? target) ;; Did you rez and ice just now
-                          ;; Are there more copies in the deck or play area (ABT interaction)?
-                          ;; (some #(= (:title %) (:title target)) (concat (:deck corp) (:play-area corp)))
-                          ;; Based on ruling re: searching and failing to find, we no longer enforce the requirement
-                          ;; of there being a target ice to bring into HQ.
-                          (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
-                                    (filter ice? rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
+                          (first-event? state :runner :rez #(ice? (first %)))))
            :optional
            {:prompt "Add another copy to HQ?"
             :yes-ability {:effect (req (if-let [found-card (some #(when (= (:title %) (:title target)) %) (concat (:deck corp) (:play-area corp)))]

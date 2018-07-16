@@ -76,9 +76,9 @@
                                              (some #{:hand} (:previous-zone target))
                                              ;; check that we haven't played a Program from the grip this turn
                                              ;; which translates to just one case of playing a Program in turn-events
-                                             (let [cards (map first (turn-events state side :runner-install))
-                                                   progs (filter #(is-type? % "Program") cards)]
-                                               (= 1 (count (filter #(some #{:hand} (:previous-zone %)) progs))))))
+                                             (first-event? state :runner :runner-install
+                                                           (fn [[card _]] (and (some #{:hand} (:previous-zone card))
+                                                                               (is-type? card "Program"))))))
                               :msg "gain [Click]"
                               :effect (effect (gain :click 1))}
              :unsuccessful-run {:effect (effect (trash card)

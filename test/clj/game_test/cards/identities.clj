@@ -1961,7 +1961,8 @@
       (prompt-select :corp (find-card "Eli 1.0" (:play-area (get-corp))))
       (prompt-choice :corp "Archives")
       (prompt-choice :corp "Yes")
-      (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D"))))
+      (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D")
+      (is (= 1 (count (:hand (get-corp)))) "Added Eli 1.0 to HQ"))))
 
 (deftest the-outfit:-family-owned-and-operated
   ;; The Outfit - Gain 3 whenever you take at least 1 bad publicity
