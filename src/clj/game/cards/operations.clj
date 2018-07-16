@@ -143,6 +143,22 @@
                    (trash state side c {:unpreventable true}))
                  (continue-ability state side (audacity 1) card nil))})
 
+"Attitude Adjustment"
+{:async true
+ :effect (req (wait-for (draw state side 2 nil)
+                        (continue-ability state side
+                          {:prompt "Choose up to 2 agendas in HQ or Archives"
+                           :choices {:max 2
+                                     :req #(and (= (:side %) "Corp")
+                                                (is-type? % "Agenda")
+                                                (or (in-hand? %)
+                                                    (in-discard? %)))}
+                           :msg (msg "reveal " (join ", " (map :title (sort-by :title targets))) " and gain " (* 2 (count targets)) " [Credits]")
+                           :effect (req (gain-credits state side (* 2 (count targets)))
+                                        (doseq [c targets]
+                                          (move state :corp c :deck))
+                                        (shuffle! state :corp :deck)
+                                        (effect-completed state side eid))} card nil)))}
    "Back Channels"
    {:async true
     :prompt "Select an installed card in a server to trash"
