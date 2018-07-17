@@ -2138,6 +2138,7 @@
       chaos "Chaos Theory: Wünderkind"
       whizzard "Whizzard: Master Gamer"
       reina "Reina Roja: Freedom Fighter"]
+
   (deftest rebirth
     ;; Rebirth - Kate's discount applies after rebirth
     (testing "Kate"
@@ -2198,18 +2199,31 @@
         (play-from-hand state :runner "Rebirth")
         (choose-runner chaos state prompt-map)
         (is (= :full (get-in (get-runner) [:identity :implementation])) "Implementation note kept as `:full`"))))
-  (deftest-pending rebirth-kate-twice
-    ;; Rebirth - Kate's discount does not after rebirth if something already installed
-    (do-game
-      (new-game (default-corp)
-                (default-runner ["Akamatsu Mem Chip" "Rebirth" "Clone Chip"])
-                {:start-as :runner})
-      (play-from-hand state :runner "Clone Chip")
-      (play-from-hand state :runner "Rebirth")
-      (choose-runner kate state prompt-map)
-      (is (changes-credits (get-corp) -1
-                           (play-from-hand state :runner "Akamatsu Mem Chip"))
-          "Discount not applied for 2nd install"))))
+
+  (deftest rebirth-kate-twice
+    ;; Rebirth - Kate does not give discount after rebirth if Hardware or Program already installed
+    (testing "Installing Hardware before does prevent discount"
+      (do-game
+        (new-game (default-corp)
+                  (default-runner ["Akamatsu Mem Chip" "Rebirth" "Clone Chip"])
+                  {:start-as :runner})
+        (play-from-hand state :runner "Clone Chip")
+        (play-from-hand state :runner "Rebirth")
+        (choose-runner kate state prompt-map)
+        (is (changes-credits (get-runner) -1
+                             (play-from-hand state :runner "Akamatsu Mem Chip"))
+            "Discount not applied for 2nd install")))
+    (testing "Installing Resource before does not prevent discount"
+      (do-game
+        (new-game (default-corp)
+                  (default-runner ["Akamatsu Mem Chip" "Rebirth" "Same Old Thing"])
+                  {:start-as :runner})
+        (play-from-hand state :runner "Same Old Thing")
+        (play-from-hand state :runner "Rebirth")
+        (choose-runner kate state prompt-map)
+        (is (changes-credits (get-runner) 0
+                             (play-from-hand state :runner "Akamatsu Mem Chip"))
+            "Discount is applied for 2nd install (since it is the first Hardware / Program)"))))
 
 (deftest reboot
   ;; Reboot - run on Archives, install 5 cards from head facedown

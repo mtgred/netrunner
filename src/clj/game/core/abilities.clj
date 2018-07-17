@@ -32,7 +32,7 @@
 
 (defn is-ability?
   "Checks to see if a given map represents a card ability. Looks for :effect, :optional, :trace, or :psi."
-  [{:keys [effect optional trace psi] :as abi}]
+  [{:keys [effect optional trace psi]}]
   (or effect optional trace psi))
 
 (defn resolve-ability
