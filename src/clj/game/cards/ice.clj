@@ -63,12 +63,15 @@
   ([base {:keys [label] :as ability}]
    {:label (str "Trace " base " - " label)
     :trace {:base base
+            :label label
             :successful ability}})
-  ([base {:keys [label] :as ability} {:keys [un-label] :as un-ability}]
-   {:label (str "Trace " base " - " label " / " un-label)
-    :trace {:base base
-            :successful ability
-            :unsuccessful un-ability}}))
+  ([base ability un-ability]
+   (let [label (str (:label ability) " / " (:label un-ability))]
+     {:label (str "Trace " base " - " label)
+      :trace {:base base
+              :label label
+              :successful ability
+              :unsuccessful un-ability}})))
 
 (defn tag-trace
   "Trace ability for giving a tag, at specified base strength"
@@ -2056,25 +2059,20 @@
     :strength-bonus advance-counters}
 
    "Sherlock 1.0"
-   {:subroutines [{:label "Trace 4 - Add an installed program to the top of the Runner's Stack"
-                   :trace {:base 4
-                           :successful {:choices {:req #(and (installed? %)
-                                                             (is-type? % "Program"))}
-                                        :msg (msg "add " (:title target) " to the top of the Runner's Stack")
-                                        :effect (effect (move :runner target :deck {:front true}))}}}]
+   {:subroutines [(trace-ability 4 {:choices {:req #(and (installed? %)
+                                                         (is-type? % "Program"))}
+                                    :label "Add an installed program to the top of the Runner's Stack"
+                                    :msg (msg "add " (:title target) " to the top of the Runner's Stack")
+                                    :effect (effect (move :runner target :deck {:front true}))})]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Sherlock 2.0"
-   {:subroutines [{:label "Trace 4 - Add an installed program to the bottom of the Runner's Stack"
-                   :trace {:base 4
-                           :successful {:choices {:req #(and (installed? %)
-                                                             (is-type? % "Program"))}
-                                        :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
-                                        :effect (effect (move :runner target :deck))}}}
-                  {:label "Give the Runner 1 tag"
-                   :msg "give the Runner 1 tag"
-                   :async true
-                   :effect (effect (gain-tags :corp eid 1))}]
+   {:subroutines [(trace-ability 4 {:choices {:req #(and (installed? %)
+                                                         (is-type? % "Program"))}
+                                    :label "Add an installed program to the bottom of the Runner's Stack"
+                                    :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                                    :effect (effect (move :runner target :deck))})
+                  (give-tags 1)]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Shinobi"
@@ -2140,9 +2138,11 @@
       :strength-bonus x
       :subroutines [{:label "Trace X - Give the Runner 2 tags"
                      :trace {:base x
+                             :label "Give the Runner 2 tags"
                              :successful (give-tags 2)}}
                     {:label "Trace X - End the run"
                      :trace {:base x
+                             :label "End the run"
                              :successful end-the-run}}]
       :events {:card-moved recalc-event
                :corp-install recalc-event}})
@@ -2239,6 +2239,7 @@
    "TMI"
    {:trace {:base 2
             :msg "keep TMI rezzed"
+            :label "Keep TMI rezzed"
             :unsuccessful {:effect (effect (derez card))}}
     :subroutines [end-the-run]}
 
