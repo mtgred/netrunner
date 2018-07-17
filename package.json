@@ -1,0 +1,16 @@
+{
+  "name": "netrunner",
+  "version": "0.0.1",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mtgred/netrunner.git"
+  },
+  "devDependencies": {
+    "bower": "^1.8.2"
+  },
+  "dependencies": {
+    "stylus": "^0.54.5"
+  }
+}

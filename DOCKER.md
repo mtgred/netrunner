@@ -28,6 +28,7 @@ with the order that services start in mattering. Here are some specific issues:
     correctly imported into the database. Hence the kludgey `sleep 30` in
     `compose.sh`.
   - The lein* services download there dependencies every time they're run.
-  - For reasons I don't understand, `docker up lein-netrunner lein-cljs
-    stylus-css coffee-server` causes the lein* services to throw an exception,
-    but splitting the non-lein services into a separate up command doesn't.
+  - You need to change the db part (line 6) of the dev.edn from localhost to mongodb
+    for the containers to see the database, if you choose to use this docker setup.
+  
+ 
