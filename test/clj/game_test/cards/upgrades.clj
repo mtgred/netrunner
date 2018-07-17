@@ -23,6 +23,46 @@
         (is (:rezzed (refresh spid)) "Spiderweb rezzed")
         (is (= 1 (:credit (get-corp))) "Paid only 1 credit to rez")))))
 
+(deftest arella-salvatore
+  ;; Arella Salvatore - when an agenda is scored from this server, install a card from hq w/ advancement token
+  (testing "Install to server"
+    (do-game
+      (new-game (default-corp ["Arella Salvatore" "Bryan Stinson" (qty "TGTBT" 2)])
+                (default-runner))
+      (play-from-hand state :corp "Arella Salvatore" "New remote")
+      (play-from-hand state :corp "TGTBT" "Server 1")
+      (play-from-hand state :corp "TGTBT" "New remote")
+      (let [arella (get-content state :remote1 0)
+            same-tg (get-content state :remote1 1)
+            diff-tg (get-content state :remote2 0)]
+        (core/rez state :corp arella)
+        (score-agenda state :corp (refresh diff-tg))
+        (is (empty? (get-in @state [:corp :prompt])) "Arella not triggered for different remote score")
+        (is (= 1 (count (get-scored state :corp))) "1 Agenda scored")
+        (score-agenda state :corp (refresh same-tg))
+        (click-card state :corp (find-card "Bryan Stinson" (:hand (get-corp))))
+        (click-prompt state :corp "New remote")
+        (is (= 2 (count (get-scored state :corp))) "2 Agendas scored")
+        (is (= 1 (count (get-content state :remote3))) "Bryan installed in new remote")
+        (is (= 1 (get-counters (get-content state :remote3 0) :advancement)) "Bryan has 1 advancement counter"))))
+  (testing "No cost"
+    (do-game
+      (new-game (default-corp ["Arella Salvatore" "TGTBT" (qty "Ice Wall" 2)])
+                (default-runner))
+      (core/gain state :corp :click 5)
+      (play-from-hand state :corp "Arella Salvatore" "New remote")
+      (play-from-hand state :corp "TGTBT" "Server 1")
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (is (= 1 (count (get-ice state :hq))) "One ice on hq")
+      (let [arella (get-content state :remote1 0)
+            tg (get-content state :remote1 1)]
+        (core/rez state :corp arella)
+        (score-agenda state :corp (refresh tg))
+        (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
+        (click-prompt state :corp "HQ")
+        (is (= 2 (count (get-ice state :hq))) "Two ice on hq")
+        (is (= 1 (get-counters (get-ice state :hq 1) :advancement)) "Ice Wall has 1 counter")))))
+
 (deftest ash-2x3zb9cy
   ;; Ash 2X3ZB9CY
   (do-game
@@ -596,6 +636,31 @@
         (run-jack-out state)
         (is (= 2 (count (:discard (get-runner)))) "Runner did not take damage")))))
 
+(deftest giordano-memorial-field
+  ;; Giordano Memorial Field
+  (do-game
+    (new-game (default-corp ["Giordano Memorial Field" "Hostile Takeover"])
+              (default-corp [(qty "Fan Site" 3)]))
+    (play-from-hand state :corp "Giordano Memorial Field" "New remote")
+    (core/rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fan Site")
+    (play-from-hand state :runner "Fan Site")
+    (play-from-hand state :runner "Fan Site")
+    (take-credits state :runner)
+    (play-and-score state "Hostile Takeover")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (let [credits (:credit (get-runner))]
+      (click-prompt state :runner "Pay 6 [Credits]")
+      (is (= (- credits 6) (:credit (get-runner))) "Runner pays 6 credits to not end the run"))
+    (click-prompt state :runner "No action")
+    (run-empty-server state "Server 1")
+    (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner should only get 1 choice")
+    (is (= "End the run" (-> (get-runner) :prompt first :choices first)) "Only choice should be End the run")
+    (click-prompt state :runner "End the run")
+    (is (not (:run @state)) "Run should be ended from Giordano Memorial Field ability")))
+
 (deftest helheim-servers
   ;; Helheim Servers - Full test
   (do-game
@@ -692,7 +757,8 @@
 
 (deftest jinja-city-grid
   ;; Jinja City Grid - install drawn ice, lowering install cost by 4
-  (do-game
+  (testing "Single draws"
+    (do-game
     (new-game (default-corp ["Jinja City Grid" (qty "Vanilla" 3) (qty "Ice Wall" 3)])
               (default-runner))
     (starting-hand state :corp ["Jinja City Grid"])
@@ -708,6 +774,20 @@
     (click-prompt state :corp (-> (get-corp) :prompt first :choices first))
     (is (= 3 (:credit (get-corp))) "Charged to install ice")
     (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
+  (testing "Drawing non-ice on runner's turn"
+    (do-game
+      (new-game
+        (default-corp ["Jinja City Grid" (qty "Hedge Fund" 3)])
+        (make-deck "Laramy Fisk: Savvy Investor" ["Eden Shard"]))
+      (starting-hand state :corp ["Jinja City Grid"])
+      (play-from-hand state :corp "Jinja City Grid" "HQ")
+      (core/rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (run-empty-server state :rd)
+      (click-prompt state :runner "Yes")
+      (is (= :bogus (-> (get-corp) :prompt first :prompt-type)) "Corp has a bogus prompt to fake out the runner")
+      (click-prompt state :corp "Carry on!")
+      (click-prompt state :runner "No action"))))
 
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program
@@ -780,8 +860,8 @@
         ;; both prompts should be on Batty
         (is (prompt-is-card? state :corp mb) "Corp prompt is on Marcus Batty")
         (is (prompt-is-card? state :runner mb) "Runner prompt is on Marcus Batty")
-        (click-prompt state :corp "0")
-        (click-prompt state :runner "0")
+        (click-prompt state :corp "0 [Credits]")
+        (click-prompt state :runner "0 [Credits]")
         (is (prompt-is-card? state :corp sn) "Corp prompt is on Security Nexus")
         (is (prompt-is-type? state :runner :waiting) "Runner prompt is waiting for Corp")))))
 
@@ -1516,7 +1596,7 @@
       (is (empty? (:prompt (get-runner))) "SJ blocking SMC")
       (run-jack-out state)
       (card-ability state :runner smc2 0)
-      (click-prompt state :runner (find-card "Reaver" (:deck (get-runner)))))))
+      (click-prompt state :runner "Reaver"))))
 
 (deftest strongbox
   ;; Strongbox

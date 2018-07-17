@@ -225,7 +225,6 @@
       (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement tokens")
       (run-on state :rd)
       (run-successful state)
-      (click-prompt state :runner "Access")
       (click-prompt state :corp "2")
       (click-card state :corp (refresh iw))
       (click-prompt state :runner "Steal")
@@ -362,6 +361,70 @@
     (take-credits state :corp)
     (is (zero? (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
 
+(deftest broad-daylight
+  ;; Broad Daylight
+  (testing "take bad pub"
+    (do-game
+      (new-game (default-corp [(qty "Broad Daylight" 3)])
+                (default-runner))
+      (is (zero? (:bad-publicity (get-corp))) "Corp start with no bad pub")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "No")
+      (is (= 1 (:bad-publicity (get-corp))) "Corp doesn't gain bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 1) :agenda)) "Should gain 1 agenda counter")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 2 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 2 (get-counters (get-scored state :corp 2) :agenda)) "Should gain 2 agenda counters")))
+  (testing "deal damage"
+    (do-game
+      (new-game (default-corp ["Broad Daylight"])
+                (default-runner))
+      (core/gain state :corp :bad-publicity 3)
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 4 (:bad-publicity (get-corp))) "Corp gains 1 bad pub")
+      (is (= 4 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")
+      (is (empty? (:discard (get-runner))) "Runner has no discarded cards")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (is (= 2 (count (:discard (get-runner)))) "Runner took 2 damage")
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (is (= 2 (count (:discard (get-runner)))) "Runner didn't take additional damage")))
+  (testing "bad pub triggers"
+    (do-game
+      (new-game (default-corp ["Broad Daylight" "Broadcast Square"])
+                (default-runner))
+      (core/gain state :corp :bad-publicity 1)
+      (play-from-hand state :corp "Broadcast Square" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 1 (:bad-publicity (get-corp))) "Corp start with one bad pub")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Doesn't gain additional bad pub yet")
+      (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
+      (click-prompt state :runner "0")  ;; Runner doesn't pump trace; loses trace
+      (is (= 1 (:bad-publicity (get-corp))) "Blocks gaining additional bad pub")
+      (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 1 agenda counter")))
+  (testing "bad pub triggers - more cases"
+    (do-game
+      (new-game (default-corp ["Broad Daylight" "Broadcast Square"])
+                (default-runner))
+      (core/gain state :corp :bad-publicity 1)
+      (play-from-hand state :corp "Broadcast Square" "New remote")
+      (core/rez state :corp (get-content state :remote1 0))
+      (is (= 1 (:bad-publicity (get-corp))) "Corp start with one bad pub")
+      (play-and-score state "Broad Daylight")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (:bad-publicity (get-corp))) "Doesn't gain additional bad pub yet")
+      (click-prompt state :corp "0")  ;; Corp doesn't pump trace, base 3
+      (click-prompt state :runner "5")  ;; Runner pumps trace; wins trace
+      (is (= 2 (:bad-publicity (get-corp))) "Gains additional bad pub")
+      (is (= 2 (get-counters (get-scored state :corp 0) :agenda)) "Should gain 2 agenda counter"))))
+
 (deftest cfc-excavation-contract
   ;; CFC Excavation Contract
   (dotimes [n 5]
@@ -488,8 +551,8 @@
     (play-and-score state "Dedicated Neural Net")
     (take-credits state :corp)
     (run-empty-server state :hq)
-    (click-prompt state :runner "0")
-    (click-prompt state :corp "1")
+    (click-prompt state :runner "0 [Credits]")
+    (click-prompt state :corp "1 [Credits]")
     (is (-> @state :run :run-effect :replace-access) "Replace-access tiggered")
     (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
     (click-prompt state :runner "Card from hand")
@@ -507,8 +570,8 @@
     (take-credits state :corp)
     (play-from-hand state :runner "HQ Interface")
     (run-empty-server state :hq)
-    (click-prompt state :runner "0")
-    (click-prompt state :corp "1")
+    (click-prompt state :runner "0 [Credits]")
+    (click-prompt state :corp "1 [Credits]")
     (is (= 2 (-> (get-corp) :selected first :max)) "Corp chooses 2 cards for Runner to access")))
 
 (deftest degree-mill
@@ -767,9 +830,8 @@
       (play-from-hand state :corp "Explode-a-palooza" "New remote")
       (take-credits state :corp)
       (run-empty-server state :remote1)
-      (click-prompt state :runner "Access")
-      (click-prompt state :runner "Steal")
       (click-prompt state :corp "Yes")
+      (click-prompt state :runner "Steal")
       (is (= 12 (:credit (get-corp))) "Gained 5 credits")))
   (testing "Interaction with The Turning Wheel. Issue #1717."
     (do-game
@@ -780,7 +842,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "The Turning Wheel")
       (run-empty-server state :remote1)
-      (click-prompt state :runner "Access")
       (click-prompt state :corp "Yes")
       (click-prompt state :runner "Steal")
       (let [ttw (get-resource state 0)]
@@ -788,7 +849,6 @@
         (is (= 1 (count (:scored (get-runner)))) "Runner stole Explodapalooza")
         (is (= 12 (:credit (get-corp))) "Gained 5 credits")
         (run-empty-server state :rd)
-        (click-prompt state :runner "Access")
         (click-prompt state :corp "Yes")
         (click-prompt state :runner "Steal")
         (is (zero? (get-counters (refresh ttw) :power)) "TTW did not gain counters")
@@ -831,6 +891,15 @@
         (click-prompt state :runner "No action")
         (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
         (is (zero? (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
+
+(deftest fly-on-the-wall
+  ;; Fly on the Wall - give the runner 1 tag
+  (do-game
+    (new-game (default-corp ["Fly on the Wall"])
+              (default-runner))
+    (is (zero? (:tag (get-runner))) "Runner starts with no tags")
+    (play-and-score state "Fly on the Wall")
+    (is (= 1 (:tag (get-runner))) "Runner is tagged")))
 
 (deftest firmware-updates
   ;; Firmware Updates
@@ -1107,6 +1176,27 @@
       (card-ability state :corp hok-scored 0)
       (is (= 2 (count (:discard (get-runner)))) "Runner should pay 1 net damage"))))
 
+(deftest hyperloop-extension
+  ;; Hyperloop Extension
+  (testing "Score"
+    (do-game
+      (new-game (default-corp ["Hyperloop Extension"])
+                (default-runner))
+      (play-from-hand state :corp "Hyperloop Extension" "New remote")
+      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")))
+  (testing "Steal"
+    (do-game
+      (new-game (default-corp ["Hyperloop Extension"])
+                (default-runner))
+      (play-from-hand state :corp "Hyperloop Extension" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 7 (:credit (get-corp))) "Corp starts with 5 credits")
+      (click-prompt state :runner "Steal")
+      (is (= 10 (:credit (get-corp))) "Corp gains 3 credits"))))
+
 (deftest ikawah-project
   ;; Ikawah Project
   (testing "Basic test"
@@ -1223,6 +1313,32 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 2 (:tag (get-runner)))))))
+
+(deftest jumon
+  ;; Jumon
+  (do-game
+    (new-game (default-corp ["Jumon" "Ice Wall" "Crisium Grid" "Project Atlas"])
+              (default-runner))
+    (play-and-score state "Jumon")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Project Atlas" "Server 2")
+    (core/end-turn state :corp nil)
+    (let [pa (get-content state :remote2 0)
+          iw (get-ice state :remote2 0)]
+      (is (zero? (get-counters (refresh pa) :advancement)) "Project Atlas starts with no counters")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall starts with no counters")
+      (click-card state :corp iw)
+      (click-card state :corp pa)
+      (is (= 2 (get-counters (refresh pa) :advancement)) "Project Atlas gains 2 counters")
+      (is (zero? (get-counters (refresh iw) :advancement)) "Ice Wall doesn't gain any counters")
+      (core/start-turn state :runner nil)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Crisium Grid" "Server 2")
+      (let [cg (get-content state :remote2 1)]
+        (is (zero? (get-counters (refresh cg) :advancement)) "Crisium Grid starts with no counters")
+        (core/end-turn state :corp nil)
+        (click-card state :corp cg)
+        (is (= 2 (get-counters (refresh cg) :advancement)) "Crisium Grid gains 2 counters")))))
 
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers
@@ -2533,7 +2649,7 @@
     (take-credits state :corp)
     (run-on state :remote2)
     (run-successful state)
-    (is (= ["Pay 2 [Credits] to steal" "No action"] (:choices (prompt? :runner))))
+    (is (= ["Pay 2 [Credits] to steal" "No action"] (:choices (prompt-map :runner))))
     (click-prompt state :runner "Pay 2 [Credits] to steal")
     (is (= 1 (:agenda-point (get-runner))))
     (is (= 3 (:credit (get-runner))))))
@@ -2601,7 +2717,7 @@
       (run-successful state)
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Viral Weaponization" (:hand (get-corp))))
-      (is (= ["Pay 1 [Credits] to trash" "No action"] (:choices (prompt? :runner))))
+      (is (= ["Pay 1 [Credits] to trash" "No action"] (:choices (prompt-map :runner))))
       (click-prompt state :runner "No action")
       (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
       (take-credits state :runner)

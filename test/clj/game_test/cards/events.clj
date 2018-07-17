@@ -1,5 +1,6 @@
 (ns game-test.cards.events
   (:require [game.core :as core]
+            [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
@@ -469,7 +470,6 @@
     (play-from-hand state :runner "CBI Raid")
     (is (= :hq (get-in @state [:run :server 0])))
     (run-successful state)
-    (click-prompt state :runner "Replacement effect")
     (click-prompt state :corp (find-card "Caprice Nisei" (:hand (get-corp))))
     (click-prompt state :corp (find-card "Adonis Campaign" (:hand (get-corp))))
     (click-prompt state :corp (find-card "Quandary" (:hand (get-corp))))
@@ -683,11 +683,12 @@
       (is (zero? (:bad-publicity (get-corp))) "Corp has BP, didn't take 1 from Activist Support"))))
 
 (deftest credit-kiting
-  ;; After successful central run lower install cost by 8 and gain a tag
+  ;; Credit Kiting - After successful central run lower install cost by 8 and gain a tag
   (do-game
-    (new-game (default-corp ["PAD Campaign"])
+    (new-game (default-corp ["PAD Campaign" "Ice Wall"])
               (default-runner ["Credit Kiting" "Femme Fatale"]))
     (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Ice Wall" "R&D")
     (take-credits state :corp)
     (run-empty-server state "Server 1")
     (click-prompt state :runner "No action")
@@ -697,6 +698,10 @@
     (play-from-hand state :runner "Credit Kiting")
     (click-card state :runner (find-card "Femme Fatale" (:hand (get-runner))))
     (is (= 4 (:credit (get-runner))) "Femme Fatale only cost 1 credit")
+    (testing "Femme Fatale can still target ice when installed with Credit Kiting, issue #3715"
+      (let [iw (get-ice state :rd 0)]
+        (click-card state :runner iw)
+        (is (:icon (refresh iw)) "Ice Wall has an icon")))
     (is (= 1 (:tag (get-runner))) "Runner gained a tag")))
 
 (deftest data-breach
@@ -815,8 +820,8 @@
     (run-continue state)
     (run-successful state)
     (is (= 2 (count (:prompt (get-runner)))) "Deuces prompt not queued")
-    (click-prompt state :corp "0")
-    (click-prompt state :runner "0")
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
     (click-prompt state :runner "Steal")
     (is (= 1 (count (:scored (get-runner)))) "TFP stolen")
     (core/gain state :runner :tag 1)
@@ -867,6 +872,49 @@
       (is (= 4 (:credit (get-runner))) "Runner is down a credit")
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")
       (is (not (:run @state)) "Run finished"))))
+
+(deftest divide-and-conquer
+  ;; Divide and Conquer
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
+                (default-runner ["Divide and Conquer"]))
+      (starting-hand state :corp ["Hostile Takeover" "Ice Wall" "Ice Wall"])
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Divide and Conquer")
+      (run-successful state)
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Steal")
+      (is (= 4 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 in R&D, and 1 in HQ")))
+  (testing "with The Turning Wheel counters"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover" (qty "Ice Wall" 100)])
+                (default-runner ["Divide and Conquer" "The Turning Wheel"]))
+      (starting-hand state :corp (concat ["Hostile Takeover"]
+                                         (repeat 4 "Ice Wall")))
+      (trash-from-hand state :corp "Ice Wall")
+      (trash-from-hand state :corp "Ice Wall")
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Turning Wheel")
+      (let [ttw (get-resource state 0)]
+        (core/add-counter state :runner ttw :power 4)
+        (play-from-hand state :runner "Divide and Conquer")
+        (card-ability state :runner ttw 0)
+        (card-ability state :runner ttw 0)
+        (run-successful state)
+        ;; R&D
+        (dotimes [_ 3]
+          (click-prompt state :runner "Card from deck")
+          (click-prompt state :runner "No action"))
+        ;; HQ
+        (dotimes [_ 3]
+          (click-prompt state :runner "Card from hand")
+          (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+        (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
+        (is (= 2 (-> (get-runner) :register :last-run :access-bonus)) "The Turning Wheel should provide 2 additional accesses")
+        (is (= 8 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
 
 (deftest drive-by
   ;; Drive By - Expose card in remote server and trash if asset or upgrade
@@ -1303,7 +1351,19 @@
       (is (= 1 (count (filter :seen discard))) "There is 1 seen card in Archives"))
     (is (zero? (count (:hand (get-corp)))) "There are no cards in hand")))
 
+(deftest guinea-pig
+  ;; Guinea Pig
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Guinea Pig" (qty "Sure Gamble" 3)]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Guinea Pig")
+    (is (= 11 (:credit (get-runner))) "Gained +6 credits from playing Guinea Pig")
+    (is (empty? (:hand (get-runner))) "No cards left in grip, trashed all cards due to Guinea Pig")
+    (is (= 4 (count (:discard (get-runner)))) "3 cards trashed from Guinea Pig + Guinea Pig itself")))
+
 (deftest hacktivist-meeting
+  ;; Hacktivist Meeting
   ;; Trash a random card from corp hand while active
   ;; Make sure it is not active when hosted on Peddler
   (do-game
@@ -1339,6 +1399,17 @@
     (click-prompt state :runner "HQ")
     (run-successful state)
     (is (= 12 (:credit (get-runner))) "Runner gains 12 credits")))
+
+(deftest hot-pursuit
+  ;; Hot Pursuit
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Hot Pursuit"]))
+    (take-credits state :corp)
+    (play-run-event state (first (:hand (get-runner))) :hq)
+    (is (= (+ 5 -2 9) (:credit (get-runner))) "Gained 9 credits on successful run")
+    (is (= 1 (:tag (get-runner))) "Took 1 tag on successful run")
+    (is (prompt-map :runner) "Still have access prompt")))
 
 (deftest independent-thinking
   ;; Independent Thinking - Trash 2 installed cards, including a facedown directive, and draw 2 cards
@@ -1422,14 +1493,15 @@
               (card-ability state :runner (get-program state 0) 1)
               (click-prompt state :runner "Done")
               (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Damage from Snare! prevented")
-              (click-prompt state :runner (-> (prompt? :runner) :choices first))
-              (click-prompt state :runner "Done") ; don't prevent Hostile dmg
+              (click-prompt state :runner (-> (prompt-map :runner) :choices first))
+              (when (-> (prompt-map :runner) :choices first)
+                (click-prompt state :runner "Done")) ; don't prevent Hostile dmg
               ;; chronos prompt
               (click-prompt state :corp "Yes")
               (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
               (is (= (+ 2 existing-dmg) (count (:discard (get-runner)))) "Damage from Hostile Inf not prevented"))
             (allow-pad [existing-dmg]
-              (click-prompt state :runner (-> (prompt? :runner) :choices first))
+              (click-prompt state :runner (-> (prompt-map :runner) :choices first))
               (card-ability state :runner (get-program state 0) 1)
               (is (= (inc existing-dmg) (count (:discard (get-runner)))) "Runner prevented damage from Hostile Inf")
               (click-prompt state :runner "Done"))]
@@ -1486,6 +1558,29 @@
     (run-continue state)
     (run-successful state)
     (is (= 2 (:current-strength (get-program state 0))) "Corroder reset to 2 strength")))
+
+(deftest insight
+  ;; Insight
+  (do-game
+    (new-game (default-corp ["Caprice Nisei" "Elizabeth Mills"
+                            "Jackson Howard" "Director Haas"])
+            (default-runner ["Insight"]))
+    (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
+    (take-credits state :corp)
+    (is (zero? (count (:hand (get-corp)))))
+    (is (= 4 (count (:deck (get-corp)))))
+    (play-from-hand state :runner "Insight")
+    (is (= :waiting (-> (get-runner) :prompt first :prompt-type)) "Runner is waiting for Corp to reorder")
+    (click-prompt state :corp (find-card "Director Haas" (:deck (get-corp))))
+    (click-prompt state :corp (find-card "Elizabeth Mills" (:deck (get-corp))))
+    (click-prompt state :corp (find-card "Jackson Howard" (:deck (get-corp))))
+    (click-prompt state :corp (find-card "Caprice Nisei" (:deck (get-corp))))
+    (click-prompt state :corp "Done")
+    (is (not= :waiting (-> (get-runner) :prompt first :prompt-type)) "Waiting prompt done")
+    (is (= "Caprice Nisei" (:title (nth (:deck (get-corp)) 0))))
+    (is (= "Jackson Howard" (:title (nth (:deck (get-corp)) 1))))
+    (is (= "Elizabeth Mills" (:title (nth (:deck (get-corp)) 2))))
+    (is (= "Director Haas" (:title (nth (:deck (get-corp)) 3))))))
 
 (deftest interdiction
   ;; Corp cannot rez non-ice cards during runner's turn
@@ -1752,6 +1847,31 @@
     (is (= 1 (count (:scored (get-runner)))) "Notoriety moved to score area")
     (is (= 1 (:agenda-point (get-runner))) "Notoriety scored for 1 agenda point")))
 
+(deftest office-supplies
+  ;; Office Supplies
+  (letfn [(office-supplies-test [link]
+            (do-game
+              (new-game (default-corp)
+                        (default-runner [(qty "Office Supplies" 2)
+                                         (qty "Access to Globalsec" 100)]))
+              (take-credits state :corp)
+              (core/gain state :runner :credit 1000 :click link)
+              (starting-hand state :runner (concat (repeat 2 "Office Supplies")
+                                                   (repeat 4 "Access to Globalsec")))
+              (dotimes [_ link]
+                (play-from-hand state :runner "Access to Globalsec"))
+              (let [credits (:credit (get-runner))]
+                (play-from-hand state :runner "Office Supplies")
+                (is (= (- credits (- 4 link)) (:credit (get-runner)))))
+              (let [credits (:credit (get-runner))]
+                (click-prompt state :runner "Gain 4 [Credits]")
+                (is (= (+ 4 credits) (:credit (get-runner))) (str "Runner should gain " (utils/quantify link "credit"))))
+              (play-from-hand state :runner "Office Supplies")
+              (let [grip (-> (get-runner) :hand count)]
+                (click-prompt state :runner "Draw 4 cards")
+                (is (= (+ 4 grip) (-> (get-runner) :hand count)) "Runner should draw 4 cards"))))]
+    (doall (map office-supplies-test (range 5)))))
+
 (deftest on-the-lam
   ;; On the Lam
   (testing "vs tags"
@@ -1997,11 +2117,7 @@
       (is (= (- runner-creds 4) (:credit (get-runner))) "Paid 4 credits to trash PAD Campaign"))))
 
 ;; Rebirth
-(let [choose-runner
-      (fn [id-name state prompt-map]
-        (let [kate-choice (some #(when (= id-name (:title %)) %) (:choices (prompt-map :runner)))]
-          (core/resolve-prompt state :runner {:card kate-choice})))
-      akiko "Akiko Nisei: Head Case"
+(let [akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
       kit "Rielle \"Kit\" Peddler: Transhuman"
       professor "The Professor: Keeper of Knowledge"
@@ -2022,7 +2138,7 @@
                     [kate kit]))
         (is (not-any? #(some #{%} (prompt-titles :runner))
                       [professor whizzard jamie]))
-        (choose-runner kate state prompt-map)
+        (click-prompt state :runner kate)
         (is (= kate (-> (get-runner) :identity :title)))
         (is (= 1 (:link (get-runner))) "1 link")
         (is (empty? (:discard (get-runner))))
@@ -2035,7 +2151,7 @@
         (play-from-hand state :corp "Ice Wall" "R&D")
         (take-credits state :corp)
         (play-from-hand state :runner "Rebirth")
-        (choose-runner whizzard state prompt-map)
+        (click-prompt state :runner whizzard)
         (card-ability state :runner (:identity (get-runner)) 0)
         (is (= 6 (:credit (get-runner))) "Took a Whizzard credit")
         (is (changes-credits (get-corp) -1
@@ -2049,7 +2165,7 @@
         (play-from-hand state :runner "Access to Globalsec")
         (is (= 2 (:link (get-runner))) "2 link before rebirth")
         (play-from-hand state :runner "Rebirth")
-        (choose-runner chaos state prompt-map)
+        (click-prompt state :runner chaos)
         (is (= 1 (:link (get-runner))) "1 link after rebirth")))
     (testing "Gain link from ID"
       (do-game
@@ -2059,9 +2175,17 @@
         (play-from-hand state :runner "Access to Globalsec")
         (is (= 1 (:link (get-runner))) "1 link before rebirth")
         (play-from-hand state :runner "Rebirth")
-        (choose-runner kate state prompt-map)
-        (is (= 2 (:link (get-runner))) "2 link after rebirth"))))
-  (deftest-pending rebirth-kate-twice
+        (click-prompt state :runner kate)
+        (is (= 2 (:link (get-runner))) "2 link after rebirth")))
+    (testing "Implementation notes are kept, regression test for #3722"
+      (do-game
+        (new-game (default-corp)
+                  (default-runner ["Rebirth"])
+                  {:start-as :runner})
+        (play-from-hand state :runner "Rebirth")
+        (click-prompt state :runner chaos)
+        (is (= :full (get-in (get-runner) [:identity :implementation])) "Implementation note kept as `:full`"))))
+  (deftest rebirth-kate-twice
     ;; Rebirth - Kate's discount does not after rebirth if something already installed
     (do-game
       (new-game (default-corp)
@@ -2069,10 +2193,33 @@
                 {:start-as :runner})
       (play-from-hand state :runner "Clone Chip")
       (play-from-hand state :runner "Rebirth")
-      (choose-runner kate state prompt-map)
-      (is (changes-credits (get-corp) -1
-                           (play-from-hand state :runner "Akamatsu Mem Chip"))
-          "Discount not applied for 2nd install"))))
+      (click-prompt state :runner kate)
+      (let [credits (:credit (get-runner))]
+        (play-from-hand state :runner "Akamatsu Mem Chip")
+        (is (= (- credits 1) (:credit (get-runner))) "Discount not applied for 2nd install")))))
+
+(deftest reboot
+  ;; Reboot - run on Archives, install 5 cards from head facedown
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Reboot" "Sure Gamble" "Paperclip" "Clot"]))
+    (take-credits state :corp)
+    (trash-from-hand state :runner "Sure Gamble")
+    (trash-from-hand state :runner "Paperclip")
+    (trash-from-hand state :runner "Clot")
+    (is (empty? (core/all-installed state :runner)) "Runner starts with no installed cards")
+    (is (= 3 (count (:discard (get-runner)))) "Runner starts with 3 cards in trash")
+    (is (empty? (:rfg (get-runner))) "Runner starts with no discarded cards")
+    (play-from-hand state :runner "Reboot")
+    (run-successful state)
+    (click-card state :runner (find-card "Sure Gamble" (:discard (get-runner))))
+    (click-card state :runner (find-card "Paperclip" (:discard (get-runner))))
+    (click-card state :runner (find-card "Clot" (:discard (get-runner))))
+    (click-prompt state :runner "Done")
+    (is (= 3 (count (filter :facedown (core/all-installed state :runner)))) "Runner has 3 facedown cards")
+    (is (= 3 (count (core/all-installed state :runner))) "Runner has no other cards installed")
+    (is (empty? (:discard (get-runner))) "Runner has empty trash")
+    (is (= 1 (count (:rfg (get-runner)))) "Runner has 1 card in RFG")))
 
 (deftest reshape
   ;; Reshape - Swap 2 pieces of unrezzed ICE
@@ -2563,6 +2710,41 @@
       (is (core/has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (not (core/has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
       (is (not (core/has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))
+
+(deftest trade-in
+  ;; Trade-in - trash an installed Hardware, gain credits equal to half of install cost,
+  ;;            search stack for Hardware and add to grip
+  (do-game
+    (new-game
+      (default-corp)
+      (default-runner [(qty "Trade-In" 3) (qty "Astrolabe" 2) (qty "Sports Hopper" 2)])
+      {:start-as :runner})
+    (starting-hand state :runner ["Trade-In" "Trade-In" "Astrolabe" "Sports Hopper"])
+    (core/gain state :runner :click 5 :credit 5)
+    (play-from-hand state :runner "Astrolabe")
+    (play-from-hand state :runner "Sports Hopper")
+
+    (testing "Trade-in works with Hardware costing 0 or 1 credits (issue #3750)"
+      (let [runner-credits (:credit (get-runner))]
+        (play-from-hand state :runner "Trade-In")
+        (click-card state :runner (get-hardware state 0))
+        (is (= 2 (count (:discard (get-runner)))) "Trade-In and Astrolabe in discard")
+        (is (= (- runner-credits 1) (:credit (get-runner)))
+            "Paid 1 credit to play Trade-In and gained 0 credits from trashing Astrolabe")))
+
+    (testing "Trade-In lets runner search for Hardware and add it to Grip"
+      (is (= 1 (count (:hand (get-runner)))) "Only 1 Trade-In in Grip")
+      ;; Add sports hopper to hand
+      (click-prompt state :runner (-> (get-runner) :prompt first :choices first))
+      (is (= 2 (count (:hand (get-runner)))) "Sports Hopper added to Grip"))
+
+    (testing "Gain credits when install cost is greater than 1"
+      (let [runner-credits (:credit (get-runner))]
+        (play-from-hand state :runner "Trade-In")
+        (click-card state :runner (get-hardware state 0))
+        (is (= (+ runner-credits -1 1) (:credit (get-runner)))
+            "Paid 1 credit to play Trade-In and gained 1 credits from trashing Sports Hopper")
+        (is (= 4 (count (:discard (get-runner)))) "2 Trade-In, 1 Astrolabe and 1 Sports Hopper in discard")))))
 
 (deftest traffic-jam
   ;; Traffic Jam - Increase adv requirement based on previously scored copies

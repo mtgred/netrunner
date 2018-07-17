@@ -8,6 +8,63 @@
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "programs"))
 
+(deftest algernon
+  ;; Algernon - pay 2 credits to gain a click, trash if no successful run
+  (testing "Use, successful run"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Algernon"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Algernon")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-runner))) "Runner starts with 8 credits")
+      (is (= 4 (:click (get-runner))) "Runner starts with 4 clicks")
+      (click-prompt state :runner "Yes")
+      (is (= 6 (:credit (get-runner))) "Runner pays 2 credits")
+      (is (= 5 (:click (get-runner))) "Runner gains 1 click")
+      (run-on state "Archives")
+      (run-successful state)
+      (take-credits state :runner)
+      (is (empty? (:discard (get-runner))) "No cards trashed")
+      (is (= "Algernon" (:title (get-program state 0))) "Algernon still installed")))
+  (testing "Use, no successful run"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Algernon"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Algernon")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-runner))) "Runner starts with 8 credits")
+      (is (= 4 (:click (get-runner))) "Runner starts with 4 clicks")
+      (click-prompt state :runner "Yes")
+      (is (= 6 (:credit (get-runner))) "Runner pays 2 credits")
+      (is (= 5 (:click (get-runner))) "Runner gains 1 click")
+      (run-on state "Archives")
+      (core/jack-out state :runner nil)
+      (take-credits state :runner)
+      (is (= 1 (count (:discard (get-runner)))) "Algernon trashed")
+      (is (empty? (get-program state)) "No programs installed")))
+  (testing "Not used, no successful run"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Algernon"]))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Algernon")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 8 (:credit (get-runner))) "Runner starts with 8 credits")
+      (is (= 4 (:click (get-runner))) "Runner starts with 4 clicks")
+      (click-prompt state :runner "No")
+      (is (= 8 (:credit (get-runner))) "No credits spent")
+      (is (= 4 (:click (get-runner))) "No clicks gained")
+      (run-on state "Archives")
+      (core/jack-out state :runner nil)
+      (take-credits state :runner)
+      (is (empty? (:discard (get-runner))) "No cards trashed")
+      (is (= "Algernon" (:title (get-program state 0))) "Algernon still installed"))))
+
 (deftest au-revoir
   ;; Au Revoir - Gain 1 credit every time you jack out
   (do-game
@@ -24,6 +81,28 @@
     (core/no-action state :corp nil)
     (core/jack-out state :runner nil)
     (is (= 6 (:credit (get-runner))) "Gained 1 credit from each copy of Au Revoir")))
+
+(deftest bankroll
+  ;; Bankroll
+  (do-game
+    (new-game (default-corp)
+              (default-runner ["Bankroll"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bankroll")
+    (is (= 3 (core/available-mu state)) "Bankroll uses up 1 MU")
+    (is (= 4 (:credit (get-runner))) "Bankroll cost 1 to install")
+    (let [bankroll (get-program state 0)
+          hosted-credits #(get-counters (refresh bankroll) :credit)]
+      (is (= 0 (hosted-credits)) "No counters on Bankroll on install")
+      (run-empty-server state "Archives")
+      (is (= 1 (hosted-credits)) "One credit counter on Bankroll after one successful run")
+      (run-empty-server state "R&D")
+      (is (= 2 (hosted-credits)) "Two credit counter on Bankroll after two successful runs")
+      (run-empty-server state "HQ")
+      (is (= 3 (hosted-credits)) "Three credit counter on Bankroll after three successful runs")
+      (card-ability state :runner bankroll 0)
+      (is (= (+ 4 3) (:credit (get-runner))) "Gained 3 credits when trashing Bankroll")
+      (is (= 1 (-> (get-runner) :discard count)) "Bankroll was trashed"))))
 
 (deftest consume
   ;; Consume - gain virus counter for trashing corp card. click to get 2c per counter.
@@ -506,14 +585,47 @@
       (is (prompt-is-card? state :corp s) "Corp prompt is on Snowflake")
       (is (prompt-is-card? state :runner s) "Runner prompt is on Snowflake")
       (is (= 6 (:credit (get-corp))) "Corp paid 1 credit to rezz Snowflake")
-      (click-prompt state :corp "1")
-      (click-prompt state :runner "1")
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
       (is (= 5 (:credit (get-corp))) "Corp paid 1 credit to psi game")
       (is (= 2 (:credit (get-runner))) "Runner did not gain 1 credit from Ixodidae when corp spent on psi game")
       (run-continue state)
       (run-successful state)
       (is (= 4 (:credit (get-corp))) "Corp lost 1 credit to Lamprey")
       (is (= 3 (:credit (get-runner))) "Runner gains 1 credit from Ixodidae due to Lamprey"))))
+
+(deftest kyuban
+  ;; Kyuban
+  (testing "Gain creds when passing a piece of ice, both when rezzed and when unrezzed."
+    (do-game
+      (new-game (default-corp [(qty "Lockdown" 3)])
+                (default-runner [(qty "Kyuban" 1)]))
+      (play-from-hand state :corp "Lockdown" "HQ")
+      (play-from-hand state :corp "Lockdown" "Archives")
+      (let [ld1 (get-ice state :archives 0)
+            ld2 (get-ice state :hq 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "Kyuban")
+        (click-card state :runner ld1)
+        (let [starting-creds (:credit (get-runner))]
+          (run-on state "HQ")
+          (core/no-action state :corp nil)
+          (run-continue state)
+          (is (= starting-creds (:credit (get-runner))) "Gained no money for passing other ice")
+          (core/jack-out state :runner nil)
+          (run-on state "Archives")
+          (core/no-action state :corp nil)
+          (run-continue state)
+          (is (= (+ starting-creds 2) (:credit (get-runner)))
+              "Gained 2 creds for passing unrezzed host ice"))
+        (let [starting-creds-2 (:credit (get-runner))]
+          (core/jack-out state :runner nil)
+          (run-on state "Archives")
+          (core/rez state :corp ld1)
+          (core/no-action state :corp nil)
+          (run-continue state)
+          (is (= (+ starting-creds-2 2) (:credit (get-runner)))
+              "Gained 2 creds for passing rezzed host ice"))))))
 
 (deftest lamprey
   ;; Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge

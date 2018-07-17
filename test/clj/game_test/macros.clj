@@ -1,6 +1,8 @@
 (ns game-test.macros
   (:require [game.core :as core]
+            [game.utils :refer [side-str]]
             [clojure.test :refer :all]
+            [clojure.string :refer [join]]
             [game-test.utils :refer :all]))
 
 (defmacro do-game [s & body]
@@ -16,9 +18,15 @@
                      (let [~'ret (core/get-card ~'state ~'card)]
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
-         ~'prompt-map (fn [side#] (first (get-in @~'state [side# :prompt])))
+         ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
          ~'prompt-titles (fn [side#] (map #(:title %) (:choices (~'prompt-map side#))))
-         ~'prompt? (fn [~'side] (-> @~'state ~'side :prompt first))]
+         ~'prompt-fmt (fn [side#]
+                        (let [prompt# (~'prompt-map side#)
+                              choices# (:choices prompt#)
+                              prompt-type# (:prompt-type prompt#)]
+                          (str (side-str side#) ": " (:msg prompt# "") "\n"
+                               "Type: " (if (some? prompt-type#) prompt-type# "nil") "\n"
+                               (join "\n" (map #(str "[ " (or (:title %) %) " ]") choices#)))))]
      ~@body))
 
 (defmacro deftest-pending [name & body]
