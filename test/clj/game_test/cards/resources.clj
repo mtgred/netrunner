@@ -232,6 +232,29 @@
     (play-from-hand state :corp "Traffic Accident")
     (is (= 3 (count (:discard (get-runner)))) "Conventional meat damage not prevented by Parlor")))
 
+(deftest citadel-sanctuary
+  (testing "Interaction with Corporate Grant and Thunder Art Gallery"
+    (do-game
+      (new-game (default-corp)
+                (default-runner ["Citadel Sanctuary" "Thunder Art Gallery" "Corroder" "Corporate \"Grant\""]))
+      (take-credits state :corp)
+      (core/gain state :runner :credit 5)
+      (play-from-hand state :runner "Citadel Sanctuary")
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (play-from-hand state :runner "Corporate \"Grant\"")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (core/gain-tags state :runner 1)
+      (core/lose state :runner :click 3)
+      (core/end-turn state :runner nil)
+      (is (= 11 (:credit (get-corp))) "Corp has 11 credits before Corporate Grant")
+      (prompt-choice :corp 0)
+      (prompt-choice :runner 1)
+      (is (not (:end-turn @state)) "Runner turn has not yet ended")
+      (prompt-select :runner (find-card "Corroder" (:hand (get-runner))))
+      (is (:end-turn @state) "Runner turn has now ended")
+      (is (= 10 (:credit (get-corp))) "Corp lost 1 credit to Corporate Grant"))))
+
 (deftest compromised-employee
   ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
   (do-game
@@ -548,8 +571,9 @@
 
 (let [;; Start id
       sunny "Sunny Lebeau: Security Specialist"
-      ;; List of all G-Mod identities
+      ;; Several G-mod identities
       geist "Armand \"Geist\" Walker: Tech Lord"
+      hayley "Hayley Kaplan: Universal Scholar"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
       kit "Rielle \"Kit\" Peddler: Transhuman"
       professor "The Professor: Keeper of Knowledge"
@@ -565,7 +589,6 @@
       ;; Ensure +1 MU is handled correctly
       (do-game
         (new-game (default-corp)
-                  ;; Runner id is Gabe, make sure Geist is not in list (would be first)
                   (make-deck sunny ["DJ Fenris"]) {:start-as :runner})
         (play-from-hand state :runner "DJ Fenris")
         (is (= (first (prompt-titles :runner)) geist) "List is sorted")
@@ -598,7 +621,6 @@
       ;; Ensure Geist effect triggers
       (do-game
         (new-game (default-corp)
-                  ;; Runner id is Gabe, make sure Geist is not in list (would be first)
                   (make-deck sunny ["DJ Fenris" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]) {:start-as :runner})
         (starting-hand state :runner ["DJ Fenris" "All-nighter" "All-nighter"])
         (play-from-hand state :runner "All-nighter")
@@ -622,7 +644,31 @@
           (is (= 2 (count (:discard (get-runner)))) "2 cards in heap: All-nighter and DJ Fenris")
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter (again)
           (is (= (+ 1 hand-count) (count (:hand (get-runner))))
-              "Did not draw another card - Geist ability removed when DJ Fenris was trashed"))))))
+              "Did not draw another card - Geist ability removed when DJ Fenris was trashed"))))
+    (testing "Geist does not trigger Laguna Velasco"
+      ;; Regression test for #3759
+      (do-game
+        (new-game (default-corp)
+                  (make-deck sunny ["DJ Fenris" "Laguna Velasco District" (qty "All-nighter" 3) (qty "Sure Gamble" 3)])
+                  {:start-as :runner})
+        (starting-hand state :runner ["DJ Fenris" "Laguna Velasco District" "All-nighter"])
+        (core/gain state :runner :credit 10)
+        (play-from-hand state :runner "All-nighter")
+        (play-from-hand state :runner "Laguna Velasco District")
+        (play-from-hand state :runner "DJ Fenris")
+        (is (= (first (prompt-titles :runner)) geist) "List is sorted")
+        (is (every? #(some #{%} (prompt-titles :runner))
+                    [geist reina maxx hayley chaos]))
+        (is (not-any? #(some #{%} (prompt-titles :runner))
+                      [professor whizzard jamie kate kit]))
+        (choose-runner geist state prompt-map)
+        (is (= geist (get-in (get-resource state 2) [:hosted 0 :title])) "Geist hosted on DJ Fenris")
+        (is (= sunny (:title (:identity (get-runner)))) "Still Hayley, id not changed")
+        (let [hand-count (count (:hand (get-runner)))]
+          ;; Use All-nighter to trigger Geist
+          (card-ability state :runner (get-resource state 0) 0)
+          (is (= (+ 1 hand-count) (count (:hand (get-runner))))
+              "Drew one card with Geist when using All-nighter trash ability, not two (from Laguna Velasco District)"))))))
 
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
