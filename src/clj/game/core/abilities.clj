@@ -579,13 +579,10 @@
 
 (defn trace-start
   "Starts the trace process by showing the boost prompt to the first player (normally corp)."
-  [state side card {:keys [player other base bonus priority label] :as trace}]
+  [state side card {:keys [player other base bonus priority] :as trace}]
   (system-msg state :corp (str "uses " (:title card)
                                " to initiate a trace with strength " ((fnil + 0 0) base bonus)
-                               (when (pos? bonus)
-                                 (str " (" base " + " bonus ")"))
-                               (when label
-                                 (str " (" label ")"))))
+                               " (" (make-label trace) ")"))
   (show-wait-prompt state other
                     (str (if (corp-start? trace) "Corp" "Runner")
                          " to boost "

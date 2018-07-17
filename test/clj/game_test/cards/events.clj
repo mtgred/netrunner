@@ -963,17 +963,7 @@
       (click-card state :runner (get-content state :remote1 0))
       (click-prompt state :corp "0 [Credits]")
       (click-prompt state :runner "1 [Credits]")
-      (is (empty? (get-content state :remote1)) "Psychic Field trashed")))
-  (testing "Turn on reprisal cards. Issue #3755."
-    (do-game
-      (new-game (default-corp ["PAD Campaign"])
-                (default-runner ["Drive By"]))
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Drive By")
-      (click-card state :runner (get-content state :remote1 0))
-      (is (empty? (get-content state :remote1)) "PAD Campaign trashed")
-      (is (get-in (get-runner) [:register :trashed-card]) "Registered as runner trashed a card"))))
+      (is (empty? (get-content state :remote1)) "Psychic Field trashed"))))
 
 (deftest early-bird
   ;; Early Bird - Priority, make a run and gain a click

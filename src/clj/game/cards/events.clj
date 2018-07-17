@@ -528,8 +528,6 @@
                              (if (#{"Asset" "Upgrade"} (:type target))
                                (do (system-msg state :runner (str "uses Drive By to trash " (:title target)))
                                    (trash state side (assoc target :seen true))
-                                   ;; Turn on Reprisal cards
-                                   (swap! state assoc-in [:runner :register :trashed-card] true)
                                    (effect-completed state side eid))
                                (effect-completed state side eid))
                              (effect-completed state side eid))))}

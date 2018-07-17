@@ -379,8 +379,7 @@
               :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
               :trace {:base 1
                       :unsuccessful {:msg "remove 1 tag"
-                                     :async true
-                                     :effect (effect (lose-tags :runner eid 1))}}}}}
+                                     :effect (effect (lose-tags :runner 1))}}}}}
 
    "Clan Vengeance"
    {:events {:pre-resolve-damage {:req (req (pos? (last targets)))
@@ -2020,11 +2019,9 @@
    "Thunder Art Gallery"
    (let [first-event-check (fn [state fn1 fn2] (and (fn1 state :runner :runner-lose-tag #(= :runner (second %)))
                                             (fn2 state :runner :runner-prevent (fn [t] (seq (filter #(some #{:tag} %) t))))))
-         ability {:choices {:req #(and (= "Runner" (:side %))
-                                       (in-hand? %)
-                                       (not (is-type? % "Event")))}
+         ability {:choices (req (cancellable (remove #(is-type? % "Event") (:hand runner))))
                   :async true
-                  :prompt (msg "Select a card to install with Thunder Art Gallery")
+                  :prompt (msg "Which card to install?")
                   :effect (req (if (and (runner-can-install? state side target)
                                         (can-pay? state side target
                                                   (install-cost state side target [:credit (dec (:cost target))])))

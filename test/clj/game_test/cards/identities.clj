@@ -1961,8 +1961,7 @@
       (click-card state :corp (find-card "Eli 1.0" (:play-area (get-corp))))
       (click-prompt state :corp "Archives")
       (click-prompt state :corp "Done")
-      (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D")
-      (is (= 1 (count (:hand (get-corp)))) "Added Eli 1.0 to HQ"))))
+      (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D"))))
 
 (deftest the-outfit:-family-owned-and-operated
   ;; The Outfit - Gain 3 whenever you take at least 1 bad publicity
@@ -1990,17 +1989,17 @@
       (click-prompt state :corp "3")
       (is (= 3 (:bad-publicity (get-corp))) "Take 3 bad publicity")
       (is (= 23 (:credit (get-corp))) "Gain 15 from Profiteering + 3 from The Outfit")))
-  (testing "vs Valencia - 1 bad pub at start means 5 credits to start with (does not _gain_ BP)"
+  (testing "vs Valencia - 1 bad pub at start means 8 credits to start with"
     (do-game
       (new-game
         (make-deck "The Outfit: Family Owned and Operated" ["Hostile Takeover"])
         (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
       (is (= 1 (:bad-publicity (get-corp))) "The Outfit starts with 1 bad publicity")
-      (is (= 5 (:credit (get-corp))) "The Outfit starts with 8 credits")
+      (is (= 8 (:credit (get-corp))) "The Outfit starts with 8 credits")
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
       (is (= 2 (:bad-publicity (get-corp))) "Take 1 bad publicity")
-      (is (= (+ 5 7 3) (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit"))))
+      (is (= 18 (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit"))))
 
 (deftest titan-transnational:-investing-in-your-future
   ;; Titan Transnational
