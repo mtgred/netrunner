@@ -639,7 +639,9 @@
                                      :rfg))}}]}
 
    "Kate \"Mac\" McCaffrey: Digital Tinker"
-   {:events {:pre-install {:req (req (and (#{"Hardware" "Program"} (:type target))
+   {:effect (req (when (pos? (event-count state side :runner-install))
+                   (swap! state assoc-in [:per-turn (:cid card)] true)))
+    :events {:pre-install {:req (req (and (#{"Hardware" "Program"} (:type target))
                                           (not (get-in @state [:per-turn (:cid card)]))))
                            :effect (effect (install-cost-bonus [:credit -1]))}
              :runner-install {:req (req (and (#{"Hardware" "Program"} (:type target))
@@ -939,9 +941,7 @@
                                                                         (>= (get-counters card :advancement) (or (:current-cost card) (:advancementcost card))))
                                                                  ((constantly false) (toast state :corp "Cannot score due to Saraswati Mnemonics: Endless Exploration." "warning"))
                                                                  true))))
-                                      (wait-for (corp-install state side chosen target nil)
-                                                (add-prop state :corp (find-latest state chosen) :advance-counter 1 {:placed true})
-                                                (effect-completed state side eid)))})]
+                                      (corp-install state side eid (assoc chosen :advance-counter 1) target nil))})]
    {:abilities [{:async true
                  :label "Install a card from HQ"
                  :cost [:click 1 :credit 1]
@@ -1159,7 +1159,12 @@
    "The Foundry: Refining the Process"
    {:events
     {:rez {:req (req (and (ice? target) ;; Did you rez and ice just now
-                          (first-event? state :runner :rez #(ice? (first %)))))
+                          ;; Are there more copies in the deck or play area (ABT interaction)?
+                          ;; (some #(= (:title %) (:title target)) (concat (:deck corp) (:play-area corp)))
+                          ;; Based on ruling re: searching and failing to find, we no longer enforce the requirement
+                          ;; of there being a target ice to bring into HQ.
+                          (empty? (let [rezzed-this-turn (map first (turn-events state side :rez))]
+                                    (filter ice? rezzed-this-turn))))) ;; Is this the first ice you've rezzed this turn
            :optional
            {:prompt "Add another copy to HQ?"
             :yes-ability {:effect (req (if-let [found-card (some #(when (= (:title %) (:title target)) %) (concat (:deck corp) (:play-area corp)))]
@@ -1193,7 +1198,7 @@
    {:events {:pre-start-game
              {:req (req (and (= side :runner)
                              (zero? (get-in @state [:corp :bad-publicity]))))
-              :effect (effect (gain :corp :bad-publicity 1))}}}
+              :effect (effect (gain-bad-publicity :corp 1))}}}
 
    "Weyland Consortium: Because We Built It"
    {:recurring 1}

@@ -63,15 +63,12 @@
   ([base {:keys [label] :as ability}]
    {:label (str "Trace " base " - " label)
     :trace {:base base
-            :label label
             :successful ability}})
-  ([base ability un-ability]
-   (let [label (str (:label ability) " / " (:label un-ability))]
-     {:label (str "Trace " base " - " label)
-      :trace {:base base
-              :label label
-              :successful ability
-              :unsuccessful un-ability}})))
+  ([base {:keys [label] :as ability} {:keys [un-label] :as un-ability}]
+   {:label (str "Trace " base " - " label " / " un-label)
+    :trace {:base base
+            :successful ability
+            :unsuccessful un-ability}}))
 
 (defn tag-trace
   "Trace ability for giving a tag, at specified base strength"
@@ -258,12 +255,12 @@
                                    (continue-ability state side
                                                      {:player :runner
                                                       :optional
-                                                      {:prompt "Pay 2[Credits] to draw 1 card?"
+                                                      {:prompt "Pay 2 [Credits] to draw 1 card?"
                                                        :no-ability {:effect (effect (system-msg :runner "does not draw 1 card")
                                                                                     (clear-wait-prompt :corp))}
                                                        :yes-ability {:async true
                                                                      :effect (effect
-                                                                               (system-msg :runner "pays 2[Credits] to draw 1 card")
+                                                                               (system-msg :runner "pays 2 [Credits] to draw 1 card")
                                                                                (lose-credits 2)
                                                                                (clear-wait-prompt :corp)
                                                                                (draw eid 1 nil))}}}
@@ -1423,7 +1420,7 @@
 
    "Mausolus"
    {:advanceable :always
-    :subroutines [{:label "Gain 1 [Credits] (Gain 3[Credits])"
+    :subroutines [{:label "Gain 1 [Credits] (Gain 3 [Credits])"
                    :msg (msg "gain " (if (wonder-sub card 3) 3 1) "[Credits]")
                    :effect (effect (gain-credits (if (wonder-sub card 3) 3 1)))}
                   {:label "Do 1 net damage (Do 3 net damage)"
@@ -1451,7 +1448,7 @@
    (grail-ice (do-net-damage 2))
 
    "Meridian"
-   {:subroutines [{:label "Gain 4[Credits] and end the run, unless the runner adds Meridian to their score area as an agenda worth -1 agenda points"
+   {:subroutines [{:label "Gain 4 [Credits] and end the run, unless the runner adds Meridian to their score area as an agenda worth -1 agenda points"
                    :async true
                    :effect (req (show-wait-prompt state :corp "Runner to choose an option for Meridian")
                                 (continue-ability
@@ -1597,9 +1594,9 @@
               :effect (req (show-wait-prompt state :corp "Runner to choose an option for Mlinzi")
                            (resolve-ability
                              state :runner
-                             {:prompt "Take net damage or trash cards from the Stack?"
+                             {:prompt "Take net damage or trash cards from the stack?"
                               :choices [(str "Take " net-dmg " net damage")
-                                        (str "Trash the top " mill-cnt " cards of the Stack")]
+                                        (str "Trash the top " mill-cnt " cards of the stack")]
                               :effect (req (if (.startsWith target "Take")
                                              (do (system-msg state :corp
                                                              (str "uses Mlinzi to do "
@@ -1609,7 +1606,7 @@
                                              (do (system-msg state :corp
                                                              (str "uses Mlinzi to trash "
                                                                   (join ", " (map :title (take mill-cnt (:deck runner))))
-                                                                  " from the Runner's Stack"))
+                                                                  " from the runner's stack"))
                                                  (clear-wait-prompt state :corp)
                                                  (mill state :runner mill-cnt))))}
                              card nil))})]
@@ -2059,20 +2056,25 @@
     :strength-bonus advance-counters}
 
    "Sherlock 1.0"
-   {:subroutines [(trace-ability 4 {:choices {:req #(and (installed? %)
-                                                         (is-type? % "Program"))}
-                                    :label "Add an installed program to the top of the Runner's Stack"
-                                    :msg (msg "add " (:title target) " to the top of the Runner's Stack")
-                                    :effect (effect (move :runner target :deck {:front true}))})]
+   {:subroutines [{:label "Trace 4 - Add an installed program to the top of the Runner's Stack"
+                   :trace {:base 4
+                           :successful {:choices {:req #(and (installed? %)
+                                                             (is-type? % "Program"))}
+                                        :msg (msg "add " (:title target) " to the top of the Runner's Stack")
+                                        :effect (effect (move :runner target :deck {:front true}))}}}]
     :runner-abilities [(runner-break [:click 1] 1)]}
 
    "Sherlock 2.0"
-   {:subroutines [(trace-ability 4 {:choices {:req #(and (installed? %)
-                                                         (is-type? % "Program"))}
-                                    :label "Add an installed program to the bottom of the Runner's Stack"
-                                    :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
-                                    :effect (effect (move :runner target :deck))})
-                  (give-tags 1)]
+   {:subroutines [{:label "Trace 4 - Add an installed program to the bottom of the Runner's Stack"
+                   :trace {:base 4
+                           :successful {:choices {:req #(and (installed? %)
+                                                             (is-type? % "Program"))}
+                                        :msg (msg "add " (:title target) " to the bottom of the Runner's Stack")
+                                        :effect (effect (move :runner target :deck))}}}
+                  {:label "Give the Runner 1 tag"
+                   :msg "give the Runner 1 tag"
+                   :async true
+                   :effect (effect (gain-tags :corp eid 1))}]
     :runner-abilities [(runner-break [:click 2] 2)]}
 
    "Shinobi"
@@ -2138,11 +2140,9 @@
       :strength-bonus x
       :subroutines [{:label "Trace X - Give the Runner 2 tags"
                      :trace {:base x
-                             :label "Give the Runner 2 tags"
                              :successful (give-tags 2)}}
                     {:label "Trace X - End the run"
                      :trace {:base x
-                             :label "End the run"
                              :successful end-the-run}}]
       :events {:card-moved recalc-event
                :corp-install recalc-event}})
@@ -2239,7 +2239,6 @@
    "TMI"
    {:trace {:base 2
             :msg "keep TMI rezzed"
-            :label "Keep TMI rezzed"
             :unsuccessful {:effect (effect (derez card))}}
     :subroutines [end-the-run]}
 

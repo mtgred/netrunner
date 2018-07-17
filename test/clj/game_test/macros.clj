@@ -1,6 +1,9 @@
 (ns game-test.macros
   (:require [game.core :as core]
-            [clojure.test :refer :all]))
+            [game.utils :refer [side-str]]
+            [clojure.test :refer :all]
+            [clojure.string :refer [join]]
+            [game-test.utils :refer :all]))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -9,33 +12,21 @@
          ~'get-run (fn [] (:run @~'state))
          ~'get-hand-size (fn [~'side] (+ (get-in @~'state [~'side :hand-size :base])
                                          (get-in @~'state [~'side :hand-size :mod])))
-         ~'refresh (fn [~'card] (core/get-card ~'state ~'card))
-         ~'prompt-choice (fn [~'side ~'choice]
-                           (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
-                           (core/resolve-prompt ~'state ~'side {:choice (~'refresh ~'choice)}))
-         ~'prompt-choice-partial (fn [~'side ~'choice]
-                                   (core/resolve-prompt
-                                     ~'state ~'side
-                                     {:choice (~'refresh (first (filter #(.contains % ~'choice)
-                                                                        (->> @~'state ~'side :prompt first :choices))))}))
-         ~'prompt-card (fn [~'side ~'card]
-                         (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
-                         (core/resolve-prompt ~'state ~'side {:card (~'refresh ~'card)}))
-         ~'prompt-select (fn [~'side ~'card]
-                           (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
-                           (core/select ~'state ~'side {:card (~'refresh ~'card)}))
-         ~'prompt-is-card? (fn [~'side ~'card]
-                             (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
-                             (and (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid)
-                                  (= (:cid ~'card) (-> @~'state ~'side :prompt first :card :cid))))
-         ~'prompt-is-type? (fn [~'side ~'type]
-                             (is (first (get-in @~'state [~'side :prompt])) "There is a prompt")
-                             (and ~'type (-> @~'state ~'side :prompt first :prompt-type)
-                                  (= ~'type (-> @~'state ~'side :prompt first :prompt-type))))
-
-         ~'prompt-map (fn [side#] (first (get-in @~'state [side# :prompt])))
+         ~'refresh (fn [~'card]
+                     ;; ;; uncommenting the below two assertions causes a looot of tests to fail
+                     ;; (is ~'card "card passed to refresh should not be nil")
+                     (let [~'ret (core/get-card ~'state ~'card)]
+                       ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
+                       ~'ret))
+         ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
          ~'prompt-titles (fn [side#] (map #(:title %) (:choices (~'prompt-map side#))))
-         ~'prompt? (fn [~'side] (-> @~'state ~'side :prompt first))]
+         ~'prompt-fmt (fn [side#]
+                        (let [prompt# (~'prompt-map side#)
+                              choices# (:choices prompt#)
+                              prompt-type# (:prompt-type prompt#)]
+                          (str (side-str side#) ": " (:msg prompt# "") "\n"
+                               "Type: " (if (some? prompt-type#) prompt-type# "nil") "\n"
+                               (join "\n" (map #(str "[ " (or (:title %) %) " ]") choices#)))))]
      ~@body))
 
 (defmacro deftest-pending [name & body]

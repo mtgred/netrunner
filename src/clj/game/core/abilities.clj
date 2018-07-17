@@ -194,12 +194,11 @@
                  0)]
          (prompt! state s card prompt {:number n :default d} ab args))
        (:card-title choices)
-       (prompt!
-         state s card prompt
-         (assoc choices :autocomplete
-                        (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
-                                                  (vals @all-cards)))))
-         ab (assoc args :prompt-type :card-title))
+       (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
+                                                   (vals @all-cards))))
+             choices (assoc choices :autocomplete card-titles)
+             args (assoc args :prompt-type :card-title)]
+         (prompt! state s card prompt choices ab args))
        ;; unknown choice
        :else nil)
      ;; Not a map; either :credit, :counter, or a vector of cards or strings.
@@ -359,6 +358,7 @@
          newitem {:eid eid
                   :msg prompt
                   :choices :credit
+                  :prompt-type :trace
                   :effect f
                   :card card
                   :priority priority
@@ -382,7 +382,8 @@
      (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))
            all (get-in ability [:choices :all])]
        (swap! state update-in [side :selected]
-              #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+              #(conj (vec %) {:ability (dissoc ability :choices)
+                              :req (get-in ability [:choices :req])
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
                               :max (get-in ability [:choices :max])
                               :all all}))
@@ -399,7 +400,8 @@
                         (show-select state side card ability args))
                       (fn [choice] (resolve-select state side)))
                     (-> args
-                        (assoc :prompt-type :select :show-discard (:show-discard ability))
+                        (assoc :prompt-type :select
+                               :show-discard (:show-discard ability))
                         (wrap-function :cancel-effect)))))))
 
 (defn resolve-select
@@ -436,7 +438,6 @@
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))
 
 ;;; Psi games
-
 (defn show-prompt-with-dice
   "Calls show-prompt normally, but appends a 'roll d6' button to choices.
   If user chooses to roll d6, reveal the result to user and re-display
@@ -471,7 +472,8 @@
        (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
                               (map #(str % " [Credits]") valid-amounts)
                               #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
-                    {:priority 2})))))
+                    {:priority 2
+                     :prompt-type :psi})))))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
@@ -577,13 +579,10 @@
 
 (defn trace-start
   "Starts the trace process by showing the boost prompt to the first player (normally corp)."
-  [state side card {:keys [player other base bonus priority label] :as trace}]
+  [state side card {:keys [player other base bonus priority] :as trace}]
   (system-msg state :corp (str "uses " (:title card)
                                " to initiate a trace with strength " ((fnil + 0 0) base bonus)
-                               (when (pos? bonus)
-                                 (str " (" base " + " bonus ")"))
-                               (when label
-                                 (str " (" label ")"))))
+                               " (" (make-label trace) ")"))
   (show-wait-prompt state other
                     (str (if (corp-start? trace) "Corp" "Runner")
                          " to boost "

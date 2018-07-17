@@ -391,8 +391,8 @@
 
 (defn- resolve-trash-end
   ([state side eid card args] (resolve-trash-end state side eid card eid args))
-  ([state side eid {:keys [disabled] :as card} oid
-   {:keys [cause keep-server-alive host-trashed] :as args}]
+  ([state side eid {:keys [zone type disabled] :as card} oid
+   {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args}]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
@@ -413,8 +413,8 @@
 
 (defn- resolve-trash
   ([state side eid card args] (resolve-trash state side eid card eid args))
-  ([state side eid {:keys [zone] :as card} oid
-   {:keys [cause suppress-event] :as args}]
+  ([state side eid {:keys [zone type] :as card} oid
+   {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
   (if (and (not suppress-event)
            (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (wait-for (trigger-event-sync state side (keyword (str (name side) "-trash")) card cause)
@@ -474,7 +474,7 @@
   "Attempts to trash the given card, allowing for boosting/prevention effects."
   ([state side card] (trash state side (make-eid state) card nil))
   ([state side card args] (trash state side (make-eid state) card args))
-  ([state side eid card {:keys [unpreventable cause suppress-event] :as args}]
+  ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args}]
    (wait-for (prevent-trash state side card eid args)
              (if-let [c (first (get-in @state [:trash :trash-list eid]))]
                (resolve-trash state side eid c args)
