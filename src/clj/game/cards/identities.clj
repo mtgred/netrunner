@@ -1189,8 +1189,7 @@
    {:events {:pre-start-game {:effect draft-points-target}}}
 
    "The Outfit: Family Owned and Operated"
-   {:events {:corp-gain-bad-publicity {:async true
-                                       :msg "gain 3 [Credit]"
+   {:events {:corp-gain-bad-publicity {:msg "gain 3 [Credit]"
                                        :effect (effect (gain-credits 3))}}}
 
    ;; No special implementation
