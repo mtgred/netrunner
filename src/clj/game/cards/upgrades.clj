@@ -1153,7 +1153,11 @@
                              (handle-end-run state side)))})]
    {:implementation "Does not handle UFAQ interaction with Singularity"
     :events {:runner-trash {:async true
-                            :req (req (= (-> card :zone second) (-> target :zone second)))
+                            :req (req (let [target-zone (:zone target)
+                                            target-zone (or (central->zone target-zone) target-zone)
+                                            warroid-zone (:zone card)]
+                                        (= (second warroid-zone)
+                                           (second target-zone))))
                             :trace {:base 4
                                     :successful
                                     {:effect
