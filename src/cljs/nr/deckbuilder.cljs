@@ -443,12 +443,13 @@
         (swap! s assoc :query "")
         (-> ".deckedit .lookup" js/$ .select)))))
 
-(defn card-lookup []
+(defn card-lookup [deck]
   (let [s (r/atom {:query ""
                    :matches []
                    :quantity 3
-                   :selected 0})]
-    (fn []
+                   :selected 0
+                   :edit-channel (:edit-channel @deck)})]
+    (fn [deck]
       [:div
        [:h3 "Add cards"]
        [:form.card-search {:on-submit #(handle-add s %)}
@@ -460,13 +461,14 @@
                      :on-change #(swap! s assoc :quantity (.. % -target -value))}]
         [:button "Add to deck"]
         (let [query (:query @s)
-              matches (match (get-in @s [:deck :identity]) query)
+              matches (match (get-in @deck [:deck :identity]) query)
               exact-match (= (:title (first matches)) query)]
           (cond
             exact-match
             (do
               (swap! s assoc :matches matches)
-              (swap! s assoc :selected 0))
+              (swap! s assoc :selected 0)
+              "")
 
             (not (or (empty? query) exact-match))
             (do
@@ -476,7 +478,8 @@
                  [:div {:class (if (= i (:selected @s)) "selected" "")
                         :on-click (fn [e] (-> ".deckedit .qty" js/$ .select)
                                     (swap! s assoc :query (.. e -target -textContent))
-                                    (swap! s assoc :selected i))}
+                                    (swap! s assoc :selected i)
+                                    nil)}
                   (:title (nth matches i))])])))]])))
 
 (defn deck-collection
@@ -737,7 +740,7 @@
                     [:option
                      {:value (identity-option-string card)}
                      (:display-name card)]))]]
-              [card-lookup]
+              [card-lookup s]
               [:h3 "Decklist"
                [:span.small "(Type or paste a decklist, it will be parsed)" ]]]
              [:textarea {:ref #(swap! db-dom assoc :deckedit %)

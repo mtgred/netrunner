@@ -70,9 +70,10 @@
          (let [c (count (:spectators game))]
            (when (pos? c)
              [:div.spectators-count.float-right (str c " Spectator" (when (> c 1) "s"))
-          [:div.blue-shade.spectators [player-view
-                                       (map (fn [%] {:player % :game game})
-                                           (:spectators game))]]]))))]))
+              [:div.blue-shade.spectators
+               (for [p (:spectators game)]
+                 ^{:key (get-in p [:user :_id])}
+                 [player-view {:player p :game game}])]]))))]))
 
 (defn mount-root []
   ; navbar stuff

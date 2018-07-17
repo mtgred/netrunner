@@ -45,6 +45,24 @@
         (is (= 2 (count (get-scored state :corp))) "2 Agendas scored")
         (is (= 1 (count (get-content state :remote3))) "Bryan installed in new remote")
         (is (= 1 (get-counters (get-content state :remote3 0) :advancement)) "Bryan has 1 advancement counter"))))
+  (testing "Interaction w/ other on-scored triggers"
+    (do-game
+      (new-game (make-deck "Sportsmetal: Go Big or Go Home" ["Arella Salvatore" "Domestic Sleepers" "Project Vitruvius" "Hedge Fund"])
+                (default-runner))
+      (starting-hand state :corp ["Arella Salvatore" "Domestic Sleepers"])
+      (play-from-hand state :corp "Arella Salvatore" "New remote")
+      (play-from-hand state :corp "Domestic Sleepers" "Server 1")
+      (let [arella (get-content state :remote1 0)
+            domest (get-content state :remote1 1)]
+        (core/rez state :corp arella)
+        (score-agenda state :corp (refresh domest))
+        ;; Simultaneous prompt: Sportsmetal automatically triggers, as Arella is silent because there are no installable cards in HQ
+        (prompt-choice-partial :corp "cards")
+        ;; Arella is no longer silent and now triggers
+        (prompt-select :corp (find-card "Project Vitruvius" (:hand (get-corp))))
+        (prompt-choice :corp "Server 1")
+        (is (= 2 (count (get-content state :remote1))) "Agenda installed in server 1")
+        (is (= 1 (get-counters (get-content state :remote1 1) :advancement)) "Agenda has 1 advancement counter"))))
   (testing "No cost"
     (do-game
       (new-game (default-corp ["Arella Salvatore" "TGTBT" (qty "Ice Wall" 2)])

@@ -57,14 +57,14 @@
    "Bankroll"
    {:implementation "Bankroll gains credits automatically."
     :events {:successful-run {:effect (effect (add-counter card :credit 1)
-                                              (system-msg "places 1 [Credit] on Bankroll."))}}
-    :abilities [{:label "[Trash]: Take all credits from Bankroll."
+                                              (system-msg "places 1 [Credit] on Bankroll"))}}
+    :abilities [{:label "[Trash]: Take all credits from Bankroll"
                  :async true
                  :effect (req (let [credits-on-bankroll (get-counters card :credit)]
                                 (wait-for (trash state :runner card {:cause :ability-cost})
                                           (take-credits state :runner credits-on-bankroll)
                                           (system-msg state :runner (str "trashes Bankroll and takes "
-                                                                         credits-on-bankroll " credits from it.")))))}]}
+                                                                         credits-on-bankroll " credits from it")))))}]}
 
    "Bishop"
    {:abilities [{:cost [:click 1]
@@ -583,10 +583,12 @@
    "Kyuban"
    {:hosting {:req #(and (ice? %) (can-host? %))}
     :events {:pass-ice {:req (req (same-card? target (:host card)))
+                        :msg "gain 2 credits"
                         :effect (effect (gain-credits :runner 2))}}}
 
    "Lamprey"
-   {:events {:successful-run {:req (req (= target :hq)) :msg "force the Corp to lose 1 [Credits]"
+   {:events {:successful-run {:req (req (= target :hq))
+                              :msg "force the Corp to lose 1 [Credits]"
                               :effect (effect (lose-credits :corp 1))}
              :purge {:effect (effect (trash card {:cause :purge}))}}}
 
