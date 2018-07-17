@@ -2126,11 +2126,7 @@
       (is (= (- runner-creds 4) (:credit (get-runner))) "Paid 4 credits to trash PAD Campaign"))))
 
 ;; Rebirth
-(let [choose-runner
-      (fn [id-name state prompt-map]
-        (let [kate-choice (some #(when (= id-name (:title %)) %) (:choices (prompt-map :runner)))]
-          (core/resolve-prompt state :runner {:card kate-choice})))
-      akiko "Akiko Nisei: Head Case"
+(let [akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
       kit "Rielle \"Kit\" Peddler: Transhuman"
       professor "The Professor: Keeper of Knowledge"
@@ -2138,6 +2134,7 @@
       chaos "Chaos Theory: Wünderkind"
       whizzard "Whizzard: Master Gamer"
       reina "Reina Roja: Freedom Fighter"]
+
   (deftest rebirth
     ;; Rebirth - Kate's discount applies after rebirth
     (testing "Kate"
@@ -2151,7 +2148,7 @@
                     [kate kit]))
         (is (not-any? #(some #{%} (prompt-titles :runner))
                       [professor whizzard jamie]))
-        (choose-runner kate state prompt-map)
+        (rebirth-choice state kate)
         (is (= kate (-> (get-runner) :identity :title)))
         (is (= 1 (:link (get-runner))) "1 link")
         (is (empty? (:discard (get-runner))))
@@ -2164,7 +2161,7 @@
         (play-from-hand state :corp "Ice Wall" "R&D")
         (take-credits state :corp)
         (play-from-hand state :runner "Rebirth")
-        (choose-runner whizzard state prompt-map)
+        (rebirth-choice state whizzard)
         (card-ability state :runner (:identity (get-runner)) 0)
         (is (= 6 (:credit (get-runner))) "Took a Whizzard credit")
         (is (changes-credits (get-corp) -1
@@ -2178,7 +2175,7 @@
         (play-from-hand state :runner "Access to Globalsec")
         (is (= 2 (:link (get-runner))) "2 link before rebirth")
         (play-from-hand state :runner "Rebirth")
-        (choose-runner chaos state prompt-map)
+        (rebirth-choice state chaos)
         (is (= 1 (:link (get-runner))) "1 link after rebirth")))
     (testing "Gain link from ID"
       (do-game
@@ -2188,7 +2185,7 @@
         (play-from-hand state :runner "Access to Globalsec")
         (is (= 1 (:link (get-runner))) "1 link before rebirth")
         (play-from-hand state :runner "Rebirth")
-        (choose-runner kate state prompt-map)
+        (rebirth-choice state kate)
         (is (= 2 (:link (get-runner))) "2 link after rebirth")))
     (testing "Implementation notes are kept, regression test for #3722"
       (do-game
@@ -2196,20 +2193,78 @@
                   (default-runner ["Rebirth"])
                   {:start-as :runner})
         (play-from-hand state :runner "Rebirth")
-        (choose-runner chaos state prompt-map)
+        (rebirth-choice state chaos)
         (is (= :full (get-in (get-runner) [:identity :implementation])) "Implementation note kept as `:full`"))))
-  (deftest-pending rebirth-kate-twice
-    ;; Rebirth - Kate's discount does not after rebirth if something already installed
-    (do-game
-      (new-game (default-corp)
-                (default-runner ["Akamatsu Mem Chip" "Rebirth" "Clone Chip"])
-                {:start-as :runner})
-      (play-from-hand state :runner "Clone Chip")
-      (play-from-hand state :runner "Rebirth")
-      (choose-runner kate state prompt-map)
-      (is (changes-credits (get-corp) -1
-                           (play-from-hand state :runner "Akamatsu Mem Chip"))
-          "Discount not applied for 2nd install"))))
+
+  (deftest rebirth-kate-twice
+    ;; Rebirth - Kate does not give discount after rebirth if Hardware or Program already installed
+    (testing "Installing Hardware before does prevent discount"
+      (do-game
+        (new-game (default-corp)
+                  (default-runner ["Akamatsu Mem Chip" "Rebirth" "Clone Chip"])
+                  {:start-as :runner})
+        (play-from-hand state :runner "Clone Chip")
+        (play-from-hand state :runner "Rebirth")
+        (rebirth-choice state kate)
+        (is (= kate (get-in (get-runner) [:identity :title])) "Rebirthed into Kate")
+        (is (changes-credits (get-runner) -1
+                             (play-from-hand state :runner "Akamatsu Mem Chip"))
+            "Discount not applied for 2nd install")))
+    (testing "Installing Resource before does not prevent discount"
+      (do-game
+        (new-game (default-corp)
+                  (default-runner ["Akamatsu Mem Chip" "Rebirth" "Same Old Thing"])
+                  {:start-as :runner})
+        (play-from-hand state :runner "Same Old Thing")
+        (play-from-hand state :runner "Rebirth")
+        (rebirth-choice state kate)
+        (is (= kate (get-in (get-runner) [:identity :title])) "Rebirthed into Kate")
+        (is (changes-credits (get-runner) 0
+                             (play-from-hand state :runner "Akamatsu Mem Chip"))
+            "Discount is applied for 2nd install (since it is the first Hardware / Program)"))))
+
+  (deftest rebirth-reina-twice
+    ;; Rebirth - Reina does not increase rez cost after rebirth if Ice already rezzed
+    (testing "Rezzing Ice before does prevent cost"
+      (do-game
+        (new-game (default-corp [(qty "Ice Wall" 2)])
+                  (make-deck whizzard ["Rebirth"]))
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Ice Wall" "R&D")
+        (take-credits state :corp)
+
+        (is (changes-credits (get-corp) -1
+                             (core/rez state :corp (get-ice state :hq 0)))
+            "Only pay 1 to rez ice wall when against Whizzard")
+
+        (play-from-hand state :runner "Rebirth")
+        (rebirth-choice state reina)
+        (is (= reina (get-in (get-runner) [:identity :title])) "Rebirthed into Reina")
+
+        (is (changes-credits (get-corp) -1
+                             (core/rez state :corp (get-ice state :rd 0)))
+            "Additional cost from Reina not applied for 2nd ice rez")))
+
+    (testing "Rezzing Asset before does not prevent additional cost"
+      (do-game
+        (new-game (default-corp ["Ice Wall" "Mark Yale"])
+                  (make-deck whizzard ["Rebirth"]))
+        (println "Reina Rebirth twice test")
+        (play-from-hand state :corp "Ice Wall" "HQ")
+        (play-from-hand state :corp "Mark Yale" "New remote")
+        (take-credits state :corp)
+
+        (is (changes-credits (get-corp) -1
+                             (core/rez state :corp (get-content state :remote1 0)))
+            "Only pay 1 to rez Mark Yale")
+
+        (play-from-hand state :runner "Rebirth")
+        (rebirth-choice state reina)
+        (is (= reina (get-in (get-runner) [:identity :title])) "Rebirthed into Reina")
+
+        (is (changes-credits (get-corp) -2
+                             (core/rez state :corp (get-ice state :hq 0)))
+            "Additional cost from Reina applied for 1st ice rez")))))
 
 (deftest reboot
   ;; Reboot - run on Archives, install 5 cards from head facedown

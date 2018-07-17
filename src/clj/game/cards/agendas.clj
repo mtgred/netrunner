@@ -252,7 +252,8 @@
                                                   (when-scored? %)
                                                   (:abilities %))}
                              :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                             :effect (effect (continue-ability (card-def target) target nil))}}}
+                             :effect (effect (continue-ability (card-def target) target nil))}
+               :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
 
    "Brain Rewiring"
    {:effect (effect (show-wait-prompt :runner "Corp to use Brain Rewiring")
