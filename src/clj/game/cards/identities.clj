@@ -152,7 +152,7 @@
                                  (:runner-phase-12 @state)))
                   :effect (effect (runner-install target {:facedown true}))}]
      {:events {:runner-turn-begins ability}
-      :flags {:runner-phase-12 (req (pos? (count (:hand runner))))}
+      :flags {:runner-phase-12 (req true)}
       :abilities [ability]})
 
    "Argus Security: Protection Guaranteed"
