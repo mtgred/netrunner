@@ -266,3 +266,10 @@
   [state title]
   (play-from-hand state :corp title "New remote")
   (score-agenda state :corp (get-content state (keyword (str "remote" (:rid @state))) 0)))
+
+(defn rebirth-choice
+  [state id-name]
+  (let [choice (some #(when (= id-name (:title %)) %)
+                     (-> @state :runner :prompt first :choices))]
+    (is choice (str id-name " is a valid Rebirth target"))
+    (core/resolve-prompt state :runner {:card choice})))

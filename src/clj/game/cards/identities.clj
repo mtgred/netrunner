@@ -643,11 +643,11 @@
                                   (is-type? card "Program")))
            (not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
            (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
-     {:effect (req (when (pos? (event-count state side :runner-install #(kate-type? (first %))))
+     {:effect (req (when (pos? (event-count state :runner :runner-install #(kate-type? (first %))))
                      (mark-triggered state card)))
       :events {:pre-install {:req (req (and (kate-type? target)
                                             (not-triggered? state card)))
-                             :effect (req (install-cost-bonus state side [:credit -1]))}
+                             :effect (effect (install-cost-bonus [:credit -1]))}
                :runner-install {:req (req (and (kate-type? target)
                                                (not-triggered? state card)))
                                 :silent (req true)
@@ -903,18 +903,26 @@
                            :effect (effect (gain-credits :corp 1))}}}
 
    "Quetzal: Free Spirit"
-   {:abilities [{:once :per-turn :msg "break 1 Barrier subroutine"}]}
+   {:abilities [{:once :per-turn
+                 :msg "break 1 Barrier subroutine"}]}
 
    "Reina Roja: Freedom Fighter"
-   {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
-                       :effect (effect (rez-cost-bonus 1))}
-             :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
-                   :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
+   (letfn [(not-triggered? [state card] (not (get-in @state [:per-turn (:cid card)])))
+           (mark-triggered [state card] (swap! state assoc-in [:per-turn (:cid card)] true))]
+     {:effect (req (when (pos? (event-count state :corp :rez #(ice? (first %))))
+                     (mark-triggered state card)))
+      :events {:pre-rez {:req (req (and (ice? target)
+                                        (not-triggered? state card)))
+                         :effect (effect (rez-cost-bonus 1))}
+               :rez {:req (req (and (ice? target)
+                                    (not-triggered? state card)))
+                     :effect (req (mark-triggered state card))}}})
 
    "Rielle \"Kit\" Peddler: Transhuman"
    {:abilities [{:req (req (and (:run @state)
                                 (:rezzed (get-card state current-ice))))
-                 :once :per-turn :msg (msg "make " (:title current-ice) " gain Code Gate until the end of the run")
+                 :once :per-turn
+                 :msg (msg "make " (:title current-ice) " gain Code Gate until the end of the run")
                  :effect (req (let [ice current-ice
                                     stypes (:subtype ice)]
                                 (update! state side (assoc ice :subtype (combine-subtypes true stypes "Code Gate")))
