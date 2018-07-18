@@ -240,9 +240,9 @@
   "Converts a central zone keyword to a string."
   [zone]
   (case (if (keyword? zone) zone (last zone))
-    :hq "HQ"
-    :rd "R&D"
-    :archives "Archives"
+    (:hand :hq) "HQ"
+    (:deck :rd) "R&D"
+    (:discard :archives) "Archives"
     nil))
 
 (defn zone->name

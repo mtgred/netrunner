@@ -28,8 +28,10 @@
        (swap! state update-in [:runner :register :made-run] #(conj % (first s)))
        (update-all-ice state :corp)
        (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-       (trigger-event-sync state :runner (make-eid state) :run s)
-       (when (>= n 2) (trigger-event state :runner :run-big s n))))))
+       (wait-for (trigger-event-sync state :runner :run s)
+                 (when (>= n 2) (trigger-event state :runner :run-big s n))
+                 (when (zero? n)
+                   (trigger-event-sync state :runner (make-eid state) :approach-server nil)))))))
 
 (defn gain-run-credits
   "Add temporary credits that will disappear when the run is over."
@@ -139,14 +141,14 @@
                                     (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
                 ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
                 trash-cost-str (when can-pay
-                                 [(str "Pay " trash-cost "[Credits] to trash")])
+                                 [(str "Pay " trash-cost " [Credits] to trash")])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
                 forced-to-trash? (and (or can-pay
                                           (seq trash-ab-cards))
                                       (or (get-in @state [:runner :register :force-trash])
                                           (card-flag-fn? state side card :must-trash true)))
                 trash-msg (when can-pay
-                            (str trash-cost "[Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
+                            (str trash-cost " [Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
                 pay-str (when can-pay
                           (str (if forced-to-trash? "is forced to pay " "pays ") trash-msg))
                 prompt-str (str "You accessed " card-name ".")
@@ -918,7 +920,8 @@
     (swap! state update-in [side :prompt] rest)
     (effect-completed state side eid)
     (when-let [run (:run @state)]
-      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+      (when (and (:ended run)
+                 (empty? (get-in @state [:runner :prompt])))
         (handle-end-run state :runner)))))
 
 (defn get-run-ices

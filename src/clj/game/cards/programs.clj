@@ -351,7 +351,7 @@
                  :cost [:click 1 :credit 1]
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
-                                 (move target :hand) )}
+                                 (move target :hand))}
                 {:label "Install a non-Icebreaker program on Djinn"
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
@@ -1104,7 +1104,7 @@
    {:implementation "Power counters added automatically"
     :events {:successful-run {:silent (req true)
                               :req (req (= target :rd))
-                              :effect (effect (add-counter card :power 1)) }}
+                              :effect (effect (add-counter card :power 1))}}
     :abilities [{:cost [:click 1]
                  :counter-cost [:power 3]
                  :once :per-turn

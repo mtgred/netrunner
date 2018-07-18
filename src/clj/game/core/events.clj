@@ -252,13 +252,19 @@
   ([state side ev pred]
    (empty? (filter pred (turn-events state side ev)))))
 
+(defn event-count
+  "Returns the number of an event this turn."
+  ([state side ev] (event-count state side ev (constantly true)))
+  ([state side ev pred]
+   (count (filter pred (turn-events state side ev)))))
+
 (defn first-event?
   "Returns true if the given event has only occured once this turn.
   Includes itself if this is checked in the requirement for an event ability.
   Filters on events satisfying (pred targets) if given pred."
   ([state side ev] (first-event? state side ev (constantly true)))
   ([state side ev pred]
-   (= 1 (count (filter pred (turn-events state side ev))))))
+   (= 1 (event-count state side ev pred))))
 
 (defn second-event?
   "Returns true if the given event has occurred twice this turn.
@@ -266,12 +272,7 @@
   Filters on events satisfying (pred targets) if given pred."
   ([state side ev] (second-event? state side ev (constantly true)))
   ([state side ev pred]
-   (= 2 (count (filter pred (turn-events state side ev))))))
-
-(defn event-count
-  "Returns the number of an event this turn."
-  [state side ev]
-  (count (turn-events state side ev)))
+   (= 2 (event-count state side ev pred))))
 
 (defn first-successful-run-on-server?
   "Returns true if the active run is the first succesful run on the given server"
