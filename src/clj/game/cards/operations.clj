@@ -143,35 +143,37 @@
                    (trash state side c {:unpreventable true}))
                  (continue-ability state side (audacity 1) card nil))})
 
-"Attitude Adjustment"
-{:async true
- :effect (req (wait-for (draw state side 2 nil)
-                        (continue-ability state side
-                          {:prompt "Choose up to 2 agendas in HQ or Archives"
-                           :choices {:max 2
-                                     :req #(and (= (:side %) "Corp")
-                                                (is-type? % "Agenda")
-                                                (or (in-hand? %)
-                                                    (in-discard? %)))}
-                           :effect (req (gain-credits state side (* 2 (count targets)))
-                                        (doseq [c targets]
-                                          (move state :corp c :deck))
-                                        (shuffle! state :corp :deck)
-                                        (let [from-hq (map :title (filter #(= [:hand] (:zone %)) targets))
-                                              from-archives (map :title (filter #(= [:discard] (:zone %)) targets))]
-                                          (system-msg
-                                            state side
-                                            (str "uses Attitude Adjustment to shuffle "
-                                                 (join " and "
-                                                       (filter identity
-                                                               [(when (not-empty from-hq)
-                                                                  (str (join " and " from-hq)
-                                                                       " from HQ"))
-                                                                (when (not-empty from-archives)
-                                                                  (str (join " and " from-archives)
-                                                                       " from Archives"))]))
-                                                 " into R&D and gain " (* 2 (count targets)) " [Credits]"))))}
-                                          card nil)))}
+   "Attitude Adjustment"
+   {:async true
+    :effect (req (wait-for (draw state side 2 nil)
+                           (continue-ability
+                             state side
+                             {:prompt "Choose up to 2 agendas in HQ or Archives"
+                              :choices {:max 2
+                                        :req #(and (= (:side %) "Corp")
+                                                   (is-type? % "Agenda")
+                                                   (or (in-hand? %)
+                                                       (in-discard? %)))}
+                              :effect (req (gain-credits state side (* 2 (count targets)))
+                                           (doseq [c targets]
+                                             (move state :corp c :deck))
+                                           (shuffle! state :corp :deck)
+                                           (let [from-hq (map :title (filter #(= [:hand] (:zone %)) targets))
+                                                 from-archives (map :title (filter #(= [:discard] (:zone %)) targets))]
+                                             (system-msg
+                                               state side
+                                               (str "uses Attitude Adjustment to shuffle "
+                                                    (join " and "
+                                                          (filter identity
+                                                                  [(when (not-empty from-hq)
+                                                                     (str (join " and " from-hq)
+                                                                          " from HQ"))
+                                                                   (when (not-empty from-archives)
+                                                                     (str (join " and " from-archives)
+                                                                          " from Archives"))]))
+                                                    " into R&D and gain " (* 2 (count targets)) " [Credits]"))))}
+                             card nil)))}
+
    "Back Channels"
    {:async true
     :prompt "Select an installed card in a server to trash"
@@ -601,7 +603,7 @@
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
                     (shuffle! :deck)
-                    (move target :hand) )}
+                    (move target :hand))}
 
    "Financial Collapse"
    {:async true
@@ -1191,7 +1193,7 @@
 
     "Psychokinesis"
     (letfn [(choose-card [state cards]
-              (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %) )
+              (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %))
                                           cards)]
                 {:prompt "Select an agenda, asset, or upgrade to install"
                  :choices (cons "None" allowed-cards)
@@ -1771,7 +1773,7 @@
    {:req (req (< (:credit corp) 10))
     :msg "gain 7 [Credits] and take 1 bad publicity"
     :effect (effect (gain-credits 7)
-                    (gain-bad-publicity :corp 1) ) }
+                    (gain-bad-publicity :corp 1))}
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))

@@ -223,7 +223,8 @@
                                            (shuffle! :deck)
                                            (install-cost-bonus [:credit (* -3 (count (get-in corp [:servers :rd :ices])))])
                                            (runner-install target)
-                                           (gain-tags eid 1) )}} card))}
+                                           (gain-tags eid 1))}}
+                         card))}
 
    "Cold Read"
    (let [end-effect {:prompt "Choose a program that was used during the run to trash "
@@ -366,7 +367,7 @@
     :effect (effect (run :rd nil card)
                     (register-events (:events (card-def card)) (assoc card :zone '(:discard))))
     :events {:successful-run {:silent (req true)
-                              :effect (effect (access-bonus (max 0 (min 4 (available-mu state))))) }
+                              :effect (effect (access-bonus (max 0 (min 4 (available-mu state)))))}
              :run-ends {:effect (effect (unregister-events card))}}}
 
    "Demolition Run"
@@ -1035,8 +1036,8 @@
                                (effect-completed state side eid))))})
            (which-pile [p1 p2]
              {:prompt "Choose a pile to access"
-              :choices [(str "Pile 1 (" (count p1) " cards)")
-                        (str "Pile 2 (" (count p2) " cards)")]
+              :choices [(str "Pile 1 (" (quantify (count p1) "card") ")")
+                        (str "Pile 2 (" (quantify (count p2) "card") ")")]
               :async true
               :effect (req (let [choice (if (.startsWith target "Pile 1") 1 2)]
                              (clear-wait-prompt state :corp)

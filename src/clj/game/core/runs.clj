@@ -141,14 +141,14 @@
                                     (filter #(can-trigger? state :runner (:trash-ability (:interactions (card-def %))) % [card])))
                 ability-strs (map #(->> (card-def %) :interactions :trash-ability :label) trash-ab-cards)
                 trash-cost-str (when can-pay
-                                 [(str "Pay " trash-cost "[Credits] to trash")])
+                                 [(str "Pay " trash-cost " [Credits] to trash")])
                 ;; If the runner is forced to trash this card (Neutralize All Threats)
                 forced-to-trash? (and (or can-pay
                                           (seq trash-ab-cards))
                                       (or (get-in @state [:runner :register :force-trash])
                                           (card-flag-fn? state side card :must-trash true)))
                 trash-msg (when can-pay
-                            (str trash-cost "[Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
+                            (str trash-cost " [Credits] to trash " card-name " from " (name-zone :corp (:zone card))))
                 pay-str (when can-pay
                           (str (if forced-to-trash? "is forced to pay " "pays ") trash-msg))
                 prompt-str (str "You accessed " card-name ".")
@@ -920,7 +920,8 @@
     (swap! state update-in [side :prompt] rest)
     (effect-completed state side eid)
     (when-let [run (:run @state)]
-      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+      (when (and (:ended run)
+                 (empty? (get-in @state [:runner :prompt])))
         (handle-end-run state :runner)))))
 
 (defn get-run-ices

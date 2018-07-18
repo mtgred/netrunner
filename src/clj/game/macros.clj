@@ -30,7 +30,9 @@
                            (get-in @state (concat [:corp :servers] (:server (:run @state)))))
             'run-ices '(:ices run-server)
             'run-position '(:position (:run @state))
-            'current-ice '(when (and run-position (pos? run-position ) (<= run-position (count (:ices run-server))))
+            'current-ice '(when (and run-position
+                                     (pos? run-position)
+                                     (<= run-position (count (:ices run-server))))
                             (nth (:ices run-server) (dec run-position)))
             'corp-reg '(get-in @state [:corp :register])
             'corp-reg-last '(get-in @state [:corp :register-last-turn])

@@ -1142,7 +1142,7 @@
                  :effect (effect (runner-install target {:host-card card :no-cost true}))}
                 {:label "Add a program hosted on London Library to your Grip"
                  :cost [:click 1]
-                 :choices {:req #(:host %)}
+                 :choices {:req #(:host %)} ;TODO: this seems to allow all hosted cards to be bounced
                  :msg (msg "add " (:title target) " to their Grip")
                  :effect (effect (move target :hand))}]
     :events {:runner-turn-ends {:effect (req (doseq [c (:hosted card)]
@@ -1479,7 +1479,7 @@
                                     card targets))))}]}
 
    "Power Tap"
-   {:events {:pre-init-trace {:msg "gain 1[Credits]"
+   {:events {:pre-init-trace {:msg "gain 1 [Credits]"
                               :effect (effect (gain-credits :runner 1))}}}
 
    "Professional Contacts"
@@ -1751,7 +1751,7 @@
      :abilities [{:req (req (:run @state))
                   :effect (req (let [ice-pos  (get-in @state [:run :position])]
                                  (resolve-ability state side
-                                   {:prompt (msg "Choose a piece of ICE protecting a central server at the same position as " (:title current-ice) )
+                                   {:prompt (msg "Choose a piece of ICE protecting a central server at the same position as " (:title current-ice))
                                     :choices {:req #(and (is-central? (second (:zone %)))
                                                          (ice? %)
                                                          (= ice-pos (inc (ice-index state %))))}

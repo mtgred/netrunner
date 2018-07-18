@@ -31,9 +31,9 @@
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
     (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
     (run-empty-server state :remote1)
-    (prompt-choice-partial :runner "Pay")
-    (prompt-choice :runner "[Click]")
-    (prompt-choice :runner "2 [Credits]")
+    (click-prompt state :runner "Pay to steal")
+    (click-prompt state :runner "[Click]")
+    (click-prompt state :runner "2 [Credits]")
     (is (= 2 (:click (get-runner))) "Runner should lose 1 click to steal")
     (is (= 3 (:credit (get-runner))) "Runner should lose 2 credits to steal")
     (is (= 1 (count (:scored (get-runner)))) "Runner should steal Ikawah Project")
@@ -87,19 +87,19 @@
     (let [oca (get-resource state 1)
           scheh (get-program state 0)]
       (card-ability state :runner scheh 0)
-      (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
+      (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= "Hivemind" (:title (first (:hosted (refresh scheh))))) "Hivemind hosted on Scheherazade")
       (play-from-hand state :runner "Kati Jones")
       (is (= 1 (:click (get-runner))) "Not charged a click")
       (is (= 2 (count (get-resource state))) "2nd copy of Kati couldn't install")
       (card-ability state :runner oca 0)
-      (prompt-select :runner (find-card "Kati Jones" (:hand (get-runner))))
+      (click-card state :runner (find-card "Kati Jones" (:hand (get-runner))))
       (is (empty? (:hosted (refresh oca))) "2nd copy of Kati couldn't be hosted on OCA")
       (is (= 1 (:click (get-runner))) "Not charged a click")
       (play-from-hand state :runner "Hivemind")
       (is (= 1 (count (get-program state))) "2nd copy of Hivemind couldn't install")
       (card-ability state :runner scheh 0)
-      (prompt-select :runner (find-card "Hivemind" (:hand (get-runner))))
+      (click-card state :runner (find-card "Hivemind" (:hand (get-runner))))
       (is (= 1 (count (:hosted (refresh scheh)))) "2nd copy of Hivemind couldn't be hosted on Scheherazade")
       (is (= 1 (:click (get-runner))) "Not charged a click"))))
 
@@ -122,10 +122,10 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Data Dealer")
     (run-empty-server state "HQ")
-    (prompt-choice :runner "Steal")
+    (click-prompt state :runner "Steal")
     (is (= 2 (:agenda-point (get-runner))))
     (card-ability state :runner (get-resource state 0) 0)
-    (prompt-select :runner (get-scored state :runner 0))
+    (click-card state :runner (get-scored state :runner 0))
     (is (= 1 (:click (get-runner))) "Didn't lose a click")
     (is (= 4 (:click-per-turn (get-runner))) "Still have 4 clicks per turn")))
 
@@ -140,7 +140,7 @@
     (play-from-hand state :corp "Corporate Town" "New remote")
     (let [ctown (get-content state :remote2 0)]
       (core/rez state :corp ctown)
-      (prompt-select :corp (get-scored state :corp 0))
+      (click-card state :corp (get-scored state :corp 0))
       (is (= 3 (:click-per-turn (get-corp))) "Back down to 3 clicks per turn"))))
 
 (deftest refresh-recurring-credits-hosted
@@ -155,8 +155,8 @@
     (let [iwall (get-ice state :hq 0)
           apt (get-resource state 0)]
       (card-ability state :runner apt 1) ; use Off-Campus option to host an installed card
-      (prompt-select :runner (find-card "Compromised Employee"
-                                        (get-resource state)))
+      (click-card state :runner (find-card "Compromised Employee"
+                                           (get-resource state)))
       (let [cehosted (first (:hosted (refresh apt)))]
         (card-ability state :runner cehosted 0) ; take Comp Empl credit
         (is (= 4 (:credit (get-runner))))
@@ -198,7 +198,7 @@
           pap (get-resource state 0)]
       (core/rez state :corp hqiwall0)
       (core/rez state :corp jh1)
-      (prompt-select :runner (refresh hqiwall0))
+      (click-card state :runner (refresh hqiwall0))
       (is (= (core/card-str state (refresh hqiwall0)) "Ice Wall protecting HQ at position 0"))
       (is (= (core/card-str state (refresh hqiwall1)) "ICE protecting HQ at position 1"))
       (is (= (core/card-str state (refresh rdiwall)) "ICE protecting R&D at position 0"))
@@ -235,11 +235,11 @@
     (let [fir (get-content state :remote1 0)]
       (core/rez state :corp fir)
       (card-ability state :corp fir 0)
-      (prompt-select :corp (find-card "Worlds Plaza" (:hand (get-corp))))
+      (click-card state :corp (find-card "Worlds Plaza" (:hand (get-corp))))
       (let [wp (first (:hosted (refresh fir)))]
         (core/rez state :corp wp)
         (card-ability state :corp wp 0)
-        (prompt-select :corp (find-card "Director Haas" (:hand (get-corp))))
+        (click-card state :corp (find-card "Director Haas" (:hand (get-corp))))
         (let [dh (first (:hosted (refresh wp)))]
           (is (:rezzed dh) "Director Haas was rezzed")
           (is (zero? (:credit (get-corp))) "Corp has 0 credits")
@@ -247,9 +247,9 @@
           (is (= 3 (count (core/all-installed state :corp))) "all-installed counting hosted Corp cards")
           (take-credits state :corp)
           (run-empty-server state "Server 1")
-          (prompt-select :runner dh)
-          (prompt-choice-partial :runner "Pay") ; trash Director Haas
-          (prompt-choice :runner "Done")
+          (click-card state :runner dh)
+          (click-prompt state :runner "Pay 5 [Credits] to trash") ; trash Director Haas
+          (click-prompt state :runner "Done")
           (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn"))))))
 
 (deftest trash-remove-per-turn-restriction
@@ -262,18 +262,18 @@
     (play-from-hand state :runner "Imp")
     (let [imp (get-program state 0)]
       (run-empty-server state "HQ")
-      (prompt-choice-partial :runner "Imp")
+      (click-prompt state :runner "[Imp]: Trash card")
       (is (= 1 (count (:discard (get-corp)))) "Accessed Hedge Fund is trashed")
       (run-empty-server state "HQ")
-      (prompt-choice :runner "No action")
+      (click-prompt state :runner "No action")
       (is (= 1 (count (:discard (get-corp)))) "Card can't be trashed, Imp already used this turn")
       (play-from-hand state :runner "Scavenge")
-      (prompt-select :runner imp)
-      (prompt-select :runner (find-card "Imp" (:discard (get-runner)))))
+      (click-card state :runner imp)
+      (click-card state :runner (find-card "Imp" (:discard (get-runner)))))
     (let [imp (get-program state 0)]
       (is (= 2 (get-counters (refresh imp) :virus)) "Reinstalled Imp has 2 counters")
       (run-empty-server state "HQ")
-      (prompt-choice-partial :runner "Imp"))
+      (click-prompt state :runner "[Imp]: Trash card"))
     (is (= 2 (count (:discard (get-corp)))) "Hedge Fund trashed, reinstalled Imp used on same turn")))
 
 (deftest trash-seen-and-unseen
@@ -285,13 +285,13 @@
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp 1)
     (run-empty-server state "Server 1")
-    (prompt-choice :runner "No action")
+    (click-prompt state :runner "No action")
     ;; run and trash the second asset
     (run-empty-server state "Server 2")
-    (prompt-choice-partial :runner "Pay")
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
     (take-credits state :runner 2)
     (play-from-hand state :corp "PAD Campaign" "Server 1")
-    (prompt-choice :corp "OK")
+    (click-prompt state :corp "OK")
     (is (= 2 (count (:discard (get-corp)))) "Trashed existing asset")
     (is (:seen (first (get-in @state [:corp :discard]))) "Asset trashed by runner is Seen")
     (is (not (:seen (second (get-in @state [:corp :discard]))))
@@ -307,12 +307,12 @@
     (take-credits state :corp 2)
     ;; run and trash the asset
     (run-empty-server state "Server 1")
-    (prompt-choice-partial :runner "Pay")
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
     (is (:seen (first (get-in @state [:corp :discard]))) "Asset trashed by runner is Seen")
     (take-credits state :runner 3)
     (play-from-hand state :corp "Interns")
-    (prompt-select :corp (first (get-in @state [:corp :discard])))
-    (prompt-choice :corp "New remote")
+    (click-card state :corp (first (get-in @state [:corp :discard])))
+    (click-prompt state :corp "New remote")
     (is (not (:seen (get-content state :remote2 0))) "New asset is unseen")))
 
 (deftest all-installed-runner-test
@@ -336,16 +336,16 @@
             co (find-card "Corroder" (:hand (get-runner)))
             le (find-card "Leprechaun" (:hand (get-runner)))]
         (card-ability state :runner kn 0)
-        (prompt-select :runner wrap)
+        (click-card state :runner wrap)
         (card-ability state :runner pw 0)
-        (prompt-select :runner co)
+        (click-card state :runner co)
         (card-ability state :runner od 0)
-        (prompt-select :runner le)
+        (click-card state :runner le)
         (let [od (refresh od)
               le (first (:hosted od))
               mi (find-card "Mimic" (:hand (get-runner)))]
           (card-ability state :runner le 0)
-          (prompt-select :runner mi)
+          (click-card state :runner mi)
           (let [all-installed (core/all-installed state :runner)]
             (is (= 5 (count all-installed)) "Number of installed runner cards is correct")
             (is (not-empty (filter #(= (:title %) "Leprechaun") all-installed)) "Leprechaun is in all-installed")
@@ -365,12 +365,12 @@
     (trash-from-hand state :corp "PAD Campaign")
     (take-credits state :corp)
     (run-empty-server state :hq)
-    (prompt-choice :runner "No") ; Dismiss trash prompt
+    (click-prompt state :runner "No action") ; Dismiss trash prompt
     (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")
     (run-empty-server state :rd)
     (is (last-log-contains? state "an unseen card") "Accessed card name was not logged")
     (run-empty-server state :remote1)
-    (prompt-choice :runner "No") ; Dismiss trash prompt
+    (click-prompt state :runner "No action") ; Dismiss trash prompt
     (is (last-log-contains? state "PAD Campaign") "Accessed card name was logged")))
 
 (deftest counter-manipulation-commands
@@ -414,17 +414,17 @@
     ;; let me fix it with a /command
     (testing "Advancement and Scoring checks"
       (core/command-counter state :corp ["power" 2])
-      (prompt-select :corp (refresh publics2))
+      (click-card state :corp (refresh publics2))
       (is (= 2 (get-counters (refresh publics2) :power)))
       ;; Oaktown checks and manipulation
       (is (= 3 (get-counters (refresh oaktown) :advancement)))
       (core/command-adv-counter state :corp 2)
-      (prompt-select :corp (refresh oaktown))
+      (click-card state :corp (refresh oaktown))
       ;; score should fail, shouldn't be able to score with 2 advancement tokens
       (core/score state :corp (refresh oaktown))
       (is (zero? (:agenda-point (get-corp))))
       (core/command-adv-counter state :corp 4)
-      (prompt-select :corp (refresh oaktown))
+      (click-card state :corp (refresh oaktown))
       (is (= 4 (get-counters (refresh oaktown) :advancement)))
       (is (= 3 (:credit (get-corp))))
       (is (= 3 (:click (get-corp))))
@@ -434,12 +434,12 @@
     (testing "Modifying publics1 and adonis for brevity"
       (is (= 2 (get-counters (refresh publics1) :power)))
       (core/command-counter state :corp ["power" 1])
-      (prompt-select :corp (refresh publics1))
+      (click-card state :corp (refresh publics1))
       (is (= 1 (get-counters (refresh publics1) :power)))
       ;; let's adjust Adonis while at it
       (is (= 9 (get-counters (refresh adonis) :credit)))
       (core/command-counter state :corp ["credit" 3])
-      (prompt-select :corp (refresh adonis))
+      (click-card state :corp (refresh adonis))
       (is (= 3 (get-counters (refresh adonis) :credit))))
     (testing "Turn 2 Runner"
       (take-credits state :runner))
@@ -464,17 +464,17 @@
     (play-from-hand state :corp "House of Knives" "New remote")
     (let [hok (get-content state :remote1 0)]
       (core/command-counter state :corp [3])
-      (prompt-select :corp (refresh hok))
+      (click-card state :corp (refresh hok))
       (is (= 3 (get-counters (refresh hok) :advancement)))
       (core/score state :corp (refresh hok)))
     (let [hok-scored (get-scored state :corp 0)]
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should start with 3 counters")
       (core/command-counter state :corp ["virus" 2])
-      (prompt-select :corp (refresh hok-scored))
+      (click-card state :corp (refresh hok-scored))
       (is (= 3 (get-counters (refresh hok-scored) :agenda)) "House of Knives should stay at 3 counters")
       (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters")
       (core/command-counter state :corp [4])
-      (prompt-select :corp (refresh hok-scored)) ;; doesn't crash with unknown counter type
+      (click-card state :corp (refresh hok-scored)) ;; doesn't crash with unknown counter type
       (is (empty? (:prompt (get-corp))) "Counter prompt closed")
       (is (= 4 (get-counters (refresh hok-scored) :agenda)) "House of Knives should have 4 agenda counters")
       (is (= 2 (get-counters (refresh hok-scored) :virus)) "House of Knives should have 2 virus counters"))))
@@ -490,16 +490,16 @@
     (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
     (take-credits state :corp)
     (run-empty-server state :remote1)
-    (prompt-choice :corp "No")
-    (prompt-choice-partial :runner "Pay")
+    (click-prompt state :corp "No")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :hq)
-    (prompt-choice :corp "No")
-    (prompt-choice-partial :runner "Pay")
+    (click-prompt state :corp "No")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :rd)
-    (prompt-choice :corp "No")
-    (prompt-choice-partial :runner "Pay")
+    (click-prompt state :corp "No")
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))
 
 (deftest run-psi-bad-publicity-credits
@@ -513,10 +513,10 @@
     (let [caprice (get-content state :remote1 0)]
       (core/rez state :corp caprice)
       (run-on state "Server 1")
-      (is (prompt-is-card? :corp caprice) "Caprice prompt even with no ice, once runner makes run")
-      (is (prompt-is-card? :runner caprice) "Runner has Caprice prompt")
-      (prompt-choice :corp "2 [Credits]")
-      (prompt-choice :runner "1 [Credits]")
+      (is (prompt-is-card? state :corp caprice) "Caprice prompt even with no ice, once runner makes run")
+      (is (prompt-is-card? state :runner caprice) "Runner has Caprice prompt")
+      (click-prompt state :corp "2 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
       (is (= 5 (:credit (get-runner))) "Runner spend bad pub credit on psi game")
       (is (= 3 (:credit (get-corp))) "Corp spent 2 on psi game"))))
 
@@ -530,10 +530,10 @@
     (play-from-hand state :runner "Leprechaun")
     (let [lep (get-program state 0)]
       (card-ability state :runner lep 0)
-      (prompt-select :runner (find-card "Djinn" (:hand (get-runner))))
+      (click-card state :runner (find-card "Djinn" (:hand (get-runner))))
       (let [djinn (first (:hosted (refresh lep)))]
         (card-ability state :runner djinn 1)
-        (prompt-select :runner (find-card "Imp" (:hand (get-runner))))
+        (click-card state :runner (find-card "Imp" (:hand (get-runner))))
         (let [imp (first (:hosted (refresh djinn)))]
           (is (= 2 (get-counters imp :virus)) "Imp has 2 virus counters")
           (take-credits state :runner)
@@ -560,24 +560,24 @@
           msg (get-content state :rd 1)
           med (get-program state 0)]
       (core/command-counter state :runner ["virus" 2])
-      (prompt-select :runner (refresh med))
+      (click-card state :runner (refresh med))
       (run-empty-server state :rd)
-      (prompt-choice :runner 2)
-      (prompt-choice :runner "Card from deck")
+      (click-prompt state :runner "2")
+      (click-prompt state :runner "Card from deck")
       (is (= "Hedge Fund" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Unrezzed upgrade in R&D")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Unrezzed upgrade in R&D")
       (is (= "Keegan Lane" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Card from deck")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Card from deck")
       (is (= "Sweeps Week" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Midway Station Grid")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Midway Station Grid")
       (is (= "Midway Station Grid" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No action")
-      (prompt-choice :runner "Card from deck")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "Card from deck")
       (is (= "Manhunt" (-> (get-runner) :prompt first :card :title)))
-      (prompt-choice :runner "No action")
+      (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run ended"))))
 
 (deftest multi-steal-archives
@@ -590,11 +590,11 @@
     (trash-from-hand state :corp "Breaking News")
     (take-credits state :corp)
     (run-empty-server state :archives)
-    (prompt-choice :runner "Breaking News")
-    (prompt-choice :runner "Steal")
-    (prompt-choice :runner "Breaking News")
-    (prompt-choice :runner "Steal")
-    (prompt-choice :runner "Breaking News")
-    (prompt-choice :runner "Steal")
+    (click-prompt state :runner "Breaking News")
+    (click-prompt state :runner "Steal")
+    (click-prompt state :runner "Breaking News")
+    (click-prompt state :runner "Steal")
+    (click-prompt state :runner "Breaking News")
+    (click-prompt state :runner "Steal")
     (is (= 3 (count (:scored (get-runner)))) "3 agendas stolen")
     (is (empty (:discard (get-corp))) "0 agendas left in archives")))
