@@ -292,7 +292,7 @@
                                        (and (installed? %) ; card installed in a server
                                             ;; central upgrades are not in a server
                                             (not (#{:hq :rd :archives} (first (:zone %)))))))}
-              :effect (req (wait-for (trash state :corp card nil )
+              :effect (req (wait-for (trash state :corp card nil)
                                      (move state :corp to-swap (:zone target) {:keep-server-alive true})
                                      (move state :corp target (:zone to-swap) {:keep-server-alive true})
                                      (system-msg state :corp

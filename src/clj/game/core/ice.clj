@@ -57,7 +57,7 @@
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
   [state side server]
-  (doseq [ice (:ices server)] (update-ice-strength state side ice) ))
+  (doseq [ice (:ices server)] (update-ice-strength state side ice)))
 
 (defn update-all-ice
   "Updates all installed ice."

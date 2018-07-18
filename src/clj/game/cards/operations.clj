@@ -601,7 +601,7 @@
     :choices (req (cancellable (filter #(is-type? % "Agenda") (:deck corp)) :sorted))
     :effect (effect (system-msg (str "adds " (:title target) " to HQ and shuffle R&D"))
                     (shuffle! :deck)
-                    (move target :hand) )}
+                    (move target :hand))}
 
    "Financial Collapse"
    {:async true
@@ -1191,7 +1191,7 @@
 
     "Psychokinesis"
     (letfn [(choose-card [state cards]
-              (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %) )
+              (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %))
                                           cards)]
                 {:prompt "Select an agenda, asset, or upgrade to install"
                  :choices (cons "None" allowed-cards)
@@ -1771,7 +1771,7 @@
    {:req (req (< (:credit corp) 10))
     :msg "gain 7 [Credits] and take 1 bad publicity"
     :effect (effect (gain-credits 7)
-                    (gain-bad-publicity :corp 1) ) }
+                    (gain-bad-publicity :corp 1))}
 
    "Traffic Accident"
    {:req (req (>= (:tag runner) 2))

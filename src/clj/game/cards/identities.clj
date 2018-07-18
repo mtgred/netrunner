@@ -421,7 +421,7 @@
                               :req (req (and (= target :hq)
                                              (first-successful-run-on-server? state :hq)))
                               :msg "gain 2 [Credits]"
-                              :effect (effect (gain-credits 2)) }}}
+                              :effect (effect (gain-credits 2))}}}
 
    "Gagarin Deep Space: Expanding the Horizon"
    {:flags {:slow-remote-access (req (not (:disabled card)))}
@@ -986,8 +986,7 @@
                                       (= (:side %) "Corp")
                                       (in-hand? %))}
                  :msg (msg "install a card in a remote server and place 1 advancement token on it")
-                 :effect (effect (continue-ability (install-card target) card nil))
-                 }]})
+                 :effect (effect (continue-ability (install-card target) card nil))}]})
 
    "Seidr Laboratories: Destiny Defined"
    {:implementation "Manually triggered"
@@ -1005,9 +1004,11 @@
               :async true
               :req (req (and (= target :hq)
                              (first-successful-run-on-server? state :hq)))
-              :effect (effect (continue-ability {:choices {:req #(and (installed? %) (not (rezzed? %)))}
-                                                 :effect (effect (expose eid target)) :msg "expose 1 card"
-                                                 :async true }
+              :effect (effect (continue-ability {:choices {:req #(and (installed? %)
+                                                                      (not (rezzed? %)))}
+                                                 :effect (effect (expose eid target))
+                                                 :msg "expose 1 card"
+                                                 :async true}
                                                 card nil))}}}
 
    "Skorpios Defense Systems: Persuasive Power"

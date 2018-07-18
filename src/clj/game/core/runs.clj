@@ -920,7 +920,8 @@
     (swap! state update-in [side :prompt] rest)
     (effect-completed state side eid)
     (when-let [run (:run @state)]
-      (when (and (:ended run) (empty? (get-in @state [:runner :prompt])) )
+      (when (and (:ended run)
+                 (empty? (get-in @state [:runner :prompt])))
         (handle-end-run state :runner)))))
 
 (defn get-run-ices

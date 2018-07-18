@@ -56,7 +56,7 @@
                               :ice-strength-changed breaker-auto-pump
                               :ice-subtype-changed breaker-auto-pump
                               :breaker-strength-changed breaker-auto-pump
-                              :approach-ice breaker-auto-pump }
+                              :approach-ice breaker-auto-pump}
                              (:events cdef))))
 
 (defn- wrestling-breaker
