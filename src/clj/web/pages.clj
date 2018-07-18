@@ -104,8 +104,7 @@
         [:div#about]]]]
     [:audio#ting
       [:source {:src "/sound/ting.mp3" :type "audio/mp3"}]
-     [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]
-    ))
+     [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]))
 
 (defn announce-page [req]
   (hiccup/html5

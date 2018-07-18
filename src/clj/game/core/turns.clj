@@ -70,11 +70,14 @@
               :hand []
               :discard [] :scored [] :rfg [] :play-area []
               :servers {:hq {} :rd {} :archives {}}
-              :click 0 :credit 5 :bad-publicity 0 :has-bad-pub 0
+              :click 0 :click-per-turn 3
+              :credit 5
+              :bad-publicity 0 :has-bad-pub 0
               :toast []
               :hand-size {:base 5 :mod 0}
               :agenda-point 0
-              :click-per-turn 3 :agenda-point-req 7 :keep false}
+              :agenda-point-req 7
+              :keep false}
        :runner {:user (:user runner) :identity runner-identity
                 :options runner-options
                 :deck (zone :deck runner-deck)
@@ -83,12 +86,17 @@
                 :discard [] :scored [] :rfg [] :play-area []
                 :rig {:program [] :resource [] :hardware []}
                 :toast []
-                :click 0 :credit 5 :run-credit 0 :link 0 :tag 0
+                :click 0 :click-per-turn 4
+                :credit 5 :run-credit 0
+                :link 0
+                :tag 0 :tagged 0 :additional-tag 0
                 :memory {:base 4 :mod 0 :used 0}
                 :hand-size {:base 5 :mod 0}
                 :agenda-point 0
-                :hq-access 1 :rd-access 1 :tagged 0
-                :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})))
+                :hq-access 1 :rd-access 1
+                :brain-damage 0
+                :agenda-point-req 7
+                :keep false}})))
 
 (defn init-game
   "Initializes a new game with the given players vector."

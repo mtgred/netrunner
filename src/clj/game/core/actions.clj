@@ -561,8 +561,9 @@
                     (system-msg state side "continues the run")
                     (when cur-ice
                       (update-ice-strength state side cur-ice))
-                    (when next-ice
-                      (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
+                    (if next-ice
+                      (trigger-event-sync state side (make-eid state) :approach-ice next-ice)
+                      (trigger-event-sync state side (make-eid state) :approach-server))
                     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
                       (update-breaker-strength state side p)))))))
