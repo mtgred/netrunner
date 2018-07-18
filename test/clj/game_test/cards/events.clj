@@ -2244,7 +2244,6 @@
       (do-game
         (new-game (default-corp ["Ice Wall" "Mark Yale"])
                   (make-deck whizzard ["Rebirth"]))
-        (println "Reina Rebirth twice test")
         (play-from-hand state :corp "Ice Wall" "HQ")
         (play-from-hand state :corp "Mark Yale" "New remote")
         (take-credits state :corp)

@@ -266,7 +266,7 @@
              ; wait for all the GETs to complete
              (:status @resp)))
          (println "Finished downloading card art")))))
-  
+
 (defn fetch-cards
   "Find the NRDB card json files and import them."
   [download-fn {:keys [collection path] :as card-table} sets download-images]
@@ -283,7 +283,7 @@
                                              (if (:rotated c1) (:code c1) (:code c2))
                                              (if (:rotated c1) (:code c2) (:code c1))]))
                          (reduce rotate-cards cards))]
-    (spit "data/cards.json" (str cards))
+    (spit "data/cards.edn" (vals cards-replaced))
     (mc/remove db collection)
     (mc/insert-batch db collection (vals cards-replaced))
     (when download-images

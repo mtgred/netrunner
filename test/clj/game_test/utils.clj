@@ -3,24 +3,10 @@
             [game.utils :as utils :refer [side-str]]
             [clojure.test :refer :all]
             [clojure.string :refer [lower-case split]]
-            [monger.core :as mg]
-            [monger.collection :as mc]
             [jinteki.cards :refer [all-cards]]))
 
-(defn load-card [title]
-  (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
-        db (mg/get-db conn "netrunner")
-        card (mc/find-maps db "cards" {:title title})
-        ret (first card)]
-    (mg/disconnect conn)
-    ret))
-
 (defn load-cards []
-  (let [conn (mg/connect {:host "127.0.0.1" :port 27017})
-        db (mg/get-db conn "netrunner")
-        cards (doall (mc/find-maps db "cards"))]
-    (mg/disconnect conn)
-    cards))
+  (read-string (slurp "data/cards.edn")))
 
 (defn qty [card amt]
   (let [loaded-card (if (string? card) (@all-cards card) card)]
