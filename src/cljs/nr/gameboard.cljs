@@ -1286,10 +1286,11 @@
 
 (defn build-start-box
   "Builds the start-of-game pop up box"
-  [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote]
+  [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote my-side]
   (let [visible-quote (r/atom true)
+        mulliganed (r/atom false)
         start-shown (r/cursor app-state [:start-shown])]
-    (fn [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote]
+    (fn [my-ident my-user my-hand my-prompt my-keep op-ident op-user op-keep me-quote op-quote my-side]
       (when (and (not @start-shown)
                  (:username @op-user)
                  (pos? (count @my-hand)))
@@ -1311,39 +1312,40 @@
                [:div.intro-blurb
                 (if @visible-quote
                   @me-quote
-                  @op-quote
-                  )]]
+                  @op-quote)]]
               [:div.start-game.ident.column
                {:class (case @op-keep "mulligan" "mulligan-op" "keep" "keep-op" "")}
                (when-let [url (image-url @op-ident)]
                  [:img {:src     url :alt (:title @op-ident) :onLoad #(-> % .-target js/$ .show)
                         :class   (when-not @visible-quote "selected")
                         :onClick #(reset! visible-quote false)}])]]
-             [:div.start-hand
-              [:div {:class (when squeeze "squeeze")}
-               (doall (map-indexed
-                        (fn [i {title :title :as card}]
-                          [:div.start-card-frame {:style (when squeeze {:left     (* (/ 610 (dec (count @my-hand))) i)
-                                                                        :position "absolute"})
-                                                  :id    (str "startcard" i)
-                                                  :key   (str (:cid card) "-" i)}
-                           [:div.flipper
-                            [:div.card-back
-                             [:img.start-card {:src (str "/img/" (.toLowerCase (:side @my-ident)) ".png")}]]
-                            [:div.card-front
-                             (when-let [url (image-url card)]
-                               [:div {:on-mouse-enter #(put! zoom-channel card)
-                                      :on-mouse-leave #(put! zoom-channel false)}
-                                [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]
-                                ])]]
-                           (js/setTimeout (fn [] (.add (.-classList (.querySelector js/document (str "#startcard" i))) "flip"))
-                                          (+ 1000 (* i 300)))])
-                        @my-hand))]]
+             (when (not= :spectator @my-side)
+               [:div.start-hand
+                [:div {:class (when squeeze "squeeze")}
+                 (doall (map-indexed
+                          (fn [i {title :title :as card}]
+                            [:div.start-card-frame {:style (when squeeze {:left     (* (/ 610 (dec (count @my-hand))) i)
+                                                                          :position "absolute"})
+                                                    :id    (str "startcard" i)
+                                                    :key   (str (:cid card) "-" i "-" @mulliganed)}
+                             [:div.flipper
+                              [:div.card-back
+                               [:img.start-card {:src (str "/img/" (.toLowerCase (:side @my-ident)) ".png")}]]
+                              [:div.card-front
+                               (when-let [url (image-url card)]
+                                 [:div {:on-mouse-enter #(put! zoom-channel card)
+                                        :on-mouse-leave #(put! zoom-channel false)}
+                                  [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]
+                                  ])]]
+                             (js/setTimeout (fn [] (.add (.-classList (.querySelector js/document (str "#startcard" i))) "flip"))
+                                            (+ 1000 (* i 300)))])
+                          @my-hand))]])
              [:div.mulligan
-              (if (and @my-keep @op-keep)
-                [cond-button "Start Game" true #(swap! app-state assoc :start-shown true)]
+              (if (or (= :spectator @my-side) (and @my-keep @op-keep))
+                [cond-button (if (= :spectator @my-side) "Close" "Start Game") true #(swap! app-state assoc :start-shown true)]
                 (list ^{:key "keepbtn"} [cond-button "Keep" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Keep"})]
-                      ^{:key "mullbtn"} [cond-button "Mulligan" (= "mulligan" (-> @my-prompt first :prompt-type)) #(send-command "choice" {:choice "Mulligan"})]))]]]
+                      ^{:key "mullbtn"} [cond-button "Mulligan" (= "mulligan" (-> @my-prompt first :prompt-type)) #(do (send-command "choice" {:choice "Mulligan"})
+                                                                                                                       (reset! mulliganed true))]))]]]
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
 
@@ -1583,13 +1585,12 @@
                  corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
                  runner-rig (r/cursor game-state [:runner :rig])]
              [:div.gameboard
+
               (let [me-keep (r/cursor game-state [me-side :keep])
                     op-keep (r/cursor game-state [op-side :keep])
                     me-quote (r/cursor game-state [me-side :quote])
                     op-quote (r/cursor game-state [op-side :quote])]
-                ; TODO: STILL WIP
-                [build-start-box me-ident me-user me-hand me-prompt me-keep op-ident op-user op-keep me-quote op-quote]
-                )
+                [build-start-box me-ident me-user me-hand me-prompt me-keep op-ident op-user op-keep me-quote op-quote side])
 
               [build-win-box game-state]
 
