@@ -29,9 +29,11 @@
             'run-server '(when (:run @state)
                            (get-in @state (concat [:corp :servers] (:server (:run @state)))))
             'run-ices '(:ices run-server)
-            'current-ice '(when-let [run-pos (:position (:run @state))]
-                            (when (and (pos? run-pos) (<= run-pos (count (:ices run-server))))
-                              (nth (:ices run-server) (dec run-pos))))
+            'run-position '(:position (:run @state))
+            'current-ice '(when (and run-position
+                                     (pos? run-position)
+                                     (<= run-position (count (:ices run-server))))
+                            (nth (:ices run-server) (dec run-position)))
             'corp-reg '(get-in @state [:corp :register])
             'corp-reg-last '(get-in @state [:corp :register-last-turn])
             'runner-reg '(get-in @state [:runner :register])
@@ -47,7 +49,9 @@
             'hq-runnable '(not (:hq (get-in runner [:register :cannot-run-on-server])))
             'rd-runnable '(not (:rd (get-in runner [:register :cannot-run-on-server])))
             'archives-runnable '(not (:archives (get-in runner [:register :cannot-run-on-server])))
-            'tagged '(or (pos? (:tagged runner)) (pos? (:tag runner)))
+            'tagged '(or (pos? (:tagged runner))
+                         (pos? (:tag runner))
+                         (pos? (:additional-tag runner)))
             'has-bad-pub '(or (pos? (:bad-publicity corp)) (pos? (:has-bad-pub corp)))
             'this-server '(let [s (-> card :zone rest butlast)
                                 r (:server run)]
