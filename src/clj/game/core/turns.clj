@@ -78,8 +78,8 @@
               :bad-publicity 0 :has-bad-pub 0
               :toast []
               :hand-size {:base 5 :mod 0}
-              :agenda-point 0
-              :click-per-turn 3 :agenda-point-req 7 :keep false
+              :agenda-point 0 :agenda-point-req 7
+              :keep false
               :quote corp-quote}
        :runner {:user (:user runner) :identity runner-identity
                 :options runner-options
@@ -95,9 +95,10 @@
                 :tag 0 :tagged 0 :additional-tag 0
                 :memory {:base 4 :mod 0 :used 0}
                 :hand-size {:base 5 :mod 0}
-                :agenda-point 0
-                :hq-access 1 :rd-access 1 :tagged 0
-                :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false
+                :agenda-point 0 :agenda-point-req 7
+                :hq-access 1 :rd-access 1
+                :brain-damage 0
+                :keep false
                 :quote runner-quote}})))
 
 (defn init-game
