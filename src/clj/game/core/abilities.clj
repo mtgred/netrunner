@@ -32,7 +32,7 @@
 
 (defn is-ability?
   "Checks to see if a given map represents a card ability. Looks for :effect, :optional, :trace, or :psi."
-  [{:keys [effect optional trace psi] :as abi}]
+  [{:keys [effect optional trace psi]}]
   (or effect optional trace psi))
 
 (defn resolve-ability
@@ -579,10 +579,13 @@
 
 (defn trace-start
   "Starts the trace process by showing the boost prompt to the first player (normally corp)."
-  [state side card {:keys [player other base bonus priority] :as trace}]
+  [state side card {:keys [player other base bonus priority label] :as trace}]
   (system-msg state :corp (str "uses " (:title card)
                                " to initiate a trace with strength " ((fnil + 0 0) base bonus)
-                               " (" (make-label trace) ")"))
+                               (when (pos? bonus)
+                                 (str " (" base " + " bonus ")"))
+                               (when label
+                                 (str " (" label ")"))))
   (show-wait-prompt state other
                     (str (if (corp-start? trace) "Corp" "Runner")
                          " to boost "

@@ -21,6 +21,15 @@
                            ((or post-run-effect (effect)) eid card targets))}
           cdef)))
 
+(defn- cutlery
+  [subtype]
+  ;; Subtype does nothing currently, but might be used if trashing is properly implemented
+  {:implementation "Ice trash is manual, always enables Reprisals"
+   :prompt "Choose a server"
+   :choices (req runnable-servers)
+   :effect (req (run state :runner target nil card)
+                (swap! state assoc-in [:runner :register :trashed-card] true))})
+
 (def card-definitions
   {"Account Siphon"
    {:req (req hq-runnable)
@@ -528,6 +537,8 @@
                              (if (#{"Asset" "Upgrade"} (:type target))
                                (do (system-msg state :runner (str "uses Drive By to trash " (:title target)))
                                    (trash state side (assoc target :seen true))
+                                   ;; Turn on Reprisal cards
+                                   (swap! state assoc-in [:runner :register :trashed-card] true)
                                    (effect-completed state side eid))
                                (effect-completed state side eid))
                              (effect-completed state side eid))))}
@@ -778,10 +789,7 @@
                      card nil)))}
 
    "Forked"
-   {:implementation "Ice trash is manual"
-    :prompt "Choose a server"
-    :choices (req runnable-servers)
-    :effect (effect (run target nil card))}
+   (cutlery "Sentry")
 
    "Frame Job"
    {:prompt "Choose an agenda to forfeit"
@@ -1129,10 +1137,7 @@
                      (gain state :corp :hand-size {:mod (:bad-publicity corp)}))}
 
    "Knifed"
-   {:implementation "Ice trash is manual"
-    :prompt "Choose a server"
-    :choices (req runnable-servers)
-    :effect (effect (run target nil card))}
+   (cutlery "Barrier")
 
    "Kraken"
    {:req (req (:stole-agenda runner-reg)) :prompt "Choose a server" :choices (req servers)
@@ -1591,10 +1596,6 @@
                  ;; enable-identity does not do everything that init-identity does
                  (init-identity state side new-id))
 
-               (system-msg state side "NOTE: passive abilities (Kate, Gabe, etc) will incorrectly fire
-                if their once per turn condition was met this turn before Rebirth was played.
-                Please adjust your game state manually for the rest of this turn if necessary")
-
                ;; Handle Ayla - Part 2
                (when-not (empty? (-> @state :runner :temp-nvram))
                  (doseq [c (-> @state :runner :temp-nvram)]
@@ -1824,10 +1825,7 @@
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))}
 
    "Spooned"
-   {:implementation "Ice trash is manual"
-    :prompt "Choose a server"
-    :choices (req runnable-servers)
-    :effect (effect (run target nil card))}
+   (cutlery "Code Gate")
 
    "Spot the Prey"
    {:prompt "Select 1 non-ICE card to expose"

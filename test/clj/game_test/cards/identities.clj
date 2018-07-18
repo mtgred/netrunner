@@ -76,6 +76,81 @@
         (is (= 1 (- corp-credits (:credit (get-corp)))) "Should lose 1 credit from 419 ability")
         (is (zero? (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae")))))
 
+(deftest acme-consulting:-the-truth-you-need
+  (testing "Tag gain when rezzing outermost ice"
+    (do-game
+      (new-game
+        (make-deck "Acme Consulting: The Truth You Need" ["Vanilla" (qty "Hedge Fund" 5)])
+        (default-runner))
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (take-credits state :corp)
+      (run-on state :archives)
+      (is (not (core/is-tagged? @state)) "Runner does not encounter an unrezzed ice")
+      (core/rez state :corp (get-ice state :archives 0))
+      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (run-continue state)
+      (is (not (core/is-tagged? @state)) "Runner no longer encountering outermost ice")))
+  (testing "Interaction with Data Ward"
+    (do-game
+      (new-game
+        (make-deck "Acme Consulting: The Truth You Need" ["Data Ward" (qty "Hedge Fund" 5)])
+        (default-runner))
+      (core/gain state :corp :credit 10)
+      (play-from-hand state :corp "Data Ward" "Archives")
+      (take-credits state :corp)
+      (run-on state :archives)
+      (is (not (core/is-tagged? @state)) "Runner does not encounter an unrezzed ice")
+      (core/rez state :corp (get-ice state :archives 0))
+      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (card-subroutine state :corp (get-ice state :archives 0) 0)
+      (is (not (:run @state)) "Run ended by Data Ward")))
+  (testing "Tag gain when starting run"
+    (do-game
+      (new-game
+        (make-deck "Acme Consulting: The Truth You Need" ["Vanilla" (qty "Hedge Fund" 5)])
+        (default-runner))
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (core/rez state :corp (get-ice state :archives 0))
+      (take-credits state :corp)
+      (run-on state :archives)
+      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (run-continue state)
+      (is (not (core/is-tagged? @state)) "Runner no longer encountering outermost ice")))
+  (testing "Tag loss when derezzing ice"
+    (do-game
+      (new-game
+        (make-deck "Acme Consulting: The Truth You Need" ["Vanilla" (qty "Hedge Fund" 5)])
+        (default-runner))
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (core/rez state :corp (get-ice state :archives 0))
+      (take-credits state :corp)
+      (run-on state :archives)
+      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (core/derez state :corp (get-ice state :archives 0))
+      (is (not (core/is-tagged? @state)) "Runner no longer encountering the derezzed ice")))
+  (testing "No tag on empty server"
+    (do-game
+      (new-game
+        (make-deck "Acme Consulting: The Truth You Need" ["Vanilla" (qty "Hedge Fund" 5)])
+        (default-runner))
+      (take-credits state :corp)
+      (run-on state :archives)
+      (is (not (core/is-tagged? @state)) "No ice to encounter")))
+  (testing "No tag when encountering second ice"
+    (do-game
+      (new-game
+        (make-deck "Acme Consulting: The Truth You Need" [(qty "Vanilla" 2) (qty "Hedge Fund" 4)])
+        (default-runner))
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (play-from-hand state :corp "Vanilla" "Archives")
+      (core/rez state :corp (get-ice state :archives 0))
+      (core/rez state :corp (get-ice state :archives 1))
+      (take-credits state :corp)
+      (run-on state :archives)
+      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (run-continue state)
+      (is (not (core/is-tagged? @state)) "Runner is not tagged when encountering second ice"))))
+
 (deftest adam:-compulsive-hacker
   ;; Adam
   (testing "Allow runner to choose directives"
@@ -1952,7 +2027,8 @@
   (testing "interaction with Accelerated Beta Test"
     (do-game
       (new-game
-        (make-deck "The Foundry: Refining the Process" [(qty "Accelerated Beta Test" 2) (qty "Eli 1.0" 3)])
+        (make-deck "The Foundry: Refining the Process"
+                   [(qty "Accelerated Beta Test" 2) (qty "Eli 1.0" 3)])
         (default-runner))
       (starting-hand state :corp ["Accelerated Beta Test"])
       (play-from-hand state :corp "Accelerated Beta Test" "New remote")
@@ -1960,8 +2036,9 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Eli 1.0" (:play-area (get-corp))))
       (click-prompt state :corp "Archives")
-      (click-prompt state :corp "Done")
-      (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D"))))
+      (click-prompt state :corp "Yes")
+      (is (empty? (:play-area (get-corp))) "Play area shuffled into R&D")
+      (is (= 1 (count (:hand (get-corp)))) "Added Eli 1.0 to HQ"))))
 
 (deftest the-outfit:-family-owned-and-operated
   ;; The Outfit - Gain 3 whenever you take at least 1 bad publicity
@@ -1989,17 +2066,17 @@
       (click-prompt state :corp "3")
       (is (= 3 (:bad-publicity (get-corp))) "Take 3 bad publicity")
       (is (= 23 (:credit (get-corp))) "Gain 15 from Profiteering + 3 from The Outfit")))
-  (testing "vs Valencia - 1 bad pub at start means 8 credits to start with"
+  (testing "vs Valencia - 1 bad pub at start means 5 credits to start with (does not _gain_ BP)"
     (do-game
       (new-game
         (make-deck "The Outfit: Family Owned and Operated" ["Hostile Takeover"])
         (make-deck "Valencia Estevez: The Angel of Cayambe" [(qty "Sure Gamble" 3)]))
       (is (= 1 (:bad-publicity (get-corp))) "The Outfit starts with 1 bad publicity")
-      (is (= 8 (:credit (get-corp))) "The Outfit starts with 8 credits")
+      (is (= 5 (:credit (get-corp))) "The Outfit starts with 8 credits")
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (score-agenda state :corp (get-content state :remote1 0))
       (is (= 2 (:bad-publicity (get-corp))) "Take 1 bad publicity")
-      (is (= 18 (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit"))))
+      (is (= (+ 5 7 3) (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit"))))
 
 (deftest titan-transnational:-investing-in-your-future
   ;; Titan Transnational

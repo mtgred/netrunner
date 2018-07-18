@@ -21,24 +21,29 @@
                                  :yes-ability {:effect (effect (rez-cost-bonus -3) (rez target))}}}}}
 
    "Arella Salvatore"
-   {:events
-    {:agenda-scored
-     {:req (req (and (= (:previous-zone target) (:zone card))
-                     (some #(corp-installable-type? %) (:hand corp))))
-      :interactive (req true)
-      :prompt "Select a card to install with Arella Salvatore"
-      :choices {:req #(and (corp-installable-type? %)
-                           (in-hand? %)
-                           (= (:side %) "Corp"))}
-      :async true
-      :cancel-effect (req (effect-completed state side eid))
-      :effect (req (wait-for (corp-install state :corp target nil {:no-install-cost true :display-message false})
-                             (let [inst-target (find-latest state target)]
-                               (add-prop state :corp inst-target :advance-counter 1 {:placed true})
-                               (system-msg state :corp
-                                           (str "uses Arella Salvatore to install and place a counter on "
-                                                (card-str state inst-target) ", ignoring all costs"))
-                               (effect-completed state side eid))))}}}
+   (let [select-ability
+         {:prompt "Select a card to install with Arella Salvatore"
+          :choices {:req #(and (corp-installable-type? %)
+                               (in-hand? %)
+                               (= (:side %) "Corp"))}
+          :async true
+          :cancel-effect (req (effect-completed state side eid))
+          :effect (req (wait-for (corp-install state :corp target nil {:no-install-cost true :display-message false})
+                                 (let [inst-target (find-latest state target)]
+                                   (add-prop state :corp inst-target :advance-counter 1 {:placed true})
+                                   (system-msg state :corp
+                                               (str "uses Arella Salvatore to install and place a counter on "
+                                                    (card-str state inst-target) ", ignoring all costs"))
+                                   (effect-completed state side eid))))}]
+     {:events
+      {:agenda-scored
+       {:req (req (and (= (:previous-zone target) (:zone card))))
+        :interactive (req true)
+        :silent (req (empty? (filter corp-installable-type? (:hand corp))))
+        :async true
+        :effect (req (if (some corp-installable-type? (:hand corp))
+                       (continue-ability state side select-ability card nil)
+                       (effect-completed state side eid)))}}})
 
    "Ash 2X3ZB9CY"
    {:events {:successful-run {:interactive (req true)
@@ -276,6 +281,37 @@
                                card nil))}
     :abilities [{:label "[Trash]: Purge virus counters"
                  :msg "purge virus counters" :effect (effect (trash card) (purge))}]}
+
+   "Daruma"
+   (letfn [(choose-swap [to-swap]
+             {:prompt (str "Select a card to swap with " (:title to-swap))
+              :choices {:not-self true
+                        :req #(and (= "Corp" (:side %))
+                                   (#{"Asset" "Agenda" "Upgrade"} (:type %))
+                                   (or (in-hand? %) ; agenda, asset or upgrade from HQ
+                                       (and (installed? %) ; card installed in a server
+                                            ;; central upgrades are not in a server
+                                            (not (#{:hq :rd :archives} (first (:zone %)))))))}
+              :effect (req (wait-for (trash state :corp card nil )
+                                     (move state :corp to-swap (:zone target) {:keep-server-alive true})
+                                     (move state :corp target (:zone to-swap) {:keep-server-alive true})
+                                     (system-msg state :corp
+                                                 (str "uses Daruma to swap " (card-str state to-swap)
+                                                      " with " (card-str state target)))
+                                     (clear-wait-prompt state :runner)))
+              :cancel-effect (effect (clear-wait-prompt :runner))})
+           (ability [card]
+             {:optional {:prompt "Trash Daruma to swap a card in this server?"
+                         :yes-ability {:async true
+                                       :prompt "Select a card in this server to swap"
+                                       :choices {:req #(and (installed? %)
+                                                            (in-same-server? card %))
+                                                 :not-self true}
+                                       :effect (effect (continue-ability (choose-swap target) card nil))}
+                         :no-ability {:effect (effect (clear-wait-prompt :runner))}}})]
+   {:events {:approach-server {:async true
+                               :effect (effect (show-wait-prompt :runner "Corp to use Daruma")
+                                               (continue-ability :corp (ability card) card nil))}}})
 
    "Dedicated Technician Team"
    {:recurring 2}
@@ -1146,7 +1182,11 @@
                              (handle-end-run state side)))})]
    {:implementation "Does not handle UFAQ interaction with Singularity"
     :events {:runner-trash {:async true
-                            :req (req (= (-> card :zone second) (-> target :zone second)))
+                            :req (req (let [target-zone (:zone target)
+                                            target-zone (or (central->zone target-zone) target-zone)
+                                            warroid-zone (:zone card)]
+                                        (= (second warroid-zone)
+                                           (second target-zone))))
                             :trace {:base 4
                                     :successful
                                     {:effect
