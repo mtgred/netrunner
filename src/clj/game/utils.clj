@@ -203,10 +203,6 @@
      (str (or verb2 (str verb "s")) " ")
      (str "spends " cost-str " to " verb " "))))
 
-(defn other-side [side]
-  (cond (= side :corp) :runner
-        (= side :runner) :corp))
-
 (defn side-str
   "Converts kw into str. If str is passed same str is returned."
   [side]

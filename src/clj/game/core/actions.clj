@@ -321,7 +321,10 @@
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
-  ([state side args] (play-subroutine state side (make-eid state) args))
+  ([state side args]
+   (let [eid (make-eid state {:source (-> args :card :title)
+                              :source-type :subroutine})]
+     (play-subroutine state side eid args)))
   ([state side eid {:keys [card subroutine targets] :as args}]
    (let [card (get-card state card)
          sub (nth (:subroutines card) subroutine nil)]
@@ -528,8 +531,8 @@
                (can-run-server? state server)
                (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
       (swap! state assoc-in [:runner :register :made-click-run] true)
-      (run state side server)
       (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
+        (run state side server)
         (system-msg state :runner
                     (str (build-spend-msg cost-str "make a run on") server))
         (play-sfx state side "click-run")))))

@@ -39,7 +39,8 @@
                    ["Keep" "Mulligan"]
                    #(if (= % "Keep")
                       (keep-hand state side nil)
-                      (mulligan state side nil))))))
+                      (mulligan state side nil))
+                   {:prompt-type :mulligan}))))
 
 (defn- init-game-state
   "Initialises the game state"
@@ -55,7 +56,9 @@
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
         corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
-        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))]
+        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
+        corp-quote (quotes/make-quote corp-identity runner-identity)
+        runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom
       {:gameid gameid :log [] :active-player :runner :end-turn true
        :room room
@@ -75,9 +78,9 @@
               :bad-publicity 0 :has-bad-pub 0
               :toast []
               :hand-size {:base 5 :mod 0}
-              :agenda-point 0
-              :agenda-point-req 7
-              :keep false}
+              :agenda-point 0 :agenda-point-req 7
+              :keep false
+              :quote corp-quote}
        :runner {:user (:user runner) :identity runner-identity
                 :options runner-options
                 :deck (zone :deck runner-deck)
@@ -92,11 +95,11 @@
                 :tag 0 :tagged 0 :additional-tag 0
                 :memory {:base 4 :mod 0 :used 0}
                 :hand-size {:base 5 :mod 0}
-                :agenda-point 0
+                :agenda-point 0 :agenda-point-req 7
                 :hq-access 1 :rd-access 1
                 :brain-damage 0
-                :agenda-point-req 7
-                :keep false}})))
+                :keep false
+                :quote runner-quote}})))
 
 (defn init-game
   "Initializes a new game with the given players vector."
@@ -106,7 +109,6 @@
         runner-identity (get-in @state [:runner :identity])]
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
-    ;(swap! game-states assoc gameid state)
     (let [side :corp]
       (wait-for (trigger-event-sync state side :pre-start-game)
                 (let [side :runner]
@@ -150,8 +152,12 @@
   (get-in (swap! state update-in [:rid] inc) [:rid]))
 
 (defn make-eid
-  [state]
-  {:eid (:eid (swap! state update-in [:eid] inc))})
+  ([state] (make-eid state nil))
+  ([state {:keys [source source-type]}]
+   (merge {:eid (:eid (swap! state update-in [:eid] inc))}
+          (when source
+            {:source source
+             :source-type source-type}))))
 
 (defn make-result
   [eid result]
@@ -166,7 +172,7 @@
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]
         (mul state side (make-eid state) card nil))))
-  (swap! state assoc-in [side :keep] true)
+  (swap! state assoc-in [side :keep] :mulligan)
   (system-msg state side "takes a mulligan")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
@@ -178,7 +184,7 @@
 (defn keep-hand
   "Choose not to mulligan."
   [state side args]
-  (swap! state assoc-in [side :keep] true)
+  (swap! state assoc-in [side :keep] :keep)
   (system-msg state side "keeps their hand")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))

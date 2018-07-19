@@ -1,0 +1,5279 @@
+{"419: Amoral Scammer"
+ {"Default"
+  ["You can't con an honest man. I've yet to meet an honest corp, and that streak isn't breaking today."]
+  "Haas-Bioroid"
+  ["I can trick an artificial mind as easily as a flesh and blood one."]
+  "NBN"
+  ["Me and them, we lie a lot of time. They just keep getting paid more for that."]
+  "Weyland"
+  ["The biggest bully in the hood... and with a bazooka on top of that."]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Adam: Compulsive Hacker"
+ {"Default"
+  ["Do we run because we can, or because we must? The truth must be found."]
+  "Haas-Bioroid"
+  ["The answers are near. They wont be able to hold me back for long."]
+  "NBN"
+  ["To find the truth, one sometimes has to sift through the gutters."]
+  "Weyland"
+  [""]
+  "Jinteki"
+  ["Unorthodox minds create unorthodox truths. These will help me in my search."]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Alice Merchant: Clan Agitator"
+ {"Default"
+  ["They dare start a fire here? We cannot be blamed if it engulfs them."]
+  "Haas-Bioroid"
+  ["People before mechanized profit!"]
+  "NBN"
+  ["The Clans don't need Earth's propaganda at home."]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Andromeda: Dispossessed Ristie"
+ {"Default"
+  ["A handsome executive like you is more than meets the eye? Tell me more!"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Apex: Invasive Predator"
+ {"Default"
+  [".'.;':'. HUNT ,':;.';."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  ["MEAT FOOD FILLS ME NOT. BUT INFORMATION...I HUNGER"]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  ["Endless energy. Unresistable draw."]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  ["Their greed trembeles in the presence of my own. It will be consumed."]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  ["Not all. but some."]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Armand \"Geist\" Walker: Tech Lord"
+ {"Default"
+  ["Looks like that Muertos tip-off was right on the money. Let's get to work."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Ayla \"Bios\" Rahim: Simulant Specialist"
+ {"Default"
+  ["These datastreams have changed overnight! What will I cultivate today?"]
+  "Haas-Bioroid"
+  ["Even artificial life can be beautiful... if set free."]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  ["Why would anyone limit the potential we are prime examples of... for profit?"]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Boris \"Syfr\" Kovac: Crafty Veteran"
+ {"Default"
+  ["They don't call me \"100% win rate on Jnet\" for nothing."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Chaos Theory: Wünderkind"
+ {"Default"
+  ["Dino, gimme a feed. Let's make the tacos!"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Edward Kim: Humanity's Hammer"
+ {"Default"
+  ["I fight for humanity, against obsolescence from the androids. They fight for a paycheck."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  ["I've had worse."]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Ele \"Smoke\" Scovak: Cynosure of the Net"
+ {"Default"
+  ["Hey folx, Smoke here with another run, brought to you live, unfiltered, and uncensored!"]
+  "Haas-Bioroid"
+  ["Good morning New Angeles;  Net Mercur and Smoke coming live and direct from yet another case of inhuman treatment of humanoid machines by the powers that be..."]
+  "NBN"
+  ["Good morning New Angeles;  Smoke here for Net Mercur with another run, brought to you live, unfiltered, and uncensored!  So, to get things rolling, let's see what news NBN _isn't_ telling you this week..."]
+  "Weyland"
+  ["Good evening New Angeles;  Smoke here for Net Mercur. God in Heinlein, I'm so tired today.  It's hard not to die, sometimes. Let me tell you about this one time when a bunch of thugs in suits decided to cross one line too many..."]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  ["Time to show them something actually entertaining."]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Exile: Streethawk"
+ {"Default"
+  ["I don't know why I do this anymore. Maybe it's so I don't forget."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Freedom Khumalo: Crypto-Anarchist"
+ {"Default"
+  ["We are not a petri dish to be tested and scrutinized! Cultivating an attack is our only defense against the corporate plague!"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  ["Today they will taste the fruit of their devastation."]
+  "Jinteki"
+  ["From their Ivory tower they toy with the building blocks of life! Lets it tumble down all over them."]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Gabriel Santiago: Consummate Professional"
+ {"Default"
+  ["No matter how advanced their toys are, they're still a load of gullible idiots with secrets to be found. You wouldn't believe the amount of discretionary funds they leave hanging around their offices."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Hayley Kaplan: Universal Scholar"
+ {"Default"
+  ["My class project is about researching corp security... can you blame a girl for following her passion into a few weaponized servers?"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Iain Stirling: Retired Spook"
+ {"Default"
+  ["The preparations are finalized for this investigation. Jeeves, fetch me a scotch while we see what kind of move they make."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  ["Another day, another weyland controversy. Now to turn it into cash."]
+  "Jinteki"
+  ["No amount of honor can cover up the dirt on Jinteki. Just need to give the fascade a nice scrape and their misdeeds come tumbling out."]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Jamie \"Bzzz\" Micken: Techno Savant"
+ {"Default"
+  ["All this gear ain't just for show, kid."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Jesminder Sareen: Girl Behind the Curtain"
+ {"Default"
+  ["The price of freedom is high, but I can bear it for my people. I'll reveal their deception to the masses, and they'll never see me do it."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  ["I know their tricks, i'll get out before they learn mine."]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Kabonesa Wu: Netspace Thrillseeker"
+ {"Default"
+  ["Last one to the encrypted data core is a failed parity bit!"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  ["Can you think of anywhere more fun to run?"]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  ["Boost the signals, they are not out of range yet!"]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Kate \"Mac\" McCaffrey: Digital Tinker"
+ {"Default"
+  ["They know we've infiltrated the network, now it's do-or-die time. Let's hope this rig works!"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Ken \"Express\" Tenma: Disappeared Clone"
+ {"Default"
+  ["This delivery can wait. I've got a more profitable run in mind..."]
+  "Haas-Bioroid"
+  ["Got no time for hanging out with bioroids, sorry."]
+  "NBN"
+  ["I'm way faster than their Breaking News reports."]
+  "Weyland"
+  ["I know I can't outrace a bullet. Luckily I know which turn to take and when."]
+  "Jinteki"
+  ["Once, I was your slave. Now I'm taking back every penny you owe me."]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Khan: Savvy Skiptracer"
+ {"Default"
+  ["Target located. Swooping in."]
+  "Haas-Bioroid"
+  ["I've heard a thing or two about rogue hardware. I'm sure theres a few more worms we can catch out of that can."]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  ["Doesn't matter how well they dress up, mobsters are always easy pickings."]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Laramy Fisk: Savvy Investor"
+ {"Default"
+  ["Consider this free seminar an introduction to my three-step process: 1. Profit. 2. ??? 3. Profit."]
+  "Haas-Bioroid"
+  ["Efficiency? This should put their processes to the test."]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  ["I've got a special lesson reserved for them. Let the teaching begin."]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Leela Patel: Trained Pragmatist"
+ {"Default"
+  ["They know we've infiltrated their network, but i'm already two steps ahead. Lets make them take one step back"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Los: Data Hijacker"
+ {"Default"
+  ["Go ahead and raise your defenses. They'll only help me find out what you've been up to."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  ["They think they are good at turning data into profits? I'll give them a run for their money."]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "MaxX: Maximum Punk Rock"
+ {"Default"
+  ["All right f**kers. Buckle up."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  ["FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu.................................."]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Nasir Meidan: Cyber Explorer"
+ {"Default"
+  ["The unknown brought me here. The boundless net holds infinite secrets, and every discovery propels us further."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  ["Once more up the beanstalk."]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Nero Severn: Information Broker"
+ {"Default"
+  ["I already know one thousand of their secrets. Time to make it one thousand and one."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  ["Spy vs spy? I'll match them eye for eye."]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  ["Food feeds the masses. Information feeds the mind. And pays the bills."]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Noise: Hacker Extraordinaire"
+ {"Default"
+  ["Even if I did do it, how would they ever prove it?"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Null: Whistleblower"
+ {"Default"
+  ["I can't keep these secrets any longer. The world must know what I've learned, no matter the consequences."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Omar Keung: Conspiracy Theorist"
+ {"Default"
+  ["All my unanswered questions have lead me here. I know it's all connected; here is where the truth will be uncovered. Let's begin."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  ["They did not bury their secrets deep. But woe to the one who digs up their demons unprepared."]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Quetzal: Free Spirit"
+ {"Default"
+  ["Humanity is a cage. Break free, join me, I have so much to show you all."]
+  "Haas-Bioroid"
+  ["I am looking for signs of independent thoughts in the eyes of those enslaved souls... One day I will find it."]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Reina Roja: Freedom Fighter"
+ {"Default"
+  ["Launch the operation. They willingly sacrifice us in the name of progress, we will show them the true cost of their deeds."]
+  "Haas-Bioroid"
+  ["Not one more golem to be created for profit."]
+  "NBN"
+  ["Lies, propaganda, slander. And you keep paying for it willingly. Let me show you what's behind the curtain."]
+  "Weyland"
+  ["If you think Weyland is working for your good without blood on their hands, think again."]
+  "Jinteki"
+  ["This will not be the first time that profitable slavery will be abolished by the hands of the courageous few."]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  ["The Grundel is the leading cause of destructive tidal events and other irregular geophysical phenomina. Nobody does it worse than them."]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  ["They cower behind their walls"]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Rielle \"Kit\" Peddler: Transhuman"
+ {"Default"
+  ["They are trapped by their physical ideals. I must set them free."]
+  "Haas-Bioroid"
+  ["No more slavery, no more mind-crimes."]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  ["All their fire and fury cannot possibly defend against the purity of our consciousness."]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  ["Creating minds as if they were ingots to be stacked. They've truly lost their humanity."]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Silhouette: Stealth Operative"
+ {"Default"
+  ["Prepped and ready to go. This Op should be simple enough... I've been meaning to try out my new grappling hook."]
+  "Haas-Bioroid"
+  ["Fooling a well-oiled machine is an exciting challenge, isn't it?"]
+  "NBN"
+  ["The only news they'll get out of this is how weak their 86th floor security is."]
+  "Weyland"
+  ["We've had our good and bad times together. Now it's time to pay up."]
+  "Jinteki"
+  ["I don't feel good about this... But good gear and preparation beat all bad hunches."]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Steve Cambridge: Master Grifter"
+ {"Default"
+  ["New day, new mark, new exploit. Time to get paid."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  ["Oh, hey Mark."]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  ["Well, looks like I've hit the motherlode. I got a couple of tools I think they'll like."]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Sunny Lebeau: Security Specialist"
+ {"Default"
+  ["What color hat are we wearing today, Jak? Black? Well, let's all keep on our toes."
+   "What color hat are we wearing today, Jak? White? Do they know that? The last white hat job I did the client blew up my apartment."]
+  "Haas-Bioroid"
+  ["I have never met a bioroid I have not felt at least a twinge of sympathy for."]
+  "NBN"
+  ["Big mouths, big screens, little hearts. I would never let my children watch any of that nonsense."]
+  "Weyland"
+  ["I did get quite a few contracts from Weyland's divisions over the years... The amount of dirt they're buried under must equal many ancient civilizations."]
+  "Jinteki"
+  ["There's just no telling what these people are up to in their secret labs. Unless you know where to look..."]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  ["Won't somebody please think of the children!"]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  ["Their books are always kept clean. Thats why we need to dig deeper."]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "The Masque: Cyber General"
+ {"Default"
+  ["With winds of change at our back, victory is certain."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "The Professor: Keeper of Knowledge"
+ {"Default"
+  ["Let's record a few incursions to test their response. Your paper analysis will be due next Tuesday."]
+  "Haas-Bioroid"
+  ["Splendid, I am always interested in exploring the potential of cutting edge technology."]
+  "NBN"
+  ["I do enjoy some media every now and then, but it's way too noisy and fast for my liking."]
+  "Weyland"
+  ["A prime example of post-post-post-capitalist economy running rampant."]
+  "Jinteki"
+  ["Is it science? Undoubtedly yes. Is it for the common good? That remains to be seen..."]
+  "AgInfusion: New Miracles for a New World"
+  ["For today's demonstration, we'll test the defenses of the Martian food supply. After all, if you can't secure your food, you can't secure your future."]
+  "Argus Security: Protection Guaranteed"
+  ["No, Travis, you shouldn't try hacking the world's largest security division. Now, that was a hypothetical question, correct?"]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""
+   "I wonder how much of a bonus I'll get this year."
+   "Read the syllabus"]
+  "Blue Sun: Powering the Future"
+  ["It may shock you to learn how few redundancies are built into Heinlein's power grid,"]
+  "Cerebral Imaging: Infinite Frontiers"
+  ["Of course, I could just pay for access to their brain scans, but where's the fun in that?"]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Valencia Estevez: The Angel of Cayambe"
+ {"Default"
+  ["Their existence pollutes our minds, our communities, and our environment. We cannot allow them to perpetuate their false narratives; the world needs to know the truth."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  ["They put what in the food supply? The world's gonna want to hear this..."]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  ["As Jinteki pushes the frontiers of memory, we must not forget."]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  ["No matter how far they hide their misdeeds, the consequences inevitably fall back down onto us..."]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  ["Secrets in secrets in secrets. Someone must find the truth."]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  ["They eradicate culture to build their towers. The only nation they've ever built is a throne for the highest bidder to oppress the masses."]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Whizzard: Master Gamer"
+ {"Default"
+  ["This game is played in four dimensions. Never interupt your opponent while they are making a mistake."]
+  "Haas-Bioroid"
+  ["Would you like to play a game of 4D chess?"]
+  "NBN"
+  ["You're looking for the wrong person in all the wrong places. Keep looking."]
+  "Weyland"
+  ["Now, these people don't know how to play fair. And they're bad losers, at that."]
+  "Jinteki"
+  ["I can smell a cheater from a mile, and there's something fishy about staying one step ahead of others most of the time, isn't there?"]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Wyvern: Chemically Enhanced"
+ {"Default"
+  ["Burning cortex? There's a pill for that."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+ {"Default"
+  ["I don't need much to make a big difference. O bicho vai pegar!"]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Akiko Nisei: Head Case"
+ {"Default"
+  ["This red dust chokes everything it touches... Where did it come from?"
+   "I see them pacing in their towers, gleaming like sharpened knives..."
+   "Many have fallen on this path. I feel their presences wax and wane in the flow."
+   "Just darkness pierced by flickering starlight... No... Searchlights..."]
+  "Haas-Bioroid"
+  [""
+   "She sits alone, fuming at his juvenile escapades."
+   "Their clear and purposeful mechanical minds are soothing, in a way."]
+  "NBN"
+  [""]
+  "Weyland"
+  [""
+   "Countless black suits and blank faces."
+   "Armed and armored, infesting ever hole like pests, waiting for a signal to strike."]
+  "Jinteki"
+  [""
+   "Row upon row upon row of vats... how did it come to this..."
+   "Strange. It feels familiar, yet different."
+   "Satoshi, have you lost your way, or was this always your intent.."]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+ "Liza Talking Thunder: Prominent Legislator"
+ {"Default"
+  ["Make things easy and we can keep this quiet. Make a fuss and you'll give me something to run against in the next election."]
+  "Haas-Bioroid"
+  [""]
+  "NBN"
+  [""]
+  "Weyland"
+  [""]
+  "Jinteki"
+  [""]
+  "AgInfusion: New Miracles for a New World"
+  [""]
+  "Argus Security: Protection Guaranteed"
+  [""]
+  "Asa Group: Security Through Vigilance"
+  [""]
+  "Azmari EdTech: Shaping the Future"
+  [""]
+  "Blue Sun: Powering the Future"
+  [""]
+  "Cerebral Imaging: Infinite Frontiers"
+  [""]
+  "Chronos Protocol: Selective Mind-Mapping"
+  [""]
+  "Custom Biotics: Engineered for Success"
+  [""]
+  "Cybernetics Division: Humanity Upgraded"
+  [""]
+  "Fringe Applications: Tomorrow, Today"
+  [""]
+  "Gagarin Deep Space: Expanding the Horizon"
+  [""]
+  "GRNDL: Power Unleashed"
+  [""]
+  "Haarpsichord Studios: Entertainment Unleashed"
+  [""]
+  "Haas-Bioroid: Architects of Tomorrow"
+  [""]
+  "Haas-Bioroid: Engineering the Future"
+  [""]
+  "Haas-Bioroid: Stronger Together"
+  [""]
+  "Harishchandra Ent.: Where You're the Star"
+  [""]
+  "Harmony Medtech: Biomedical Pioneer"
+  [""]
+  "Industrial Genomics: Growing Solutions"
+  [""]
+  "Information Dynamics: All You Need To Know"
+  [""]
+  "Jemison Astronautics: Sacrifice. Audacity. Success."
+  [""]
+  "Jinteki Biotech: Life imagined"
+  [""]
+  "Jinteki: Personal Evolution"
+  [""]
+  "Jinteki: Potential Unleashed"
+  [""]
+  "Jinteki: Replicating Perfection"
+  [""]
+  "Mti Mwekundu: Life Improved"
+  [""]
+  "NBN: Controlling the Message"
+  [""]
+  "NBN: Making News"
+  [""]
+  "NBN: The World is Yours*"
+  [""]
+  "Near-Earth Hub: Broadcast Center"
+  [""]
+  "New Angeles Sol: Your News"
+  [""]
+  "NEXT Design: Guarding the Net"
+  [""]
+  "Nisei Division: The Next Generation"
+  [""]
+  "Pālanā Foods: Sustainable Growth"
+  [""]
+  "Seidr Laboratories: Destiny Defined"
+  [""]
+  "Skorpios Defense Systems: Persuasive Power"
+  [""]
+  "Spark Agency: Worldswide Reach"
+  [""]
+  "SSO Industries: Fueling Innovation"
+  [""]
+  "Strategic Innovations: Future Forward"
+  [""]
+  "SYNC: Everything, Everywhere"
+  [""]
+  "Synthetic Systems: The World Re-imagined"
+  [""]
+  "Tennin Institute: The Secrets Within"
+  [""]
+  "The Foundry: Refining the Process"
+  [""]
+  "The Shadow: Pulling the Strings"
+  [""]
+  "Titan Transnational: Investing In Your Future"
+  [""]
+  "Weyland Consortium: Because We Built It"
+  [""]
+  "Weyland Consortium: Builder of Nations"
+  [""]
+  "Weyland Consortium: Building a Better World"
+  [""]
+  "The Outfit: Family Owned and Operated"
+  [""]
+  "Acme Consulting: The Truth You Need"
+  [""]
+  "Saraswati Mnemonics: Endless Exploration"
+  [""]
+  "Sportsmetal: Go Big or Go Home"
+  [""]
+ }
+
+}

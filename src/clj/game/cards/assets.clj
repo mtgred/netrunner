@@ -4,7 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int]]
+            [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
 ;;; Asset-specific helpers
@@ -1734,10 +1734,11 @@
                               (play-cost-bonus [:credit 2]))}}}
 
    "Sundew"
-   {:events {:runner-spent-click {:once :per-turn
-                                  :msg (req (when (not this-server) "gain 2 [Credits]"))
-                                  :effect (req (when (not this-server)
-                                                 (gain-credits state :corp 2)))}}}
+   {:implementation "it's all broken just don't even try man"}
+    ; :events {:runner-spent-click {:once :per-turn
+    ;                               :msg (req (when (not this-server) "gain 2 [Credits]"))
+    ;                               :effect (req (when (not this-server)
+    ;                                              (gain-credits state :corp 2)))}}
 
    "Synth DNA Modification"
    {:implementation "Manual fire once subroutine is broken"

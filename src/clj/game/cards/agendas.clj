@@ -4,7 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int]]
+            [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
 (defn ice-boost-agenda [subtype]
@@ -693,7 +693,8 @@
     :swapped {:effect (req (update-all-ice state side))}
     :events {:pre-ice-strength {:req (req (has-subtype? target "Tracer"))
                                 :effect (effect (ice-strength-bonus 1 target))}
-             :pre-init-trace {:req (req (has-subtype? target "Tracer"))
+             :pre-init-trace {:req (req (and (has-subtype? target "Tracer")
+                                             (= :subroutine (:source-type (second targets)))))
                               :effect (effect (init-trace-bonus 1))}}}
 
    "Jumon"

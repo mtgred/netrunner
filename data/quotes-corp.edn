@@ -1,0 +1,4941 @@
+{"AgInfusion: New Miracles for a New World"
+ {"Default"
+  ["Do these ideologues know what this planet would look like without us? Protect our investment or Mars will return to dust."]
+  "Anarch"
+  ["An individual and inferior mind can't possibly understand what we're trying to achieve here."]
+  "Criminal"
+  ["A whole new world... and yet the rats have come on the very same ships we brought hope with here."]
+  "Shaper"
+  ["Putting technology in the service of crime does not pay off in the long run."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Argus Security: Protection Guaranteed"
+ {"Default"
+  ["Our clients trust us because we're the best. We're even better on our turf, and they're about to find out how."]
+  "Anarch"
+  ["These hackers are a tough breed, but we will break them nonetheless."]
+  "Criminal"
+  ["We have so much more than a few measily credits in store."]
+  "Shaper"
+  ["What's a fragile runner like you doing in a network like this?"]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Asa Group: Security Through Vigilance"
+ {"Default"
+  ["Protocols checked and re-checked. Prepare to \"test\" their brain against our code."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Azmari EdTech: Shaping the Future"
+ {"Default"
+  ["It appears someone objects to our vision... What greater purpose could there be than shaping young minds to guide our future?"]
+  "Anarch"
+  ["Your obsolete ideas and worn-out slogans do not apply to the glorious future we are creating in every young mind we can reach."]
+  "Criminal"
+  ["Those who lie and cheat should not profit from the wisdom we want to share with the world."]
+  "Shaper"
+  ["You think you know what true knowledge is? Let us teach you a real lesson, then."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Blue Sun: Powering the Future"
+ {"Default"
+  ["Power. Everyone needs it and without us there is never enough. They don't understand power like we do. No one understands power like we do."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Cerebral Imaging: Infinite Frontiers"
+ {"Default"
+  ["There are infinite ways we can win this game. Our minds are the only limit."]
+  "Anarch"
+  ["Not much of a mind left to this one I'm afraid."]
+  "Criminal"
+  ["Here's a sharp one... full of tricks. yet no match for our vault of secrets."]
+  "Shaper"
+  ["Now here is a mind that may just be worth taping, after all is said and done."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Chronos Protocol: Selective Mind-Mapping"
+ {"Default"
+  ["The Bio-Ethics Association won't permit us to run clinical trials on the new protocol. Thankfully, it looks like another runner has just volunteered."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Custom Biotics: Engineered for Success"
+ {"Default"
+  ["Unlike our seedier competitors, we present clean security. Let's give them a demonstration."]
+  "Anarch"
+  ["With chaos boiling over in the streets, we need our designs to save the world, one rioter at a time."]
+  "Criminal"
+  ["Good luck outsmarting perfection, lawbreakers."]
+  "Shaper"
+  ["This is the most optimised server in all the worlds. They won't be getting in, no matter how clever they think they are."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  ["We have word from Director herself. Our top priority is to safeguard the privacy of our clients and their projects."]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Cybernetics Division: Humanity Upgraded"
+ {"Default"
+  ["That's not considered very polite, here in Oaktown. Let's see what our cybernetics have to say about it."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Fringe Applications: Tomorrow, Today"
+ {"Default"
+  ["We are moving forward on this. Let go of the license and liquidate the assets. It's good policy, despite what some may think."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Gagarin Deep Space: Expanding the Horizon"
+ {"Default"
+  ["Humanity has no future without expansion: beyond our planets, to the stars. And yet they interfere."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "GRNDL: Power Unleashed"
+ {"Default"
+  ["Network intrusion detected. Countermeasures armed and all squads on alert. No option is off the table, no matter the cost. Nothing about this must leak."]
+  "Anarch"
+  ["Those Molotov cocktails burn only half as bright on biofuels."]
+  "Criminal"
+  ["Our operations are too important for the economy to allow any interference. We will crush all intrusion attempts with extreme prejudice."]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Haarpsichord Studios: Entertainment Unleashed"
+ {"Default"
+  ["We'll do what we do best. Let's keep them entertained while we wrap up this project."]
+  "Anarch"
+  ["It's quite ironic that most of underground and independent music fueling young, angry people aggressively interfering with our cultural projects comes from labels we have direct ties with."]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Haas-Bioroid: Architects of Tomorrow"
+ {"Default"
+  ["Initiate bioroid acceleration, we're not going down without a fight!"]
+  "Anarch"
+  ["You can tear down our walls, and we will build them again. Our bioroids will not falter."]
+  "Criminal"
+  ["We are protecting something far greater than profits. You would not understand how important this fight is."]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Haas-Bioroid: Engineering the Future"
+ {"Default"
+  ["Intrusion Detected. Eyes Forward. Maintain peak efficiency."]
+  "Anarch"
+  ["Order shall prevail over havock"]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Haas-Bioroid: Stronger Together"
+ {"Default"
+  ["Many hands make light work, many minds make bright thought. They are but one, they can do the math."]
+  "Anarch"
+  ["Humanity does not end here. It merely begins its Golden Age."]
+  "Criminal"
+  ["Yet another example proving that bioroid programming is superior to some undesired human behaviour patterns."]
+  "Shaper"
+  ["Embrace change and go with its flow or be shoved aside in its wake."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Harishchandra Ent.: Where You're the Star"
+ {"Default"
+  ["Another day, another undiscovered star knocking at our door."]
+  "Anarch"
+  ["Violence and hate? We can sell that to the masses."]
+  "Criminal"
+  ["Underground crime syndicates? We can market that to our viewers."]
+  "Shaper"
+  ["It's hard to get enough audience attention for nerdy science types, but maybe if we put an adventurous spin on this..."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Harmony Medtech: Biomedical Pioneer"
+ {"Default"
+  ["The balanced life is the healthiest life. Those who disrupt this harmony are fated to suffer."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Industrial Genomics: Growing Solutions"
+ {"Default"
+  ["For every problem, there exists a vat waiting to be distilled."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Information Dynamics: All You Need To Know"
+ {"Default"
+  ["Data goes comes in, we use it, data goes out. A runner is approaching? We can use that too."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Jemison Astronautics: Sacrifice. Audacity. Success."
+ {"Default"
+  ["They have no idea what we've been through to get this far. It does not end here."]
+  "Anarch"
+  ["They've got the will to go far, but not the resources."]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Jinteki Biotech: Life imagined"
+ {"Default"
+  ["An untraceable connection? Well... They'll never guess what we have in store for them."]
+  "Anarch"
+  ["Unrest and dissent are society's cancer. We are the cure."]
+  "Criminal"
+  ["Criminal instincts can be eradicated once and for all with enough research and experimentation."]
+  "Shaper"
+  ["You can keep tinkering with bio-pots at home... or join a global giant and change the course of human evolution. What's your pick?"]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Jinteki: Personal Evolution"
+ {"Default"
+  ["As the bonsai blooms / Watch your step, for the petals / Conceal sharp intent"]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Jinteki: Potential Unleashed"
+ {"Default"
+  ["In the midst of battle, as soon as an adversary tries to get out of the way of your steel, you have already won. However this is war, we will not let them flinch from our blade."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Jinteki: Replicating Perfection"
+ {"Default"
+  ["From a house of knives / To a lotus field serene / Feel the thousand cuts"]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Mti Mwekundu: Life Improved"
+ {"Default"
+  ["Libraries need not be lifeless, though you may find yourself to be if you tamper with ours."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "NBN: Controlling the Message"
+ {"Default"
+  ["In times of crisis, the public needs to know the truth. Stay out of our way so we can tell it."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  ["When you mess with the holdings of the worlds' largest media corporation, some attention is unavoidable."]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "NBN: Making News"
+ {"Default"
+  ["Stay out of our business unless you want to become tomorrow's headline."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "NBN: The World is Yours*"
+ {"Default"
+  ["An unregistered user? Terms and Conditions will apply."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Near-Earth Hub: Broadcast Center"
+ {"Default"
+  ["They're trying to hide from us? We can see their house from here."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "New Angeles Sol: Your News"
+ {"Default"
+  ["Network servers under TERRORIST CYBER ATTACK! Can NBN repel this INVASION? Tune in to find out LIVE!"]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "NEXT Design: Guarding the Net"
+ {"Default"
+  ["We ARE cyber security! Some lo-rez bojo wants to see our secrets? Let's show them what we do best."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Nisei Division: The Next Generation"
+ {"Default"
+  ["We've seen this intrusion coming. An interesting test for our newest line. This will be over quickly."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Pālanā Foods: Sustainable Growth"
+ {"Default"
+  ["They eat Palana for breakfast, then attack our servers for brunch. Mr. Batty, how about we set the table for the main course?"]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Seidr Laboratories: Destiny Defined"
+ {"Default"
+  ["We've faced this sort of challenge before, and we are certain of its outcome."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Skorpios Defense Systems: Persuasive Power"
+ {"Default"
+  ["A pathetic attempt. Dispatch the seekers; this will be over before they know it."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Spark Agency: Worldswide Reach"
+ {"Default"
+  ["Everything is profitable. Let's sell the world on this intruder."]
+  "Anarch"
+  [""]
+  "Criminal"
+  ["It's pay day! For us."]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "SSO Industries: Fueling Innovation"
+ {"Default"
+  ["We have reached an agreement to industrialise several previously protected parks in the region. There may be some resistance to this in the local population. Pay them no attention."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Strategic Innovations: Future Forward"
+ {"Default"
+  ["Our dynamic structures have suffered worse than this. By the time they realized what they are dealing with we'll be far beyond them"]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "SYNC: Everything, Everywhere"
+ {"Default"
+  ["We control the network. They control a computer."]
+  "Anarch"
+  ["\"Information wants to be free\"? So does snow in an avalanche - watch out where you tread."]
+  "Criminal"
+  ["No shadows you try to hide in are too deep for us."]
+  "Shaper"
+  ["Every self-professed do-gooder has a darker side - and we're happy to drag it out into the open."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Synthetic Systems: The World Re-imagined"
+ {"Default"
+  ["They'll find more than they'd hoped for. Everything we make is still bound by natural law, the limits merely exceed most notions."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Tennin Institute: The Secrets Within"
+ {"Default"
+  ["They must not know... They will not know... Until there is nothing they can do to stop us."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "The Foundry: Refining the Process"
+ {"Default"
+  ["Let them deal their blows. The strongest metals are forged under pressure."]
+  "Anarch"
+  ["We will fight your fire with ours. Let's see who turns to ash first."]
+  "Criminal"
+  ["For every piece you steal, we produce a hundred more."]
+  "Shaper"
+  ["Misinformed talent is such a waste."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  ["Melt away the obsolete, the malfunctioning, the scarred and remake perfection."]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "The Shadow: Pulling the Strings"
+ {"Default"
+  ["They cannot possibly comprehend the stability we bring to the worlds."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Titan Transnational: Investing In Your Future"
+ {"Default"
+  ["They can try to keep up, we make billions in the blink of an eye. We were bitten once, but now is no time to be shy."]
+  "Anarch"
+  ["No future for those who fight it."]
+  "Criminal"
+  ["Scammers and fraudsters beware - we know who you are."]
+  "Shaper"
+  ["Biting the hand that feeds may result in a slap to the face."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  ["The Flashpoint was merely a setback!"]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Weyland Consortium: Because We Built It"
+ {"Default"
+  ["These monuments to our power will outlast us all. No hopped up stim junky can hope to stand against them. We'll make sure of that."]
+  "Anarch"
+  ["Our ancestors built walls to keep the barbarians out. So do we."]
+  "Criminal"
+  ["One day you will run out of places to hide."]
+  "Shaper"
+  ["We built the Net without you meddling. We can keep it that way if need be."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Weyland Consortium: Builder of Nations"
+ {"Default"
+  ["Let them break themselves on our defenses. When they run to hide we'll stamp them out."]
+  "Anarch"
+  ["You will yield to reason and superior firepower, if need be."]
+  "Criminal"
+  ["Those who trespass shall be hurt. Those who trespass repeatedly, shall be eliminated."]
+  "Shaper"
+  ["There is nothing to see here for the likes of you. Move along."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Weyland Consortium: Building a Better World"
+ {"Default"
+  ["With our two hands, we made everthing. With our two hands, you will be crushed."]
+  "Anarch"
+  ["Throughout history, disruptive forces have smashed against concerted progress time and again. You can't stop progress, regardless of how hard you try."]
+  "Criminal"
+  ["Every highly organized and profitable system attracts leeches and profiteers. It's a necessary evil we are willing to fight with at all cost."]
+  "Shaper"
+  ["It's a shame we can't cooperate and stand on opposing sides.. Together, we could have achieved so much more..."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "The Outfit: Family Owned and Operated"
+ {"Default"
+  ["When you're here, you're family. They mess with us, we make them pay. Don't worry about it."]
+  "Anarch"
+  ["Bunch of hooligans don't much scare the likes of us. They only speak one language, and lucky for us, we got a PHD in making em squeel."]
+  "Criminal"
+  ["Ey, if they wanted their kneecaps so badly, they woulda joined the family, dontchathink?"]
+  "Shaper"
+  ["If these kids were as smart as they thought they were, they'd know to keep their nose outta our business."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Acme Consulting: The Truth You Need"
+ {"Default"
+  ["There is no need to hide your dirty secrets. We already know who, where, and what you are."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Saraswati Mnemonics: Endless Exploration"
+ {"Default"
+  ["It is not a priority, let them burn out searching for crumbs. Even if they find something worth spreading, we'll be onto the next project by then."]
+  "Anarch"
+  [""]
+  "Criminal"
+  [""]
+  "Shaper"
+  [""]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  [""]
+ }
+
+ "Sportsmetal: Go Big or Go Home"
+ {"Default"
+  ["Let's hustle, team! They are coming at us with 110% intensity!"]
+  "Anarch"
+  ["They are coming in hot and looks like they play dirty. Feed our 'roids lightning, lets make em crap thunder."]
+  "Criminal"
+  ["FEEL THE RYTHM, FEEL THE RHYME. GET ON UP, ITS SPORTSMETAL TIME!"]
+  "Shaper"
+  ["Trust the Process."]
+  "419: Amoral Scammer"
+  [""]
+  "Adam: Compulsive Hacker"
+  [""]
+  "Alice Merchant: Clan Agitator"
+  [""]
+  "Andromeda: Dispossessed Ristie"
+  [""]
+  "Apex: Invasive Predator"
+  [""]
+  "Armand \"Geist\" Walker: Tech Lord"
+  [""]
+  "Ayla \"Bios\" Rahim: Simulant Specialist"
+  [""]
+  "Boris \"Syfr\" Kovac: Crafty Veteran"
+  [""]
+  "Chaos Theory: Wünderkind"
+  [""]
+  "Edward Kim: Humanity's Hammer"
+  [""]
+  "Ele \"Smoke\" Scovak: Cynosure of the Net"
+  [""]
+  "Exile: Streethawk"
+  [""]
+  "Freedom Khumalo: Crypto-Anarchist"
+  [""]
+  "Gabriel Santiago: Consummate Professional"
+  [""]
+  "Hayley Kaplan: Universal Scholar"
+  [""]
+  "Iain Stirling: Retired Spook"
+  [""]
+  "Jamie \"Bzzz\" Micken: Techno Savant"
+  [""]
+  "Jesminder Sareen: Girl Behind the Curtain"
+  [""]
+  "Kabonesa Wu: Netspace Thrillseeker"
+  [""]
+  "Kate \"Mac\" McCaffrey: Digital Tinker"
+  [""]
+  "Ken \"Express\" Tenma: Disappeared Clone"
+  [""]
+  "Khan: Savvy Skiptracer"
+  [""]
+  "Laramy Fisk: Savvy Investor"
+  [""]
+  "Leela Patel: Trained Pragmatist"
+  [""]
+  "Los: Data Hijacker"
+  [""]
+  "MaxX: Maximum Punk Rock"
+  [""]
+  "Nasir Meidan: Cyber Explorer"
+  [""]
+  "Nero Severn: Information Broker"
+  [""]
+  "Noise: Hacker Extraordinaire"
+  [""]
+  "Null: Whistleblower"
+  [""]
+  "Omar Keung: Conspiracy Theorist"
+  [""]
+  "Quetzal: Free Spirit"
+  [""]
+  "Reina Roja: Freedom Fighter"
+  [""]
+  "Rielle \"Kit\" Peddler: Transhuman"
+  [""]
+  "Silhouette: Stealth Operative"
+  [""]
+  "Steve Cambridge: Master Grifter"
+  [""]
+  "Sunny Lebeau: Security Specialist"
+  [""]
+  "The Masque: Cyber General"
+  [""]
+  "The Professor: Keeper of Knowledge"
+  [""]
+  "Valencia Estevez: The Angel of Cayambe"
+  [""]
+  "Whizzard: Master Gamer"
+  [""]
+  "Wyvern: Chemically Enhanced"
+  ["Shake it up! Get down there!"]
+ }
+
+}

@@ -3430,7 +3430,7 @@
     (play-from-hand state :runner "Sure Gamble")
     (is (= 13 (:credit (get-runner))) "3rd Gamble played for 2c")))
 
-(deftest sundew
+(deftest-pending sundew
   ;; Sundew
   (testing "Basic test"
     (do-game

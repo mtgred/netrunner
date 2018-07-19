@@ -16,3 +16,7 @@
   (if (nil? (:faction card))
     "neutral"
     (-> card :faction .toLowerCase (.replace " " "-"))))
+
+(defn other-side [side]
+  (cond (= side :corp) :runner
+        (= side :runner) :corp))
