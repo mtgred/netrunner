@@ -1,8 +1,6 @@
 {"AgInfusion: New Miracles for a New World"
- {"Generic - First Draft RED=REVIEW NEEDED"
+ {"Default"
   ["Do these ideologues know what this planet would look like without us? Protect our investment or Mars will return to dust."]
-  "Default"
-  ["Do these ideologues not know what this planet would look like without us? Protect our investment or Mars will return to dust."]
   "Anarch"
   ["An individual and inferior mind can't possibly understand what we're trying to achieve here."]
   "Criminal"
@@ -96,10 +94,8 @@
  }
 
  "Argus Security: Protection Guaranteed"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["We protect everyone. Even from themselves."]
-  "Default"
-  ["Our clients trust us because we're the best. We're even better at it on our turf, they are about to find out how."]
+ {"Default"
+  ["Our clients trust us because we're the best. We're even better on our turf, and they're about to find out how."]
   "Anarch"
   ["These hackers are a tough breed, but we will break them nonetheless."]
   "Criminal"
@@ -193,9 +189,7 @@
  }
 
  "Asa Group: Security Through Vigilance"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Protocols checked and re-checked."]
-  "Default"
+ {"Default"
   ["Protocols checked and re-checked. Prepare to \"test\" their brain against our code."]
   "Anarch"
   [""]
@@ -290,9 +284,7 @@
  }
 
  "Azmari EdTech: Shaping the Future"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["What greater purpose could there be than shaping young minds to guide our future?"]
-  "Default"
+ {"Default"
   ["It appears someone objects to our vision... What greater purpose could there be than shaping young minds to guide our future?"]
   "Anarch"
   ["Your obsolete ideas and worn-out slogans do not apply to the glorious future we are creating in every young mind we can reach."]
@@ -387,9 +379,7 @@
  }
 
  "Blue Sun: Powering the Future"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Power. Everyone needs it, and some is never enough. But no one understands power like we do."]
-  "Default"
+ {"Default"
   ["Power. Everyone needs it and without us there is never enough. They don't understand power like we do. No one understands power like we do."]
   "Anarch"
   [""]
@@ -484,9 +474,7 @@
  }
 
  "Cerebral Imaging: Infinite Frontiers"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["There are infinite ways we can win this game. The only limit is our imagination."]
-  "Default"
+ {"Default"
   ["There are infinite ways we can win this game. Our minds are the only limit."]
   "Anarch"
   ["Not much of a mind left to this one I'm afraid."]
@@ -581,10 +569,8 @@
  }
 
  "Chronos Protocol: Selective Mind-Mapping"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["The Bio-Ethics Association won't permit us to run clinical trials on the new protocol. Thankfully, it looks like another runner has just \"volunteered\"."]
-  "Default"
-  ["The Bio-Ethics Association won't permit us to run clinical trials on the new protocol. Thankfully, it looks like another runner has just  volunteered."]
+ {"Default"
+  ["The Bio-Ethics Association won't permit us to run clinical trials on the new protocol. Thankfully, it looks like another runner has just volunteered."]
   "Anarch"
   [""]
   "Criminal"
@@ -678,9 +664,7 @@
  }
 
  "Custom Biotics: Engineered for Success"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["No task too great, no detail too small. (no location too seedy)"]
-  "Default"
+ {"Default"
   ["Unlike our seedier competitors, we present clean security. Let's give them a demonstration."]
   "Anarch"
   ["With chaos boiling over in the streets, we need our designs to save the world, one rioter at a time."]
@@ -775,9 +759,7 @@
  }
 
  "Cybernetics Division: Humanity Upgraded"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["They're messing with Oaktown, with our turf? Good luck with that."]
-  "Default"
+ {"Default"
   ["That's not considered very polite, here in Oaktown. Let's see what our cybernetics have to say about it."]
   "Anarch"
   [""]
@@ -872,10 +854,8 @@
  }
 
  "Fringe Applications: Tomorrow, Today"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Lets move it people, the bleeding edge is on our tail!"]
-  "Default"
-  ["We are moving forward on this. Let go of the licence and liquidate the assets. It's good policy, despite what some may think."]
+ {"Default"
+  ["We are moving forward on this. Let go of the license and liquidate the assets. It's good policy, despite what some may think."]
   "Anarch"
   [""]
   "Criminal"
@@ -969,10 +949,8 @@
  }
 
  "Gagarin Deep Space: Expanding the Horizon"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Are they out of their minds? If we don't get this done, humanity is doomed to a dying rock."]
-  "Default"
-  ["Humanity has no future without expansion. Beyond our planets, to the stars. And yet they interfere."]
+ {"Default"
+  ["Humanity has no future without expansion: beyond our planets, to the stars. And yet they interfere."]
   "Anarch"
   [""]
   "Criminal"
@@ -1066,9 +1044,7 @@
  }
 
  "GRNDL: Power Unleashed"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Damn the consequences, we're doing this for their own good."]
-  "Default"
+ {"Default"
   ["Network intrusion detected. Countermeasures armed and all squads on alert. No option is off the table, no matter the cost. Nothing about this must leak."]
   "Anarch"
   ["Those Molotov cocktails burn only half as bright on biofuels."]
@@ -1163,9 +1139,7 @@
  }
 
  "Haarpsichord Studios: Entertainment Unleashed"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["We'll do what we do best. Let's keep them entertained while we wrap up this project."]
-  "Default"
+ {"Default"
   ["We'll do what we do best. Let's keep them entertained while we wrap up this project."]
   "Anarch"
   ["It's quite ironic that most of underground and independent music fueling young, angry people aggressively interfering with our cultural projects comes from labels we have direct ties with."]
@@ -1260,9 +1234,7 @@
  }
 
  "Haas-Bioroid: Architects of Tomorrow"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["They did WHAT to Titan? Arm the Bioroids!"]
-  "Default"
+ {"Default"
   ["Initiate bioroid acceleration, we're not going down without a fight!"]
   "Anarch"
   ["You can tear down our walls, and we will build them again. Our bioroids will not falter."]
@@ -1357,9 +1329,7 @@
  }
 
  "Haas-Bioroid: Engineering the Future"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Efficiency, no matter the cost."]
-  "Default"
+ {"Default"
   ["Intrusion Detected. Eyes Forward. Maintain peak efficiency."]
   "Anarch"
   ["Order shall prevail over havock"]
@@ -1454,9 +1424,7 @@
  }
 
  "Haas-Bioroid: Stronger Together"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Many hands make light work, many minds make bright thought."]
-  "Default"
+ {"Default"
   ["Many hands make light work, many minds make bright thought. They are but one, they can do the math."]
   "Anarch"
   ["Humanity does not end here. It merely begins its Golden Age."]
@@ -1551,9 +1519,7 @@
  }
 
  "Harishchandra Ent.: Where You're the Star"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Another day, another undiscovered star knocking at our door."]
-  "Default"
+ {"Default"
   ["Another day, another undiscovered star knocking at our door."]
   "Anarch"
   ["Violence and hate? We can sell that to the masses."]
@@ -1648,9 +1614,7 @@
  }
 
  "Harmony Medtech: Biomedical Pioneer"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Harmony in all things. Including our bank accounts."]
-  "Default"
+ {"Default"
   ["The balanced life is the healthiest life. Those who disrupt this harmony are fated to suffer."]
   "Anarch"
   [""]
@@ -1745,9 +1709,7 @@
  }
 
  "Industrial Genomics: Growing Solutions"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["For every problem, there exists a vat waiting to be distilled."]
-  "Default"
+ {"Default"
   ["For every problem, there exists a vat waiting to be distilled."]
   "Anarch"
   [""]
@@ -1842,9 +1804,7 @@
  }
 
  "Information Dynamics: All You Need To Know"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["We give the people exactly what they want, our job is taking care of the rest."]
-  "Default"
+ {"Default"
   ["Data goes comes in, we use it, data goes out. A runner is approaching? We can use that too."]
   "Anarch"
   [""]
@@ -1939,9 +1899,7 @@
  }
 
  "Jemison Astronautics: Sacrifice. Audacity. Success."
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["They have no idea what we've been through to get this far. It does not end here."]
-  "Default"
+ {"Default"
   ["They have no idea what we've been through to get this far. It does not end here."]
   "Anarch"
   ["They've got the will to go far, but not the resources."]
@@ -2036,9 +1994,7 @@
  }
 
  "Jinteki Biotech: Life imagined"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["The only limits we have are the ones we place on ourselves."]
-  "Default"
+ {"Default"
   ["An untraceable connection? Well... They'll never guess what we have in store for them."]
   "Anarch"
   ["Unrest and dissent are society's cancer. We are the cure."]
@@ -2133,10 +2089,8 @@
  }
 
  "Jinteki: Personal Evolution"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["As the bonsai blooms / Watch your step, as the petals / Conceal our sharp blade"]
-  "Default"
-  ["As the bonsai blooms / Watch your step, as the petals / Conceal sharp intent"]
+ {"Default"
+  ["As the bonsai blooms / Watch your step, for the petals / Conceal sharp intent"]
   "Anarch"
   [""]
   "Criminal"
@@ -2230,9 +2184,7 @@
  }
 
  "Jinteki: Potential Unleashed"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["To question an unending bloom is an affront to heaven and earth."]
-  "Default"
+ {"Default"
   ["In the midst of battle, as soon as an adversary tries to get out of the way of your steel, you have already won. However this is war, we will not let them flinch from our blade."]
   "Anarch"
   [""]
@@ -2327,10 +2279,8 @@
  }
 
  "Jinteki: Replicating Perfection"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Perfection may be / our goal, but it is not a / possibility"]
-  "Default"
-  ["From a house of knives/ To a lotus field serene/ Feel the thousand cuts"]
+ {"Default"
+  ["From a house of knives / To a lotus field serene / Feel the thousand cuts"]
   "Anarch"
   [""]
   "Criminal"
@@ -2424,9 +2374,7 @@
  }
 
  "Mti Mwekundu: Life Improved"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Libraries need not be lifeless, though you may find yourself to be if you tamper with ours."]
-  "Default"
+ {"Default"
   ["Libraries need not be lifeless, though you may find yourself to be if you tamper with ours."]
   "Anarch"
   [""]
@@ -2521,10 +2469,8 @@
  }
 
  "NBN: Controlling the Message"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Why let a global financial crisis get in the way of making a profit?"]
-  "Default"
-  ["In times of crisis, the public needs to know the truth. Get out of our way so we can tell it."]
+ {"Default"
+  ["In times of crisis, the public needs to know the truth. Stay out of our way so we can tell it."]
   "Anarch"
   [""]
   "Criminal"
@@ -2618,9 +2564,7 @@
  }
 
  "NBN: Making News"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["We spin the world around our little finger."]
-  "Default"
+ {"Default"
   ["Stay out of our business unless you want to become tomorrow's headline."]
   "Anarch"
   [""]
@@ -2715,9 +2659,7 @@
  }
 
  "NBN: The World is Yours*"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Terms and conditions may apply."]
-  "Default"
+ {"Default"
   ["An unregistered user? Terms and Conditions will apply."]
   "Anarch"
   [""]
@@ -2812,9 +2754,7 @@
  }
 
  "Near-Earth Hub: Broadcast Center"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["We can see your house from here."]
-  "Default"
+ {"Default"
   ["They're trying to hide from us? We can see their house from here."]
   "Anarch"
   [""]
@@ -2909,9 +2849,7 @@
  }
 
  "New Angeles Sol: Your News"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["NBN successfully repels CYBER ATTACKS! Will they target YOU next? More at 7!"]
-  "Default"
+ {"Default"
   ["Network servers under TERRORIST CYBER ATTACK! Can NBN repel this INVASION? Tune in to find out LIVE!"]
   "Anarch"
   [""]
@@ -3006,9 +2944,7 @@
  }
 
  "NEXT Design: Guarding the Net"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["An advance on our servers? Bold."]
-  "Default"
+ {"Default"
   ["We ARE cyber security! Some lo-rez bojo wants to see our secrets? Let's show them what we do best."]
   "Anarch"
   [""]
@@ -3103,10 +3039,8 @@
  }
 
  "Nisei Division: The Next Generation"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["An interesting test for our newest line. This should be over quickly."]
-  "Default"
-  ["We've seen this coming. An interesting test for our newest line. This will be over quickly."]
+ {"Default"
+  ["We've seen this intrusion coming. An interesting test for our newest line. This will be over quickly."]
   "Anarch"
   [""]
   "Criminal"
@@ -3200,9 +3134,7 @@
  }
 
  "Pālanā Foods: Sustainable Growth"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["A runner, attacking us with palana flowing through their veins? Bold."]
-  "Default"
+ {"Default"
   ["They eat Palana for breakfast, then attack our servers for brunch. Mr. Batty, how about we set the table for the main course?"]
   "Anarch"
   [""]
@@ -3297,9 +3229,7 @@
  }
 
  "Seidr Laboratories: Destiny Defined"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["We've faced this sort of challenge before, and we are certain of its outcome."]
-  "Default"
+ {"Default"
   ["We've faced this sort of challenge before, and we are certain of its outcome."]
   "Anarch"
   [""]
@@ -3394,10 +3324,8 @@
  }
 
  "Skorpios Defense Systems: Persuasive Power"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["A pathetic attempt. Dispatch the seekers, this will be over before they know it."]
-  "Default"
-  ["A pathetic attempt. Dispatch the seekers, this will be over before they know it."]
+ {"Default"
+  ["A pathetic attempt. Dispatch the seekers; this will be over before they know it."]
   "Anarch"
   [""]
   "Criminal"
@@ -3491,9 +3419,7 @@
  }
 
  "Spark Agency: Worldswide Reach"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Everything is profitable. Let's sell the world on this intruder."]
-  "Default"
+ {"Default"
   ["Everything is profitable. Let's sell the world on this intruder."]
   "Anarch"
   [""]
@@ -3588,9 +3514,7 @@
  }
 
  "SSO Industries: Fueling Innovation"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["We have reached an agreement to industrialise several, previously protected, parks in the region. There may be some resistance to this in the local population. Pay them no attention."]
-  "Default"
+ {"Default"
   ["We have reached an agreement to industrialise several previously protected parks in the region. There may be some resistance to this in the local population. Pay them no attention."]
   "Anarch"
   [""]
@@ -3685,9 +3609,7 @@
  }
 
  "Strategic Innovations: Future Forward"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Let go of the lisence and liquidate the assets. It's just good policy."]
-  "Default"
+ {"Default"
   ["Our dynamic structures have suffered worse than this. By the time they realized what they are dealing with we'll be far beyond them"]
   "Anarch"
   [""]
@@ -3782,9 +3704,7 @@
  }
 
  "SYNC: Everything, Everywhere"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["We control the network. You control a computer."]
-  "Default"
+ {"Default"
   ["We control the network. They control a computer."]
   "Anarch"
   ["\"Information wants to be free\"? So does snow in an avalanche - watch out where you tread."]
@@ -3879,9 +3799,7 @@
  }
 
  "Synthetic Systems: The World Re-imagined"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Everything we make is still bound by natural law, the limits merely exceed most notions."]
-  "Default"
+ {"Default"
   ["They'll find more than they'd hoped for. Everything we make is still bound by natural law, the limits merely exceed most notions."]
   "Anarch"
   [""]
@@ -3976,9 +3894,7 @@
  }
 
  "Tennin Institute: The Secrets Within"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["They must not know. They will not know. Until there is nothing they can do to stop us."]
-  "Default"
+ {"Default"
   ["They must not know... They will not know... Until there is nothing they can do to stop us."]
   "Anarch"
   [""]
@@ -4073,9 +3989,7 @@
  }
 
  "The Foundry: Refining the Process"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Let them deal their blows, anything they break off was slag to be discarded anyhow."]
-  "Default"
+ {"Default"
   ["Let them deal their blows. The strongest metals are forged under pressure."]
   "Anarch"
   ["We will fight your fire with ours. Let's see who turns to ash first."]
@@ -4170,9 +4084,7 @@
  }
 
  "The Shadow: Pulling the Strings"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["They cannot possibly comprehend the stability we bring to humanity."]
-  "Default"
+ {"Default"
   ["They cannot possibly comprehend the stability we bring to the worlds."]
   "Anarch"
   [""]
@@ -4267,9 +4179,7 @@
  }
 
  "Titan Transnational: Investing In Your Future"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Once bitten, twice shy. I'd like to see them try and take us down now."]
-  "Default"
+ {"Default"
   ["They can try to keep up, we make billions in the blink of an eye. We were bitten once, but now is no time to be shy."]
   "Anarch"
   ["No future for those who fight it."]
@@ -4350,7 +4260,7 @@
   "Steve Cambridge: Master Grifter"
   [""]
   "Sunny Lebeau: Security Specialist"
-  [""]
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
   "The Masque: Cyber General"
   [""]
   "The Professor: Keeper of Knowledge"
@@ -4364,9 +4274,7 @@
  }
 
  "Weyland Consortium: Because We Built It"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["These monuments to our power will outlast us all. No hopped up stim junky can hope to stand against them. We'll make sure of that."]
-  "Default"
+ {"Default"
   ["These monuments to our power will outlast us all. No hopped up stim junky can hope to stand against them. We'll make sure of that."]
   "Anarch"
   ["Our ancestors built walls to keep the barbarians out. So do we."]
@@ -4461,9 +4369,7 @@
  }
 
  "Weyland Consortium: Builder of Nations"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Collateral? Those are just new projects waiting to be built."]
-  "Default"
+ {"Default"
   ["Let them break themselves on our defenses. When they run to hide we'll stamp them out."]
   "Anarch"
   ["You will yield to reason and superior firepower, if need be."]
@@ -4544,7 +4450,7 @@
   "Steve Cambridge: Master Grifter"
   [""]
   "Sunny Lebeau: Security Specialist"
-  [""]
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
   "The Masque: Cyber General"
   [""]
   "The Professor: Keeper of Knowledge"
@@ -4558,9 +4464,7 @@
  }
 
  "Weyland Consortium: Building a Better World"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["With our two hands, we made everthing. With our two hands, you will be crushed."]
-  "Default"
+ {"Default"
   ["With our two hands, we made everthing. With our two hands, you will be crushed."]
   "Anarch"
   ["Throughout history, disruptive forces have smashed against concerted progress time and again. You can't stop progress, regardless of how hard you try."]
@@ -4641,7 +4545,7 @@
   "Steve Cambridge: Master Grifter"
   [""]
   "Sunny Lebeau: Security Specialist"
-  [""]
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. I'll make sure we leave everything squeeky clean on our end."]
   "The Masque: Cyber General"
   [""]
   "The Professor: Keeper of Knowledge"
@@ -4655,9 +4559,7 @@
  }
 
  "The Outfit: Family Owned and Operated"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["When you're here, you're family."]
-  "Default"
+ {"Default"
   ["When you're here, you're family. They mess with us, we make them pay. Don't worry about it."]
   "Anarch"
   ["Bunch of hooligans don't much scare the likes of us. They only speak one language, and lucky for us, we got a PHD in making em squeel."]
@@ -4752,9 +4654,7 @@
  }
 
  "Acme Consulting: The Truth You Need"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["There is no need to hide your dirty secrets. We already know who, where, and how you are."]
-  "Default"
+ {"Default"
   ["There is no need to hide your dirty secrets. We already know who, where, and what you are."]
   "Anarch"
   [""]
@@ -4849,9 +4749,7 @@
  }
 
  "Saraswati Mnemonics: Endless Exploration"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Let them burn themselves out looking. Even if they find something worth spreading, we'll be onto the next project by then."]
-  "Default"
+ {"Default"
   ["It is not a priority, let them burn out searching for crumbs. Even if they find something worth spreading, we'll be onto the next project by then."]
   "Anarch"
   [""]
@@ -4946,16 +4844,14 @@
  }
 
  "Sportsmetal: Go Big or Go Home"
- {"Generic - First Draft RED=REVIEW NEEDED"
-  ["Lets hussle team! They are coming at us with 110% intensity!"]
-  "Default"
-  ["Lets hussle team! They are coming at us with 110% intensity!"]
+ {"Default"
+  ["Let's hustle, team! They are coming at us with 110% intensity!"]
   "Anarch"
-  [""]
+  ["They are coming in hot and looks like they play dirty. Feed our 'roids lightning, lets make em crap thunder."]
   "Criminal"
-  [""]
+  ["FEEL THE RYTHM, FEEL THE RHYME. GET ON UP, ITS SPORTSMETAL TIME!"]
   "Shaper"
-  [""]
+  ["Trust the Process."]
   "419: Amoral Scammer"
   [""]
   "Adam: Compulsive Hacker"
@@ -5039,7 +4935,7 @@
   "Whizzard: Master Gamer"
   [""]
   "Wyvern: Chemically Enhanced"
-  [""]
+  ["Shake it up! Get down there!"]
  }
 
 }

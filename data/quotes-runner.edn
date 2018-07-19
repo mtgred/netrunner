@@ -1,7 +1,5 @@
 {"419: Amoral Scammer"
- {"Generic - Draft 1"
-  ["You can't con an honest man. Lucky for me then, that I'm against you."]
-  "Default"
+ {"Default"
   ["You can't con an honest man. I've yet to meet an honest corp, and that streak isn't breaking today."]
   "Haas-Bioroid"
   ["I can trick an artificial mind as easily as a flesh and blood one."]
@@ -118,9 +116,7 @@
  }
 
  "Adam: Compulsive Hacker"
- {"Generic - Draft 1"
-  ["Do we run because we can, or because we must?"]
-  "Default"
+ {"Default"
   ["Do we run because we can, or because we must? The truth must be found."]
   "Haas-Bioroid"
   ["The answers are near. They wont be able to hold me back for long."]
@@ -237,9 +233,7 @@
  }
 
  "Alice Merchant: Clan Agitator"
- {"Generic - Draft 1"
-  ["They dare start a fire here? We cannot be blamed if it engulfs them."]
-  "Default"
+ {"Default"
   ["They dare start a fire here? We cannot be blamed if it engulfs them."]
   "Haas-Bioroid"
   ["People before mechanized profit!"]
@@ -356,9 +350,7 @@
  }
 
  "Andromeda: Dispossessed Ristie"
- {"Generic - Draft 1"
-  ["A handsome company man like you is more than meets the eye? Tell me more!"]
-  "Default"
+ {"Default"
   ["A handsome executive like you is more than meets the eye? Tell me more!"]
   "Haas-Bioroid"
   [""]
@@ -475,9 +467,7 @@
  }
 
  "Apex: Invasive Predator"
- {"Generic - Draft 1"
-  ["MEAT FOOD FILLS ME NOT. BUT INFORMATION...I HUNGER"]
-  "Default"
+ {"Default"
   [".'.;':'. HUNT ,':;.';."]
   "Haas-Bioroid"
   [""]
@@ -594,9 +584,7 @@
  }
 
  "Armand \"Geist\" Walker: Tech Lord"
- {"Generic - Draft 1"
-  ["Looks like that muertos tip-off was right on the money. Let's get to work."]
-  "Default"
+ {"Default"
   ["Looks like that Muertos tip-off was right on the money. Let's get to work."]
   "Haas-Bioroid"
   [""]
@@ -713,9 +701,7 @@
  }
 
  "Ayla \"Bios\" Rahim: Simulant Specialist"
- {"Generic - Draft 1"
-  ["These datastreams have changed overnight! What will I cultivate today?"]
-  "Default"
+ {"Default"
   ["These datastreams have changed overnight! What will I cultivate today?"]
   "Haas-Bioroid"
   ["Even artificial life can be beautiful... if set free."]
@@ -832,9 +818,7 @@
  }
 
  "Boris \"Syfr\" Kovac: Crafty Veteran"
- {"Generic - Draft 1"
-  ["They don't call me \"100% win rate on Jnet\" for nothing."]
-  "Default"
+ {"Default"
   ["They don't call me \"100% win rate on Jnet\" for nothing."]
   "Haas-Bioroid"
   [""]
@@ -951,9 +935,7 @@
  }
 
  "Chaos Theory: Wünderkind"
- {"Generic - Draft 1"
-  ["Dino, gimme a feed. Let's make the tacos."]
-  "Default"
+ {"Default"
   ["Dino, gimme a feed. Let's make the tacos!"]
   "Haas-Bioroid"
   [""]
@@ -1070,9 +1052,7 @@
  }
 
  "Edward Kim: Humanity's Hammer"
- {"Generic - Draft 1"
-  ["I fight for humanity. They fight for a paycheck."]
-  "Default"
+ {"Default"
   ["I fight for humanity, against obsolescence from the androids. They fight for a paycheck."]
   "Haas-Bioroid"
   [""]
@@ -1189,9 +1169,7 @@
  }
 
  "Ele \"Smoke\" Scovak: Cynosure of the Net"
- {"Generic - Draft 1"
-  ["Hey folx, it's Smoke here with another run, brought to you live, unfiltered, and uncensored!"]
-  "Default"
+ {"Default"
   ["Hey folx, Smoke here with another run, brought to you live, unfiltered, and uncensored!"]
   "Haas-Bioroid"
   ["Good morning New Angeles;  Net Mercur and Smoke coming live and direct from yet another case of inhuman treatment of humanoid machines by the powers that be..."]
@@ -1308,9 +1286,7 @@
  }
 
  "Exile: Streethawk"
- {"Generic - Draft 1"
-  ["I don't know why I do this anymore. Maybe it's so I don't forget."]
-  "Default"
+ {"Default"
   ["I don't know why I do this anymore. Maybe it's so I don't forget."]
   "Haas-Bioroid"
   [""]
@@ -1427,9 +1403,7 @@
  }
 
  "Freedom Khumalo: Crypto-Anarchist"
- {"Generic - Draft 1"
-  ["We are not a petri dish to be tested and scrutinized! Cultivating an attack is our only defense against the corporate plague!"]
-  "Default"
+ {"Default"
   ["We are not a petri dish to be tested and scrutinized! Cultivating an attack is our only defense against the corporate plague!"]
   "Haas-Bioroid"
   [""]
@@ -1546,9 +1520,7 @@
  }
 
  "Gabriel Santiago: Consummate Professional"
- {"Generic - Draft 1"
-  ["No matter how advanced their toys are, they're still a load of gullible idiots."]
-  "Default"
+ {"Default"
   ["No matter how advanced their toys are, they're still a load of gullible idiots with secrets to be found. You wouldn't believe the amount of discretionary funds they leave hanging around their offices."]
   "Haas-Bioroid"
   [""]
@@ -1665,9 +1637,7 @@
  }
 
  "Hayley Kaplan: Universal Scholar"
- {"Generic - Draft 1"
-  ["Well, my class project was about researching corp security..."]
-  "Default"
+ {"Default"
   ["My class project is about researching corp security... can you blame a girl for following her passion into a few weaponized servers?"]
   "Haas-Bioroid"
   [""]
@@ -1784,9 +1754,7 @@
  }
 
  "Iain Stirling: Retired Spook"
- {"Generic - Draft 1"
-  ["I suppose one more score wouldn't hurt...Jeeves, fetch me some scotch!"]
-  "Default"
+ {"Default"
   ["The preparations are finalized for this investigation. Jeeves, fetch me a scotch while we see what kind of move they make."]
   "Haas-Bioroid"
   [""]
@@ -1903,9 +1871,7 @@
  }
 
  "Jamie \"Bzzz\" Micken: Techno Savant"
- {"Generic - Draft 1"
-  ["This stuff aint just for show, kid."]
-  "Default"
+ {"Default"
   ["All this gear ain't just for show, kid."]
   "Haas-Bioroid"
   [""]
@@ -2022,9 +1988,7 @@
  }
 
  "Jesminder Sareen: Girl Behind the Curtain"
- {"Generic - Draft 1"
-  ["Mirrormode engaged. Try and find me now."]
-  "Default"
+ {"Default"
   ["The price of freedom is high, but I can bear it for my people. I'll reveal their deception to the masses, and they'll never see me do it."]
   "Haas-Bioroid"
   [""]
@@ -2141,10 +2105,8 @@
  }
 
  "Kabonesa Wu: Netspace Thrillseeker"
- {"Generic - Draft 1"
-  ["Last one to the encrypted data core is a corrupted segfault!"]
-  "Default"
-  [""]
+ {"Default"
+  ["Last one to the encrypted data core is a failed parity bit!"]
   "Haas-Bioroid"
   [""]
   "NBN"
@@ -2260,9 +2222,7 @@
  }
 
  "Kate \"Mac\" McCaffrey: Digital Tinker"
- {"Generic - Draft 1"
-  ["Well, it's do-or-die time. Let's hope this rig works!"]
-  "Default"
+ {"Default"
   ["They know we've infiltrated the network, now it's do-or-die time. Let's hope this rig works!"]
   "Haas-Bioroid"
   [""]
@@ -2379,10 +2339,8 @@
  }
 
  "Ken \"Express\" Tenma: Disappeared Clone"
- {"Generic - Draft 1"
-  ["Once, I was your slave. Now I'm taking back every penny you owe me."]
-  "Default"
-  [""]
+ {"Default"
+  ["This delivery can wait. I've got a more profitable run in mind..."]
   "Haas-Bioroid"
   ["Got no time for hanging out with bioroids, sorry."]
   "NBN"
@@ -2498,9 +2456,7 @@
  }
 
  "Khan: Savvy Skiptracer"
- {"Generic - Draft 1"
-  ["Target located. Swooping in."]
-  "Default"
+ {"Default"
   ["Target located. Swooping in."]
   "Haas-Bioroid"
   ["I've heard a thing or two about rogue hardware. I'm sure theres a few more worms we can catch out of that can."]
@@ -2617,9 +2573,7 @@
  }
 
  "Laramy Fisk: Savvy Investor"
- {"Generic - Draft 1"
-  ["Let me introduce my three step process: 1. Profit 2. ??? 3. Profit"]
-  "Default"
+ {"Default"
   ["Consider this free seminar an introduction to my three-step process: 1. Profit. 2. ??? 3. Profit."]
   "Haas-Bioroid"
   ["Efficiency? This should put their processes to the test."]
@@ -2736,9 +2690,7 @@
  }
 
  "Leela Patel: Trained Pragmatist"
- {"Generic - Draft 1"
-  ["I'm already two steps ahead, I'll let you take the one step back."]
-  "Default"
+ {"Default"
   ["They know we've infiltrated their network, but i'm already two steps ahead. Lets make them take one step back"]
   "Haas-Bioroid"
   [""]
@@ -2855,9 +2807,7 @@
  }
 
  "Los: Data Hijacker"
- {"Generic - Draft 1"
-  ["If they wanted to keep this, they would have put some effort into locking it up."]
-  "Default"
+ {"Default"
   ["Go ahead and raise your defenses. They'll only help me find out what you've been up to."]
   "Haas-Bioroid"
   [""]
@@ -2974,9 +2924,7 @@
  }
 
  "MaxX: Maximum Punk Rock"
- {"Generic - Draft 1"
-  ["All right f**kers. Buckle up."]
-  "Default"
+ {"Default"
   ["All right f**kers. Buckle up."]
   "Haas-Bioroid"
   [""]
@@ -3093,9 +3041,7 @@
  }
 
  "Nasir Meidan: Cyber Explorer"
- {"Generic - Draft 1"
-  ["I am the captain of my ship. The boundless net my ocean."]
-  "Default"
+ {"Default"
   ["The unknown brought me here. The boundless net holds infinite secrets, and every discovery propels us further."]
   "Haas-Bioroid"
   [""]
@@ -3212,9 +3158,7 @@
  }
 
  "Nero Severn: Information Broker"
- {"Generic - Draft 1"
-  ["Value is relative, this will be worth much more in my hands than theirs."]
-  "Default"
+ {"Default"
   ["I already know one thousand of their secrets. Time to make it one thousand and one."]
   "Haas-Bioroid"
   [""]
@@ -3331,9 +3275,7 @@
  }
 
  "Noise: Hacker Extraordinaire"
- {"Generic - Draft 1"
-  ["Even if I did do it, how would they ever prove it?"]
-  "Default"
+ {"Default"
   ["Even if I did do it, how would they ever prove it?"]
   "Haas-Bioroid"
   [""]
@@ -3450,9 +3392,7 @@
  }
 
  "Null: Whistleblower"
- {"Generic - Draft 1"
-  ["I can't keep these secrets any longer. The world must know what I've learned."]
-  "Default"
+ {"Default"
   ["I can't keep these secrets any longer. The world must know what I've learned, no matter the consequences."]
   "Haas-Bioroid"
   [""]
@@ -3569,9 +3509,7 @@
  }
 
  "Omar Keung: Conspiracy Theorist"
- {"Generic - Draft 1"
-  ["The deeper you dig, the more gems you find. This is to distract you from the truth that lies yet lower."]
-  "Default"
+ {"Default"
   ["All my unanswered questions have lead me here. I know it's all connected; here is where the truth will be uncovered. Let's begin."]
   "Haas-Bioroid"
   [""]
@@ -3688,9 +3626,7 @@
  }
 
  "Quetzal: Free Spirit"
- {"Generic - Draft 1"
-  ["Humanity is a cage. Break free, join me, I have so much to show you."]
-  "Default"
+ {"Default"
   ["Humanity is a cage. Break free, join me, I have so much to show you all."]
   "Haas-Bioroid"
   ["I am looking for signs of independent thoughts in the eyes of those enslaved souls... One day I will find it."]
@@ -3807,9 +3743,7 @@
  }
 
  "Reina Roja: Freedom Fighter"
- {"Generic - Draft 1"
-  ["They willingly sacrifice us in the name of progress, we will show them the true cost of their deeds."]
-  "Default"
+ {"Default"
   ["Launch the operation. They willingly sacrifice us in the name of progress, we will show them the true cost of their deeds."]
   "Haas-Bioroid"
   ["Not one more golem to be created for profit."]
@@ -3926,9 +3860,7 @@
  }
 
  "Rielle “Kit” Peddler: Transhuman"
- {"Generic - Draft 1"
-  ["They are trapped by their petty ideals. I will set them free."]
-  "Default"
+ {"Default"
   ["They are trapped by their physical ideals. I must set them free."]
   "Haas-Bioroid"
   ["No more slavery, no more mind-crimes."]
@@ -4045,10 +3977,8 @@
  }
 
  "Silhouette: Stealth Operative"
- {"Generic - Draft 1"
-  ["They'll never see it coming, and I already have."]
-  "Default"
-  [""]
+ {"Default"
+  ["Prepped and ready to go. This Op should be simple enough... I've been meaning to try out my new grappling hook."]
   "Haas-Bioroid"
   ["Fooling a well-oiled machine is an exciting challenge, isn't it?"]
   "NBN"
@@ -4164,9 +4094,7 @@
  }
 
  "Steve Cambridge: Master Grifter"
- {"Generic - Draft 1"
-  ["New day, new job, new exploit."]
-  "Default"
+ {"Default"
   ["New day, new mark, new exploit. Time to get paid."]
   "Haas-Bioroid"
   [""]
@@ -4283,9 +4211,7 @@
  }
 
  "Sunny Lebeau: Security Specialist"
- {"Generic - Draft 1"
-  ["Mommy can't come home now sweetie. She has to kick some ass first."]
-  "Default"
+ {"Default"
   ["What color hat are we wearing today, Jak? Black? Well, let's all keep on our toes."
    "What color hat are we wearing today, Jak? White? Do they know that? The last white hat job I did the client blew up my apartment."]
   "Haas-Bioroid"
@@ -4403,9 +4329,7 @@
  }
 
  "The Masque: Cyber General"
- {"Generic - Draft 1"
-  ["With winds of change at our back, victory is certain."]
-  "Default"
+ {"Default"
   ["With winds of change at our back, victory is certain."]
   "Haas-Bioroid"
   [""]
@@ -4522,10 +4446,8 @@
  }
 
  "The Professor: Keeper of Knowledge"
- {"Generic - Draft 1"
-  ["You can take the academic out of the university, but you can't take the university out of the academic..."]
-  "Default"
-  ["These defenses are a C-minus at best. Someone didn't pay attention in lecture."]
+ {"Default"
+  ["Let's record a few incursions to test their response. Your paper analysis will be due next Tuesday."]
   "Haas-Bioroid"
   ["Splendid, I am always interested in exploring the potential of cutting edge technology."]
   "NBN"
@@ -4643,9 +4565,7 @@
  }
 
  "Valencia Estevez: The Angel of Cayambe"
- {"Generic - Draft 1"
-  ["The truth, the whole truth and nothing but the truth."]
-  "Default"
+ {"Default"
   ["Their existence pollutes our minds, our communities, and our environment. We cannot allow them to perpetuate their false narratives; the world needs to know the truth."]
   "Haas-Bioroid"
   [""]
@@ -4762,9 +4682,7 @@
  }
 
  "Whizzard: Master Gamer"
- {"Generic - Draft 1"
-  ["Never interupt your opponent while they are making a mistake."]
-  "Default"
+ {"Default"
   ["This game is played in four dimensions. Never interupt your opponent while they are making a mistake."]
   "Haas-Bioroid"
   ["Would you like to play a game of 4D chess?"]
@@ -4881,9 +4799,7 @@
  }
 
  "Wyvern: Chemically Enhanced"
- {"Generic - Draft 1"
-  ["Burning cortex? There's a pill for that."]
-  "Default"
+ {"Default"
   ["Burning cortex? There's a pill for that."]
   "Haas-Bioroid"
   [""]
@@ -5000,10 +4916,8 @@
  }
 
  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
- {"Generic - Draft 1"
-  ["I don't need much to make a big difference."]
-  "Default"
-  [""]
+ {"Default"
+  ["I don't need much to make a big difference. O bicho vai pegar!"]
   "Haas-Bioroid"
   [""]
   "NBN"
@@ -5119,10 +5033,11 @@
  }
 
  "Akiko Nisei: Head Case"
- {"Generic - Draft 1"
-  ["Are they feeling lucky?"]
-  "Default"
-  [""]
+ {"Default"
+  ["This red dust chokes everything it touches... Where did it come from?"
+   "I see them pacing in their towers, gleaming like sharpened knives..."
+   "Many have fallen on this path. I feel their presences wax and wane in the flow."
+   "Just darkness pierced by flickering starlight... No... Searchlights..."]
   "Haas-Bioroid"
   [""
    "She sits alone, fuming at his juvenile escapades."
@@ -5131,7 +5046,8 @@
   [""]
   "Weyland"
   [""
-   "Countless black suits and blank faces."]
+   "Countless black suits and blank faces."
+   "Armed and armored, infesting ever hole like pests, waiting for a signal to strike."]
   "Jinteki"
   [""
    "Row upon row upon row of vats... how did it come to this..."
@@ -5244,9 +5160,7 @@
  }
 
  "Liza Talking Thunder: Prominent Legislator"
- {"Generic - Draft 1"
-  ["Looks like someone's been naughty... I know just what my next campaign will run on."]
-  "Default"
+ {"Default"
   ["Make things easy and we can keep this quiet. Make a fuss and you'll give me something to run against in the next election."]
   "Haas-Bioroid"
   [""]
