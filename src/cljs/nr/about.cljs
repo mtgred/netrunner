@@ -12,13 +12,26 @@
     (fn []
    [:div.about.panel.content-page.blue-shade
     [:h3 "About"]
-    [:p "This website is created and run by an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."]
-
-    [:h3 "Contact"]
-    [:p "Twitter: " [:a {:href "http://twitter.com/mtgred" :target "_blank"} "@mtgred"]]
-    [:p "Email: " [:a {:href "mailto:mtgred@gmail.com"} "mtgred@gmail.com"]]
+    [:p "This website was founded by " [:a {:href "http://twitter.com/mtgred" :target "_blank"} "@mtgred"]
+     ", an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."]
 
     [:h3 "Development"]
+    [:h4 "The Team"]
+    [:ul.list.compact
+     [:li "mtgred: Founder, original sole developer. Retired."]
+     [:li "nealterrell: Project maintainer, lead developer."]
+     [:li "Saintis, danhut, jwarwick, NoahTheDuke, nicohasa, presheaf, Msbeck: Primary contributors."]
+     [:li "JoelCFC25, domtancredi, Zaroth, queueseven, erbridge, and "
+      [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank"} "many more"]
+      ": Past contributors."]
+     [:li "0thmxma, Sanjay, quarg, znsolomon, hbarsquared, yankeeflatline, rumirumirumirumi: Corp and Runner quotes for start-of-game splash screen."]]
+
+    [:h4 "Tech Stack"]
+    [:ul.list.compact
+     [:li [:b "Game engine:"] " Clojure. Card data from " [:a {:href "https://netrunnerdb.com/" :target "_blank"} "NetrunnerDB"] " API."]
+     [:li [:b "Server:"] " Clojure. Ring and Compojure running on http-kit. Sente for websocket communications."]
+     [:li [:b "Front-end client:"] " ClojureScript. Reagent (React). "]
+     ]
 
     [:p "The code is open source and available on "
      [:a {:href "https://github.com/mtgred/netrunner" :target "_blank"} "Github"] "."]
@@ -30,9 +43,6 @@
      [:a {:href "https://docs.google.com/spreadsheets/d/1ICv19cNjSaW9C-DoEEGH3iFt09PBTob4CAutGex0gnE/pubhtml"
           :target "_blank"} "status"] "."]
 
-    [:h3 "Contributors"]
-    [:p "A big props to Neal Terrell (nealpro), Joel Koepp (JoelCFC25), Filip Gokstorp (Saintis), Dan Hutchins (danhut, wozzit) and John Warwick (jwarwick, BobTomatoes) who actively contribute to the success of the project with regular code submissions, the management of the issue tracker and answers to questions in the chat. It would not be the same without your help."]
-
     [:h3 "Donations"]
     [:p "Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation."]
     [:ul.list.compact
@@ -40,7 +50,7 @@
      [:li "Bitcoin: " [:span.bitcoin "1ByjuLNZRvG17YaRKgKUjNi3c4qQ3daX3g" [:img.qr {:src "/img/bitcoin.png" :alt "Bitcoin QR Code"}]]]
      ]
 
-    [:p "Many thanks to all the donors. Your contributions and kind words are greatly appreciated. You help finance fast servers and keep the developer motivated."]
+    [:p "Many thanks to all the donors. Your contributions and kind words are greatly appreciated. You help finance fast servers."]
     [:ul.list.compact
      (for [d @donators]
        [:li d])]

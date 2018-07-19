@@ -9,8 +9,6 @@
                  [org.clojure/clojurescript "1.10.238"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
-                 [org.omcljs/om "0.9.0"] ; to be retired by reagent
-                 [sablono "0.3.4"]       ; to be retired by reagent
                  [danhut/monger "3.1.0"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.3.1"]
