@@ -474,13 +474,14 @@
             (do
               (swap! s assoc :matches matches)
               [:div.typeahead
-               (for [i (range (count matches))]
-                 [:div {:class (if (= i (:selected @s)) "selected" "")
-                        :on-click (fn [e] (-> ".deckedit .qty" js/$ .select)
-                                    (swap! s assoc :query (.. e -target -textContent))
-                                    (swap! s assoc :selected i)
-                                    nil)}
-                  (:title (nth matches i))])])))]])))
+               (doall (for [i (range (count matches))]
+                        [:div {:class (if (= i (:selected @s)) "selected" "")
+                               :on-click (fn [e] (-> ".deckedit .qty" js/$ .select)
+                                           (swap! s assoc :query (.. e -target -textContent))
+                                           (swap! s assoc :selected i)
+                                           nil)
+                               :key (:title (nth matches i))}
+                         (:title (nth matches i))]))])))]])))
 
 (defn deck-collection
   [{:keys [sets decks decks-loaded active-deck]}]
