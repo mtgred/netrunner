@@ -1311,8 +1311,8 @@
                [:div (:username @op-user)]
                [:div.intro-blurb
                 (if @visible-quote
-                  @me-quote
-                  @op-quote)]]
+                  (str "\"" @me-quote "\"")
+                  (str "\"" @op-quote "\""))]]
               [:div.start-game.ident.column
                {:class (case @op-keep "mulligan" "mulligan-op" "keep" "keep-op" "")}
                (when-let [url (image-url @op-ident)]
