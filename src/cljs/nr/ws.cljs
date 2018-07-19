@@ -1,12 +1,10 @@
-(ns netrunner.ws
+(ns nr.ws
   (:require-macros
     [cljs.core.async.macros :as asyncm :refer [go go-loop]])
   (:require
-    ;; <other stuff>
-    [netrunner.cardbrowser :refer [non-game-toast] :as cb]
     [cljs.core.async :as async :refer [<! >! put! chan]]
+    [nr.cardbrowser :refer [non-game-toast] :as cb]
     [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
-
 
 (let [{:keys [chsk ch-recv send-fn state]}
       (sente/make-channel-socket! "/ws" {:type :ws})]

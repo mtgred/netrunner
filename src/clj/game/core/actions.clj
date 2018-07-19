@@ -146,7 +146,8 @@
     (when-let [run (:run @state)]
       (when (:ended run)
         (handle-end-run state :runner)))
-    (swap! state dissoc :access)))
+    (swap! state dissoc :access))
+  true)
 
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
@@ -157,35 +158,62 @@
                (@all-cards (:title card))
                servercard)
         prompt (first (get-in @state [side :prompt]))
-        choices (:choices prompt)
-        choice (if (= (:choices prompt) :credit)
-                 (min choice (get-in @state [side :credit]))
-                 choice)]
-    (if (not= choice "Cancel")
-      (if (:card-title choices) ; check the card has a :card-title function
-        (let [title-fn (:card-title choices)
-              found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (vals @all-cards))]
-          (if found
-            (if (title-fn state side (make-eid state) (:card prompt) [found])
-              (do ((:effect prompt) (or choice card))
-                  (finish-prompt state side prompt card))
-              (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
-            (toast state side (str "Could not find a card named " choice ".") "warning")))
+        choices (:choices prompt)]
+    (cond
+      ;; Shortcut
+      (= choice "Cancel")
+      (do (if-let [cancel-effect (:cancel-effect prompt)]
+            ;; trigger the cancel effect
+            (cancel-effect choice)
+            (effect-completed state side (:eid prompt)))
+          (finish-prompt state side prompt card))
+
+      ;; Integer prompts
+      (or (= choices :credit)
+          (:counter choices)
+          (:number choices))
+      (if (number? choice)
         (do (when (= choices :credit) ; :credit prompts require payment
-              (pay state side card :credit choice))
-            (when (and (map? choices)
-                       (:counter choices))
+              (pay state side card :credit (min choice (get-in @state [side :credit]))))
+            (when (:counter choices)
               ;; :Counter prompts deduct counters from the card
               (add-counter state side (:card prompt) (:counter choices) (- choice)))
             ;; trigger the prompt's effect function
             (when-let [effect-prompt (:effect prompt)]
               (effect-prompt (or choice card)))
-            (finish-prompt state side prompt card)))
-      (do (if-let [cancel-effect (:cancel-effect prompt)]
-            ;; trigger the cancel effect
-            (cancel-effect choice)
-            (effect-completed state side (:eid prompt)))
-          (finish-prompt state side prompt card)))))
+            (finish-prompt state side prompt card))
+        (.println *err* "Error in an integer prompt"))
+
+      ;; List of card titles for auto-completion
+      (:card-title choices)
+      (if (string? choice)
+        (let [title-fn (:card-title choices)
+              found (some #(when (= (lower-case choice) (lower-case (:title % ""))) %) (vals @all-cards))]
+          (if found
+            (if (title-fn state side (make-eid state) (:card prompt) [found])
+              (do (when-let [effect-prompt (:effect prompt)]
+                    (effect-prompt (or choice card)))
+                  (finish-prompt state side prompt card))
+              (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
+            (toast state side (str "Could not find a card named " choice ".") "warning")))
+        (.println *err* "Error in a card-title prompt"))
+
+      ;; Default text prompt
+      :else
+      (let [buttons (filter #(or (= choice %)
+                                 (= card %)
+                                 (let [choice-str (if (string? choice)
+                                                    (lower-case choice)
+                                                    (lower-case (:title choice "do-not-match")))]
+                                   (or (= choice-str (lower-case %))
+                                       (= choice-str (lower-case (:title % ""))))))
+                            choices)
+            button (first buttons)]
+        (if button
+          (do (when-let [effect-prompt (:effect prompt)]
+                (effect-prompt button))
+              (finish-prompt state side prompt card))
+          (.println *err* "Error in a text prompt"))))))
 
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
@@ -194,7 +222,9 @@
   (let [card (get-card state card)
         r (get-in @state [side :selected 0 :req])
         cid (get-in @state [side :selected 0 :not-self])]
-    (when (and (not= (:cid card) cid) (or (not r) (r card)))
+    (when (and (not= (:cid card) cid)
+               (or (not r)
+                   (r card)))
       (let [c (update-in card [:selected] not)]
         (update! state side c)
         (if (:selected c)
@@ -291,7 +321,10 @@
 
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
-  ([state side args] (play-subroutine state side (make-eid state) args))
+  ([state side args]
+   (let [eid (make-eid state {:source (-> args :card :title)
+                              :source-type :subroutine})]
+     (play-subroutine state side eid args)))
   ([state side eid {:keys [card subroutine targets] :as args}]
    (let [card (get-card state card)
          sub (nth (:subroutines card) subroutine nil)]
@@ -498,8 +531,8 @@
                (can-run-server? state server)
                (can-pay? state :runner "a run" :click 1 cost-bonus click-cost-bonus))
       (swap! state assoc-in [:runner :register :made-click-run] true)
-      (run state side server)
       (when-let [cost-str (pay state :runner nil :click 1 cost-bonus click-cost-bonus)]
+        (run state side server)
         (system-msg state :runner
                     (str (build-spend-msg cost-str "make a run on") server))
         (play-sfx state side "click-run")))))
@@ -509,7 +542,7 @@
   [state side args]
   (let [remove-cost (max 0 (- 2 (get-in @state [:runner :tag-remove-bonus] 0)))]
     (when-let [cost-str (pay state side nil :click 1 :credit remove-cost)]
-      (lose state side :tag 1)
+      (lose-tags state :runner 1)
       (system-msg state side (build-spend-msg cost-str "remove 1 tag"))
       (play-sfx state side "click-remove-tag"))))
 
@@ -531,8 +564,9 @@
                     (system-msg state side "continues the run")
                     (when cur-ice
                       (update-ice-strength state side cur-ice))
-                    (when next-ice
-                      (trigger-event-sync state side (make-eid state) :approach-ice next-ice))
+                    (if next-ice
+                      (trigger-event-sync state side (make-eid state) :approach-ice next-ice)
+                      (trigger-event-sync state side (make-eid state) :approach-server))
                     (doseq [p (filter #(has-subtype? % "Icebreaker") (all-active-installed state :runner))]
                       (update! state side (update-in (get-card state p) [:pump] dissoc :encounter))
                       (update-breaker-strength state side p)))))))

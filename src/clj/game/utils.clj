@@ -64,9 +64,17 @@
   [card property value]
   (let [cv (property card)]
     (cond
-      (or (keyword? cv) (and (string? value) (string? cv))) (= value cv)
-      (and (keyword? value) (string? cv)) (= value (keyword (.toLowerCase cv)))
-      :else (= value cv))))
+      (or (keyword? cv)
+          (and (string? value)
+               (string? cv)))
+      (= value cv)
+
+      (and (keyword? value)
+           (string? cv))
+      (= value (keyword (.toLowerCase cv)))
+
+      :else
+      (= value cv))))
 
 (defn zone
   "Associate the specified zone to each item in the collection.
@@ -195,10 +203,6 @@
      (str (or verb2 (str verb "s")) " ")
      (str "spends " cost-str " to " verb " "))))
 
-(defn other-side [side]
-  (cond (= side :corp) :runner
-        (= side :runner) :corp))
-
 (defn side-str
   "Converts kw into str. If str is passed same str is returned."
   [side]
@@ -236,9 +240,9 @@
   "Converts a central zone keyword to a string."
   [zone]
   (case (if (keyword? zone) zone (last zone))
-    :hq "HQ"
-    :rd "R&D"
-    :archives "Archives"
+    (:hand :hq) "HQ"
+    (:deck :rd) "R&D"
+    (:discard :archives) "Archives"
     nil))
 
 (defn zone->name

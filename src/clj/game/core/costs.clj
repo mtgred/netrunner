@@ -25,7 +25,7 @@
                                              (sub->0 value)))
         (when (and (= attr :credit)
                    (= side :runner)
-                   (get-in @state [:runner :run-credit]))
+                   (pos? (get-in @state [:runner :run-credit] 0)))
           (swap! state update-in [:runner :run-credit] (sub->0 value)))))
   (when-let [cost-name (cost-names value attr)]
     cost-name))
@@ -183,7 +183,9 @@
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))
 
      ;; Else
-     (complete-with-result state side eid (deduct state side cost)))))
+     (let [[type amount] cost]
+       (swap! state update-in [:stats side :spent type] (fnil + 0) amount)
+       (complete-with-result state side eid (deduct state side cost))))))
 
 (defn pay
   "Deducts each cost from the player.
@@ -216,8 +218,7 @@
                 (effect-completed state side
                                   (make-result eid (->> async-result
                                                         (filter some?)
-                                                        (interpose " and ")
-                                                        (apply str)))))
+                                                        (join " and ")))))
       (effect-completed state side (make-result eid nil)))))
 
 (defn gain [state side & args]
@@ -236,7 +237,7 @@
       ;; Else assume amount is a number and try to increment type by it.
       :else
       (do (swap! state update-in [side type] (safe-inc-n amount))
-          (swap! state update-in [:stats side :gain type] (fnil + 0) amount)))))
+          (swap! state update-in [:stats side :gain type] (fnil + 0 0) amount)))))
 
 (defn lose [state side & args]
   (doseq [r (partition 2 args)]

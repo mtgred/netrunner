@@ -4,11 +4,34 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int]]
+            [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
 (def card-definitions
-  {"Analog Dreamers"
+  {"Algernon"
+   {:events
+    {:runner-turn-begins
+     {:req (req (can-pay? state :runner nil [:credit 2]))
+      :optional
+      {:prompt (msg "Pay 2 [Credits] to gain [Click]")
+       :player :runner
+       :yes-ability {:msg "gain [Click]"
+                     :effect (req (gain state :runner :click 1)
+                                  (update! state :runner (assoc-in (get-card state card) [:special :used-algernon] true)))
+                     :cost [:credit 2]}}}
+     :runner-turn-ends
+     {:async true
+      :effect (req (if (get-in card [:special :used-algernon])
+                     (do
+                       (update! state :runner (dissoc-in card [:special :used-algernon]))
+                       (if-not (:successful-run runner-reg)
+                         (do
+                           (system-msg state :runner "trashes Algernon because a successful run did not occur")
+                           (trash state :runner eid card nil))
+                         (effect-completed state side eid)))
+                     (effect-completed state side eid)))}}}
+
+   "Analog Dreamers"
    {:abilities [{:cost [:click 1]
                  :msg "make a run on R&D"
                  :makes-run true
@@ -30,6 +53,18 @@
    "Au Revoir"
    {:events {:jack-out {:effect (effect (gain-credits 1))
                         :msg "gain 1 [Credits]"}}}
+
+   "Bankroll"
+   {:implementation "Bankroll gains credits automatically."
+    :events {:successful-run {:effect (effect (add-counter card :credit 1)
+                                              (system-msg "places 1 [Credit] on Bankroll"))}}
+    :abilities [{:label "[Trash]: Take all credits from Bankroll"
+                 :async true
+                 :effect (req (let [credits-on-bankroll (get-counters card :credit)]
+                                (wait-for (trash state :runner card {:cause :ability-cost})
+                                          (take-credits state :runner credits-on-bankroll)
+                                          (system-msg state :runner (str "trashes Bankroll and takes "
+                                                                         credits-on-bankroll " credits from it")))))}]}
 
    "Bishop"
    {:abilities [{:cost [:click 1]
@@ -316,7 +351,7 @@
                  :cost [:click 1 :credit 1]
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
-                                 (move target :hand) )}
+                                 (move target :hand))}
                 {:label "Install a non-Icebreaker program on Djinn"
                  :effect (effect (resolve-ability
                                    {:cost [:click 1]
@@ -545,8 +580,15 @@
                                      :effect (effect (trash (assoc target :seen true))
                                                      (shuffle! :corp :deck))}} card))}]}
 
+   "Kyuban"
+   {:hosting {:req #(and (ice? %) (can-host? %))}
+    :events {:pass-ice {:req (req (same-card? target (:host card)))
+                        :msg "gain 2 credits"
+                        :effect (effect (gain-credits :runner 2))}}}
+
    "Lamprey"
-   {:events {:successful-run {:req (req (= target :hq)) :msg "force the Corp to lose 1 [Credits]"
+   {:events {:successful-run {:req (req (= target :hq))
+                              :msg "force the Corp to lose 1 [Credits]"
                               :effect (effect (lose-credits :corp 1))}
              :purge {:effect (effect (trash card {:cause :purge}))}}}
 
@@ -622,7 +664,7 @@
                  :choices {:number (req (min (:credit runner) (:tag runner)))}
                  :msg (msg "spend " target " [Credits] and remove " target " tags")
                  :effect (effect (lose-credits target)
-                                 (lose :tag target))}]}
+                                 (lose-tags target))}]}
 
    "Multithreader"
    {:recurring 2}
@@ -1062,7 +1104,7 @@
    {:implementation "Power counters added automatically"
     :events {:successful-run {:silent (req true)
                               :req (req (= target :rd))
-                              :effect (effect (add-counter card :power 1)) }}
+                              :effect (effect (add-counter card :power 1))}}
     :abilities [{:cost [:click 1]
                  :counter-cost [:power 3]
                  :once :per-turn

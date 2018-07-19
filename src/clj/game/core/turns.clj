@@ -39,7 +39,8 @@
                    ["Keep" "Mulligan"]
                    #(if (= % "Keep")
                       (keep-hand state side nil)
-                      (mulligan state side nil))))))
+                      (mulligan state side nil))
+                   {:prompt-type :mulligan}))))
 
 (defn- init-game-state
   "Initialises the game state"
@@ -55,7 +56,9 @@
         corp-identity (assoc (or (get-in corp [:deck :identity]) {:side "Corp" :type "Identity"}) :cid (make-cid))
         corp-identity (assoc corp-identity :implementation (card-implemented corp-identity))
         runner-identity (assoc (or (get-in runner [:deck :identity]) {:side "Runner" :type "Identity"}) :cid (make-cid))
-        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))]
+        runner-identity (assoc runner-identity :implementation (card-implemented runner-identity))
+        corp-quote (quotes/make-quote corp-identity runner-identity)
+        runner-quote (quotes/make-quote runner-identity corp-identity)]
     (atom
       {:gameid gameid :log [] :active-player :runner :end-turn true
        :room room
@@ -70,11 +73,14 @@
               :hand []
               :discard [] :scored [] :rfg [] :play-area []
               :servers {:hq {} :rd {} :archives {}}
-              :click 0 :credit 5 :bad-publicity 0 :has-bad-pub 0
+              :click 0 :click-per-turn 3
+              :credit 5
+              :bad-publicity 0 :has-bad-pub 0
               :toast []
               :hand-size {:base 5 :mod 0}
-              :agenda-point 0
-              :click-per-turn 3 :agenda-point-req 7 :keep false}
+              :agenda-point 0 :agenda-point-req 7
+              :keep false
+              :quote corp-quote}
        :runner {:user (:user runner) :identity runner-identity
                 :options runner-options
                 :deck (zone :deck runner-deck)
@@ -83,12 +89,17 @@
                 :discard [] :scored [] :rfg [] :play-area []
                 :rig {:program [] :resource [] :hardware []}
                 :toast []
-                :click 0 :credit 5 :run-credit 0 :link 0 :tag 0
+                :click 0 :click-per-turn 4
+                :credit 5 :run-credit 0
+                :link 0
+                :tag 0 :tagged 0 :additional-tag 0
                 :memory {:base 4 :mod 0 :used 0}
                 :hand-size {:base 5 :mod 0}
-                :agenda-point 0
-                :hq-access 1 :rd-access 1 :tagged 0
-                :brain-damage 0 :click-per-turn 4 :agenda-point-req 7 :keep false}})))
+                :agenda-point 0 :agenda-point-req 7
+                :hq-access 1 :rd-access 1
+                :brain-damage 0
+                :keep false
+                :quote runner-quote}})))
 
 (defn init-game
   "Initializes a new game with the given players vector."
@@ -98,7 +109,6 @@
         runner-identity (get-in @state [:runner :identity])]
     (init-identity state :corp corp-identity)
     (init-identity state :runner runner-identity)
-    ;(swap! game-states assoc gameid state)
     (let [side :corp]
       (wait-for (trigger-event-sync state side :pre-start-game)
                 (let [side :runner]
@@ -142,8 +152,12 @@
   (get-in (swap! state update-in [:rid] inc) [:rid]))
 
 (defn make-eid
-  [state]
-  {:eid (:eid (swap! state update-in [:eid] inc))})
+  ([state] (make-eid state nil))
+  ([state {:keys [source source-type]}]
+   (merge {:eid (:eid (swap! state update-in [:eid] inc))}
+          (when source
+            {:source source
+             :source-type source-type}))))
 
 (defn make-result
   [eid result]
@@ -158,7 +172,7 @@
     (when-let [cdef (card-def card)]
       (when-let [mul (:mulligan cdef)]
         (mul state side (make-eid state) card nil))))
-  (swap! state assoc-in [side :keep] true)
+  (swap! state assoc-in [side :keep] :mulligan)
   (system-msg state side "takes a mulligan")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
@@ -170,7 +184,7 @@
 (defn keep-hand
   "Choose not to mulligan."
   [state side args]
-  (swap! state assoc-in [side :keep] true)
+  (swap! state assoc-in [side :keep] :keep)
   (system-msg state side "keeps their hand")
   (trigger-event state side :pre-first-turn)
   (when (and (= side :corp) (-> @state :runner :identity :title))
@@ -261,11 +275,16 @@
                (when (has-subtype? card "Icebreaker")
                  (update! state side (update-in (get-card state card) [:pump] dissoc :all-turn))
                  (update-breaker-strength state :runner card)))
+             (doseq [card (all-installed state :corp)]
+               ;; Clear :rezzed :this-turn as turn has ended
+               (when (= :this-turn (:rezzed card))
+                 (update! state side (assoc card :rezzed true)))
+               ;; Update strength of all ice every turn
+               (when (ice? card)
+                 (update-ice-strength state side card)))
              (swap! state assoc :end-turn true)
              (swap! state update-in [side :register] dissoc :cannot-draw)
              (swap! state update-in [side :register] dissoc :drawn-this-turn)
-             (doseq [c (filter #(= :this-turn (:rezzed %)) (all-installed state :corp))]
-               (update! state side (assoc c :rezzed true)))
              (clear-turn-register! state)
              (swap! state dissoc :turn-events)
              (when-let [extra-turns (get-in @state [side :extra-turns])]

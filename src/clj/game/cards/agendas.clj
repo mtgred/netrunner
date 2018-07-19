@@ -4,7 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int]]
+            [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
 (defn ice-boost-agenda [subtype]
@@ -110,7 +110,7 @@
                             :async true
                             :req (req (some #(card-is? % :side :corp) targets))
                             :msg "give the Runner a tag for trashing a Corp card"
-                            :effect (effect (tag-runner :runner eid 1))}}}
+                            :effect (effect (gain-tags eid 1))}}}
 
    "Armed Intimidation"
    {:async true
@@ -125,7 +125,7 @@
                                       (do (damage state :runner eid :meat 5 {:card card :unboostable true})
                                           (system-msg state :runner "chooses to suffer 5 meat damage from Armed Intimidation"))
                                       "Take 2 tags"
-                                      (do (tag-runner state :runner eid 2 {:card card})
+                                      (do (gain-tags state :runner eid 2 {:card card})
                                           (system-msg state :runner "chooses to take 2 tags from Armed Intimidation"))))}
                       card nil))}
 
@@ -223,7 +223,7 @@
                          :yes-ability {:async true
                                        :msg (str "give the Runner a tag for " kind)
                                        :effect (req (swap! state assoc-in [:per-turn (:cid card)] true)
-                                                    (tag-runner state :runner eid 1))}
+                                                    (gain-tags state :corp eid 1))}
                          :end-effect (effect (clear-wait-prompt :runner))}}
                        card nil)))]
     {:events {:play-event {:req (req (and (first-event? state :runner :run)
@@ -252,7 +252,8 @@
                                                   (when-scored? %)
                                                   (:abilities %))}
                              :msg (msg "trigger the \"when scored\" ability of " (:title target))
-                             :effect (effect (continue-ability (card-def target) target nil))}}}
+                             :effect (effect (continue-ability (card-def target) target nil))}
+               :no-ability {:effect (effect (clear-wait-prompt :runner))}}}
 
    "Brain Rewiring"
    {:effect (effect (show-wait-prompt :runner "Corp to use Brain Rewiring")
@@ -285,11 +286,31 @@
 
    "Breaking News"
    {:async true
-    :effect (effect (tag-runner :runner eid 2))
+    :effect (effect (gain-tags :corp eid 2))
     :silent (req true)
     :msg "give the Runner 2 tags"
     :end-turn {:effect (effect (lose :runner :tag 2))
                :msg "make the Runner lose 2 tags"}}
+
+   "Broad Daylight"
+   (letfn [(add-counters [state side card eid]
+             (let [bp (get-in @state [:corp :bad-publicity] 0)]
+               (add-counter state :corp card :agenda bp)
+               (effect-completed state side eid)))]
+     {:prompt "Take 1 bad publicity?"
+      :choices ["Yes" "No"]
+      :async true
+      :effect (req (if (= target "Yes")
+                     (wait-for (gain-bad-publicity state :corp 1)
+                               (system-msg state :corp "used Broad Daylight to take 1 bad publicity")
+                               (add-counters state side card eid))
+                     (add-counters state side card eid)))
+      :abilities [{:cost [:click 1] :counter-cost [:agenda 1]
+                   :async true
+                   :label "Do 2 meat damage"
+                   :once :per-turn
+                   :msg "do 2 meat damage"
+                   :effect (effect (damage eid :meat 2 {:card card}))}]})
 
    "CFC Excavation Contract"
    {:effect (req (let [bios (count (filter #(has-subtype? % "Bioroid") (all-active-installed state :corp)))
@@ -498,6 +519,11 @@
                  :once :per-turn
                  :effect (effect (add-prop target :advance-counter 1))}]}
 
+   "Fly on the Wall"
+   {:msg "give the runner 1 tag"
+    :async true
+    :effect (req (gain-tags state :runner eid 1))}
+
    "Genetic Resequencing"
    {:choices {:req #(= (last (:zone %)) :scored)}
     :msg (msg "add 1 agenda counter on " (:title target))
@@ -631,6 +657,12 @@
                  :once :per-run
                  :effect (effect (damage eid :net 1 {:card card}))}]}
 
+   "Hyperloop Extension"
+   (let [he (req (gain-credits state :corp 3)
+                 (system-msg state side (str "uses Hyperloop Extension to gain 3 [Credits]")))]
+     {:effect he
+      :stolen {:effect he}})
+
    "Ikawah Project"
    {:steal-cost-bonus (req [:credit 2 :click 1])}
 
@@ -661,8 +693,22 @@
     :swapped {:effect (req (update-all-ice state side))}
     :events {:pre-ice-strength {:req (req (has-subtype? target "Tracer"))
                                 :effect (effect (ice-strength-bonus 1 target))}
-             :pre-init-trace {:req (req (has-subtype? target "Tracer"))
+             :pre-init-trace {:req (req (and (has-subtype? target "Tracer")
+                                             (= :subroutine (:source-type (second targets)))))
                               :effect (effect (init-trace-bonus 1))}}}
+
+   "Jumon"
+   {:events
+    {:corp-turn-ends
+     {:req (req (some #(and (= (last (:zone %)) :content)
+                            (is-remote? (second (:zone %))))
+                      (all-installed state :corp)))
+      :prompt "Select a card to place 2 advancement tokens on"
+      :player :corp
+      :choices {:req #(and (= (last (:zone %)) :content)
+                           (is-remote? (second (:zone %))))}
+      :msg (msg "place 2 advancement token on " (card-str state target))
+      :effect (effect (add-prop :corp target :advance-counter 2 {:placed true}))}}}
 
    "Labyrinthine Servers"
    {:interactions {:prevent [{:type #{:jack-out}
@@ -849,7 +895,7 @@
                :yes-ability {:msg "give the Runner 1 tag and take 1 bad publicity"
                              :async true
                              :effect (effect (gain-bad-publicity :corp eid 1)
-                                             (tag-runner :runner eid 1)
+                                             (gain-tags :corp eid 1)
                                              (forfeit card))}}}
 
    "Priority Requisition"
@@ -1082,7 +1128,7 @@
                  :trace {:base 2
                          :successful {:msg "give the Runner 1 tag"
                                       :async true
-                                      :effect (effect (tag-runner :runner eid 1))}}}]}
+                                      :effect (effect (gain-tags eid 1))}}}]}
 
    "Self-Destruct Chips"
    {:silent (req true)
@@ -1186,7 +1232,7 @@
    {:flags {:rd-reveal (req true)}
     :access {:msg "give the Runner 1 tag"
              :async true
-             :effect (effect (tag-runner :runner eid 1))}}
+             :effect (effect (gain-tags eid 1))}}
 
    "The Cleaners"
    {:events {:pre-damage {:req (req (and (= target :meat)

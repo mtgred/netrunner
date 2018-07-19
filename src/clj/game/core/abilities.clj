@@ -32,7 +32,7 @@
 
 (defn is-ability?
   "Checks to see if a given map represents a card ability. Looks for :effect, :optional, :trace, or :psi."
-  [{:keys [effect optional trace psi] :as abi}]
+  [{:keys [effect optional trace psi]}]
   (or effect optional trace psi))
 
 (defn resolve-ability
@@ -172,11 +172,11 @@
 
 (defn- do-choices
   "Handle a choices ability"
-  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid] :as ability}
+  [state side {:keys [choices player priority cancel-effect not-distinct prompt eid prompt-type] :as ability}
    card targets]
   (let [s (or player side)
         ab (dissoc ability :choices)
-        args {:priority priority :cancel-effect cancel-effect}]
+        args {:priority priority :cancel-effect cancel-effect :prompt-type prompt-type}]
    (if (map? choices)
      ;; Two types of choices use maps: select prompts, and :number prompts.
      (cond
@@ -194,12 +194,11 @@
                  0)]
          (prompt! state s card prompt {:number n :default d} ab args))
        (:card-title choices)
-       (prompt!
-         state s card prompt
-         (assoc choices :autocomplete
-                        (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
-                                                  (vals @all-cards)))))
-         ab (assoc args :prompt-type :card-title))
+       (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state) nil [%])
+                                                   (vals @all-cards))))
+             choices (assoc choices :autocomplete card-titles)
+             args (assoc args :prompt-type :card-title)]
+         (prompt! state s card prompt choices ab args))
        ;; unknown choice
        :else nil)
      ;; Not a map; either :credit, :counter, or a vector of cards or strings.
@@ -222,27 +221,27 @@
              (or (not advance-counter-cost)
                  (<= advance-counter-cost (or advance-counter 0))))
     ;; Ensure that any costs can be paid
-    (when-let [cost-str (apply pay (concat [state side card] cost [{:action (:cid card)}]))]
-      (let [c (if counter-cost
-                (update-in card [:counter (first counter-cost)]
-                           #(- (or % 0) (or (second counter-cost) 0)))
-                card)
-            c (if advance-counter-cost
-                (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
-                c)]
-        ;; Remove any counters
-        (when (or counter-cost advance-counter-cost)
-          (update! state side c)
-          (when (is-type? card "Agenda")
-            (trigger-event state side :agenda-counter-spent card)))
-        ;; Print the message
-        (print-msg state side ability card targets cost-str)
-        ;; Trigger the effect
-        (do-effect state side ability c targets)
-        ;; Record the :end-turn effect
-        (register-end-turn state side ability card targets))
-      ;; Record the ability has been triggered if it is restricted to happening once
-      (register-once state ability card))))
+    (wait-for
+      (pay-sync state side card cost {:action (:cid card)})
+      (if-let [cost-str async-result]
+        (let [c (if counter-cost
+                  (update-in card [:counter (first counter-cost)]
+                             #(- (or % 0) (or (second counter-cost) 0)))
+                  card)
+              c (if advance-counter-cost
+                  (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
+                  c)]
+          ;; Remove any counters
+          (when (or counter-cost advance-counter-cost)
+            (update! state side c)
+            (when (is-type? card "Agenda")
+              (trigger-event state side :agenda-counter-spent card)))
+          ;; Print the message
+          (print-msg state side ability card targets cost-str)
+          ;; Trigger the effect
+          (do-effect state side ability c targets)
+          (register-end-turn state side ability card targets)
+          (register-once state ability card))))))
 
 (defn- print-msg
   "Prints the ability message"
@@ -359,6 +358,7 @@
          newitem {:eid eid
                   :msg prompt
                   :choices :credit
+                  :prompt-type :trace
                   :effect f
                   :card card
                   :priority priority
@@ -382,7 +382,8 @@
      (let [ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card nil) %))
            all (get-in ability [:choices :all])]
        (swap! state update-in [side :selected]
-              #(conj (vec %) {:ability (dissoc ability :choices) :req (get-in ability [:choices :req])
+              #(conj (vec %) {:ability (dissoc ability :choices)
+                              :req (get-in ability [:choices :req])
                               :not-self (when (get-in ability [:choices :not-self]) (:cid card))
                               :max (get-in ability [:choices :max])
                               :all all}))
@@ -399,7 +400,8 @@
                         (show-select state side card ability args))
                       (fn [choice] (resolve-select state side)))
                     (-> args
-                        (assoc :prompt-type :select :show-discard (:show-discard ability))
+                        (assoc :prompt-type :select
+                               :show-discard (:show-discard ability))
                         (wrap-function :cancel-effect)))))))
 
 (defn resolve-select
@@ -436,7 +438,6 @@
     (swap! state update-in [side :prompt] (fn [pr] (filter #(not= % wait) pr)))))
 
 ;;; Psi games
-
 (defn show-prompt-with-dice
   "Calls show-prompt normally, but appends a 'roll d6' button to choices.
   If user chooses to roll d6, reveal the result to user and re-display
@@ -461,7 +462,7 @@
   ([state side eid card psi]
    (swap! state assoc :psi {})
    (register-once state psi card)
-   (system-msg state :corp (str "uses " (:title card) " to start a psi game"))
+   (system-msg state (:player psi :corp) (str "uses " (:title card) " to start a psi game"))
    (doseq [s [:corp :runner]]
      (let [all-amounts (range (min 3 (inc (get-in @state [s :credit]))))
            valid-amounts (remove #(or (any-flag-fn? state :corp :psi-prevent-spend %)
@@ -471,7 +472,8 @@
        (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
                               (map #(str % " [Credits]") valid-amounts)
                               #(resolve-psi state s eid card psi (str->int (first (split % #" "))))
-                    {:priority 2})))))
+                    {:priority 2
+                     :prompt-type :psi})))))
 
 (defn resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
@@ -577,10 +579,13 @@
 
 (defn trace-start
   "Starts the trace process by showing the boost prompt to the first player (normally corp)."
-  [state side card {:keys [player other base bonus priority] :as trace}]
+  [state side card {:keys [player other base bonus priority label] :as trace}]
   (system-msg state :corp (str "uses " (:title card)
                                " to initiate a trace with strength " ((fnil + 0 0) base bonus)
-                               " (" (make-label trace) ")"))
+                               (when (pos? bonus)
+                                 (str " (" base " + " bonus ")"))
+                               (when label
+                                 (str " (" label ")"))))
   (show-wait-prompt state other
                     (str (if (corp-start? trace) "Corp" "Runner")
                          " to boost "
@@ -599,9 +604,9 @@
   (swap! state dissoc-in [:bonus :trace]))
 
 (defn init-trace
-  [state side card {:keys [base priority] :as trace}]
+  [state side card {:keys [base priority eid] :as trace}]
   (reset-trace-modifications state)
-  (wait-for (trigger-event-sync state :corp :pre-init-trace card)
+  (wait-for (trigger-event-sync state :corp :pre-init-trace card eid)
             (let [force-base (get-in @state [:trace :force-base])
                   force-link (get-in @state [:trace :force-link])
                   base (cond force-base force-base

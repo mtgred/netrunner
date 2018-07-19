@@ -42,41 +42,41 @@
                              (play-instant state side (make-eid state) eid? card?)))
   ([state side eid card {:keys [targets ignore-cost extra-cost no-additional-cost]}]
    (swap! state update-in [:bonus] dissoc :play-cost)
-   (trigger-event state side :pre-play-instant card)
-   (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
-     (let [cdef (card-def card)
-           additional-cost (if (has-subtype? card "Triple")
-                             (concat (:additional-cost cdef) [:click 2])
-                             (:additional-cost cdef))
-           additional-cost (if (and (has-subtype? card "Double")
-                                    (not (get-in @state [side :register :double-ignore-additional])))
-                             (concat (:additional-cost cdef) [:click 1])
-                             additional-cost)
-           additional-cost (if (and (has-subtype? card "Run")
-                                    (get-in @state [:bonus :run-cost]))
-                             (concat additional-cost (get-in @state [:bonus :run-cost]))
-                             additional-cost)
-           total-cost (play-cost state side card
-                                 (concat (when-not no-additional-cost additional-cost) extra-cost
-                                         [:credit (:cost card)]))
-           eid (if-not eid (make-eid state) eid)]
-       ;; ensure the instant can be played
-       (if (and (if-let [cdef-req (:req cdef)]
-                  (cdef-req state side eid card targets) true) ; req is satisfied
-                (not (and (has-subtype? card "Current")
-                          (get-in @state [side :register :cannot-play-current])))
-                (not (and (has-subtype? card "Run")
-                          (not (can-run? state :runner))))
-                (not (and (has-subtype? card "Priority")
-                          (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
-         ;; Wait on pay-sync to finish before triggering instant-effect
-         (wait-for (pay-sync state side card (if ignore-cost 0 total-cost) {:action :play-instant})
-                   (if-let [cost-str async-result]
-                     (complete-play-instant state side eid card cost-str ignore-cost)
-                     ;; could not pay the card's price; mark the effect as being over.
-                     (effect-completed state side eid)))
-         ;; card's req was not satisfied; mark the effect as being over.
-         (effect-completed state side eid))))))
+   (wait-for (trigger-event-simult state side :pre-play-instant nil card)
+             (when-not (seq (get-in @state [side :locked (-> card :zone first)]))
+               (let [cdef (card-def card)
+                     additional-cost (if (has-subtype? card "Triple")
+                                       (concat (:additional-cost cdef) [:click 2])
+                                       (:additional-cost cdef))
+                     additional-cost (if (and (has-subtype? card "Double")
+                                              (not (get-in @state [side :register :double-ignore-additional])))
+                                       (concat (:additional-cost cdef) [:click 1])
+                                       additional-cost)
+                     additional-cost (if (and (has-subtype? card "Run")
+                                              (get-in @state [:bonus :run-cost]))
+                                       (concat additional-cost (get-in @state [:bonus :run-cost]))
+                                       additional-cost)
+                     total-cost (play-cost state side card
+                                           (concat (when-not no-additional-cost additional-cost) extra-cost
+                                                   [:credit (:cost card)]))
+                     eid (if-not eid (make-eid state) eid)]
+                 ;; ensure the instant can be played
+                 (if (and (if-let [cdef-req (:req cdef)]
+                            (cdef-req state side eid card targets) true) ; req is satisfied
+                          (not (and (has-subtype? card "Current")
+                                    (get-in @state [side :register :cannot-play-current])))
+                          (not (and (has-subtype? card "Run")
+                                    (not (can-run? state :runner))))
+                          (not (and (has-subtype? card "Priority")
+                                    (get-in @state [side :register :spent-click])))) ; if priority, have not spent a click
+                   ;; Wait on pay-sync to finish before triggering instant-effect
+                   (wait-for (pay-sync state side card (if ignore-cost 0 total-cost) {:action :play-instant})
+                             (if-let [cost-str async-result]
+                               (complete-play-instant state side eid card cost-str ignore-cost)
+                               ;; could not pay the card's price; mark the effect as being over.
+                               (effect-completed state side eid)))
+                   ;; card's req was not satisfied; mark the effect as being over.
+                   (effect-completed state side eid)))))))
 
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."
@@ -266,9 +266,11 @@
       (- (or (when-not unpreventable (get-in @state [:tag :tag-prevent])) 0))
       (max 0)))
 
-(defn tag-prevent [state side n]
-  (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
-  (trigger-event state side (if (= side :corp) :corp-prevent :runner-prevent) `(:tag ~n)))
+(defn tag-prevent
+  ([state side n] (tag-prevent state side (make-eid state) n))
+  ([state side eid n]
+   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
+   (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) `(:tag ~n))))
 
 (defn tag-remove-bonus
   "Applies a cost increase of n to removing tags with the click action. (SYNC.)"
@@ -283,10 +285,10 @@
         (trigger-event-sync state side eid :runner-gain-tag n))
     (effect-completed state side eid)))
 
-(defn tag-runner
+(defn gain-tags
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
-  ([state side n] (tag-runner state side (make-eid state) n nil))
-  ([state side eid n] (tag-runner state side eid n nil))
+  ([state side n] (gain-tags state side (make-eid state) n nil))
+  ([state side eid n] (gain-tags state side eid n nil))
   ([state side eid n {:keys [unpreventable unboostable card] :as args}]
    (swap! state update-in [:tag] dissoc :tag-bonus :tag-prevent)
    (trigger-event state side :pre-tag card)
@@ -302,17 +304,27 @@
              state :runner nil
              (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
              (fn [_]
-               (let [prevent (get-in @state [:tag :tag-prevent])]
-                 (system-msg state :runner
-                             (if prevent
-                               (str "avoids "
-                                    (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                    (if (< 1 prevent) " tags" " tag"))
-                               "will not avoid tags"))
+               (let [prevent (get-in @state [:tag :tag-prevent])
+                     prevent-msg (if prevent
+                                   (str "avoids "
+                                        (if (= prevent Integer/MAX_VALUE) "all" prevent)
+                                        (if (< 1 prevent) " tags" " tag"))
+                                   "will not avoid tags")]
+                 (system-msg state :runner prevent-msg)
                  (clear-wait-prompt state :corp)
                  (resolve-tag state side eid (max 0 (- n (or prevent 0))) args)))
              {:priority 10}))
        (resolve-tag state side eid n args)))))
+
+(defn lose-tags
+  ([state side n] (lose-tags state side (make-eid state) n))
+  ([state side eid n]
+   (if (= n :all)
+     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0 0) (get-in @state [:runner :tag]))
+         (swap! state assoc-in [:runner :tag] 0))
+     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
+         (deduct state :runner [:tag n])))
+   (trigger-event-sync state side eid :runner-lose-tag n side)))
 
 
 ;;;; Bad Publicity
@@ -379,8 +391,8 @@
 
 (defn- resolve-trash-end
   ([state side eid card args] (resolve-trash-end state side eid card eid args))
-  ([state side eid {:keys [zone type disabled] :as card} oid
-   {:keys [unpreventable cause keep-server-alive suppress-event host-trashed] :as args}]
+  ([state side eid {:keys [disabled] :as card} oid
+   {:keys [cause keep-server-alive host-trashed] :as args}]
   (let [cdef (card-def card)
         moved-card (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive})]
     (swap! state update-in [:per-turn] dissoc (:cid moved-card))
@@ -401,8 +413,8 @@
 
 (defn- resolve-trash
   ([state side eid card args] (resolve-trash state side eid card eid args))
-  ([state side eid {:keys [zone type] :as card} oid
-   {:keys [unpreventable cause keep-server-alive suppress-event] :as args}]
+  ([state side eid {:keys [zone] :as card} oid
+   {:keys [cause suppress-event] :as args}]
   (if (and (not suppress-event)
            (not= (last zone) :current)) ; Trashing a current does not trigger a trash event.
     (wait-for (trigger-event-sync state side (keyword (str (name side) "-trash")) card cause)
@@ -462,7 +474,7 @@
   "Attempts to trash the given card, allowing for boosting/prevention effects."
   ([state side card] (trash state side (make-eid state) card nil))
   ([state side card args] (trash state side (make-eid state) card args))
-  ([state side eid {:keys [zone type] :as card} {:keys [unpreventable cause suppress-event] :as args}]
+  ([state side eid card {:keys [unpreventable cause suppress-event] :as args}]
    (wait-for (prevent-trash state side card eid args)
              (if-let [c (first (get-in @state [:trash :trash-list eid]))]
                (resolve-trash state side eid c args)
