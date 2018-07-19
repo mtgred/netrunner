@@ -197,8 +197,12 @@
   (let [restricted-cards (remove (fn [card] (some #(= (:setname (:card card)) %) allowed-sets)) (:cards deck))
         restricted-sets (group-by (fn [card] (:setname (:card card))) restricted-cards)
         sorted-restricted-sets (reverse (sort-by #(count (second %)) restricted-sets))
-        [restricted-bigboxes restricted-datapacks] (split-with (fn [[setname cards]] (some #(when (= (:name %) setname) (:bigbox %)) sets)) sorted-restricted-sets)]
-    { :bigboxes restricted-bigboxes :datapacks restricted-datapacks }))
+        [restricted-bigboxes restricted-datapacks] (split-with (fn [[setname _]]
+                                                                 (some #(when (= (:name %) setname)
+                                                                          (:bigbox %)) sets))
+                                                               sorted-restricted-sets)]
+    {:bigboxes restricted-bigboxes
+     :datapacks restricted-datapacks}))
 
 (defn cards-over-one-core
   "Returns cards in deck that require more than single box."
@@ -235,45 +239,56 @@
         restricted-bigboxes (remove #(= revised-core %) (:bigboxes restricted-sets))
         restricted-datapacks (:datapacks restricted-sets)
         example-card (fn [cardlist] (get-in (first cardlist) [:card :title]))
-        reasons {
-                 :bigbox (when (not= (count restricted-bigboxes) 0) (str "Only Revised Core Set permitted - check: " (example-card (second (first restricted-bigboxes)))))
-                 :datapack (when (not= (count restricted-datapacks) 0) (str "Only the most recent cycles permitted - check: " (example-card (second (first restricted-datapacks)))))
-                 }]
-    { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons)))}))
+        reasons {:bigbox (when (not= (count restricted-bigboxes) 0)
+                           (str "Only Revised Core Set permitted - check: " (example-card (second (first restricted-bigboxes)))))
+                 :datapack (when (not= (count restricted-datapacks) 0)
+                             (str "Only the most recent cycles permitted - check: " (example-card (second (first restricted-datapacks)))))}]
+    {:legal (not-any? val reasons)
+     :reason (join "\n" (filter identity (vals reasons)))
+     :description "Modded format compliant"}))
 
 (defn cache-refresh-legal
   "Returns true if deck is valid under Cache Refresh rules. http://www.cache-refresh.info/"
-  [sets deck]
-  (let [over-one-core (cards-over-one-core deck)
-        valid-sets (concat ["Revised Core Set" "Terminal Directive"] (sets-in-newest-cycles sets 2))
-        deck-with-id (assoc deck :cards (cons {:card (:identity deck) } (:cards deck))) ;identity should also be from valid sets
-        restricted-sets (group-cards-from-restricted-sets sets valid-sets deck-with-id)
-        restricted-bigboxes (rest (:bigboxes restricted-sets)) ;one big box is fine
-        restricted-datapacks (:datapacks restricted-sets)
-        example-card (fn [cardlist] (get-in (first cardlist) [:card :title]))
-        reasons {
-                 :onecore (when (not= (count over-one-core) 0) (str "Only one Core Set permitted - check: " (example-card over-one-core)))
-                 :bigbox (when (not= (count restricted-bigboxes) 0) (str "Only one Deluxe Expansion permitted - check: " (example-card (second (first restricted-bigboxes)))))
-                 :datapack (when (not= (count restricted-datapacks) 0) (str "Only two most recent cycles permitted - check: " (example-card (second (first restricted-datapacks)))))
-                 }]
-    { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons)))}))
+  ([sets deck] (cache-refresh-legal sets deck (concat ["Terminal Directive"] (sets-in-newest-cycles sets 2)) "Cache Refresh compliant"))
+  ([sets deck valid-sets description]
+   (let [over-one-core (cards-over-one-core deck)
+         valid-sets (concat ["Revised Core Set"] valid-sets)
+         deck-with-id (assoc deck :cards (cons {:card (:identity deck)} (:cards deck))) ; identity should also be from valid sets
+         restricted-sets (group-cards-from-restricted-sets sets valid-sets deck-with-id)
+         restricted-bigboxes (rest (:bigboxes restricted-sets)) ; one big box is fine
+         restricted-datapacks (:datapacks restricted-sets)
+         example-card (fn [cardlist] (get-in (first cardlist) [:card :title]))
+         reasons {:onecore (when (not= (count over-one-core) 0)
+                             (str "Only one Revised Core Set permitted - check: " (example-card over-one-core)))
+                  :bigbox (when (not= (count restricted-bigboxes) 0)
+                            (str "Only one Deluxe Expansion permitted - check: " (example-card (second (first restricted-bigboxes)))))
+                  :datapack (when (not= (count restricted-datapacks) 0)
+                              (str "Only latest 2 cycles are permitted - check: " (example-card (second (first restricted-datapacks)))))}]
+     {:legal (not-any? val reasons)
+      :reason (join "\n" (filter identity (vals reasons)))
+      :description description})))
 
 (defn onesies-legal
   "Returns true if deck is valid under 1.1.1.1 format rules. https://www.reddit.com/r/Netrunner/comments/5238a4/1111_onesies/"
   [sets deck]
   (let [over-one-core (cards-over-one-core deck)
-        valid-sets ["Core Set"]
+        valid-sets ["Revised Core Set"]
         restricted-sets (group-cards-from-restricted-sets sets valid-sets deck)
-        restricted-bigboxes (rest (:bigboxes restricted-sets)) ;one big box is fine
-        restricted-datapacks (rest (:datapacks restricted-sets)) ;one datapack is fine
-        only-one-offence (>= 1 (apply + (map count [over-one-core restricted-bigboxes restricted-datapacks]))) ;one offence is fine
+        restricted-bigboxes (rest (:bigboxes restricted-sets)) ; one big box is fine
+        restricted-datapacks (rest (:datapacks restricted-sets)) ; one datapack is fine
+        only-one-offence (>= 1 (apply + (map count [over-one-core restricted-bigboxes restricted-datapacks]))) ; one offence is fine
         example-card (fn [cardlist] (join ", " (map #(get-in % [:card :title]) (take 2 cardlist))))
-        reasons (if only-one-offence {} {
-                                         :onecore (when (not= (count over-one-core) 0) (str "Only one Core Set permitted - check: " (example-card over-one-core)))
-                                         :bigbox (when (not= (count restricted-bigboxes) 0) (str "Only one Deluxe Expansion permitted - check: " (example-card (second (first restricted-bigboxes)))))
-                                         :datapack (when (not= (count restricted-datapacks) 0) (str "Only one Datapack permitted - check: " (example-card (second (first restricted-datapacks)))))
-                                         })]
-    { :legal (not-any? val reasons) :reason (join "\n" (filter identity (vals reasons))) }))
+        reasons (if only-one-offence
+                  {}
+                  {:onecore (when (not= (count over-one-core) 0)
+                              (str "Only one Revised Core Set permitted - check: " (example-card over-one-core)))
+                   :bigbox (when (not= (count restricted-bigboxes) 0)
+                             (str "Only one Deluxe Expansion permitted - check: " (example-card (second (first restricted-bigboxes)))))
+                   :datapack (when (not= (count restricted-datapacks) 0)
+                               (str "Only one Datapack permitted - check: " (example-card (second (first restricted-datapacks)))))})]
+    {:legal (not-any? val reasons)
+     :reason (join "\n" (filter identity (vals reasons)))
+     :description "1.1.1.1 format compliant"}))
 
 ;; Card and deck validity
 (defn allowed?
@@ -310,30 +325,36 @@
   (and (every? #(released? sets (:card %)) (:cards deck))
        (released? sets (:identity deck))))
 
-(defn deck-status
-  [mwl-legal valid in-rotation]
+(defn check-deck-status
+  "Checks the valid, mwl and rotation keys of a deck-status map to check if the deck is legal, casual or invalid."
+  [{:keys [valid mwl rotation]}]
   (cond
-    (and mwl-legal valid in-rotation) "legal"
-    valid "casual"
+    (every? :legal [valid mwl rotation]) "legal"
+    (:legal valid) "casual"
     :else "invalid"))
 
-(defn calculate-deck-status [deck]
-  (let [valid (valid-deck? deck)
+(defn calculate-deck-status
+  "Calculates all the deck's validity for the basic deckbuilding rules, as well as various official and unofficial formats.
+  Implement any new formats here."
+  [deck]
+  (let [sets @cards/sets
+        valid (valid-deck? deck)
         mwl (mwl-legal? deck)
-        rotation (only-in-rotation? @cards/sets deck)
-        onesies (onesies-legal @cards/sets deck)
-        cache-refresh (cache-refresh-legal @cards/sets deck)
-        modded (modded-legal @cards/sets deck)
-        status (deck-status mwl valid rotation)]
-    {:valid         valid
-     :mwl           mwl
-     :rotation      rotation
-     :status        status
-     :onesies       onesies
+        rotation (only-in-rotation? sets deck)
+        onesies (onesies-legal sets deck)
+        cache-refresh (cache-refresh-legal sets deck)
+        modded (modded-legal sets deck)]
+    {:valid {:legal valid :description "Basic deckbuilding rules"}
+     :mwl {:legal mwl :description (:name @cards/mwl)}
+     :rotation {:legal rotation :description "Only released and non-rotated cards"}
+     :onesies onesies
      :cache-refresh cache-refresh
-     :modded        modded}))
+     ;; Stimhack Online Cache Refresh 7: Latest cycle + Reign and Reverie
+     :socr7 (cache-refresh-legal sets deck (concat ["Terminal Directive" "Reign and Reverie"] (sets-in-newest-cycles sets 1))
+                                 "Stimhack Online Cache Refresh 7")
+     :modded modded}))
 
-(defn trusted-deck-status [{:keys [status name cards date] :as deck}]
+(defn trusted-deck-status [{:keys [status date] :as deck}]
   (let [parse-date #?(:clj  #(f/parse (f/formatters :date-time) %)
                       :cljs #(js/Date.parse %))
         deck-date (parse-date date)
