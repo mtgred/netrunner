@@ -1314,7 +1314,10 @@
           "Should gain only 1 bonus trace strength regardless of number of runs in a turn")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= 2 (:tag (get-runner)))))))
+      (is (= 2 (:tag (get-runner))))
+      (run-on state "R&D")
+      (card-ability state :corp io 1)
+      (is (zero? (-> (get-corp) :prompt first :bonus)) "Should gain 0 bonus trace strength, as it's an encounter ability"))))
 
 (deftest jumon
   ;; Jumon

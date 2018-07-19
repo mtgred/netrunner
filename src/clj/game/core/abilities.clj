@@ -606,7 +606,7 @@
 (defn init-trace
   [state side card {:keys [base priority eid] :as trace}]
   (reset-trace-modifications state)
-  (wait-for (trigger-event-sync state :corp :pre-init-trace card)
+  (wait-for (trigger-event-sync state :corp :pre-init-trace card eid)
             (let [force-base (get-in @state [:trace :force-base])
                   force-link (get-in @state [:trace :force-link])
                   base (cond force-base force-base
