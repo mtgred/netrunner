@@ -57,10 +57,15 @@
                    (continue-ability state side
                      {:optional
                       {:prompt "Use Archives Interface to remove a card from the game instead of accessing it?"
-                       :yes-ability {:prompt "Choose a card in Archives to remove from the game instead of accessing"
-                                     :choices (req (:discard corp))
-                                     :msg (msg "remove " (:title target) " from the game")
-                                     :effect (effect (move :corp target :rfg))}}} card nil))}}}
+                       :yes-ability
+                               {:delayed-completion true
+                                :effect (effect (continue-ability
+                                                  {:prompt "Choose a card in Archives to remove from the game instead of accessing"
+                                                   :choices (req (:discard corp))
+                                                   :msg (msg "remove " (:title target) " from the game")
+                                                   :effect (effect (move :corp target :rfg))} card nil))}}}
+                                     card nil))}}}
+
    "Astrolabe"
    {:in-play [:memory 1]
     :events {:server-created {:msg "draw 1 card"
@@ -580,12 +585,14 @@
                              (pos? (count-virus-programs state))))
               :optional
                    {:prompt "Place a virus counter?"
-                    :yes-ability {:prompt "Select an installed virus program"
-                                  :choices {:req #(and (installed? %)
-                                                       (has-subtype? % "Virus")
-                                                       (is-type? % "Program"))}
-                                  :msg (msg "place 1 virus counter on " (:title target))
-                                  :effect (effect (add-counter target :virus 1))}}}}}
+                    :yes-ability {:effect (effect (continue-ability
+                                                    {:prompt "Select an installed virus program"
+                                                     :choices {:req #(and (installed? %)
+                                                                          (has-subtype? % "Virus")
+                                                                          (is-type? % "Program"))}
+                                                     :msg (msg "place 1 virus counter on " (:title target))
+                                                     :effect (effect (add-counter target :virus 1))}
+                                                    card nil))}}}}}
 
    "Lemuria Codecracker"
    {:abilities [{:cost [:click 1 :credit 1]
