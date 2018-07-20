@@ -1349,7 +1349,7 @@
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
 
-(defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
+(defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent sfx] :as cursor}]
   (let [s (r/atom {})
         autocomp (r/track (fn [] (get-in @game-state [side :prompt 0 :choices :autocomplete])))
         audio-sfx (fn [name] (list (keyword name)
@@ -1392,7 +1392,8 @@
                         :gameid (:gameid @game-state)} soundbank))
 
     :reagent-render
-    (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
+    (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent sfx] :as cursor}]
+      (let [_ @sfx]) ;; hack: make this component rebuild when sfx changes. Could probably move audio to its own component.
       [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                          :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
        (if-let [prompt (first (:prompt @me))]
@@ -1583,7 +1584,8 @@
                  op-scored (r/cursor game-state [op-side :scored])
                  corp-servers (r/cursor game-state [:corp :servers])
                  corp-remotes (r/track (fn [] (get-remotes (get-in @game-state [:corp :servers]))))
-                 runner-rig (r/cursor game-state [:runner :rig])]
+                 runner-rig (r/cursor game-state [:runner :rig])
+                 sfx (r/cursor game-state [:sfx])]
              [:div.gameboard
 
               (let [me-keep (r/cursor game-state [me-side :keep])
@@ -1643,7 +1645,8 @@
                  (when-not (= @side :spectator)
                    [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
                                  :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
-                                 :corp corp :runner runner :me me :opponent opponent}])]]
+                                 :corp corp :runner runner :me me :opponent opponent
+                                 :sfx sfx}])]]
 
                [:div.me
                 [hand-view me-user (if (= :corp me-side) "HQ" "Grip") me-hand me-prompt
