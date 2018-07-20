@@ -284,12 +284,12 @@
 (defn game-view [{:keys [title password started players gameid current-game password-game original-players editing] :as game}]
   (r/with-let [s (r/atom {})
                 join (fn [action]
-                      (let [password (:password password-game password)]
-                        (if (empty? password)
-                          (join-game (if password-game (:gameid password-game) gameid) s action nil)
-                          (if-let [input-password (:password @s)]
-                            (join-game (if password-game (:gameid password-game) gameid) s action input-password)
-                            (do (swap! app-state assoc :password-gameid gameid) (swap! s assoc :prompt action))))))]
+                       (let [password (:password password-game password)]
+                         (if (empty? password)
+                           (join-game (if password-game (:gameid password-game) gameid) s action nil)
+                           (if-let [input-password (:password @s)]
+                             (join-game (if password-game (:gameid password-game) gameid) s action input-password)
+                             (do (swap! app-state assoc :password-gameid gameid) (swap! s assoc :prompt action))))))]
       [:div.gameline {:class (when (= current-game gameid) "active")}
        (when (and (:allowspectator game) (not (or password-game current-game editing)))
          [:button {:on-click #(do (join "watch") (resume-sound))} "Watch" editing])
@@ -352,16 +352,15 @@
     (filter #(blocking-from-game blocked-users %) blocked-games)))
 
 (defn game-list [user {:keys [current-room games gameid password-game editing]}]
-  (let [roomgames (r/track (fn [] (filter #(= (:room %) current-room) @games)))
-        filtered-games (r/track #(filter-blocked-games user @roomgames))]
-    (fn [user {:keys [current-room games gameid password-game editing]}]
-      [:div.game-list
-       (if (empty? @filtered-games)
-         [:h4 "No games"]
-         (doall
-           (for [game @filtered-games]
-             ^{:key (:gameid game)}
-             [game-view (assoc game :current-game @gameid :password-game password-game :editing editing)])))])))
+   (let [roomgames (r/track (fn [] (filter #(= (:room %) current-room) @games)))
+         filtered-games (r/track #(filter-blocked-games user @roomgames))]
+        [:div.game-list
+         (if (empty? @filtered-games)
+           [:h4 "No games"]
+           (doall
+             (for [game @filtered-games]
+               ^{:key (:gameid game)}
+               [game-view (assoc game :current-game @gameid :password-game password-game :editing editing)])))]))
 
 (def open-games-symbol "○")
 (def closed-games-symbol "●")
@@ -387,12 +386,12 @@
 
 (defn game-lobby []
   (r/with-let [s (r/atom {:current-room "casual"})
-                decks (r/cursor app-state [:decks])
-                games (r/cursor app-state [:games])
-                gameid (r/cursor app-state [:gameid])
-                password-gameid (r/cursor app-state [:password-gameid])
-                sets (r/cursor app-state [:sets])
-                user (r/cursor app-state [:user])]
+               decks (r/cursor app-state [:decks])
+               games (r/cursor app-state [:games])
+               gameid (r/cursor app-state [:gameid])
+               password-gameid (r/cursor app-state [:password-gameid])
+               sets (r/cursor app-state [:sets])
+               user (r/cursor app-state [:user])]
     [:div
      [:div.lobby-bg]
      [:div.container
