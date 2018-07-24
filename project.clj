@@ -6,11 +6,9 @@
             :url "https://opensource.org/licenses/MIT"}
 
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/clojurescript "1.9.946"]
+                 [org.clojure/clojurescript "1.10.238"]
                  [org.clojure/core.async "0.3.443"]
                  [cheshire "5.6.3"]
-                 [org.omcljs/om "0.9.0"]
-                 [sablono "0.3.4"]
                  [danhut/monger "3.1.0"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [differ "0.3.1"]
@@ -31,17 +29,22 @@
                  [clj-time "0.14.2"]
                  [com.draines/postal "2.0.2"]
                  [throttler "1.0.0"]
-                 [clj-http "3.7.0"]]
+                 [clj-http "3.7.0"]
+                 [reagent "0.8.1"]
+                 [cljsjs/react "16.4.1-0"]
+                 [cljsjs/react-dom "16.4.1-0"]
+                 [org.clojars.frozenlock/reagent-modals "0.2.8"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
-            [lein-figwheel "0.5.15"]
+            [lein-figwheel "0.5.16"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
             [lein-exec "0.3.7"]]
 
-  :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.15"]
+  :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]
+                                  [binaryage/devtools "0.9.7"]
                                   [com.cemerick/piggieback "0.2.1"]]
-                   :plugins [[lein-figwheel "0.5.15"]]
+                   :plugins [[lein-figwheel "0.5.16"]]
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
@@ -50,7 +53,7 @@
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]}
 
   ;; Compilation.
-  :source-paths ["src/clj" "src/cljs" "src/cljc"]
+  :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
     ;; aot only the namespaces needed for the main game in uberjar, notably ignoring the test and task namespaces.
   :aot [#"game\.*"
         #"web\.*"
@@ -69,19 +72,23 @@
   :cljsbuild {
     :builds [
       {:id "dev"
-       :source-paths ["src/cljs" "src/dev" "src/cljc"]
+       :source-paths ["src/cljs/nr" "src/cljs/dev" "src/cljc"]
        :figwheel true
-       :compiler {:output-to "resources/public/cljs/app.js"
+       :compiler {:output-to "resources/public/cljs/app10.js"
                   :output-dir "resources/public/cljs"
+                  :main "dev.nr"
+                  :asset-path   "cljs"
                   :optimizations :none
                   :source-map-timestamp true
+                  :npm-deps false
                   :external-config {:devtools/config {:features-to-install :all}}}}
       {:id "prod"
-       :source-paths ["src/cljs/netrunner" "src/cljc"]
-       :compiler {:output-to "resources/public/js/app.js"
+       :source-paths ["src/cljs/nr" "src/cljs/prod" "src/cljc"]
+       :compiler {:output-to "resources/public/js/app10.js"
                   :output-dir "out"
                   :optimizations :advanced
                   :pretty-print false
+                  :npm-deps false
                   :externs ["src/cljs/externs/extras.js"
                             "src/cljs/externs/$.js"
                             "src/cljs/externs/howler.js"

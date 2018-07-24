@@ -1,14 +1,13 @@
 (ns web.pages
-  (:require [web.utils :refer [response]]
-            [web.db :refer [db object-id]]
-            [monger.collection :as mc]
-            [monger.result :refer [acknowledged?]]
-            [monger.operators :refer :all]
-            [clj-time.core :as t]
+  (:require [clj-time.core :as t]
             [clj-time.coerce :as c]
+            [cheshire.core :as json]
             [hiccup.page :as hiccup]
-            [cheshire.core :as json]))
-
+            [monger.collection :as mc]
+            [monger.operators :refer :all]
+            [monger.result :refer [acknowledged?]]
+            [web.db :refer [db object-id]]
+            [web.utils :refer [response]]))
 
 (defn layout [{:keys [version user] :as req} & content]
   (hiccup/html5
@@ -35,26 +34,11 @@
 
      (if (= "dev" @web.config/server-mode)
        (list (hiccup/include-js "/cljs/goog/base.js")
-             (hiccup/include-js (str "cljs/app.js?v=" version))
+             (hiccup/include-js (str "cljs/app10.js?v=" version))
              [:script
-              (for [req ["netrunner.utils"
-                         "netrunner.appstate"
-                         "netrunner.main"
-                         "netrunner.ajax"
-                         "netrunner.auth"
-                         "netrunner.chat"
-                         "netrunner.gameboard"
-                         "netrunner.gamelobby"
-                         "netrunner.cardbrowser"
-                         "netrunner.deckbuilder"
-                         "netrunner.help"
-                         "netrunner.about"
-                         "netrunner.account"
-                         "netrunner.stats"
-                         "netrunner.news"
-                         "dev.figwheel"]]
+              (for [req ["dev.figwheel"]]
                 (str "goog.require(\"" req "\");"))])
-       (list (hiccup/include-js (str "js/app.js?v=" version))
+       (list (hiccup/include-js (str "js/app10.js?v=" version))
              [:script
               "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
               ga('create', 'UA-20250150-2', 'www.jinteki.net');"]))

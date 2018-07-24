@@ -4,7 +4,7 @@
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int]]
+            [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
 ;;; Helper functions for Draft cards
@@ -792,7 +792,9 @@
                                           (:runner-phase-12 @state))
                                  (system-msg state :runner (str "uses " (:title card) " to gain 1 [Credits]"))
                                  (gain-credits state :runner 1)))}]
-     {:flags {:drip-economy true}
+     {:flags {:drip-economy true
+              :runner-phase-12 (req (and (not (:disabled card))
+                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
       :abilities [ability]
       :events {:runner-turn-begins ability}})
 

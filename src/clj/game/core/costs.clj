@@ -25,7 +25,7 @@
                                              (sub->0 value)))
         (when (and (= attr :credit)
                    (= side :runner)
-                   (get-in @state [:runner :run-credit]))
+                   (pos? (get-in @state [:runner :run-credit] 0)))
           (swap! state update-in [:runner :run-credit] (sub->0 value)))))
   (when-let [cost-name (cost-names value attr)]
     cost-name))
@@ -183,7 +183,9 @@
      :shuffle-installed-to-stack (pay-shuffle-installed-to-stack state side eid card (second cost))
 
      ;; Else
-     (complete-with-result state side eid (deduct state side cost)))))
+     (let [[type amount] cost]
+       (swap! state update-in [:stats side :spent type] (fnil + 0) amount)
+       (complete-with-result state side eid (deduct state side cost))))))
 
 (defn pay
   "Deducts each cost from the player.
