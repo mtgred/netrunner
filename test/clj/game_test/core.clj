@@ -2,23 +2,47 @@
   (:require [game.core :as core]
             [game.utils :as utils :refer [make-cid]]
             [jinteki.cards :refer [all-cards]]
-            [game-test.utils :refer [load-cards]]
             [clojure.test :refer :all]))
 
+(declare take-credits)
 
-;;; Click action functions
-(defn take-credits
-  "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
-  If all clicks are used up, end turn and start the opponent's turn."
-  ([state side] (take-credits state side nil))
-  ([state side n]
-    (let  [remaining-clicks (get-in @state [side :click])
-           n (or n remaining-clicks)
-           other (if (= side :corp) :runner :corp)]
-      (dotimes [i n] (core/click-credit state side nil))
-      (if (= (get-in @state [side :click]) 0)
-        (do (core/end-turn state side nil)
-            (core/start-turn state other nil))))))
+;; Deck construction helpers
+(defn load-cards []
+  (->> (clojure.java.io/file "data/cards")
+       file-seq
+       (filter #(.isFile %))
+       (map slurp)
+       (map read-string)
+       merge))
+
+(defn load-all-cards [tests]
+  (when (empty? @all-cards)
+    (core/reset-card-defs)
+    (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
+  (tests))
+(use-fixtures :once load-all-cards)
+
+(defn reset-card-defs [card-type tests]
+  (core/reset-card-defs card-type)
+  (tests))
+
+(defn qty [card amt]
+  (let [loaded-card (if (string? card) (@all-cards card) card)]
+    (when-not loaded-card
+      (throw (Exception. (str card " not found in @all-cards"))))
+    {:card loaded-card :qty amt}))
+
+(defn make-deck [id deck]
+  {:identity id
+   :deck (map #(if (string? %) (qty % 1) %) deck)})
+
+(defn default-corp
+  ([] (default-corp [(qty "Hedge Fund" 3)]))
+  ([deck] (make-deck "Custom Biotics: Engineered for Success" deck)))
+
+(defn default-runner
+  ([] (default-runner [(qty "Sure Gamble" 3)]))
+  ([deck] (make-deck "The Professor: Keeper of Knowledge" deck)))
 
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
@@ -42,17 +66,6 @@
         (when-not dont-start-turn (core/start-turn state :corp nil))
         (when (= start-as :runner) (take-credits state :corp)))
       state)))
-
-(defn load-all-cards [tests]
-  (when (empty? @all-cards)
-    (core/reset-card-defs)
-    (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
-  (tests))
-(use-fixtures :once load-all-cards)
-
-(defn reset-card-defs [card-type tests]
-  (core/reset-card-defs card-type)
-  (tests))
 
 
 ;;; Card related functions
@@ -208,6 +221,19 @@
 
 
 ;;; Misc functions
+(defn take-credits
+  "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
+  If all clicks are used up, end turn and start the opponent's turn."
+  ([state side] (take-credits state side nil))
+  ([state side n]
+    (let  [remaining-clicks (get-in @state [side :click])
+           n (or n remaining-clicks)
+           other (if (= side :corp) :runner :corp)]
+      (dotimes [i n] (core/click-credit state side nil))
+      (if (= (get-in @state [side :click]) 0)
+        (do (core/end-turn state side nil)
+            (core/start-turn state other nil))))))
+
 (defn score-agenda
   "Take clicks and credits needed to advance and score the given agenda."
   ([state _ card]

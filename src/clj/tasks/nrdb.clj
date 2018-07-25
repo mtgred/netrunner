@@ -171,13 +171,6 @@
            :cycle_position (:position c)
            :cycle (:name c))))
 
-(defn deaccent
-  "Remove diacritical marks from a string, from http://www.matt-reid.co.uk/blog_post.php?id=69"
-  [s]
-  (if (nil? s) ""
-    (let [normalized (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)]
-      (string/replace normalized #"\p{InCombiningDiacriticalMarks}+" ""))))
-
 (defn- prune-null-fields
   "Remove specified fields if the value is nil"
   [c fields]
@@ -201,6 +194,20 @@
     (:image_url card)
     (make-image-url card set)))
 
+(defn slugify
+  "As defined here: https://you.tools/slugify/"
+  ([s] (slugify s "-"))
+  ([s sep]
+   (if (nil? s) ""
+     (as-> s s
+       (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)
+       (string/replace s #"[\P{ASCII}]+" "")
+       (string/lower-case s)
+       (string/trim s)
+       (string/split s #"[\p{Space}\p{Punct}]+")
+       (filter seq s)
+       (string/join sep s)))))
+
 (defn- add-card-fields
   "Add additional fields to the card documents"
   [set-map c]
@@ -211,7 +218,7 @@
              :cycle_code (:cycle_code s)
              :rotated (:rotated s)
              :image_url (get-uri c s)
-             :normalizedtitle (string/lower-case (deaccent (:title c)))))))
+             :normalizedtitle (slugify (:title c))))))
 
 (defn fetch-data
   "Read NRDB json data. Modify function is mapped to all elements in the data collection."
@@ -275,15 +282,22 @@
                           (partial add-card-fields sets)
                           (fn [c d] true))
         cards-replaced (->> cards
-                         vals
-                         (group-by :title)
-                         (filter (fn [[k v]] (>= (count v) 2)))
-                         vals
-                         (map (fn [[c1 c2]] [(:title c1)
-                                             (if (:rotated c1) (:code c1) (:code c2))
-                                             (if (:rotated c1) (:code c2) (:code c1))]))
-                         (reduce rotate-cards cards))]
-    (spit "data/cards.edn" (vals cards-replaced))
+                            vals
+                            (group-by :title)
+                            (filter (fn [[k v]] (>= (count v) 2)))
+                            vals
+                            (map (fn [[c1 c2]] [(:title c1)
+                                                (if (:rotated c1) (:code c1) (:code c2))
+                                                (if (:rotated c1) (:code c2) (:code c1))]))
+                            (reduce rotate-cards cards))]
+    (doseq [card (vals cards-replaced)]
+      (let [file-name (str "data/cards/" (:normalizedtitle card) ".edn")]
+        (io/make-parents file-name)
+        ;; Below taken from https://coderwall.com/p/mxbxdq/clojure-fast-pretty-print-writes-to-file
+        (with-open [w (clojure.java.io/writer file-name)]
+          (binding [*out* w
+                    clojure.pprint/*print-right-margin* 350]
+            (clojure.pprint/write (into (sorted-map) card))))))
     (mc/remove db collection)
     (mc/insert-batch db collection (vals cards-replaced))
     (when download-images

@@ -1,8 +1,11 @@
 (ns tasks.fetch
   "NetrunnerDB import tasks"
   (:require [web.db :refer [db] :as webdb]
+            [game.utils :refer [pluralize]]
             [clojure.string :as string]
             [tasks.nrdb :refer :all]
+            [clojure.java.io :as io]
+            [jinteki.cards :refer [all-cards]]
             [tasks.altart :refer [add-art]]))
 
 (defn fetch
@@ -35,3 +38,56 @@
                          (println "Import data failed:" (.getMessage e))
                          (.printStackTrace e)))
     (finally (webdb/disconnect))))
+
+(defn open-defs []
+  (->> (io/file "src/clj/game/cards")
+       file-seq
+       (filter #(.isFile %))
+       (filter #(clojure.string/ends-with? (.getPath %) ".clj"))
+       sort
+       (map slurp)))
+
+(defn write-defs []
+  (let [header (string/join
+                 "\r\n"
+                 ["(in-ns 'game.cards.%s)"
+                  ""
+                  "(def card-definition-%s"
+                  "  {"])
+        defs (->> (open-defs)
+                  (map #(string/split % #"\r\n\r\n"))
+                  (map #(filter (fn [x] (.startsWith x "   \"")) %))
+                  flatten
+                  (map string/split-lines))
+        cards (->> @all-cards
+                   (map (fn [[k v]] {(.replace k "'" "") v}))
+                   (apply merge))]
+    (doseq [card defs
+          :let [title (-> card first string/trim read-string)
+                card (rest card)
+                all-card (cards title)
+                card-type (if (and (:subtype all-card)
+                                   (> (.indexOf (:subtype all-card) "Icebreaker") -1))
+                            "icebreakers"
+                            (case (:type all-card)
+                              "Agenda" "agendas"
+                              "Asset" "assets"
+                              "Event" "events"
+                              "Hardware" "hardware"
+                              "ICE" "ice"
+                              "Identity" "identities"
+                              "Operation" "operations"
+                              "Program" "programs"
+                              "Resource" "resources"
+                              "Upgrade" "upgrades"))
+                filename (str "src/clj/game/cards/"
+                              card-type "/"
+                              (slugify title "_") ".clj")]]
+      (io/make-parents filename)
+      (println filename)
+      (spit filename
+            (str (format header card-type (slugify title))
+                 (pr-str (:title (cards title))) "\r\n"
+                 (string/join "\r\n" card)
+                 "})\r\n"))
+      )))

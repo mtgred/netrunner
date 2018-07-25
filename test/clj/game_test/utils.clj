@@ -5,30 +5,7 @@
             [clojure.string :refer [lower-case split]]
             [jinteki.cards :refer [all-cards]]))
 
-(defn load-cards []
-  (read-string (slurp "data/cards.edn")))
-
-(defn qty [card amt]
-  (let [loaded-card (if (string? card) (@all-cards card) card)]
-    (when-not loaded-card
-      (throw (Exception. (str card " not found in @all-cards"))))
-    {:card loaded-card :qty amt}))
-
-(defn make-deck [identity deck]
-  {:identity identity
-   :deck (map #(if (string? %) (qty % 1) %) deck)})
-
-(defn default-corp
-  ([] (default-corp [(qty "Hedge Fund" 3)]))
-  ([deck] (make-deck "Custom Biotics: Engineered for Success" deck)))
-
-(defn default-runner
-  ([] (default-runner [(qty "Sure Gamble" 3)]))
-  ([deck] (make-deck "The Professor: Keeper of Knowledge" deck)))
-
-
 ;;; helper functions for prompt interaction
-
 (defn assert-prompt [state side]
   (let [prompt (-> @state side :prompt)]
     (is (first prompt) (str "Expected an open " (side-str side) " prompt"))

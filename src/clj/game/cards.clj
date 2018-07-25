@@ -212,11 +212,12 @@
   "Load all card definitions into their own namespaces"
   ([] (load-all-cards nil))
   ([path]
-   (doall (pmap load-file
+   (doall (map load-file
                 (->> (io/file (str "src/clj/game/cards" (when path (str "/" path ".clj"))))
                      (file-seq)
                      (filter #(.isFile %))
                      (filter #(clojure.string/ends-with? (.getPath %) ".clj"))
+                     sort
                      (map str))))))
 
 (defn get-card-defs
@@ -224,7 +225,14 @@
   ([path]
    (->> (all-ns)
         (filter #(starts-with? % (str "game.cards" (when path (str "." path)))))
-        (map #(ns-resolve % 'card-definitions))
+        (map ns-publics)
+        flatten
+        (apply merge)
+        (filter #(if path
+                   (and (starts-with? (-> % val meta :ns str) (str "game.cards." path))
+                        (starts-with? (key %) "card-definition-"))
+                   (starts-with? (key %) "card-definition-")))
+        vals
         (map var-get)
         (apply merge))))
 
