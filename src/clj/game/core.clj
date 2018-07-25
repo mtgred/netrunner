@@ -2,12 +2,12 @@
   (:require [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clj-time.core :as t]
-            [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
+            [clojure.string :as string :refer [split-lines split join lower-case includes? starts-with?]]
             [clojure.java.io :as io]
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side]]
-            [jinteki.cards :refer [all-cards]]
+            [jinteki.cards :refer [all-cards card-definitions]]
             [game.quotes :as quotes]))
 
 (load "core/events")    ; triggering of events

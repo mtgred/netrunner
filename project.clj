@@ -48,6 +48,7 @@
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
+            "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "add-art" ["run" "-m" "tasks.altart/add-art"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]}
@@ -102,6 +103,6 @@
              :css-dirs ["resources/public/css"]}
 
   ;; Set timeout to 2 min to allow for full compilation after a clean.
-  :repl-options {:timeout 120000
+  :repl-options {:timeout 180000
                  :init-ns web.core
                  :init (do (use 'web.lobby) (-main "dev"))})

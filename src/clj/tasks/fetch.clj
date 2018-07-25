@@ -47,6 +47,23 @@
        sort
        (map slurp)))
 
+(defn type->dir
+  [card]
+  (case (:type card)
+    "Agenda" "agendas"
+    "Asset" "assets"
+    "Event" "events"
+    "Hardware" "hardware"
+    "ICE" "ice"
+    "Identity" "identities"
+    "Operation" "operations"
+    "Program" (if (and (:subtype card)
+                       (> (.indexOf (:subtype card) "Icebreaker") -1))
+                "icebreakers"
+                "programs")
+    "Resource" "resources"
+    "Upgrade" "upgrades"))
+
 (defn write-defs []
   (let [header (string/join
                  "\r\n"
@@ -66,20 +83,7 @@
           :let [title (-> card first string/trim read-string)
                 card (rest card)
                 all-card (cards title)
-                card-type (if (and (:subtype all-card)
-                                   (> (.indexOf (:subtype all-card) "Icebreaker") -1))
-                            "icebreakers"
-                            (case (:type all-card)
-                              "Agenda" "agendas"
-                              "Asset" "assets"
-                              "Event" "events"
-                              "Hardware" "hardware"
-                              "ICE" "ice"
-                              "Identity" "identities"
-                              "Operation" "operations"
-                              "Program" "programs"
-                              "Resource" "resources"
-                              "Upgrade" "upgrades"))
+                card-type (type->dir all-card)
                 filename (str "src/clj/game/cards/"
                               card-type "/"
                               (slugify title "_") ".clj")]]
@@ -89,5 +93,4 @@
             (str (format header card-type (slugify title))
                  (pr-str (:title (cards title))) "\r\n"
                  (string/join "\r\n" card)
-                 "})\r\n"))
-      )))
+                 "})\r\n")))))

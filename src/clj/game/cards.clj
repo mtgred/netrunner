@@ -209,25 +209,32 @@
 
 ;; Load all card definitions into the current namespace.
 (defn load-all-cards
-  "Load all card definitions into their own namespaces"
   ([] (load-all-cards nil))
   ([path]
-   (doall (map load-file
-                (->> (io/file (str "src/clj/game/cards" (when path (str "/" path ".clj"))))
-                     (file-seq)
-                     (filter #(.isFile %))
-                     (filter #(clojure.string/ends-with? (.getPath %) ".clj"))
-                     sort
-                     (map str))))))
+   (let [base "src/clj/game/cards"]
+     (doall (pmap load-file (->> (io/file base)
+                                 .listFiles
+                                 (filter #(string/ends-with? (.getPath %) ".clj"))
+                                 (map str))))
+     (doall
+       (pmap load-file
+             (->> (io/file base)
+                  file-seq
+                  (filter #(and (.isFile %)
+                                (if path
+                                  (string/starts-with? (.getPath %) (join "\\" (split (str base "/" path) #"/")))
+                                  true)
+                                (string/ends-with? (.getPath %) ".clj")))
+                  sort
+                  (map str)))))))
 
 (defn get-card-defs
   ([] (get-card-defs nil))
   ([path]
    (->> (all-ns)
         (filter #(starts-with? % (str "game.cards" (when path (str "." path)))))
-        (map ns-publics)
-        flatten
-        (apply merge)
+        (mapcat ns-publics)
+        (into {})
         (filter #(if path
                    (and (starts-with? (-> % val meta :ns str) (str "game.cards." path))
                         (starts-with? (key %) "card-definition-"))
@@ -236,16 +243,10 @@
         (map var-get)
         (apply merge))))
 
-(def cards {})
-
 (defn reset-card-defs
   "Performs any once only initialization that should be performed on startup"
   ([] (reset-card-defs nil))
   ([path]
-   (let [cards-var #'game.core/cards]
-     (alter-var-root cards-var
-                     (constantly
-                       (merge cards
-                              (do (load-all-cards path)
-                                  (get-card-defs path))))))
+   (load-all-cards path)
+   (swap! card-definitions merge (get-card-defs path))
    'loaded))

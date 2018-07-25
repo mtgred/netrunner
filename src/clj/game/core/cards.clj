@@ -10,7 +10,7 @@
   "Retrieves a card's abilities definition map."
   [card]
   (when-let [title (:title card)]
-    (cards title)))
+    (get @card-definitions title)))
 
 (defn find-cid
   "Return a card with specific :cid from given sequence"
