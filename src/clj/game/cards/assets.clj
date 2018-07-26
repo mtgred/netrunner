@@ -534,7 +534,8 @@
                  :choices {:req #(and (is-type? % "Agenda")
                                       (or (in-hand? %)
                                           (in-discard? %)))}
-                 :msg (msg "reveal " (:title target)
+                 :label "Reveal an agenda from HQ or Archives"
+                 :msg (msg "reveal " (:title target) " from " (zone->name (:zone target))
                            (let [target-agenda-points (get-agenda-points state :corp target)]
                              (when (pos? target-agenda-points)
                                (str ", gain " target-agenda-points " [Credits], ")))
