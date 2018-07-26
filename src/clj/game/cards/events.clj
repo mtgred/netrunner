@@ -22,13 +22,14 @@
           cdef)))
 
 (defn- cutlery
-  [subtype]
+  [_subtype]
   ;; Subtype does nothing currently, but might be used if trashing is properly implemented
   {:implementation "Ice trash is manual, always enables Reprisals"
-   :prompt "Choose a server"
-   :choices (req runnable-servers)
-   :effect (req (run state :runner target nil card)
-                (swap! state assoc-in [:runner :register :trashed-card] true))})
+   :async true
+   :effect (req (continue-ability state :runner
+                                  (run-event nil nil nil
+                                             (req (swap! state assoc-in [:runner :register :trashed-card] true)))
+                                  card nil))})
 
 (def card-definitions
   {"Account Siphon"
