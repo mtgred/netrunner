@@ -1,6 +1,6 @@
 (in-ns 'game.cards.identities)
 
-(def card-definition-edward-kim-humanitys-hammer
+(def card-definition-edward-kim-humanity-s-hammer
   {"Edward Kim: Humanity's Hammer"
    {:events {:access {:once :per-turn
                       :req (req (and (is-type? target "Operation")

@@ -1,6 +1,6 @@
 (in-ns 'game.cards.events)
 
-(def card-definition-ive-had-worse
+(def card-definition-i-ve-had-worse
   {"I've Had Worse"
    {:effect (effect (draw 3))
     :trash-effect {:when-inactive true

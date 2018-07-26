@@ -1,6 +1,6 @@
 (in-ns 'game.cards.events)
 
-(def card-definition-the-makers-eye
+(def card-definition-the-maker-s-eye
   {"The Maker's Eye"
    {:req (req rd-runnable)
     :effect (effect (run :rd nil card)

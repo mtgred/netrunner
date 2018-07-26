@@ -1,6 +1,6 @@
 (in-ns 'game.cards.resources)
 
-(def card-definition-aesops-pawnshop
+(def card-definition-aesop-s-pawnshop
   {"Aesop's Pawnshop"
    {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
     :abilities [{:effect (req (resolve-ability

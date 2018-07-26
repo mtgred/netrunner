@@ -1,6 +1,6 @@
 (in-ns 'game.cards.identities)
 
-(def card-definition-harishchandra-ent-where-youre-the-star
+(def card-definition-harishchandra-ent-where-you-re-the-star
   {"Harishchandra Ent.: Where You're the Star"
    {:effect (req (when tagged
                    (reveal-hand state :runner))

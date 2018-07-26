@@ -1,6 +1,6 @@
 (in-ns 'game.cards.operations)
 
-(def card-definition-an-offer-you-cant-refuse
+(def card-definition-an-offer-you-can-t-refuse
   {"An Offer You Can't Refuse"
    {:async true
     :prompt "Choose a server" :choices ["Archives" "R&D" "HQ"]

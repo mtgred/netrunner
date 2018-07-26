@@ -1,6 +1,6 @@
 (in-ns 'game.cards.hardware)
 
-(def card-definition-minds-eye
+(def card-definition-mind-s-eye
   {"Mind's Eye"
    {:in-play [:memory 1]
     :implementation "Power counters added automatically"

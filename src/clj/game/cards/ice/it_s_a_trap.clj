@@ -1,6 +1,6 @@
 (in-ns 'game.cards.ice)
 
-(def card-definition-its-a-trap
+(def card-definition-it-s-a-trap
   {"It's a Trap!"
    {:expose {:msg "do 2 net damage"
              :async true

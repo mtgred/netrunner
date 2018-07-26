@@ -1,6 +1,6 @@
 (in-ns 'game.cards.icebreakers)
 
-(def card-definition-nanotk
+(def card-definition-na-not-k
   {"Na'Not'K"
    (auto-icebreaker ["Sentry"]
                     {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))

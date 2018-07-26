@@ -208,6 +208,13 @@
                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
 ;; Load all card definitions into the current namespace.
+(defn load-base-cards []
+  (let [base "src/clj/game/cards"]
+    (doall (pmap load-file (->> (io/file base)
+                                .listFiles
+                                (filter #(string/ends-with? (.getPath %) ".clj"))
+                                (map str))))))
+
 (defn load-all-cards
   ([] (load-all-cards nil))
   ([path]

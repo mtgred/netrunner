@@ -1,6 +1,6 @@
 (in-ns 'game.cards.events)
 
-(def card-definition-dianas-hunt
+(def card-definition-diana-s-hunt
   {"Diana's Hunt"
    {:implementation "One program per encounter not enforced"
     :prompt "Choose a server"

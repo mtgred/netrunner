@@ -10,7 +10,21 @@
   "Retrieves a card's abilities definition map."
   [card]
   (when-let [title (:title card)]
-    (get @card-definitions title)))
+    (if (contains? @card-definitions title)
+      (get @card-definitions title)
+      (let [card-type (type->dir card)
+            filename (slugify title "_")
+            classname (symbol (format "game.cards.%s" card-type))
+            cdef (symbol (format "card-definition-%s" (:normalizedtitle card)))]
+        (try (load-file (format "src/clj/game/cards/%s/%s.clj" card-type filename))
+             (require classname)
+             (let [c (var-get (ns-resolve classname cdef))]
+               (swap! card-definitions merge c))
+             (catch java.lang.Exception e
+               ; (println (str "Tried to import " classname
+               ;               " for card " title " but failed."))
+               (swap! card-definitions assoc title {})))
+        (get @card-definitions title)))))
 
 (defn find-cid
   "Return a card with specific :cid from given sequence"

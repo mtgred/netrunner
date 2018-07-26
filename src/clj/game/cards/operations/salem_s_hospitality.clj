@@ -1,6 +1,6 @@
 (in-ns 'game.cards.operations)
 
-(def card-definition-salems-hospitality
+(def card-definition-salem-s-hospitality
   {"Salem's Hospitality"
    {:prompt "Name a Runner card"
     :choices {:card-title (req (and (card-is? target :side "Runner")
