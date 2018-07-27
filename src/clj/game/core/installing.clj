@@ -31,17 +31,17 @@
   "Deactivates a card, unregistering its events, removing certain attribute keys, and triggering
   some events."
   ([state side card] (deactivate state side card nil))
-  ([state side card keep-counter]
+  ([state side {:keys [cid disabled facedown installed memoryunits rezzed] :as card} keep-counter]
    (unregister-events state side card)
    (trigger-leave-effect state side card)
-   (when-let [mu (:memoryunits card)]
-     (when (and (:installed card)
-                (not (:facedown card)))
-       (free-mu state mu)))
-   (when (and (find-cid (:cid card) (all-active-installed state side))
-              (not (:disabled card))
-              (or (:rezzed card)
-                  (:installed card)))
+   (when (and memoryunits
+              installed
+              (not facedown))
+     (free-mu state memoryunits))
+   (when (and (find-cid cid (all-active-installed state side))
+              (not disabled)
+              (or rezzed
+                  installed))
      (when-let [in-play (:in-play (card-def card))]
        (apply lose state side in-play)))
    (dissoc-card card keep-counter)))
