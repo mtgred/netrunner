@@ -1966,6 +1966,19 @@
         (is (empty? (:hand (get-corp))) "No cards in hand")
         (is (= 2 (count (:scored (get-corp)))) "Two cards in score area")
         (is (= 4 (:agenda-point (get-corp))) "Gained 3 agenda points"))))
+  (testing "Agenda constant effects"
+    (do-game
+      (new-game (default-corp ["Lady Liberty" "Self-Destruct Chips"])
+                (default-runner))
+      (play-from-hand state :corp "Lady Liberty" "New remote")
+      (let [ll (get-content state :remote1 0)]
+        (core/rez state :corp ll)
+        (take-credits state :corp)
+        (take-credits state :runner)
+        (card-ability state :corp (refresh ll) 0)
+        (click-card state :corp (find-card "Self-Destruct Chips" (:hand (get-corp))))
+        (is (= 1 (:agenda-point (get-corp))) "Gained 1 agenda points")
+        (is (= 4 (core/hand-size state :runner)) "Runner hand size reduced by 1"))))
   (testing "Agenda events"
     (do-game
       (new-game (default-corp ["Lady Liberty" "Puppet Master"])
