@@ -11,7 +11,8 @@
             [web.stats :as stats]
             [jinteki.nav :as nav]
             [clj-time.format :as f]
-            [game.core :as core])
+            [game.core :as core]
+            [game.quotes :as quotes])
   (:gen-class :main true))
 
 (defonce server (atom nil))
@@ -54,6 +55,8 @@
 
     (reset! server (org.httpkit.server/run-server app {:port port}))
     (println "Jinteki server running in" @server-mode "mode on port" port)
-    (println "Frontend version " @frontend-version))
+    (println "Frontend version " @frontend-version)
+
+    (quotes/load-quotes!))
 
   (ws/start-ws-router!))
