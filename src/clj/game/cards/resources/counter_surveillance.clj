@@ -4,6 +4,7 @@
   {"Counter Surveillance"
    {:implementation "Does not prevent access of cards installed in the root of a server"
     :abilities [{:cost [:click 1]
+                 :label "Make a run"
                  :makes-run true
                  :prompt "Choose a server to run with Counter Surveillance"
                  :msg (msg "run " target " and trashes Counter Surveillance")

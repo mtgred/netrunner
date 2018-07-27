@@ -8,9 +8,11 @@
                    :effect (req (toast state :runner (str "Click Councilman to derez " (card-str state target {:visible true})
                                                           " that was just rezzed") "info")
                                 (toast state :corp (str "Runner has the opportunity to derez with Councilman.") "error"))}}
-    :abilities [{:prompt "Select an asset or upgrade that was just rezzed"
+    :abilities [{:label "Derez asset or upgrade"
+                 :prompt "Select an asset or upgrade that was just rezzed"
                  :choices {:req #(and (rezzed? %)
-                                      (or (is-type? % "Asset") (is-type? % "Upgrade")))}
+                                      (or (is-type? % "Asset")
+                                          (is-type? % "Upgrade")))}
                  :effect (req (let [c target
                                     creds (rez-cost state :corp c)]
                                 (when (can-pay? state side nil [:credit creds])
@@ -27,4 +29,4 @@
                                                          (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
                                                         true)))
                                                   (trash state side card {:unpreventable true}))}
-                                   card nil))))}]}})
+                                    card nil))))}]}})

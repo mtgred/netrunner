@@ -3,7 +3,10 @@
 (def card-definition-paintbrush
   {"Paintbrush"
    {:abilities [{:cost [:click 1]
-                 :choices {:req #(and (installed? %) (ice? %) (rezzed? %))}
+                 :label "Give a piece of ice a subtype"
+                 :choices {:req #(and (installed? %)
+                                      (ice? %)
+                                      (rezzed? %))}
                  :effect (req (let [ice target
                                     stypes (:subtype ice)]
                            (resolve-ability
@@ -14,9 +17,11 @@
                                          " until the end of the next run this turn")
                                :effect (effect (update! (assoc ice :subtype (combine-subtypes true stypes target)))
                                                (update-ice-strength (get-card state ice))
-                                               (register-events {:run-ends
-                                                                 {:effect (effect (update! (assoc ice :subtype stypes))
-                                                                                  (unregister-events card)
-                                                                                  (update-ice-strength (get-card state ice)))}} card))}
+                                               (register-events
+                                                 {:run-ends
+                                                  {:effect (effect (update! (assoc ice :subtype stypes))
+                                                                   (unregister-events card)
+                                                                   (update-ice-strength (get-card state ice)))}}
+                                                 card))}
                             card nil)))}]
     :events {:run-ends nil}}})

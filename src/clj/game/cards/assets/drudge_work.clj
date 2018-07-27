@@ -6,6 +6,7 @@
     :abilities [{:cost [:click 1]
                  :counter-cost [:power 1]
                  :async true
+                 :label "Reveal and gain [Credits]"
                  :choices {:req #(and (is-type? % "Agenda")
                                       (or (in-hand? %)
                                           (in-discard? %)))}

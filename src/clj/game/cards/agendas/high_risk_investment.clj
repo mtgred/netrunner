@@ -6,5 +6,6 @@
     :silent (req true)
     :abilities [{:cost [:click 1]
                  :counter-cost [:agenda 1]
+                 :label "Gain [Credits]"
                  :msg (msg "gain " (:credit runner) " [Credits]")
                  :effect (effect (gain-credits (:credit runner)))}]}})

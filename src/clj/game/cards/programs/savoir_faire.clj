@@ -3,6 +3,7 @@
 (def card-definition-savoir-faire
   {"Savoir-faire"
    {:abilities [{:cost [:credit 2]
+                 :label "Install program from grip"
                  :once :per-turn
                  :req (req (not (install-locked? state side)))
                  :msg (msg "install " (:title target))

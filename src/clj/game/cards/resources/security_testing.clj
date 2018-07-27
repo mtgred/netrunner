@@ -3,6 +3,7 @@
 (def card-definition-security-testing
   {"Security Testing"
    (let [ability {:prompt "Choose a server for Security Testing"
+                  :label "Choose a server"
                   :choices (req (conj servers "No server"))
                   :msg (msg "target " target)
                   :req (req (and (not (click-spent? :runner state))

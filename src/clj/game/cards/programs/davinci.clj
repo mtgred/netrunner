@@ -4,11 +4,14 @@
   {"DaVinci"
    {:events {:successful-run {:silent (req true)
                               :effect (effect (add-counter card :power 1))}}
-    :abilities [{:effect
+    :abilities [{:label "Install a card"
+                 :effect
                  (req (let [c card]
-                        (resolve-ability state side
+                        (resolve-ability
+                          state side
                                          {:prompt "Choose a card to install from your Grip"
-                                          :choices {:req #(and (<= (:cost %) (get-counters c :power))
+                                          :choices {:req #(and (<= (:cost %)
+                                                                   (get-counters c :power))
                                                                (#{"Hardware" "Program" "Resource"} (:type %))
                                                                (in-hand? %))}
                                           :req (req (not (install-locked? state side)))

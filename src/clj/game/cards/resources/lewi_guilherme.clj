@@ -2,7 +2,8 @@
 
 (def card-definition-lewi-guilherme
   {"Lewi Guilherme"
-   (let [ability {:once :per-turn
+   (let [ability {:label "Pay 1 [Credits]"
+                  :once :per-turn
                   :optional {:once :per-turn
                              :prompt "Pay 1 [Credits] to keep Lewi Guilherme?"
                              :yes-ability {:effect (req (if (pos? (:credit runner))
@@ -18,5 +19,5 @@
     ;; KNOWN ISSUE: :effect is not fired when Assimilator turns cards over or Dr. Lovegood re-enables it.
     :effect (effect (lose :corp :hand-size 1))
     :leave-play (effect (gain :corp :hand-size 1))
-    :abilities [(assoc-in ability [:req] (req (:runner-phase-12 @state)))]
+    :abilities [ability]
     :events {:runner-turn-begins ability}})})

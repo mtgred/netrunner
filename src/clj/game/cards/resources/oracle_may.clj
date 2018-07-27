@@ -4,6 +4,7 @@
   {"Oracle May"
    {:abilities [{:cost [:click 1]
                  :once :per-turn
+                 :label "Reveal a card"
                  :prompt "Choose card type"
                  :choices ["Event" "Hardware" "Program" "Resource"]
                  :effect (req (let [c (first (get-in @state [:runner :deck]))]

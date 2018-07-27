@@ -4,6 +4,7 @@
   {"Dr. Lovegood"
    {:flags {:runner-phase-12 (req (> (count (all-installed state :runner)) 1))}
     :abilities [{:req (req (:runner-phase-12 @state))
+                 :label "Blank installed card"
                  :prompt "Select an installed card to make its text box blank for the remainder of the turn"
                  :once :per-turn
                  :choices {:req installed?}

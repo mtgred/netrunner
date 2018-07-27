@@ -9,5 +9,6 @@
                          (installed? %))}
     :abilities [{:cost [:credit 2]
                  :req (req run)
+                 :label "Gain 4 strength"
                  :effect (effect (pump (get-card state (:host card)) 4))
-                 :msg (msg (str "pump the strength of " (get-in card [:host :title]) " by 4"))}]}})
+                 :msg (msg "pump the strength of " (get-in card [:host :title]) " by 4")}]}})

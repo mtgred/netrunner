@@ -6,5 +6,8 @@
     :choices ["Barrier" "Code Gate" "Sentry"]
     :msg (msg "choose " target)
     :effect (effect (update! (assoc card :subtype-target target)))
-    :events {:runner-turn-ends {:msg "add itself to Grip" :effect (effect (move card :hand))}}
-    :abilities [{:cost [:credit 1] :msg (msg "break 1 " (:subtype-target card) " subroutine")}]}})
+    :events {:runner-turn-ends {:msg "add itself to Grip"
+                                :effect (effect (move card :hand))}}
+    :abilities [{:cost [:credit 1]
+                 :label "Break a subroutine"
+                 :msg (msg "break 1 " (:subtype-target card) " subroutine")}]}})

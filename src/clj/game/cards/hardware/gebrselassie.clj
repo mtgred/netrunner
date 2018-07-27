@@ -2,8 +2,9 @@
 
 (def card-definition-gebrselassie
   {"Gebrselassie"
-   {:abilities [{:msg (msg "host it on an installed non-AI icebreaker")
-                 :cost [:click 1]
+   {:abilities [{:cost [:click 1]
+                 :label "Host on icebreaker"
+                 :msg "host it on an installed non-AI icebreaker"
                  :choices {:req #(and (installed? %)
                                       (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI")))}

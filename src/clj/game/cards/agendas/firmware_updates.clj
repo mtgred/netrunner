@@ -5,6 +5,7 @@
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))
     :abilities [{:counter-cost [:agenda 1]
+                 :label "Place 1 advancement token"
                  :choices {:req #(and (ice? %)
                                       (can-be-advanced? %))}
                  :req (req (pos? (get-counters card :agenda)))

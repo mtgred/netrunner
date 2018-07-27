@@ -9,6 +9,7 @@
                    :effect (req (toast state :runner "Click Nasir Meidan: Cyber Explorer to lose all credits and gain credits equal to the rez cost of the newly rezzed ice." "info"))}}
     :abilities [{:req (req (and (:run @state)
                                 (:rezzed (get-card state current-ice))))
+                 :label "Lose and gain [Credits]"
                  :effect (req (let [current-ice (get-card state current-ice)]
                                 (trigger-event state side :pre-rez-cost current-ice)
                                 (let [cost (rez-cost state side current-ice)]

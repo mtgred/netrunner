@@ -22,24 +22,22 @@
   (seq (utils/make-label ab)))
 
 (deftest displayed-abilities-require-lables
-  (doseq [[title card] @all-cards
+  (doseq [[title card] (sort-by #(tasks.fetch/type->dir (val %)) @all-cards)
           :let [card (@card-definitions title)
                 abilities (:abilities card)
                 subroutines (:subroutines card)
                 runner-abilities (:runner-abilities card)
                 corp-abilities (:corp-abilities card)]]
-    ; (testing "Abilities need labels"
-    ;   (when abilities
-    ;     (doseq [ab abilities]
-    ;       (is (make-label ab) (str title "'s ability needs a label"))))
-    ;   (when subroutines
-    ;     (doseq [sub subroutines]
-    ;       (is (make-label sub) (str title "'s subroutine needs a label"))))
-    ;   (when runner-abilities
-    ;     (doseq [ab runner-abilities]
-    ;       (is (make-label ab) (str title "'s runner-ability needs a label"))))
-    ;   (when corp-abilities
-    ;     (doseq [ab corp-abilities]
-    ;       (is (make-label ab) (str title "'s corp-ability needs a label"))))
-    ;   )
+    (when abilities
+      (doseq [[idx ab] (map-indexed vector abilities)]
+        (is (make-label ab) (str title " ability " idx " needs a label"))))
+    (when subroutines
+      (doseq [[idx sub] (map-indexed vector subroutines)]
+        (is (make-label sub) (str title " subroutine " idx " needs a label"))))
+    (when runner-abilities
+      (doseq [[idx ab] (map-indexed vector runner-abilities)]
+        (is (make-label ab) (str title " runner-ability " idx " needs a label"))))
+    (when corp-abilities
+      (doseq [[idx ab] (map-indexed vector corp-abilities)]
+        (is (make-label ab) (str title " corp-ability " idx " needs a label"))))
     ))

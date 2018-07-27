@@ -5,6 +5,7 @@
    {:flags {:corp-phase-12 (req (and (not (:disabled card))
                                      (some #(rezzed? %) (all-installed state :corp))))}
     :abilities [{:choices {:req #(:rezzed %)}
+                 :label "Return card and gain [Credits]"
                  :effect (req (trigger-event state side :pre-rez-cost target)
                               (let [cost (rez-cost state side target)]
                                 (gain-credits state side cost)

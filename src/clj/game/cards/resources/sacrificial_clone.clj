@@ -4,7 +4,8 @@
   {"Sacrificial Clone"
    {:interactions {:prevent [{:type #{:net :brain :meat}
                               :req (req true)}]}
-    :abilities [{:effect (req (doseq [c (concat (get-in runner [:rig :hardware])
+    :abilities [{:label "Prevent damage, remove tags"
+                 :effect (req (doseq [c (concat (get-in runner [:rig :hardware])
                                                 (filter #(not (has-subtype? % "Virtual"))
                                                         (get-in runner [:rig :resource]))
                                                 (:hand runner))]

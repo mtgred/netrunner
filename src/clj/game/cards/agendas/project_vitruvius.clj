@@ -5,6 +5,7 @@
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
     :abilities [{:counter-cost [:agenda 1]
+                 :label "Add card in Archives to HQ"
                  :prompt "Choose a card in Archives to add to HQ"
                  :show-discard true
                  :choices {:req #(and (in-discard? %)

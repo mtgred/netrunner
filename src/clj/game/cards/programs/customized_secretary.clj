@@ -6,10 +6,11 @@
              {:prompt "Choose a program to host on Customized Secretary"
               :choices (cons "None" cards)
               :async true
-              :effect (req (if (or (= target "None") (not (is-type? target "Program")))
+              :effect (req (if (or (= target "None")
+                                   (not (is-type? target "Program")))
                              (do (clear-wait-prompt state :corp)
                                  (shuffle! state side :deck)
-                                 (system-msg state side (str "shuffles their Stack"))
+                                 (system-msg state side "shuffles their Stack")
                                  (effect-completed state side eid))
                              (do (host state side (get-card state card) target)
                                  (system-msg state side (str "hosts " (:title target) " on Customized Secretary"))
@@ -22,6 +23,7 @@
                    (let [from (take 5 (:deck runner))]
                      (continue-ability state side (custsec-host from) card nil)))
       :abilities [{:cost [:click 1]
+                   :label "Install hosted program"
                    :prompt "Choose a program hosted on Customized Secretary to install"
                    :choices (req (cancellable (filter #(can-pay? state side nil :credit (:cost %))
                                                       (:hosted card))))

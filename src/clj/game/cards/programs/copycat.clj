@@ -4,6 +4,7 @@
   {"Copycat"
    {:abilities [{:req (req (and (:run @state)
                                 (:rezzed current-ice)))
+                 :label "Move run positions"
                  :effect (req (let [icename (:title current-ice)]
                                 (resolve-ability
                                   state side
@@ -17,4 +18,4 @@
                                                   (swap! state update-in [:run]
                                                          #(assoc % :position tgtndx :server [dest]))
                                                   (trash state side card {:cause :ability-cost})))}
-                                 card nil)))}]}})
+                                  card nil)))}]}})

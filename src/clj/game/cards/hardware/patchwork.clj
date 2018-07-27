@@ -19,13 +19,14 @@
                                 :msg (msg "trash " (:title target) " to lower the " cost-type " cost of "
                                           (:title playing) " by 2 [Credits]")
                                 :effect (effect (trash target {:unpreventable true})
-                                             (bonus-fn [:credit -2])
-                                             (update! (dissoc-in card [:special :patchwork])))
+                                                (bonus-fn [:credit -2])
+                                                (update! (dissoc-in card [:special :patchwork])))
                                 :cancel-effect (effect (effect-completed eid))}
                                card nil)))})]
      {:in-play [:memory 1]
       :implementation "Click Patchwork before playing/installing a card."
       :abilities [{:once :per-turn
+                   :label "Lower play/install cost"
                    :effect (effect (update! (assoc-in card [:special :patchwork] true))
                              (toast "Your next card played will trigger Patchwork." "info"))}]
       :events {:pre-play-instant (patchwork-discount "play" play-cost-bonus)

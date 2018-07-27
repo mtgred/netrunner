@@ -2,7 +2,8 @@
 
 (def card-definition-artist-colony
   {"Artist Colony"
-   {:abilities [{:prompt "Choose a card to install"
+   {:abilities [{:label "Install card from stack"
+                 :prompt "Choose a card to install"
                  :msg (msg "install " (:title target))
                  :req (req (not (install-locked? state side)))
                  :cost [:forfeit]

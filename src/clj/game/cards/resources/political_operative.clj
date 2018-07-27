@@ -3,7 +3,8 @@
 (def card-definition-political-operative
   {"Political Operative"
    {:req (req (some #{:hq} (:successful-run runner-reg)))
-    :abilities [{:prompt "Select a rezzed card with a trash cost"
+    :abilities [{:label "Trash rezzed corp card"
+                 :prompt "Select a rezzed card with a trash cost"
                  :choices {:req #(and (:trash %)
                                       (rezzed? %))}
                  :effect (req (let [cost (modified-trash-cost state :runner target)]

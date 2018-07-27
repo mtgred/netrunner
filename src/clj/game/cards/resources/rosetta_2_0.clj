@@ -5,8 +5,10 @@
    {:abilities [{:req (req (and (not (install-locked? state side))
                                 (some #(is-type? % "Program") (all-active-installed state :runner))))
                  :cost [:click 1]
+                 :label "Install program from stack"
                  :prompt "Choose an installed program to remove from the game"
-                 :choices {:req #(and (installed? %) (is-type? % "Program"))}
+                 :choices {:req #(and (installed? %)
+                                      (is-type? % "Program"))}
                  :effect (req (let [n (:cost target)
                                     t (:title target)]
                                 (move state side target :rfg)

@@ -2,19 +2,19 @@
 
 (def card-definition-hivemind
   {"Hivemind"
-   (let [update-programs (req (let [virus-programs (->> (all-installed state :runner)
-                                                  (filter #(and (program? %)
-                                                                (has-subtype? % "Virus")
-                                                                (not (facedown? %)))))]
-                                (doseq [p virus-programs]
-                                  (update-breaker-strength state side p))))]
+   (let [update-programs (req (doseq [p (filter #(and (has-subtype? % "Icebreaker")
+                                                      (has-subtype? % "Virus"))
+                                                (all-active-installed state :runner))]
+                                (update-breaker-strength state side p)))]
      {:data {:counter {:virus 1}}
       :effect update-programs
       :trash-effect {:effect update-programs}
-      :events {:counter-added {:req (req (= (:cid target) (:cid card)))
+      :events {:counter-added {:req (req (= (:cid target)
+                                            (:cid card)))
                                :effect update-programs}}
       :abilities [{:req (req (pos? (get-counters card :virus)))
                    :priority true
+                   :label "Move a virus counter"
                    :prompt "Move a virus counter to which card?"
                    :choices {:req #(has-subtype? % "Virus")}
                    :effect (req (let [abilities (:abilities (card-def target))
@@ -23,7 +23,7 @@
                                   (add-counter state :runner card :virus -1)
                                   (if (= (count abilities) 1)
                                     (do (swap! state update-in [side :prompt] rest) ; remove the Hivemind prompt so Imp works
-                                      (resolve-ability state side (first abilities) (get-card state virus) nil))
+                                        (resolve-ability state side (first abilities) (get-card state virus) nil))
                                     (resolve-ability
                                       state side
                                       {:prompt "Choose an ability to trigger"

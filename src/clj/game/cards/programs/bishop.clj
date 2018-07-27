@@ -3,6 +3,7 @@
 (def card-definition-bishop
   {"Bishop"
    {:abilities [{:cost [:click 1]
+                 :label "Host on a piece of ice"
                  :effect (req (let [b (get-card state card)
                                     hosted? (ice? (:host b))
                                     remote? (is-remote? (second (:zone (:host b))))]
@@ -24,7 +25,10 @@
                                                          (not (some (fn [c] (has-subtype? c "Caïssa"))
                                                                     (:hosted %)))))}
                                   :msg (msg "host it on " (card-str state target))
-                                  :effect (effect (host target card))} card nil)))}]
+                                  :effect (effect (host target card))}
+                                 card nil)))}]
     :events {:pre-ice-strength
-             {:req (req (and (= (:cid target) (:cid (:host card))) (:rezzed target)))
+             {:req (req (and (= (:cid target)
+                                (:cid (:host card)))
+                             (:rezzed target)))
               :effect (effect (ice-strength-bonus -2 target))}}}})

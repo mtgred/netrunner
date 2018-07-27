@@ -2,9 +2,11 @@
 
 (def card-definition-tyson-observatory
   {"Tyson Observatory"
-   {:abilities [{:prompt "Choose a piece of Hardware" :msg (msg "add " (:title target) " to their Grip")
+   {:abilities [{:cost [:click 2]
+                 :label "Add hardware to grip from stack"
+                 :prompt "Choose a piece of hardware"
+                 :msg (msg "add " (:title target) " to their grip")
                  :choices (req (cancellable (filter #(is-type? % "Hardware") (:deck runner)) :sorted))
-                 :cost [:click 2]
                  :effect (effect (trigger-event :searched-stack nil)
                                  (shuffle! :deck)
                                  (move target :hand))}]}})
