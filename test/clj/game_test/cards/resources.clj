@@ -603,7 +603,10 @@
         (is (= 5 (core/available-mu state)) "+1 MU from Chaos Theory")
         ;; Trash DJ Fenris
         (trash-resource state "DJ Fenris")
-        (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
+        (is (not= chaos (-> (get-runner) :rfg last :title)) "Chaos Theory not moved to rfg")
+        (is (not= chaos (-> (get-runner) :discard last :title)) "Chaos Theory not moved to discard")
+        (is (not= chaos (-> (get-runner) :hand last :title)) "Chaos Theory not moved to hand")
+        (is (not= chaos (-> (get-runner) :identity :title)) "Chaos Theory not moved to identity")
         (is (= 1 (count (:discard (get-runner)))) "1 card in heap: DJ Fenris")
         (is (= 4 (core/available-mu state)) "+1 MU from Chaos Theory removed")
         ;; Recover DJ Fenris
@@ -611,11 +614,13 @@
         (core/gain state :runner :credit 3)
         ;; Re-play DJ Fenris
         (play-from-hand state :runner "DJ Fenris")
-        (is (not (some #(= chaos (:title %)) (:choices (prompt-map :runner)))) "Chaos Theory isn't available anymore")
+        (is (some #(= chaos (:title %)) (:choices (prompt-map :runner))) "Chaos Theory still available")
         ;; Try moving CT to hand
-        (game.core/move state :runner (get-in (get-resource state 0) [:hosted 0]) :hand)
-        (is (= chaos (get-in (get-runner) [:rfg 0 :title])) "Chaos Theory moved to RFG")
-        (is (zero? (count (:hand (get-runner)))) "Chaos Theory _not_ moved to hand")
+        (game.core/move state :runner (-> (get-resource state 0) :hosted first) :hand)
+        (is (not= chaos (-> (get-runner) :rfg last :title)) "Chaos Theory not moved to rfg")
+        (is (not= chaos (-> (get-runner) :discard last :title)) "Chaos Theory not moved to discard")
+        (is (not= chaos (-> (get-runner) :hand last :title)) "Chaos Theory not moved to hand")
+        (is (not= chaos (-> (get-runner) :identity :title)) "Chaos Theory not moved to identity")
         (is (= 4 (core/available-mu state)) "+1 MU from Chaos Theory removed")))
     (testing "Hosting Geist"
       ;; Ensure Geist effect triggers
@@ -640,7 +645,10 @@
           (is (= (+ 1 hand-count) (count (:hand (get-runner))))
               "Drew one card with Geist when using All-nighter trash ability")
           (trash-resource state "DJ Fenris")
-          (is (= geist (get-in (get-runner) [:rfg 0 :title])) "Geist moved to RFG")
+          (is (not= geist (-> (get-runner) :rfg last :title)) "Geist not moved to rfg")
+          (is (not= geist (-> (get-runner) :discard last :title)) "Geist not moved to discard")
+          (is (not= geist (-> (get-runner) :hand last :title)) "Geist not moved to hand")
+          (is (not= geist (-> (get-runner) :identity :title)) "Geist not moved to identity")
           (is (= 2 (count (:discard (get-runner)))) "2 cards in heap: All-nighter and DJ Fenris")
           (card-ability state :runner (get-resource state 0) 0) ; Use All-nighter (again)
           (is (= (+ 1 hand-count) (count (:hand (get-runner))))
