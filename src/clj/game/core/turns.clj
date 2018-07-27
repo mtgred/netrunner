@@ -16,7 +16,10 @@
   (when-let [cdef (card-def card)]
     ;; Card is defined - hence implemented
     (if-let [impl (:implementation cdef)]
-      (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
+      (cond
+        (:recurring cdef) (str impl ". Recurring credits usage not restricted")
+        (= impl :unimplemented) nil
+        :else impl)
       (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
 
 ;;; Functions for the creation of games and the progression of turns.
@@ -132,7 +135,8 @@
 (defn reset-card
   "Resets a card back to its original state - retaining any data in the :persistent key"
   ([state side card]
-   (update! state side (merge (make-card (get @all-cards (:title card)) (:cid card)) {:persistent card}))))
+   (update! state side (merge (make-card (get @all-cards (:title card)) (:cid card)) (when-let [p (:persistent card)]
+                                                                                       {:persistent p})))))
 
 (defn create-deck
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
