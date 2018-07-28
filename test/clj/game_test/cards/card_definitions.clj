@@ -9,14 +9,6 @@
 
 (use-fixtures :once load-all-cards (partial reset-card-defs nil))
 
-; (deftest defined-cards-are-real-cards
-;   (doseq [[title card] @card-definitions]
-;     (is (@all-cards title))))
-
-; (deftest unimplemented-cards-should-still-return-something
-;   (doseq [[title card] @all-cards]
-;     (is (core/card-def card))))
-
 (defn make-label
   [ab]
   (seq (utils/make-label ab)))
@@ -39,5 +31,4 @@
         (is (make-label ab) (str title " runner-ability " idx " needs a label"))))
     (when corp-abilities
       (doseq [[idx ab] (map-indexed vector corp-abilities)]
-        (is (make-label ab) (str title " corp-ability " idx " needs a label"))))
-    ))
+        (is (make-label ab) (str title " corp-ability " idx " needs a label"))))))

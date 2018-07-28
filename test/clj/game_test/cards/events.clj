@@ -1650,6 +1650,18 @@
       (play-from-hand state :runner "Apocalypse")
       (is (not (= "Flatline" (:reason @state))) "Win condition does not report flatline"))))
 
+(deftest knifed
+  ;; Knifed - Make a run, trash a barrier if all subs broken
+  (do-game
+    (new-game (default-corp ["Ice Wall"])
+              (default-runner ["Knifed"]))
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (core/rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Knifed")
+    (click-prompt state :runner "HQ")
+    (run-successful state)))
+
 (deftest lawyer-up
   ;; Lawyer Up - Lose 2 tags and draw 3 cards
   (do-game
