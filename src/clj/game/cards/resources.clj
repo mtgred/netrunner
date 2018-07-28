@@ -975,7 +975,7 @@
 
    "Jarogniew Mercs"
    {:effect (effect (gain-tags :runner eid 1)
-                    (add-counter card :power (-> @state :runner :tag (+ 3))))
+                    (add-counter card :power (+ 3 (count-tags state))))
     :flags {:untrashable-while-resources true}
     :interactions {:prevent [{:type #{:meat}
                               :req (req true)}]}
