@@ -967,8 +967,10 @@
                          (installed? %))}
     :msg (msg "host it on " (card-str state target) ". The Runner has an additional tag")
     :effect (req (host state side (get-card state target) (assoc card :zone [:discard] :seen true))
-                 (swap! state update-in [:runner :tag :additional] inc))
+                 (swap! state update-in [:runner :tag :additional] inc)
+                 (trigger-event state :corp :runner-additional-tag-change 1))
     :leave-play (req (swap! state update-in [:runner :tag :additional] dec)
+                     (trigger-event state :corp :runner-additional-tag-change 1)
                      (system-msg state :corp "trashes MCA Informant"))}
 
    "Medical Research Fundraiser"
@@ -1760,16 +1762,11 @@
             :successful
             {:label "Give the Runner X tags"
              :async true
-             :effect (req (let [tags (count-tags state)]
-                            (if (pos? tags)
-                              (do (gain-tags state :corp eid tags)
-                                  (system-msg
-                                    state side
-                                    (str "uses Threat Level Alpha to give the Runner " tags " tags")))
-                              (do (gain-tags state :corp eid 1)
-                                  (system-msg
-                                    state side
-                                    "uses Threat Level Alpha to give the Runner a tag")))))}}}
+             :effect (req (let [tags (max 1 (count-tags state))]
+                            (do (gain-tags state :corp eid tags)
+                                (system-msg
+                                  state side
+                                  (str "uses Threat Level Alpha to give the Runner " (quantify tags "tag"))))))}}}
 
    "Too Big to Fail"
    {:req (req (< (:credit corp) 10))

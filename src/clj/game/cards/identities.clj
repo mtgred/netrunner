@@ -78,7 +78,8 @@
    "Acme Consulting: The Truth You Need"
    (letfn [(activate [state card active]
              (update! state :corp (assoc-in card [:special :acme-active] active))
-             (swap! state update-in [:runner :tag :additional] (if active inc dec)))
+             (swap! state update-in [:runner :tag :additional] (if active inc dec))
+             (trigger-event state :corp :runner-additional-tag-change (if active 1 -1)))
            (outermost? [run-position run-ices]
              (and run-position
                   (pos? run-position)
