@@ -325,7 +325,7 @@
       (is (= :waiting (-> @state :runner :prompt first :prompt-type))
           "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
-      (is (zero? (:tag (get-runner))) "Runner has 0 tags")
+      (is (zero? (core/count-tags state)) "Runner has 0 tags")
       (is (= 3 (get-counters (refresh dorm) :power))))))
 
 (deftest feedback-filter
@@ -1279,11 +1279,11 @@
     (let [nexus (get-hardware state 0)]
       (run-on state :rd)
       (card-ability state :runner nexus 0)
-      (is (zero? (:tag (get-runner))) "Runner should have no tags to start")
+      (is (zero? (core/count-tags state)) "Runner should have no tags to start")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (not (:run @state)) "Run should end from losing Security Nexus trace")
-      (is (= 1 (:tag (get-runner))) "Runner should take 1 tag from losing Security Nexus trace")
+      (is (= 1 (core/count-tags state)) "Runner should take 1 tag from losing Security Nexus trace")
       (take-credits state :runner)
       (take-credits state :corp)
       (run-on state :rd)
@@ -1291,7 +1291,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "10")
       (is (:run @state) "Run should still be going on from winning Security Nexus trace")
-      (is (= 1 (:tag (get-runner))) "Runner should still only have 1 tag"))))
+      (is (= 1 (core/count-tags state)) "Runner should still only have 1 tag"))))
 
 (deftest sifr
   ;; Sifr - Once per turn drop encountered ICE to zero strenght

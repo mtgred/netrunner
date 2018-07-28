@@ -38,7 +38,7 @@
           (play-from-hand state :corp "SEA Source")
           (click-prompt state :corp "3") ; boost trace to 6
           (click-prompt state :runner "0")
-          (is (= 1 (:tag (get-runner))) "Runner took tag from SEA Source")
+          (is (= 1 (core/count-tags state)) "Runner took tag from SEA Source")
           (is (= 7 (:credit (get-corp))))
           (core/trash-resource state :corp nil)
           (click-card state :corp "Off-Campus Apartment")

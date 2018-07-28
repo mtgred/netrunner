@@ -234,7 +234,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
-      (is (= 1 (:tag (get-runner))))
+      (is (= 1 (core/count-tags state)))
       (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
       (core/rez state :corp (get-content state :remote2 0))
       (core/gain state :runner :credit 20)
@@ -261,7 +261,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
-      (is (= 1 (:tag (get-runner))))
+      (is (= 1 (core/count-tags state)))
       (is (= 2 (:credit (get-runner))) "Runner paid 3cr to trash Bernice")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 1 meat damage"))))
 
@@ -426,14 +426,14 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 3 (:credit (get-corp))) "Trace was successful")
-      (is (zero? (:tag (get-runner))) "No tags given for run on different server")
+      (is (zero? (core/count-tags state)) "No tags given for run on different server")
       (run-successful state)
       (run-on state "Server 1")
       (card-subroutine state :corp cad 0)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (= 6 (:credit (get-corp))) "Trace was successful")
-      (is (= 1 (:tag (get-runner)))
+      (is (= 1 (core/count-tags state))
           "Runner took 1 tag given from successful trace during run on ChiLo server"))))
 
 (deftest code-replicator
@@ -617,19 +617,19 @@
     (starting-hand state :corp ["Forced Connection" "Forced Connection"])
     (play-from-hand state :corp "Forced Connection" "New remote")
     (take-credits state :corp)
-    (is (zero? (:tag (get-runner))) "Runner starts with 0 tags")
+    (is (zero? (core/count-tags state)) "Runner starts with 0 tags")
     (run-empty-server state :remote1)
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
-    (is (= 2 (:tag (get-runner))) "Runner took two tags")
+    (is (= 2 (core/count-tags state)) "Runner took two tags")
     (run-empty-server state "Archives")
-    (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when accessed from Archives")
+    (is (= 2 (core/count-tags state)) "Runner doesn't take tags when accessed from Archives")
     (run-empty-server state "HQ")
     (click-prompt state :corp "0")
     (click-prompt state :runner "3")
     (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash
-    (is (= 2 (:tag (get-runner))) "Runner doesn't take tags when trace won")))
+    (is (= 2 (core/count-tags state)) "Runner doesn't take tags when trace won")))
 
 (deftest georgia-emelyov
   ;; Georgia Emelyov
@@ -823,7 +823,7 @@
       (core/gain state :runner :tag 2)
       (card-ability state :corp keeg 0)
       (click-card state :corp (get-program state 0))
-      (is (= 1 (:tag (get-runner))) "1 tag removed")
+      (is (= 1 (core/count-tags state)) "1 tag removed")
       (is (= 1 (count (:discard (get-corp)))) "Keegan trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder trashed"))))
 
@@ -1271,15 +1271,15 @@
         (run-on state "Server 1")
         (core/rez state :corp om)
         (run-successful state)
-        (is (zero? (:tag (get-runner))) "Runner starts with no tags")
+        (is (zero? (core/count-tags state)) "Runner starts with no tags")
         (click-card state :runner rh)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
         (click-prompt state :corp "Yes")
-        (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+        (is (= 1 (core/count-tags state)) "Runner takes a tag")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
         (click-prompt state :corp "Yes")
-        (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
+        (is (= 2 (core/count-tags state)) "Runner takes a tag"))))
   (testing "Effect persists after trash"
     (do-game
       (new-game (default-corp ["Overseer Matrix" (qty "Red Herrings" 3)])
@@ -1292,15 +1292,15 @@
         (run-on state "Server 1")
         (core/rez state :corp om)
         (run-successful state)
-        (is (zero? (:tag (get-runner))) "Runner starts with no tags")
+        (is (zero? (core/count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
         (click-prompt state :corp "Yes")
-        (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+        (is (= 1 (core/count-tags state)) "Runner takes a tag")
         (click-card state :runner rh)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
         (click-prompt state :corp "Yes")
-        (is (= 2 (:tag (get-runner))) "Runner takes a tag"))))
+        (is (= 2 (core/count-tags state)) "Runner takes a tag"))))
   (testing "Effect ends after current run"
     (do-game
       (new-game (default-corp ["Overseer Matrix" (qty "Red Herrings" 3)])
@@ -1313,19 +1313,19 @@
         (run-on state "Server 1")
         (core/rez state :corp om)
         (run-successful state)
-        (is (zero? (:tag (get-runner))) "Runner starts with no tags")
+        (is (zero? (core/count-tags state)) "Runner starts with no tags")
         (click-card state :runner om)
         (click-prompt state :runner "Pay 2 [Credits] to trash")
         (click-prompt state :corp "Yes")
-        (is (= 1 (:tag (get-runner))) "Runner takes a tag")
+        (is (= 1 (core/count-tags state)) "Runner takes a tag")
         (click-card state :runner rh)
         (click-prompt state :runner "No action")
-        (is (= 1 (:tag (get-runner))) "Runner doesn't take a tag")
+        (is (= 1 (core/count-tags state)) "Runner doesn't take a tag")
         (run-on state "Server 1")
         (run-successful state)
         (click-prompt state :runner "Pay 1 [Credits] to trash")
         (is (empty? (:prompt (get-corp))) "No prompt for Overseer Matrix")
-        (is (= 1 (:tag (get-runner))) "Runner doesn't take a tag")))))
+        (is (= 1 (core/count-tags state)) "Runner doesn't take a tag")))))
 
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
@@ -1362,7 +1362,7 @@
       (let [pre-creds (:credit (get-corp))]
         (click-prompt state :corp "Yes")
         (is (= (- pre-creds 2) (:credit (get-corp))) "Pay 2 [Credits] to pay for Prisec"))
-      (is (= 1 (:tag (get-runner))) "Give runner 1 tag")
+      (is (= 1 (core/count-tags state)) "Give runner 1 tag")
       (is (= 1 (count (:discard (get-runner)))) "Prisec does 1 damage")
       ;; Runner trashes Prisec
       (click-prompt state :runner "Pay 3 [Credits] to trash")
