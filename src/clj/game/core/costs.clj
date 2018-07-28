@@ -18,6 +18,10 @@
     (#{:hand-size :memory} attr)
     (deduct state side [attr {:mod value}])
 
+    ;; default case for `:tag` is `:base`
+    (#{:tag} attr)
+    (deduct state side [attr {:base value}])
+
     :else
     (do (swap! state update-in [side attr] (if (= attr :agenda-point)
                                              ;; Agenda points may be negative
@@ -233,6 +237,10 @@
       ;; Default cases for the types that expect a map
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})
+
+      ;; Default case for tag is `:base`
+      (#{:tag} type)
+      (gain state side type {:base amount})
 
       ;; Else assume amount is a number and try to increment type by it.
       :else

@@ -49,9 +49,7 @@
             'hq-runnable '(not (:hq (get-in runner [:register :cannot-run-on-server])))
             'rd-runnable '(not (:rd (get-in runner [:register :cannot-run-on-server])))
             'archives-runnable '(not (:archives (get-in runner [:register :cannot-run-on-server])))
-            'tagged '(or (pos? (:tagged runner))
-                         (pos? (:tag runner))
-                         (pos? (:additional-tag runner)))
+            'tagged '(is-tagged? state)
             'has-bad-pub '(or (pos? (:bad-publicity corp)) (pos? (:has-bad-pub corp)))
             'this-server '(let [s (-> card :zone rest butlast)
                                 r (:server run)]
@@ -75,7 +73,7 @@
                             (when (and (pos? run-pos) (<= run-pos (count (:ices run-server))))
                               (nth (:ices run-server) (dec run-pos))))
             'target '(first targets)
-            'tagged '(or (pos? (:tagged runner)) (pos? (:tag runner)))]
+            'tagged '(is-tagged? state)]
        (str ~@expr))))
 
 (defmacro wait-for

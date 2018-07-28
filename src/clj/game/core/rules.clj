@@ -277,10 +277,12 @@
   [state side n]
   (swap! state update-in [:runner :tag-remove-bonus] (fnil #(+ % n) 0)))
 
-(defn resolve-tag [state side eid n args]
+(defn resolve-tag
+  "Resolve runner gain tags. Always gives `:base` tags."
+  [state side eid n _]
   (trigger-event state side :pre-resolve-tag n)
   (if (pos? n)
-    (do (gain state :runner :tag n)
+    (do (gain state :runner :tag {:base n})
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
         (trigger-event-sync state side eid :runner-gain-tag n))
     (effect-completed state side eid)))
@@ -317,13 +319,14 @@
        (resolve-tag state side eid n args)))))
 
 (defn lose-tags
+  "Always removes `:base` tags"
   ([state side n] (lose-tags state side (make-eid state) n))
   ([state side eid n]
    (if (= n :all)
      (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0 0) (get-in @state [:runner :tag]))
-         (swap! state assoc-in [:runner :tag] 0))
+         (swap! state assoc-in [:runner :tag :base] 0))
      (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
-         (deduct state :runner [:tag n])))
+         (deduct state :runner [:tag {:base n}])))
    (trigger-event-sync state side eid :runner-lose-tag n side)))
 
 

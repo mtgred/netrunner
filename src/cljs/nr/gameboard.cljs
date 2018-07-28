@@ -1030,7 +1030,7 @@
   (let [me? (= (:side @game-state) :runner)]
     (fn [runner]
       (let [{:keys [user click credit run-credit memory link tag
-                    brain-damage agenda-point tagged hand-size active]} @runner]
+                    brain-damage agenda-point hand-size active]} @runner]
         [:div.panel.blue-shade.stats {:class (when active "active-player")}
          [:h4.ellipsis [avatar user {:opts {:size 22}}] (:username user)]
          [:div (str click " Click" (if (not= click 1) "s" ""))
@@ -1049,8 +1049,12 @@
          [:div (str agenda-point " Agenda Point"
                     (when (not= agenda-point 1) "s"))
           (when me? (controls :agenda-point))]
-         [:div (str tag " Tag" (if (not= tag 1) "s" ""))
-          (when (or (pos? tag) (pos? tagged)) [:div.warning "!"]) (when me? (controls :tag))]
+         (let [{:keys [base additional is-tagged]} tag
+               tag-count (+ base additional)
+               show-tagged (or (pos? tag-count) (pos? is-tagged))]
+           [:div (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= tag-count 1) "s" ""))
+            (when show-tagged [:div.warning "!"])
+            (when me? (controls :tag))])
          [:div (str brain-damage " Brain Damage")
           (when me? (controls :brain-damage))]
          (let [{:keys [base mod]} hand-size]
