@@ -19,12 +19,6 @@
     (println "Loaded quote files")
     (reset! identity-quotes (merge quotes-corp quotes-runner))))
 
-(hawk/watch! [{:paths [quotes-corp-filename
-                       quotes-runner-filename]
-               :handler (fn [ctx e]
-                          (when (= :create (:kind e))
-                            (load-quotes!)))}])
-
 (defn- choose-and-repeat [options qty]
   (when (not-empty options)
     (repeat qty (first (shuffle options)))))

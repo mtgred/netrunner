@@ -12,7 +12,8 @@
             [jinteki.nav :as nav]
             [clj-time.format :as f]
             [game.core :as core]
-            [game.quotes :as quotes])
+            [game.quotes :as quotes]
+            [hawk.core :as hawk])
   (:gen-class :main true))
 
 (defonce server (atom nil))
@@ -57,6 +58,12 @@
     (println "Jinteki server running in" @server-mode "mode on port" port)
     (println "Frontend version " @frontend-version)
 
+    ;; Set up the watch on quotes files, and load them once.
+    (hawk/watch! [{:paths   [quotes/quotes-corp-filename
+                             quotes/quotes-runner-filename]
+                   :handler (fn [ctx e]
+                              (when (= :create (:kind e))
+                                (quotes/load-quotes!)))}])
     (quotes/load-quotes!))
 
   (ws/start-ws-router!))
