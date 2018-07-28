@@ -885,8 +885,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Divide and Conquer")
       (run-successful state)
-      (click-prompt state :runner "No action")
       (click-prompt state :runner "Steal")
+      (click-prompt state :runner "No action")
       (is (= 4 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 in R&D, and 1 in HQ")))
   (testing "with The Turning Wheel counters"
     (do-game
@@ -904,14 +904,15 @@
         (card-ability state :runner ttw 0)
         (card-ability state :runner ttw 0)
         (run-successful state)
-        ;; R&D
-        (dotimes [_ 3]
-          (click-prompt state :runner "Card from deck")
-          (click-prompt state :runner "No action"))
         ;; HQ
         (dotimes [_ 3]
           (click-prompt state :runner "Card from hand")
           (click-prompt state :runner (-> (prompt-map :runner) :choices first)))
+        ;; R&D
+        (dotimes [_ 3]
+          (click-prompt state :runner "Card from deck")
+          (click-prompt state :runner "No action"))
+
         (is (empty? (:prompt (get-runner))) "No prompts after all accesses are complete")
         (is (= 2 (-> (get-runner) :register :last-run :access-bonus)) "The Turning Wheel should provide 2 additional accesses")
         (is (= 8 (-> (get-runner) :register :last-run core/total-cards-accessed)) "Runner should access 2 cards in Archives, 1 + 2 in R&D, and 1 + 2 in HQ")))))
