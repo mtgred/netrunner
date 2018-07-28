@@ -603,7 +603,7 @@
           corp-creds (:credit (get-corp))]
       (core/rez state :corp hydra)
       (is (= (- corp-creds 10) (:credit (get-corp))) "Cost 10 credits to rez Hydra")
-      (is (not (core/is-tagged? @state)) "Runner is not tagged approaching Hydra")
+      (is (not (core/is-tagged? state)) "Runner is not tagged approaching Hydra")
 
       (testing "Hydra subroutines give tags if Runner is not tagged"
         (doseq [n (range 3)]
@@ -614,7 +614,7 @@
       (testing "Hydra subroutines do their effect if the Runner is tagged"
         ;; Gain 1 tag to turn on main effect of subroutines
         (core/gain state :runner :tag 1)
-        (is (core/is-tagged? @state) "Runner is tagged")
+        (is (core/is-tagged? state) "Runner is tagged")
 
         (is (= 3 (count (:hand (get-runner)))) "3 cards in Runner grip before Hydra damage")
         (card-subroutine state :corp hydra 0)

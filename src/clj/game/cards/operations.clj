@@ -1760,7 +1760,7 @@
             :successful
             {:label "Give the Runner X tags"
              :async true
-             :effect (req (let [tags (-> @state :runner :tag)]
+             :effect (req (let [tags (count-tags state)]
                             (if (pos? tags)
                               (do (gain-tags state :corp eid tags)
                                   (system-msg

@@ -85,11 +85,11 @@
       (play-from-hand state :corp "Vanilla" "Archives")
       (take-credits state :corp)
       (run-on state :archives)
-      (is (not (core/is-tagged? @state)) "Runner does not encounter an unrezzed ice")
+      (is (not (core/is-tagged? state)) "Runner does not encounter an unrezzed ice")
       (core/rez state :corp (get-ice state :archives 0))
-      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
       (run-continue state)
-      (is (not (core/is-tagged? @state)) "Runner no longer encountering outermost ice")))
+      (is (not (core/is-tagged? state)) "Runner no longer encountering outermost ice")))
   (testing "Interaction with Data Ward"
     (do-game
       (new-game
@@ -99,9 +99,9 @@
       (play-from-hand state :corp "Data Ward" "Archives")
       (take-credits state :corp)
       (run-on state :archives)
-      (is (not (core/is-tagged? @state)) "Runner does not encounter an unrezzed ice")
+      (is (not (core/is-tagged? state)) "Runner does not encounter an unrezzed ice")
       (core/rez state :corp (get-ice state :archives 0))
-      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
       (card-subroutine state :corp (get-ice state :archives 0) 0)
       (is (not (:run @state)) "Run ended by Data Ward")))
   (testing "Tag gain when starting run"
@@ -113,9 +113,9 @@
       (core/rez state :corp (get-ice state :archives 0))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
       (run-continue state)
-      (is (not (core/is-tagged? @state)) "Runner no longer encountering outermost ice")))
+      (is (not (core/is-tagged? state)) "Runner no longer encountering outermost ice")))
   (testing "Tag loss when derezzing ice"
     (do-game
       (new-game
@@ -125,9 +125,9 @@
       (core/rez state :corp (get-ice state :archives 0))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
       (core/derez state :corp (get-ice state :archives 0))
-      (is (not (core/is-tagged? @state)) "Runner no longer encountering the derezzed ice")))
+      (is (not (core/is-tagged? state)) "Runner no longer encountering the derezzed ice")))
   (testing "No tag on empty server"
     (do-game
       (new-game
@@ -135,7 +135,7 @@
         (default-runner))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (not (core/is-tagged? @state)) "No ice to encounter")))
+      (is (not (core/is-tagged? state)) "No ice to encounter")))
   (testing "No tag when encountering second ice"
     (do-game
       (new-game
@@ -147,9 +147,9 @@
       (core/rez state :corp (get-ice state :archives 1))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (core/is-tagged? @state) "Runner is tagged when encountering outermost ice")
+      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
       (run-continue state)
-      (is (not (core/is-tagged? @state)) "Runner is not tagged when encountering second ice"))))
+      (is (not (core/is-tagged? state)) "Runner is not tagged when encountering second ice"))))
 
 (deftest adam:-compulsive-hacker
   ;; Adam
