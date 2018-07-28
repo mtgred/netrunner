@@ -387,7 +387,7 @@
                                 (trash state side c {:unpreventable true}))
                               (damage-prevent state side :meat Integer/MAX_VALUE))}]
     :events {:runner-turn-ends
-             {:req (req (pos? (get-in runner [:tag :base] 0)))
+             {:req (req (pos? (count-tags state)))
               :msg "force the Corp to initiate a trace"
               :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
               :trace {:base 1
@@ -1520,14 +1520,14 @@
 
    "Raymond Flint"
    {:events {:corp-gain-bad-publicity
-             {:effect (wait-for
-                        ;; manually trigger the pre-access event to alert Nerve Agent.
-                        (trigger-event-sync state side :pre-access :hq)
-                        (let [from-hq (access-count state side :hq-access)
-                              ;; see note in Gang Sign
-                              already-accessed (set (get-in @state [:corp :servers :hq :content]))
-                              ability (access-helper-hq state from-hq already-accessed)]
-                          (resolve-ability state side ability card nil)))}}
+             {:effect (req (wait-for
+                             ;; manually trigger the pre-access event to alert Nerve Agent.
+                             (trigger-event-sync state side :pre-access :hq)
+                             (let [from-hq (access-count state side :hq-access)
+                                   ;; see note in Gang Sign
+                                   already-accessed (set (get-in @state [:corp :servers :hq :content]))
+                                   ability (access-helper-hq state from-hq already-accessed)]
+                               (resolve-ability state side ability card nil)))) }}
     :abilities [{:msg "expose 1 card"
                  :label "Expose 1 installed card"
                  :choices {:req installed?}
