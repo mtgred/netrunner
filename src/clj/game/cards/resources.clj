@@ -33,6 +33,19 @@
                                    (swap! state update-in [:runner :prompt] rest)
                                    (handle-end-run state side)))))})))
 
+(defn- trash-when-tagged-contructor
+  "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
+  [name definition]
+  (let [trash-effect {:effect (req (when tagged
+                                     (trash state :runner card {:unpreventable true})
+                                     (system-msg state :runner (str "trashes " name " for being tagged"))))}
+        definition (-> definition
+                       (update :events merge {:runner-gain-tag trash-effect
+                                              :runner-is-tagged trash-effect})
+                       (assoc :reactivate trash-effect))]
+    ;; Add an effect only if there is none in the map
+    (merge trash-effect definition)))
+
 ;;; Card definitions
 (def card-definitions
   {"Aaron Marrón"
@@ -537,7 +550,9 @@
 
    "Data Leak Reversal"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-    :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))
+    :abilities [{:req (req tagged)
+                 :cost [:click 1]
+                 :effect (effect (mill :corp))
                  :msg "force the Corp to trash the top card of R&D"}]}
 
    "DDoS"
@@ -1416,10 +1431,12 @@
       :abilities [ability]})
 
    "Paparazzi"
-   {:effect (req (swap! state update-in [:runner :tagged] inc))
+   {:effect (req (swap! state update-in [:runner :tag :is-tagged] inc)
+                 (trigger-event state :runner :runner-is-tagged true))
     :events {:pre-damage {:req (req (= target :meat)) :msg "prevent all meat damage"
                           :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}}
-    :leave-play (req (swap! state update-in [:runner :tagged] dec))}
+    :leave-play (req (swap! state update-in [:runner :tag :is-tagged] dec)
+                     (trigger-event state :runner :runner-is-tagged (pos? (get-in @state [:runner :tag :is-tagged]))))}
 
    "Personal Workshop"
    (let [remove-counter
@@ -1498,13 +1515,7 @@
    {:in-play [:hand-size 2]}
 
    "Rachel Beckman"
-   {:in-play [:click 1 :click-per-turn 1]
-    :events {:runner-gain-tag {:effect (effect (trash card {:unpreventable true}))
-                               :msg (msg "trashes Rachel Beckman for being tagged")}}
-    :effect (req (when tagged
-                   (trash state :runner card {:unpreventable true})))
-    :reactivate {:effect (req (when tagged
-                                (trash state :runner card {:unpreventable true})))}}
+   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click 1 :click-per-turn 1]})
 
    "Raymond Flint"
    {:effect (req (add-watch state :raymond-flint
@@ -2125,18 +2136,12 @@
                             :effect (effect (rez-cost-bonus 1))}}}
 
    "Zona Sul Shipping"
-   {:events {:runner-turn-begins {:effect (effect (add-counter card :credit 1))}}
-    :abilities [{:cost [:click 1]
-                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
-                 :label "Take all credits"
-                 :effect (effect (gain-credits (get-counters card :credit))
-                                 (add-counter card :credit
-                                              (- (get-counters card :credit))))}]
-    :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))
-                            (fn [k ref old new]
-                              (when (is-tagged? new)
-                                (remove-watch ref (keyword (str "zona-sul-shipping" (:cid card))))
-                                (trash ref :runner card)
-                                (system-msg ref side "trashes Zona Sul Shipping for being tagged")))))
-    :reactivate {:effect (req (when tagged
-                                (trash state :runner card {:unpreventable true})))}}})
+   (trash-when-tagged-contructor
+     "Zone Sul Shipping"
+     {:events {:runner-turn-begins {:effect (effect (add-counter card :credit 1))}}
+      :abilities [{:cost [:click 1]
+                   :msg (msg "gain " (get-counters card :credit) " [Credits]")
+                   :label "Take all credits"
+                   :effect (effect (gain-credits (get-counters card :credit))
+                             (add-counter card :credit
+                                          (- (get-counters card :credit))))}]})})
