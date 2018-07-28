@@ -203,7 +203,7 @@
    "Best Defense"
    {:async true
     :req (req (not-empty (all-installed state :runner)))
-    :effect (req (let [t (:tag runner)]
+    :effect (req (let [t (count-tags state)]
                    (continue-ability state side
                      {:prompt (msg "Choose a Runner card with an install cost of " t " or less to trash")
                       :choices {:req #(and (installed? %)
@@ -271,7 +271,7 @@
                     (draw eid 2 nil))}
 
    "BOOM!"
-   {:req (req (> (:tag runner) 1))
+   {:req (req (> (count-tags state) 1))
     :async true
     :msg "do 7 meat damage"
     :effect (effect (damage eid :meat 7 {:card card}))}
@@ -799,12 +799,11 @@
                                              card nil)))}
 
    "High-Profile Target"
-   (letfn [(dmg-count [runner]
-             (* 2 (:tag runner)))]
+   (letfn [(dmg-count [state] (* 2 (count-tags state)))]
      {:req (req tagged)
       :async true
-      :msg (msg "do " (dmg-count runner) " meat damage")
-      :effect (effect (damage eid :meat (dmg-count runner) {:card card}))})
+      :msg (msg "do " (dmg-count state) " meat damage")
+      :effect (effect (damage eid :meat (dmg-count state) {:card card}))})
 
    "Housekeeping"
    {:events {:runner-install {:player :runner
@@ -942,13 +941,13 @@
                                                    :effect (effect (gain-tags eid 1))}}}}}
 
    "Market Forces"
-   (letfn [(credit-diff [runner]
-             (min (* 3 (:tag runner))
-                  (:credit runner)))]
+   (letfn [(credit-diff [state]
+             (min (* 3 (count-tags state))
+                  (get-in @state [:runner :credit])))]
      {:req (req tagged)
-      :msg (msg (let [c (credit-diff runner)]
+      :msg (msg (let [c (credit-diff state)]
                   (str "make the runner lose " c " [Credits], and gain " c " [Credits]")))
-      :effect (req (let [c (credit-diff runner)]
+      :effect (req (let [c (credit-diff state)]
                      (lose-credits state :runner c)
                      (gain-credits state :corp c)))})
 
@@ -1066,7 +1065,7 @@
 
    "Observe and Destroy"
    {:additional-cost [:tag 1]
-    :req (req (and (pos? (:tag runner))
+    :req (req (and (pos? (count-tags state))
                    (< (:credit runner) 6)))
     :async true
     :effect (effect (continue-ability
@@ -1186,7 +1185,7 @@
     :choices :credit
     :prompt "How many credits?"
     :async true
-    :effect (req (let [c (min target (:tag runner))]
+    :effect (req (let [c (min target (count-tags state))]
                    (continue-ability state side
                                      {:msg (msg "place " c " advancement tokens on "
                                                 (card-str state target))
@@ -1543,7 +1542,7 @@
 
    "Shoot the Moon"
    {:choices {:req #(and (ice? %) (not (rezzed? %)))
-              :max (req (min (:tag runner)
+              :max (req (min (count-tags state)
                              (reduce (fn [c server]
                                        (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
                                      0 (flatten (seq (:servers corp))))))}
@@ -1779,7 +1778,7 @@
                     (gain-bad-publicity :corp 1))}
 
    "Traffic Accident"
-   {:req (req (>= (:tag runner) 2))
+   {:req (req (>= (count-tags state) 2))
     :msg "do 2 meat damage"
     :async true
     :effect (effect (damage eid :meat 2 {:card card}))}

@@ -1170,7 +1170,7 @@
    "Information Overload"
    {:implementation "Encounter effect is manual"
     :abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (:tag runner 0) " subroutines")}
+                 :msg (msg "gain " (count-tags state) " subroutines")}
                 (tag-trace 1)]
     :subroutines [trash-installed]}
 
@@ -1892,14 +1892,11 @@
     :events {:pre-ice-strength nil :run-ends nil}}
 
    "Resistor"
-   {:effect (req (add-watch state (keyword (str "resistor" (:cid card)))
-                            (fn [k ref old new]
-                              (let [tags (get-in new [:runner :tag])]
-                                (when (not= (get-in old [:runner :tag]) tags)
-                                  (update! ref side (assoc (get-card ref card) :strength-bonus tags))
-                                  (update-ice-strength ref side (get-card ref card)))))))
-    :strength-bonus (req (:tag runner))
-    :leave-play (req (remove-watch state (keyword (str "resistor" (:cid card)))))
+   {:events {:runner-gain-tag {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))
+                                               (update-ice-strength (get-card state card)))}
+             :runner-lose-tag {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))
+                                               (update-ice-strength (get-card state card)))}}
+    :strength-bonus (req (count-tags state))
     :subroutines [(trace-ability 4 end-the-run)]}
 
    "Rototurret"
@@ -2203,12 +2200,12 @@
                                      (gain-tags state :corp eid 1))}]
     :subroutines [(trace-ability 4 {:label "Do 1 net damage for each Runner tag"
                                     :async true
-                                    :msg (msg "do " (:tag runner) " net damage")
-                                    :effect (effect (damage eid :net (:tag runner) {:card card}))})
+                                    :msg (msg "do " (count-tags state) " net damage")
+                                    :effect (effect (damage eid :net (count-tags state) {:card card}))})
                   (trace-ability 4 {:label "Runner loses 1 [Credits] for each tag"
                                     :async true
-                                    :msg (msg "force the Runner to lose " (:tag runner) " [Credits]")
-                                    :effect (effect (lose-credits :runner (:tag runner)))})]}
+                                    :msg (msg "force the Runner to lose " (count-tags state) " [Credits]")
+                                    :effect (effect (lose-credits :runner (count-tags state)))})]}
 
    "Thimblerig"
    {:flags {:corp-phase-12 (req (>= (count (filter ice? (all-installed state :corp))) 2))}

@@ -62,7 +62,7 @@
    "Activist Support"
    {:events
     {:corp-turn-begins {:async true
-                        :effect (req (if (zero? (:tag runner))
+                        :effect (req (if (zero? (count-tags state))
                                        (do (gain-tags state :runner eid 1)
                                            (system-msg state :runner (str "uses " (:title card) " to take 1 tag")))
                                        (effect-completed state :runner eid)))}
@@ -387,7 +387,7 @@
                                 (trash state side c {:unpreventable true}))
                               (damage-prevent state side :meat Integer/MAX_VALUE))}]
     :events {:runner-turn-ends
-             {:req (req (pos? (:tag runner)))
+             {:req (req (pos? (get-in runner [:tag :base] 0)))
               :msg "force the Corp to initiate a trace"
               :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
               :trace {:base 1
@@ -455,17 +455,18 @@
                               (register-events state side
                                                {:successful-run
                                                 {:silent (req true)
-                                                 :effect (req (if (>= (:credit runner) (:tag runner))
-                                                                ;; Can pay, do access
-                                                                (do (system-msg state side (str "uses Counter Surveillance to access up to "
-                                                                                                (:tag runner) " cards by paying "
-                                                                                                (:tag runner) " [Credit]"))
-                                                                    (pay state side card :credit (:tag runner))
-                                                                    (access-bonus state side (- (:tag runner) 1)))
-                                                                ;; Can't pay, don't access cards
-                                                                (do (system-msg state side "could not afford to use Counter Surveillance")
-                                                                    ;; Cannot access any cards
-                                                                    (max-access state side 0))))}
+                                                 :effect (req (let [tags (count-tags state)]
+                                                                (if (>= (:credit runner) tags)
+                                                                  ;; Can pay, do access
+                                                                  (do (system-msg state side (str "uses Counter Surveillance to access up to "
+                                                                                                  tags " cards by paying "
+                                                                                                  tags " [Credit]"))
+                                                                      (pay state side card :credit tags)
+                                                                      (access-bonus state side (- tags 1)))
+                                                                  ;; Can't pay, don't access cards
+                                                                  (do (system-msg state side "could not afford to use Counter Surveillance")
+                                                                      ;; Cannot access any cards
+                                                                      (max-access state side 0)))))}
                                                 :run-ends {:effect (effect (unregister-events card))}}
                                                (assoc card :zone '(:discard))))}]
     :events {:successful-run nil :run-ends nil}}
@@ -1518,25 +1519,21 @@
    (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click 1 :click-per-turn 1]})
 
    "Raymond Flint"
-   {:effect (req (add-watch state :raymond-flint
-                            (fn [k ref old new]
-                              (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
-                                (wait-for
-                                  ; manually trigger the pre-access event to alert Nerve Agent.
-                                  (trigger-event-sync ref side :pre-access :hq)
-                                  (let [from-hq (access-count state side :hq-access)]
-                                    (resolve-ability
-                                      ref side
-                                      (access-helper-hq
-                                        state from-hq
-                                        ; see note in Gang Sign
-                                        (set (get-in @state [:corp :servers :hq :content])))
-                                      card nil)))))))
-    :leave-play (req (remove-watch state :raymond-flint))
+   {:events {:corp-gain-bad-publicity
+             {:effect (wait-for
+                        ;; manually trigger the pre-access event to alert Nerve Agent.
+                        (trigger-event-sync state side :pre-access :hq)
+                        (let [from-hq (access-count state side :hq-access)
+                              ;; see note in Gang Sign
+                              already-accessed (set (get-in @state [:corp :servers :hq :content]))
+                              ability (access-helper-hq state from-hq already-accessed)]
+                          (resolve-ability state side ability card nil)))}}
     :abilities [{:msg "expose 1 card"
+                 :label "Expose 1 installed card"
                  :choices {:req installed?}
                  :async true
-                 :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
+                 :effect (effect (expose eid target)
+                                 (trash card {:cause :ability-cost}))}]}
 
    "Reclaim"
    {:abilities

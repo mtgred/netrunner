@@ -54,7 +54,7 @@
       (not (or (#{:memory :net-damage} cost-type)
                (and (= cost-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
                (and (= cost-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
-               (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
+               (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag :base]) amount) 0))
                (and (= cost-type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
                (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))

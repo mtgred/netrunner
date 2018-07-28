@@ -471,8 +471,8 @@
    {:abilities [{:label "Gain 1 [Credit] for each Runner tag"
                  :cost [:click 1]
                  :once :per-turn
-                 :msg (msg "gain " (:tag runner) " [Credits]")
-                 :effect (effect (gain-credits (:tag runner)))}]}
+                 :msg (msg "gain " (count-tags state) " [Credits]")
+                 :effect (effect (gain-credits (count-tags state)))}]}
 
    "Executive Retreat"
    {:effect (effect (add-counter card :agenda 1)
@@ -787,7 +787,7 @@
    {:interactive (req true)
     :async true
     :prompt "Use Meteor Mining?"
-    :choices (req (if (< (:tag runner) 2)
+    :choices (req (if (< (count-tags state) 2)
                     ["Gain 7 [Credits]" "No action"]
                     ["Gain 7 [Credits]" "Do 7 meat damage" "No action"]))
     :effect (req (case target

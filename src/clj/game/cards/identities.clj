@@ -275,7 +275,7 @@
    "Boris \"Syfr\" Kovac: Crafty Veteran"
    {:events {:pre-start-game {:effect draft-points-target}
              :runner-turn-begins {:req (req (and (has-most-faction? state :runner "Criminal")
-                                                 (pos? (:tag runner))))
+                                                 (pos? (get-in runner [:tag :base]))))
                                   :msg "remove 1 tag"
                                   :effect (effect (lose-tags 1))}}}
 

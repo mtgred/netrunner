@@ -967,7 +967,7 @@
                  :prompt "Choose an operation to put on top of R&D"
                  :cost [:click 1]
                  :choices (req (cancellable (filter #(is-type? % "Operation") (:deck corp)) :sorted))
-                 :req (req (pos? (get-in @state [:runner :tag])))
+                 :req (req (pos? (get-in @state [:runner :tag :base])))
                  :effect (req (lose-tags state :corp 1)
                               (let [c (move state :corp target :play-area)]
                                 (shuffle! state :corp :deck)
@@ -1938,7 +1938,7 @@
 
    "Watchdog"
    {:events {:pre-rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
-                       :effect (effect (rez-cost-bonus (- (:tag runner))))}
+                       :effect (effect (rez-cost-bonus (- (count-tags state))))}
              :rez {:req (req (and (ice? target) (not (get-in @state [:per-turn (:cid card)]))))
                               :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}}}
 

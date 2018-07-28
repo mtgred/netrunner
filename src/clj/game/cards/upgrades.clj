@@ -590,7 +590,7 @@
    "Keegan Lane"
    {:abilities [{:label "[Trash], remove a tag: Trash a program"
                  :req (req (and this-server
-                                (pos? (get-in @state [:runner :tag]))
+                                (pos? (get-in @state [:runner :tag :base]))
                                 (not (empty? (filter #(is-type? % "Program")
                                                      (all-active-installed state :runner))))))
                  :msg (msg "remove 1 tag")

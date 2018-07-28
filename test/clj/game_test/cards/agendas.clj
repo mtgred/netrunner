@@ -357,9 +357,9 @@
     (new-game (default-corp [(qty "Breaking News" 3)])
               (default-runner))
     (play-and-score state "Breaking News")
-    (is (= 2 (get-in @state [:runner :tag])) "Runner receives 2 tags from Breaking News")
+    (is (= 2 (core/count-tags state)) "Runner receives 2 tags from Breaking News")
     (take-credits state :corp)
-    (is (zero? (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
+    (is (zero? (core/count-tags state))) "Two tags removed at the end of the turn"))
 
 (deftest broad-daylight
   ;; Broad Daylight

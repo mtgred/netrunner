@@ -661,7 +661,7 @@
    "Misdirection"
    {:abilities [{:cost [:click 2]
                  :prompt "How many [Credits] to spend to remove that number of tags?"
-                 :choices {:number (req (min (:credit runner) (:tag runner)))}
+                 :choices {:number (req (min (:credit runner) (get-in runner [:tag :base])))}
                  :msg (msg "spend " target " [Credits] and remove " target " tags")
                  :effect (effect (lose-credits target)
                                  (lose-tags target))}]}

@@ -1280,10 +1280,10 @@
    "Mars for Martians"
    {:msg (msg "draw " (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
                                      (all-active-installed state :runner)))
-              " cards and gain " (:tag runner) " [Credits]")
+              " cards and gain " (count-tags state) " [Credits]")
     :effect (effect (draw (count (filter #(and (has-subtype? % "Clan") (is-type? % "Resource"))
                                          (all-active-installed state :runner))))
-                    (gain-credits (:tag runner)))}
+                    (gain-credits (count-tags state)))}
 
    "Mass Install"
    (let [mhelper (fn mi [n] {:prompt "Select a program to install"
