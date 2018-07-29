@@ -489,9 +489,9 @@
                                                (reveal-hand state :runner)
                                                (conceal-hand state :runner)))}
              ;; Triggered when gaining or losing additional tag
-             :runner-additional-tag-change {(req (if (is-tagged? state)
-                                                   (reveal-hand state :runner)
-                                                   (conceal-hand state :runner)))}}
+             :runner-additional-tag-change {:effect (req (if (is-tagged? state)
+                                                           (reveal-hand state :runner)
+                                                           (conceal-hand state :runner)))}}
     :effect (req (when (is-tagged? state)
                    (reveal-hand state :runner)))
     :leave-play (req (when (is-tagged? state)
