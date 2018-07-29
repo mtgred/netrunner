@@ -239,9 +239,9 @@
           ;; Print the message
           (print-msg state side ability card targets cost-str)
           ;; Trigger the effect
-          (do-effect state side ability c targets)
           (register-end-turn state side ability card targets)
-          (register-once state ability card))))))
+          (register-once state ability card)
+          (do-effect state side ability c targets))))))
 
 (defn- print-msg
   "Prints the ability message"

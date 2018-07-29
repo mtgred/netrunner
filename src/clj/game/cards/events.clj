@@ -516,9 +516,8 @@
                  {:end-run
                   {:async true
                    :effect
-                   (req (wait-for (do-access state side [:rd] {:no-root true})
-                                  (wait-for (do-access state side [:hq] {:no-root true})
-                                            (effect-completed state side eid))))}}
+                   (req (wait-for (do-access state side [:hq] {:no-root true})
+                                  (do-access state side eid [:rd] {:no-root true})))}}
                  card))}
 
    "Drive By"

@@ -33,7 +33,8 @@
                  [reagent "0.8.1"]
                  [cljsjs/react "16.4.1-0"]
                  [cljsjs/react-dom "16.4.1-0"]
-                 [org.clojars.frozenlock/reagent-modals "0.2.8"]]
+                 [org.clojars.frozenlock/reagent-modals "0.2.8"]
+                 [hawk "0.2.11"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.16"]
