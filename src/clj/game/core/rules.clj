@@ -352,7 +352,7 @@
     (effect-completed state side eid)))
 
 (defn gain-bad-publicity
-  "Attempts to give the runner n bad publicity, allowing for boosting/prevention effects."
+  "Attempts to give the corp n bad publicity, allowing for boosting/prevention effects."
   ([state side n] (gain-bad-publicity state side (make-eid state) n nil))
   ([state side eid n] (gain-bad-publicity state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
@@ -611,6 +611,11 @@
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
        (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
+
+(defn change-hand-size
+  "Changes a side's hand-size modification by specified amount (positive or negative)"
+  [state side n]
+  (gain state side :hand-size {:mod n}))
 
 ;; Exposing
 (defn expose-prevent

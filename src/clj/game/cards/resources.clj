@@ -1641,7 +1641,7 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
-   {:in-play [:hand-size {:mod -2}]
+   {:in-play [:hand-size -2]
     :events {:runner-turn-ends
              {:async true
               :effect (req (if (< (count (:hand runner)) (hand-size state :runner))

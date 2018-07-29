@@ -1125,17 +1125,16 @@
 
    "Itinerant Protesters"
    {:msg "reduce the Corp's maximum hand size by 1 for each bad publicity"
-    :effect (req (lose state :corp :hand-size {:mod  (:bad-publicity corp)})
+    :effect (req (change-hand-size state :corp (- (:bad-publicity corp)))
                  (add-watch state :itin
                    (fn [k ref old new]
                      (let [bpnew (get-in new [:corp :bad-publicity])
-                           bpold (get-in old [:corp :bad-publicity])]
-                       (when (> bpnew bpold)
-                         (lose state :corp :hand-size {:mod (- bpnew bpold)}))
-                       (when (< bpnew bpold)
-                         (gain state :corp :hand-size {:mod (- bpold bpnew)}))))))
+                           bpold (get-in old [:corp :bad-publicity])
+                           bpchange (- bpnew bpold)]
+                       (when-not (zero? bpchange)
+                         (change-hand-size state :corp (- bpchange)))))))
     :leave-play (req (remove-watch state :itin)
-                     (gain state :corp :hand-size {:mod (:bad-publicity corp)}))}
+                     (change-hand-size state :corp (:bad-publicity corp)))}
 
    "Knifed"
    (cutlery "Barrier")

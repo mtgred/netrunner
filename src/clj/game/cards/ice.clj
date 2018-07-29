@@ -1892,12 +1892,13 @@
     :events {:pre-ice-strength nil :run-ends nil}}
 
    "Resistor"
-   {:events {:runner-gain-tag {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))
-                                               (update-ice-strength (get-card state card)))}
-             :runner-lose-tag {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))
-                                               (update-ice-strength (get-card state card)))}}
-    :strength-bonus (req (count-tags state))
-    :subroutines [(trace-ability 4 end-the-run)]}
+   (let [resistor-effect {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))
+                                          (update-ice-strength (get-card state card)))}]
+     {:events {:runner-gain-tag resistor-effect
+               :runner-lose-tag resistor-effect
+               :runner-additional-tag-change resistor-effect}
+      :strength-bonus (req (count-tags state))
+      :subroutines [(trace-ability 4 end-the-run)]})
 
    "Rototurret"
    {:subroutines [trash-program end-the-run]}
