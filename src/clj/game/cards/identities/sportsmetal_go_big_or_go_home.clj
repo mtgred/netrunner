@@ -7,6 +7,7 @@
              :choices ["2 credits" "2 cards"]
              :msg "gain 2 [Credits] or draw 2 cards"
              :async true
+             :interactive (req true)
              :effect (req (if (= target "2 credits")
                             (do (system-msg state side "chooses to take 2 [Credits]")
                                 (gain-credits state :corp 2)

@@ -91,7 +91,7 @@
 (defn merge-defs []
   (let [header (string/join
                  "\r\n"
-                 ["\r\n;; Card definitions"
+                 ["\r\n\r\n;; Card definitions"
                   "(def card-definitions"
                   "  {"])
         footer "})\r\n"

@@ -4,7 +4,7 @@
   {"Paragon"
    {:in-play [:memory 1]
     :events {:successful-run
-             {:once :per-turn
+             {:req (req (first-event? state side :successful-run))
               :async true
               :effect (effect
                         (show-wait-prompt :corp "Runner to decide if they will use Paragon")
@@ -27,5 +27,6 @@
                                                             (clear-wait-prompt :corp))}
                                            :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
                                          card nil))}
-                            :no-ability {:effect (effect (clear-wait-prompt :corp))}}}
+                            :no-ability {:effect (effect (clear-wait-prompt :corp)
+                                                         (system-msg "does not add the top card of the Stack to the bottom"))}}}
                           card nil))}}}})
