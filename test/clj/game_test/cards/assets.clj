@@ -850,7 +850,7 @@
       (take-credits state :corp)
       (run-empty-server state :rd)
       (is (empty? (:discard (get-runner))) "Not tagged, no damage done")
-      (core/gain state :runner :tag 1)
+      (core/gain-tags state :runner 1)
       (run-on state :rd)
       (run-jack-out state)
       (is (empty? (:discard (get-runner))) "Tagged but run unsuccessful, no damage done")
@@ -1861,7 +1861,7 @@
     (take-credits state :corp)
     (take-credits state :runner)
     ;; trash 3 resources
-    (core/gain state :runner :tag 1)
+    (core/gain-tags state :runner 1)
     (core/trash-resource state :corp nil)
     (click-card state :corp (get-resource state 0))
     (is (= 1 (count (:discard (get-runner)))))
@@ -2071,7 +2071,7 @@
     (core/gain state :corp :click 10)
     (starting-hand state :corp ["Lily Lockwell" "Beanstalk Royalties"])
     (play-from-hand state :corp "Lily Lockwell" "New remote")
-    (core/gain state :runner :tag 2)
+    (core/gain-tags state :runner 2)
     (let [lily (get-content state :remote1 0)
           clicks (:click (get-corp))
           number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))
@@ -2964,7 +2964,7 @@
       (take-credits state :runner)
       (is (= 8 (:credit (get-corp))) "Gained 1 credit")
       (take-credits state :corp)
-      (core/gain state :runner :tag 1)
+      (core/gain-tags state :runner 1)
       (take-credits state :runner)
       (is (= 13 (:credit (get-corp))) "Gained 2 credits because Runner is tagged"))))
 
@@ -2973,7 +2973,7 @@
   (do-game
     (new-game (default-corp ["Reconstruction Contract" "Scorched Earth" "Pup"])
               (default-runner [(qty "Sure Gamble" 3) (qty "Imp" 3)]))
-    (core/gain state :runner :tag 1)
+    (core/gain-tags state :runner 1)
     (core/gain state :corp :credit 5)
     (starting-hand state :runner ["Sure Gamble" "Sure Gamble" "Sure Gamble" "Imp" "Imp"])
     (play-from-hand state :corp "Reconstruction Contract" "New remote")
@@ -3969,7 +3969,7 @@
           wrap (get-ice state :hq 0)]
       (take-credits state :corp)
       (is (= 4 (:credit (get-corp))))
-      (core/gain state :runner :tag 2)
+      (core/gain-tags state :runner 2)
       (run-on state "HQ")
       (core/rez state :corp wd)
       (core/rez state :corp arch)
@@ -4061,7 +4061,7 @@
     (let [judge (get-content state :remote1 0)]
       (core/rez state :corp judge)
       (is (not (:rezzed (refresh judge))) "Zealous Judge can't be rezzed until Runner is tagged")
-      (core/gain state :runner :tag 1)
+      (core/gain-tags state :runner 1)
       (core/rez state :corp judge)
       (is (:rezzed (refresh judge)) "Zealous Judge can be rezzed while the Runner is tagged")
       (card-ability state :corp judge 0)

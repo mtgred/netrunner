@@ -609,11 +609,11 @@
         (doseq [n (range 3)]
           (card-subroutine state :corp hydra n)
           (is (= 1 (core/count-tags state)) (str "Hydra sub " (inc n) " gave Runner 1 tag"))
-          (core/lose state :runner :tag 1)))
+          (core/lose-tags state :runner 1)))
 
       (testing "Hydra subroutines do their effect if the Runner is tagged"
         ;; Gain 1 tag to turn on main effect of subroutines
-        (core/gain state :runner :tag 1)
+        (core/gain-tags state :runner 1)
         (is (core/is-tagged? state) "Runner is tagged")
 
         (is (= 3 (count (:hand (get-runner)))) "3 cards in Runner grip before Hydra damage")
