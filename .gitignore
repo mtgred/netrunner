@@ -22,6 +22,7 @@ pom.xml
 /resources/public/img/cards
 /data/andb-*.json
 /data/img
+/data/cards/
 /.lein-failures
 
 config.edn
