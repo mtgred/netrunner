@@ -63,7 +63,7 @@
     (doseq [card prelude
             :let [title (-> card string/split-lines first (string/split #"\.") last)
                   filename (str "src/clj/game/cards/" title ".clj")]]
-      (spit filename (str card "\r\n")))
+      (spit filename (str card)))
     (doseq [card defs
             :let [title (-> card first string/trim read-string)
                   card (rest card)
@@ -112,6 +112,6 @@
     (doseq [[filename cards] (sort-by key card-defs)]
       (spit filename
             (str header
-                 (string/join "\r\n\r\n   " (vals (sort-by key cards)))
-                 footer "\r\n")
+                 (string/join "\r\n\r\n   " (vals (sort-by #(string/lower-case (key %)) cards)))
+                 footer)
             :append true))))
