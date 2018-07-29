@@ -1,6 +1,7 @@
 (ns game-test.cards.card-definitions
   (:require [game.core :as core]
             [game.utils :as utils]
+            [tasks.split-defs :refer [type->dir]]
             [jinteki.cards :refer [all-cards card-definitions]]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
@@ -14,7 +15,7 @@
   (seq (utils/make-label ab)))
 
 (deftest displayed-abilities-require-lables
-  (doseq [[title card] (sort-by #(tasks.fetch/type->dir (val %)) @all-cards)
+  (doseq [[title card] (sort-by #(type->dir (val %)) @all-cards)
           :let [card (@card-definitions title)
                 abilities (:abilities card)
                 subroutines (:subroutines card)
