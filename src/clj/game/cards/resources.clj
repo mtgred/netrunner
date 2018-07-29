@@ -801,18 +801,15 @@
               :interactive (req true)
               :msg (msg "access " (quantify (get-in @state [:runner :hq-access]) "card") " from HQ")
               :effect (req (wait-for
-                             ; manually trigger the pre-access event to alert Nerve Agent.
+                             ;; manually trigger the pre-access event to alert Nerve Agent.
                              (trigger-event-sync state side :pre-access :hq)
-                             (let [from-hq (access-count state side :hq-access)]
-                               (continue-ability
-                                 state :runner
-                                 (access-helper-hq
-                                   state from-hq
-                                   ; access-helper-hq uses a set to keep track of which cards have already
-                                   ; been accessed. by adding HQ root's contents to this set, we make the runner
-                                   ; unable to access those cards, as Gang Sign intends.
-                                   (set (get-in @state [:corp :servers :hq :content])))
-                                 card nil))))}}}
+                             (let [from-hq (access-count state side :hq-access)
+                                   ;; access-helper-hq uses a set to keep track of which cards have already
+                                   ;; been accessed. By adding HQ root's contents to this set, we make the runner
+                                   ;; unable to access those cards, as Gang Sign intends.
+                                   accessed-cards (set (get-in @state [:corp :servers :hq :content]))
+                                   ability (access-helper-hq state from-hq accessed-cards)]
+                               (continue-ability state :runner ability card nil))))}}}
 
    "Gbahali"
    {:abilities [{:label "[Trash]: Break the last subroutine on the encountered piece of ice"
