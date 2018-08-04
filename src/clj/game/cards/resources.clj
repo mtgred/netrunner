@@ -1490,8 +1490,8 @@
 
    "Psych Mike"
    {:events {:successful-run-ends
-             {:req (req (and (= [:rd] (:server target))
-                             (first-event? state side :successful-run-ends)))
+             {:req (req (first-event? state side :successful-run-ends #(= :rd (first (:server (first %))))))
+              :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
               :effect (effect (gain-credits :runner (total-cards-accessed target :deck)))}}}
 
    "Public Sympathy"
