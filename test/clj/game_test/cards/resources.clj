@@ -1868,7 +1868,19 @@
         (dotimes [_ 5]
           (click-prompt state :runner "Card from deck")
           (click-prompt state :runner "No action"))
-        (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))))
+        (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
+      (testing "Regression test for #3828"
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (let [credits (:credit (get-runner))]
+          (run-empty-server state "HQ")
+          (click-prompt state :runner "No action")
+          (is (= credits (:credit (get-runner))) "Psych Mike should give 0 credits for accessing 1 card from HQ"))
+        (let [credits (:credit (get-runner))]
+          (run-empty-server state "R&D")
+          (click-prompt state :runner "No action")
+          (is (= (inc credits) (:credit (get-runner)))
+              "Psych Mike should give 1 credit for second run of the turn, if first on HQ")))))
   (testing "vs upgrades"
     (do-game
       (new-game (default-corp ["Bryan Stinson" (qty "Ice Wall" 100)])
