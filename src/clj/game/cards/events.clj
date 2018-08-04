@@ -900,7 +900,7 @@
    {:flags {:psi-prevent-spend (req 2)}}
 
    "Guinea Pig"
-   {:msg "trash all cards in the grip and gain 10 [credits]"
+   {:msg "trash all cards in the grip and gain 10 [Credits]"
     :effect (req (doseq [c (:hand runner)]
                    (trash state :runner c {:unpreventable true}))
                  (gain-credits state :runner 10))}
