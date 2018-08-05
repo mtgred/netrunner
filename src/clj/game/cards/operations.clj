@@ -1426,15 +1426,16 @@
    {:req (req (pos? (:bad-publicity corp)))
     :async true
     :additional-cost [:forfeit]
-    :effect (effect (register-events (:events (card-def card))
-                                     (assoc card :zone '(:discard))))
-    :events {:corp-forfeit-agenda {:effect (req (let [bplost (min (:agendapoints (last (:rfg corp))) (:bad-publicity corp))]
-                                                  (if (not (neg? bplost)) (do (lose state side :bad-publicity bplost)
-                                                                              (gain-credits state side bplost)
-                                                                              (system-msg state side (str "uses Sacrifice to lose " bplost " bad publicity and gain " bplost " [Credits]")))
-                                                                          (system-msg state side "uses Sacrifice but gains no credits and loses no bad publicity"))
-                                                  (effect-completed state side eid)
-                                                  (unregister-events state side card)))}}}
+    :effect (req (let [bp-lost (min (:agendapoints (last (:rfg corp)))
+                                    (:bad-publicity corp))]
+                   (if (pos? bp-lost)
+                     (do (lose state side :bad-publicity bp-lost)
+                         (gain-credits state side bp-lost)
+                         (system-msg state side (str "uses Sacrifice to lose " bp-lost " bad publicity and gain " bp-lost " [Credits]")))
+                     (system-msg state side "uses Sacrifice but loses no bad publicity and gains no credits"))
+                   (effect-completed state side eid)
+                   (unregister-events state side card)))}
+   
    "Salems Hospitality"
    {:prompt "Name a Runner card"
     :choices {:card-title (req (and (card-is? target :side "Runner")
