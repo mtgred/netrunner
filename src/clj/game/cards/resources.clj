@@ -622,8 +622,8 @@
                                        (clear-wait-prompt state :corp)
                                        (effect-completed state side eid)))}]
      {:async true
-      :effect (req (show-wait-prompt state :corp "Runner to pick identity to host on DJ Fenris")
-                   (continue-ability state side fenris-effect card nil))})
+      :effect (effect (show-wait-prompt :corp "Runner to pick identity to host on DJ Fenris")
+                      (continue-ability fenris-effect card nil))})
 
    "Donut Taganes"
    {:msg "increase the play cost of operations and events by 1 [Credits]"

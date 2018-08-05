@@ -1572,24 +1572,25 @@
    "Rebirth"
    {:msg "change identities"
     :prompt "Choose an identity to become"
-    :choices (req (let [is-swappable (fn [c] (and (= "Identity" (:type c))
-                                             (= (-> @state :runner :identity :faction) (:faction c))
-                                             (not (.startsWith (:code c) "00")) ; only draft identities have this
-                                             (not (= (:title c) (-> @state :runner :identity :title)))))
+    :choices (req (let [is-draft-id? #(.startsWith (:code %) "00")
+                        runner-identity (:identity runner)
+                        is-swappable #(and (= "Identity" (:type %))
+                                           (= (:faction runner-identity) (:faction %))
+                                           (not (is-draft-id? %))
+                                           (not= (:title runner-identity) (:title %)))
                         swappable-ids (filter is-swappable (vals @all-cards))]
                     (cancellable swappable-ids :sorted)))
-
      :effect (req
-               ;; Handle Ayla - Part 1
-               (when (-> @state :runner :identity :code (= "13012"))
-                 (doseq [c (-> @state :runner :identity :hosted)]
-                   (move state side c :temp-nvram)))
+               (let [old-runner-identity (:identity runner)]
+                 ;; Handle hosted cards (Ayla) - Part 1
+                 (doseq [c (:hosted old-runner-identity)]
+                   (move state side c :temp-hosted))
 
-               (move state side (last (:discard runner)) :rfg)
-               (disable-identity state side)
+                 (move state side (last (:discard runner)) :rfg)
+                 (disable-identity state side)
 
-               ;; Manually reduce the runner's link by old link
-               (lose state :runner :link (get-in @state [:runner :identity :baselink]))
+                 ;; Manually reduce the runner's link by old link
+                 (lose state :runner :link (:baselink old-runner-identity)))
 
                ;; Move the selected ID to [:runner :identity] and set the zone
                (let [new-id (-> target :title server-card make-card (assoc :zone [:identity]))]
@@ -1597,10 +1598,10 @@
                  ;; enable-identity does not do everything that init-identity does
                  (init-identity state side new-id))
 
-               ;; Handle Ayla - Part 2
-               (when-not (empty? (-> @state :runner :temp-nvram))
-                 (doseq [c (-> @state :runner :temp-nvram)]
-                   (host state side (get-in @state [:runner :identity]) c {:facedown true}))))}
+               ;; Handle hosted cards (Ayla) - Part 2
+               (doseq [c (get-in @state [:runner :temp-hosted])]
+                 ;; Currently assumes all hosted cards are hosted facedown (Ayla)
+                 (host state side (get-in @state [:runner :identity]) c {:facedown true})))}
 
    "Reboot"
    (letfn [(install-cards [state side eid card to-install titles]
