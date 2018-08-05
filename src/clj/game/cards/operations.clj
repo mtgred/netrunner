@@ -1423,19 +1423,16 @@
                                 :effect (effect (ice-strength-bonus (get-counters card :power) target))}}}
 
    "Sacrifice"
-   {:req (req (pos? (:bad-publicity corp)))
-    :async true
+   {:req (req (and (pos? (:bad-publicity corp))
+                   (some #(pos? (:agendapoints %)) (:scored corp))))
     :additional-cost [:forfeit]
-    :effect (req (let [bp-lost (min (:agendapoints (last (:rfg corp)))
-                                    (:bad-publicity corp))]
-                   (if (pos? bp-lost)
-                     (do (lose state side :bad-publicity bp-lost)
-                         (gain-credits state side bp-lost)
-                         (system-msg state side (str "uses Sacrifice to lose " bp-lost " bad publicity and gain " bp-lost " [Credits]")))
-                     (system-msg state side "uses Sacrifice but loses no bad publicity and gains no credits"))
-                   (effect-completed state side eid)
-                   (unregister-events state side card)))}
-   
+    :effect (req (let [bp-lost (max 0 (min (:agendapoints (last (:rfg corp)))
+                                           (:bad-publicity corp)))]
+                   (system-msg state side (str "uses Sacrifice to lose " bp-lost " bad publicity and gain " bp-lost " [Credits]"))
+                   (when (pos? bp-lost)
+                     (lose state side :bad-publicity bp-lost)
+                     (gain-credits state side bp-lost))))}
+
    "Salems Hospitality"
    {:prompt "Name a Runner card"
     :choices {:card-title (req (and (card-is? target :side "Runner")

@@ -1747,17 +1747,31 @@
 
 (deftest sacrifice
   ;; Sacrifice - Remove BP for each agenda point sacrificed and gain a credit
-  (do-game
-    (new-game (default-corp ["Hostile Takeover" "Sacrifice"])
-              (default-runner))
-    (play-and-score state "Hostile Takeover")
-    (is (= 1 (:bad-publicity (get-corp))) "Hostile Takeover gives one bad publicity")
-    (let [ht (get-scored state :corp 0)
-          credits (:credit (get-corp))]
+  (testing "Basic test"
+    (do-game
+      (new-game (default-corp ["Hostile Takeover" "Sacrifice"])
+                (default-runner))
+      (play-and-score state "Hostile Takeover")
+      (is (= 1 (:bad-publicity (get-corp))) "Hostile Takeover gives one bad publicity")
+      (let [ht (get-scored state :corp 0)
+            credits (:credit (get-corp))]
+        (play-from-hand state :corp "Sacrifice")
+        (click-card state :corp ht)
+        (is (zero? (:bad-publicity (get-corp))) "Sacrifice removes one bad publicity for forfeiting Hostile Takeover")
+        (is (= (inc credits) (:credit (get-corp))) "Corp gained one credit from removing one bad pub with Sacrifice"))))
+  (testing "Play restrictions"
+    (do-game
+      (new-game (default-corp ["Standoff" "Hostile Takeover" "Sacrifice"])
+                (default-runner))
+      (play-and-score state "Standoff")
+      (core/gain state :corp :bad-publicity 1)
       (play-from-hand state :corp "Sacrifice")
-      (click-card state :corp ht)
-      (is (zero? (:bad-publicity (get-corp))) "Sacrifice removes one bad publicity for forfeiting Hostile Takeover")
-      (is (= (inc credits) (:credit (get-corp))) "Corp gained one credit from removing one bad pub with Sacrifice"))))
+      (is (= 2 (count (:hand (get-corp)))) "Can not play Sacrifice with no 1+ agenda in score area")
+      (play-and-score state "Hostile Takeover")
+      ;; Remove BP
+      (core/gain state :corp :bad-publicity -2)
+      (play-from-hand state :corp "Sacrifice")
+      (is (= 1 (count (:hand (get-corp)))) "Can not play Sacrifice with no bad publicity in score area"))))
 
 (deftest salem's-hospitality
   ;; Salem's Hospitality - Full test
