@@ -491,7 +491,7 @@
                                this-player (= player-id (:_id @user))]]
                      ^{:key player-id}
                      [:div
-                      [player-view players game]
+                      [player-view player game]
                       (when-let [{:keys [name status]} (:deck player)]
                         [:span {:class (:status status)}
                          [:span.label
