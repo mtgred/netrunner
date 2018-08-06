@@ -73,7 +73,7 @@
               [:div.blue-shade.spectators
                (for [p (:spectators game)]
                  ^{:key (get-in p [:user :_id])}
-                 [player-view {:player p :game game}])]]))))]))
+                 [player-view p game])]]))))]))
 
 (defn mount-root []
   ; navbar stuff
