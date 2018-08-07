@@ -283,9 +283,11 @@
 (defn disable-card
   "Disables a card"
   [state side card]
+  (deactivate state side card)
   (let [c (assoc card :disabled true)]
-    (deactivate state side card)
-    (update! state side c)))
+    (update! state side c))
+  (when-let [disable-effect (:disable (card-def card))]
+    (resolve-ability state side disable-effect (get-card state card) nil)))
 
 (defn enable-identity
   "Enables the side's identity"

@@ -622,7 +622,15 @@
                                        (effect-completed state side eid)))}]
      {:async true
       :effect (req (show-wait-prompt state :corp "Runner to pick identity to host on DJ Fenris")
-                   (continue-ability state side fenris-effect card nil))})
+                   (continue-ability state side fenris-effect card nil))
+      ;; Handle Dr. Lovegood / Malia
+      :disable {:effect (req (doseq [hosted (:hosted card)]
+                               (disable-card state side hosted)))}
+      :reactivate {:effect (req (doseq [hosted (:hosted card)
+                                        :let [c (dissoc hosted :disabled)]]
+                                  ;; Manually enable card to trigger `:effect`
+                                  (update! state side c)
+                                  (card-init state side c {:resolve-effect true})))}})
 
    "Donut Taganes"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
