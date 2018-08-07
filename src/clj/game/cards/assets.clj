@@ -999,7 +999,9 @@
      {:effect (effect (update! (assoc card :malia-target target))
                       (disable-card :runner target))
       :msg (msg (str "blank the text box of " (card-str state target)))
-      :choices {:req #(and (= (:side %) "Runner") (installed? %) (resource? %)
+      :choices {:req #(and (= "Runner" (:side %))
+                           (installed? %)
+                           (resource? %)
                            (not (has-subtype? % "Virtual")))}
       :leave-play re-enable-target
       :move-zone re-enable-target})
