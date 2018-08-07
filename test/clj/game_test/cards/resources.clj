@@ -676,7 +676,29 @@
           ;; Use All-nighter to trigger Geist
           (card-ability state :runner (get-resource state 0) 0)
           (is (= (+ 1 hand-count) (count (:hand (get-runner))))
-              "Drew one card with Geist when using All-nighter trash ability, not two (from Laguna Velasco District)"))))))
+              "Drew one card with Geist when using All-nighter trash ability, not two (from Laguna Velasco District)"))))
+    (testing "Disable with Malia"
+      (do-game
+        (new-game (default-corp ["Malia Z0L0K4"])
+                  (make-deck geist ["DJ Fenris"]))
+        (play-from-hand state :corp "Malia Z0L0K4" "New remote")
+        (take-credits state :corp)
+        (play-from-hand state :runner "DJ Fenris")
+        (click-prompt state :runner chaos)
+        (is (= 5 (core/available-mu state)) "Gained 1 MU from CT")
+        (let [malia (get-content state :remote1 0)
+              dj-fenris (get-resource state 0)
+              hosted-ct #(first (:hosted (refresh dj-fenris)))]
+          (core/rez state :corp malia)
+          (click-card state :corp dj-fenris)
+          (is (:disabled (refresh dj-fenris)) "DJ Fenris is disabled")
+          (is (:disabled (hosted-ct)) "CT is disabled")
+          (is (= 4 (core/available-mu state)) "Disabling DJ Fenris also disabled CT, reducing MU back to 4")
+          ;; Trash Malia to stop disable
+          (core/trash state :corp (refresh malia))
+          (is (not (:disabled (refresh dj-fenris))) "DJ Fenris is enabled")
+          (is (not (:disabled (hosted-ct))) "CT is enabled")
+          (is (= 5 (core/available-mu state)) "Enabling DJ Fenris also enabled CT, bringing MU back up to 5"))))))
 
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
