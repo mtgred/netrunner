@@ -255,7 +255,7 @@
 
 (defn get-virus-counters
   "Calculate the number of virus counters on the given card, taking Hivemind into account."
-  [state side card]
+  [state card]
   (let [hiveminds (when (is-virus-program? card)
                     (filter #(= (:title %) "Hivemind") (all-active-installed state :runner)))]
     (reduce + (map #(get-counters % :virus) (cons card hiveminds)))))

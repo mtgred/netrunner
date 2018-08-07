@@ -2071,7 +2071,7 @@
                  :effect (req (resolve-ability
                                 state side
                                 {:msg (msg "move 1 virus counter to " (:title target))
-                                 :choices {:req #(pos? (get-virus-counters state side %))}
+                                 :choices {:req #(pos? (get-virus-counters state %))}
                                  :effect (req (add-counter state side card :virus -1)
                                               (add-counter state side target :virus 1))}
                                 card nil))}]}
