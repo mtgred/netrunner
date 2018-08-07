@@ -627,10 +627,14 @@
       :disable {:effect (req (doseq [hosted (:hosted card)]
                                (disable-card state side hosted)))}
       :reactivate {:effect (req (doseq [hosted (:hosted card)
-                                        :let [c (dissoc hosted :disabled)]]
-                                  ;; Manually enable card to trigger `:effect`
+                                        :let [c (dissoc hosted :disabled)
+                                              {:keys [effect events]} (card-def c)]]
+                                  ;; Manually enable card to trigger `:effect`, similar to `enable-identity`
                                   (update! state side c)
-                                  (card-init state side c {:resolve-effect true})))}})
+                                  (when effect
+                                    (effect state side (make-eid state) c nil))
+                                  (when events
+                                    (register-events state side events c))))}})
 
    "Donut Taganes"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
