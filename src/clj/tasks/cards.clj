@@ -1,6 +1,7 @@
 (ns tasks.cards
   "Utilities for card tests"
   (:require [clojure.data :refer [diff]]
+            [clojure.java.io :as io]
             [clojure.string :as string]
             [jinteki.cards :refer [all-cards]]
             [game.utils :as utils :refer [make-cid]]
@@ -46,7 +47,6 @@
        (filter #(string/starts-with? % (str "game-test.cards." nspace)))
        (map ns-publics)
        (apply merge)
-       vals
        (filter (fn [[k v]] (contains? (meta v) :test)))
        (remove (fn [[k v]] (or (:skip-card-coverage (meta v))
                                (contains? (meta v) :private))))
@@ -71,9 +71,7 @@
 (defn- compare-tests
   [[k v] show-all show-none]
   (let [cards (get-card-by-type k)
-        tests (->> v
-                (map get-tests)
-                (flatten))
+        tests (get-tests v)
         [cards-wo tests-wo both] (diff (set cards)
                                        (set tests))]
     (swap! cards-total #(+ % (count (set cards))))
@@ -95,14 +93,17 @@
       (doseq [c (sort tests-wo)]
         (println "\t\t" c)))))
 
-(defn test-coverage
-  "Determine which cards have tests written for them. Takes an `--only <Type>` argument to limit output to a specific card type."
-  [& args]
+(defn- load-all-cards []
   (->> (load-cards)
        (map #(assoc % :cid (make-cid)))
        (map (juxt :title identity))
        (into {})
-       (reset! all-cards))
+       (reset! all-cards)))
+
+(defn test-coverage
+  "Determine which cards have tests written for them. Takes an `--only <Type>` argument to limit output to a specific card type."
+  [& args]
+  (load-all-cards)
   (let [only (some #{"--only"} args)
         card-type (first (remove #(string/starts-with? % "--") args))
         show-all (some #{"--show-all"} args)
@@ -129,5 +130,4 @@
     (println (str ansi-esc ansi-blue "Totals" ansi-reset))
     (println "\tTotal cards: " @cards-total)
     (println (format-output "\tCards with tests: " @cards-with-tests ansi-green))
-    (println (format-output "\tCards without tests: " @cards-without-tests ansi-red))
-    (System/exit 0)))
+    (println (format-output "\tCards without tests: " @cards-without-tests ansi-red))))
