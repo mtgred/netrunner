@@ -335,11 +335,11 @@
 
 (defn card-list-view [s]
   (let [selected (selected-set-name s)
-        cycle-sets (set (for [x selected :when (= (:cycle x) selected)] (:name x)))
+        selected-cycle (-> selected .toLowerCase (.replace " " "-"))
         [alt-filter cards] (cond
                              (= selected "All") [nil @all-cards]
                              (= selected "Alt Art") [nil (filter-alt-art-cards @all-cards)]
-                             (str/ends-with? (:set-filter @s) " Cycle") [nil (filter #(cycle-sets (:setname %)) @all-cards)]
+                             (str/ends-with? (:set-filter @s) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) @all-cards)]
                              (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected @all-cards)]
                              :else
                              [nil (filter #(= (:setname %) selected) @all-cards)])
@@ -390,11 +390,10 @@
                                                :type "text" :placeholder "Search cards" :value query}]])
                             [:div
                              [:h4 "Sort by"]
-                             [:select {:value (:sort-filter @s)
-                                       :on-change #(swap! s assoc :sort-field (.trim (.. % -target -value)))}
+                             [:select {:value (:sort-field @s)
+                                       :on-change #(swap! s assoc :sort-field (.. % -target -value))}
                               (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
-                                ^{:key field}
-                                [:option {:value field} field])]
+                                [:option {:value field :key field :dangerouslySetInnerHTML #js {:__html field}}])]
                              ]
 
                             (let [format-pack-name (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name))
