@@ -24,8 +24,8 @@
 (deftest aimor
   ;; Aimor - trash the top 3 cards of the stack, trash Aimor
   (do-game
-    (new-game {:corp {:deck ["Aimor"]}}
-              {:runner {:deck [(qty "Sure Gamble" 2) "Desperado" "Corroder" "Patron"]}})
+    (new-game {:corp {:deck ["Aimor"]}
+               :runner {:deck [(qty "Sure Gamble" 2) "Desperado" "Corroder" "Patron"]}})
     (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
     (play-from-hand state :corp "Aimor" "HQ")
     (is (= 1 (count (get-in @state [:corp :servers :hq :ices]))) "Aimor installed")
@@ -41,8 +41,8 @@
 (deftest archangel
   ;; Archangel - accessing from R&D does not cause run to hang.
   (do-game
-    (new-game {:corp {:deck ["Archangel" "Hedge Fund"]}}
-              {:runner {:deck ["Bank Job"]}})
+    (new-game {:corp {:deck ["Archangel" "Hedge Fund"]}
+               :runner {:deck ["Bank Job"]}})
     (starting-hand state :corp ["Hedge Fund"])
     (take-credits state :corp)
     (play-from-hand state :runner "Bank Job")
@@ -185,8 +185,8 @@
 (deftest cortex-lock
   ;; Cortex Lock - Do net damage equal to Runner's unused memory
   (do-game
-    (new-game {:corp {:deck ["Cortex Lock"]}}
-              {:runner {:deck [(qty "Corroder" 2) (qty "Sure Gamble" 3)]}})
+    (new-game {:corp {:deck ["Cortex Lock"]}
+               :runner {:deck [(qty "Corroder" 2) (qty "Sure Gamble" 3)]}})
     (play-from-hand state :corp "Cortex Lock" "HQ")
     (take-credits state :corp)
     (let [cort (get-ice state :hq 0)]
@@ -234,8 +234,8 @@
 (deftest data-hound
   ;; Data Hound - Full test
   (do-game
-    (new-game {:corp {:deck ["Data Hound"]}}
-              {:runner {:deck [(qty "Sure Gamble" 2) "Desperado"
+    (new-game {:corp {:deck ["Data Hound"]}
+               :runner {:deck [(qty "Sure Gamble" 2) "Desperado"
                                "Corroder" "Patron"]}})
     (starting-hand state :runner ["Sure Gamble"]) ;move all other cards to stack
     (play-from-hand state :corp "Data Hound" "HQ")
@@ -332,8 +332,8 @@
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
-    (new-game {:corp {:deck ["Excalibur"]}}
-              {:runner {:deck ["Stimhack"]}})
+    (new-game {:corp {:deck ["Excalibur"]}
+               :runner {:deck ["Stimhack"]}})
     (play-from-hand state :corp "Excalibur" "HQ")
     (take-credits state :corp)
     (let [excal (get-ice state :hq 0)]
@@ -373,8 +373,8 @@
 (deftest flare
   ;; Flare - Trash 1 program, do 2 unpreventable meat damage, and end the run
   (do-game
-    (new-game {:corp {:deck ["Flare"]}}
-              {:runner {:deck ["Plascrete Carapace" "Clone Chip" (qty "Cache" 3)]}})
+    (new-game {:corp {:deck ["Flare"]}
+               :runner {:deck ["Plascrete Carapace" "Clone Chip" (qty "Cache" 3)]}})
     (play-from-hand state :corp "Flare" "HQ")
     (core/gain state :corp :credit 2)
     (take-credits state :corp)
@@ -398,8 +398,8 @@
   ;; Formicary - when approaching server, may rez and move to innermost
   (testing "Verifies basic functionality and that First Responders may trigger"
     (do-game
-      (new-game {:corp {:deck [(qty "Ice Wall" 2) (qty "Formicary" 3)]}}
-                {:runner {:deck [(qty "First Responders" 6)]}})
+      (new-game {:corp {:deck [(qty "Ice Wall" 2) (qty "Formicary" 3)]}
+                 :runner {:deck [(qty "First Responders" 6)]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (play-from-hand state :corp "Formicary" "Archives")
       (play-from-hand state :corp "Formicary" "R&D")
@@ -508,8 +508,8 @@
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["Gemini" (qty "Hedge Fund" 2)]}}
-                {:runner {:deck [(qty "Sure Gamble" 3) (qty "Dirty Laundry" 2)]}})
+      (new-game {:corp {:deck ["Gemini" (qty "Hedge Fund" 2)]}
+                 :runner {:deck [(qty "Sure Gamble" 3) (qty "Dirty Laundry" 2)]}})
       (play-from-hand state :corp "Gemini" "HQ")
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
@@ -528,8 +528,8 @@
   (testing "Interaction with Chronos Protocol and kicker"
     (do-game
       (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
-                        :deck ["Gemini" (qty "Hedge Fund" 2)]}}
-                {:runner {:deck ["Sure Gamble" (qty "Dirty Laundry" 2)]}})
+                        :deck ["Gemini" (qty "Hedge Fund" 2)]}
+                 :runner {:deck ["Sure Gamble" (qty "Dirty Laundry" 2)]}})
       (play-from-hand state :corp "Gemini" "HQ")
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
@@ -547,8 +547,8 @@
 (deftest holmegaard
   ;; Holmegaard - Stop Runner from accessing cards if win trace
   (do-game
-    (new-game {:corp {:deck ["Holmegaard" "Hostile Takeover"]}}
-              {:runner {:deck ["Cache" "Inti"]}})
+    (new-game {:corp {:deck ["Holmegaard" "Hostile Takeover"]}
+               :runner {:deck ["Cache" "Inti"]}})
     (core/gain state :corp :credit 10)
     (play-from-hand state :corp "Holmegaard" "HQ")
     (let [holm (get-ice state :hq 0)]
@@ -630,8 +630,8 @@
   its-a-trap
   ;; It's a Trap! - 2 net dmg on expose, self-trash and make Runner trash installed card
   (do-game
-    (new-game {:corp {:deck ["It's a Trap!"]}}
-              {:runner {:deck [(qty "Cache" 3) (qty "Infiltration" 2)]}})
+    (new-game {:corp {:deck ["It's a Trap!"]}
+               :runner {:deck [(qty "Cache" 3) (qty "Infiltration" 2)]}})
     (play-from-hand state :corp "It's a Trap!" "Archives")
     (let [iat (get-ice state :archives 0)]
       (take-credits state :corp)
@@ -651,8 +651,8 @@
   ;; Jua
   (testing "Encounter effect - Prevent Runner from installing cards for the rest of the turn"
     (do-game
-      (new-game {:corp {:deck ["Jua"]}}
-                {:runner {:deck ["Desperado" "Sure Gamble"]}})
+      (new-game {:corp {:deck ["Jua"]}
+                 :runner {:deck ["Desperado" "Sure Gamble"]}})
       (play-from-hand state :corp "Jua" "HQ")
       (take-credits state :corp)
       (let [jua (get-ice state :hq 0)]
@@ -672,8 +672,8 @@
         (is (zero? (count (:hand (get-runner)))) "Card installed"))))
   (testing "Subroutine effect - Select 2 runner cards, runner moves one to the stack"
     (do-game
-      (new-game {:corp {:deck ["Jua"]}}
-                {:runner {:deck ["Desperado" "Gordian Blade"]}})
+      (new-game {:corp {:deck ["Jua"]}
+                 :runner {:deck ["Desperado" "Gordian Blade"]}})
       (play-from-hand state :corp "Jua" "HQ")
       (take-credits state :corp)
       (let [jua (get-ice state :hq 0)]
@@ -695,8 +695,8 @@
   (testing "Should only lock installing for Runner, not for both sides"
     (do-game
       (new-game {:corp {:id "Mti Mwekundu: Life Improved"
-                        :deck ["Jua" "Kakugo"]}}
-                {:runner {:deck ["Paperclip"]}})
+                        :deck ["Jua" "Kakugo"]}
+                 :runner {:deck ["Paperclip"]}})
       (play-from-hand state :corp "Jua" "HQ")
       (let [mti (get-in @state [:corp :identity])
             jua (get-ice state :hq 0)]
@@ -743,8 +743,8 @@
 (deftest kamali-1.0
   ;; Kamali 1.0
   (do-game
-    (new-game {:corp {:deck ["Kamali 1.0"]}}
-              {:runner {:deck ["Astrolabe" "Decoy"
+    (new-game {:corp {:deck ["Kamali 1.0"]}
+               :runner {:deck ["Astrolabe" "Decoy"
                                "Cache" "Hedge Fund"]}})
     (play-from-hand state :corp "Kamali 1.0" "HQ")
     (take-credits state :corp)
@@ -791,8 +791,8 @@
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
-    (new-game {:corp {:deck ["Lockdown"]}}
-              {:runner {:deck [(qty "Diesel" 2) (qty "Sure Gamble" 3)]}})
+    (new-game {:corp {:deck ["Lockdown"]}
+               :runner {:deck [(qty "Diesel" 2) (qty "Sure Gamble" 3)]}})
     (play-from-hand state :corp "Lockdown" "R&D")
     (take-credits state :corp)
     (core/move state :runner (find-card "Sure Gamble" (:hand (get-runner))) :deck)
@@ -814,8 +814,8 @@
 (deftest lotus-field
   ;; Lotus Field strength cannot be lowered
   (do-game
-    (new-game {:corp {:deck ["Lotus Field" "Lag Time"]}}
-              {:runner {:deck ["Ice Carver" "Parasite"]}})
+    (new-game {:corp {:deck ["Lotus Field" "Lag Time"]}
+               :runner {:deck ["Ice Carver" "Parasite"]}})
     (play-from-hand state :corp "Lotus Field" "Archives")
     (take-credits state :corp 2)
     (let [lotus (get-ice state :archives 0)]
@@ -842,8 +842,8 @@
   ;; Magnet - host program when rezzed
   (testing "Faceup ice"
     (do-game
-      (new-game {:corp {:deck ["Magnet" "Enigma"]}}
-                {:runner {:deck ["Parasite"]}})
+      (new-game {:corp {:deck ["Magnet" "Enigma"]}
+                 :runner {:deck ["Parasite"]}})
       (play-from-hand state :corp "Magnet" "HQ")
       (play-from-hand state :corp "Enigma" "R&D")
       (core/rez state :corp (get-ice state :rd 0))
@@ -865,8 +865,8 @@
             "Parasite does not gain a virus counter"))))
   (testing "Facedown ice"
     (do-game
-      (new-game {:corp {:deck ["Magnet" "Enigma"]}}
-                {:runner {:deck ["Trypano"]}})
+      (new-game {:corp {:deck ["Magnet" "Enigma"]}
+                 :runner {:deck ["Trypano"]}})
       (play-from-hand state :corp "Magnet" "HQ")
       (play-from-hand state :corp "Enigma" "R&D")
       (take-credits state :corp)
@@ -888,8 +888,8 @@
             "Trypano does not gain a virus counter"))))
   (testing "Derezzed ice"
     (do-game
-      (new-game {:corp {:deck ["Magnet" "Enigma"]}}
-                {:runner {:deck [(qty "Parasite" 2)]}})
+      (new-game {:corp {:deck ["Magnet" "Enigma"]}
+                 :runner {:deck [(qty "Parasite" 2)]}})
       (play-from-hand state :corp "Magnet" "HQ")
       (play-from-hand state :corp "Enigma" "R&D")
       (core/rez state :corp (get-ice state :rd 0))
@@ -940,8 +940,8 @@
 (deftest mausolus
   ;; Mausolus - 3 adv tokens change the subroutines
   (do-game
-    (new-game {:corp {:deck ["Mausolus"]}}
-              {:runner {:deck [(qty "NetChip" 5)]}})
+    (new-game {:corp {:deck ["Mausolus"]}
+               :runner {:deck [(qty "NetChip" 5)]}})
     (play-from-hand state :corp "Mausolus" "HQ")
     (let [mau (get-ice state :hq 0)]
       (core/rez state :corp mau)
@@ -1059,8 +1059,8 @@
 (deftest mlinzi
   ;; Mlinzi - take X net damage or trash the top X+1 cards from the Stack
   (do-game
-    (new-game {:corp {:deck ["Mlinzi"]}}
-              {:runner {:deck [(qty "Sure Gamble" 3)]}})
+    (new-game {:corp {:deck ["Mlinzi"]}
+               :runner {:deck [(qty "Sure Gamble" 3)]}})
     (starting-hand state :runner ["Sure Gamble"])
     (play-from-hand state :corp "Mlinzi" "HQ")
     (take-credits state :corp)
@@ -1292,8 +1292,8 @@
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
-    (new-game {:corp {:deck ["Peeping Tom"]}}
-              {:runner {:deck [(qty "Sure Gamble" 5)]}})
+    (new-game {:corp {:deck ["Peeping Tom"]}
+               :runner {:deck [(qty "Sure Gamble" 5)]}})
     (play-from-hand state :corp "Peeping Tom" "HQ")
     (take-credits state :corp)
     (run-on state "HQ")
@@ -1352,8 +1352,8 @@
         (is (= 1 (count (:hand (get-corp)))) "Corp doesn't draw a card"))))
   (testing "Sub 2 - You may trash 1 card in HQ. If you do, trash 1 resource. Trash Sadaka."
     (do-game
-      (new-game {:corp {:deck [(qty "Sadaka" 2) (qty "Enigma" 3)]}}
-                {:runner {:deck ["Bank Job"]}})
+      (new-game {:corp {:deck [(qty "Sadaka" 2) (qty "Enigma" 3)]}
+                 :runner {:deck ["Bank Job"]}})
       (play-from-hand state :corp "Sadaka" "Archives")
       (play-from-hand state :corp "Sadaka" "HQ")
       (let [sadaka (get-ice state :archives 0)
@@ -1387,8 +1387,8 @@
 (deftest sandman
   ;; Sandman - add an installed runner card to the grip
   (do-game
-    (new-game {:corp {:deck ["Sandman"]}}
-              {:runner {:deck ["Inti" "Scrubber"]}})
+    (new-game {:corp {:deck ["Sandman"]}
+               :runner {:deck ["Inti" "Scrubber"]}})
     (play-from-hand state :corp "Sandman" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Inti")
@@ -1442,8 +1442,8 @@
 (deftest self-adapting-code-wall
   ;; Self-Adapting Code Wall
   (do-game
-    (new-game {:corp {:deck ["Self-Adapting Code Wall" "Lag Time"]}}
-              {:runner {:deck ["Ice Carver" "Parasite"]}})
+    (new-game {:corp {:deck ["Self-Adapting Code Wall" "Lag Time"]}
+               :runner {:deck ["Ice Carver" "Parasite"]}})
     (play-from-hand state :corp "Self-Adapting Code Wall" "Archives")
     (take-credits state :corp 2)
     (let [sacw (get-ice state :archives 0)]
@@ -1469,8 +1469,8 @@
 (deftest sherlock-1.0
   ;; Sherlock 1.0 - Trace to add an installed program to the top of Runner's Stack
   (do-game
-    (new-game {:corp {:deck ["Sherlock 1.0"]}}
-              {:runner {:deck [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]}})
+    (new-game {:corp {:deck ["Sherlock 1.0"]}
+               :runner {:deck [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]}})
     (play-from-hand state :corp "Sherlock 1.0" "HQ")
     (take-credits state :corp)
     (let [sherlock (get-ice state :hq 0)]
@@ -1487,8 +1487,8 @@
 (deftest sherlock-2.0
   ;; Sherlock 2.0 - Trace to add an installed program to the bottom of Runner's Stack
   (do-game
-    (new-game {:corp {:deck [(qty "Sherlock 2.0" 1)]}}
-              {:runner {:deck [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]}})
+    (new-game {:corp {:deck [(qty "Sherlock 2.0" 1)]}
+               :runner {:deck [(qty "Gordian Blade" 3) (qty "Sure Gamble" 3)]}})
     (play-from-hand state :corp "Sherlock 2.0" "HQ")
     (take-credits state :corp)
     (let [sherlock (get-ice state :hq 0)]
@@ -1507,8 +1507,8 @@
   (testing "Full test"
     (do-game
       (new-game {:corp {:deck ["Shiro" "Caprice Nisei"
-                               "Quandary" "Jackson Howard"]}}
-                {:runner {:deck ["R&D Interface"]}})
+                               "Quandary" "Jackson Howard"]}
+                 :runner {:deck ["R&D Interface"]}})
       (starting-hand state :corp ["Shiro"])
       (play-from-hand state :corp "Shiro" "HQ")
       (take-credits state :corp)
@@ -1540,8 +1540,8 @@
   (testing "with Mwanza City Grid, should access additional 3 cards"
     (do-game
       (new-game {:corp {:deck ["Shiro" "Mwanza City Grid"
-                               (qty "Ice Wall" 10)]}}
-                {:runner {:deck ["R&D Interface"]}})
+                               (qty "Ice Wall" 10)]}
+                 :runner {:deck ["R&D Interface"]}})
       (starting-hand state :corp ["Shiro" "Mwanza City Grid"])
       (play-from-hand state :corp "Mwanza City Grid" "R&D")
       (play-from-hand state :corp "Shiro" "R&D")
@@ -1682,8 +1682,8 @@
   ;; Forfeit option as rez cost, can have hosted condition counters
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["Hostile Takeover" "Tithonium" "Patch"]}}
-                {:runner {:deck ["Pawn" "Wasteland"]}})
+      (new-game {:corp {:deck ["Hostile Takeover" "Tithonium" "Patch"]}
+                 :runner {:deck ["Pawn" "Wasteland"]}})
       (core/gain state :corp :click 10)
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (play-from-hand state :corp "Tithonium" "HQ")
@@ -1750,8 +1750,8 @@
         (is (:rezzed (refresh tmi))))))
   (testing "Losing trace derezzes TMI"
     (do-game
-      (new-game {:corp {:deck ["TMI"]}}
-                {:runner {:id "Sunny Lebeau: Security Specialist"
+      (new-game {:corp {:deck ["TMI"]}
+                 :runner {:id "Sunny Lebeau: Security Specialist"
                           :deck [(qty "Blackmail" 3)]}})
       (play-from-hand state :corp "TMI" "HQ")
       (let [tmi (get-ice state :hq 0)]
@@ -1796,8 +1796,8 @@
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game
-    (new-game {:corp {:deck ["Waiver"]}}
-              {:runner {:deck ["Corroder" "Dean Lister" "Ubax" "Caldera"]}})
+    (new-game {:corp {:deck ["Waiver"]}
+               :runner {:deck ["Corroder" "Dean Lister" "Ubax" "Caldera"]}})
     (play-from-hand state :corp "Waiver" "HQ")
     (let [waiv (get-ice state :hq 0)]
       (core/rez state :corp waiv)
@@ -1835,8 +1835,8 @@
 (deftest wraparound
   ;; Wraparound - Strength boosted when no fracter is installed
   (do-game
-    (new-game {:corp {:deck ["Wraparound"]}}
-              {:runner {:deck ["Corroder"]}})
+    (new-game {:corp {:deck ["Wraparound"]}
+               :runner {:deck ["Corroder"]}})
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
       (core/rez state :corp wrap)

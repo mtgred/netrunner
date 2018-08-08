@@ -10,8 +10,8 @@
   fifteen-minutes
   ;; 15 Minutes - check if it works correctly from both sides
   (do-game
-    (new-game {:corp {:hand ["15 Minutes"]}}
-              {:runner {:hand ["Wyldside"]}})
+    (new-game {:corp {:hand ["15 Minutes"]}
+               :runner {:hand ["Wyldside"]}})
     (play-from-hand state :corp "15 Minutes" "New remote")
     (take-credits state :corp)
     ;; use 15 minutes to take it away from runner

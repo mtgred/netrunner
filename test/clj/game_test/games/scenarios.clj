@@ -8,8 +8,8 @@
 (deftest minigame-prevent-netdmg-resourcetrash
   (testing "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
     (do-game
-      (new-game {:corp {:deck ["Neural EMP" (qty "Hedge Fund" 3) "SEA Source"]}}
-                {:runner {:deck ["Fall Guy" "Off-Campus Apartment" "Net Shield"
+      (new-game {:corp {:deck ["Neural EMP" (qty "Hedge Fund" 3) "SEA Source"]}
+                 :runner {:deck ["Fall Guy" "Off-Campus Apartment" "Net Shield"
                                  "Wireless Net Pavilion" "Sure Gamble"]}})
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
@@ -55,8 +55,8 @@
                                "Caprice Nisei"
                                "Ash 2X3ZB9CY"
                                "Turing"
-                               "Hedge Fund"]}}
-                {:runner {:deck ["Desperado"
+                               "Hedge Fund"]}
+                 :runner {:deck ["Desperado"
                                  "Dirty Laundry"
                                  "Emergency Shutdown"
                                  "Lamprey"

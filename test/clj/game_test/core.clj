@@ -78,8 +78,7 @@
        seq))
 
 (defn make-decks
-  [{:keys [corp]}
-   {:keys [runner]}]
+  [{:keys [corp runner]}]
   {:corp {:deck (or (transform (conj (:deck corp)
                                      (:hand corp)
                                      (:discard corp)))
@@ -103,26 +102,14 @@
 
 (defn new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
-  ([] (new-game nil nil nil))
-  ([side]
-   (cond
-     (= :corp (first (keys side)))
-     (new-game side nil nil)
-     (= :runner (first (keys side)))
-     (new-game nil side nil)
-     :else
-     (new-game nil nil side)))
-  ([corp runner]
-   (cond
-     (and (= :corp (first (keys corp)))
-          (= :runner (first (keys runner))))
-     (new-game corp runner nil)
-     (= :corp (first (keys corp)))
-     (new-game corp nil runner)
-     :else
-     (new-game nil corp runner)))
-  ([corp runner {:keys [mulligan start-as dont-start-turn dont-start-game] :as args}]
-   (let [{:keys [corp runner]} (make-decks corp runner)
+  ([] (new-game nil nil))
+  ([args]
+   (if (or (contains? args :corp)
+           (contains? args :runner))
+     (new-game args nil)
+     (new-game nil args)))
+  ([players {:keys [mulligan start-as dont-start-turn dont-start-game] :as args}]
+   (let [{:keys [corp runner]} (make-decks players)
          state (core/init-game
                  {:gameid 1
                   :players [{:side "Corp"

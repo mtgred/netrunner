@@ -164,8 +164,8 @@
         (is (= 1 (count (:scored (get-runner)))) "1 scored agenda"))))
   (testing "Check runner chooses order of payment"
     (do-game
-      (new-game {:corp {:deck ["Ben Musashi" "Obokata Protocol"]}}
-                {:runner {:deck [(qty "Sure Gamble" 6)]}})
+      (new-game {:corp {:deck ["Ben Musashi" "Obokata Protocol"]}
+                 :runner {:deck [(qty "Sure Gamble" 6)]}})
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "Obokata Protocol" "Server 1")
       (take-credits state :corp)
@@ -187,8 +187,8 @@
         (is (= 1 (count (:scored (get-runner)))) "Scored agenda"))))
   (testing "Check Fetal AI can be stolen, #2586"
     (do-game
-      (new-game {:corp {:deck ["Ben Musashi" "Fetal AI"]}}
-                {:runner {:deck [(qty "Sure Gamble" 5)]}})
+      (new-game {:corp {:deck ["Ben Musashi" "Fetal AI"]}
+                 :runner {:deck [(qty "Sure Gamble" 5)]}})
       (play-from-hand state :corp "Ben Musashi" "New remote")
       (play-from-hand state :corp "Fetal AI" "Server 1")
       (take-credits state :corp)
@@ -300,8 +300,8 @@
   (do-game
     (new-game {:corp {:deck ["Bryan Stinson" "Death and Taxes"
                              "Paywall Implementation" "Global Food Initiative"
-                             "IPO"]}}
-              {:runner {:deck ["Interdiction"]}})
+                             "IPO"]}
+               :runner {:deck ["Interdiction"]}})
     (trash-from-hand state :corp "Death and Taxes")
     (play-from-hand state :corp "Bryan Stinson" "New remote")
     (let [bs (get-content state :remote1 0)]
@@ -477,8 +477,8 @@
   ;; Crisium Grid
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Crisium Grid" 2)]}}
-                {:runner {:deck ["Desperado" "Temüjin Contract"]}})
+      (new-game {:corp {:deck [(qty "Crisium Grid" 2)]}
+                 :runner {:deck ["Desperado" "Temüjin Contract"]}})
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (core/rez state :corp (get-content state :hq 0))
       (take-credits state :corp)
@@ -492,8 +492,8 @@
       (is (not (:successful-run (:register (get-runner)))) "No successful run in register")))
   (testing "with Gauntlet, #3082"
     (do-game
-      (new-game {:corp {:deck [(qty "Crisium Grid" 2)(qty "Vanilla" 2)]}}
-                {:runner {:deck ["The Gauntlet" "Temüjin Contract"]}})
+      (new-game {:corp {:deck [(qty "Crisium Grid" 2)(qty "Vanilla" 2)]}
+                 :runner {:deck ["The Gauntlet" "Temüjin Contract"]}})
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (play-from-hand state :corp "Vanilla" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
@@ -509,8 +509,8 @@
   ;; Cyberdex Virus Suite
   (testing "Purge ability"
     (do-game
-      (new-game {:corp {:deck [(qty "Cyberdex Virus Suite" 3)]}}
-                {:runner {:deck ["Cache" "Medium"]}})
+      (new-game {:corp {:deck [(qty "Cyberdex Virus Suite" 3)]}
+                 :runner {:deck ["Cache" "Medium"]}})
       (play-from-hand state :corp "Cyberdex Virus Suite" "HQ")
       (take-credits state :corp 2)
       ;; runner's turn
@@ -533,8 +533,8 @@
             "Medium has no counters"))))
   (testing "Purge on access"
     (do-game
-      (new-game {:corp {:deck [(qty "Cyberdex Virus Suite" 3)]}}
-                {:runner {:deck ["Cache" "Medium"]}})
+      (new-game {:corp {:deck [(qty "Cyberdex Virus Suite" 3)]}
+                 :runner {:deck ["Cache" "Medium"]}})
       (play-from-hand state :corp "Cyberdex Virus Suite" "New remote")
       (take-credits state :corp 2)
       ;; runner's turn
@@ -557,8 +557,8 @@
             "Medium has no counters"))))
   (testing "Don't interrupt archives access, #1647"
     (do-game
-      (new-game {:corp {:deck ["Cyberdex Virus Suite" "Braintrust"]}}
-                {:runner {:deck ["Cache"]}})
+      (new-game {:corp {:deck ["Cyberdex Virus Suite" "Braintrust"]}
+                 :runner {:deck ["Cache"]}})
       (trash-from-hand state :corp "Cyberdex Virus Suite")
       (trash-from-hand state :corp "Braintrust")
       (take-credits state :corp)
@@ -636,8 +636,8 @@
 (deftest giordano-memorial-field
   ;; Giordano Memorial Field
   (do-game
-    (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}}
-              {:runner {:deck [(qty "Fan Site" 3)]}})
+    (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
+               :runner {:deck [(qty "Fan Site" 3)]}})
     (play-from-hand state :corp "Giordano Memorial Field" "New remote")
     (core/rez state :corp (get-content state :remote1 0))
     (take-credits state :corp)
@@ -707,8 +707,8 @@
 (deftest intake
   ;; Intake - Trace4, add an installed program or virtual resource to the grip
   (do-game
-    (new-game {:corp {:deck [(qty "Intake" 3)]}}
-              {:runner {:deck ["Corroder" "Fester" "Daily Casts"]}})
+    (new-game {:corp {:deck [(qty "Intake" 3)]}
+               :runner {:deck ["Corroder" "Fester" "Daily Casts"]}})
     (starting-hand state :corp ["Intake" "Intake"])
     (play-from-hand state :corp "Intake" "New remote")
     (take-credits state :corp)
@@ -770,8 +770,8 @@
       (is (= 6 (count (get-in @state [:corp :servers :remote1 :ices]))) "6 ICE protecting Remote1")))
   (testing "Drawing non-ice on runner's turn"
     (do-game
-      (new-game {:corp {:deck ["Jinja City Grid" (qty "Hedge Fund" 3)]}}
-                {:runner {:id "Laramy Fisk: Savvy Investor"
+      (new-game {:corp {:deck ["Jinja City Grid" (qty "Hedge Fund" 3)]}
+                 :runner {:id "Laramy Fisk: Savvy Investor"
                           :deck ["Eden Shard"]}})
       (starting-hand state :corp ["Jinja City Grid"])
       (play-from-hand state :corp "Jinja City Grid" "HQ")
@@ -786,8 +786,8 @@
 (deftest keegan-lane
   ;; Keegan Lane - Trash self and remove 1 Runner tag to trash a program
   (do-game
-    (new-game {:corp {:deck ["Keegan Lane"]}}
-              {:runner {:deck ["Corroder"]}})
+    (new-game {:corp {:deck ["Keegan Lane"]}
+               :runner {:deck ["Corroder"]}})
     (play-from-hand state :corp "Keegan Lane" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Corroder")
@@ -835,8 +835,8 @@
   ;; Marcus Batty
   (testing "Simultaneous Interaction with Security Nexus"
     (do-game
-      (new-game {:corp {:deck ["Marcus Batty" "Enigma"]}}
-                {:runner {:deck ["Security Nexus"]}})
+      (new-game {:corp {:deck ["Marcus Batty" "Enigma"]}
+                 :runner {:deck ["Security Nexus"]}})
       (play-from-hand state :corp "Marcus Batty" "HQ")
       (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
@@ -918,8 +918,8 @@
     (is (= "Mumbad Virtual Tour" (:title (first (:discard (get-corp))))) "MVT trashed"))
   (testing "interaction with Imp"
     (do-game
-      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 2)]}}
-                {:runner {:deck ["Imp"]}})
+      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 2)]}
+                 :runner {:deck ["Imp"]}})
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
@@ -939,8 +939,8 @@
         (is (not (core/any-flag-fn? state :runner :slow-trash true))))))
   (testing "interactions with Imp and various amounts of money"
     (do-game
-      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}}
-                {:runner {:deck ["Imp"]}})
+      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
+                 :runner {:deck ["Imp"]}})
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Imp")
@@ -967,8 +967,8 @@
       (is (= 2 (->> (get-corp) :discard count)) "Runner was not forced to trash MVT")))
   (testing "not forced to trash when credits below 5"
     (do-game
-      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}}
-                {:runner {:deck ["Cache"]}})
+      (new-game {:corp {:deck [(qty "Mumbad Virtual Tour" 3)]}
+                 :runner {:deck ["Cache"]}})
       (play-from-hand state :corp "Mumbad Virtual Tour" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Cache")
@@ -1017,8 +1017,8 @@
   (testing "works well with replacement effects"
     ;; Regression test for #3456
     (do-game
-      (new-game {:corp {:deck ["Mwanza City Grid" "Hedge Fund"]}}
-                {:runner {:deck ["Embezzle"]}})
+      (new-game {:corp {:deck ["Mwanza City Grid" "Hedge Fund"]}
+                 :runner {:deck ["Embezzle"]}})
       (play-from-hand state :corp "Mwanza City Grid" "HQ")
       (take-credits state :corp)
       (core/rez state :corp (get-content state :hq 0))
@@ -1171,8 +1171,8 @@
         (is (= 1 (count (:scored (get-runner)))) "1 stolen agenda"))))
   (testing "Gang Sign interaction. Prevent the steal outside of a run. #2169"
     (do-game
-      (new-game {:corp {:deck ["Old Hollywood Grid" (qty "Project Beale" 2)]}}
-                {:runner {:deck ["Gang Sign"]}})
+      (new-game {:corp {:deck ["Old Hollywood Grid" (qty "Project Beale" 2)]}
+                 :runner {:deck ["Gang Sign"]}})
       (play-from-hand state :corp "Old Hollywood Grid" "HQ")
       (play-from-hand state :corp "Project Beale" "New remote")
       (take-credits state :corp)
@@ -1289,8 +1289,8 @@
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game
-    (new-game {:corp {:deck ["Port Anson Grid" "Data Raven"]}}
-              {:runner {:deck ["Faerie" "Technical Writer"]}})
+    (new-game {:corp {:deck ["Port Anson Grid" "Data Raven"]}
+               :runner {:deck ["Faerie" "Technical Writer"]}})
     (play-from-hand state :corp "Port Anson Grid" "New remote")
     (play-from-hand state :corp "Data Raven" "Server 1")
     (take-credits state :corp)
@@ -1328,8 +1328,8 @@
       (is (not (:prompt @state)) "Prisec does not trigger from HQ")))
   (testing "Multiple unrezzed upgrades in Archives interaction with DRT"
     (do-game
-      (new-game {:corp {:deck [(qty "Prisec" 2) "Dedicated Response Team"]}}
-                {:runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3)]}})
+      (new-game {:corp {:deck [(qty "Prisec" 2) "Dedicated Response Team"]}
+                 :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3)]}})
       (play-from-hand state :corp "Dedicated Response Team" "New remote")
       (play-from-hand state :corp "Prisec" "Archives")
       (play-from-hand state :corp "Prisec" "Archives")
@@ -1544,8 +1544,8 @@
 (deftest signal-jamming
   ;; Trash to stop installs for the rest of the run
   (do-game
-    (new-game {:corp {:deck [(qty "Signal Jamming" 3)]}}
-              {:runner {:deck [(qty "Self-modifying Code" 3) "Reaver"]}})
+    (new-game {:corp {:deck [(qty "Signal Jamming" 3)]}
+               :runner {:deck [(qty "Self-modifying Code" 3) "Reaver"]}})
     (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
     (play-from-hand state :corp "Signal Jamming" "HQ")
     (take-credits state :corp)
@@ -1643,8 +1643,8 @@
 (deftest tempus
   ;; Tempus - Trace^3, the runner chooses to lose 2 clicks or take 1 brain damage
   (do-game
-    (new-game {:corp {:deck [(qty "Tempus" 3)]}}
-              {:runner {:deck [(qty "Sure Gamble" 3)]}})
+    (new-game {:corp {:deck [(qty "Tempus" 3)]}
+               :runner {:deck [(qty "Sure Gamble" 3)]}})
     (starting-hand state :corp ["Tempus"])
     (play-from-hand state :corp "Tempus" "New remote")
     (take-credits state :corp)
@@ -1686,8 +1686,8 @@
 (deftest the-twins
   ;; The Twins
   (do-game
-    (new-game {:corp {:deck ["The Twins" (qty "Ice Wall" 10)]}}
-              {:runner {:deck ["Corroder"]}})
+    (new-game {:corp {:deck ["The Twins" (qty "Ice Wall" 10)]}
+               :runner {:deck ["Corroder"]}})
     (starting-hand state :corp ["The Twins" "Ice Wall" "Ice Wall"])
     (play-from-hand state :corp "The Twins" "New remote")
     (play-from-hand state :corp "Ice Wall" "Server 1")
@@ -1710,8 +1710,8 @@
   ;; Tori Hanzō - Pay to do 1 brain damage instead of net damage
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["Pup" "Tori Hanzō"]}}
-                {:runner {:deck [(qty "Sure Gamble" 3) "Net Shield"]}})
+      (new-game {:corp {:deck ["Pup" "Tori Hanzō"]}
+                 :runner {:deck [(qty "Sure Gamble" 3) "Net Shield"]}})
       (core/gain state :corp :credit 10)
       (play-from-hand state :corp "Pup" "HQ")
       (play-from-hand state :corp "Tori Hanzō" "HQ")
@@ -1791,8 +1791,8 @@
   ;; Underway Grid - prevent expose of cards in server
   (do-game
     (new-game {:corp {:deck ["Eve Campaign"
-                             "Underway Grid"]}}
-              {:runner {:deck ["Drive By"]}})
+                             "Underway Grid"]}
+               :runner {:deck ["Drive By"]}})
     (play-from-hand state :corp "Underway Grid" "New remote")
     (play-from-hand state :corp "Eve Campaign" "Server 1")
     (take-credits state :corp)
@@ -1825,8 +1825,8 @@
   ;; Warroid Tracker
   (testing "Trashing Warroid starts trace"
     (do-game
-      (new-game {:corp {:deck ["Warroid Tracker"]}}
-                {:runner {:deck ["Corroder" "Dyson Mem Chip"]}})
+      (new-game {:corp {:deck ["Warroid Tracker"]}
+                 :runner {:deck ["Corroder" "Dyson Mem Chip"]}})
       (play-from-hand state :corp "Warroid Tracker" "New remote")
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
@@ -1847,8 +1847,8 @@
   (testing "Trashing from central triggers Warroid in root"
     ;; Regression test for #3725
     (do-game
-      (new-game {:corp {:deck ["Warroid Tracker" (qty "Hedge Fund" 3)]}}
-                {:runner {:deck ["Clan Vengeance" "Corroder" "Dyson Mem Chip"]}})
+      (new-game {:corp {:deck ["Warroid Tracker" (qty "Hedge Fund" 3)]}
+                 :runner {:deck ["Clan Vengeance" "Corroder" "Dyson Mem Chip"]}})
       (play-from-hand state :corp "Warroid Tracker" "HQ")
       (take-credits state :corp)
       (core/gain state :runner :credit 10)

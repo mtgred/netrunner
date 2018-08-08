@@ -132,8 +132,8 @@
 (deftest armed-intimidation
   ;; Armed Intimidation
   (do-game
-    (new-game {:corp {:deck [(qty "Armed Intimidation" 2)]}}
-              {:runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 2)]}})
+    (new-game {:corp {:deck [(qty "Armed Intimidation" 2)]}
+               :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 2)]}})
     (play-and-score state "Armed Intimidation")
     (click-prompt state :runner "Take 2 tags")
     (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Armed Intimidation tag choice")
@@ -258,8 +258,8 @@
   ;; Better Citizen Program
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["Better Citizen Program"]}}
-                {:runner {:deck [(qty "The Maker's Eye" 2)
+      (new-game {:corp {:deck ["Better Citizen Program"]}
+                 :runner {:deck [(qty "The Maker's Eye" 2)
                                  (qty "Wyrm" 2)]}})
       (play-and-score state "Better Citizen Program")
       (take-credits state :corp)
@@ -283,8 +283,8 @@
       (run-successful state)))
   (testing "Should only trigger on Run events. #3619"
     (do-game
-      (new-game {:corp {:deck ["Better Citizen Program"]}}
-                {:runner {:deck ["Mining Accident"]}})
+      (new-game {:corp {:deck ["Better Citizen Program"]}
+                 :runner {:deck ["Mining Accident"]}})
       (play-and-score state "Better Citizen Program")
       (take-credits state :corp)
       (run-empty-server state "HQ")
@@ -419,8 +419,8 @@
 (deftest character-assassination
   ;; Character Assassination
   (do-game
-    (new-game {:corp {:deck ["Character Assassination"]}}
-              {:runner {:deck ["Fall Guy" "Kati Jones"]}})
+    (new-game {:corp {:deck ["Character Assassination"]}
+               :runner {:deck ["Fall Guy" "Kati Jones"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Kati Jones")
     (play-from-hand state :runner "Fall Guy")
@@ -444,8 +444,8 @@
 (deftest city-works-project
   ;; City Works Project
   (do-game
-    (new-game {:corp {:deck ["City Works Project"]}}
-              {:runner {:deck [(qty "Sure Gamble" 4)]}})
+    (new-game {:corp {:deck ["City Works Project"]}
+               :runner {:deck [(qty "Sure Gamble" 4)]}})
     (play-from-hand state :corp "City Works Project" "New remote")
     (let [cwp (get-content state :remote1 0)]
       (core/advance state :corp {:card (refresh cwp)})
@@ -515,8 +515,8 @@
   ;; Dedicated Neural Net
   (do-game
     (new-game {:corp {:deck ["Dedicated Neural Net" (qty "Scorched Earth" 2)
-                             "Hedge Fund" "Caprice Nisei"]}}
-              {:runner {:deck ["HQ Interface"]}})
+                             "Hedge Fund" "Caprice Nisei"]}
+               :runner {:deck ["HQ Interface"]}})
     (play-from-hand state :corp "Caprice Nisei" "HQ")
     (play-and-score state "Dedicated Neural Net")
     (take-credits state :corp)
@@ -548,8 +548,8 @@
   ;; Degree Mill
   (testing "Basic behavior"
     (do-game
-      (new-game {:corp {:deck [(qty "Degree Mill" 2)]}}
-                {:runner {:deck ["Ice Analyzer" "All-nighter" "Hunting Grounds"]}})
+      (new-game {:corp {:deck [(qty "Degree Mill" 2)]}
+                 :runner {:deck ["Ice Analyzer" "All-nighter" "Hunting Grounds"]}})
       (play-from-hand state :corp "Degree Mill" "New remote")
       (take-credits state :corp)
       (is (= 0 (count (:deck (get-runner)))) "Runner starts with empty deck")
@@ -594,8 +594,8 @@
           (is (= 2 (count (:deck (get-runner)))) "Degree Mill didn't put cards back in deck")))))
   (testing "Multiple steal costs"
     (do-game
-      (new-game {:corp {:deck [(qty "Degree Mill" 1) (qty "Strongbox" 1)]}}
-                {:runner {:deck [(qty "Ice Analyzer" 3) (qty "All-nighter" 3)]}})
+      (new-game {:corp {:deck [(qty "Degree Mill" 1) (qty "Strongbox" 1)]}
+                 :runner {:deck [(qty "Ice Analyzer" 3) (qty "All-nighter" 3)]}})
       (play-from-hand state :corp "Degree Mill" "New remote")
       (play-from-hand state :corp "Strongbox" "Server 1")
       (let [dm (get-content state :remote1 0)
@@ -795,8 +795,8 @@
       (is (= 12 (:credit (get-corp))) "Gained 5 credits")))
   (testing "Interaction with The Turning Wheel. Issue #1717."
     (do-game
-      (new-game {:corp {:deck [(qty "Explode-a-palooza" 3)]}}
-                {:runner {:deck ["The Turning Wheel"]}})
+      (new-game {:corp {:deck [(qty "Explode-a-palooza" 3)]}
+                 :runner {:deck ["The Turning Wheel"]}})
       (starting-hand state :corp ["Explode-a-palooza" "Explode-a-palooza"])
       (play-from-hand state :corp "Explode-a-palooza" "New remote")
       (take-credits state :corp)
@@ -830,8 +830,8 @@
   ;; Fetal AI
   (testing "basic test"
     (do-game
-      (new-game {:corp {:deck [(qty "Fetal AI" 3)]}}
-                {:runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]}})
+      (new-game {:corp {:deck [(qty "Fetal AI" 3)]}
+                 :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]}})
       (play-from-hand state :corp "Fetal AI" "New remote")
       (take-credits state :corp 2)
       (run-empty-server state "Server 1")
@@ -841,8 +841,8 @@
       (is (= 1 (count (:scored (get-runner)))) "Runner stole Fetal AI"))
     (testing "can't afford to steal"
       (do-game
-        (new-game {:corp {:deck [(qty "Fetal AI" 3)]}}
-                  {:runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]}})
+        (new-game {:corp {:deck [(qty "Fetal AI" 3)]}
+                   :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3) (qty "Quality Time" 3)]}})
         (play-from-hand state :corp "Fetal AI" "New remote")
         (take-credits state :corp 2)
         (core/lose state :runner :credit 5)
@@ -1483,8 +1483,8 @@
   (testing "when Meteor Mining is scored"
     (letfn [(meteor-mining-test [[tags num-choices pick creds dmg]]
               (do-game
-                (new-game {:corp {:deck ["Meteor Mining"]}}
-                          {:runner {:deck [(qty "Sure Gamble" 7)]}})
+                (new-game {:corp {:deck ["Meteor Mining"]}
+                           :runner {:deck [(qty "Sure Gamble" 7)]}})
                 (starting-hand state :runner (repeat 7 "Sure Gamble"))
                 (let [credits (:credit (get-corp))
                       grip (count (:hand (get-runner)))]
@@ -1533,8 +1533,8 @@
         (is (= 2 (:agenda-point (get-corp))) "Scored NAPD for 2 points after 5 advancements"))))
   (testing "scoring requirement increases with bad publicity from Corporate Scandal"
     (do-game
-      (new-game {:corp {:deck ["NAPD Contract"]}}
-                {:runner {:deck ["Corporate Scandal"]}})
+      (new-game {:corp {:deck ["NAPD Contract"]}
+                 :runner {:deck ["Corporate Scandal"]}})
       (play-from-hand state :corp "NAPD Contract" "New remote")
       (let [napd (get-content state :remote1 0)]
         (advance state napd 2)
@@ -1650,8 +1650,8 @@
   ;; Obotaka Protocol
   (do-game
     (new-game {:corp {:id "Jinteki: Personal Evolution"
-                      :deck [(qty "Obokata Protocol" 10)]}}
-              {:runner {:deck [(qty "Sure Gamble" 4)]}})
+                      :deck [(qty "Obokata Protocol" 10)]}
+               :runner {:deck [(qty "Sure Gamble" 4)]}})
     (play-from-hand state :corp "Obokata Protocol" "New remote")
     (take-credits state :corp)
     (core/gain state :runner :agenda-point 6)
@@ -1665,8 +1665,8 @@
 (deftest paper-trail
   ;; Paper Trail
   (do-game
-    (new-game {:corp {:deck ["Paper Trail"]}}
-              {:runner {:deck ["Aeneas Informant" "Bank Job"
+    (new-game {:corp {:deck ["Paper Trail"]}
+               :runner {:deck ["Aeneas Informant" "Bank Job"
                                "Rosetta 2.0" "Magnum Opus"
                                "Astrolabe"]}})
     (take-credits state :corp)
@@ -1690,8 +1690,8 @@
   ;; Personality Profiles
   (testing "basic test"
     (do-game
-      (new-game {:corp {:deck ["Personality Profiles"]}}
-                {:runner {:deck ["Self-modifying Code" "Clone Chip"
+      (new-game {:corp {:deck ["Personality Profiles"]}
+                 :runner {:deck ["Self-modifying Code" "Clone Chip"
                                  "Corroder" (qty "Patron" 2)]}})
       (starting-hand state :runner ["Self-modifying Code" "Clone Chip" "Patron" "Patron"])
       (play-and-score state "Personality Profiles")
@@ -1710,8 +1710,8 @@
         (is (= 3 (count (:discard (get-runner))))))))
   (testing "Ensure effects still fire with an empty hand, #1840"
     (do-game
-      (new-game {:corp {:deck ["Personality Profiles"]}}
-                {:runner {:deck ["Self-modifying Code" "Clone Chip"
+      (new-game {:corp {:deck ["Personality Profiles"]}
+                 :runner {:deck ["Self-modifying Code" "Clone Chip"
                                  "Corroder"]}})
       (starting-hand state :runner ["Self-modifying Code" "Clone Chip"])
       (play-and-score state "Personality Profiles")
@@ -1736,8 +1736,8 @@
 (deftest philotic-entanglement
   ;; Philotic Entanglement
   (do-game
-    (new-game {:corp {:deck ["Philotic Entanglement" (qty "House of Knives" 3)]}}
-              {:runner {:deck [(qty "Sure Gamble" 3) (qty "Cache" 2)]}})
+    (new-game {:corp {:deck ["Philotic Entanglement" (qty "House of Knives" 3)]}
+               :runner {:deck [(qty "Sure Gamble" 3) (qty "Cache" 2)]}})
     (play-from-hand state :corp "House of Knives" "New remote")
     (play-from-hand state :corp "House of Knives" "New remote")
     (play-from-hand state :corp "House of Knives" "New remote")
@@ -1812,8 +1812,8 @@
 (deftest project-ares
   ;; Project Ares
   (do-game
-    (new-game {:corp {:deck [(qty "Project Ares" 2)]}}
-              {:runner {:deck ["Clone Chip"]}})
+    (new-game {:corp {:deck [(qty "Project Ares" 2)]}
+               :runner {:deck ["Clone Chip"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Clone Chip")
     (take-credits state :runner)
@@ -2043,8 +2043,8 @@
   (testing "Simple test"
     (do-game
       (new-game {:corp {:deck ["Reeducation" "Sweeps Week" "Hedge Fund"
-                               "Jackson Howard" "Gutenberg"]}}
-                {:runner {:deck ["Self-modifying Code" "Clone Chip"
+                               "Jackson Howard" "Gutenberg"]}
+                 :runner {:deck ["Self-modifying Code" "Clone Chip"
                                  "Corroder" "Sure Gamble" "Desperado"]}})
       (starting-hand state :corp ["Reeducation" "Sweeps Week"])
       (starting-hand state :runner ["Self-modifying Code"])
@@ -2064,8 +2064,8 @@
     ;; is not 'able' to resolve the effect and doesn't have to add to bottom of Stack
     (do-game
       (new-game {:corp {:deck ["Reeducation" "Sweeps Week" "Hedge Fund"
-                               "Jackson Howard" "Gutenberg"]}}
-                {:runner {:deck ["Self-modifying Code" "Clone Chip"
+                               "Jackson Howard" "Gutenberg"]}
+                 :runner {:deck ["Self-modifying Code" "Clone Chip"
                                  "Corroder" "Sure Gamble" "Desperado"]}})
       (starting-hand state :corp ["Reeducation" "Sweeps Week" "Hedge Fund"])
       (starting-hand state :runner ["Self-modifying Code"])
@@ -2096,8 +2096,8 @@
   (do-game
     (new-game {:corp {:deck [(qty "Remote Enforcement" 2)
                              "Archer"
-                             "Chiyashi"]}}
-              {:runner {:id "Reina Roja: Freedom Fighter"
+                             "Chiyashi"]}
+               :runner {:id "Reina Roja: Freedom Fighter"
                         :deck []}})
     (starting-hand state :corp ["Remote Enforcement" "Remote Enforcement"])
     (is (= 2 (count (:deck (get-corp)))))
@@ -2129,8 +2129,8 @@
   (testing "vs Leela"
     ;; Issue #3069
     (do-game
-      (new-game {:corp {:deck [(qty "Research Grant" 2) (qty "Ice Wall" 2)]}}
-                {:runner {:id "Leela Patel: Trained Pragmatist"
+      (new-game {:corp {:deck [(qty "Research Grant" 2) (qty "Ice Wall" 2)]}
+                 :runner {:id "Leela Patel: Trained Pragmatist"
                           :deck ["Sure Gamble"]}})
       (core/gain state :corp :click 1)
       (play-from-hand state :corp "Ice Wall" "HQ")
@@ -2196,8 +2196,8 @@
 (deftest sentinel-defense-program
   ;; Sentinel Defense Program - Doesn't fire if brain damage is prevented
   (do-game
-    (new-game {:corp {:deck ["Sentinel Defense Program" "Viktor 1.0"]}}
-              {:runner {:deck ["Feedback Filter" (qty "Sure Gamble" 3)]}})
+    (new-game {:corp {:deck ["Sentinel Defense Program" "Viktor 1.0"]}
+               :runner {:deck ["Feedback Filter" (qty "Sure Gamble" 3)]}})
     (play-and-score state "Sentinel Defense Program")
     (play-from-hand state :corp "Viktor 1.0" "HQ")
     (take-credits state :corp)
@@ -2282,8 +2282,8 @@
   (testing "register event when agenda swapped with Turntable"
     ;; Regression test for #3114
     (do-game
-      (new-game {:corp {:deck ["SSL Endorsement" "Breaking News"]}}
-                {:runner {:deck ["Turntable"]}})
+      (new-game {:corp {:deck ["SSL Endorsement" "Breaking News"]}
+                 :runner {:deck ["Turntable"]}})
       (play-from-hand state :corp "Breaking News" "New remote")
       (play-and-score state "SSL Endorsement")
       (take-credits state :corp)
@@ -2337,8 +2337,8 @@
   ;; Standoff
   (testing "Runner declines first"
     (do-game
-      (new-game {:corp {:deck ["Standoff" "Ice Wall" "News Team"]}}
-                {:runner {:deck ["Cache"]}})
+      (new-game {:corp {:deck ["Standoff" "Ice Wall" "News Team"]}
+                 :runner {:deck ["Cache"]}})
       (starting-hand state :corp ["Standoff" "Ice Wall"])
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
@@ -2359,8 +2359,8 @@
         (is (= 1 (-> (get-corp) :hand count)) "Corp should draw a card from Runner declining to trash an installed card"))))
   (testing "Corp declines first"
     (do-game
-      (new-game {:corp {:deck ["Standoff" "Ice Wall" "News Team"]}}
-                {:runner {:deck ["Cache" "Cache"]}})
+      (new-game {:corp {:deck ["Standoff" "Ice Wall" "News Team"]}
+                 :runner {:deck ["Cache" "Cache"]}})
       (starting-hand state :corp ["Standoff" "Ice Wall"])
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
@@ -2438,16 +2438,16 @@
   ;; The Cleaners
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["The Cleaners" "Scorched Earth"]}}
-                {:runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3)]}})
+      (new-game {:corp {:deck ["The Cleaners" "Scorched Earth"]}
+                 :runner {:deck [(qty "Sure Gamble" 3) (qty "Diesel" 3)]}})
       (play-and-score state "The Cleaners")
       (core/gain state :runner :tag 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (zero? (count (:hand (get-runner)))) "5 damage dealt to Runner")))
   (testing "No bonus damage when runner 'suffers' damage, ie Cybernetics"
     (do-game
-      (new-game {:corp {:deck ["The Cleaners"]}}
-                {:runner {:deck [(qty "Respirocytes" 3)]}})
+      (new-game {:corp {:deck ["The Cleaners"]}
+                 :runner {:deck [(qty "Respirocytes" 3)]}})
       (play-and-score state "The Cleaners")
       (take-credits state :corp)
       (play-from-hand state :runner "Respirocytes")
@@ -2580,8 +2580,8 @@
   ;; Viral Weaponization - at the end of turn scored, do 1 net damage for each card in grip
   (testing "Score on corp turn"
     (do-game
-      (new-game {:corp {:deck [(qty "Viral Weaponization" 2)]}}
-                {:runner {:deck [(qty "Sure Gamble" 3)]}})
+      (new-game {:corp {:deck [(qty "Viral Weaponization" 2)]}
+                 :runner {:deck [(qty "Sure Gamble" 3)]}})
       (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
       (play-and-score state "Viral Weaponization")
       (is (= 2 (count (:hand (get-runner)))) "Runner doesn't take damage when scored")
@@ -2599,8 +2599,8 @@
       (is (zero? (count (:hand (get-runner)))) "Runner's hand is empty")))
   (testing "Score on runners turn"
     (do-game
-      (new-game {:corp {:deck ["Viral Weaponization" "Plan B"]}}
-                {:runner {:deck [(qty "Sure Gamble" 3)]}})
+      (new-game {:corp {:deck ["Viral Weaponization" "Plan B"]}
+                 :runner {:deck [(qty "Sure Gamble" 3)]}})
       (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
       (play-from-hand state :corp "Plan B" "New remote")
       (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
@@ -2654,8 +2654,8 @@
 (deftest water-monopoly
   ;; Water Monopoly
   (do-game
-    (new-game {:corp {:deck ["Water Monopoly"]}}
-              {:runner {:deck ["Fan Site" "Levy Advanced Research Lab"]}})
+    (new-game {:corp {:deck ["Water Monopoly"]}
+               :runner {:deck ["Fan Site" "Levy Advanced Research Lab"]}})
     (play-and-score state "Water Monopoly")
     (take-credits state :corp)
     (is (= 5 (:credit (get-runner))) "Runner should start with 5 credits")

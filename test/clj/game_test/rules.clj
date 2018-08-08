@@ -21,8 +21,8 @@
 
 (deftest undo-click
   (do-game
-    (new-game {:corp {:deck ["Ikawah Project"]}}
-              {:runner {:deck ["Day Job"]}})
+    (new-game {:corp {:deck ["Ikawah Project"]}
+               :runner {:deck ["Day Job"]}})
     (play-from-hand state :corp "Ikawah Project" "New remote")
     (take-credits state :corp)
     (is (= 5 (:credit (get-runner))) "Runner has 5 credits")
@@ -110,8 +110,8 @@
 (deftest agenda-forfeit-runner
   ;; forfeit - Don't deactivate agenda to trigger leave play effects if Runner forfeits a stolen agenda
   (do-game
-    (new-game {:corp {:deck ["Mandatory Upgrades"]}}
-              {:runner {:deck ["Data Dealer"]}})
+    (new-game {:corp {:deck ["Mandatory Upgrades"]}
+               :runner {:deck ["Data Dealer"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Data Dealer")
     (run-empty-server state "HQ")
@@ -138,8 +138,8 @@
 (deftest refresh-recurring-credits-hosted
   ;; host - Recurring credits on cards hosted after install refresh properly
   (do-game
-    (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Hedge Fund" 3)]}}
-              {:runner {:deck ["Compromised Employee" "Off-Campus Apartment"]}})
+    (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Hedge Fund" 3)]}
+               :runner {:deck ["Compromised Employee" "Off-Campus Apartment"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp 2)
     (play-from-hand state :runner "Off-Campus Apartment")
@@ -162,8 +162,8 @@
 (deftest card-str-test-simple
   ;; ensure card-str names cards in simple situations properly
   (do-game
-    (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Jackson Howard" 2)]}}
-              {:runner {:deck ["Corroder" "Clone Chip" "Paparazzi" "Parasite"]}})
+    (new-game {:corp {:deck [(qty "Ice Wall" 3) (qty "Jackson Howard" 2)]}
+               :runner {:deck ["Corroder" "Clone Chip" "Paparazzi" "Parasite"]}})
     (core/gain state :corp :click 2)
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "R&D")
@@ -241,8 +241,8 @@
 (deftest trash-remove-per-turn-restriction
   ;; Trashing a card should remove it from [:per-turn] - Issue #1345
   (do-game
-    (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}}
-              {:runner {:deck [(qty "Imp" 2) "Scavenge"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
+               :runner {:deck [(qty "Imp" 2) "Scavenge"]}})
     (take-credits state :corp)
     (core/gain state :runner :click 1)
     (play-from-hand state :runner "Imp")
@@ -302,8 +302,8 @@
 (deftest all-installed-runner-test
   ;; Tests all-installed for programs hosted on ICE, nested hosted programs, and non-installed hosted programs
   (do-game
-    (new-game {:corp {:deck ["Wraparound"]}}
-              {:runner {:deck ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]}})
+    (new-game {:corp {:deck ["Wraparound"]}
+               :runner {:deck ["Omni-drive" "Personal Workshop" "Leprechaun" "Corroder" "Mimic" "Knight"]}})
     (play-from-hand state :corp "Wraparound" "HQ")
     (let [wrap (get-ice state :hq 0)]
       (core/rez state :corp wrap)
@@ -462,8 +462,8 @@
 (deftest run-bad-publicity-credits
   ;; Should not lose BP credits until a run is completely over. Issue #1721.
   (do-game
-    (new-game {:corp {:deck [(qty "Cyberdex Virus Suite" 3)]}}
-              {:runner {:id "Valencia Estevez: The Angel of Cayambe"
+    (new-game {:corp {:deck [(qty "Cyberdex Virus Suite" 3)]}
+               :runner {:id "Valencia Estevez: The Angel of Cayambe"
                         :deck [(qty "Sure Gamble" 3)]}})
     (is (= 1 (:bad-publicity (get-corp))) "Corp starts with 1 BP")
     (play-from-hand state :corp "Cyberdex Virus Suite" "New remote")
@@ -486,8 +486,8 @@
 (deftest run-psi-bad-publicity-credits
   ;; Should pay from Bad Pub for Psi games during run #2374
   (do-game
-    (new-game {:corp {:deck [(qty "Caprice Nisei" 3)]}}
-              {:runner {:id "Valencia Estevez: The Angel of Cayambe"
+    (new-game {:corp {:deck [(qty "Caprice Nisei" 3)]}
+               :runner {:id "Valencia Estevez: The Angel of Cayambe"
                         :deck [(qty "Sure Gamble" 3)]}})
     (is (= 1 (:bad-publicity (get-corp))) "Corp starts with 1 BP")
     (play-from-hand state :corp "Caprice Nisei" "New remote")
@@ -505,8 +505,8 @@
 (deftest purge-nested
   ;; Purge nested-hosted virus counters
   (do-game
-    (new-game {:corp {:deck ["Cyberdex Trial"]}}
-              {:runner {:deck ["Djinn" "Imp" "Leprechaun"]}})
+    (new-game {:corp {:deck ["Cyberdex Trial"]}
+               :runner {:deck ["Djinn" "Imp" "Leprechaun"]}})
     (take-credits state :corp)
     (core/gain state :runner :credit 100)
     (play-from-hand state :runner "Leprechaun")
@@ -527,8 +527,8 @@
   (do-game
     (new-game {:corp {:deck ["Keegan Lane" "Midway Station Grid"
                              "Sweeps Week" "Manhunt"
-                             "Hedge Fund" "Big Brother"]}}
-              {:runner {:deck ["Medium"]}})
+                             "Hedge Fund" "Big Brother"]}
+               :runner {:deck ["Medium"]}})
     (play-from-hand state :corp "Keegan Lane" "R&D")
     (play-from-hand state :corp "Midway Station Grid" "R&D")
     (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)

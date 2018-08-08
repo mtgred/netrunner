@@ -10,8 +10,8 @@
   ;; Breaker get a dynamic ability that matches the strength of the encountered ice
   (testing "Single pump"
     (do-game
-      (new-game {:corp {:deck ["Masvingo"]}}
-                {:runner {:deck ["Laamb"]}})
+      (new-game {:corp {:deck ["Masvingo"]}
+                 :runner {:deck ["Laamb"]}})
       (play-from-hand state :corp "Masvingo" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
@@ -26,8 +26,8 @@
         (is (= 3 (:credit (get-runner))) "Spent 3 to pump"))))
   (testing "Multi pump"
     (do-game
-      (new-game {:corp {:deck ["Masvingo"]}}
-                {:runner {:deck ["Ankusa"]}})
+      (new-game {:corp {:deck ["Masvingo"]}
+                 :runner {:deck ["Ankusa"]}})
       (play-from-hand state :corp "Masvingo" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
@@ -82,8 +82,8 @@
   ;; Aumakua - Gain credit on no-trash
   (testing "Gain counter on no trash"
     (do-game
-      (new-game {:corp {:deck [(qty "PAD Campaign" 3)]}}
-                {:runner {:deck ["Aumakua"]}})
+      (new-game {:corp {:deck [(qty "PAD Campaign" 3)]}
+                 :runner {:deck ["Aumakua"]}})
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Aumakua")
@@ -103,8 +103,8 @@
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from accessing empty Archives")))
   (testing "Neutralize All Threats interaction"
     (do-game
-      (new-game {:corp {:deck [(qty "PAD Campaign" 3)]}}
-                {:runner {:deck ["Aumakua" "Neutralize All Threats"]}})
+      (new-game {:corp {:deck [(qty "PAD Campaign" 3)]}
+                 :runner {:deck ["Aumakua" "Neutralize All Threats"]}})
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Aumakua")
@@ -202,8 +202,8 @@
 (deftest cradle
   ;; Cradle
   (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}}
-              {:runner {:deck ["Cradle" (qty "Cache" 100)]}})
+    (new-game {:corp {:deck ["Ice Wall"]}
+               :runner {:deck ["Cradle" (qty "Cache" 100)]}})
     (starting-hand state :runner ["Cradle"])
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
@@ -226,8 +226,8 @@
 (deftest crypsis
   ;; Crypsis - Loses a virus counter after encountering ice it broke
   (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}}
-              {:runner {:deck [(qty "Crypsis" 2)]}})
+    (new-game {:corp {:deck ["Ice Wall"]}
+               :runner {:deck [(qty "Crypsis" 2)]}})
     (play-from-hand state :corp "Ice Wall" "Archives")
     (take-credits state :corp)
     (core/gain state :runner :credit 100)
@@ -287,8 +287,8 @@
 (deftest deus-x
   (testing "vs Multiple Hostile Infrastructure"
     (do-game
-      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]}}
-                {:runner {:deck [(qty "Deus X" 3) (qty "Sure Gamble" 2)]}})
+      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3)]}
+                 :runner {:deck [(qty "Deus X" 3) (qty "Sure Gamble" 2)]}})
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
@@ -308,8 +308,8 @@
   (testing "vs Multiple sources of net damage"
     (do-game
       (new-game {:corp {:id "Jinteki: Personal Evolution"
-                        :deck [(qty "Fetal AI" 6)]}}
-                {:runner {:deck [(qty "Deus X" 3) (qty "Sure Gamble" 2)]}})
+                        :deck [(qty "Fetal AI" 6)]}
+                 :runner {:deck [(qty "Deus X" 3) (qty "Sure Gamble" 2)]}})
       (play-from-hand state :corp "Fetal AI" "New remote")
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
@@ -325,8 +325,8 @@
 (deftest faerie
   ;; Faerie - trash after encounter is over, not before.
   (do-game
-    (new-game {:corp {:deck ["Caduceus"]}}
-              {:runner {:deck ["Faerie"]}})
+    (new-game {:corp {:deck ["Caduceus"]}
+               :runner {:deck ["Faerie"]}})
     (play-from-hand state :corp "Caduceus" "Archives")
     (take-credits state :corp)
     (play-from-hand state :runner "Faerie")
@@ -377,8 +377,8 @@
 (deftest femme-fatale
   ;; Femme Fatale counter test
   (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}}
-              {:runner {:deck [(qty "Femme Fatale" 2)]}})
+    (new-game {:corp {:deck ["Ice Wall"]}
+               :runner {:deck [(qty "Femme Fatale" 2)]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
     (core/gain state :runner :credit 18)
@@ -411,8 +411,8 @@
   ;; Ika
   (testing "Can be hosted on both rezzed/unrezzed ice, respects no-host, is blanked by Magnet"
     (do-game
-      (new-game {:corp {:deck ["Tithonium" "Enigma" "Magnet"]}}
-                {:runner {:deck ["Ika"]}})
+      (new-game {:corp {:deck ["Tithonium" "Enigma" "Magnet"]}
+                 :runner {:deck ["Ika"]}})
       (play-from-hand state :corp "Enigma" "HQ")
       (play-from-hand state :corp "Tithonium" "Archives")
       (play-from-hand state :corp "Magnet" "R&D")
@@ -455,8 +455,8 @@
 (deftest inversificator
   ;; Inversificator shouldn't hook up events for unrezzed ice
   (do-game
-    (new-game {:corp {:deck ["Turing" "Kakugo"]}}
-              {:runner {:deck ["Inversificator" "Sure Gamble"]}})
+    (new-game {:corp {:deck ["Turing" "Kakugo"]}
+               :runner {:deck ["Inversificator" "Sure Gamble"]}})
     (play-from-hand state :corp "Kakugo" "HQ")
     (play-from-hand state :corp "Turing" "HQ")
     (take-credits state :corp)
@@ -496,8 +496,8 @@
 (deftest musaazi
   ;; Musaazi gains virus counters on successful runs and can spend virus counters from any installed card
   (do-game
-    (new-game {:corp {:deck ["Lancelot"]}}
-              {:runner {:deck ["Musaazi" "Imp"]}})
+    (new-game {:corp {:deck ["Lancelot"]}
+               :runner {:deck ["Musaazi" "Imp"]}})
     (play-from-hand state :corp "Lancelot" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Musaazi")
@@ -527,8 +527,8 @@
   ;; Na'Not'K - Strength adjusts accordingly when ice installed during run
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["Architect" "Eli 1.0"]}}
-                {:runner {:deck ["Na'Not'K"]}})
+      (new-game {:corp {:deck ["Architect" "Eli 1.0"]}
+                 :runner {:deck ["Na'Not'K"]}})
       (play-from-hand state :corp "Architect" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Na'Not'K")
@@ -546,8 +546,8 @@
         (is (= 1 (:current-strength (refresh nanotk))) "Back to default strength"))))
   (testing "Strength adjusts accordingly when run redirected to another server"
     (do-game
-      (new-game {:corp {:deck ["Susanoo-no-Mikoto" "Crick" "Cortex Lock"]}}
-                {:runner {:deck ["Na'Not'K"]}})
+      (new-game {:corp {:deck ["Susanoo-no-Mikoto" "Crick" "Cortex Lock"]}
+                 :runner {:deck ["Na'Not'K"]}})
       (play-from-hand state :corp "Cortex Lock" "HQ")
       (play-from-hand state :corp "Susanoo-no-Mikoto" "HQ")
       (play-from-hand state :corp "Crick" "Archives")
@@ -582,8 +582,8 @@
   ;; Paperclip - prompt to install on encounter, but not if another is installed
   (testing "Basic test"
     (do-game
-      (new-game {:corp {:deck ["Vanilla"]}}
-                {:runner {:deck [(qty "Paperclip" 2)]}})
+      (new-game {:corp {:deck ["Vanilla"]}
+                 :runner {:deck [(qty "Paperclip" 2)]}})
       (play-from-hand state :corp "Vanilla" "Archives")
       (take-credits state :corp)
       (trash-from-hand state :runner "Paperclip")
@@ -598,8 +598,8 @@
       (is (empty? (:prompt (get-runner))) "No prompt to install second Paperclip")))
   (testing "firing on facedown ice shouldn't crash"
     (do-game
-      (new-game {:corp {:deck ["Vanilla"]}}
-                {:runner {:deck ["Paperclip"]}})
+      (new-game {:corp {:deck ["Vanilla"]}
+                 :runner {:deck ["Paperclip"]}})
       (play-from-hand state :corp "Vanilla" "Archives")
       (take-credits state :corp)
       (play-from-hand state :runner "Paperclip")
@@ -608,8 +608,8 @@
       (click-prompt state :runner "0")))
   (testing "do not show a second install prompt if user said No to first, when multiple are in heap"
     (do-game
-      (new-game {:corp {:deck [(qty "Vanilla" 2)]}}
-                {:runner {:deck [(qty "Paperclip" 3)]}})
+      (new-game {:corp {:deck [(qty "Vanilla" 2)]}
+                 :runner {:deck [(qty "Paperclip" 3)]}})
       (play-from-hand state :corp "Vanilla" "Archives")
       (play-from-hand state :corp "Vanilla" "Archives")
       (take-credits state :corp)
@@ -634,8 +634,8 @@
 (deftest peregrine
   ;; Peregrine - 2c to return to grip and derez an encountered code gate
   (do-game
-    (new-game {:corp {:deck ["Paper Wall" (qty "Bandwidth" 2)]}}
-              {:runner {:deck ["Peregrine"]}})
+    (new-game {:corp {:deck ["Paper Wall" (qty "Bandwidth" 2)]}
+               :runner {:deck ["Peregrine"]}})
     (play-from-hand state :corp "Bandwidth" "Archives")
     (play-from-hand state :corp "Bandwidth" "Archives")
     (play-from-hand state :corp "Paper Wall" "Archives")
@@ -663,8 +663,8 @@
   ;; Persephone's ability trashes cards from R&D, triggering AR-Enhanced Security
   ;; See #3187
   (do-game
-    (new-game {:corp {:deck ["Zed 1.0" (qty "Zed 2.0" 3) "AR-Enhanced Security"]}}
-              {:runner {:deck [(qty "Persephone" 10)]}})
+    (new-game {:corp {:deck ["Zed 1.0" (qty "Zed 2.0" 3) "AR-Enhanced Security"]}
+               :runner {:deck [(qty "Persephone" 10)]}})
     (core/move state :corp (find-card "Zed 2.0" (:hand (get-corp))) :deck)
     (core/move state :corp (find-card "Zed 2.0" (:hand (get-corp))) :deck)
     (play-from-hand state :corp "AR-Enhanced Security" "New remote")
@@ -712,8 +712,8 @@
 (deftest snowball
   ;; Snowball - Strength boost until end of run when used to break a subroutine
   (do-game
-    (new-game {:corp {:deck ["Spiderweb" "Fire Wall" "Hedge Fund"]}}
-              {:runner {:deck ["Snowball"]}})
+    (new-game {:corp {:deck ["Spiderweb" "Fire Wall" "Hedge Fund"]}
+               :runner {:deck ["Snowball"]}})
     (play-from-hand state :corp "Hedge Fund")
     (play-from-hand state :corp "Fire Wall" "HQ")
     (play-from-hand state :corp "Spiderweb" "HQ")
@@ -763,8 +763,8 @@
 (deftest tycoon
   ;; Tycoon
   (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}}
-              {:runner {:deck ["Tycoon"]}})
+    (new-game {:corp {:deck ["Ice Wall"]}
+               :runner {:deck ["Tycoon"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (core/rez state state :corp (get-ice state :hq 0))
     (take-credits state :corp)
@@ -780,8 +780,8 @@
 (deftest wyrm
   ;; Wyrm reduces strength of ice
   (do-game
-    (new-game {:corp {:deck ["Ice Wall"]}}
-              {:runner {:deck ["Wyrm"]}})
+    (new-game {:corp {:deck ["Ice Wall"]}
+               :runner {:deck ["Wyrm"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Wyrm")
@@ -797,8 +797,8 @@
 (deftest yusuf
   ;; Yusuf gains virus counters on successful runs and can spend virus counters from any installed card
   (do-game
-    (new-game {:corp {:deck ["Fire Wall"]}}
-              {:runner {:deck ["Yusuf" "Cache"]}})
+    (new-game {:corp {:deck ["Fire Wall"]}
+               :runner {:deck ["Yusuf" "Cache"]}})
     (play-from-hand state :corp "Fire Wall" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Yusuf")
