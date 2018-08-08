@@ -1,23 +1,19 @@
 (ns tasks.cards
   "Utilities for card tests"
-  (:require [web.db :refer [db] :as webdb]
-            [monger.collection :as mc]
-            [clojure.data :refer [diff]]
-            [clojure.string :as s]
-            [game-test.cards.agendas]
-            [game-test.cards.assets]
-            [game-test.cards.events]
-            [game-test.cards.hardware]
-            [game-test.cards.ice]
-            [game-test.cards.icebreakers]
-            [game-test.cards.identities]
-            [game-test.cards.operations]
-            [game-test.cards.programs]
-            [game-test.cards.resources]
-            [game-test.cards.upgrades]))
+  (:require [clojure.data :refer [diff]]
+            [clojure.string :as string]
+            [jinteki.cards :refer [all-cards]]
+            [game.utils :as utils :refer [make-cid]]
+            [game-test.core :refer [load-cards]]
+            [game-test.utils :refer :all]
+            [game-test.macros :refer :all]))
 
 (defn- get-card-by-type
-  "Get the normalized title (as a symbol) for cards of a specific type in the database"
+  "Get the normalized title (as a symbol) for cards of a specific type in the database.
+  This is needed because we put icebreakers in their own file/folder, even tho their
+  type _is technically_ Program. If we want to focus on Programs, we remove Icebreakers;
+  if we want to focus on Icebreakers, we filter for Icebreakers. If we're doing other
+  types, we just return the collection."
   [t]
   (let [card-type (if (= "Icebreaker" t) "Program" t)
         f (case t
@@ -27,23 +23,35 @@
         func (fn [coll]
                (if f
                  (f #(and (:subtype %)
-                          (> (.indexOf (:subtype %) "Icebreaker") -1)) coll)
+                          (string/includes? (:subtype %) "Icebreaker")) coll)
                  coll))]
-    (->> (mc/find-maps db "cards" {:type card-type} [:normalizedtitle :subtype])
-      func
-      (map :normalizedtitle)
-      (map #(s/replace % #"\s+" "-"))
-      (map symbol))))
+    (->> (vals @all-cards)
+         (map #(select-keys % [:normalizedtitle :type :subtype]))
+         (filter #(= card-type (:type %)))
+         func
+         (map :normalizedtitle)
+         (map symbol))))
 
 (defn- get-tests
   "Returns the names of all tests in a namespace"
   [nspace]
-  (->> nspace
-    (ns-publics)
-    (filter (fn [[k v]] (contains? (meta v) :test)))
-    (remove (fn [[k v]] (:skip-card-coverage (meta v))))
-    (map (fn [[k v]] (if-let [title (:card-title (meta v))]
-                       (symbol title) k)))))
+  (doall (pmap load-file
+               (->> (io/file (str "test/clj/game_test/cards/" nspace))
+                    file-seq
+                    (filter #(and (.isFile %)
+                                  (string/ends-with? (.getPath %) ".clj")))
+                    sort
+                    (map str))))
+  (->> (all-ns)
+       (filter #(string/starts-with? % (str "game-test.cards." nspace)))
+       (map ns-publics)
+       (apply merge)
+       vals
+       (filter (fn [[k v]] (contains? (meta v) :test)))
+       (remove (fn [[k v]] (or (:skip-card-coverage (meta v))
+                               (contains? (meta v) :private))))
+       (map (fn [[k v]] (if-let [title (:card-title (meta v))]
+                          (symbol title) k)))))
 
 (def ansi-esc "\u001B")
 (def ansi-reset "\u001B[0m")
@@ -56,6 +64,10 @@
   [s cnt color]
   (str ansi-esc color s ansi-reset ansi-esc ansi-bold cnt ansi-reset))
 
+(def cards-total (atom 0))
+(def cards-with-tests (atom 0))
+(def cards-without-tests (atom 0))
+
 (defn- compare-tests
   [[k v] show-all show-none]
   (let [cards (get-card-by-type k)
@@ -64,6 +76,9 @@
                 (flatten))
         [cards-wo tests-wo both] (diff (set cards)
                                        (set tests))]
+    (swap! cards-total #(+ % (count (set cards))))
+    (swap! cards-with-tests #(+ % (count both)))
+    (swap! cards-without-tests #(+ % (count cards-wo)))
     (println (str ansi-esc ansi-blue k ansi-reset))
     (println "\tUnique cards in db:" (count (set cards)))
     (println "\tTests:" (count tests))
@@ -83,33 +98,36 @@
 (defn test-coverage
   "Determine which cards have tests written for them. Takes an `--only <Type>` argument to limit output to a specific card type."
   [& args]
-  (webdb/connect)
-  (try
-    (let [only (some #{"--only"} args)
-          card-type (first (remove #(s/starts-with? % "--") args))
-          show-all (some #{"--show-all"} args)
-          show-none (some #{"--show-none"} args)
-          nspaces {"Agenda" '(game-test.cards.agendas)
-                   "Asset" '(game-test.cards.assets)
-                   "Event" '(game-test.cards.events)
-                   "Hardware" '(game-test.cards.hardware)
-                   "ICE" '(game-test.cards.ice)
-                   "Icebreaker" '(game-test.cards.icebreakers)
-                   "Identity" '(game-test.cards.identities)
-                   "Operation" '(game-test.cards.operations)
-                   "Program"  '(game-test.cards.programs)
-                   "Resource" '(game-test.cards.resources)
-                   "Upgrade" '(game-test.cards.upgrades)}
-          filtered-nspaces (if only
-                             (select-keys nspaces [card-type])
-                             (into (sorted-map) nspaces))]
-      (when only
-        (println "Only checking cards of type" (str ansi-esc ansi-blue card-type ansi-reset)))
-      (doseq [ct filtered-nspaces]
-        (compare-tests ct show-all show-none)
-        (println)))
-    (catch Exception e
-      (do
-        (println "Card test coverage failed: " (.getMessage e))
-        (.printStackTrace e)))
-    (finally (webdb/disconnect))))
+  (->> (load-cards)
+       (map #(assoc % :cid (make-cid)))
+       (map (juxt :title identity))
+       (into {})
+       (reset! all-cards))
+  (let [only (some #{"--only"} args)
+        card-type (first (remove #(string/starts-with? % "--") args))
+        show-all (some #{"--show-all"} args)
+        show-none (some #{"--show-none"} args)
+        nspaces {"Agenda" "agendas"
+                 "Asset" "assets"
+                 "Event" "events"
+                 "Hardware" "hardware"
+                 "ICE" "ice"
+                 "Icebreaker" "icebreakers"
+                 "Identity" "identities"
+                 "Operation" "operations"
+                 "Program"  "programs"
+                 "Resource" "resources"
+                 "Upgrade" "upgrades"}
+        filtered-nspaces (if only
+                           (select-keys nspaces [card-type])
+                           (into (sorted-map) nspaces))]
+    (when only
+      (println "Only checking cards of type" (str ansi-esc ansi-blue card-type ansi-reset)))
+    (doseq [ct filtered-nspaces]
+      (compare-tests ct show-all show-none)
+      (println))
+    (println (str ansi-esc ansi-blue "Totals" ansi-reset))
+    (println "\tTotal cards: " @cards-total)
+    (println (format-output "\tCards with tests: " @cards-with-tests ansi-green))
+    (println (format-output "\tCards without tests: " @cards-without-tests ansi-red))
+    (System/exit 0)))

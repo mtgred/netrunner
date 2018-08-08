@@ -25,6 +25,12 @@
   [n]
   #(max 0 (- % n)))
 
+(defn in?
+  "true if coll contains elm.
+  Taken from https://stackoverflow.com/a/3249777/3023252"
+  [coll elm]
+  (some #(= elm %) coll))
+
 (defn clean-forfeit
   "Takes a flat :forfeit in costs and adds a cost of 1.
   Ignores cost vectors with an even count as these have forfeit value included"

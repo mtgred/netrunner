@@ -31,7 +31,7 @@
 
 (defmacro deftest-pending [name & body]
   (let [message (str "\n" name " is pending")]
-    `(clojure.test/deftest ~name (println ~message))))
+    `(clojure.test/deftest- ~name (println ~message))))
 
 (defmacro changes-val-macro [change-amt val-form body-form msg]
   `(let [start-val# ~val-form]

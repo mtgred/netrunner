@@ -16,8 +16,11 @@
 
 (defn load-all-cards []
   (when (empty? @all-cards)
-    (reset! all-cards (into {} (map (juxt :title identity)
-                                    (map #(assoc % :cid (make-cid)) (load-cards)))))
+    (->> (load-cards)
+         (map #(assoc % :cid (make-cid)))
+         (map (juxt :title identity))
+         (into {})
+         (reset! all-cards))
     (core/reset-card-defs)))
 (load-all-cards)
 
