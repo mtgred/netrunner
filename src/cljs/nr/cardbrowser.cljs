@@ -88,7 +88,7 @@
                             (assoc card :art art)
                             card)))
            (map (fn [c] (if (:art c)
-                          (assoc c :display-name (str (:display-name c) " [" (alt-art-name (:art c)) "]"))
+                          (assoc c :display-name (str (:code c) "[" (alt-art-name (:art c)) "]"))
                           c)))
            (concat acc))
       (conj acc card))))
