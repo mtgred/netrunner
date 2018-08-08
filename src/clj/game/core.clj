@@ -8,8 +8,7 @@
             [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards card-definitions]]
-            [tasks.nrdb :refer [slugify]]
-            [tasks.split-defs :refer [type->dir]]
+            [tasks.utils :refer [slugify type->dir]]
             [game.quotes :as quotes]))
 
 (load "core/events")    ; triggering of events

@@ -31,6 +31,7 @@
                  [throttler "1.0.0"]
                  [clj-http "3.7.0"]
                  [reagent "0.8.1"]
+                 [eftest "0.1.4"]
                  [cljsjs/react "16.4.1-0"]
                  [cljsjs/react-dom "16.4.1-0"]
                  [org.clojars.frozenlock/reagent-modals "0.2.8"]
@@ -40,6 +41,7 @@
             [lein-figwheel "0.5.16"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
+            [lein-eftest "0.5.2"]
             [lein-exec "0.3.7"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]
@@ -68,6 +70,7 @@
 
   ;; Misc
   :test-paths ["test/clj"]
+  :eftest {:multithread? :namespaces}
 
   :ring {:handler web.api/app}
 

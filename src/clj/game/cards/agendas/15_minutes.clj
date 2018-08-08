@@ -2,7 +2,8 @@
 
 (def card-definition-15-minutes
   {"15 Minutes"
-   {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
+   {:abilities [{:cost [:click 1]
+                 :msg "shuffle 15 Minutes into R&D"
                  :label "Shuffle 15 Minutes into R&D"
                  :effect (req (let [corp-agendas (get-in corp [:scored])
                                     agenda-owner (if (some #(= (:cid %) (:cid card)) corp-agendas) :corp :runner)]

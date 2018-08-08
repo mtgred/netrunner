@@ -9,7 +9,8 @@
             [clojure.data :as data]
             [clojure.java.io :as io]
             [clojure.pprint :refer [pprint] :as pprint]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [tasks.utils :refer [slugify]]))
 
 (declare faction-map)
 
@@ -193,20 +194,6 @@
   (if (contains? card :image_url)
     (:image_url card)
     (make-image-url card set)))
-
-(defn slugify
-  "As defined here: https://you.tools/slugify/"
-  ([s] (slugify s "-"))
-  ([s sep]
-   (if (nil? s) ""
-     (as-> s s
-       (java.text.Normalizer/normalize s java.text.Normalizer$Form/NFD)
-       (string/replace s #"[\P{ASCII}]+" "")
-       (string/lower-case s)
-       (string/trim s)
-       (string/split s #"[\p{Space}\p{Punct}]+")
-       (filter seq s)
-       (string/join sep s)))))
 
 (defn- add-card-fields
   "Add additional fields to the card documents"

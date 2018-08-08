@@ -49,21 +49,21 @@
   ([reorder-side cards] (reorder-choice reorder-side (other-side reorder-side) cards `() (count cards) cards nil))
   ([reorder-side wait-side remaining chosen n original] (reorder-choice reorder-side wait-side remaining chosen n original nil))
   ([reorder-side wait-side remaining chosen n original dest]
-  {:prompt (str "Select a card to move next "
-                (if (= dest "bottom") "under " "onto ")
-                (if (= reorder-side :corp) "R&D" "your Stack"))
-   :choices remaining
-   :async true
-   :effect (req (let [chosen (cons target chosen)]
-                  (if (< (count chosen) n)
-                    (continue-ability
-                      state side
-                      (reorder-choice reorder-side wait-side (remove-once #(= target %) remaining) chosen n original dest)
-                      card nil)
-                    (continue-ability
-                      state side
-                      (reorder-final reorder-side wait-side chosen original dest)
-                      card nil))))}))
+   {:prompt (str "Select a card to move next "
+                 (if (= dest "bottom") "under " "onto ")
+                 (if (= reorder-side :corp) "R&D" "your Stack"))
+    :choices remaining
+    :async true
+    :effect (req (let [chosen (cons target chosen)]
+                   (if (< (count chosen) n)
+                     (continue-ability
+                       state side
+                       (reorder-choice reorder-side wait-side (remove-once #(= target %) remaining) chosen n original dest)
+                       card nil)
+                     (continue-ability
+                       state side
+                       (reorder-final reorder-side wait-side chosen original dest)
+                       card nil))))}))
 
 (defn- reorder-final
   "Generates a recursive prompt structure for cards that do reordering (Indexing, Making an Entrance, etc.)
@@ -76,24 +76,24 @@
                    " will be " (join  ", " (map :title (reverse chosen))) ".")
               (str "The top cards of " (if (= reorder-side :corp) "R&D" "your Stack")
                    " will be " (join  ", " (map :title chosen)) "."))
-   :choices ["Done" "Start over"]
-   :async true
-   :effect (req
-             (cond
-               (and (= dest "bottom") (= target "Done"))
-               (do (swap! state update-in [reorder-side :deck]
-                          #(vec (concat (drop (count chosen) %) (reverse chosen))))
-                   (clear-wait-prompt state wait-side)
-                   (effect-completed state side eid))
+    :choices ["Done" "Start over"]
+    :async true
+    :effect (req
+              (cond
+                (and (= dest "bottom") (= target "Done"))
+                (do (swap! state update-in [reorder-side :deck]
+                           #(vec (concat (drop (count chosen) %) (reverse chosen))))
+                    (clear-wait-prompt state wait-side)
+                    (effect-completed state side eid))
 
-               (= target "Done")
-               (do (swap! state update-in [reorder-side :deck]
-                          #(vec (concat chosen (drop (count chosen) %))))
-                   (clear-wait-prompt state wait-side)
-                   (effect-completed state side eid))
+                (= target "Done")
+                (do (swap! state update-in [reorder-side :deck]
+                           #(vec (concat chosen (drop (count chosen) %))))
+                    (clear-wait-prompt state wait-side)
+                    (effect-completed state side eid))
 
-               :else
-               (continue-ability state side (reorder-choice reorder-side wait-side original '() (count original) original dest) card nil)))}))
+                :else
+                (continue-ability state side (reorder-choice reorder-side wait-side original '() (count original) original dest) card nil)))}))
 
 (defn swap-ice
   "Swaps two pieces of ICE."
@@ -202,27 +202,29 @@
                             (add-counter state :runner (get-card state card) :virus number))
                           (effect-completed state side (make-result eid :cancel)))
                      (req (let [msg (join ", " (map #(let [{:keys [card number]} %
-                                                      title (:title card)]
-                                                  (str (quantify number "virus counter") " from " title))
-                                               (vals selected-cards)))]
-                           (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
+                                                           title (:title card)]
+                                                       (str (quantify number "virus counter") " from " title))
+                                                    (vals selected-cards)))]
+                            (effect-completed state side (make-result eid {:number counter-count :msg msg})))))}))
 
 ;; Load all card definitions into the current namespace.
 (defn load-base-cards []
   (let [base "src/clj/game/cards"]
-    (doall (pmap load-file (->> (io/file base)
-                                .listFiles
-                                (filter #(string/ends-with? (.getPath %) ".clj"))
-                                (map str))))))
+    (doall (pmap load-file
+                 (->> (io/file base)
+                      .listFiles
+                      (filter #(string/ends-with? (.getPath %) ".clj"))
+                      (map str))))))
 
 (defn load-all-cards
   ([] (load-all-cards nil))
   ([path]
    (let [base "src/clj/game/cards"]
-     (doall (pmap load-file (->> (io/file base)
-                                 .listFiles
-                                 (filter #(string/ends-with? (.getPath %) ".clj"))
-                                 (map str))))
+     (doall (pmap load-file
+                  (->> (io/file base)
+                       .listFiles
+                       (filter #(string/ends-with? (.getPath %) ".clj"))
+                       (map str))))
      (doall
        (pmap load-file
              (->> (io/file base)

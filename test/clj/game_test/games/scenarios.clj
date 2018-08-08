@@ -5,15 +5,12 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards (partial reset-card-defs nil))
-
 (deftest minigame-prevent-netdmg-resourcetrash
   (testing "Mini-game testing prevention of net damage and resource trashing, with hosted Fall Guy"
     (do-game
-      (new-game
-        (default-corp ["Neural EMP" (qty "Hedge Fund" 3) "SEA Source"])
-        (default-runner ["Fall Guy" "Off-Campus Apartment" "Net Shield"
-                         "Wireless Net Pavilion" "Sure Gamble"]))
+      (new-game {:corp {:deck ["Neural EMP" (qty "Hedge Fund" 3) "SEA Source"]}}
+                {:runner {:deck ["Fall Guy" "Off-Campus Apartment" "Net Shield"
+                                 "Wireless Net Pavilion" "Sure Gamble"]}})
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
       (take-credits state :corp 1)
@@ -51,20 +48,20 @@
 (deftest hb-glacier
   (testing "HB Glacier econ and server protection with upgrades - Ash, Caprice, Breaker Bay Grid, positional ice strength boost"
     (do-game
-      (new-game (make-deck "Haas-Bioroid: Engineering the Future"
-                           ["Adonis Campaign"
-                            "Global Food Initiative"
-                            "Breaker Bay Grid"
-                            "Caprice Nisei"
-                            "Ash 2X3ZB9CY"
-                            "Turing"
-                            "Hedge Fund"])
-                (default-runner ["Desperado"
+      (new-game {:corp {:id "Haas-Bioroid: Engineering the Future"
+                        :deck ["Adonis Campaign"
+                               "Global Food Initiative"
+                               "Breaker Bay Grid"
+                               "Caprice Nisei"
+                               "Ash 2X3ZB9CY"
+                               "Turing"
+                               "Hedge Fund"]}}
+                {:runner {:deck ["Desperado"
                                  "Dirty Laundry"
                                  "Emergency Shutdown"
                                  "Lamprey"
                                  "Data Folding"
-                                 "Career Fair"]))
+                                 "Career Fair"]}})
       (core/draw state :corp 1)
       (core/gain state :corp :click 1)
       (play-from-hand state :corp "Hedge Fund")

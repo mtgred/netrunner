@@ -1,41 +1,13 @@
 (ns tasks.split-defs
-  "NetrunnerDB import tasks"
   (:require [clojure.string :as string]
-            [tasks.nrdb :refer [slugify]]
+            [tasks.utils :refer [slugify type->dir deep-merge]]
             [clojure.java.io :as io]
             [jinteki.cards :refer [all-cards]]))
-
-(defn type->dir
-  [card]
-  (case (:type card)
-    "Agenda" "agendas"
-    "Asset" "assets"
-    "Event" "events"
-    "Hardware" "hardware"
-    "ICE" "ice"
-    "Identity" "identities"
-    "Operation" "operations"
-    "Program" (if (and (:subtype card)
-                       (> (.indexOf (:subtype card) "Icebreaker") -1))
-                "icebreakers"
-                "programs")
-    "Resource" "resources"
-    "Upgrade" "upgrades"))
-
-(defn deep-merge [v & vs]
-  ;; Pulled from https://gist.github.com/danielpcox/c70a8aa2c36766200a95#gistcomment-2313926
-  (letfn [(rec-merge [v1 v2]
-            (if (and (map? v1) (map? v2))
-              (merge-with deep-merge v1 v2)
-              v2))]
-    (if (some identity vs)
-      (reduce #(rec-merge %1 %2) v vs)
-      v)))
 
 (defn open-base-defs []
   (->> (io/file "src/clj/game/cards")
        .listFiles
-       (filter #(clojure.string/ends-with? (.getPath %) ".clj"))
+       (filter #(string/ends-with? (.getPath %) ".clj"))
        sort
        (map slurp)))
 
