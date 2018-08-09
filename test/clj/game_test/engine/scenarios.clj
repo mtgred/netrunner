@@ -1,4 +1,4 @@
-(ns game-test.games.scenarios
+(ns game-test.engine.scenarios
   (:require [game.core :as core]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
