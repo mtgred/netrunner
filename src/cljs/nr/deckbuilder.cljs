@@ -353,29 +353,14 @@
   [deck]
   (dots-html influence-dot (decks/influence-map deck)))
 
-(defn build-format-status
-  "Builds div for alternative format status"
-  [format violation-details? message]
-  [:div {:class (if (:legal format) "legal" "invalid") :title (when violation-details? (:reason format))}
-   [:span.tick (if (:legal format) "✔" "✘")] message " compliant"])
-
-(defn- build-deck-status-label [valid mwl rotation cache-refresh onesies modded violation-details?]
-  (let [status (decks/deck-status mwl valid rotation)
-        message (case status
-                  "legal" "Tournament legal"
-                  "casual" "Casual play only"
-                  "invalid" "Invalid"
-                  "")]
-    [:div.status-tooltip.blue-shade
-     [:div {:class (if valid "legal" "invalid")}
-      [:span.tick (if valid "✔" "✘")] "Basic deckbuilding rules"]
-     [:div {:class (if mwl "legal" "invalid")}
-      [:span.tick (if mwl "✔" "✘")] (:name @cards/mwl)]
-     [:div {:class (if rotation "legal" "invalid")}
-      [:span.tick (if rotation "✔" "✘")] "Only released cards"]
-     (build-format-status cache-refresh violation-details? "Cache Refresh")
-     (build-format-status onesies violation-details? "1.1.1.1 format")
-     (build-format-status modded violation-details? "Modded format")]))
+(defn- build-deck-status-label [deck-status violation-details?]
+  [:div.status-tooltip.blue-shade
+   (doall (for [[status-key {:keys [legal reason description]}] deck-status]
+            ^{:key status-key}
+            [:div {:class (if legal "legal" "invalid")
+                   :title (when violation-details? reason)}
+             [:span.tick (if legal "✔" "✘")]
+             description]))])
 
 (defn- deck-status-details
   [deck use-trusted-info]
@@ -385,7 +370,7 @@
 
 (defn format-deck-status-span
   [deck-status tooltip? violation-details?]
-  (let [{:keys [valid mwl rotation cache-refresh onesies modded status]} deck-status
+  (let [status (decks/check-deck-status deck-status)
         message (case status
                   "legal" "Tournament legal"
                   "casual" "Casual play only"
@@ -393,18 +378,18 @@
                   "")]
     [:span.deck-status.shift-tooltip {:class status} message
      (when tooltip?
-       (build-deck-status-label valid mwl rotation cache-refresh onesies modded violation-details?))]))
+       (build-deck-status-label deck-status violation-details?))]))
 
-(defn deck-status-span-impl [sets deck tooltip? violation-details? use-trusted-info]
+(defn deck-status-span-impl [deck tooltip? violation-details? use-trusted-info]
   (format-deck-status-span (deck-status-details deck use-trusted-info) tooltip? violation-details?))
 
 (def deck-status-span-memoize (memoize deck-status-span-impl))
 
 (defn deck-status-span
   "Returns a [:span] with standardized message and colors depending on the deck validity."
-  ([sets deck] (deck-status-span sets deck false false true))
-  ([sets deck tooltip? violation-details? use-trusted-info]
-   (deck-status-span-memoize sets deck tooltip? violation-details? use-trusted-info)))
+  ([deck] (deck-status-span deck false false true))
+  ([deck tooltip? violation-details? use-trusted-info]
+   (deck-status-span-memoize deck tooltip? violation-details? use-trusted-info)))
 
 (defn match [identity query]
   (->> @all-cards
@@ -501,7 +486,7 @@
                                :on-click #(put! select-channel deck)}
                 [:img {:src (image-url (:identity deck))
                        :alt (get-in deck [:identity :title] "")}]
-                [:div.float-right [deck-status-span @sets deck]]
+                [:div.float-right [deck-status-span deck]]
                 [:h4 (:name deck)]
                 [:div.float-right (-> (:date deck) js/Date. js/moment (.format "MMM Do YYYY"))]
                 [:p (get-in deck [:identity :title]) [:br]
@@ -701,7 +686,7 @@
                           [:span.invalid " (minimum " min-point ")"])
                         (when (> points (inc min-point))
                           [:span.invalid " (maximum " (inc min-point) ")"])]))
-                   [:div [deck-status-span @card-sets deck true true false]]]
+                   [:div [deck-status-span deck true true false]]]
                   [:div.cards
                    (doall
                      (for [group (sort-by first (group-by #(get-in % [:card :type]) cards))]
