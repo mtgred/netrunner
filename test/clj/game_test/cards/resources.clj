@@ -488,7 +488,7 @@
   (testing "Trashes by both sides and manual triggers"
     (do-game
       (new-game (default-corp ["Bio-Ethics Association"])
-                (default-runner ["District 99" (qty "Spy Camera" 2) "Faerie"]))
+                (default-runner ["District 99" (qty "Spy Camera" 3) "Faerie"]))
       (play-from-hand state :corp "Bio-Ethics Association" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "District 99")
@@ -503,6 +503,11 @@
         (click-prompt state :runner "OK")
         (is (= 1 (get-counters (refresh d99) :power)) "Manual power counter addition suppressed later trigger")
         (play-from-hand state :runner "Spy Camera")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (core/move-card state :runner {:card (find-card "Spy Camera" (:hand (get-runner)))
+                                       :server "Heap"})
+        (is (= 1 (get-counters (refresh d99) :power)) "Discarding from hand does not trigger D99")
         (is (= 1 (count (:hand (get-runner)))) "Faerie in hand")
         (is (= "Faerie" (:title (first (:hand (get-runner))))))
         (core/rez state :corp bea)

@@ -60,6 +60,8 @@
                                               (system-msg "places 1 [Credit] on Bankroll"))}}
     :abilities [{:label "[Trash]: Take all credits from Bankroll"
                  :async true
+                 ;; Cannot trash unless there are counters (so game state changes)
+                 :req (req (pos? (get-counters card :credit)))
                  :effect (req (let [credits-on-bankroll (get-counters card :credit)]
                                 (wait-for (trash state :runner card {:cause :ability-cost})
                                           (take-credits state :runner credits-on-bankroll)
