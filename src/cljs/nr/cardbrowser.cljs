@@ -312,8 +312,9 @@
       (swap! s update-in [:page] (fnil inc 0)))))
 
 (defn handle-search [e s]
-  (doseq [filter [:set-filter :type-filter :sort-filter :faction-filter]]
+  (doseq [filter [:set-filter :type-filter :faction-filter]]
     (swap! s assoc filter "All"))
+  (swap! s assoc :sort-field "Faction")
   (swap! s assoc :search-query (.. e -target -value)))
 
 (defn card-view [card s]
@@ -361,7 +362,6 @@
 (defn card-browser []
   (let [s (r/atom {:search-query ""
                    :sort-field "Faction"
-                   :sort-filter "All"
                    :set-filter "All"
                    :type-filter "All"
                    :side-filter "All"
