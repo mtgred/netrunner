@@ -277,8 +277,6 @@
     {:keys [gameid password options]}   :?data
     reply-fn                            :?reply-fn
     :as                                 msg}]
-  (println "Join: " user)
-  (println "Game: " (@all-games gameid))
   (if-let [{game-password :password :as game} (@all-games gameid)]
     (when (and user game (allowed-in-game game user))
       (if (and (not (already-in-game? user game))
