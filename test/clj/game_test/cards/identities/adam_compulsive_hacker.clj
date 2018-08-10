@@ -10,8 +10,8 @@
   (testing "Allow runner to choose directives"
     (do-game
       (new-game {:runner {:id "Adam: Compulsive Hacker"
-                          :deck [(qty "Sure Gamble" 3)]}}
-                {:dont-start-game true})
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :options {:dont-start-game true}})
       (is (= 4 (count (get-in @state [:runner :play-area]))) "All directives are in the runner's play area")
       (is (zero? (count (get-in @state [:runner :hand]))))
       (click-card state :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
@@ -28,8 +28,8 @@
       (new-game {:corp {:id "Pālanā Foods: Sustainable Growth"
                         :deck [(qty "Hedge Fund" 3)]}
                  :runner {:id "Adam: Compulsive Hacker"
-                          :deck [(qty "Sure Gamble" 3)]}}
-                {:dont-start-game true})
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :options {:dont-start-game true}})
       (click-card state :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
       (click-card state :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
       (click-card state :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
@@ -41,8 +41,8 @@
     (do-game
       (new-game {:corp {:deck [(qty "Cerebral Overwriter" 3)]}
                  :runner {:id "Adam: Compulsive Hacker"
-                          :deck [(qty "Sure Gamble" 3)]}}
-                {:dont-start-game true})
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :options {:dont-start-game true}})
       (click-card state :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
       (click-card state :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
       (click-card state :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))

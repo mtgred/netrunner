@@ -149,8 +149,8 @@
   (testing "Allow runner to choose directives"
     (do-game
       (new-game {:runner {:id "Adam: Compulsive Hacker"
-                          :deck [(qty "Sure Gamble" 3)]}}
-                {:dont-start-game true})
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :options {:dont-start-game true}})
       (is (= 4 (count (get-in @state [:runner :play-area]))) "All directives are in the runner's play area")
       (is (zero? (count (get-in @state [:runner :hand]))))
       (click-card state :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
@@ -167,8 +167,8 @@
       (new-game {:corp {:id "Pālanā Foods: Sustainable Growth"
                         :deck [(qty "Hedge Fund" 3)]}
                  :runner {:id "Adam: Compulsive Hacker"
-                          :deck [(qty "Sure Gamble" 3)]}}
-                {:dont-start-game true})
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :options {:dont-start-game true}})
       (click-card state :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
       (click-card state :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
       (click-card state :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
@@ -180,8 +180,8 @@
     (do-game
       (new-game {:corp {:deck [(qty "Cerebral Overwriter" 3)]}
                  :runner {:id "Adam: Compulsive Hacker"
-                          :deck [(qty "Sure Gamble" 3)]}}
-                {:dont-start-game true})
+                          :deck [(qty "Sure Gamble" 3)]}
+                 :options {:dont-start-game true}})
       (click-card state :runner (find-card "Neutralize All Threats" (get-in @state [:runner :play-area])))
       (click-card state :runner (find-card "Safety First" (get-in @state [:runner :play-area])))
       (click-card state :runner (find-card "Always Be Running" (get-in @state [:runner :play-area])))
@@ -270,8 +270,8 @@
     (do-game
       (new-game {:runner {:id "Andromeda: Dispossessed Ristie"
                           :deck [(qty "Sure Gamble" 3) (qty "Desperado" 3)
-                                 (qty "Security Testing" 3) (qty "Bank Job" 3)]}}
-                {:mulligan :runner})
+                                 (qty "Security Testing" 3) (qty "Bank Job" 3)]}
+                 :options {:mulligan :runner}})
       (is (= 1 (:link (get-runner))) "1 link")
       (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
   (testing "should not grant Palana credits"
@@ -358,8 +358,8 @@
     (new-game {:runner {:id "Ayla \"Bios\" Rahim: Simulant Specialist"
                         :deck ["Sure Gamble" "Desperado"
                                "Security Testing" "Bank Job"
-                               "Heartbeat" "Eater"]}}
-              {:dont-start-game true})
+                               "Heartbeat" "Eater"]}
+               :options {:dont-start-game true}})
     (is (= 6 (count (get-in @state [:runner :play-area]))) "Deck cards are in play area")
     (is (zero? (count (get-in @state [:runner :hand]))))
     (click-card state :runner (find-card "Sure Gamble" (get-in @state [:runner :play-area])))
@@ -996,8 +996,8 @@
   (testing "Brewery net damage"
     (do-game
       (new-game {:corp {:id "Jinteki Biotech: Life Imagined"
-                        :deck ["Braintrust"]}}
-                {:dont-start-turn true})
+                        :deck ["Braintrust"]}
+                 :options {:dont-start-turn true}})
       (click-prompt state :corp "The Brewery")
       (core/start-turn state :corp nil)
       (card-ability state :corp (:identity (get-corp)) 1)
@@ -1005,8 +1005,8 @@
   (testing "Greenhouse four advancement tokens"
     (do-game
       (new-game {:corp {:id "Jinteki Biotech: Life Imagined"
-                        :deck ["Braintrust"]}}
-                {:dont-start-turn true})
+                        :deck ["Braintrust"]}
+                 :options {:dont-start-turn true}})
       (click-prompt state :corp "The Greenhouse")
       (core/start-turn state :corp nil)
       (play-from-hand state :corp "Braintrust" "New remote")
@@ -1020,8 +1020,8 @@
   (testing "Tank shuffle Archives into R&D"
     (do-game
       (new-game {:corp {:id "Jinteki Biotech: Life Imagined"
-                        :deck [(qty "Hedge Fund" 3)]}}
-                {:dont-start-turn true})
+                        :deck [(qty "Hedge Fund" 3)]}
+                 :options {:dont-start-turn true}})
       (click-prompt state :corp "The Tank")
       (core/start-turn state :corp nil)
       (play-from-hand state :corp "Hedge Fund")
@@ -1464,8 +1464,8 @@
   ;; Next Design.  Install up to 3 ICE before game starts, one per server max, and re-draw to 5
   (do-game
     (new-game {:corp {:id "NEXT Design: Guarding the Net"
-                      :deck [(qty "Snowflake" 10)]}}
-              {:dont-start-turn true})
+                      :deck [(qty "Snowflake" 10)]}
+               :options {:dont-start-turn true}})
     (click-card state :corp (find-card "Snowflake" (:hand (get-corp))))
     (click-prompt state :corp "HQ")
     (click-card state :corp (find-card "Snowflake" (:hand (get-corp))))

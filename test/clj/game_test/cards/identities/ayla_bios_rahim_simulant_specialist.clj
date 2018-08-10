@@ -11,8 +11,8 @@
     (new-game {:runner {:id "Ayla \"Bios\" Rahim: Simulant Specialist"
                         :deck ["Sure Gamble" "Desperado"
                                "Security Testing" "Bank Job"
-                               "Heartbeat" "Eater"]}}
-              {:dont-start-game true})
+                               "Heartbeat" "Eater"]}
+               :options {:dont-start-game true}})
     (is (= 6 (count (get-in @state [:runner :play-area]))) "Deck cards are in play area")
     (is (zero? (count (get-in @state [:runner :hand]))))
     (click-card state :runner (find-card "Sure Gamble" (get-in @state [:runner :play-area])))

@@ -9,8 +9,8 @@
   ;; Next Design.  Install up to 3 ICE before game starts, one per server max, and re-draw to 5
   (do-game
     (new-game {:corp {:id "NEXT Design: Guarding the Net"
-                      :deck [(qty "Snowflake" 10)]}}
-              {:dont-start-turn true})
+                      :deck [(qty "Snowflake" 10)]}
+               :options {:dont-start-turn true}})
     (click-card state :corp (find-card "Snowflake" (:hand (get-corp))))
     (click-prompt state :corp "HQ")
     (click-card state :corp (find-card "Snowflake" (:hand (get-corp))))

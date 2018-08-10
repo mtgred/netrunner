@@ -18,8 +18,8 @@
     ;; Rebirth - Kate's discount applies after rebirth
     (testing "Kate"
       (do-game
-        (new-game {:runner {:deck ["Magnum Opus" "Rebirth"]}}
-                  {:start-as :runner})
+        (new-game {:runner {:deck ["Magnum Opus" "Rebirth"]}
+                   :options {:start-as :runner}})
         (play-from-hand state :runner "Rebirth")
         (is (= (first (prompt-titles :runner)) akiko) "List is sorted")
         (is (every? #(some #{%} (prompt-titles :runner))
@@ -50,8 +50,8 @@
     (testing "Lose link from ID"
       (do-game
         (new-game {:runner {:id kate
-                            :deck ["Rebirth" "Access to Globalsec"]}}
-                  {:start-as :runner})
+                            :deck ["Rebirth" "Access to Globalsec"]}
+                   :options {:start-as :runner}})
         (play-from-hand state :runner "Access to Globalsec")
         (is (= 2 (:link (get-runner))) "2 link before rebirth")
         (play-from-hand state :runner "Rebirth")
@@ -59,8 +59,8 @@
         (is (= 1 (:link (get-runner))) "1 link after rebirth")))
     (testing "Gain link from ID"
       (do-game
-        (new-game {:runner {:deck ["Rebirth" "Access to Globalsec"]}}
-                  {:start-as :runner})
+        (new-game {:runner {:deck ["Rebirth" "Access to Globalsec"]}
+                   :options {:start-as :runner}})
         (play-from-hand state :runner "Access to Globalsec")
         (is (= 1 (:link (get-runner))) "1 link before rebirth")
         (play-from-hand state :runner "Rebirth")
@@ -68,8 +68,8 @@
         (is (= 2 (:link (get-runner))) "2 link after rebirth")))
     (testing "Implementation notes are kept, regression test for #3722"
       (do-game
-        (new-game {:runner {:deck ["Rebirth"]}}
-                  {:start-as :runner})
+        (new-game {:runner {:deck ["Rebirth"]}
+                   :options {:start-as :runner}})
         (play-from-hand state :runner "Rebirth")
         (click-prompt state :runner chaos)
         (is (= :full (get-in (get-runner) [:identity :implementation])) "Implementation note kept as `:full`"))))
@@ -77,8 +77,8 @@
     ;; Rebirth - Kate does not give discount after rebirth if Hardware or Program already installed
     (testing "Installing Hardware before does prevent discount"
       (do-game
-        (new-game {:runner {:deck ["Akamatsu Mem Chip" "Rebirth" "Clone Chip"]}}
-                  {:start-as :runner})
+        (new-game {:runner {:deck ["Akamatsu Mem Chip" "Rebirth" "Clone Chip"]}
+                   :options {:start-as :runner}})
         (play-from-hand state :runner "Clone Chip")
         (play-from-hand state :runner "Rebirth")
         (click-prompt state :runner kate)
@@ -88,8 +88,8 @@
             "Discount not applied for 2nd install")))
     (testing "Installing Resource before does not prevent discount"
       (do-game
-        (new-game {:runner {:deck ["Akamatsu Mem Chip" "Rebirth" "Same Old Thing"]}}
-                  {:start-as :runner})
+        (new-game {:runner {:deck ["Akamatsu Mem Chip" "Rebirth" "Same Old Thing"]}
+                   :options {:start-as :runner}})
         (play-from-hand state :runner "Same Old Thing")
         (play-from-hand state :runner "Rebirth")
         (click-prompt state :runner kate)

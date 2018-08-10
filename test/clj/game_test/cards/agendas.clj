@@ -233,8 +233,8 @@
       (is (not (:run @state)) "No run is active")))
   (testing "Removing all cards from R&D should not freeze for runner, nor give an extra access."
     (do-game
-      (new-game {:corp {:deck [(qty "Bacterial Programming" 8)]}}
-                {:start-as :runner})
+      (new-game {:corp {:deck [(qty "Bacterial Programming" 8)]}
+                 :options {:start-as :runner}})
       (starting-hand state :corp [])
       (run-empty-server state :rd)
       (click-prompt state :runner "Steal")

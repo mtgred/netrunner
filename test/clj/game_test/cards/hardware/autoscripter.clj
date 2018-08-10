@@ -9,8 +9,8 @@
   ;; Autoscripter - gain 1 [Click] first time Runner installs program from Grip during their turn.
   ;; Trash if unsuccessful run
   (do-game
-    (new-game {:runner {:deck ["Autoscripter" (qty "Inti" 3) "Clone Chip"]}}
-              {:start-as :runner})
+    (new-game {:runner {:deck ["Autoscripter" (qty "Inti" 3) "Clone Chip"]}
+               :options {:start-as :runner}})
     (testing "Gaining (and not gaining) clicks"
       (play-from-hand state :runner "Inti")
       (play-from-hand state :runner "Autoscripter")

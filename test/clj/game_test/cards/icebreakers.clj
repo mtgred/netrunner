@@ -61,8 +61,8 @@
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua does not gain virus counter from trash")))
   (testing "Gain counters on empty archives"
     (do-game
-      (new-game {:runner {:deck ["Aumakua"]}}
-                {:start-as :runner})
+      (new-game {:runner {:deck ["Aumakua"]}
+                 :options {:start-as :runner}})
       (play-from-hand state :runner "Aumakua")
       (run-empty-server state :archives)
       (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gains virus counter from accessing empty Archives")))

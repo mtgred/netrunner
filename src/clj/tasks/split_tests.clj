@@ -77,22 +77,15 @@
                                     (string/split #"\"}") last
                                     (string/split #"\"") last
                                     (string/split #" ") last)
-                          ; _ (println title)
                           card (->> card
                                     (remove string/blank?)
                                     (string/join "\r\n"))
                           all-card (@all-cards (normalized->title title))
-                          card-type (type->dir all-card)
-                          ; filename (str "test/clj/game_test/cards/" card-type ".clj")
-                          ]]
-                {card-type {title card}}
-                )
-        card-tests (apply deep-merge tests)
-        ]
-    ; (println tests)
+                          card-type (type->dir all-card)]]
+                {card-type {title card}})
+        card-tests (apply deep-merge tests)]
     (doseq [[card-type cards] (sort-by key card-tests)]
       (spit (str "test/clj/game_test/cards/" card-type ".clj")
             (str (format header card-type)
                  (string/join "\r\n\r\n" (vals (sort-by #(string/lower-case (key %)) cards)))
-                 footer)))
-    ))
+                 footer)))))

@@ -574,8 +574,8 @@
       ;; Ensure +1 MU is handled correctly
       (do-game
         (new-game {:runner {:id sunny
-                            :deck ["DJ Fenris"]}}
-                  {:start-as :runner})
+                            :deck ["DJ Fenris"]}
+                   :options {:start-as :runner}})
         (play-from-hand state :runner "DJ Fenris")
         (is (= (first (prompt-titles :runner)) geist) "List is sorted")
         (is (every? #(some #{%} (prompt-titles :runner))
@@ -612,8 +612,8 @@
       ;; Ensure Geist effect triggers
       (do-game
         (new-game {:runner {:id sunny
-                            :deck ["DJ Fenris" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]}}
-                  {:start-as :runner})
+                            :deck ["DJ Fenris" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]}
+                   :options {:start-as :runner}})
         (starting-hand state :runner ["DJ Fenris" "All-nighter" "All-nighter"])
         (play-from-hand state :runner "All-nighter")
         (play-from-hand state :runner "All-nighter")
@@ -644,8 +644,8 @@
       ;; Regression test for #3759
       (do-game
         (new-game {:runner {:id sunny
-                            :deck ["DJ Fenris" "Laguna Velasco District" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]}}
-                  {:start-as :runner})
+                            :deck ["DJ Fenris" "Laguna Velasco District" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]}
+                   :options {:start-as :runner}})
         (starting-hand state :runner ["DJ Fenris" "Laguna Velasco District" "All-nighter"])
         (core/gain state :runner :credit 10)
         (play-from-hand state :runner "All-nighter")

@@ -18,8 +18,8 @@
     (do-game
       (new-game {:runner {:id "Andromeda: Dispossessed Ristie"
                           :deck [(qty "Sure Gamble" 3) (qty "Desperado" 3)
-                                 (qty "Security Testing" 3) (qty "Bank Job" 3)]}}
-                {:mulligan :runner})
+                                 (qty "Security Testing" 3) (qty "Bank Job" 3)]}
+                 :options {:mulligan :runner}})
       (is (= 1 (:link (get-runner))) "1 link")
       (is (= 9 (count (:hand (get-runner)))) "9 cards in Andromeda starting hand")))
   (testing "should not grant Palana credits"

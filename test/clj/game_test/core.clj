@@ -81,7 +81,7 @@
        seq))
 
 (defn make-decks
-  [{:keys [corp runner]}]
+  [{:keys [corp runner options]}]
   {:corp {:deck (or (transform (conj (:deck corp)
                                      (:hand corp)
                                      (:discard corp)))
@@ -101,54 +101,57 @@
             :identity (@all-cards
                         (or (:id runner)
                             "The Professor: Keeper of Knowledge"))
-            :credits (:credits runner)}})
+            :credits (:credits runner)}
+   :mulligan (:mulligan options)
+   :start-as (:start-as options)
+   :dont-start-turn (:dont-start-turn options)
+   :dont-start-game (:dont-start-game options)})
+
+(defn- new-game-internal
+  "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
+  [{:keys [corp runner mulligan start-as dont-start-turn dont-start-game] :as players}]
+  (let [state (core/init-game
+                {:gameid 1
+                 :players [{:side "Corp"
+                            :user "player1"
+                            :deck {:identity (:identity corp)
+                                   :cards (:deck corp)}}
+                           {:side "Runner"
+                            :user "player2"
+                            :deck {:identity (:identity runner)
+                                   :cards (:deck runner)}}]})]
+    (when-not dont-start-game
+      (if (#{:both :corp} mulligan)
+        (core/resolve-prompt state :corp {:choice "Mulligan"})
+        (core/resolve-prompt state :corp {:choice "Keep"}))
+      (if (#{:both :runner} mulligan)
+        (core/resolve-prompt state :runner {:choice "Mulligan"})
+        (core/resolve-prompt state :runner {:choice "Keep"}))
+      (when-not dont-start-turn (core/start-turn state :corp nil))
+      (when (= start-as :runner) (take-credits state :corp)))
+    ;; Gotta move cards where they need to go
+    (doseq [side [:corp :runner]]
+      (let [side-map (if (= :corp side) corp runner)]
+        (when-let [hand (seq (:hand side-map))]
+          (starting-hand state side hand))
+        (when (seq (:discard side-map))
+          (doseq [card (:discard side-map)]
+            (core/move state side
+                       (find-card (:card card) (get-in @state [side :deck])) :discard)))
+        (when (:credits side-map)
+          (swap! state assoc-in [side :credit] (:credits side-map)))))
+    ;; These are side independent so they happen ouside the loop
+    (when (:bad-pub corp)
+      (swap! state assoc-in [:corp :bad-publicity] (:bad-pub corp)))
+    (when (:tags runner)
+      (swap! state assoc-in [:runner :tag] (:tags runner)))
+    state))
 
 (defn new-game
-  "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
-  ([] (new-game nil nil))
-  ([args]
-   (if (or (contains? args :corp)
-           (contains? args :runner))
-     (new-game args nil)
-     (new-game nil args)))
-  ([players {:keys [mulligan start-as dont-start-turn dont-start-game] :as args}]
-   (let [{:keys [corp runner]} (make-decks players)
-         state (core/init-game
-                 {:gameid 1
-                  :players [{:side "Corp"
-                             :user "player1"
-                             :deck {:identity (:identity corp)
-                                    :cards (:deck corp)}}
-                            {:side "Runner"
-                             :user "player2"
-                             :deck {:identity (:identity runner)
-                                    :cards (:deck runner)}}]})]
-     (when-not dont-start-game
-       (if (#{:both :corp} mulligan)
-         (core/resolve-prompt state :corp {:choice "Mulligan"})
-         (core/resolve-prompt state :corp {:choice "Keep"}))
-       (if (#{:both :runner} mulligan)
-         (core/resolve-prompt state :runner {:choice "Mulligan"})
-         (core/resolve-prompt state :runner {:choice "Keep"}))
-       (when-not dont-start-turn (core/start-turn state :corp nil))
-       (when (= start-as :runner) (take-credits state :corp)))
-     ;; Gotta move cards where they need to go
-     (doseq [side [:corp :runner]]
-       (let [side-map (if (= :corp side) corp runner)]
-         (when-let [hand (seq (:hand side-map))]
-           (starting-hand state side hand))
-         (when (seq (:discard side-map))
-           (doseq [card (:discard side-map)]
-             (core/move state side
-                        (find-card (:card card) (get-in @state [side :deck])) :discard)))
-         (when (:credits side-map)
-           (swap! state assoc-in [side :credit] (:credits side-map)))))
-     ;; These are side independent so they happen ouside the loop
-     (when (:bad-pub corp)
-       (swap! state assoc-in [:corp :bad-publicity] (:bad-pub corp)))
-     (when (:tags runner)
-       (swap! state assoc-in [:runner :tag] (:tags runner)))
-     state)))
+  "A small wrapper so we can unpack in the parameters and not in a let"
+  ([] (new-game-internal (make-decks nil)))
+  ([players]
+   (new-game-internal (make-decks players))))
 
 ;;; Card related functions
 (defn card-ability

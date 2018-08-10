@@ -10,8 +10,8 @@
   (testing "Brewery net damage"
     (do-game
       (new-game {:corp {:id "Jinteki Biotech: Life Imagined"
-                        :deck ["Braintrust"]}}
-                {:dont-start-turn true})
+                        :deck ["Braintrust"]}
+                 :options {:dont-start-turn true}})
       (click-prompt state :corp "The Brewery")
       (core/start-turn state :corp nil)
       (card-ability state :corp (:identity (get-corp)) 1)
@@ -19,8 +19,8 @@
   (testing "Greenhouse four advancement tokens"
     (do-game
       (new-game {:corp {:id "Jinteki Biotech: Life Imagined"
-                        :deck ["Braintrust"]}}
-                {:dont-start-turn true})
+                        :deck ["Braintrust"]}
+                 :options {:dont-start-turn true}})
       (click-prompt state :corp "The Greenhouse")
       (core/start-turn state :corp nil)
       (play-from-hand state :corp "Braintrust" "New remote")
@@ -34,8 +34,8 @@
   (testing "Tank shuffle Archives into R&D"
     (do-game
       (new-game {:corp {:id "Jinteki Biotech: Life Imagined"
-                        :deck [(qty "Hedge Fund" 3)]}}
-                {:dont-start-turn true})
+                        :deck [(qty "Hedge Fund" 3)]}
+                 :options {:dont-start-turn true}})
       (click-prompt state :corp "The Tank")
       (core/start-turn state :corp nil)
       (play-from-hand state :corp "Hedge Fund")

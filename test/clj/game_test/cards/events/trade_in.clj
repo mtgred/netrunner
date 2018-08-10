@@ -9,8 +9,8 @@
   ;; Trade-in - trash an installed Hardware, gain credits equal to half of install cost,
   ;;            search stack for Hardware and add to grip
   (do-game
-    (new-game {:runner {:deck [(qty "Trade-In" 3) (qty "Astrolabe" 2) (qty "Sports Hopper" 2)]}}
-              {:start-as :runner})
+    (new-game {:runner {:deck [(qty "Trade-In" 3) (qty "Astrolabe" 2) (qty "Sports Hopper" 2)]}
+               :options {:start-as :runner}})
     (starting-hand state :runner ["Trade-In" "Trade-In" "Astrolabe" "Sports Hopper"])
     (core/gain state :runner :click 5 :credit 5)
     (play-from-hand state :runner "Astrolabe")
