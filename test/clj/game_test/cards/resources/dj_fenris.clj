@@ -5,8 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-;; (deftest dj-fenris
-(let [;; Start id
+(let [;; Start id for dj-fenris
       sunny "Sunny Lebeau: Security Specialist"
       ;; Several G-mod identities
       geist "Armand \"Geist\" Walker: Tech Lord"

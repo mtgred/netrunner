@@ -17,4 +17,4 @@
       (core/rez state :corp sand-storm)
       (card-subroutine state :corp sand-storm 0)
       (click-prompt state :corp "Server 2")
-      (is (=  (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))
+      (is (= (first (get-in @state [:run :server])) :remote2) "Is running on server 2"))))

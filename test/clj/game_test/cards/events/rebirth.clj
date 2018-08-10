@@ -5,7 +5,7 @@
             [game-test.macros :refer :all]
             [clojure.test :refer :all]))
 
-;; Rebirth
+;; rebirth
 (let [akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
       kit "Rielle \"Kit\" Peddler: Transhuman"
