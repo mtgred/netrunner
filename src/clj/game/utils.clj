@@ -25,6 +25,12 @@
   [n]
   #(max 0 (- % n)))
 
+(defn in?
+  "true if coll contains elm.
+  Taken from https://stackoverflow.com/a/3249777/3023252"
+  [coll elm]
+  (some #(= elm %) coll))
+
 (defn clean-forfeit
   "Takes a flat :forfeit in costs and adds a cost of 1.
   Ignores cost vectors with an even count as these have forfeit value included"
@@ -149,7 +155,10 @@
 (defn make-label
   "Looks into an ability for :label, if it doesn't find it, capitalizes :msg instead."
   [ability]
-  (or (:label ability) (and (string? (:msg ability)) (capitalize (:msg ability))) ""))
+  (or (:label ability)
+      (and (string? (:msg ability))
+           (capitalize (:msg ability)))
+      ""))
 
 (defn click-spent?
   "Returns true if player has spent at least one click"

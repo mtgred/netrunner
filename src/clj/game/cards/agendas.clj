@@ -3,7 +3,6 @@
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
@@ -22,6 +21,7 @@
      :events {:pre-ice-strength {:req (req (has-subtype? target subtype))
                                  :effect (effect (ice-strength-bonus 1 target))}}}))
 
+;; Card definitions
 (def card-definitions
   {"15 Minutes"
    {:abilities [{:cost [:click 1] :msg "shuffle 15 Minutes into R&D"
@@ -140,8 +140,9 @@
    "AstroScript Pilot Program"
    {:effect (effect (add-counter card :agenda 1))
     :silent (req true)
-    :abilities [{:counter-cost [:agenda 1] :msg (msg "place 1 advancement token on "
-                                                      (card-str state target))
+    :abilities [{:counter-cost [:agenda 1]
+                 :label "Place advancement token"
+                 :msg (msg "place 1 advancement token on " (card-str state target))
                  :choices {:req can-be-advanced?}
                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]}
 
@@ -405,7 +406,7 @@
    "Degree Mill"
    {:steal-cost-bonus (req [:shuffle-installed-to-stack 2])}
 
-   "Director Haas Pet Project"
+   "Director Haas' Pet Project"
    (letfn [(install-ability [server-name n]
              {:prompt "Select a card to install"
               :show-discard true
@@ -512,6 +513,7 @@
    {:silent (req true)
     :effect (effect (add-counter card :agenda 3))
     :abilities [{:counter-cost [:agenda 1]
+                 :label "Place 1 advancement token"
                  :choices {:req #(and (ice? %)
                                       (can-be-advanced? %))}
                  :req (req (pos? (get-counters card :agenda)))
@@ -544,9 +546,6 @@
                  :msg "gain 3 [Credits]"
                  :effect (effect (gain-credits 3))}]}
 
-   "Global Food Initiative"
-   {:agendapoints-runner (req 2)}
-
    "Glenn Station"
    {:implementation "Doesn't prohibit hosting multiple cards"
     :abilities [{:label "Host a card from HQ on Glenn Station"
@@ -561,6 +560,9 @@
                  :prompt "Choose a card on Glenn Station"
                  :choices (req (:hosted card))
                  :effect (effect (move target :hand))}]}
+
+   "Global Food Initiative"
+   {:agendapoints-runner (req 2)}
 
    "Government Contracts"
    {:abilities [{:cost [:click 2]
@@ -593,16 +595,17 @@
    "Hades Fragment"
    {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard]))
                                      (is-scored? state :corp card)))}
-    :abilities [{:prompt "Select a card to add to the bottom of R&D"
+    :abilities [{:label "Add card in Archives to bottom of R&D"
+                 :prompt "Select a card to add to the bottom of R&D"
                  :show-discard true
                  :choices {:req #(and (= (:side %) "Corp")
                                       (= (:zone %) [:discard]))}
-                 :effect (effect (move target :deck))
                  :msg (msg "add "
                            (if (:seen target)
                              (:title target)
                              "a card")
-                           " to the bottom of R&D")}]}
+                           " to the bottom of R&D")
+                 :effect (effect (move target :deck))}]}
 
    "Helium-3 Deposit"
    {:async true
@@ -622,14 +625,9 @@
     :silent (req true)
     :abilities [{:cost [:click 1]
                  :counter-cost [:agenda 1]
+                 :label "Gain [Credits]"
                  :msg (msg "gain " (:credit runner) " [Credits]")
                  :effect (effect (gain-credits (:credit runner)))}]}
-
-   "Hostile Takeover"
-   {:msg "gain 7 [Credits] and take 1 bad publicity"
-    :effect (effect (gain-credits 7)
-                    (gain-bad-publicity :corp 1))
-    :interactive (req true)}
 
    "Hollywood Renovation"
    {:install-state :face-up
@@ -647,6 +645,12 @@
                                          (card-str state target))
                                :effect (effect (add-prop :corp target :advance-counter n {:placed true}))}
                               card nil)))}}}
+
+   "Hostile Takeover"
+   {:msg "gain 7 [Credits] and take 1 bad publicity"
+    :effect (effect (gain-credits 7)
+                    (gain-bad-publicity :corp 1))
+    :interactive (req true)}
 
    "House of Knives"
    {:effect (effect (add-counter card :agenda 3))
@@ -807,6 +811,18 @@
     :advancement-cost-bonus (req (+ (:bad-publicity corp)
                                     (:has-bad-pub corp)))}
 
+   "Net Quarantine"
+   (let [nq {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
+                            (when (pos? extra)
+                              (gain-credits state side extra)
+                              (system-msg state :corp (str "uses Net Quarantine to gain " extra "[Credits]")))))}]
+     {:events {:pre-init-trace {:once :per-turn
+                                :silent (req true)
+                                :effect (req (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
+                                             (swap! state assoc-in [:trace :force-link] 0))}
+               :successful-trace nq
+               :unsuccessful-trace nq}})
+
    "New Construction"
    {:install-state :face-up
     :events {:advance
@@ -826,18 +842,6 @@
                                                               {:install-state :rezzed-no-cost})
                                                 (trigger-event state side :rez target))
                                             (corp-install state side target "New remote")))}}}}}
-
-   "Net Quarantine"
-   (let [nq {:effect (req (let [extra (int (/ (:runner-spent target) 2))]
-                            (when (pos? extra)
-                              (gain-credits state side extra)
-                              (system-msg state :corp (str "uses Net Quarantine to gain " extra "[Credits]")))))}]
-     {:events {:pre-init-trace {:once :per-turn
-                                :silent (req true)
-                                :effect (req (system-msg state :corp "uses Net Quarantine to reduce Runner's base link to zero")
-                                             (swap! state assoc-in [:trace :force-link] 0))}
-               :successful-trace nq
-               :unsuccessful-trace nq}})
 
    "NEXT Wave 2"
    {:not-when-scored true
@@ -973,6 +977,7 @@
    {:silent (req true)
     :effect (effect (add-counter card :agenda (- (get-counters card :advancement) 3)))
     :abilities [{:counter-cost [:agenda 1]
+                 :label "Add card in Archives to HQ"
                  :prompt "Choose a card in Archives to add to HQ"
                  :show-discard true
                  :choices {:req #(and (in-discard? %)
@@ -1124,8 +1129,9 @@
 
    "Restructured Datapool"
    {:abilities [{:cost [:click 1]
+                 :label "Tag the runner"
                  :trace {:base 2
-                         :successful {:msg "give the Runner 1 tag"
+                         :successful {:msg "give the runner 1 tag"
                                       :async true
                                       :effect (effect (gain-tags eid 1))}}}]}
 
@@ -1141,18 +1147,25 @@
    {:effect (effect (add-counter card :agenda 1))
     :silent (req true)
     :abilities [{:counter-cost [:agenda 1]
-                 :req (req (some #(and (has-subtype? % "Bioroid") (not (rezzed? %))) (all-installed state :corp)))
+                 :req (req (some #(and (has-subtype? % "Bioroid")
+                                       (not (rezzed? %)))
+                                 (all-installed state :corp)))
+                 :label "Rez bioroid ice"
                  :prompt "Choose a bioroid to rez, ignoring all costs"
-                 :choices {:req #(and (has-subtype? % "Bioroid") (not (rezzed? %)))}
+                 :choices {:req #(and (has-subtype? % "Bioroid")
+                                      (not (rezzed? %)))}
                  :msg (msg "rez " (card-str state target) ", ignoring all costs")
                  :effect (req (let [c target]
                                 (rez state side c {:ignore-cost :all-costs})
-                                (register-events state side
+                                (register-events
+                                  state side
                                   {:corp-turn-ends {:effect (effect (derez c)
                                                                     (unregister-events card))}
                                    :runner-turn-ends {:effect (effect (derez c)
-                                                                      (unregister-events card))}} card)))}]
-      :events {:corp-turn-ends nil :runner-turn-ends nil}}
+                                                                      (unregister-events card))}}
+                                  card)))}]
+    :events {:corp-turn-ends nil
+             :runner-turn-ends nil}}
 
    "Sentinel Defense Program"
    {:events {:pre-resolve-damage {:req (req (and (= target :brain)
@@ -1282,6 +1295,7 @@
                                              (steal-cost-bonus state side [:credit (* 2 counter)])))}}}
 
    "Vanity Project"
+   ;; No special implementation
    {}
 
    "Veterans Program"

@@ -10,7 +10,20 @@
   "Retrieves a card's abilities definition map."
   [card]
   (when-let [title (:title card)]
-    (cards (.replace title "'" ""))))
+    (if (contains? @card-definitions title)
+      (get @card-definitions title)
+      (let [card-type (type->dir card)
+            filename (slugify title "_")
+            classname (symbol (format "game.cards.%s" card-type))
+            cdef (symbol (format "card-definition-%s" (:normalizedtitle card)))]
+        (try (load-file (format "src/clj/game/cards/%s/%s.clj" card-type filename))
+             (let [c (var-get (ns-resolve classname cdef))]
+               (swap! card-definitions merge c))
+             (catch java.lang.Exception e
+               (println (str "Tried to import " classname
+                             " for card " title " but failed."))
+               (swap! card-definitions assoc title nil)))
+        (get @card-definitions title)))))
 
 (defn find-cid
   "Return a card with specific :cid from given sequence"
@@ -145,8 +158,9 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front keep-server-alive force]}]
-   (let [zone (if host (map to-keyword (:zone host)) zone)
+  ([state side {:keys [zone cid host installed] :as card} to {:keys [front keep-server-alive force] :as options}]
+   (let [to (if (is-type? card "Fake-Identity") :rfg to)  ; Fake-Identities always get moved to RFG
+         zone (if host (map to-keyword (:zone host)) zone)
          src-zone (first zone)
          target-zone (if (vector? to) (first to) to)]
      (if (is-type? card "Fake-Identity")
@@ -324,9 +338,9 @@
   (let [card (if host
                (dissoc card :facedown)
                (move state side card (type->rig-zone (:type card))))]
-   (card-init state side card {:resolve-effect false :init-data false})
-   (when-let [mu (:memoryunits card)]
-     (use-mu state mu)
-     (toast-check-mu state))
-   (when (has-subtype? card "Icebreaker")
-     (update-breaker-strength state side card))))
+    (card-init state side card {:resolve-effect false :init-data false})
+    (when-let [mu (:memoryunits card)]
+      (use-mu state mu)
+      (toast-check-mu state))
+    (when (has-subtype? card "Icebreaker")
+      (update-breaker-strength state side card))))

@@ -1,8 +1,11 @@
 (ns tasks.fetch
   "NetrunnerDB import tasks"
   (:require [web.db :refer [db] :as webdb]
+            [game.utils :refer [pluralize]]
             [clojure.string :as string]
             [tasks.nrdb :refer :all]
+            [clojure.java.io :as io]
+            [jinteki.cards :refer [all-cards]]
             [tasks.altart :refer [add-art]]))
 
 (defn fetch

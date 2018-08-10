@@ -2,65 +2,158 @@
   (:require [game.core :as core]
             [game.utils :as utils :refer [make-cid]]
             [jinteki.cards :refer [all-cards]]
-            [game-test.utils :refer [load-cards]]
+            [hawk.core :as hawk]
             [clojure.test :refer :all]))
 
+;; Card information and definitions
+(defn load-cards []
+  (->> (clojure.java.io/file "data/cards")
+       file-seq
+       (filter #(.isFile %))
+       (map slurp)
+       (map read-string)
+       merge))
 
-;;; Click action functions
-(defn take-credits
-  "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
-  If all clicks are used up, end turn and start the opponent's turn."
-  ([state side] (take-credits state side nil))
-  ([state side n]
-    (let  [remaining-clicks (get-in @state [side :click])
-           n (or n remaining-clicks)
-           other (if (= side :corp) :runner :corp)]
-      (dotimes [i n] (core/click-credit state side nil))
-      (if (= (get-in @state [side :click]) 0)
-        (do (core/end-turn state side nil)
-            (core/start-turn state other nil))))))
-
-(defn new-game
-  "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
-  ([corp runner] (new-game corp runner nil))
-  ([corp runner {:keys [mulligan start-as dont-start-turn dont-start-game] :as args}]
-    (let [state (core/init-game
-                   {:gameid 1
-                    :players [{:side "Corp"
-                               :deck {:identity (@all-cards (:identity corp))
-                                      :cards (:deck corp)}}
-                              {:side "Runner"
-                               :deck {:identity (@all-cards (:identity runner))
-                                      :cards (:deck runner)}}]})]
-      (when-not dont-start-game
-        (if (#{:both :corp} mulligan)
-          (core/resolve-prompt state :corp {:choice "Mulligan"})
-          (core/resolve-prompt state :corp {:choice "Keep"}))
-        (if (#{:both :runner} mulligan)
-          (core/resolve-prompt state :runner {:choice "Mulligan"})
-          (core/resolve-prompt state :runner {:choice "Keep"}))
-        (when-not dont-start-turn (core/start-turn state :corp nil))
-        (when (= start-as :runner) (take-credits state :corp)))
-      state)))
-
-(defn load-all-cards [tests]
+(defn load-all-cards []
   (when (empty? @all-cards)
-    (core/reset-card-defs)
-    (reset! all-cards (into {} (map (juxt :title identity) (map #(assoc % :cid (make-cid)) (load-cards))))))
-  (tests))
-(use-fixtures :once load-all-cards)
+    (->> (load-cards)
+         (map #(assoc % :cid (make-cid)))
+         (map (juxt :title identity))
+         (into {})
+         (reset! all-cards))
+    (core/reset-card-defs)))
+(load-all-cards)
 
-(defn reset-card-defs [card-type tests]
-  (core/reset-card-defs card-type)
-  (tests))
+(hawk/watch! [{:paths ["src/clj/game/cards"]
+               :filter hawk/file?
+               :handler (fn [ctx e]
+                          (load-file (-> e :file str)))}])
 
-
-;;; Card related functions
+;; General utilities necessary for starting a new game
 (defn find-card
   "Return a card with given title from given sequence"
   [title from]
   (some #(when (= (:title %) title) %) from))
 
+(defn starting-hand
+  "Moves all cards in the player's hand to their draw pile, then moves the specified card names
+  back into the player's hand."
+  [state side cards]
+  (doseq [c (get-in @state [side :hand])]
+    (core/move state side c :deck))
+  (doseq [ctitle cards]
+    (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
+
+(defn take-credits
+  "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
+  If all clicks are used up, end turn and start the opponent's turn."
+  ([state side] (take-credits state side nil))
+  ([state side n]
+   (let  [remaining-clicks (get-in @state [side :click])
+          n (or n remaining-clicks)
+          other (if (= side :corp) :runner :corp)]
+     (dotimes [i n] (core/click-credit state side nil))
+     (if (= (get-in @state [side :click]) 0)
+       (do (core/end-turn state side nil)
+           (core/start-turn state other nil))))))
+
+
+;; Deck construction helpers
+(defn qty [card amt]
+  (when (pos? amt)
+    (repeat amt card)))
+
+(defn card-vec->card-map
+  [[card amt]]
+  (let [loaded-card (if (string? card) (@all-cards card) card)]
+    (when-not loaded-card
+      (throw (Exception. (str card " not found in @all-cards"))))
+    {:card loaded-card
+     :qty amt}))
+
+(defn transform
+  [cards]
+  (->> cards
+       flatten
+       (filter string?)
+       frequencies
+       (map card-vec->card-map)
+       seq))
+
+(defn make-decks
+  [{:keys [corp runner options]}]
+  {:corp {:deck (or (transform (conj (:deck corp)
+                                     (:hand corp)
+                                     (:discard corp)))
+                    (transform (qty "Hedge Fund" 3)))
+          :hand (flatten (:hand corp))
+          :discard (flatten (:discard corp))
+          :identity (@all-cards
+                      (or (:id corp)
+                          "Custom Biotics: Engineered for Success"))
+          :credits (:credits corp)}
+   :runner {:deck (or (transform (conj (:deck runner)
+                                       (:hand runner)
+                                       (:discard runner)))
+                      (transform (qty "Sure Gamble" 3)))
+            :hand (flatten (:hand runner))
+            :discard (flatten (:discard runner))
+            :identity (@all-cards
+                        (or (:id runner)
+                            "The Professor: Keeper of Knowledge"))
+            :credits (:credits runner)}
+   :mulligan (:mulligan options)
+   :start-as (:start-as options)
+   :dont-start-turn (:dont-start-turn options)
+   :dont-start-game (:dont-start-game options)})
+
+(defn- new-game-internal
+  "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
+  [{:keys [corp runner mulligan start-as dont-start-turn dont-start-game] :as players}]
+  (let [state (core/init-game
+                {:gameid 1
+                 :players [{:side "Corp"
+                            :user "player1"
+                            :deck {:identity (:identity corp)
+                                   :cards (:deck corp)}}
+                           {:side "Runner"
+                            :user "player2"
+                            :deck {:identity (:identity runner)
+                                   :cards (:deck runner)}}]})]
+    (when-not dont-start-game
+      (if (#{:both :corp} mulligan)
+        (core/resolve-prompt state :corp {:choice "Mulligan"})
+        (core/resolve-prompt state :corp {:choice "Keep"}))
+      (if (#{:both :runner} mulligan)
+        (core/resolve-prompt state :runner {:choice "Mulligan"})
+        (core/resolve-prompt state :runner {:choice "Keep"}))
+      (when-not dont-start-turn (core/start-turn state :corp nil))
+      (when (= start-as :runner) (take-credits state :corp)))
+    ;; Gotta move cards where they need to go
+    (doseq [side [:corp :runner]]
+      (let [side-map (if (= :corp side) corp runner)]
+        (when-let [hand (seq (:hand side-map))]
+          (starting-hand state side hand))
+        (when (seq (:discard side-map))
+          (doseq [card (:discard side-map)]
+            (core/move state side
+                       (find-card (:card card) (get-in @state [side :deck])) :discard)))
+        (when (:credits side-map)
+          (swap! state assoc-in [side :credit] (:credits side-map)))))
+    ;; These are side independent so they happen ouside the loop
+    (when (:bad-pub corp)
+      (swap! state assoc-in [:corp :bad-publicity] (:bad-pub corp)))
+    (when (:tags runner)
+      (swap! state assoc-in [:runner :tag] (:tags runner)))
+    state))
+
+(defn new-game
+  "A small wrapper so we can unpack in the parameters and not in a let"
+  ([] (new-game-internal (make-decks nil)))
+  ([players]
+   (new-game-internal (make-decks players))))
+
+;;; Card related functions
 (defn card-ability
   "Trigger a card's ability with its 0-based index. Refreshes the card argument before
   triggering the ability."
@@ -85,8 +178,8 @@
              :ability ability
              :targets targets}]
      (if (= :corp side)
-                (core/play-corp-ability state side ab)
-                (core/play-runner-ability state side ab)))))
+       (core/play-corp-ability state side ab)
+       (core/play-runner-ability state side ab)))))
 
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
@@ -246,15 +339,6 @@
   "Trash specified card from rig of the runner"
   [state title]
   (core/trash state :runner (find-card title (get-in @state [:runner :rig :resource]))))
-
-(defn starting-hand
-  "Moves all cards in the player's hand to their draw pile, then moves the specified card names
-  back into the player's hand."
-  [state side cards]
-  (doseq [c (get-in @state [side :hand])]
-    (core/move state side c :deck))
-  (doseq [ctitle cards]
-    (core/move state side (find-card ctitle (get-in @state [side :deck])) :hand)))
 
 (defn accessing
   "Checks to see if the runner has a prompt accessing the given card title"

@@ -3,7 +3,6 @@
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
@@ -43,11 +42,11 @@
                                        abs))
                             abs)))))})
 
-;; Takes a vector of ice subtypes that can be broken (or ["All"] for
-;; AI breakers) and a card definition, and returns a new card definition that
-;; hooks up breaker-auto-pump to the necessary events.
-;; IMPORTANT: Events on cdef take precedence, and should call
-;; (:effect breaker-auto-pump) themselves.
+; Takes a vector of ice subtypes that can be broken (or ["All"] for
+; AI breakers) and a card definition, and returns a new card definition that
+; hooks up breaker-auto-pump to the necessary events.
+; IMPORTANT: Events on cdef take precedence, and should call
+; (:effect breaker-auto-pump) themselves.
 (defn auto-icebreaker [breaks cdef]
   (assoc cdef :data (merge {:breaks breaks} (:data cdef))
               :events (merge {:run breaker-auto-pump
@@ -59,7 +58,7 @@
                               :approach-ice breaker-auto-pump}
                              (:events cdef))))
 
-(defn- wrestling-breaker
+(defn wrestling-breaker
   "Laamb and Engolo. Makes currently encountered ice gain chosen type until end of encounter."
   [cost ice-type]
   {:once :per-turn
@@ -109,7 +108,7 @@
                                    ;; To counteract the normal freeing of MU on program `:leave-play`
                                    (use-mu state (:memoryunits card)))))))
 
-(defn- strength-pump
+(defn strength-pump
   "Creates a strength pump ability.
   Cost can be a credit amount or a list of costs e.g. [:credit 2]."
   ([cost strength] (strength-pump cost strength :encounter))
@@ -123,7 +122,7 @@
     :effect (effect (pump card strength duration))
     :pump strength}))
 
-(defn- break-sub
+(defn break-sub
   "Creates a break subroutine ability.
   If n = 0 then any number of subs are broken."
   ([cost n] (break-sub cost n nil))
@@ -137,8 +136,8 @@
     :cost [:credit cost]
     :effect effect}))
 
-;;; Breaker sets
-(defn- cerberus
+;; Breaker sets
+(defn cerberus
   "Breaker from the dog set"
   [ice-type]
   (auto-icebreaker [ice-type]
@@ -147,7 +146,7 @@
                                  :msg (str "break up to 2 " (lower-case ice-type) " subroutines")}
                                 (strength-pump 1 1)]}))
 
-(defn- break-and-enter
+(defn break-and-enter
   "Breakers from the Break and Entry set"
   [ice-type]
   (cloud-icebreaker {:abilities [{:label (str "[Trash]: Break up to 3 " (lower-case ice-type) "subroutines")
@@ -160,13 +159,13 @@
                       :strength-bonus (req (count (filter #(has-subtype? % "Icebreaker")
                                                           (all-active-installed state :runner))))}))
 
-(defn- global-sec-breaker
+(defn global-sec-breaker
   "GlobalSec breakers for Sunny"
   [ice-type]
   (cloud-icebreaker (auto-icebreaker [ice-type] {:abilities [(break-sub 2 0 (lower-case ice-type))
                                                          (strength-pump 2 3)]})))
 
-(defn- deva
+(defn deva
   "Deva breakers"
   [card-name]
   (auto-icebreaker ["All"]
@@ -193,7 +192,7 @@
                                                                                  :init-data true})))
                                               (move state side card :hand))}]}))
 
-(defn- conspiracy
+(defn conspiracy
   "Install-from-heap breakers"
   [title ice-type abilities]
   (let [install-prompt {:req (req (and (= (:zone card) [:discard])
@@ -225,7 +224,7 @@
               :run nil}
      :abilities abilities}))
 
-(defn- central-breaker
+(defn central-breaker
   "'Cannot be used on a remote server' breakers"
   [ice-type break pump]
   (let [central-req (req (or (not (:central-breaker card)) (#{:hq :rd :archives} (first (:server run)))))]
@@ -234,7 +233,7 @@
                                   (assoc pump :req central-req)]
                       :effect (effect (update! (assoc card :central-breaker true)))})))
 
-(defn- ancient-greek-breaker
+(defn ancient-greek-breaker
   "Adept, Sage and Savant. Strength depends on available memory units."
   [card-name abilities]
   {:abilities abilities
@@ -247,7 +246,7 @@
    :leave-play (req (remove-watch state (keyword (str card-name (:cid card)))))
    :strength-bonus (req (available-mu state))})
 
-(defn- khumalo-breaker
+(defn khumalo-breaker
   "Spends virus counters from any card to pump/break, gains virus counters for successful runs."
   [ice-type]
   {:events {:successful-run {:silent (req true)
@@ -286,7 +285,7 @@
                                      (dotimes [_ (:number async-result)]
                                        (pump state side (get-card state card) 1))))))}]})
 
-;;; Icebreaker definitions
+;; Card definitions
 (def card-definitions
   {"Abagnale"
    (auto-icebreaker ["Code Gate"]
@@ -306,17 +305,17 @@
    "Aghora"
    (deva "Aghora")
 
+   "Alias"
+   (central-breaker "Sentry"
+                    (break-sub 1 1 "Sentry")
+                    (strength-pump 2 3))
+
    "Alpha"
    (auto-icebreaker ["All"]
                     {:abilities [{:cost [:credit 1]
                                   :req (req (= (:position run) (count run-ices)))
                                   :msg "break 1 subroutine on the outermost ICE protecting this server"}
                                  (strength-pump 1 1)]})
-
-   "Alias"
-   (central-breaker "Sentry"
-                    (break-sub 1 1 "Sentry")
-                    (strength-pump 2 3))
 
    "Amina"
    (auto-icebreaker ["Code Gate"]
@@ -415,6 +414,12 @@
                                                 :effect (effect (system-msg (str "pumps Berserker by " target " on encounter with the current ICE"))
                                                                 (pump card target))} card nil))}}}
 
+   "Black Orchestra"
+   (conspiracy "Black Orchestra" "Code Gate"
+               [{:cost [:credit 3]
+                 :effect (effect (pump card 2)) :pump 2
+                 :msg "add 2 strength and break up to 2 subroutines"}])
+
    "BlacKat"
    {:implementation "Stealth credit restriction not enforced"
     :abilities [(break-sub 1 1 "Barrier")
@@ -424,12 +429,6 @@
                 {:cost [:credit 2]
                  :msg "add 2 strength (using at least 1 stealth [Credits])"
                  :effect (effect (pump card 2)) :pump 2}]}
-
-   "Black Orchestra"
-   (conspiracy "Black Orchestra" "Code Gate"
-               [{:cost [:credit 3]
-                 :effect (effect (pump card 2)) :pump 2
-                 :msg "add 2 strength and break up to 2 subroutines"}])
 
    "Blackstone"
    {:abilities [(break-sub 1 1 "Barrier")
@@ -451,19 +450,22 @@
    "Cerberus \"Cuj.0\" H3"
    (cerberus "Sentry")
 
-   "Cerberus \"Rex\" H2"
-   (cerberus "Code Gate")
-
    "Cerberus \"Lady\" H1"
    (cerberus "Barrier")
+
+   "Cerberus \"Rex\" H2"
+   (cerberus "Code Gate")
 
    "Chameleon"
    {:prompt "Choose one subtype"
     :choices ["Barrier" "Code Gate" "Sentry"]
     :msg (msg "choose " target)
     :effect (effect (update! (assoc card :subtype-target target)))
-    :events {:runner-turn-ends {:msg "add itself to Grip" :effect (effect (move card :hand))}}
-    :abilities [{:cost [:credit 1] :msg (msg "break 1 " (:subtype-target card) " subroutine")}]}
+    :events {:runner-turn-ends {:msg "add itself to Grip"
+                                :effect (effect (move card :hand))}}
+    :abilities [{:cost [:credit 1]
+                 :label "Break a subroutine"
+                 :msg (msg "break 1 " (:subtype-target card) " subroutine")}]}
 
    "Corroder"
    (auto-icebreaker ["Barrier"]
@@ -580,6 +582,7 @@
                  :msg (msg "trash " (:title target)
                            " and break 1 \"[Subroutine] End the run.\" subroutine")
                  :effect (effect (trash target {:unpreventable true}))}]}
+
    "Engolo"
    (auto-icebreaker
      ["Code Gate"]
@@ -648,6 +651,11 @@
                     {:abilities [(break-sub 1 1 "Sentry")
                                  (strength-pump 1 1)]})
 
+   "Gingerbread"
+   (auto-icebreaker ["Tracer"]
+                    {:abilities [(break-sub 1 1 "Tracer")
+                                 (strength-pump 2 3)]})
+
    "God of War"
    (auto-icebreaker ["All"]
                     {:flags {:runner-phase-12 (req true)}
@@ -680,11 +688,6 @@
                     {:abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 1 1 :all-run)]})
 
-   "Gingerbread"
-   (auto-icebreaker ["Tracer"]
-                    {:abilities [(break-sub 1 1 "Tracer")
-                                 (strength-pump 2 3)]})
-
    "GS Sherman M3"
    (global-sec-breaker "Barrier")
 
@@ -699,6 +702,19 @@
                 {:cost [:credit 2]
                  :msg "add 4 strength (using at least 1 stealth [Credits])"
                  :effect (effect (pump card 4 :all-run)) :pump 4}]}
+
+   "Ika"
+   (auto-icebreaker ["Sentry"]
+                    {:abilities [(break-sub 1 2 "Sentry")
+                                 (strength-pump 2 3)
+                                 {:label "Host Ika on a piece of ICE"
+                                  :prompt (msg "Host Ika on a piece of ICE")
+                                  :cost [:credit 2]
+                                  :choices {:req #(and (ice? %)
+                                                       (installed? %)
+                                                       (can-host? %))}
+                                  :msg (msg "host it on " (card-str state target))
+                                  :effect (effect (host target card))}]})
 
    "Inti"
    (auto-icebreaker ["Barrier"]
@@ -718,19 +734,6 @@
                                                  (swap-ice state side (first targets) (second targets))))}
                                  (break-sub 1 1 "Code Gate")
                                  (strength-pump 1 1)]})
-
-   "Ika"
-   (auto-icebreaker ["Sentry"]
-                    {:abilities [(break-sub 1 2 "Sentry")
-                                 (strength-pump 2 3)
-                                 {:label "Host Ika on a piece of ICE"
-                                  :prompt (msg "Host Ika on a piece of ICE")
-                                  :cost [:credit 2]
-                                  :choices {:req #(and (ice? %)
-                                                       (installed? %)
-                                                       (can-host? %))}
-                                  :msg (msg "host it on " (card-str state target))
-                                  :effect (effect (host target card))}]})
 
    "Knight"
    {:abilities [{:label "Host Knight on a piece of ICE"
@@ -809,17 +812,8 @@
               {:runner-install maven :trash maven :card-moved maven})
     :strength-bonus (req (count (filter #(is-type? % "Program") (all-active-installed state :runner))))}
 
-   "Morning Star"
-   {:abilities [(break-sub 1 0 "Barrier")]}
-
    "Mimic"
    {:abilities [(break-sub 1 1 "Sentry")]}
-
-   "Mongoose"
-   (auto-icebreaker ["Sentry"]
-                    {:implementation "Usage restriction is not implemented"
-                     :abilities [(break-sub 1 2 "Sentry")
-                                 (strength-pump 2 2)]})
 
    "MKUltra"
    (conspiracy "MKUltra" "Sentry"
@@ -827,10 +821,19 @@
                  :effect (effect (pump card 2)) :pump 2
                  :msg "add 2 strength and break up to 2 subroutines"}])
 
+   "Mongoose"
+   (auto-icebreaker ["Sentry"]
+                    {:implementation "Usage restriction is not implemented"
+                     :abilities [(break-sub 1 2 "Sentry")
+                                 (strength-pump 2 2)]})
+
+   "Morning Star"
+   {:abilities [(break-sub 1 0 "Barrier")]}
+
    "Musaazi"
    (khumalo-breaker "sentry")
 
-   "NaNotK"
+   "Na'Not'K"
    (auto-icebreaker ["Sentry"]
                     {:effect (req (add-watch state (keyword (str "nanotk" (:cid card)))
                                               (fn [k ref old new]
@@ -875,6 +878,7 @@
                      :abilities [{:counter-cost [:power 1]
                                   :msg "break 1 subroutine"}
                                  (strength-pump 1 1)]})
+
    "Paperclip"
    (conspiracy "Paperclip" "Barrier"
                [{:label (str "X [Credits]: +X strength, break X subroutines")
@@ -952,6 +956,7 @@
                     {:implementation "Stealth credit restriction not enforced"
                      :abilities [(break-sub 1 1 "Code Gate")
                                  (strength-pump 1 3)]})
+
    "Sadyojata"
    (deva "Sadyojata")
 
@@ -977,12 +982,6 @@
                                     {:cost [:credit 2] :req (req (has-subtype? current-ice "Code Gate"))
                                      :msg "break 2 Code Gate subroutines"}])
 
-   "Snowball"
-   (auto-icebreaker ["Barrier"]
-                    {:abilities [{:cost [:credit 1] :msg "break 1 Barrier subroutine"
-                                  :effect (effect (pump card 1 :all-run))}
-                                 (strength-pump 1 1)]})
-
    "Sharpshooter"
    (auto-icebreaker ["Destroyer"]
                     {:abilities [{:label "[Trash]: Break any number of Destroyer subroutines"
@@ -992,6 +991,12 @@
 
    "Shiv"
    (break-and-enter "Sentry")
+
+   "Snowball"
+   (auto-icebreaker ["Barrier"]
+                    {:abilities [{:cost [:credit 1] :msg "break 1 Barrier subroutine"
+                                  :effect (effect (pump card 1 :all-run))}
+                                 (strength-pump 1 1)]})
 
    "Spike"
    (break-and-enter "Barrier")
@@ -1003,6 +1008,12 @@
                                  (update-breaker-strength card))}]
     :strength-bonus (req (get-counters card :power))}
 
+   "Switchblade"
+   (auto-icebreaker ["Sentry"]
+                    {:implementation "Stealth credit restriction not enforced"
+                     :abilities [(break-sub 1 0 "Sentry")
+                                 (strength-pump 1 7)]})
+
    "Sūnya"
    {:implementation "Adding power counter is manual"
     :abilities [{:label "Place 1 power counter on Sūnya"
@@ -1012,12 +1023,6 @@
                                  (update-breaker-strength card))}
                 (break-sub 2 1 "Sentry")]
     :strength-bonus (req (get-counters card :power))}
-
-   "Switchblade"
-   (auto-icebreaker ["Sentry"]
-                    {:implementation "Stealth credit restriction not enforced"
-                     :abilities [(break-sub 1 0 "Sentry")
-                                 (strength-pump 1 7)]})
 
    "Torch"
    (auto-icebreaker ["Code Gate"]
@@ -1059,11 +1064,11 @@
                                 :pass-ice wy
                                 :run-ends wy})})
 
-   "Yusuf"
-   (khumalo-breaker "barrier")
-
    "Yog.0"
    {:abilities [(break-sub 0 1 "Code Gate")]}
+
+   "Yusuf"
+   (khumalo-breaker "barrier")
 
    "ZU.13 Key Master"
    (cloud-icebreaker

@@ -3,11 +3,10 @@
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
-;;; Asset-specific helpers
+;; Asset-specific helpers
 (defn installed-access-trigger
   "Effect for triggering ambush on access.
   Ability is what happends upon access. If cost is specified Corp needs to pay that to trigger."
@@ -63,7 +62,7 @@
              (do (gain-agenda-point state side n)
                  (effect-completed state side eid)))))
 
-;;; Card definitions
+;; Card definitions
 (def card-definitions
   {"Adonis Campaign"
    (campaign 12 3)
@@ -233,6 +232,12 @@
    {:effect (effect (lock-zone (:cid card) :runner :discard))
     :leave-play (effect (release-zone (:cid card) :runner :discard))}
 
+   "Brain-Taping Warehouse"
+   {:events {:pre-rez
+             {:req (req (and (ice? target)
+                             (has-subtype? target "Bioroid")))
+              :effect (effect (rez-cost-bonus (- (:click runner))))}}}
+
    "Breached Dome"
    {:flags {:rd-reveal (req true)}
     :access {:async true
@@ -242,17 +247,30 @@
                             (mill state :corp :runner 1)
                             (damage state side eid :meat 1 {:card card})))}}
 
-   "Brain-Taping Warehouse"
-   {:events {:pre-rez
-             {:req (req (and (ice? target)
-                             (has-subtype? target "Bioroid")))
-              :effect (effect (rez-cost-bonus (- (:click runner))))}}}
-
    "Broadcast Square"
    {:events {:pre-bad-publicity {:async true
                                  :trace {:base 3
                                          :successful {:msg "prevents all bad publicity"
                                                       :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}}}
+
+   "C.I. Fund"
+   {:derezzed-events {:runner-turn-ends corp-rez-toast}
+    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
+    :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund"
+                 :prompt "Choose how many [Credit] to move"
+                 :once :per-turn
+                 :choices {:number (req (min (:credit corp) 3))}
+                 :effect (effect (lose-credits target)
+                                 (add-counter card :credit target))
+                 :msg (msg "move " target " [Credit] to C.I. Fund")}
+                {:label "Take all credits from C.I. Fund"
+                 :cost [:credit 2]
+                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
+                 :effect (effect (trash card {:cause :ability-cost})
+                                 (take-credits (get-counters card :credit)))}]
+    :events {:corp-turn-begins {:req (req (>= (get-counters card :credit) 6))
+                                :effect (effect (add-counter card :credit 2)
+                                                (system-msg (str "adds 2 [Credits] to C.I. Fund")))}}}
 
    "Capital Investors"
    {:abilities [{:cost [:click 1]
@@ -284,25 +302,6 @@
                  :msg "do 5 meat damage"
                  :effect (effect (damage eid :meat 5 {:card card}))}]}
 
-   "C.I. Fund"
-   {:derezzed-events {:runner-turn-ends corp-rez-toast}
-    :flags {:corp-phase-12 (req (pos? (:credit corp)))}
-    :abilities [{:label "Move up to 3 [Credit] from credit pool to C.I. Fund"
-                 :prompt "Choose how many [Credit] to move"
-                 :once :per-turn
-                 :choices {:number (req (min (:credit corp) 3))}
-                 :effect (effect (lose-credits target)
-                                 (add-counter card :credit target))
-                 :msg (msg "move " target " [Credit] to C.I. Fund")}
-                {:label "Take all credits from C.I. Fund"
-                 :cost [:credit 2]
-                 :msg (msg "trash it and gain " (get-counters card :credit) " [Credits]")
-                 :effect (effect (trash card {:cause :ability-cost})
-                                 (take-credits (get-counters card :credit)))}]
-    :events {:corp-turn-begins {:req (req (>= (get-counters card :credit) 6))
-                                :effect (effect (add-counter card :credit 2)
-                                                (system-msg (str "adds 2 [Credits] to C.I. Fund")))}}}
-
    "City Surveillance"
    {:derezzed-events {:corp-turn-ends corp-rez-toast}
     :flags {:runner-phase-12 (req (pos? (:credit runner)))}
@@ -319,7 +318,6 @@
                              (do (system-msg state :runner "pays 1 [Credits]")
                                  (pay state :runner card :credit 1)
                                  (effect-completed state side eid))
-
                              (do (system-msg state :runner "takes 1 tag")
                                  (gain-tags state :corp eid 1))))}}}
 
@@ -576,6 +574,11 @@
                                   :effect (effect (damage eid :brain (ice-count state)
                                                           {:card card}))}))
 
+   "Eliza's Toybox"
+   {:abilities [{:cost [:click 3] :choices {:req #(not (:rezzed %))}
+                 :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
+                 :effect (effect (rez target {:ignore-cost :all-costs}))}]}
+
    "Elizabeth Mills"
    {:effect (effect (lose :bad-publicity 1)) :msg "remove 1 bad publicity"
     :abilities [{:cost [:click 1] :label "Trash a location"
@@ -584,11 +587,6 @@
                  :effect (effect (trash card {:cause :ability-cost})
                                  (trash target)
                                  (gain-bad-publicity :corp 1))}]}
-
-   "Elizas Toybox"
-   {:abilities [{:cost [:click 3] :choices {:req #(not (:rezzed %))}
-                 :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
-                 :effect (effect (rez target {:ignore-cost :all-costs}))}]}
 
    "Encryption Protocol"
    {:events {:pre-trash {:req (req (installed? target))
@@ -868,7 +866,7 @@
       :trash-effect {:effect cleanup}
       :events {:corp-spent-click
                {:effect (req (when-not target
-                               (print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
+                               (clojure.stacktrace/print-stack-trace (Exception. (str "WHY JEEVES WHY: " targets))))
                              (update! state side (update-in card [:seen-this-turn (or target :this-is-a-hack)]
                                                             (fnil + 0) (second targets)))
                              (when (>= (get-in (get-card state card) [:seen-this-turn (or target :this-is-a-hack)]) 3)
@@ -1293,16 +1291,6 @@
                                       ((constantly false) (toast state :corp "Cannot score due to PAD Factory." "warning"))
                                       true)))))}]}
 
-   "Pālanā Agroplex"
-   (let [ability {:msg "make each player draw 1 card"
-                  :label "Make each player draw 1 card (start of turn)"
-                  :once :per-turn
-                  :effect (effect (draw 1) (draw :runner))}]
-     {:derezzed-events {:runner-turn-ends corp-rez-toast}
-      :flags {:corp-phase-12 (req true)}
-      :events {:corp-turn-begins ability}
-      :abilities [ability]})
-
    "Personalized Portal"
    {:events {:corp-turn-begins
              {:effect (req (draw state :runner 1)
@@ -1398,6 +1386,16 @@
                              (do (system-msg state :corp "uses Public Support to add it to their score area as an agenda worth 1 agenda point")
                                  (as-agenda state :corp eid (dissoc card :counter) 1))
                              (effect-completed state side eid)))}}}
+
+   "Pālanā Agroplex"
+   (let [ability {:msg "make each player draw 1 card"
+                  :label "Make each player draw 1 card (start of turn)"
+                  :once :per-turn
+                  :effect (effect (draw 1) (draw :runner))}]
+     {:derezzed-events {:runner-turn-ends corp-rez-toast}
+      :flags {:corp-phase-12 (req true)}
+      :events {:corp-turn-begins ability}
+      :abilities [ability]})
 
    "Quarantine System"
    (letfn [(rez-ice [cnt] {:prompt "Select an ICE to rez"
@@ -1733,11 +1731,11 @@
                               (play-cost-bonus [:credit 2]))}}}
 
    "Sundew"
-   {:implementation "it's all broken just don't even try man"}
-    ; :events {:runner-spent-click {:once :per-turn
-    ;                               :msg (req (when (not this-server) "gain 2 [Credits]"))
-    ;                               :effect (req (when (not this-server)
-    ;                                              (gain-credits state :corp 2)))}}
+   {:implementation "Doesn't restrict credit gain"
+    :events {:runner-spent-click {:once :per-turn
+                                  :msg (req (when (not this-server) "gain 2 [Credits]"))
+                                  :effect (req (when (not this-server)
+                                                 (gain-credits state :corp 2)))}}}
 
    "Synth DNA Modification"
    {:implementation "Manual fire once subroutine is broken"

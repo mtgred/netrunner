@@ -3,12 +3,17 @@
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
+;; Card definitions
 (def card-definitions
-  {"24/7 News Cycle"
+  {"\"Clones are not People\""
+   {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 1 agenda point"
+                             :async true
+                             :effect (req (as-agenda state :corp eid card 1))}}}
+
+   "24/7 News Cycle"
    {:req (req (pos? (count (:scored corp))))
     :async true
     :additional-cost [:forfeit]
@@ -74,7 +79,7 @@
                     (shuffle! :deck))
     :msg "search R&D for a card and add it to HQ"}
 
-   "An Offer You Cant Refuse"
+   "An Offer You Can't Refuse"
    {:async true
     :prompt "Choose a server" :choices ["Archives" "R&D" "HQ"]
     :effect (req (let [serv target]
@@ -121,28 +126,6 @@
                    (move state :runner c :rfg))
                  (effect-completed state side eid))}
 
-   "Audacity"
-   (let [audacity (fn au [n] {:prompt "Choose a card on which to place an advancement"
-                              :async true
-                              :choices {:req can-be-advanced?}
-                              :cancel-effect (req (effect-completed state side eid))
-                              :msg (msg "place an advancement token on " (card-str state target))
-                              :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
-                                           (if (< n 2)
-                                             (continue-ability state side (au (inc n)) card nil)
-                                             (effect-completed state side eid)))})]
-   {:async true
-    :req (req (let [h (:hand corp)
-                    p (:play-area corp)]
-                ;; this is needed to pass the req check for can-play? and again when card is actually played
-                (if (some #(= (:cid %) (:cid card)) p)
-                  (>= (count h) 2)
-                  (>= (count h) 3))))
-    :effect (req (system-msg state side "trashes all cards in HQ due to Audacity")
-                 (doseq [c (:hand corp)]
-                   (trash state side c {:unpreventable true}))
-                 (continue-ability state side (audacity 1) card nil))})
-
    "Attitude Adjustment"
    {:async true
     :effect (req (wait-for (draw state side 2 nil)
@@ -173,6 +156,28 @@
                                                                           " from Archives"))]))
                                                     " into R&D and gain " (* 2 (count targets)) " [Credits]"))))}
                              card nil)))}
+
+   "Audacity"
+   (let [audacity (fn au [n] {:prompt "Choose a card on which to place an advancement"
+                              :async true
+                              :choices {:req can-be-advanced?}
+                              :cancel-effect (req (effect-completed state side eid))
+                              :msg (msg "place an advancement token on " (card-str state target))
+                              :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
+                                           (if (< n 2)
+                                             (continue-ability state side (au (inc n)) card nil)
+                                             (effect-completed state side eid)))})]
+   {:async true
+    :req (req (let [h (:hand corp)
+                    p (:play-area corp)]
+                ;; this is needed to pass the req check for can-play? and again when card is actually played
+                (if (some #(= (:cid %) (:cid card)) p)
+                  (>= (count h) 2)
+                  (>= (count h) 3))))
+    :effect (req (system-msg state side "trashes all cards in HQ due to Audacity")
+                 (doseq [c (:hand corp)]
+                   (trash state side c {:unpreventable true}))
+                 (continue-ability state side (audacity 1) card nil))})
 
    "Back Channels"
    {:async true
@@ -325,11 +330,6 @@
    {:msg "disable the Runner's identity"
     :effect (effect (disable-identity :runner))
     :leave-play (effect (enable-identity :runner))}
-
-   "\"Clones are not People\""
-   {:events {:agenda-scored {:msg "add it to their score area as an agenda worth 1 agenda point"
-                             :async true
-                             :effect (req (as-agenda state :corp eid card 1))}}}
 
    "Closed Accounts"
    {:req (req tagged)
@@ -969,6 +969,10 @@
     :leave-play (req (swap! state update-in [:runner :tag] dec)
                      (system-msg state :corp "trashes MCA Informant"))}
 
+   "Media Blitz"
+   ;; Currently unimplemented
+   {:implementation :unimplemented}
+
    "Medical Research Fundraiser"
    {:msg "gain 8 [Credits]. The Runner gains 3 [Credits]"
     :effect (effect (gain-credits 8) (gain-credits :runner 3))}
@@ -1043,24 +1047,6 @@
     :msg "do 1 net damage"
     :effect (effect (damage eid :net 1 {:card card}))}
 
-   "O₂ Shortage"
-   {:async true
-    :effect (req (if (empty? (:hand runner))
-                   (do (gain state :corp :click 2)
-                       (system-msg state side (str "uses O₂ Shortage to gain [Click][Click]"))
-                       (effect-completed state side eid))
-                   (do (show-wait-prompt state :corp "Runner to decide whether or not to trash a card from their Grip")
-                       (continue-ability state side
-                         {:optional
-                          {:prompt "Trash 1 random card from your Grip?"
-                           :player :runner
-                           :yes-ability {:effect (effect (trash-cards :runner (take 1 (shuffle (:hand runner))))
-                                                         (clear-wait-prompt :corp))}
-                           :no-ability {:msg "gain [Click][Click]"
-                                        :effect (effect (gain :corp :click 2)
-                                                        (clear-wait-prompt :corp))}}}
-                        card nil))))}
-
    "Observe and Destroy"
    {:additional-cost [:tag 1]
     :req (req (and (pos? (:tag runner))
@@ -1079,6 +1065,24 @@
     :msg (msg "rez " (:title target) " at no cost")
     :effect (effect (rez target {:ignore-cost :all-costs})
                     (host (get-card state target) (assoc card :zone [:discard] :seen true :condition true)))}
+
+   "O₂ Shortage"
+   {:async true
+    :effect (req (if (empty? (:hand runner))
+                   (do (gain state :corp :click 2)
+                       (system-msg state side (str "uses O₂ Shortage to gain [Click][Click]"))
+                       (effect-completed state side eid))
+                   (do (show-wait-prompt state :corp "Runner to decide whether or not to trash a card from their Grip")
+                       (continue-ability state side
+                         {:optional
+                          {:prompt "Trash 1 random card from your Grip?"
+                           :player :runner
+                           :yes-ability {:effect (effect (trash-cards :runner (take 1 (shuffle (:hand runner))))
+                                                         (clear-wait-prompt :corp))}
+                           :no-ability {:msg "gain [Click][Click]"
+                                        :effect (effect (gain :corp :click 2)
+                                                        (clear-wait-prompt :corp))}}}
+                        card nil))))}
 
    "Patch"
    {:choices {:req #(and (ice? %) (rezzed? %))}
@@ -1191,29 +1195,29 @@
                                       :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                      card nil)))}
 
-    "Psychokinesis"
-    (letfn [(choose-card [state cards]
-              (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %))
-                                          cards)]
-                {:prompt "Select an agenda, asset, or upgrade to install"
-                 :choices (cons "None" allowed-cards)
-                 :async true
-                 :effect (req (if-not (or (= target "None") (ice? target) (is-type? target "Operation"))
-                                (continue-ability state side (install-card target) card nil)
-                                (system-msg state side "does not install an asset, agenda, or upgrade"))
-                              (effect-completed state side eid)
-                              (clear-wait-prompt state :runner))}))
-            (install-card [chosen]
-             {:prompt "Select a remote server"
-              :choices (req (conj (vec (get-remote-names state)) "New remote"))
-              :async true
-              :effect (effect (clear-wait-prompt :runner)
-                              (corp-install (move state side chosen :play-area) target))})]
-     {:msg "look at the top 5 cards of R&D"
-      :async true
-      :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of R&D")
-                   (let [top-5 (take 5 (:deck corp))]
-                     (continue-ability state side (choose-card state top-5) card nil)))})
+   "Psychokinesis"
+   (letfn [(choose-card [state cards]
+             (let [allowed-cards (filter #(some #{"New remote"} (installable-servers state %))
+                                         cards)]
+               {:prompt "Select an agenda, asset, or upgrade to install"
+                :choices (cons "None" allowed-cards)
+                :async true
+                :effect (req (if-not (or (= target "None") (ice? target) (is-type? target "Operation"))
+                               (continue-ability state side (install-card target) card nil)
+                               (system-msg state side "does not install an asset, agenda, or upgrade"))
+                             (effect-completed state side eid)
+                             (clear-wait-prompt state :runner))}))
+           (install-card [chosen]
+            {:prompt "Select a remote server"
+             :choices (req (conj (vec (get-remote-names state)) "New remote"))
+             :async true
+             :effect (effect (clear-wait-prompt :runner)
+                             (corp-install (move state side chosen :play-area) target))})]
+    {:msg "look at the top 5 cards of R&D"
+     :async true
+     :effect (req (show-wait-prompt state :runner "Corp to look at the top cards of R&D")
+                  (let [top-5 (take 5 (:deck corp))]
+                    (continue-ability state side (choose-card state top-5) card nil)))})
 
    "Punitive Counterstrike"
    {:trace {:base 5
@@ -1435,7 +1439,8 @@
                                                                           (system-msg state side "uses Sacrifice but gains no credits and loses no bad publicity"))
                                                   (effect-completed state side eid)
                                                   (unregister-events state side card)))}}}
-   "Salems Hospitality"
+
+   "Salem's Hospitality"
    {:prompt "Name a Runner card"
     :choices {:card-title (req (and (card-is? target :side "Runner")
                                     (not (card-is? target :type "Identity"))))}

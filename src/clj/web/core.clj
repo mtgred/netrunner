@@ -35,7 +35,7 @@
                        (map (fn [e] (update e :date_start #(f/parse (f/formatters :date) %))))
                        (sort-by :date_start)
                        (last))]
-      (core/reset-card-defs)
+      (core/load-base-cards)
       (reset! cards/all-cards (into {} (map (juxt :title identity)
                                             (sort-by (complement :rotated) cards))))
       (reset! cards/sets sets)

@@ -31,18 +31,18 @@
 
 (defmacro deftest-pending [name & body]
   (let [message (str "\n" name " is pending")]
-    `(clojure.test/deftest ~name (println ~message))))
+    `(clojure.test/deftest- ~name (println ~message))))
 
 (defmacro changes-val-macro [change-amt val-form body-form msg]
   `(let [start-val# ~val-form]
-    ~body-form
-    (let [end-val# ~val-form
-          actual-change# (- end-val# start-val#)]
-      (clojure.test/do-report
-        {:type (if (= actual-change# ~change-amt) :pass :fail)
-         :actual actual-change#
-         :expected ~change-amt
-         :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " '~body-form)}))))
+     ~body-form
+     (let [end-val# ~val-form
+           actual-change# (- end-val# start-val#)]
+       (clojure.test/do-report
+         {:type (if (= actual-change# ~change-amt) :pass :fail)
+          :actual actual-change#
+          :expected ~change-amt
+          :message (str "Changed from " start-val# " to " end-val# ", Expected end result of " (+ start-val# ~change-amt) " " ~msg " " '~body-form)}))))
 
 (defmethod clojure.test/assert-expr 'changes-val [msg form]
   (let [change-amt (nth form 1)
@@ -52,7 +52,7 @@
 
 ;; Enables you to do this:
 ;; (is (changes-credits (get-runner) -5
-;;   (play-from-hand state :runner "Magnum Opus")))
+                        ;;   (play-from-hand state :runner "Magnum Opus")))
 (defmethod clojure.test/assert-expr 'changes-credits [msg form]
   (let [side (nth form 1)
         change-amt (nth form 2)

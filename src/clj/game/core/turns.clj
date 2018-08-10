@@ -16,7 +16,10 @@
   (when-let [cdef (card-def card)]
     ;; Card is defined - hence implemented
     (if-let [impl (:implementation cdef)]
-      (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
+      (cond
+        (:recurring cdef) (str impl ". Recurring credits usage not restricted")
+        (= impl :unimplemented) nil
+        :else impl)
       (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
 
 ;;; Functions for the creation of games and the progression of turns.

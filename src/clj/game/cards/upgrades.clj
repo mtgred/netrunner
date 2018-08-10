@@ -3,10 +3,10 @@
             [game.utils :refer :all]
             [game.macros :refer [effect req msg wait-for continue-ability]]
             [clojure.string :refer [split-lines split join lower-case includes? starts-with?]]
-            [clojure.stacktrace :refer [print-stack-trace]]
             [jinteki.utils :refer [str->int other-side]]
             [jinteki.cards :refer [all-cards]]))
 
+;; Card definitions
 (def card-definitions
   {"Akitaro Watanabe"
    {:events {:pre-rez-cost {:req (req (and (ice? target)
@@ -139,17 +139,17 @@
                                       {:effect (effect (system-msg "trashes Bernice Mai from the unsuccessful trace")
                                                        (trash card))}}}}}
 
-  "Bio Vault"
-  {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :advanceable :always
-   :abilities [{:label "[Trash]: End the run"
-                :advance-counter-cost 2
-                :req (req (:run @state))
-                :msg "end the run. Bio Vault is trashed"
-                :async true
-                :effect (effect
-                          (end-run)
-                          (trash eid card {:cause :ability-cost}))}]}
+   "Bio Vault"
+   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    :advanceable :always
+    :abilities [{:label "[Trash]: End the run"
+                 :advance-counter-cost 2
+                 :req (req (:run @state))
+                 :msg "end the run. Bio Vault is trashed"
+                 :async true
+                 :effect (effect
+                           (end-run)
+                           (trash eid card {:cause :ability-cost}))}]}
 
    "Black Level Clearance"
    {:events {:successful-run
@@ -202,7 +202,6 @@
                                     :effect (effect (add-prop target :advance-counter 1 {:placed true})
                                                     (trash eid card {:cause :ability-cost}))}
                                    card nil))}]}
-
 
    "Caprice Nisei"
    {:events {:pass-ice {:req (req (and this-server
@@ -532,7 +531,6 @@
                                              (effect-completed state side eid)
                                              (continue-ability state side (choose-ice remaining grids)
                                                                card nil))))))}))
-
            (choose-grid [ice ices grids]
              (if (= 1 (count grids))
                (install-ice ice ices grids (-> (first grids) :zone second zone->name))
@@ -540,7 +538,6 @@
                 :prompt (str "Choose a server to install " (:title ice))
                 :choices (conj (mapv #(-> % :zone second zone->name) grids) "None")
                 :effect (effect (continue-ability (install-ice ice ices grids target) card nil))}))
-
            (choose-ice [ices grids]
              (if (empty? ices)
                nil
@@ -553,7 +550,6 @@
                                                  (choose-grid (some #(when (= target (:title %)) %) ices)
                                                               ices grids)
                                                  card nil)))}))]
-
      {:events {:corp-draw {;; THIS IS A HACK: it prevents multiple Jinja from showing the "choose a server to install into" sequence
                            :once :per-turn
                            :once-key :jinja-city-grid-draw
@@ -587,21 +583,6 @@
                                              (when (= :runner (:active-player @state))
                                                (clear-wait-prompt state :runner)))}}})
 
-   "Keegan Lane"
-   {:abilities [{:label "[Trash], remove a tag: Trash a program"
-                 :req (req (and this-server
-                                (pos? (get-in @state [:runner :tag]))
-                                (not (empty? (filter #(is-type? % "Program")
-                                                     (all-active-installed state :runner))))))
-                 :msg (msg "remove 1 tag")
-                 :effect (req (resolve-ability state side trash-program card nil)
-                              (trash state side card {:cause :ability-cost})
-                              (lose-tags state :corp 1))}]}
-
-   "Khondi Plaza"
-   {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
-    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
-
    "K. P. Lynn"
    (let [abi {:prompt "Choose one"
               :player :runner
@@ -618,6 +599,21 @@
                                     (zero? (:position run)))) ; trigger on unprotected server
                      :async true
                      :effect (req (continue-ability state :runner abi card nil))}}})
+
+   "Keegan Lane"
+   {:abilities [{:label "[Trash], remove a tag: Trash a program"
+                 :req (req (and this-server
+                                (pos? (get-in @state [:runner :tag]))
+                                (not (empty? (filter #(is-type? % "Program")
+                                                     (all-active-installed state :runner))))))
+                 :msg (msg "remove 1 tag")
+                 :effect (req (resolve-ability state side trash-program card nil)
+                              (trash state side card {:cause :ability-cost})
+                              (lose-tags state :corp 1))}]}
+
+   "Khondi Plaza"
+   {:recurring (effect (set-prop card :rec-counter (count (get-remotes state))))
+    :effect (effect (set-prop card :rec-counter (count (get-remotes state))))}
 
    "Manta Grid"
    {:events {:successful-run-ends
@@ -664,6 +660,10 @@
                                               (fn [coll] (remove-once #(= (:cid %) (:cid hqice)) coll)))
                                        (trigger-event state side :corp-install newice)
                                        (move state side c :hand)))} card nil)))}]}
+
+   "Midway Station Grid"
+   ;; Currently unimplemented
+   {:implementation :unimplemented}
 
    "Mumbad City Grid"
    {:abilities [{:req (req (let [num-ice (count run-ices)]
@@ -735,6 +735,10 @@
                                          :unsuccessful-run-ends {:effect (effect (unregister-events card))}
                                          :successful-run-ends {:effect (effect (unregister-events card))}}
                                         (assoc card :zone '(:discard))))}})
+
+   "Navi Mumbai City Grid"
+   ;; Currently unimplemented
+   {:implementation :unimplemented}
 
    "NeoTokyo Grid"
    (let [ng {:req (req (in-same-server? card target))
@@ -1129,7 +1133,7 @@
                            :successful {:msg "gain 1 [Credits]"
                                         :effect (effect (gain-credits 1))}}}}}
 
-   "Tyrs Hand"
+   "Tyr's Hand"
    {:abilities [{:label "[Trash]: Prevent a subroutine on a piece of Bioroid ICE from being broken"
                  :req (req (and (= (butlast (:zone current-ice)) (butlast (:zone card)))
                                 (has-subtype? current-ice "Bioroid")))
@@ -1203,7 +1207,7 @@
                                                 state side
                                                 (str "uses Warroid Tracker but there are no installed cards to trash")))))}}}}})
 
-   "Will-o-the-Wisp"
+   "Will-o'-the-Wisp"
    {:events
     {:successful-run
      {:interactive (req true)
