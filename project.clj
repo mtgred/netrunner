@@ -70,7 +70,7 @@
 
   ;; Misc
   :test-paths ["test/clj"]
-  ; :eftest {:multithread? :namespaces}
+  :eftest {:report eftest.report.pretty/report}
 
   :ring {:handler web.api/app}
 
