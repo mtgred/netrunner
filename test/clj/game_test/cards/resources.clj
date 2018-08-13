@@ -1,18 +1,16 @@
 (ns game-test.cards.resources
   (:require [game.core :as core]
+            [game.utils :as utils]
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
             [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
-(use-fixtures :once load-all-cards (partial reset-card-defs "resources"))
-
 (deftest activist-support
   ;; Activist Support - Take tag if you have none; Corp gains bad pub if they have none
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Activist Support"]))
+    (new-game {:runner {:deck ["Activist Support"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Activist Support")
     (is (zero? (count-tags state)))
@@ -30,8 +28,7 @@
   ;; Ensure adjusted chronotype gains only 1 click when 2 clicks are lost
   (testing "Basic test"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Adjusted Chronotype" (qty "Beach Party" 2)]))
+      (new-game {:runner {:deck ["Adjusted Chronotype" (qty "Beach Party" 2)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Adjusted Chronotype")
       (play-from-hand state :runner "Beach Party")
@@ -44,9 +41,8 @@
       (is (= 3 (:click (get-runner))) "Should have lost 2 clicks and gained 1 click")))
   (testing "Chronotype to cancel out MCA click loss"
     (do-game
-      (new-game
-        (default-corp ["MCA Austerity Policy"])
-        (default-runner ["Adjusted Chronotype"]))
+      (new-game {:corp {:deck ["MCA Austerity Policy"]}
+                 :runner {:deck ["Adjusted Chronotype"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Adjusted Chronotype")
       (take-credits state :runner)
@@ -60,10 +56,9 @@
         (is (= 4 (:click (get-runner)))))))
   (testing "Ensure adjusted chronotype gains 2 clicks when 2 clicks are lost and GCS is installed"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Adjusted Chronotype"
+      (new-game {:runner {:deck ["Adjusted Chronotype"
                                  (qty "Beach Party" 3)
-                                 "Gene Conditioning Shoppe"]))
+                                 "Gene Conditioning Shoppe"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Adjusted Chronotype")
       (play-from-hand state :runner "Beach Party")
@@ -80,11 +75,10 @@
       (take-credits state :corp)
       (is (= 3 (:click (get-runner))) "Should have lost 3 clicks and gained 2 clicks"))))
 
-(deftest aesop's-pawnshop
+(deftest aesop-s-pawnshop
   ;; Tests use cases for Aesop's Pawnshop
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Aesop's Pawnshop" "Cache"]))
+    (new-game {:runner {:deck ["Aesop's Pawnshop" "Cache"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Aesop's Pawnshop")
     (play-from-hand state :runner "Cache")
@@ -104,8 +98,7 @@
 (deftest all-nighter
   ;; All-nighter - Click/trash to gain 2 clicks
   (do-game
-    (new-game (default-corp)
-              (default-runner ["All-nighter"]))
+    (new-game {:runner {:deck ["All-nighter"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "All-nighter")
     (is (= 3 (:click (get-runner))))
@@ -117,8 +110,8 @@
   ;; Bank Job
   (testing "Manhunt trace happens first"
     (do-game
-      (new-game (default-corp ["Manhunt" "PAD Campaign"])
-                (default-runner ["Bank Job"]))
+      (new-game {:corp {:deck ["Manhunt" "PAD Campaign"]}
+                 :runner {:deck ["Bank Job"]}})
       (play-from-hand state :corp "Manhunt")
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (take-credits state :corp)
@@ -134,8 +127,8 @@
       (is (= 1 (count (:discard (get-runner)))))))
   (testing "Choose which to use when 2+ copies are installed"
     (do-game
-      (new-game (default-corp ["PAD Campaign"])
-                (default-runner [(qty "Bank Job" 2)]))
+      (new-game {:corp {:deck ["PAD Campaign"]}
+                 :runner {:deck [(qty "Bank Job" 2)]}})
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Bank Job")
@@ -154,8 +147,8 @@
         (is (= 2 (get-counters (refresh bj2) :credit)) "2 credits remaining on 2nd copy"))))
   (testing "Security Testing takes priority"
     (do-game
-      (new-game (default-corp ["PAD Campaign"])
-                (default-runner ["Bank Job" "Security Testing"]))
+      (new-game {:corp {:deck ["PAD Campaign"]}
+                 :runner {:deck ["Bank Job" "Security Testing"]}})
       (play-from-hand state :corp "PAD Campaign" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Security Testing")
@@ -171,10 +164,9 @@
 (deftest bazaar
   ;; Bazaar - Only triggers when installing from Grip
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Street Peddler"
+    (new-game {:runner {:deck ["Street Peddler"
                                "Bazaar"
-                               (qty "Spy Camera" 6)]))
+                               (qty "Spy Camera" 6)]}})
     (take-credits state :corp)
     (starting-hand state :runner ["Street Peddler" "Bazaar" "Spy Camera" "Spy Camera" "Spy Camera"])
     (play-from-hand state :runner "Bazaar")
@@ -187,8 +179,7 @@
 (deftest beach-party
   ;; Beach Party - Lose 1 click when turn begins; hand size increased by 5
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Beach Party"]))
+    (new-game {:runner {:deck ["Beach Party"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Beach Party")
     (is (= 10 (core/hand-size state :runner)) "Max hand size increased by 5")
@@ -199,8 +190,8 @@
 (deftest bhagat
   ;; Bhagat - only trigger on first run
   (do-game
-    (new-game (default-corp [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)])
-              (default-runner ["Bhagat"]))
+    (new-game {:corp {:deck [(qty "Hedge Fund" 3) (qty "Eli 1.0" 3) (qty "Architect" 3)]}
+               :runner {:deck ["Bhagat"]}})
     (starting-hand state :corp [])
     (take-credits state :corp)
     (run-empty-server state :hq)
@@ -215,9 +206,9 @@
 (deftest chrome-parlor
   ;; Chrome Parlor - Prevent all meat/brain dmg when installing cybernetics
   (do-game
-    (new-game (default-corp ["Traffic Accident"])
-              (default-runner ["Chrome Parlor" "Titanium Ribs"
-                               "Brain Cage" (qty "Sure Gamble" 2)]))
+    (new-game {:corp {:deck ["Traffic Accident"]}
+               :runner {:deck ["Chrome Parlor" "Titanium Ribs"
+                               "Brain Cage" (qty "Sure Gamble" 2)]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Chrome Parlor")
     (play-from-hand state :runner "Titanium Ribs")
@@ -236,8 +227,7 @@
 (deftest citadel-sanctuary
   (testing "Interaction with Corporate Grant and Thunder Art Gallery"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Citadel Sanctuary" "Thunder Art Gallery" "Corroder" "Corporate \"Grant\""]))
+      (new-game {:runner {:deck ["Citadel Sanctuary" "Thunder Art Gallery" "Corroder" "Corporate \"Grant\""]}})
       (take-credits state :corp)
       (core/gain state :runner :credit 5)
       (play-from-hand state :runner "Citadel Sanctuary")
@@ -259,8 +249,8 @@
 (deftest compromised-employee
   ;; Compromised Employee - Gain 1c every time Corp rezzes ICE
   (do-game
-    (new-game (default-corp [(qty "Pup" 2) "Launch Campaign"])
-              (default-runner ["Compromised Employee"]))
+    (new-game {:corp {:deck [(qty "Pup" 2) "Launch Campaign"]}
+               :runner {:deck ["Compromised Employee"]}})
     (play-from-hand state :corp "Pup" "HQ")
     (play-from-hand state :corp "Pup" "R&D")
     (play-from-hand state :corp "Launch Campaign" "New remote")
@@ -278,8 +268,8 @@
 (deftest councilman
   ;; Councilman reverses the rezz and prevents re-rezz
   (do-game
-    (new-game (default-corp ["Jackson Howard"])
-              (default-runner ["Councilman"]))
+    (new-game {:corp {:deck ["Jackson Howard"]}
+               :runner {:deck ["Councilman"]}})
     (play-from-hand state :corp "Jackson Howard" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Councilman")
@@ -296,12 +286,11 @@
       ;; Next turn
       (core/rez state :corp (refresh jesus))
       (is (core/rezzed? (refresh jesus)) "Jackson Howard can be rezzed next turn"))))
-
 (deftest-pending councilman-zone-change
   ;; Rezz no longer prevented when card changes zone (issues #1571)
   (do-game
-    (new-game (default-corp ["Jackson Howard"])
-              (default-runner ["Councilman"]))
+    (new-game {:corp {:deck ["Jackson Howard"]}
+               :runner {:deck ["Councilman"]}})
     (play-from-hand state :corp "Jackson Howard" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Councilman")
@@ -323,8 +312,8 @@
   ;; Counter-Surveillance
   (testing "Trash to run, on successful run access cards equal to Tags and pay that amount in credits"
     (do-game
-      (new-game (default-corp [(qty "Hedge Fund" 3)])
-                (default-runner ["Counter Surveillance"]))
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
+                 :runner {:deck ["Counter Surveillance"]}})
       (take-credits state :corp)
       (core/gain-tags state :runner 2)
       (play-from-hand state :runner "Counter Surveillance")
@@ -344,8 +333,8 @@
         (is (= 2 (:credit (get-runner))) "Runner has 2 credits"))))
   (testing "Test Obelus does not trigger before Counter Surveillance accesses are done. Issues #2675"
     (do-game
-      (new-game (default-corp [(qty "Hedge Fund" 3)])
-                (default-runner ["Counter Surveillance" "Obelus" (qty "Sure Gamble" 3)]))
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
+                 :runner {:deck ["Counter Surveillance" "Obelus" (qty "Sure Gamble" 3)]}})
       (starting-hand state :runner ["Counter Surveillance" "Obelus"])
       (take-credits state :corp)
       (core/gain-tags state :runner 2)
@@ -374,8 +363,7 @@
 (deftest daily-casts
   ;; Play and tick through all turns of daily casts
   (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Daily Casts" 3)]))
+    (new-game {:runner {:deck [(qty "Daily Casts" 3)]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Daily Casts")
     (let [dc (get-resource state 0)]
@@ -402,8 +390,7 @@
 (deftest data-folding
   ;; Data Folding - Gain 1c at start of turn if 2+ unused MU
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Data Folding" "Hyperdriver"]))
+    (new-game {:runner {:deck ["Data Folding" "Hyperdriver"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Data Folding")
     (take-credits state :runner)
@@ -420,8 +407,8 @@
 (deftest ddos
   ;; Prevent rezzing of outermost ice for the rest of the turn
   (do-game
-    (new-game (default-corp [(qty "Ice Wall" 3)])
-              (default-runner ["DDoS"]))
+    (new-game {:corp {:deck [(qty "Ice Wall" 3)]}
+               :runner {:deck ["DDoS"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (play-from-hand state :corp "Ice Wall" "HQ")
     (take-credits state :corp)
@@ -447,8 +434,7 @@
 (deftest dean-lister
   ;; Basic test
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Dean Lister" "Faust" (qty "Sure Gamble" 3)]))
+    (new-game {:runner {:deck ["Dean Lister" "Faust" (qty "Sure Gamble" 3)]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Dean Lister")
     (play-from-hand state :runner "Faust")
@@ -470,8 +456,8 @@
 (deftest decoy
   ;; Decoy - Trash to avoid 1 tag
   (do-game
-    (new-game (default-corp ["SEA Source"])
-              (default-runner ["Decoy"]))
+    (new-game {:corp {:deck ["SEA Source"]}
+               :runner {:deck ["Decoy"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Decoy")
     (run-empty-server state :archives)
@@ -488,8 +474,8 @@
   ;; District 99 - Gains power counters on hardware/program trashes, can spend 3 power counters to recur a card matching identity
   (testing "Trashes by both sides and manual triggers"
     (do-game
-      (new-game (default-corp ["Bio-Ethics Association"])
-                (default-runner ["District 99" (qty "Spy Camera" 3) "Faerie"]))
+      (new-game {:corp {:deck ["Bio-Ethics Association"]}
+                 :runner {:deck ["District 99" (qty "Spy Camera" 3) "Faerie"]}})
       (play-from-hand state :corp "Bio-Ethics Association" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "District 99")
@@ -520,9 +506,9 @@
         (is (= 2 (get-counters (refresh d99) :power)) "Trashing Spy Camera after Faerie did not place a counter"))))
   (testing "Rebirth interaction, basic functionality"
     (do-game
-      (new-game (default-corp ["Grim"])
-                (make-deck "Armand \"Geist\" Walker: Tech Lord"
-                           ["District 99" (qty "Spy Camera" 3) "Faerie" "Rebirth" "Sure Gamble"]))
+      (new-game {:corp {:deck ["Grim"]}
+                 :runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                          :deck ["District 99" (qty "Spy Camera" 3) "Faerie" "Rebirth" "Sure Gamble"]}})
       (play-from-hand state :corp "Grim" "HQ")
       (take-credits state :corp)
       (core/gain state :runner :click 10)
@@ -575,7 +561,7 @@
           (is (= "Faerie" (-> (get-runner) :hand first :title)) "Faerie added to hand")
           (is (zero? (get-counters (refresh d99) :power)) "Picking up Faerie removed 3 counters"))))))
 
-(let [;; Start id
+(let [;; Start id for dj-fenris
       sunny "Sunny Lebeau: Security Specialist"
       ;; Several G-mod identities
       geist "Armand \"Geist\" Walker: Tech Lord"
@@ -588,14 +574,14 @@
       whizzard "Whizzard: Master Gamer"
       reina "Reina Roja: Freedom Fighter"
       maxx "MaxX: Maximum Punk Rock"]
-
   (deftest dj-fenris
     ;; DJ Fenris - host 1 g-mod id not in faction on DJ Fenris
     (testing "Hosting Chaos Theory"
       ;; Ensure +1 MU is handled correctly
       (do-game
-        (new-game (default-corp)
-                  (make-deck sunny ["DJ Fenris"]) {:start-as :runner})
+        (new-game {:runner {:id sunny
+                            :deck ["DJ Fenris"]}
+                   :options {:start-as :runner}})
         (play-from-hand state :runner "DJ Fenris")
         (is (= (first (prompt-titles :runner)) geist) "List is sorted")
         (is (every? #(some #{%} (prompt-titles :runner))
@@ -631,8 +617,9 @@
     (testing "Hosting Geist"
       ;; Ensure Geist effect triggers
       (do-game
-        (new-game (default-corp)
-                  (make-deck sunny ["DJ Fenris" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]) {:start-as :runner})
+        (new-game {:runner {:id sunny
+                            :deck ["DJ Fenris" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]}
+                   :options {:start-as :runner}})
         (starting-hand state :runner ["DJ Fenris" "All-nighter" "All-nighter"])
         (play-from-hand state :runner "All-nighter")
         (play-from-hand state :runner "All-nighter")
@@ -662,9 +649,9 @@
     (testing "Geist does not trigger Laguna Velasco"
       ;; Regression test for #3759
       (do-game
-        (new-game (default-corp)
-                  (make-deck sunny ["DJ Fenris" "Laguna Velasco District" (qty "All-nighter" 3) (qty "Sure Gamble" 3)])
-                  {:start-as :runner})
+        (new-game {:runner {:id sunny
+                            :deck ["DJ Fenris" "Laguna Velasco District" (qty "All-nighter" 3) (qty "Sure Gamble" 3)]}
+                   :options {:start-as :runner}})
         (starting-hand state :runner ["DJ Fenris" "Laguna Velasco District" "All-nighter"])
         (core/gain state :runner :credit 10)
         (play-from-hand state :runner "All-nighter")
@@ -685,8 +672,9 @@
               "Drew one card with Geist when using All-nighter trash ability, not two (from Laguna Velasco District)"))))
     (testing "Disable with Malia"
       (do-game
-        (new-game (default-corp ["Malia Z0L0K4"])
-                  (make-deck geist ["DJ Fenris"]))
+        (new-game {:corp {:deck ["Malia Z0L0K4"]}
+                   :runner {:id geist
+                            :deck ["DJ Fenris"]}})
         (play-from-hand state :corp "Malia Z0L0K4" "New remote")
         (take-credits state :corp)
         (play-from-hand state :runner "DJ Fenris")
@@ -709,8 +697,7 @@
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Donut Taganes" "Easy Mark"]))
+    (new-game {:runner {:deck ["Donut Taganes" "Easy Mark"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Donut Taganes")
     (is (= 2 (:credit (get-runner))) "Donut played for 3c")
@@ -725,8 +712,7 @@
   ;; Dummy Box - trash a card from hand to prevent corp trashing installed card
   (testing "Basic test"
     (do-game
-      (new-game (default-corp)
-                (default-runner [(qty "Dummy Box" 1) (qty "Cache" 1) (qty "Clot" 1)]))
+      (new-game {:runner {:deck [(qty "Dummy Box" 1) (qty "Cache" 1) (qty "Clot" 1)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Dummy Box")
       (play-from-hand state :runner "Cache")
@@ -742,8 +728,7 @@
       (is (= 1 (count (get-resource state))) "Dummy Box still installed")))
   (testing "doesn't prevent program deletion during purge"
     (do-game
-      (new-game (default-corp)
-                (default-runner [(qty "Dummy Box" 1) (qty "Cache" 1) (qty "Clot" 1)]))
+      (new-game {:runner {:deck [(qty "Dummy Box" 1) (qty "Cache" 1) (qty "Clot" 1)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Dummy Box")
       (play-from-hand state :runner "Clot")
@@ -755,8 +740,7 @@
   ;; Eden Shard - Install from Grip in lieu of accessing R&D; trash to make Corp draw 2
   (testing "Basic test"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Eden Shard"]))
+      (new-game {:runner {:deck ["Eden Shard"]}})
       (starting-hand state :corp ["Hedge Fund"])
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
@@ -770,8 +754,7 @@
       (is (= 1 (count (:discard (get-runner)))) "Eden Shard trashed")))
   (testing "Do not install when accessing cards"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Eden Shard"]))
+      (new-game {:runner {:deck ["Eden Shard"]}})
       (starting-hand state :corp ["Hedge Fund"])
       (take-credits state :corp)
       (is (= 1 (count (:hand (get-corp)))))
@@ -784,8 +767,8 @@
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (testing "Basic test"
     (do-game
-      (new-game (default-corp ["Hostile Takeover"])
-                (default-runner ["Fan Site"]))
+      (new-game {:corp {:deck ["Hostile Takeover"]}
+                 :runner {:deck ["Fan Site"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Fan Site")
       (take-credits state :runner)
@@ -795,8 +778,8 @@
       (is (= 1 (count (:scored (get-runner)))) "Fan Site added to Runner score area")))
   (testing "Don't trigger after swap with Exchange of Information. Issue #1824"
     (do-game
-      (new-game (default-corp [(qty "Hostile Takeover" 2) "Exchange of Information"])
-                (default-runner ["Fan Site"]))
+      (new-game {:corp {:deck [(qty "Hostile Takeover" 2) "Exchange of Information"]}
+                 :runner {:deck ["Fan Site"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Fan Site")
       (take-credits state :runner)
@@ -814,8 +797,8 @@
       (is (find-card "Fan Site" (:scored (get-corp))) "Fan Site not removed from Corp score area")))
   (testing "Runner can forfeit Fan Site"
     (do-game
-      (new-game (default-corp ["Hostile Takeover"])
-                (default-runner ["Fan Site" "Data Dealer"]))
+      (new-game {:corp {:deck ["Hostile Takeover"]}
+                 :runner {:deck ["Fan Site" "Data Dealer"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Fan Site")
       (take-credits state :runner)
@@ -834,8 +817,7 @@
 (deftest fester
   ;; Fester - Corp loses 2c (if able) when purging viruses
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Fester"]))
+    (new-game {:runner {:deck ["Fester"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Fester")
     (take-credits state :runner)
@@ -851,8 +833,8 @@
   ;; Film Critic
   (testing "Prevent Corp-trashed execs going to Runner scored. Issues #1181/#1042"
     (do-game
-      (new-game (default-corp [(qty "Director Haas" 3) (qty "Project Vitruvius" 3) "Hedge Fund"])
-                (default-runner ["Film Critic"]))
+      (new-game {:corp {:deck [(qty "Director Haas" 3) (qty "Project Vitruvius" 3) "Hedge Fund"]}
+                 :runner {:deck ["Film Critic"]}})
       (play-from-hand state :corp "Project Vitruvius" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Film Critic")
@@ -867,8 +849,8 @@
         (is (empty? (:scored (get-runner))) "Nothing in Runner scored"))))
   (testing "Fetal AI interaction"
     (do-game
-      (new-game (default-corp [(qty "Fetal AI" 3)])
-                (default-runner ["Film Critic" (qty "Sure Gamble" 3)]))
+      (new-game {:corp {:deck [(qty "Fetal AI" 3)]}
+                 :runner {:deck ["Film Critic" (qty "Sure Gamble" 3)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Film Critic")
       (let [fc (first (get-resource state))]
@@ -883,8 +865,8 @@
         (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
   (testing "Do not take a net damage when a hosted agenda is trashed due to film critic trash #2382"
     (do-game
-      (new-game (default-corp [(qty "Hostile Infrastructure" 3) "Project Vitruvius"])
-                (default-runner ["Film Critic" (qty "Sure Gamble" 3)]))
+      (new-game {:corp {:deck [(qty "Hostile Infrastructure" 3) "Project Vitruvius"]}
+                 :runner {:deck ["Film Critic" (qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Hostile Infrastructure" "New remote")
       (play-from-hand state :corp "Project Vitruvius" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
@@ -903,8 +885,8 @@
         (is (= 3 (count (:hand (get-runner)))) "No damage dealt"))))
   (testing "required hosted cards to be an agenda before firing ability"
     (do-game
-      (new-game (default-corp ["MCA Informant"])
-                (default-runner ["Film Critic"]))
+      (new-game {:corp {:deck ["MCA Informant"]}
+                 :runner {:deck ["Film Critic"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Film Critic")
       (let [fc (first (get-resource state))]
@@ -920,9 +902,8 @@
   ;; Find the Truth
   (testing "Basic test - On successful run see the top card from R&D before access"
     (do-game
-      (new-game
-        (default-corp [(qty "Restructure" 10)])
-        (default-runner ["Find the Truth"]))
+      (new-game {:corp {:deck [(qty "Restructure" 10)]}
+                 :runner {:deck ["Find the Truth"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Find the Truth")
       (run-on state "HQ")
@@ -933,9 +914,8 @@
       (click-prompt state :runner "OK")))
   (testing "Equivocation & FTT - should get order of choice"
     (do-game
-      (new-game
-        (default-corp [(qty "Restructure" 10)])
-        (default-runner ["Equivocation" "Find the Truth"]))
+      (new-game {:corp {:deck [(qty "Restructure" 10)]}
+                 :runner {:deck ["Equivocation" "Find the Truth"]}})
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Equivocation")
@@ -950,9 +930,8 @@
       (click-prompt state :runner "Yes")))
   (testing "Find The Truth should completed before Marilyn trash is forced"
     (do-game
-      (new-game
-        (default-corp ["Marilyn Campaign" (qty "Vanilla" 10)])
-        (default-runner ["Find the Truth" "Neutralize All Threats"]))
+      (new-game {:corp {:deck ["Marilyn Campaign" (qty "Vanilla" 10)]}
+                 :runner {:deck ["Find the Truth" "Neutralize All Threats"]}})
       (starting-hand state :corp ["Marilyn Campaign"])
       (play-from-hand state :corp "Marilyn Campaign" "New remote")
       (core/rez state :corp (get-content state :remote1 0))
@@ -977,8 +956,8 @@
   ;; Gang Sign
   (testing "accessing from HQ, not including root. Issue #2113"
     (do-game
-      (new-game (default-corp [(qty "Hostile Takeover" 3) (qty "Braintrust" 2) "Crisium Grid"])
-                (default-runner [(qty "Gang Sign" 2) "HQ Interface"]))
+      (new-game {:corp {:deck [(qty "Hostile Takeover" 3) (qty "Braintrust" 2) "Crisium Grid"]}
+                 :runner {:deck [(qty "Gang Sign" 2) "HQ Interface"]}})
       (play-from-hand state :corp "Crisium Grid" "HQ")
       (take-credits state :corp)
       (core/gain state :runner :credit 100)
@@ -1003,8 +982,8 @@
         (click-prompt state :runner "Steal"))))
   (testing "accessing from HQ, not including root. Issue #2113"
     (do-game
-      (new-game (default-corp ["Hostile Takeover" "Snare!"])
-                (default-runner ["Gang Sign"]))
+      (new-game {:corp {:deck ["Hostile Takeover" "Snare!"]}
+                 :runner {:deck ["Gang Sign"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Gang Sign")
       (take-credits state :runner)
@@ -1019,9 +998,9 @@
   ;; Gene Conditioning Shoppe - set :genetics-trigger-twice flag
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Hedge Fund" 3)])
-                (default-runner ["Gene Conditioning Shoppe"
-                                 "Adjusted Chronotype"]))
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
+                 :runner {:deck ["Gene Conditioning Shoppe"
+                                 "Adjusted Chronotype"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Adjusted Chronotype")
       (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))
@@ -1031,9 +1010,9 @@
       (is (not (core/has-flag? state :runner :persistent :genetics-trigger-twice)))))
   (testing "set :genetics-trigger-twice flag - ensure redundant copies work"
     (do-game
-      (new-game (default-corp [(qty "Hedge Fund" 3)])
-                (default-runner [(qty "Gene Conditioning Shoppe" 2)
-                                 "Adjusted Chronotype"]))
+      (new-game {:corp {:deck [(qty "Hedge Fund" 3)]}
+                 :runner {:deck [(qty "Gene Conditioning Shoppe" 2)
+                                 "Adjusted Chronotype"]}})
       (take-credits state :corp)
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1053,8 +1032,7 @@
 (deftest globalsec-security-clearance
   ;; Globalsec Security Clearance - Ability, click lost on use
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Globalsec Security Clearance"]))
+    (new-game {:runner {:deck ["Globalsec Security Clearance"]}})
     (take-credits state :corp)
     (core/gain state :runner :link 2)
     (play-from-hand state :runner "Globalsec Security Clearance")
@@ -1071,8 +1049,7 @@
 (deftest grifter
   ;; Grifter - Gain 1c if you made a successful run this turn, otherwise trash it
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Grifter"]))
+    (new-game {:runner {:deck ["Grifter"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Grifter")
     (run-empty-server state :hq)
@@ -1088,8 +1065,8 @@
   ;; Guru Davinder - no prompt/trash for 'preventing' 0 damage
   (testing "Basic test"
     (do-game
-      (new-game (default-corp ["Punitive Counterstrike"])
-                (default-runner ["Guru Davinder"]))
+      (new-game {:corp {:deck ["Punitive Counterstrike"]}
+                 :runner {:deck ["Guru Davinder"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Guru Davinder")
       (take-credits state :runner)
@@ -1100,8 +1077,9 @@
           "There is no prompt for 0 damage")))
   (testing "cannot steal Obokata while installed"
     (do-game
-      (new-game (make-deck "Jinteki: Personal Evolution" [(qty "Obokata Protocol" 10)])
-                (default-runner ["Guru Davinder" (qty "Sure Gamble" 4)]))
+      (new-game {:corp {:id "Jinteki: Personal Evolution"
+                        :deck [(qty "Obokata Protocol" 10)]}
+                 :runner {:deck ["Guru Davinder" (qty "Sure Gamble" 4)]}})
       (play-from-hand state :corp "Obokata Protocol" "New remote")
       (take-credits state :corp)
       (core/gain state :runner :agenda-point 6)
@@ -1114,8 +1092,7 @@
 (deftest hard-at-work
   ;; Hard at Work - Gain 2c and lose 1 click when turn begins
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Hard at Work"]))
+    (new-game {:runner {:deck ["Hard at Work"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Hard at Work")
     (take-credits state :runner)
@@ -1126,8 +1103,8 @@
 (deftest ice-carver
   ;; Ice Carver - lower ice strength on encounter
   (do-game
-    (new-game (default-corp ["Ice Wall"])
-              (default-runner ["Ice Carver"]))
+    (new-game {:corp {:deck ["Ice Wall"]}
+               :runner {:deck ["Ice Carver"]}})
     (play-from-hand state :corp "Ice Wall" "Archives")
     (take-credits state :corp 2)
     (let [iwall (get-ice state :archives 0)]
@@ -1141,8 +1118,7 @@
 (deftest investigative-journalism
   ;; Investigative Journalism - 4 clicks and trash to give the Corp 1 bad pub
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Investigative Journalism"]))
+    (new-game {:runner {:deck ["Investigative Journalism"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Investigative Journalism")
     (is (empty? (get-resource state)) "Corp has no bad pub, couldn't install")
@@ -1155,12 +1131,12 @@
     (is (= 1 (count (:discard (get-runner)))) "IJ is trashed")
     (is (= 2 (:bad-publicity (get-corp))) "Corp took 1 bad publicity")))
 
-(deftest jackpot!
+(deftest jackpot
   ;; Jackpot! - whenever a card enters your score area, trash Jackpot to pull off credits
   (testing "Basic test"
     (do-game
-      (new-game (default-corp ["Braintrust"])
-                (default-runner ["Jackpot!"]))
+      (new-game {:corp {:deck ["Braintrust"]}
+                 :runner {:deck ["Jackpot!"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Jackpot!")
       (let [jak (get-resource state 0)]
@@ -1181,8 +1157,8 @@
         (is (= 1 (count (:discard (get-runner)))) "Jackpot! trashed"))))
   (testing "should fire when moving agendas from Film Critic to scored area"
     (do-game
-      (new-game (default-corp ["Project Vitruvius"])
-                (default-runner ["Jackpot!" "Film Critic"]))
+      (new-game {:corp {:deck ["Project Vitruvius"]}
+                 :runner {:deck ["Jackpot!" "Film Critic"]}})
       (play-from-hand state :corp "Project Vitruvius" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Film Critic")
@@ -1202,8 +1178,8 @@
         (is (empty? (:hosted (refresh fc))) "Removed agenda hosted on FC"))))
   (testing "should fire when trashing Chairman Hiro"
     (do-game
-      (new-game (default-corp ["Chairman Hiro"])
-                (default-runner ["Jackpot!"]))
+      (new-game {:corp {:deck ["Chairman Hiro"]}
+                 :runner {:deck ["Jackpot!"]}})
       (play-from-hand state :corp "Chairman Hiro" "New remote")
       (take-credits state :corp)
       (play-from-hand state :runner "Jackpot!")
@@ -1223,8 +1199,8 @@
   ;; Jak Sinclair
   (testing "Lost clicks carry through to when turn starts fully #1764"
     (do-game
-      (new-game (default-corp [(qty "Enigma" 3)])
-                (default-runner [(qty "Jak Sinclair" 3)]))
+      (new-game {:corp {:deck [(qty "Enigma" 3)]}
+                 :runner {:deck [(qty "Jak Sinclair" 3)]}})
       (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Jak Sinclair")
@@ -1244,10 +1220,10 @@
 (deftest john-masanori
   ;; John Masanori - Draw 1 card on first successful run, take 1 tag on first unsuccessful run
   (do-game
-    (new-game (default-corp ["Crisium Grid"])
-              (default-runner [(qty "John Masanori" 3)
+    (new-game {:corp {:deck ["Crisium Grid"]}
+               :runner {:deck [(qty "John Masanori" 3)
                                (qty "Sure Gamble" 3)
-                               "Fall Guy"]))
+                               "Fall Guy"]}})
     (play-from-hand state :corp "Crisium Grid" "HQ")
     (core/rez state :corp (get-content state :hq 0))
     (take-credits state :corp)
@@ -1267,11 +1243,10 @@
     (run-jack-out state)
     (is (= 1 (count-tags state)) "No tag taken from second unsuccessful run")))
 
-(deftest joshua-b.
+(deftest joshua-b
   ;; Joshua B. - Take 1 tag at turn end if you choose to gain the extra click
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Joshua B."]))
+    (new-game {:runner {:deck ["Joshua B."]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Joshua B.")
     (take-credits state :runner)
@@ -1288,8 +1263,7 @@
 (deftest kati-jones
   ;; Kati Jones - Click to store and take
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Kati Jones"]))
+    (new-game {:runner {:deck ["Kati Jones"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Kati Jones")
     (is (= 3 (:credit (get-runner))))
@@ -1315,8 +1289,7 @@
 (deftest lewi-guilherme
   ;; Lewi Guilherme - lower corp hand size by 1, pay 1 credit when turn begins or trash
   (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Lewi Guilherme" 2)]))
+    (new-game {:runner {:deck [(qty "Lewi Guilherme" 2)]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Lewi Guilherme")
     (is (= -1 (get-in (get-corp) [:hand-size :mod])) "Corp hand size reduced by 1")
@@ -1343,8 +1316,8 @@
   ;; Logic Bomb
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Ice Wall" 2)])
-                (default-runner ["Logic Bomb"]))
+      (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
+                 :runner {:deck ["Logic Bomb"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
@@ -1358,8 +1331,8 @@
       (is (last-log-contains? state "\\[Click\\]\\[Click\\]") "Log should mention 2 clicks")))
   (testing "if the runner has no clicks left"
     (do-game
-      (new-game (default-corp [(qty "Ice Wall" 2)])
-                (default-runner ["Logic Bomb"]))
+      (new-game {:corp {:deck [(qty "Ice Wall" 2)]}
+                 :runner {:deck ["Logic Bomb"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (core/rez state :corp (get-ice state :hq 0))
       (take-credits state :corp)
@@ -1377,9 +1350,8 @@
 (deftest london-library
   ;; Install non-virus programs on London library. Includes #325/409
   (do-game
-    (new-game (default-corp)
-              (default-runner ["London Library" "Darwin" "Study Guide"
-                               "Chameleon" "Femme Fatale"]))
+    (new-game {:runner {:deck ["London Library" "Darwin" "Study Guide"
+                               "Chameleon" "Femme Fatale"]}})
     (take-credits state :corp)
     (core/gain state :runner :click 2)
     (play-from-hand state :runner "London Library")
@@ -1423,9 +1395,7 @@
 (deftest miss-bones
   ;; Miss Bones - credits for trashing installed cards, trash when empty
   (do-game
-    (new-game
-      (default-corp)
-      (default-runner ["Miss Bones"]))
+    (new-game {:runner {:deck ["Miss Bones"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Miss Bones")
     (let [mb (get-resource state 0)]
@@ -1444,8 +1414,8 @@
   ;; Muertos Gang Member - Install and Trash
   (testing "Basic test"
     (do-game
-      (new-game (default-corp ["Tollbooth" "Ice Wall"])
-                (default-runner [(qty "Hedge Fund" 3) "Muertos Gang Member"]))
+      (new-game {:corp {:deck ["Tollbooth" "Ice Wall"]}
+                 :runner {:deck [(qty "Hedge Fund" 3) "Muertos Gang Member"]}})
       (play-from-hand state :corp "Tollbooth" "HQ")
       (play-from-hand state :corp "Ice Wall" "Archives")
       (take-credits state :corp)
@@ -1464,9 +1434,9 @@
           (is (:rezzed (refresh toll)) "Tollbooth was rezzed")))))
   (testing "Account for Reina interaction, #1098"
     (do-game
-      (new-game (default-corp ["Tollbooth" "Ice Wall"])
-                (make-deck "Reina Roja: Freedom Fighter" [(qty "Hedge Fund" 3)
-                                                          "Muertos Gang Member"]))
+      (new-game {:corp {:deck ["Tollbooth" "Ice Wall"]}
+                 :runner {:id "Reina Roja: Freedom Fighter"
+                          :deck [(qty "Hedge Fund" 3) "Muertos Gang Member"]}})
       (play-from-hand state :corp "Tollbooth" "HQ")
       (play-from-hand state :corp "Ice Wall" "Archives")
       (let [toll (get-ice state :hq 0)
@@ -1489,8 +1459,7 @@
 (deftest net-mercur
   ;; Net Mercur - Gains 1 credit or draw 1 card when a stealth credit is used
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Net Mercur" "Silencer" "Ghost Runner"]))
+    (new-game {:runner {:deck ["Net Mercur" "Silencer" "Ghost Runner"]}})
     (take-credits state :corp)
     (core/gain state :runner :click 4 :credit 10)
     (play-from-hand state :runner "Silencer")
@@ -1518,8 +1487,8 @@
   ;; ICE install costs 1 more except for inner most
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Paper Wall" 3)])
-                (default-runner ["Network Exchange"]))
+      (new-game {:corp {:deck [(qty "Paper Wall" 3)]}
+                 :runner {:deck ["Network Exchange"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Network Exchange")
       (take-credits state :runner)
@@ -1531,8 +1500,8 @@
       (is (= 3 (:credit (get-corp))) "Paid 1 extra  to install Paper Wall")))
   (testing "Architect 1st sub should ignore additional install cost"
     (do-game
-      (new-game (default-corp [(qty "Architect" 3)])
-                (default-runner ["Network Exchange"]))
+      (new-game {:corp {:deck [(qty "Architect" 3)]}
+                 :runner {:deck ["Network Exchange"]}})
       (play-from-hand state :corp "Architect" "HQ")
       (take-credits state :corp) ; corp has 7 credits
       (play-from-hand state :runner "Network Exchange")
@@ -1549,8 +1518,8 @@
 (deftest neutralize-all-threats
   ;; Neutralize All Threats - Access 2 cards from HQ, force trash first accessed card with a trash cost
   (do-game
-    (new-game (default-corp [(qty "Hedge Fund" 2) "Breaker Bay Grid" "Elizabeth Mills"])
-              (default-runner ["Neutralize All Threats"]))
+    (new-game {:corp {:deck [(qty "Hedge Fund" 2) "Breaker Bay Grid" "Elizabeth Mills"]}
+               :runner {:deck ["Neutralize All Threats"]}})
     (play-from-hand state :corp "Breaker Bay Grid" "New remote")
     (play-from-hand state :corp "Elizabeth Mills" "New remote")
     (take-credits state :corp)
@@ -1571,8 +1540,8 @@
   ;; New Angeles City Hall - Avoid tags; trash when agenda is stolen
   (testing "Basic test"
     (do-game
-      (new-game (default-corp ["SEA Source" "Breaking News"])
-                (default-runner ["New Angeles City Hall"]))
+      (new-game {:corp {:deck ["SEA Source" "Breaking News"]}
+                 :runner {:deck ["New Angeles City Hall"]}})
       (play-from-hand state :corp "Breaking News" "New remote")
       (take-credits state :corp 2)
       (play-from-hand state :runner "New Angeles City Hall")
@@ -1594,8 +1563,7 @@
         (is (empty? (get-resource state)) "NACH trashed by agenda steal"))))
   (testing "don't gain Siphon credits until opportunity to avoid tags has passed"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Account Siphon" "New Angeles City Hall"]))
+      (new-game {:runner {:deck ["Account Siphon" "New Angeles City Hall"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "New Angeles City Hall")
       (play-run-event state (first (:hand (get-runner))) :hq)
@@ -1612,8 +1580,8 @@
 (deftest no-one-home
   ;; Prevent first tag or net damage of the turn if you beat trace0, then trash
   (do-game
-    (new-game (default-corp ["Data Mine" "SEA Source" "Scorched Earth"])
-              (default-runner [(qty "No One Home" 3) (qty "Sure Gamble" 2)]))
+    (new-game {:corp {:deck ["Data Mine" "SEA Source" "Scorched Earth"]}
+               :runner {:deck [(qty "No One Home" 3) (qty "Sure Gamble" 2)]}})
     (play-from-hand state :corp "Data Mine" "Server 1")
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
@@ -1655,9 +1623,8 @@
   ;; Off-Campus Apartment
   (testing "ability shows a simultaneous resolution prompt when appropriate"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Street Peddler" "Off-Campus Apartment"
-                                 "Underworld Contact" (qty "Spy Camera" 6)]))
+      (new-game {:runner {:deck ["Street Peddler" "Off-Campus Apartment"
+                                 "Underworld Contact" (qty "Spy Camera" 6)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler" "Off-Campus Apartment" "Underworld Contact"])
       (play-from-hand state :runner "Off-Campus Apartment")
@@ -1673,8 +1640,7 @@
         (is (= 2 (count (:hand (get-runner)))) "Drew a card from OCA"))))
   (testing "second ability does not break cards that are hosting others, e.g., Street Peddler"
     (do-game
-      (new-game (default-corp)
-                (default-runner [(qty "Street Peddler" 2) "Off-Campus Apartment" (qty "Spy Camera" 6)]))
+      (new-game {:runner {:deck [(qty "Street Peddler" 2) "Off-Campus Apartment" (qty "Spy Camera" 6)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler" "Street Peddler" "Off-Campus Apartment"])
       (core/move state :runner (find-card "Street Peddler" (:hand (get-runner))) :deck {:front true})
@@ -1697,36 +1663,36 @@
 (deftest officer-frank
   ;; Officer Frank - meat damage to trash 2 from HQ
   (do-game
-      (new-game (default-corp ["Swordsman" (qty "Hedge Fund" 2)])
-                (default-runner ["Officer Frank" "Skulljack" (qty "Respirocytes" 4)]))
-   (play-from-hand state :corp "Swordsman" "Archives")
-   (take-credits state :corp)
-   (starting-hand state :runner ["Officer Frank" "Skulljack" "Respirocytes" "Respirocytes" "Respirocytes" "Respirocytes"])
-   (play-from-hand state :runner "Officer Frank")
-   (card-ability state :runner (get-resource state 0) 0)
-   (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
-   (play-from-hand state :runner "Skulljack")
-   (is (= 3 (count (:hand (get-runner)))) "Took 1 brain damage")
-   (card-ability state :runner (get-resource state 0) 0)
-   (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
-   (let [sm (get-ice state :archives 0)]
-     (run-on state :archives)
-     (core/rez state :corp sm)
-     (card-subroutine state :corp sm 0)
-     (run-jack-out state))
-   (is (= 2 (count (:hand (get-runner)))) "Took 1 net damage")
-   (card-ability state :runner (get-resource state 0) 0)
-   (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
-   (play-from-hand state :runner "Respirocytes")
-   (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")
-   (card-ability state :runner (get-resource state 0) 0)
-   (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
+    (new-game {:corp {:deck ["Swordsman" (qty "Hedge Fund" 2)]}
+               :runner {:deck ["Officer Frank" "Skulljack" (qty "Respirocytes" 4)]}})
+    (play-from-hand state :corp "Swordsman" "Archives")
+    (take-credits state :corp)
+    (starting-hand state :runner ["Officer Frank" "Skulljack" "Respirocytes" "Respirocytes" "Respirocytes" "Respirocytes"])
+    (play-from-hand state :runner "Officer Frank")
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
+    (play-from-hand state :runner "Skulljack")
+    (is (= 3 (count (:hand (get-runner)))) "Took 1 brain damage")
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
+    (let [sm (get-ice state :archives 0)]
+      (run-on state :archives)
+      (core/rez state :corp sm)
+      (card-subroutine state :corp sm 0)
+      (run-jack-out state))
+    (is (= 2 (count (:hand (get-runner)))) "Took 1 net damage")
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (zero? (count (:discard (get-corp)))) "Nothing discarded from HQ")
+    (play-from-hand state :runner "Respirocytes")
+    (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
 
 (deftest pad-tap
   ;; PAD Tap
   (do-game
-    (new-game (default-corp ["Melange Mining Corp."])
-              (default-runner ["PAD Tap"]))
+    (new-game {:corp {:deck ["Melange Mining Corp."]}
+               :runner {:deck ["PAD Tap"]}})
     (play-from-hand state :corp "Melange Mining Corp." "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "PAD Tap")
@@ -1757,9 +1723,8 @@
   ;; Paige Piper
   (testing "interaction with Frantic Coding. Issue #2190"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Paige Piper" (qty "Frantic Coding" 2) (qty "Sure Gamble" 3)
-                                 (qty "Gordian Blade" 2) "Ninja" (qty "Bank Job" 3) (qty "Indexing" 2)]))
+      (new-game {:runner {:deck ["Paige Piper" (qty "Frantic Coding" 2) (qty "Sure Gamble" 3)
+                                 (qty "Gordian Blade" 2) "Ninja" (qty "Bank Job" 3) (qty "Indexing" 2)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Paige Piper" "Frantic Coding" "Frantic Coding"])
       (play-from-hand state :runner "Paige Piper")
@@ -1786,8 +1751,8 @@
   ;; Patron
   (testing "Basic test"
     (do-game
-      (new-game (default-corp ["Jackson Howard"])
-                (default-runner [(qty "Patron" 4) (qty "Easy Mark" 4)]))
+      (new-game {:corp {:deck ["Jackson Howard"]}
+                 :runner {:deck [(qty "Patron" 4) (qty "Easy Mark" 4)]}})
       (play-from-hand state :corp "Jackson Howard" "New remote")
       (take-credits state :corp 2)
       (play-from-hand state :runner "Patron")
@@ -1809,8 +1774,7 @@
         (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server"))))
   (testing "Manually selecting during Step 1.2 does not show a second prompt at start of turn. Issue #1744."
     (do-game
-      (new-game (default-corp)
-                (default-runner [(qty "Patron" 3) (qty "Jak Sinclair" 3)]))
+      (new-game {:runner {:deck [(qty "Patron" 3) (qty "Jak Sinclair" 3)]}})
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
       (starting-hand state :runner ["Patron" "Jak Sinclair"])
@@ -1832,8 +1796,8 @@
 (deftest power-tap
   ;; Power Tap
   (do-game
-    (new-game (default-corp ["Restructured Datapool"])
-              (default-runner ["Power Tap"]))
+    (new-game {:corp {:deck ["Restructured Datapool"]}
+               :runner {:deck ["Power Tap"]}})
     (play-and-score state "Restructured Datapool")
     (let [agenda (get-scored state :corp 0)
           tags (count-tags state)
@@ -1858,10 +1822,9 @@
 (deftest professional-contacts
   ;; Professional Contacts - Click to gain 1 credit and draw 1 card
   (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Professional Contacts" 3)
+    (new-game {:runner {:deck [(qty "Professional Contacts" 3)
                                (qty "Sure Gamble" 2)
-                               (qty "Shiv" 2)]))
+                               (qty "Shiv" 2)]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Professional Contacts")
     (let [proco (get-resource state 0)]
@@ -1878,8 +1841,8 @@
   ;; Psych Mike
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Ice Wall" 100)])
-                (default-runner ["Psych Mike" "Deep Data Mining"]))
+      (new-game {:corp {:deck [(qty "Ice Wall" 100)]}
+                 :runner {:deck ["Psych Mike" "Deep Data Mining"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Psych Mike")
       (let [credits (:credit (get-runner))]
@@ -1913,8 +1876,8 @@
               "Psych Mike should give 1 credit for second run of the turn, if first on HQ")))))
   (testing "vs upgrades"
     (do-game
-      (new-game (default-corp ["Bryan Stinson" (qty "Ice Wall" 100)])
-                (default-runner ["Psych Mike"]))
+      (new-game {:corp {:deck ["Bryan Stinson" (qty "Ice Wall" 100)]}
+                 :runner {:deck ["Psych Mike"]}})
       (starting-hand state :corp ["Bryan Stinson"])
       (play-from-hand state :corp "Bryan Stinson" "R&D")
       (take-credits state :corp)
@@ -1931,8 +1894,7 @@
   ;; Reclaim - trash Reclaim, trash card from grip, install program, hardware, or virtual resource from heap
   (testing "Basic behavior"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Reclaim" "Mimic" "Clone Chip"]))
+      (new-game {:runner {:deck ["Reclaim" "Mimic" "Clone Chip"]}})
       (take-credits state :corp)
       (core/move state :runner (find-card "Mimic" (:hand (get-runner))) :discard)
       (play-from-hand state :runner "Reclaim")
@@ -1945,16 +1907,14 @@
       (is (= 2 (:credit (get-runner))) "Runner paid install cost")))
   (testing "No cards in hand"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Reclaim"]))
+      (new-game {:runner {:deck ["Reclaim"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Reclaim")
       (card-ability state :runner (get-resource state 0) 0)
       (is (empty? (:prompt (get-runner))) "No Reclaim prompt")))
   (testing "Can install trashed card"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Reclaim" "Mimic"]))
+      (new-game {:runner {:deck ["Reclaim" "Mimic"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Reclaim")
       (is (empty? (get-program state)) "No programs installed")
@@ -1966,8 +1926,7 @@
       (is (= 2 (:credit (get-runner))) "Runner paid install cost")))
   (testing "Can't afford to install card"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Reclaim" "Alpha"]))
+      (new-game {:runner {:deck ["Reclaim" "Alpha"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Reclaim")
       (card-ability state :runner (get-resource state 0) 0)
@@ -1981,9 +1940,8 @@
 (deftest rolodex
   ;; Rolodex - Full test
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Rolodex" "Sure Gamble" "Desperado"
-                               "Diesel" "Corroder" "Patron"]))
+    (new-game {:runner {:deck ["Rolodex" "Sure Gamble" "Desperado"
+                               "Diesel" "Corroder" "Patron"]}})
     (starting-hand state :runner ["Rolodex"])
     (is (= 1 (count (:hand (get-runner)))))
     (take-credits state :corp)
@@ -2012,11 +1970,10 @@
     (is (= 4 (count (:discard (get-runner)))) "Rolodex mills 3 cards when trashed")
     (is (= "Corroder" (:title (first (:deck (get-runner))))))))
 
-(deftest rosetta-2.0
+(deftest rosetta-2-0
   ;; Rosetta 2.0 remove an installed program from the game and install one from the heap lower install cost
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Rosetta 2.0" "Corroder" "Gordian Blade"]))
+    (new-game {:runner {:deck ["Rosetta 2.0" "Corroder" "Gordian Blade"]}})
     (take-credits state :corp)
     (starting-hand state :runner ["Rosetta 2.0" "Corroder"])
     (core/gain state :runner :credit 2)
@@ -2036,9 +1993,8 @@
 (deftest sacrificial-construct
   ;; Sacrificial Construct - Trash to prevent trash of installed program or hardware
   (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Sacrificial Construct" 2) "Cache"
-                               "Motivation" "Astrolabe"]))
+    (new-game {:runner {:deck [(qty "Sacrificial Construct" 2) "Cache"
+                               "Motivation" "Astrolabe"]}})
     (take-credits state :corp)
     (core/gain state :runner :click 1)
     (play-from-hand state :runner "Sacrificial Construct")
@@ -2061,8 +2017,7 @@
 (deftest safety-first
   ;; Safety First - Reduce hand size by 2, draw 1 at turn end if below maximum
   (do-game
-    (new-game (default-corp)
-              (default-runner [(qty "Safety First" 3) (qty "Cache" 3)]))
+    (new-game {:runner {:deck [(qty "Safety First" 3) (qty "Cache" 3)]}})
     (take-credits state :corp)
     (starting-hand state :runner ["Safety First" "Safety First" "Cache"])
     (play-from-hand state :runner "Safety First")
@@ -2073,61 +2028,12 @@
     (take-credits state :runner)
     (is (= 3 (count (:hand (get-runner)))) "Drew no cards, at maximum")))
 
-(deftest scrubber
-  ;; Scrubber
-  (testing "Basic test"
-    (do-game
-      (new-game (default-corp ["The Board"])
-                (default-runner ["Scrubber"]))
-      (play-from-hand state :corp "The Board" "New remote")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner doesn't have enough credits to trash")
-      (click-prompt state :runner "No action")
-      (play-from-hand state :runner "Scrubber")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (is (= 5 (:credit (get-runner))) "Runner should only have 5 credits in pool")
-      (run-empty-server state "Server 1")
-      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
-      (let [scrubber (get-resource state 0)]
-        (card-ability state :runner scrubber 0)
-        (card-ability state :runner scrubber 0))
-      (click-prompt state :runner "Pay 7 [Credits] to trash")
-      (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points")))
-  (testing "when under trash cost but can up with recurring credits"
-    (do-game
-      (new-game (default-corp ["The Board"])
-                (default-runner ["Scrubber" "Skulljack" "Sure Gamble"]))
-      (play-from-hand state :corp "The Board" "New remote")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner doesn't have enough credits to trash")
-      (click-prompt state :runner "No action")
-      (play-from-hand state :runner "Scrubber")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (play-from-hand state :runner "Skulljack")
-      (core/gain state :runner :credit 1)
-      (is (= 4 (:credit (get-runner))) "Runner should only have 4 credits in pool")
-      (run-empty-server state "Server 1")
-      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "The Board should cost 6 to trash")
-      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
-      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Whoops, runner forgot to actually get the credits from Scrubber
-      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "Skulljack shouldn't trigger a second time")
-      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can still use Scrubber credits the second time around")
-      (let [scrubber (get-resource state 0)]
-        (card-ability state :runner scrubber 0)
-        (card-ability state :runner scrubber 0))
-      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Now the runner has actually gained the Scrubber credits
-      (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points"))))
-
 (deftest salsette-slums
   ;; Salsette Slums - Once per turn, when the trash cost of a card is paid, optionally remove from the game
   (do-game
-    (new-game (default-corp ["Hostile Infrastructure" "Tech Startup" "Thomas Haas"
-                             (qty "Hedge Fund" 3)])
-              (default-runner [(qty "Salsette Slums" 2) (qty "Sure Gamble" 3)]))
+    (new-game {:corp {:deck ["Hostile Infrastructure" "Tech Startup" "Thomas Haas"
+                             (qty "Hedge Fund" 3)]}
+               :runner {:deck [(qty "Salsette Slums" 2) (qty "Sure Gamble" 3)]}})
     ;; Use Hostile Infrastructure to ensure on-trash effects don't fire.
     (core/move state :corp (find-card "Hostile Infrastructure" (:deck (get-corp))) :hand)
     (core/move state :corp (find-card "Tech Startup" (:deck (get-corp))) :hand)
@@ -2189,12 +2095,61 @@
       (click-card state :runner (find-card "Hostile Infrastructure" (:discard (get-corp))))
       (is (not (= (:cid hostile2) (:cid (last (:rfg (get-corp)))))) "Did not remove card from game"))))
 
+(deftest scrubber
+  ;; Scrubber
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck ["The Board"]}
+                 :runner {:deck ["Scrubber"]}})
+      (play-from-hand state :corp "The Board" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner doesn't have enough credits to trash")
+      (click-prompt state :runner "No action")
+      (play-from-hand state :runner "Scrubber")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 5 (:credit (get-runner))) "Runner should only have 5 credits in pool")
+      (run-empty-server state "Server 1")
+      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
+      (let [scrubber (get-resource state 0)]
+        (card-ability state :runner scrubber 0)
+        (card-ability state :runner scrubber 0))
+      (click-prompt state :runner "Pay 7 [Credits] to trash")
+      (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points")))
+  (testing "when under trash cost but can up with recurring credits"
+    (do-game
+      (new-game {:corp {:deck ["The Board"]}
+                 :runner {:deck ["Scrubber" "Skulljack" "Sure Gamble"]}})
+      (play-from-hand state :corp "The Board" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (= 1 (-> (get-runner) :prompt first :choices count)) "Runner doesn't have enough credits to trash")
+      (click-prompt state :runner "No action")
+      (play-from-hand state :runner "Scrubber")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Skulljack")
+      (core/gain state :runner :credit 1)
+      (is (= 4 (:credit (get-runner))) "Runner should only have 4 credits in pool")
+      (run-empty-server state "Server 1")
+      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "The Board should cost 6 to trash")
+      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can use Scrubber credits to trash")
+      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Whoops, runner forgot to actually get the credits from Scrubber
+      (is (= 6 (core/trash-cost state :runner (get-content state :remote1 0))) "Skulljack shouldn't trigger a second time")
+      (is (= 2 (-> (get-runner) :prompt first :choices count)) "Runner can still use Scrubber credits the second time around")
+      (let [scrubber (get-resource state 0)]
+        (card-ability state :runner scrubber 0)
+        (card-ability state :runner scrubber 0))
+      (click-prompt state :runner "Pay 6 [Credits] to trash") ;; Now the runner has actually gained the Scrubber credits
+      (is (= 2 (:agenda-point (get-runner))) "Runner should trash The Board and gain 2 agenda points"))))
+
 (deftest security-testing
   ;; Security Testing
   (testing "Basic test"
     (do-game
-      (new-game (default-corp ["Jackson Howard"])
-                (default-runner ["Security Testing"]))
+      (new-game {:corp {:deck ["Jackson Howard"]}
+                 :runner {:deck ["Security Testing"]}})
       (play-from-hand state :corp "Jackson Howard" "New remote")
       (take-credits state :corp 2)
       (play-from-hand state :runner "Security Testing")
@@ -2214,8 +2169,7 @@
         (is (= 12 (:credit (get-runner))) "Did not gain credits when running other server"))))
   (testing "with multiple copies"
     (do-game
-      (new-game (default-corp)
-                (default-runner [(qty "Security Testing" 2)]))
+      (new-game {:runner {:deck [(qty "Security Testing" 2)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Security Testing")
       (play-from-hand state :runner "Security Testing")
@@ -2231,8 +2185,8 @@
 (deftest spoilers
   ;; Spoilers - Mill the Corp when it scores an agenda
   (do-game
-    (new-game (default-corp ["Hostile Takeover" "Hedge Fund"])
-              (default-runner ["Spoilers"]))
+    (new-game {:corp {:deck ["Hostile Takeover" "Hedge Fund"]}
+               :runner {:deck ["Spoilers"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Spoilers")
     (take-credits state :runner)
@@ -2247,8 +2201,7 @@
 (deftest stim-dealer
   ;; Stim Dealer - Take 1 brain damage when it accumulates 2 power counters
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Stim Dealer" "Sure Gamble" "Feedback Filter"]))
+    (new-game {:runner {:deck ["Stim Dealer" "Sure Gamble" "Feedback Filter"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Feedback Filter")
@@ -2273,9 +2226,8 @@
   ;; Street Peddler
   (testing "Basic test"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Street Peddler" "Gordian Blade"
-                                 "Torch" (qty "Sure Gamble" 2)]))
+      (new-game {:runner {:deck ["Street Peddler" "Gordian Blade"
+                                 "Torch" (qty "Sure Gamble" 2)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
       (play-from-hand state :runner "Street Peddler")
@@ -2288,8 +2240,7 @@
         (is (= 3 (core/available-mu state)) "Gordian cost 1 mu"))))
   (testing "Can't afford install"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Street Peddler" (qty "Gordian Blade" 3)]))
+      (new-game {:runner {:deck ["Street Peddler" (qty "Gordian Blade" 3)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler"])
       (play-from-hand state :runner "Street Peddler")
@@ -2305,10 +2256,10 @@
                  "Street Peddler still installed with 3 hosted cards")))))
   (testing "Interaction with Kate discount"
     (do-game
-      (new-game (default-corp)
-                (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker" ["Street Peddler"
-                                                                     "Gordian Blade"
-                                                                     (qty "Sure Gamble" 2)]))
+      (new-game {:runner {:id "Kate \"Mac\" McCaffrey: Digital Tinker"
+                          :deck ["Street Peddler"
+                                 "Gordian Blade"
+                                 (qty "Sure Gamble" 2)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler"])
       (play-from-hand state :runner "Street Peddler")
@@ -2324,8 +2275,7 @@
         (is (= 3 (core/available-mu state)) "Gordian cost 1 mu"))))
   (testing "Programs should cost memory. Issue #708"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Street Peddler" (qty "Corroder" 3)]))
+      (new-game {:runner {:deck ["Street Peddler" (qty "Corroder" 3)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler"])
       (play-from-hand state :runner "Street Peddler")
@@ -2339,8 +2289,8 @@
         (is (= 3 (core/available-mu state)) "Corroder cost 1 mu"))))
   (testing "Muertos/Brain Chip uninstall effect not fired when removed off peddler/hosting Issue #2294, #2358"
     (do-game
-      (new-game (default-corp ["Jackson Howard"])
-                (default-runner [(qty "Street Peddler" 2) "Muertos Gang Member" "Brain Chip"]))
+      (new-game {:corp {:deck ["Jackson Howard"]}
+                 :runner {:deck [(qty "Street Peddler" 2) "Muertos Gang Member" "Brain Chip"]}})
       (core/move state :runner (find-card "Muertos Gang Member" (:hand (get-runner))) :deck {:front true})
       (core/move state :runner (find-card "Brain Chip" (:hand (get-runner))) :deck {:front true})
       (core/move state :runner (find-card "Street Peddler" (:hand (get-runner))) :deck {:front true})
@@ -2357,8 +2307,7 @@
         (is (= 4 (core/available-mu state)) "Runner has 4 MU"))))
   (testing "Trashing hardware should not reduce :in-play values"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Street Peddler" (qty "HQ Interface" 3)]))
+      (new-game {:runner {:deck ["Street Peddler" (qty "HQ Interface" 3)]}})
       (take-credits state :corp)
       (starting-hand state :runner ["Street Peddler"])
       (play-from-hand state :runner "Street Peddler")
@@ -2369,8 +2318,8 @@
             "HQ Access increased by 1 from installed HQI and not reduced by the 2 trashed ones"))))
   (testing "Installing Parasite with only 1cr. Issue #491."
     (do-game
-      (new-game (default-corp [(qty "Pop-up Window" 3)])
-                (default-runner ["Street Peddler" (qty "Parasite" 3)]))
+      (new-game {:corp {:deck [(qty "Pop-up Window" 3)]}
+                 :runner {:deck ["Street Peddler" (qty "Parasite" 3)]}})
       (play-from-hand state :corp "Pop-up Window" "HQ")
       (take-credits state :corp 2)
       (starting-hand state :runner ["Street Peddler"])
@@ -2387,31 +2336,28 @@
         (click-card state :runner pu)
         (is (= 4 (count (:discard (get-runner)))) "3 Parasite, 1 Street Peddler in heap")
         (is (= 1 (count (:discard (get-corp)))) "Pop-up Window in archives"))))
-  (testing "Tech Trader install"
-    (do-game
-      (new-game (default-corp)
-                (default-runner ["Street Peddler"
-                                 "Tech Trader"]))
-      (take-credits state :corp)
-      (starting-hand state :runner ["Street Peddler"])
-      (play-from-hand state :runner "Street Peddler")
-      (let [sp (get-resource state 0)]
-        (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")
-        (card-ability state :runner sp 0)
-        (click-prompt state :runner (find-card "Tech Trader" (:hosted sp))) ; choose to install Tech Trader
-        (is (= "Tech Trader" (:title (get-resource state 0)))
-            "Tech Trader was installed")
-        (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability")))))
-
+(testing "Tech Trader install"
+  (do-game
+    (new-game {:runner {:deck ["Street Peddler"
+                               "Tech Trader"]}})
+    (take-credits state :corp)
+    (starting-hand state :runner ["Street Peddler"])
+    (play-from-hand state :runner "Street Peddler")
+    (let [sp (get-resource state 0)]
+      (is (= 1 (count (:hosted sp))) "Street Peddler is hosting 1 card")
+      (card-ability state :runner sp 0)
+      (click-prompt state :runner (find-card "Tech Trader" (:hosted sp))) ; choose to install Tech Trader
+      (is (= "Tech Trader" (:title (get-resource state 0)))
+          "Tech Trader was installed")
+      (is (= 5 (:credit (get-runner))) "Did not gain 1cr from Tech Trader ability")))))
 (deftest-pending street-peddler-trash-while-choosing-card
   ;; Street Peddler - trashing Street Peddler while choosing which card to
   ;; discard should dismiss the choice prompt. Issue #587.
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Street Peddler"
+    (new-game {:runner {:deck ["Street Peddler"
                                "Gordian Blade"
                                "Torch"
-                               (qty "Sure Gamble" 2)]))
+                               (qty "Sure Gamble" 2)]}})
     (take-credits state :corp)
     (starting-hand state :runner ["Street Peddler" "Sure Gamble"])
     (play-from-hand state :runner "Street Peddler")
@@ -2425,10 +2371,9 @@
   ;; Symmetrical Visage - Gain 1 credit the first time you click to draw each turn
   (testing "Basic test"
     (do-game
-      (new-game (default-corp)
-                (default-runner [(qty "Symmetrical Visage" 3)
+      (new-game {:runner {:deck [(qty "Symmetrical Visage" 3)
                                  (qty "Sure Gamble" 3)
-                                 "Fall Guy"]))
+                                 "Fall Guy"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Symmetrical Visage")
       (is (= 3 (:credit (get-runner))))
@@ -2438,10 +2383,9 @@
       (is (= 4 (:credit (get-runner))) "No credit gained from second click spent to draw")))
   (testing "Gain 1 credit the first and second time you click to draw each turn when GCS is installed"
     (do-game
-      (new-game (default-corp)
-                (default-runner [(qty "Symmetrical Visage" 3)
+      (new-game {:runner {:deck [(qty "Symmetrical Visage" 3)
                                  (qty "Gene Conditioning Shoppe" 3)
-                                 "Fall Guy"]))
+                                 "Fall Guy"]}})
       (take-credits state :corp)
       (core/gain state :runner :click 1)
       (play-from-hand state :runner "Symmetrical Visage")
@@ -2463,10 +2407,10 @@
   ;; Synthetic Blood - The first time you take damage each turn, draw one card
   (testing "Basic test"
     (do-game
-      (new-game (default-corp [(qty "Data Mine" 3) (qty "Hedge Fund" 3)])
-                (default-runner [(qty "Synthetic Blood" 3)
+      (new-game {:corp {:deck [(qty "Data Mine" 3) (qty "Hedge Fund" 3)]}
+                 :runner {:deck [(qty "Synthetic Blood" 3)
                                  (qty "Sure Gamble" 3)
-                                 "Fall Guy"]))
+                                 "Fall Guy"]}})
       (play-from-hand state :corp "Data Mine" "HQ")
       (play-from-hand state :corp "Data Mine" "HQ")
       (take-credits state :corp)
@@ -2483,10 +2427,10 @@
         (is (= 3 (count (:hand (get-runner)))) "no card drawn when receiving damage (2nd time)"))))
   (testing "The first and second time you take damage each turn (with GCS installed), draw one card"
     (do-game
-      (new-game (default-corp [(qty "Data Mine" 3) (qty "Hedge Fund" 3)])
-                (default-runner [(qty "Synthetic Blood" 3)
+      (new-game {:corp {:deck [(qty "Data Mine" 3) (qty "Hedge Fund" 3)]}
+                 :runner {:deck [(qty "Synthetic Blood" 3)
                                  "Sure Gamble"
-                                 (qty "Gene Conditioning Shoppe" 3)]))
+                                 (qty "Gene Conditioning Shoppe" 3)]}})
       (play-from-hand state :corp "Data Mine" "HQ")
       (play-from-hand state :corp "Data Mine" "HQ")
       (take-credits state :corp)
@@ -2503,12 +2447,23 @@
         (card-subroutine state :corp second-dm 0)
         (is (= 3 (count (:hand (get-runner)))) "1 card drawn when receiving damage (2nd time)")))))
 
+(deftest tech-trader
+  ;; Basic test
+  (do-game
+    (new-game {:runner {:deck ["Tech Trader" "Fall Guy"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tech Trader")
+    (play-from-hand state :runner "Fall Guy")
+    (is (= 4 (:credit (get-runner))))
+    (let [fall (get-resource state 1)]
+      (card-ability state :runner fall 1)
+      (is (= 7 (:credit (get-runner)))))))
+
 (deftest technical-writer
   ;; Technical Writer - Gain 1c per program/hardware install; click/trash to take all credits
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Technical Writer" (qty "Faerie" 2)
-                               "Vigil" "Same Old Thing"]))
+    (new-game {:runner {:deck ["Technical Writer" (qty "Faerie" 2)
+                               "Vigil" "Same Old Thing"]}})
     (take-credits state :corp)
     (core/gain state :runner :click 2)
     (play-from-hand state :runner "Technical Writer")
@@ -2526,11 +2481,89 @@
       (is (zero? (:click (get-runner))) "Spent 1 click")
       (is (= 1 (count (:discard (get-runner)))) "Technical Writer trashed"))))
 
+(deftest temujin-contract
+  ;; Temüjin Contract
+  (testing "Multiple times in one turn. Issue #1952"
+    (do-game
+      (new-game {:runner {:id "Silhouette: Stealth Operative"
+                          :deck ["Temüjin Contract"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Temüjin Contract")
+      (click-prompt state :runner "Archives")
+      (run-empty-server state "Archives")
+      (is (= 5 (:credit (get-runner))) "Gained 4cr")
+      (run-empty-server state "Archives")
+      (is (= 9 (:credit (get-runner))) "Gained 4cr")
+      (is (= 12 (get-counters (get-resource state 0) :credit)) "Temjin has 12 credits remaining"))))
+
+(deftest the-archivist
+  ;; The Archivist
+  (do-game
+    (new-game {:corp {:deck ["Global Food Initiative" "Private Security Force"]}
+               :runner {:deck ["The Archivist"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Archivist")
+    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
+    (take-credits state :runner)
+    (play-and-score state "Global Food Initiative")
+    (click-prompt state :corp "0")
+    (click-prompt state :runner "0")
+    (is (= 1 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")
+    (play-and-score state "Private Security Force")
+    (click-prompt state :corp "0")
+    (click-prompt state :runner "0")
+    (is (= 2 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")))
+
+(deftest the-black-file
+  ;; The Black File - Prevent Corp from winning by agenda points
+  (testing "Basic test"
+    (do-game
+      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Sure Gamble" 3)]}
+                 :runner {:deck ["The Black File"]}})
+      (starting-hand state :corp ["Vanity Project"])
+      (core/gain state :corp :agenda-point 3)
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Black File")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Vanity Project" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 7 (:agenda-point (get-corp))))
+      (is (not (:winner @state)) "No registered Corp win")
+      (take-credits state :corp)
+      (let [bf (get-resource state 0)]
+        (is (= 1 (get-counters (refresh bf) :power)) "1 power counter on The Black File")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 2 (get-counters (refresh bf) :power)) "2 power counters on The Black File")
+        (take-credits state :runner)
+        (take-credits state :corp)
+        (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game")
+        (is (= :corp (:winner @state)) "Corp wins")
+        (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
+  (testing "Corp can still win by flatlining Runner"
+    (do-game
+      (new-game {:corp {:deck [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)]}
+                 :runner {:deck ["The Black File"]}})
+      (starting-hand state :corp ["Vanity Project" "Scorched Earth"])
+      (core/gain state :corp :agenda-point 3)
+      (take-credits state :corp)
+      (play-from-hand state :runner "The Black File")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Vanity Project" "New remote")
+      (score-agenda state :corp (get-content state :remote1 0))
+      (is (= 7 (:agenda-point (get-corp))))
+      (is (not (:winner @state)) "No registered Corp win")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (core/gain state :runner :tag 1)
+      (play-from-hand state :corp "Scorched Earth")
+      (is (= :corp (:winner @state)) "Corp wins")
+      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
+
 (deftest the-helpful-ai
   ;; The Helpful AI - +1 link; trash to give an icebreaker +2 str until end of turn
   (do-game
-    (new-game (default-corp)
-              (default-runner ["The Helpful AI" "Corroder"]))
+    (new-game {:runner {:deck ["The Helpful AI" "Corroder"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "The Helpful AI")
     (is (= 1 (:link (get-runner))) "Gained 1 link")
@@ -2547,8 +2580,8 @@
 (deftest the-source
   ;; The Source - Increase advancement requirement of agendas by 1; 3c additional cost to steal
   (do-game
-    (new-game (default-corp [(qty "Hostile Takeover" 2)])
-              (default-runner [(qty "The Source" 2) (qty "Sure Gamble" 3)]))
+    (new-game {:corp {:deck [(qty "Hostile Takeover" 2)]}
+               :runner {:deck [(qty "The Source" 2) (qty "Sure Gamble" 3)]}})
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (take-credits state :corp)
     (play-from-hand state :runner "Sure Gamble")
@@ -2575,11 +2608,10 @@
   ;; The Supplier
   (testing "Basic test"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["The Supplier"
+      (new-game {:runner {:deck ["The Supplier"
                                  "Plascrete Carapace"
                                  "Utopia Shard"
-                                 "Hedge Fund"]))
+                                 "Hedge Fund"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "The Supplier")
       (let [ts (get-resource state 0)]
@@ -2600,12 +2632,11 @@
         (is (= 1 (count (:hosted (refresh ts)))) "One card still on The Supplier"))))
   (testing "Interaction with Kate discount. Issue #578."
     (do-game
-      (new-game (default-corp)
-                (make-deck "Kate \"Mac\" McCaffrey: Digital Tinker"
-                           ["The Supplier"
-                            "Plascrete Carapace"
-                            "Kati Jones"
-                            "Hedge Fund"]))
+      (new-game {:runner {:id "Kate \"Mac\" McCaffrey: Digital Tinker"
+                          :deck ["The Supplier"
+                                 "Plascrete Carapace"
+                                 "Kati Jones"
+                                 "Hedge Fund"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "The Supplier")
       (let [ts (get-resource state 0)]
@@ -2619,9 +2650,9 @@
         (is (= 1 (count (get-resource state))) "Plascrete installed"))))
   (testing "Brain chip mem is deducted when it is hosted and Supplier is trashed. Issue #2358"
     (do-game
-      (new-game (default-corp [(qty "Hostile Takeover" 2)])
-                (default-runner ["The Supplier"
-                                 "Brain Chip"]))
+      (new-game {:corp {:deck [(qty "Hostile Takeover" 2)]}
+                 :runner {:deck ["The Supplier"
+                                 "Brain Chip"]}})
       (play-from-hand state :corp "Hostile Takeover" "New remote")
       (take-credits state :corp)
       (is (= 4 (core/available-mu state)) "Runner has 4 MU")
@@ -2639,127 +2670,12 @@
         (is (= 2 (count (:discard (get-runner)))))
         (is (= 4 (core/available-mu state)) "Runner has 4 MU")))))
 
-(deftest thunder-art-gallery
-  ;; Thunder Art Gallery
-  (testing "Works when removing/avoiding tags"
-    (do-game
-      (new-game (default-corp)
-                (default-runner ["Thunder Art Gallery" "New Angeles City Hall" "Corroder"]))
-      (take-credits state :corp)
-      (play-from-hand state :runner "Thunder Art Gallery")
-      (core/gain-credits state :runner 1)
-      (core/gain-tags state :corp 1)
-      (core/remove-tag state :runner nil)
-      (click-card state :runner "New Angeles City Hall")
-      (is (= 1 (:credit (get-runner))) "Runner paid one less to install (but 2 to remove tag)")
-      (is (= "New Angeles City Hall" (:title (get-resource state 1))) "NACH is installed")
-      (take-credits state :runner)
-      (is (= 3 (:credit (get-runner))) "Runner is now at 3 credits")
-      (core/gain-tags state :corp 1)
-      (card-ability state :runner (get-resource state 1) 0)
-      (click-prompt state :runner "Done")
-      (click-card state :runner "Corroder")
-      (is (= 0 (:credit (get-runner))) "Runner paid one less to install")
-      (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
-
-(deftest tech-trader
-  ;; Basic test
-  (do-game
-    (new-game (default-corp)
-              (default-runner ["Tech Trader" "Fall Guy"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "Tech Trader")
-    (play-from-hand state :runner "Fall Guy")
-    (is (= 4 (:credit (get-runner))))
-    (let [fall (get-resource state 1)]
-      (card-ability state :runner fall 1)
-      (is (= 7 (:credit (get-runner)))))))
-
-(deftest the-archivist
-  ;; The Archivist
-  (do-game
-    (new-game (default-corp ["Global Food Initiative" "Private Security Force"])
-              (default-runner ["The Archivist"]))
-    (take-credits state :corp)
-    (play-from-hand state :runner "The Archivist")
-    (is (zero? (:bad-publicity (get-corp))) "Corp should start with 0 bad publicity")
-    (take-credits state :runner)
-    (play-and-score state "Global Food Initiative")
-    (click-prompt state :corp "0")
-    (click-prompt state :runner "0")
-    (is (= 1 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")
-    (play-and-score state "Private Security Force")
-    (click-prompt state :corp "0")
-    (click-prompt state :runner "0")
-    (is (= 2 (:bad-publicity (get-corp))) "Corp should get 1 bad publicity from The Archivist")))
-
-(deftest the-black-file
-  ;; The Black File - Prevent Corp from winning by agenda points
-  (testing "Basic test"
-    (do-game
-      (new-game (default-corp [(qty "Vanity Project" 3) (qty "Sure Gamble" 3)])
-                (default-runner ["The Black File"]))
-      (starting-hand state :corp ["Vanity Project"])
-      (core/gain state :corp :agenda-point 3)
-      (take-credits state :corp)
-      (play-from-hand state :runner "The Black File")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Vanity Project" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
-      (is (= 7 (:agenda-point (get-corp))))
-      (is (not (:winner @state)) "No registered Corp win")
-      (take-credits state :corp)
-      (let [bf (get-resource state 0)]
-        (is (= 1 (get-counters (refresh bf) :power)) "1 power counter on The Black File")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 2 (get-counters (refresh bf) :power)) "2 power counters on The Black File")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 1 (count (:rfg (get-runner)))) "The Black File removed from the game")
-        (is (= :corp (:winner @state)) "Corp wins")
-        (is (= "Agenda" (:reason @state)) "Win condition reports agendas"))))
-  (testing "Corp can still win by flatlining Runner"
-    (do-game
-      (new-game (default-corp [(qty "Vanity Project" 3) (qty "Scorched Earth" 3)])
-                (default-runner ["The Black File"]))
-      (starting-hand state :corp ["Vanity Project" "Scorched Earth"])
-      (core/gain state :corp :agenda-point 3)
-      (take-credits state :corp)
-      (play-from-hand state :runner "The Black File")
-      (take-credits state :runner)
-      (play-from-hand state :corp "Vanity Project" "New remote")
-      (score-agenda state :corp (get-content state :remote1 0))
-      (is (= 7 (:agenda-point (get-corp))))
-      (is (not (:winner @state)) "No registered Corp win")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (core/gain-tags state :runner 1)
-      (play-from-hand state :corp "Scorched Earth")
-      (is (= :corp (:winner @state)) "Corp wins")
-      (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
-
-(deftest temujin-contract
-  ;; Temüjin Contract
-  (testing "Multiple times in one turn. Issue #1952"
-    (do-game
-      (new-game (default-corp)
-                (make-deck "Silhouette: Stealth Operative" ["Temüjin Contract"]))
-      (take-credits state :corp)
-      (play-from-hand state :runner "Temüjin Contract")
-      (click-prompt state :runner "Archives")
-      (run-empty-server state "Archives")
-      (is (= 5 (:credit (get-runner))) "Gained 4cr")
-      (run-empty-server state "Archives")
-      (is (= 9 (:credit (get-runner))) "Gained 4cr")
-      (is (= 12 (get-counters (get-resource state 0) :credit)) "Temjin has 12 credits remaining"))))
-
 (deftest the-turning-wheel
   ;; The Turning Wheel
   (testing "Basic test"
     (do-game
-      (new-game (default-corp ["Hostile Takeover" "Ice Wall" "Ice Wall"])
-                (default-runner ["The Turning Wheel"]))
+      (new-game {:corp {:deck ["Hostile Takeover" "Ice Wall" "Ice Wall"]}
+                 :runner {:deck ["The Turning Wheel"]}})
       (core/move state :corp (find-card "Ice Wall" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Hostile Takeover" (:hand (get-corp))) :deck)
       (take-credits state :corp)
@@ -2778,8 +2694,8 @@
         (is (= 1 (-> @state :run :access-bonus)) "Runner should access 1 additional card"))))
   (testing "Access bonus shouldn't carry over to other runs if prematurely ended after spending TTW counters. #3598"
     (do-game
-      (new-game (default-corp ["Nisei MK II"])
-                (default-runner ["The Turning Wheel"]))
+      (new-game {:corp {:deck ["Nisei MK II"]}
+                 :runner {:deck ["The Turning Wheel"]}})
       (play-and-score state "Nisei MK II")
       (is (= 1 (get-counters (get-scored state :corp 0) :agenda)))
       (take-credits state :corp)
@@ -2801,8 +2717,8 @@
         (is (zero? (-> @ state :run :access-bonus)) "Access bonus should be reset on new run"))))
   (testing "Spending counters shouldn't increase accesses when running a non-R&D/HQ server"
     (do-game
-      (new-game (default-corp ["Hostile Takeover" "Ice Wall"])
-                (default-runner ["The Turning Wheel"]))
+      (new-game {:corp {:deck ["Hostile Takeover" "Ice Wall"]}
+                 :runner {:deck ["The Turning Wheel"]}})
       (core/move state :corp (find-card "Ice Wall" (:hand (get-corp))) :deck)
       (trash-from-hand state :corp "Hostile Takeover")
       (take-credits state :corp)
@@ -2825,8 +2741,7 @@
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Theophilius Bagbiter"]))
+    (new-game {:runner {:deck ["Theophilius Bagbiter"]}})
     (take-credits state :corp)
     (is (= 5 (:credit (get-runner))) "Runner starts with 5c")
     (play-from-hand state :runner "Theophilius Bagbiter")
@@ -2842,11 +2757,32 @@
     (is (empty? (get-resource state)) "No resources installed")
     (is (= 5 (core/hand-size state :runner)) "Max hand size is reset to default")))
 
+(deftest thunder-art-gallery
+  ;; Thunder Art Gallery
+  (testing "Works when removing/avoiding tags"
+    (do-game
+      (new-game {:runner {:deck ["Thunder Art Gallery" "New Angeles City Hall" "Corroder"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Thunder Art Gallery")
+      (core/gain-credits state :runner 1)
+      (core/gain-tags state :corp 1)
+      (core/remove-tag state :runner nil)
+      (click-card state :runner "New Angeles City Hall")
+      (is (= 1 (:credit (get-runner))) "Runner paid one less to install (but 2 to remove tag)")
+      (is (= "New Angeles City Hall" (:title (get-resource state 1))) "NACH is installed")
+      (take-credits state :runner)
+      (is (= 3 (:credit (get-runner))) "Runner is now at 3 credits")
+      (core/gain-tags state :corp 1)
+      (card-ability state :runner (get-resource state 1) 0)
+      (click-prompt state :runner "Done")
+      (click-card state :runner "Corroder")
+      (is (= 0 (:credit (get-runner))) "Runner paid one less to install")
+      (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed"))))
+
 (deftest tri-maf-contact
   ;; Tri-maf Contact - Click for 2c once per turn; take 3 meat dmg when trashed
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Tri-maf Contact" (qty "Cache" 3) "Shiv"]))
+    (new-game {:runner {:deck ["Tri-maf Contact" (qty "Cache" 3) "Shiv"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Tri-maf Contact")
     (let [tmc (get-resource state 0)]
@@ -2868,8 +2804,7 @@
   ;; Virus Breeding Ground - Gain counters
   (testing "Basic test"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Virus Breeding Ground"]))
+      (new-game {:runner {:deck ["Virus Breeding Ground"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Virus Breeding Ground")
       (let [vbg (get-resource state 0)]
@@ -2882,8 +2817,7 @@
         (is (= 2 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground gains 1 counter per turn"))))
   (testing "Can move to programs pumped by Hivemind"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Virus Breeding Ground" "Hivemind" "Aumakua"]))
+      (new-game {:runner {:deck ["Virus Breeding Ground" "Hivemind" "Aumakua"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Virus Breeding Ground")
       (take-credits state :runner)
@@ -2900,8 +2834,7 @@
         (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
   (testing "Move counters"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Virus Breeding Ground" "Hivemind"]))
+      (new-game {:runner {:deck ["Virus Breeding Ground" "Hivemind"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Virus Breeding Ground")
       (play-from-hand state :runner "Hivemind")
@@ -2918,8 +2851,7 @@
         (is (zero? (get-counters (refresh vbg) :virus)) "Virus Breeding Ground lost 1 counter"))))
   (testing "Move counters to a non-virus resource"
     (do-game
-      (new-game (default-corp)
-                (default-runner ["Virus Breeding Ground" "Crypt"]))
+      (new-game {:runner {:deck ["Virus Breeding Ground" "Crypt"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Virus Breeding Ground")
       (play-from-hand state :runner "Crypt")
@@ -2947,8 +2879,8 @@
 (deftest wasteland
   ;; Wasteland - Gain 1c the first time you trash an installed card of yours each turn
   (do-game
-    (new-game (default-corp ["PAD Campaign"])
-              (default-runner ["Wasteland" "Faust" (qty "Fall Guy" 4)]))
+    (new-game {:corp {:deck ["PAD Campaign"]}
+               :runner {:deck ["Wasteland" "Faust" (qty "Fall Guy" 4)]}})
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (take-credits state :corp)
     (core/gain state :runner :click 2)
@@ -2982,8 +2914,8 @@
 (deftest xanadu
   ;; Xanadu - Increase all ICE rez cost by 1 credit
   (do-game
-    (new-game (default-corp [(qty "Paper Wall" 2) "Launch Campaign"])
-              (default-runner ["Xanadu"]))
+    (new-game {:corp {:deck [(qty "Paper Wall" 2) "Launch Campaign"]}
+               :runner {:deck ["Xanadu"]}})
     (play-from-hand state :corp "Paper Wall" "HQ")
     (play-from-hand state :corp "Paper Wall" "R&D")
     (play-from-hand state :corp "Launch Campaign" "New remote")
@@ -3002,8 +2934,7 @@
 (deftest zona-sul-shipping
   ;; Zona Sul Shipping - Gain 1c per turn, click to take all credits. Trash when tagged
   (do-game
-    (new-game (default-corp)
-              (default-runner ["Zona Sul Shipping"]))
+    (new-game {:runner {:deck ["Zona Sul Shipping"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Zona Sul Shipping")
     (let [zss (get-resource state 0)]

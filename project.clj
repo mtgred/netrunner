@@ -23,7 +23,7 @@
                  [crypto-password "0.2.0"]
                  [binaryage/devtools "0.9.7"]
                  [digest "1.4.6"]
-                 [http-kit "2.2.0"]
+                 [http-kit "2.3.0"]
                  [org.slf4j/slf4j-nop "1.7.12"]
                  [jwarwick/trello "0.3.3"]
                  [clj-time "0.14.2"]
@@ -31,6 +31,7 @@
                  [throttler "1.0.0"]
                  [clj-http "3.7.0"]
                  [reagent "0.8.1"]
+                 [eftest "0.1.4"]
                  [cljsjs/react "16.4.1-0"]
                  [cljsjs/react-dom "16.4.1-0"]
                  [org.clojars.frozenlock/reagent-modals "0.2.8"]
@@ -40,6 +41,7 @@
             [lein-figwheel "0.5.16"]
             [com.gfredericks/lein-sha-version "0.1.1-p1"]
             [lein-ring "0.9.7"]
+            [lein-eftest "0.5.2"]
             [lein-exec "0.3.7"]]
 
   :profiles {:dev {:dependencies [[figwheel-sidecar "0.5.16"]
@@ -49,6 +51,7 @@
                    :source-paths ["src/clj" "src/cljs" "src/dev" "src/cljc"]}}
 
   :aliases {"fetch" ["run" "-m" "tasks.fetch/fetch"]
+            "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "add-art" ["run" "-m" "tasks.altart/add-art"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "card-coverage" ["run" "-m" "tasks.cards/test-coverage"]}
@@ -67,6 +70,7 @@
 
   ;; Misc
   :test-paths ["test/clj"]
+  :eftest {:report eftest.report.pretty/report}
 
   :ring {:handler web.api/app}
 
@@ -103,6 +107,6 @@
              :css-dirs ["resources/public/css"]}
 
   ;; Set timeout to 2 min to allow for full compilation after a clean.
-  :repl-options {:timeout 120000
+  :repl-options {:timeout 180000
                  :init-ns web.core
                  :init (do (use 'web.lobby) (-main "dev"))})
