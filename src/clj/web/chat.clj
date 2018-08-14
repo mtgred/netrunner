@@ -16,6 +16,11 @@
 (def msg-collection "messages")
 (def log-collection "moderator_actions")
 
+(defn- chat-max-length [] (:max-length chat-config 144))
+
+(defn config-handler [req]
+  (response 200 {:max-length (chat-max-length)}))
+
 (defn messages-handler [{{:keys [channel]} :params}]
   (response 200 (reverse (q/with-collection db msg-collection
                                             (q/find {:channel channel})
@@ -33,7 +38,7 @@
 (defn- insert-msg [{{{:keys [username emailhash]} :user} :ring-req
                     client-id :client-id
                     {:keys [:channel :msg]} :?data :as event}]
-  (let [len-valid (<= (count msg) (:max-length chat-config 144))
+  (let [len-valid (<= (count msg) (chat-max-length))
         rate-valid (within-rate-limit username)]
     (when (and username
                emailhash
