@@ -88,7 +88,7 @@
                             (assoc card :art art)
                             card)))
            (map (fn [c] (if (:art c)
-                          (assoc c :display-name (str (:display-name c) " [" (alt-art-name (:art c)) "]"))
+                          (assoc c :display-name (str (:code c) "[" (alt-art-name (:art c)) "]"))
                           c)))
            (concat acc))
       (conj acc card))))
@@ -312,8 +312,9 @@
       (swap! s update-in [:page] (fnil inc 0)))))
 
 (defn handle-search [e s]
-  (doseq [filter [:set-filter :type-filter :sort-filter :faction-filter]]
+  (doseq [filter [:set-filter :type-filter :faction-filter]]
     (swap! s assoc filter "All"))
+  (swap! s assoc :sort-field "Faction")
   (swap! s assoc :search-query (.. e -target -value)))
 
 (defn card-view [card s]
@@ -335,11 +336,11 @@
 
 (defn card-list-view [s]
   (let [selected (selected-set-name s)
-        cycle-sets (set (for [x selected :when (= (:cycle x) selected)] (:name x)))
+        selected-cycle (-> selected .toLowerCase (.replace " " "-"))
         [alt-filter cards] (cond
                              (= selected "All") [nil @all-cards]
                              (= selected "Alt Art") [nil (filter-alt-art-cards @all-cards)]
-                             (str/ends-with? (:set-filter @s) " Cycle") [nil (filter #(cycle-sets (:setname %)) @all-cards)]
+                             (str/ends-with? (:set-filter @s) " Cycle") [nil (filter #(= (:cycle_code %) selected-cycle) @all-cards)]
                              (not (some #(= selected (:name %)) (:sets @app-state))) [selected (filter-alt-art-set selected @all-cards)]
                              :else
                              [nil (filter #(= (:setname %) selected) @all-cards)])
@@ -361,7 +362,6 @@
 (defn card-browser []
   (let [s (r/atom {:search-query ""
                    :sort-field "Faction"
-                   :sort-filter "All"
                    :set-filter "All"
                    :type-filter "All"
                    :side-filter "All"
@@ -390,11 +390,10 @@
                                                :type "text" :placeholder "Search cards" :value query}]])
                             [:div
                              [:h4 "Sort by"]
-                             [:select {:value (:sort-filter @s)
-                                       :on-change #(swap! s assoc :sort-field (.trim (.. % -target -value)))}
+                             [:select {:value (:sort-field @s)
+                                       :on-change #(swap! s assoc :sort-field (.. % -target -value))}
                               (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
-                                ^{:key field}
-                                [:option {:value field} field])]
+                                [:option {:value field :key field :dangerouslySetInnerHTML #js {:__html field}}])]
                              ]
 
                             (let [format-pack-name (fn [name] (str "&nbsp;&nbsp;&nbsp;&nbsp;" name))
