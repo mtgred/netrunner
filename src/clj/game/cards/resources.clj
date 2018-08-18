@@ -598,12 +598,14 @@
 
    "DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
-         can-host? (fn [runner c] (and (is-type? c "Identity")
-                                       (has-subtype? c "g-mod")
-                                       (not= (-> runner :identity :faction) (:faction c))
-                                       (not (is-draft-id? c))))
+         sorted-id-list (fn [runner] (sort-by :title (filter #(and (is-type? % "Identity")
+                                                                   (has-subtype? % "g-mod")
+                                                                   (not= (-> runner :identity :faction)
+                                                                         (:faction %))
+                                                                   (not (is-draft-id? %)))
+                                                             (vals @all-cards))))
          fenris-effect {:prompt "Choose a g-mod identity to host on DJ Fenris"
-                        :choices (req (cancellable (filter (partial can-host? runner) (vals @all-cards)) :sorted))
+                        :choices (req (sorted-id-list runner))
                         :msg (msg "host " (:title target))
                         :effect (req (let [card (assoc-host-zones card)
                                            ;; Work around for get-card and update!
@@ -613,16 +615,15 @@
                                                       :zone '(:onhost)
                                                       ;; semi hack to get deactivate to work
                                                       :installed true)]
-
                                        ;; Manually host id on card
                                        (update! state side (assoc card :hosted [c]))
                                        (card-init state :runner c)
-
+                                       ;; Clean-up
                                        (clear-wait-prompt state :corp)
                                        (effect-completed state side eid)))}]
      {:async true
-      :effect (req (show-wait-prompt state :corp "Runner to pick identity to host on DJ Fenris")
-                   (continue-ability state side fenris-effect card nil))})
+      :effect (effect (show-wait-prompt :corp "Runner to pick identity to host on DJ Fenris")
+                      (continue-ability fenris-effect card nil))})
 
    "Donut Taganes"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
@@ -1486,12 +1487,12 @@
    {:abilities [{:cost [:click 1]
                  :msg "gain 1 [Credits] and draw 1 card"
                  :effect (effect (gain-credits 1)
-                                 (draw))}]}
+                                 (draw 1))}]}
 
    "Psych Mike"
    {:events {:successful-run-ends
-             {:req (req (and (= [:rd] (:server target))
-                             (first-event? state side :successful-run-ends)))
+             {:req (req (first-event? state side :successful-run-ends #(= :rd (first (:server (first %))))))
+              :msg (msg "gain " (total-cards-accessed target :deck) " [Credits]")
               :effect (effect (gain-credits :runner (total-cards-accessed target :deck)))}}}
 
    "Public Sympathy"

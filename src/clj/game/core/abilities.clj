@@ -135,15 +135,16 @@
              ;; Not a prompt. Trigger the ability.
              (do-ability state side ability card targets))
            (effect-completed state side eid))
-         (complete-ability state side ability card))))))
+         (complete-ability state side ability))))))
 
 ;;; Checking functions for resolve-ability
 (defn- complete-ability
-  [state side {:keys [eid choices optional prompt async psi trace] :as ability} card]
+  [state side {:keys [eid choices optional async psi trace]}]
   ;; If it doesn't have choices and it doesn't have a true async or
   ;; if it does have choices and has false async
-  (when (or (and (not choices) (not optional) (not psi) (not trace) (not async))
-            (and (or optional psi choices trace) (false? async)))
+  (when (or (not (or choices optional psi trace async))
+            (and (or choices optional psi trace)
+                 (false? async)))
     (effect-completed state side eid)))
 
 (defn- check-optional
@@ -212,36 +213,35 @@
 
 (defn- do-ability
   "Perform the ability, checking all costs can be paid etc."
-  [state side {:keys [cost counter-cost advance-counter-cost] :as ability}
-   {:keys [counter advance-counter] :as card} targets]
+  [state side {:keys [cost counter-cost advance-counter-cost] :as ability} {:keys [advance-counter] :as card} targets]
   ;; Ensure counter costs can be paid
-  (when (and (or (not counter-cost)
-                 (<= (or (second counter-cost) 0)
-                     (get-in card [:counter (first counter-cost)] 0)))
-             (or (not advance-counter-cost)
-                 (<= advance-counter-cost (or advance-counter 0))))
-    ;; Ensure that any costs can be paid
-    (wait-for
-      (pay-sync state side card cost {:action (:cid card)})
-      (if-let [cost-str async-result]
-        (let [c (if counter-cost
-                  (update-in card [:counter (first counter-cost)]
-                             #(- (or % 0) (or (second counter-cost) 0)))
-                  card)
-              c (if advance-counter-cost
-                  (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
-                  c)]
-          ;; Remove any counters
-          (when (or counter-cost advance-counter-cost)
-            (update! state side c)
-            (when (is-type? card "Agenda")
-              (trigger-event state side :agenda-counter-spent card)))
-          ;; Print the message
-          (print-msg state side ability card targets cost-str)
-          ;; Trigger the effect
-          (register-end-turn state side ability card targets)
-          (register-once state ability card)
-          (do-effect state side ability c targets))))))
+  (let [[counter-type counter-amount] counter-cost]
+    (when (and (or (not counter-cost)
+                   (<= (or counter-amount 0)
+                       (get-in card [:counter counter-type] 0)))
+               (or (not advance-counter-cost)
+                   (<= advance-counter-cost (or advance-counter 0))))
+      ;; Ensure that any costs can be paid
+      (wait-for
+        (pay-sync state side card cost {:action (:cid card)})
+        (if-let [cost-str async-result]
+          (let [c (if counter-cost
+                    (update-in card [:counter counter-type] #(- (or % 0) (or counter-amount 0)))
+                    card)
+                c (if advance-counter-cost
+                    (update-in c [:advance-counter] #(- (or % 0) (or advance-counter-cost 0)))
+                    c)]
+            ;; Remove any counters
+            (when (or counter-cost advance-counter-cost)
+              (update! state side c)
+              (when (is-type? card "Agenda")
+                (trigger-event state side :agenda-counter-spent card)))
+            ;; Print the message
+            (print-msg state side ability card targets cost-str)
+            ;; Trigger the effect
+            (register-end-turn state side ability card targets)
+            (register-once state ability card)
+            (do-effect state side ability c targets)))))))
 
 (defn- print-msg
   "Prints the ability message"
