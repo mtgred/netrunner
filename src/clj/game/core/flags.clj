@@ -32,13 +32,6 @@
   ([state side flag-key value cards]
    (some #(card-flag-fn? state side % flag-key value) cards)))
 
-(defn is-tagged?
-  "Returns true if the runner is tagged."
-  [state]
-  (or (pos? (get-in state [:runner :tag]))
-      (pos? (get-in state [:runner :tagged]))
-      (pos? (get-in state [:runner :additional-tag]))))
-
 ;;; Generic flag functions
 (defn- register-flag!
   "Register a flag of the specific type."

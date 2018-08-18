@@ -173,6 +173,21 @@
   ([state n]
    (gain state :runner :memory {:used n})))
 
+(defn count-tags
+  "Counts number of tags runner has (real + additional)"
+  [state]
+  (+ (get-in @state [:runner :tag :base] 0)
+     (get-in @state [:runner :tag :additional] 0)))
+
+(defn is-tagged?
+  "Returns truthy if runner is tagged"
+  [state]
+  (or (pos? (get-in @state [:runner :tag :is-tagged] 0))
+      (pos? (count-tags state))))
+
+
+;;; Other helpers
+
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side)"
   [state side scored stolen]

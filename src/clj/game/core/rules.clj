@@ -277,10 +277,12 @@
   [state side n]
   (swap! state update-in [:runner :tag-remove-bonus] (fnil #(+ % n) 0)))
 
-(defn resolve-tag [state side eid n args]
+(defn resolve-tag
+  "Resolve runner gain tags. Always gives `:base` tags."
+  [state side eid n _]
   (trigger-event state side :pre-resolve-tag n)
   (if (pos? n)
-    (do (gain state :runner :tag n)
+    (do (gain state :runner :tag {:base n})
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
         (trigger-event-sync state side eid :runner-gain-tag n))
     (effect-completed state side eid)))
@@ -317,13 +319,14 @@
        (resolve-tag state side eid n args)))))
 
 (defn lose-tags
+  "Always removes `:base` tags"
   ([state side n] (lose-tags state side (make-eid state) n))
   ([state side eid n]
    (if (= n :all)
-     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0 0) (get-in @state [:runner :tag]))
-         (swap! state assoc-in [:runner :tag] 0))
+     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0 0) (get-in @state [:runner :tag :base]))
+         (swap! state assoc-in [:runner :tag :base] 0))
      (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
-         (deduct state :runner [:tag n])))
+         (deduct state :runner [:tag {:base n}])))
    (trigger-event-sync state side eid :runner-lose-tag n side)))
 
 
@@ -349,7 +352,7 @@
     (effect-completed state side eid)))
 
 (defn gain-bad-publicity
-  "Attempts to give the runner n bad publicity, allowing for boosting/prevention effects."
+  "Attempts to give the corp n bad publicity, allowing for boosting/prevention effects."
   ([state side n] (gain-bad-publicity state side (make-eid state) n nil))
   ([state side eid n] (gain-bad-publicity state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
@@ -608,6 +611,11 @@
    (let [milltargets (take n (get-in @state [to-side :deck]))]
      (doseq [card milltargets]
        (trash-no-cost state from-side (make-eid state) card :seen false :unpreventable true)))))
+
+(defn change-hand-size
+  "Changes a side's hand-size modification by specified amount (positive or negative)"
+  [state side n]
+  (gain state side :hand-size {:mod n}))
 
 ;; Exposing
 (defn expose-prevent

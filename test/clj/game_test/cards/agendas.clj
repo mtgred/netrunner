@@ -123,7 +123,7 @@
       (run-successful state)
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (= 1 (count (:discard (get-corp)))) "trashed")
-      (is (zero? (:tag (get-runner))) "Runner took 0 tags")
+      (is (zero? (core/count-tags state)) "Runner took 0 tags")
       (take-credits state :runner)
       (play-and-score state "AR-Enhanced Security")
       (take-credits state :corp))
@@ -132,13 +132,13 @@
       (run-successful state)
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (= 2 (count (:discard (get-corp)))) "trashed")
-      (is (= 1 (:tag (get-runner))) "Runner took 1 tag"))
+      (is (= 1 (core/count-tags state)) "Runner took 1 tag"))
     (testing "don't gain a tag from second trash"
       (run-on state :remote3)
       (run-successful state)
       (click-prompt state :runner "Pay 1 [Credits] to trash")
       (is (= 3 (count (:discard (get-corp)))) "trashed")
-      (is (= 1 (:tag (get-runner))) "Runner took 0 tags"))))
+      (is (= 1 (core/count-tags state)) "Runner took 0 tags"))))
 
 (deftest armed-intimidation
   ;; Armed Intimidation
@@ -147,7 +147,7 @@
               (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 2)]))
     (play-and-score state "Armed Intimidation")
     (click-prompt state :runner "Take 2 tags")
-    (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Armed Intimidation tag choice")
+    (is (= 2 (core/count-tags state)) "Runner took 2 tags from Armed Intimidation tag choice")
     (play-and-score state "Armed Intimidation")
     (is (= 5 (count (:hand (get-runner)))) "Runner has 5 cards before Armed Intimidation meat damage")
     (click-prompt state :runner "Suffer 5 meat damage")
@@ -280,22 +280,22 @@
       (play-and-score state "Better Citizen Program")
       (take-credits state :corp)
       (core/gain state :runner :credit 10)
-      (is (zero? (:tag (get-runner))) "Runner starts with 0 tags")
+      (is (zero? (core/count-tags state)) "Runner starts with 0 tags")
       (play-from-hand state :runner "The Maker's Eye")
       (click-prompt state :corp "Yes")
-      (is (= 1 (:tag (get-runner))) "Runner takes 1 tag for playing a Run event")
+      (is (= 1 (core/count-tags state)) "Runner takes 1 tag for playing a Run event")
       (run-successful state)
       (play-from-hand state :runner "Wyrm")
       (is (empty? (-> (get-corp) :prompt)) "Corp shouldn't get a prompt to use Better Citizen Program")
-      (is (= 1 (:tag (get-runner))) "Runner doesn't gain a tag from installing an icebreaker after playing a Run event")
+      (is (= 1 (core/count-tags state)) "Runner doesn't gain a tag from installing an icebreaker after playing a Run event")
       (take-credits state :runner)
       (take-credits state :corp)
       (play-from-hand state :runner "Wyrm")
       (click-prompt state :corp "Yes")
-      (is (= 2 (:tag (get-runner))) "Runner gains 1 tag for installing an Icebreaker")
+      (is (= 2 (core/count-tags state)) "Runner gains 1 tag for installing an Icebreaker")
       (play-from-hand state :runner "The Maker's Eye")
       (is (empty? (-> (get-corp) :prompt)) "Corp shouldn't get a prompt to use Better Citizen Program")
-      (is (= 2 (:tag (get-runner))) "Runner doesn't gain a tag from playing a Run event after installing an Icebreaker")
+      (is (= 2 (core/count-tags state)) "Runner doesn't gain a tag from playing a Run event after installing an Icebreaker")
       (run-successful state)))
   (testing "Should only trigger on Run events. #3619"
     (do-game
@@ -307,7 +307,7 @@
       (play-from-hand state :runner "Mining Accident")
       (click-prompt state :corp "Pay 5 [Credits]")
       (is (empty? (-> (get-corp) :prompt)) "Corp shouldn't get a prompt to use Better Citizen Program")
-      (is (zero? (:tag (get-runner))) "Runner should not gain a tag from playing a non-Run event"))))
+      (is (zero? (core/count-tags state)) "Runner should not gain a tag from playing a non-Run event"))))
 
 (deftest bifrost-array
   ;; Bifrost Array
@@ -357,9 +357,9 @@
     (new-game (default-corp [(qty "Breaking News" 3)])
               (default-runner))
     (play-and-score state "Breaking News")
-    (is (= 2 (get-in @state [:runner :tag])) "Runner receives 2 tags from Breaking News")
+    (is (= 2 (core/count-tags state)) "Runner receives 2 tags from Breaking News")
     (take-credits state :corp)
-    (is (zero? (get-in @state [:runner :tag]))) "Two tags removed at the end of the turn"))
+    (is (zero? (core/count-tags state))) "Two tags removed at the end of the turn"))
 
 (deftest broad-daylight
   ;; Broad Daylight
@@ -537,7 +537,7 @@
     (take-credits state :runner)
     (is (= 3 (count (:hand (get-runner)))) "No damage done, Runner not tagged")
     (take-credits state :corp)
-    (core/gain state :runner :tag 1)
+    (core/gain-tags state :runner 1)
     (take-credits state :runner)
     (is (= 2 (count (:hand (get-runner)))) "Crisis Management dealt 1 meat damage")))
 
@@ -783,15 +783,15 @@
     (play-and-score state "Escalate Vitriol")
     (let [ev-scored (get-scored state :corp 0)]
       (dotimes [tag 10]
-        (is (zero? (:tag (get-runner))) "Should start with 0 tags")
+        (is (zero? (core/count-tags state)) "Should start with 0 tags")
         (is (zero? (:credit (get-corp))) "Should start with 0 credits")
-        (core/gain state :runner :tag tag)
+        (core/gain-tags state :runner tag)
         (card-ability state :corp ev-scored 0)
         (is (= tag (:credit (get-corp))) (str "Should gain " tag " credits"))
         (take-credits state :corp)
         (take-credits state :runner)
         (core/lose state :corp :credit (:credit (get-corp)))
-        (core/lose state :runner :tag tag)))))
+        (core/lose-tags state :runner tag)))))
 
 (deftest executive-retreat
   ;; Executive Retreat
@@ -897,9 +897,9 @@
   (do-game
     (new-game (default-corp ["Fly on the Wall"])
               (default-runner))
-    (is (zero? (:tag (get-runner))) "Runner starts with no tags")
+    (is (zero? (core/count-tags state)) "Runner starts with no tags")
     (play-and-score state "Fly on the Wall")
-    (is (= 1 (:tag (get-runner))) "Runner is tagged")))
+    (is (= 1 (core/count-tags state)) "Runner is tagged")))
 
 (deftest firmware-updates
   ;; Firmware Updates
@@ -1306,7 +1306,7 @@
       (is (= 1 (-> (get-corp) :prompt first :bonus)) "Should gain 1 bonus trace strength")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= 1 (:tag (get-runner))))
+      (is (= 1 (core/count-tags state)))
       (run-jack-out state)
       (run-on state "HQ")
       (card-subroutine state :corp nh 0)
@@ -1314,7 +1314,7 @@
           "Should gain only 1 bonus trace strength regardless of number of runs in a turn")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= 2 (:tag (get-runner))))
+      (is (= 2 (core/count-tags state)))
       (run-on state "R&D")
       (card-ability state :corp io 1)
       (is (zero? (-> (get-corp) :prompt first :bonus)) "Should gain 0 bonus trace strength, as it's an encounter ability"))))
@@ -1503,7 +1503,7 @@
       (play-and-score state "Market Research")
       (is (= 2 (:agenda-point (get-corp))) "Only 4 advancements: scored for standard 2 points"))
     (testing "Runner is tagged"
-      (core/gain state :runner :tag 1)
+      (core/gain-tags state :runner 1)
       (play-and-score state "Market Research")
       (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points"))))
 
@@ -1563,7 +1563,7 @@
                 (starting-hand state :runner (repeat 7 "Sure Gamble"))
                 (let [credits (:credit (get-corp))
                       grip (count (:hand (get-runner)))]
-                  (core/gain state :runner :tag tags)
+                  (core/gain-tags state :runner tags)
                   (play-and-score state "Meteor Mining")
                   (is (= num-choices (count (:choices (first (get-in @state [:corp :prompt]))))))
                   (click-prompt state :corp pick)
@@ -1844,7 +1844,7 @@
       (click-prompt state :corp "Yes")
       (is (zero? (:agenda-point (get-corp))) "Forfeiting Posted Bounty nullifies agenda points")
       (is (= 1 (:bad-publicity (get-corp))) "Forfeiting takes 1 bad publicity")
-      (is (= 1 (:tag (get-runner))) "Runner receives 1 tag forfeiting Posted Bounty")))
+      (is (= 1 (core/count-tags state)) "Runner receives 1 tag forfeiting Posted Bounty")))
   (testing "Choosing not to forfeit scores normally"
     (do-game
       (new-game (default-corp ["Posted Bounty"])
@@ -1853,7 +1853,7 @@
       (click-prompt state :corp "No")
       (is (= 1 (:agenda-point (get-corp))))
       (is (zero? (:bad-publicity (get-corp))))
-      (is (zero? (:tag (get-runner)))))))
+      (is (zero? (core/count-tags state))))))
 
 (deftest priority-requisition
   ;; Priority Requisition
@@ -1871,7 +1871,7 @@
   (do-game
     (new-game (default-corp [(qty "Private Security Force" 10)])
               (default-runner))
-    (core/gain state :runner :tag 1)
+    (core/gain-tags state :runner 1)
     (play-and-score state "Private Security Force")
     (let [psf-scored (get-scored state :corp 0)]
       (card-ability state :corp psf-scored 0)
@@ -2088,7 +2088,7 @@
       (run-successful state)
       (click-prompt state :runner "Steal")
       (is (= 2 (:agenda-point (get-runner))) "Runner should steal"))
-    (core/gain state :runner :tag 1)
+    (core/gain-tags state :runner 1)
     (testing "Access intalled with tag"
       (run-on state :remote2)
       (run-successful state)
@@ -2242,13 +2242,13 @@
   (do-game
     (new-game (default-corp ["Restructured Datapool"])
               (default-runner))
-    (is (zero? (:tag (get-runner))) "Runner should start with no tags")
+    (is (zero? (core/count-tags state)) "Runner should start with no tags")
     (play-and-score state "Restructured Datapool")
     (let [rd-scored (get-scored state :corp 0)]
       (card-ability state :corp rd-scored 0)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= 1 (:tag (get-runner))) "Runner should gain a tag from Restructured Datapool ability"))))
+      (is (= 1 (core/count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
 
 (deftest self-destruct-chips
   ;; Self-Destruct Chips
@@ -2414,7 +2414,7 @@
       (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
       (click-prompt state :corp "Yes")
       (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
-      (core/gain state :runner :tag 1)
+      (core/gain-tags state :runner 1)
       (play-from-hand state :corp "Exchange of Information")
       (click-card state :corp (find-card "SSL Endorsement" (:scored (get-runner))))
       (click-card state :corp (find-card "Breaking News" (:scored (get-corp))))
@@ -2529,14 +2529,14 @@
       (run-successful state)
       (click-card state :runner tg1)
       ;; Accesses TGTBT but can't steal
-      (is (= 1 (:tag (get-runner))) "Runner took 1 tag from accessing without stealing")
+      (is (= 1 (core/count-tags state)) "Runner took 1 tag from accessing without stealing")
       (click-prompt state :runner "No action")
       (click-card state :runner ohg))
     (click-prompt state :runner "Pay 4 [Credits] to trash") ;; Trashes OHG
     (run-empty-server state "Server 2")
     ;; Accesses TGTBT and can steal
     (click-prompt state :runner "Steal")
-    (is (= 2 (:tag (get-runner))) "Runner took 1 tag from accessing and stealing")))
+    (is (= 2 (core/count-tags state)) "Runner took 1 tag from accessing and stealing")))
 
 (deftest the-cleaners
   ;; The Cleaners
@@ -2545,7 +2545,7 @@
       (new-game (default-corp ["The Cleaners" "Scorched Earth"])
                 (default-runner [(qty "Sure Gamble" 3) (qty "Diesel" 3)]))
       (play-and-score state "The Cleaners")
-      (core/gain state :runner :tag 1)
+      (core/gain-tags state :runner 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (zero? (count (:hand (get-runner)))) "5 damage dealt to Runner")))
   (testing "No bonus damage when runner 'suffers' damage, ie Cybernetics"

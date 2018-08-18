@@ -33,6 +33,19 @@
                                    (swap! state update-in [:runner :prompt] rest)
                                    (handle-end-run state side)))))})))
 
+(defn- trash-when-tagged-contructor
+  "Constructor for a 'trash when tagged' card. Does not overwrite `:effect` key."
+  [name definition]
+  (let [trash-effect {:effect (req (when tagged
+                                     (trash state :runner card {:unpreventable true})
+                                     (system-msg state :runner (str "trashes " name " for being tagged"))))}
+        definition (-> definition
+                       (update :events merge {:runner-gain-tag trash-effect
+                                              :runner-is-tagged trash-effect})
+                       (assoc :reactivate trash-effect))]
+    ;; Add an effect only if there is none in the map
+    (merge trash-effect definition)))
+
 ;;; Card definitions
 (def card-definitions
   {"Aaron Marrón"
@@ -49,7 +62,7 @@
    "Activist Support"
    {:events
     {:corp-turn-begins {:async true
-                        :effect (req (if (zero? (:tag runner))
+                        :effect (req (if (zero? (count-tags state))
                                        (do (gain-tags state :runner eid 1)
                                            (system-msg state :runner (str "uses " (:title card) " to take 1 tag")))
                                        (effect-completed state :runner eid)))}
@@ -374,7 +387,7 @@
                                 (trash state side c {:unpreventable true}))
                               (damage-prevent state side :meat Integer/MAX_VALUE))}]
     :events {:runner-turn-ends
-             {:req (req (pos? (:tag runner)))
+             {:req (req (pos? (count-tags state)))
               :msg "force the Corp to initiate a trace"
               :label "Trace 1 - If unsuccessful, Runner removes 1 tag"
               :trace {:base 1
@@ -442,17 +455,18 @@
                               (register-events state side
                                                {:successful-run
                                                 {:silent (req true)
-                                                 :effect (req (if (>= (:credit runner) (:tag runner))
-                                                                ;; Can pay, do access
-                                                                (do (system-msg state side (str "uses Counter Surveillance to access up to "
-                                                                                                (:tag runner) " cards by paying "
-                                                                                                (:tag runner) " [Credit]"))
-                                                                    (pay state side card :credit (:tag runner))
-                                                                    (access-bonus state side (- (:tag runner) 1)))
-                                                                ;; Can't pay, don't access cards
-                                                                (do (system-msg state side "could not afford to use Counter Surveillance")
-                                                                    ;; Cannot access any cards
-                                                                    (max-access state side 0))))}
+                                                 :effect (req (let [tags (count-tags state)]
+                                                                (if (>= (:credit runner) tags)
+                                                                  ;; Can pay, do access
+                                                                  (do (system-msg state side (str "uses Counter Surveillance to access up to "
+                                                                                                  tags " cards by paying "
+                                                                                                  tags " [Credit]"))
+                                                                      (pay state side card :credit tags)
+                                                                      (access-bonus state side (- tags 1)))
+                                                                  ;; Can't pay, don't access cards
+                                                                  (do (system-msg state side "could not afford to use Counter Surveillance")
+                                                                      ;; Cannot access any cards
+                                                                      (max-access state side 0)))))}
                                                 :run-ends {:effect (effect (unregister-events card))}}
                                                (assoc card :zone '(:discard))))}]
     :events {:successful-run nil :run-ends nil}}
@@ -537,7 +551,9 @@
 
    "Data Leak Reversal"
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-    :abilities [{:req (req tagged) :cost [:click 1] :effect (effect (mill :corp))
+    :abilities [{:req (req tagged)
+                 :cost [:click 1]
+                 :effect (effect (mill :corp))
                  :msg "force the Corp to trash the top card of R&D"}]}
 
    "DDoS"
@@ -804,18 +820,15 @@
               :interactive (req true)
               :msg (msg "access " (quantify (get-in @state [:runner :hq-access]) "card") " from HQ")
               :effect (req (wait-for
-                             ; manually trigger the pre-access event to alert Nerve Agent.
+                             ;; manually trigger the pre-access event to alert Nerve Agent.
                              (trigger-event-sync state side :pre-access :hq)
-                             (let [from-hq (access-count state side :hq-access)]
-                               (continue-ability
-                                 state :runner
-                                 (access-helper-hq
-                                   state from-hq
-                                   ; access-helper-hq uses a set to keep track of which cards have already
-                                   ; been accessed. by adding HQ root's contents to this set, we make the runner
-                                   ; unable to access those cards, as Gang Sign intends.
-                                   (set (get-in @state [:corp :servers :hq :content])))
-                                 card nil))))}}}
+                             (let [from-hq (access-count state side :hq-access)
+                                   ;; access-helper-hq uses a set to keep track of which cards have already
+                                   ;; been accessed. By adding HQ root's contents to this set, we make the runner
+                                   ;; unable to access those cards, as Gang Sign intends.
+                                   accessed-cards (set (get-in @state [:corp :servers :hq :content]))
+                                   ability (access-helper-hq state from-hq accessed-cards)]
+                               (continue-ability state :runner ability card nil))))}}}
 
    "Gbahali"
    {:abilities [{:label "[Trash]: Break the last subroutine on the encountered piece of ice"
@@ -978,7 +991,7 @@
 
    "Jarogniew Mercs"
    {:effect (effect (gain-tags :runner eid 1)
-                    (add-counter card :power (-> @state :runner :tag (+ 3))))
+                    (add-counter card :power (+ 3 (count-tags state))))
     :flags {:untrashable-while-resources true}
     :interactions {:prevent [{:type #{:meat}
                               :req (req true)}]}
@@ -1435,10 +1448,12 @@
       :abilities [ability]})
 
    "Paparazzi"
-   {:effect (req (swap! state update-in [:runner :tagged] inc))
+   {:effect (req (swap! state update-in [:runner :tag :is-tagged] inc)
+                 (trigger-event state :runner :runner-is-tagged true))
     :events {:pre-damage {:req (req (= target :meat)) :msg "prevent all meat damage"
                           :effect (effect (damage-prevent :meat Integer/MAX_VALUE))}}
-    :leave-play (req (swap! state update-in [:runner :tagged] dec))}
+    :leave-play (req (swap! state update-in [:runner :tag :is-tagged] dec)
+                     (trigger-event state :runner :runner-is-tagged (pos? (get-in @state [:runner :tag :is-tagged]))))}
 
    "Personal Workshop"
    (let [remove-counter
@@ -1517,34 +1532,24 @@
    {:in-play [:hand-size 2]}
 
    "Rachel Beckman"
-   {:in-play [:click 1 :click-per-turn 1]
-    :events {:runner-gain-tag {:effect (effect (trash card {:unpreventable true}))
-                               :msg (msg "trashes Rachel Beckman for being tagged")}}
-    :effect (req (when tagged
-                   (trash state :runner card {:unpreventable true})))
-    :reactivate {:effect (req (when tagged
-                                (trash state :runner card {:unpreventable true})))}}
+   (trash-when-tagged-contructor "Rachel Beckman" {:in-play [:click 1 :click-per-turn 1]})
 
    "Raymond Flint"
-   {:effect (req (add-watch state :raymond-flint
-                            (fn [k ref old new]
-                              (when (< (get-in old [:corp :bad-publicity]) (get-in new [:corp :bad-publicity]))
-                                (wait-for
-                                  ; manually trigger the pre-access event to alert Nerve Agent.
-                                  (trigger-event-sync ref side :pre-access :hq)
-                                  (let [from-hq (access-count state side :hq-access)]
-                                    (resolve-ability
-                                      ref side
-                                      (access-helper-hq
-                                        state from-hq
-                                        ; see note in Gang Sign
-                                        (set (get-in @state [:corp :servers :hq :content])))
-                                      card nil)))))))
-    :leave-play (req (remove-watch state :raymond-flint))
+   {:events {:corp-gain-bad-publicity
+             {:effect (req (wait-for
+                             ;; manually trigger the pre-access event to alert Nerve Agent.
+                             (trigger-event-sync state side :pre-access :hq)
+                             (let [from-hq (access-count state side :hq-access)
+                                   ;; see note in Gang Sign
+                                   already-accessed (set (get-in @state [:corp :servers :hq :content]))
+                                   ability (access-helper-hq state from-hq already-accessed)]
+                               (resolve-ability state side ability card nil)))) }}
     :abilities [{:msg "expose 1 card"
+                 :label "Expose 1 installed card"
                  :choices {:req installed?}
                  :async true
-                 :effect (effect (expose eid target) (trash card {:cause :ability-cost}))}]}
+                 :effect (effect (expose eid target)
+                                 (trash card {:cause :ability-cost}))}]}
 
    "Reclaim"
    {:abilities
@@ -1652,7 +1657,7 @@
                                  (trash card {:cause :ability-cost}))}]}
 
    "Safety First"
-   {:in-play [:hand-size {:mod -2}]
+   {:in-play [:hand-size -2]
     :events {:runner-turn-ends
              {:async true
               :effect (req (if (< (count (:hand runner)) (hand-size state :runner))
@@ -2144,18 +2149,12 @@
                             :effect (effect (rez-cost-bonus 1))}}}
 
    "Zona Sul Shipping"
-   {:events {:runner-turn-begins {:effect (effect (add-counter card :credit 1))}}
-    :abilities [{:cost [:click 1]
-                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
-                 :label "Take all credits"
-                 :effect (effect (gain-credits (get-counters card :credit))
-                                 (add-counter card :credit
-                                              (- (get-counters card :credit))))}]
-    :effect (req (add-watch state (keyword (str "zona-sul-shipping" (:cid card)))
-                            (fn [k ref old new]
-                              (when (is-tagged? new)
-                                (remove-watch ref (keyword (str "zona-sul-shipping" (:cid card))))
-                                (trash ref :runner card)
-                                (system-msg ref side "trashes Zona Sul Shipping for being tagged")))))
-    :reactivate {:effect (req (when tagged
-                                (trash state :runner card {:unpreventable true})))}}})
+   (trash-when-tagged-contructor
+     "Zone Sul Shipping"
+     {:events {:runner-turn-begins {:effect (effect (add-counter card :credit 1))}}
+      :abilities [{:cost [:click 1]
+                   :msg (msg "gain " (get-counters card :credit) " [Credits]")
+                   :label "Take all credits"
+                   :effect (effect (gain-credits (get-counters card :credit))
+                             (add-counter card :credit
+                                          (- (get-counters card :credit))))}]})})

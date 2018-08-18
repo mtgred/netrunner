@@ -78,12 +78,14 @@
    "Acme Consulting: The Truth You Need"
    (letfn [(activate [state card active]
              (update! state :corp (assoc-in card [:special :acme-active] active))
-             (swap! state update-in [:runner :additional-tag] (if active inc dec)))
+             (swap! state update-in [:runner :tag :additional] (if active inc dec))
+             (trigger-event state :corp :runner-additional-tag-change (if active 1 -1)))
            (outermost? [run-position run-ices]
              (and run-position
                   (pos? run-position)
                   (= run-position (count run-ices))))]
-     {:implementation "Tag is gained on approach, not on encounter"
+     {:implementation "Additional tag is gained on approach, not on encounter"
+      ;; Should be comprehensive list of all cases when tag should be gained or lost
       :events {:run {:effect (req (when (and (outermost? run-position run-ices)
                                              (rezzed? current-ice))
                                     (activate state card true)))}
@@ -274,7 +276,7 @@
    "Boris \"Syfr\" Kovac: Crafty Veteran"
    {:events {:pre-start-game {:effect draft-points-target}
              :runner-turn-begins {:req (req (and (has-most-faction? state :runner "Criminal")
-                                                 (pos? (:tag runner))))
+                                                 (pos? (get-in runner [:tag :base]))))
                                   :msg "remove 1 tag"
                                   :effect (effect (lose-tags 1))}}}
 
@@ -478,19 +480,22 @@
     :effect (effect (update-all-ice))}
 
    "Harishchandra Ent.: Where Youre the Star"
-   {:effect (req (when tagged
-                   (reveal-hand state :runner))
-                 (add-watch state :harishchandra
-                            (fn [k ref old new]
-                              (when (and (is-tagged? new) (not (is-tagged? old)))
-                                (system-msg ref side (str "uses Harishchandra Ent.: Where You're the Star to"
-                                                          " make the Runner play with their Grip revealed"))
-                                (reveal-hand state :runner))
-                              (when (and (is-tagged? old) (not (is-tagged? new)))
-                                (conceal-hand state :runner)))))
-    :leave-play (req (when tagged
-                       (conceal-hand state :runner))
-                     (remove-watch state :harishchandra))}
+   {:events {:runner-gain-tag {:effect (req (when (is-tagged? state)
+                                              (reveal-hand state :runner)))}
+             :runner-lose-tag {:effect (req (when-not (is-tagged? state)
+                                              (conceal-hand state :runner)))}
+             ;; Triggered when Paparazzi enters / leaves
+             :runner-is-tagged {:effect (req (if (is-tagged? state)
+                                               (reveal-hand state :runner)
+                                               (conceal-hand state :runner)))}
+             ;; Triggered when gaining or losing additional tag
+             :runner-additional-tag-change {:effect (req (if (is-tagged? state)
+                                                           (reveal-hand state :runner)
+                                                           (conceal-hand state :runner)))}}
+    :effect (req (when (is-tagged? state)
+                   (reveal-hand state :runner)))
+    :leave-play (req (when (is-tagged? state)
+                       (conceal-hand state :runner)))}
 
    "Harmony Medtech: Biomedical Pioneer"
    {:effect (effect (lose :agenda-point-req 1) (lose :runner :agenda-point-req 1))

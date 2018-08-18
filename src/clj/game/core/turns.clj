@@ -92,7 +92,8 @@
                 :click 0 :click-per-turn 4
                 :credit 5 :run-credit 0
                 :link 0
-                :tag 0 :tagged 0 :additional-tag 0
+                ;; is-tagged is a number in case there are multiple "runner is tagged" effects
+                :tag {:base 0 :additional 0 :is-tagged 0}
                 :memory {:base 4 :mod 0 :used 0}
                 :hand-size {:base 5 :mod 0}
                 :agenda-point 0 :agenda-point-req 7

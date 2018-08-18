@@ -1122,10 +1122,10 @@
 
    "Hydra"
    (letfn [(otherwise-tag [message ability]
-             {:msg (msg (if (is-tagged? @state) message "give the Runner 1 tag"))
+             {:msg (msg (if tagged message "give the Runner 1 tag"))
               :label (str (capitalize message) " if the Runner is tagged; otherwise, give the Runner 1 tag")
               :async true
-              :effect (req (if (is-tagged? @state)
+              :effect (req (if tagged
                              (ability state :runner eid card nil)
                              (gain-tags state :runner eid 1)))})]
      {:subroutines [(otherwise-tag "do 3 net damage"
@@ -1170,7 +1170,7 @@
    "Information Overload"
    {:implementation "Encounter effect is manual"
     :abilities [{:label "Gain subroutines"
-                 :msg (msg "gain " (:tag runner 0) " subroutines")}
+                 :msg (msg "gain " (count-tags state) " subroutines")}
                 (tag-trace 1)]
     :subroutines [trash-installed]}
 
@@ -1892,15 +1892,13 @@
     :events {:pre-ice-strength nil :run-ends nil}}
 
    "Resistor"
-   {:effect (req (add-watch state (keyword (str "resistor" (:cid card)))
-                            (fn [k ref old new]
-                              (let [tags (get-in new [:runner :tag])]
-                                (when (not= (get-in old [:runner :tag]) tags)
-                                  (update! ref side (assoc (get-card ref card) :strength-bonus tags))
-                                  (update-ice-strength ref side (get-card ref card)))))))
-    :strength-bonus (req (:tag runner))
-    :leave-play (req (remove-watch state (keyword (str "resistor" (:cid card)))))
-    :subroutines [(trace-ability 4 end-the-run)]}
+   (let [resistor-effect {:effect (effect (update! (assoc (get-card state card) :strength-bonus (count-tags state)))
+                                          (update-ice-strength (get-card state card)))}]
+     {:events {:runner-gain-tag resistor-effect
+               :runner-lose-tag resistor-effect
+               :runner-additional-tag-change resistor-effect}
+      :strength-bonus (req (count-tags state))
+      :subroutines [(trace-ability 4 end-the-run)]})
 
    "Rototurret"
    {:subroutines [trash-program end-the-run]}
@@ -2203,12 +2201,12 @@
                                      (gain-tags state :corp eid 1))}]
     :subroutines [(trace-ability 4 {:label "Do 1 net damage for each Runner tag"
                                     :async true
-                                    :msg (msg "do " (:tag runner) " net damage")
-                                    :effect (effect (damage eid :net (:tag runner) {:card card}))})
+                                    :msg (msg "do " (count-tags state) " net damage")
+                                    :effect (effect (damage eid :net (count-tags state) {:card card}))})
                   (trace-ability 4 {:label "Runner loses 1 [Credits] for each tag"
                                     :async true
-                                    :msg (msg "force the Runner to lose " (:tag runner) " [Credits]")
-                                    :effect (effect (lose-credits :runner (:tag runner)))})]}
+                                    :msg (msg "force the Runner to lose " (count-tags state) " [Credits]")
+                                    :effect (effect (lose-credits :runner (count-tags state)))})]}
 
    "Thimblerig"
    {:flags {:corp-phase-12 (req (>= (count (filter ice? (all-installed state :corp))) 2))}

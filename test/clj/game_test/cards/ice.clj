@@ -101,14 +101,14 @@
       (run-on state "Archives")
       (core/rez state :corp bw)
       (card-subroutine state :corp bw 0)
-      (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
+      (is (= 1 (core/count-tags state)) "Runner took 1 tag")
       (run-successful state)
-      (is (zero? (:tag (get-runner))) "Run successful; Runner lost 1 tag")
+      (is (zero? (core/count-tags state)) "Run successful; Runner lost 1 tag")
       (run-on state "Archives")
       (card-subroutine state :corp bw 0)
-      (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
+      (is (= 1 (core/count-tags state)) "Runner took 1 tag")
       (run-jack-out state)
-      (is (= 1 (:tag (get-runner))) "Run unsuccessful; Runner kept 1 tag"))))
+      (is (= 1 (core/count-tags state)) "Run unsuccessful; Runner kept 1 tag"))))
 
 (deftest blockchain
   (do-game
@@ -311,7 +311,7 @@
       (card-subroutine state :corp drac 0)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= 1 (:tag (get-runner))) "Runner took 1 tag")
+      (is (= 1 (core/count-tags state)) "Runner took 1 tag")
       (is (nil? (get-in @state [:run])) "Run was ended"))))
 
 (deftest enigma
@@ -603,18 +603,18 @@
           corp-creds (:credit (get-corp))]
       (core/rez state :corp hydra)
       (is (= (- corp-creds 10) (:credit (get-corp))) "Cost 10 credits to rez Hydra")
-      (is (not (core/is-tagged? @state)) "Runner is not tagged approaching Hydra")
+      (is (not (core/is-tagged? state)) "Runner is not tagged approaching Hydra")
 
       (testing "Hydra subroutines give tags if Runner is not tagged"
         (doseq [n (range 3)]
           (card-subroutine state :corp hydra n)
-          (is (= 1 (:tag (get-runner))) (str "Hydra sub " (inc n) " gave Runner 1 tag"))
-          (core/lose state :runner :tag 1)))
+          (is (= 1 (core/count-tags state)) (str "Hydra sub " (inc n) " gave Runner 1 tag"))
+          (core/lose-tags state :runner 1)))
 
       (testing "Hydra subroutines do their effect if the Runner is tagged"
         ;; Gain 1 tag to turn on main effect of subroutines
-        (core/gain state :runner :tag 1)
-        (is (core/is-tagged? @state) "Runner is tagged")
+        (core/gain-tags state :runner 1)
+        (is (core/is-tagged? state) "Runner is tagged")
 
         (is (= 3 (count (:hand (get-runner)))) "3 cards in Runner grip before Hydra damage")
         (card-subroutine state :corp hydra 0)
@@ -971,13 +971,13 @@
       (run-on state :hq)
       (is (= 3 (:credit (get-corp))) "corp starts encounter with 3 crs")
       (is (zero? (count (:discard (get-runner)))) "runner starts encounter with no cards in heap")
-      (is (zero? (:tag (get-runner))) "runner starts encounter with 0 tags")
+      (is (zero? (core/count-tags state)) "runner starts encounter with 0 tags")
       (card-subroutine state :corp mau 0)
       (card-subroutine state :corp mau 1)
       (card-subroutine state :corp mau 2)
       (is (= 4 (:credit (get-corp))) "corp gains 1 cr from mausolus")
       (is (= 1 (count (:discard (get-runner)))) "corp does 1 net damage")
-      (is (= 1 (:tag (get-runner))) "corp gives 1 tag")
+      (is (= 1 (core/count-tags state)) "corp gives 1 tag")
       (run-jack-out state)
       (take-credits state :runner)
       (core/advance state :corp {:card (refresh mau)})
@@ -986,13 +986,13 @@
       (run-on state :hq)
       (is (= 1 (:credit (get-corp))) "corp starts encounter with 1 crs")
       (is (= 1 (count (:discard (get-runner)))) "runner starts encounter with 1 card in heap")
-      (is (= 1 (:tag (get-runner))) "runner starts encounter with 1 tags")
+      (is (= 1 (core/count-tags state)) "runner starts encounter with 1 tags")
       (card-subroutine state :corp mau 0)
       (card-subroutine state :corp mau 1)
       (card-subroutine state :corp mau 2)
       (is (= 4 (:credit (get-corp))) "corp gains 3 cr")
       (is (= 4 (count (:discard (get-runner)))) "corp does 3 net damage")
-      (is (= 2 (:tag (get-runner))) "corp gives 1 tag")
+      (is (= 2 (core/count-tags state)) "corp gives 1 tag")
       (is (not (:run @state)) "Run is ended")
       (is (get-in @state [:runner :register :unsuccessful-run]) "Run was unsuccessful"))))
 
@@ -1348,7 +1348,7 @@
       (card-side-ability state :runner tom 1)
       (card-side-ability state :runner tom 1)
       (card-side-ability state :runner tom 1)
-      (is (= 4 (:tag (get-runner))) "Tag ability sucessful")
+      (is (= 4 (core/count-tags state)) "Tag ability sucessful")
       (card-side-ability state :runner tom 0)
       (is (not (:run @state)) "Run ended"))))
 
@@ -1362,7 +1362,7 @@
       (core/rez state :corp resistor)
       (is (zero? (:current-strength (refresh resistor))) "No Runner tags; 0 strength")
       (core/gain-tags state :runner 2)
-      (is (= 2 (:tag (get-runner))))
+      (is (= 2 (core/count-tags state)))
       (is (= 2 (:current-strength (refresh resistor))) "2 Runner tags; 2 strength")
       (take-credits state :corp)
       (core/remove-tag state :runner 1)
@@ -1456,12 +1456,12 @@
       (card-subroutine state :corp (refresh searchlight) 0)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (zero? (:tag (get-runner))) "Trace failed with 0 advancements")
+      (is (zero? (core/count-tags state)) "Trace failed with 0 advancements")
       (advance state searchlight 1)
       (card-subroutine state :corp (refresh searchlight) 0)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= 1 (:tag (get-runner))) "Trace succeeds with 1 advancement"))))
+      (is (= 1 (core/count-tags state)) "Trace succeeds with 1 advancement"))))
 
 (deftest seidr-adaptive-barrier
   ;; Seidr Adaptive Barrier - +1 strength for every ice protecting its server
@@ -1675,12 +1675,12 @@
       (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
       (click-prompt state :corp "0")
       (click-prompt state :runner "5")
-      (is (= 2 (:tag (get-runner))) "Runner took 2 tags from Surveyor Trace 6 with boost 5")
+      (is (= 2 (core/count-tags state)) "Runner took 2 tags from Surveyor Trace 6 with boost 5")
       (card-subroutine state :corp surv 0)
       (is (= 6 (-> (get-corp) :prompt first :base)) "Trace should be base 6")
       (click-prompt state :corp "0")
       (click-prompt state :runner "6")
-      (is (= 2 (:tag (get-runner))) "Runner did not take tags from Surveyor Trace 6 with boost 6")
+      (is (= 2 (core/count-tags state)) "Runner did not take tags from Surveyor Trace 6 with boost 6")
       (core/move-card state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (:current-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ICE"))))
 

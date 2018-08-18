@@ -18,6 +18,10 @@
     (#{:hand-size :memory} attr)
     (deduct state side [attr {:mod value}])
 
+    ;; default case for `:tag` is `:base`
+    (#{:tag} attr)
+    (deduct state side [attr {:base value}])
+
     :else
     (do (swap! state update-in [side attr] (if (= attr :agenda-point)
                                              ;; Agenda points may be negative
@@ -50,7 +54,7 @@
       (not (or (#{:memory :net-damage} cost-type)
                (and (= cost-type :forfeit) (>= (- (count (get-in @state [side :scored])) amount) 0))
                (and (= cost-type :mill) (>= (- (count (get-in @state [side :deck])) amount) 0))
-               (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag]) amount) 0))
+               (and (= cost-type :tag) (>= (- (get-in @state [:runner :tag :base]) amount) 0))
                (and (= cost-type :ice) (>= (- (count (filter (every-pred rezzed? ice?) (all-installed state :corp))) amount) 0))
                (and (= cost-type :hardware) (>= (- (count (get-in @state [:runner :rig :hardware])) amount) 0))
                (and (= cost-type :program) (>= (- (count (get-in @state [:runner :rig :program])) amount) 0))
@@ -233,6 +237,10 @@
       ;; Default cases for the types that expect a map
       (#{:hand-size :memory} type)
       (gain state side type {:mod amount})
+
+      ;; Default case for tag is `:base`
+      (#{:tag} type)
+      (gain state side type {:base amount})
 
       ;; Else assume amount is a number and try to increment type by it.
       :else
