@@ -119,22 +119,32 @@
                (same-side? s (:side card))
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
-      (case server
-        ("Heap" "Archives")
-        (let [action-str (if (= (first (:zone c)) :hand) "discards " "trashes ")]
-          (trash state s c {:unpreventable true})
-          (system-msg state side (str action-str label from-str)))
-        ("Grip" "HQ")
-        (do (move state s (dissoc c :seen :rezzed) :hand {:force true})
-            (system-msg state side (str "moves " label from-str " to " server)))
-        ("Stack" "R&D")
-        (do (move state s (dissoc c :seen :rezzed) :deck {:front true :force true})
-            (system-msg state side (str "moves " label from-str " to the top of " server)))
-        nil))))
+      (let [move-card-to (partial move state s (dissoc c :seen :rezzed))
+            log-move (fn [verb & text] (system-msg state side (str verb " " label from-str
+                                                                   (when (seq text) (apply str " " text)))))]
+        (case server
+          ("Heap" "Archives")
+          (if (= :hand (first (:zone c)))
+            ;; Discard from hand, do not trigger trash
+            (do (move-card-to :discard {:force true})
+                (log-move "discards"))
+            (do (trash state s c {:unpreventable true})
+                (log-move "trashes")))
+          ("Grip" "HQ")
+          (do (move-card-to :hand {:force true})
+              (log-move "moves" "to " server))
+          ("Stack" "R&D")
+          (do (move-card-to :deck {:front true :force true})
+              (log-move "moves" "to the top of " server))
+          ;; default
+          nil)))))
 
-(defn concede [state side args]
-  (system-msg state side "concedes")
-  (win state (if (= side :corp) :runner :corp) "Concede"))
+(defn concede
+  "Trigger game concede by specified side. Takes a third argument for use with user commands."
+  ([state side _] (concede state side))
+  ([state side]
+   (system-msg state side "concedes")
+   (win state (if (= side :corp) :runner :corp) "Concede")))
 
 (defn- finish-prompt [state side prompt card]
   (when-let [end-effect (:end-effect prompt)]

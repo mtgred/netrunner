@@ -153,7 +153,7 @@
   "Concedes victory from the given player."
   [state side]
   (when (and state side)
-    (core/concede state side nil)))
+    (core/concede state side)))
 
 (defn handle-say
   "Adds a message from a user to the chat log."

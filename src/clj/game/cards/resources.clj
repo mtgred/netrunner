@@ -577,24 +577,30 @@
     :abilities [{:msg "avoid 1 tag" :effect (effect (tag-prevent :runner 1) (trash card {:cause :ability-cost}))}]}
 
    "District 99"
-   {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
-    :abilities [{:label "Add a card from your heap to your grip"
-                 :req (req (seq (filter #(= (:faction (:identity runner)) (:faction %)) (:discard runner))))
-                 :counter-cost [:power 3] :cost [:click 1]
-                 :prompt (msg "Which card to add to grip?")
-                 :choices (req (filter #(= (:faction (:identity runner)) (:faction %)) (:discard runner)))
-                 :effect (effect (move target :hand))
-                 :msg (msg "Add " (:title target) " to grip")}
-                {:label "Add a power counter manually"
-                 :once :per-turn
-                 :effect (effect (add-counter card :power 1))
-                 :msg (msg "manually add a power counter.")}]
-    :events (let [prog-or-hw (fn [t] (or (program? (first t)) (hardware? (first t))))
-                  trash-event (fn [side-trash] {:once :per-turn
-                                                :req (req (first-event? state side side-trash prog-or-hw))
-                                                :effect (effect (add-counter card :power 1))})]
-              {:corp-trash (trash-event :corp-trash)
-               :runner-trash (trash-event :runner-trash)})}
+   (letfn [(eligible-cards [runner] (filter #(same-card? :faction (:identity runner) %)
+                                            (:discard runner)))]
+     {:implementation "Adding power counters must be done manually for programs/hardware trashed manually (e.g. by being over MU)"
+      :abilities [{:label "Add a card from your heap to your grip"
+                   :req (req (seq (eligible-cards runner)))
+                   :counter-cost [:power 3]
+                   :cost [:click 1]
+                   :prompt "Select a card to add to grip?"
+                   :choices (req (eligible-cards runner))
+                   :effect (effect (move target :hand))
+                   :msg (msg "add " (:title target) " to grip")}
+                  {:label "Add a power counter manually"
+                   :once :per-turn
+                   :effect (effect (add-counter card :power 1))
+                   :msg "manually add a power counter"}]
+      :events (let [prog-or-hw #(or (program? (first %))
+                                    (hardware? (first %)))
+                    trash-event (fn [side-trash] {:once :per-turn
+                                                  :req (req (first-event? state side side-trash prog-or-hw))
+                                                  :effect (effect (system-msg :runner "adds 1 power counter on District 99")
+                                                                  (add-counter card :power 1))})]
+                {:corp-trash (trash-event :corp-trash)
+                 :runner-trash (trash-event :runner-trash)})})
+
 
    "DJ Fenris"
    (let [is-draft-id? #(.startsWith (:code %) "00")
@@ -622,8 +628,20 @@
                                        (clear-wait-prompt state :corp)
                                        (effect-completed state side eid)))}]
      {:async true
-      :effect (effect (show-wait-prompt :corp "Runner to pick identity to host on DJ Fenris")
-                      (continue-ability fenris-effect card nil))})
+      :effect (req (show-wait-prompt state :corp "Runner to pick identity to host on DJ Fenris")
+                   (continue-ability state side fenris-effect card nil))
+      ;; Handle Dr. Lovegood / Malia
+      :disable {:effect (req (doseq [hosted (:hosted card)]
+                               (disable-card state side hosted)))}
+      :reactivate {:effect (req (doseq [hosted (:hosted card)
+                                        :let [c (dissoc hosted :disabled)
+                                              {:keys [effect events]} (card-def c)]]
+                                  ;; Manually enable card to trigger `:effect`, similar to `enable-identity`
+                                  (update! state side c)
+                                  (when effect
+                                    (effect state side (make-eid state) c nil))
+                                  (when events
+                                    (register-events state side events c))))}})
 
    "Donut Taganes"
    {:msg "increase the play cost of operations and events by 1 [Credits]"
@@ -2072,7 +2090,7 @@
                  :effect (req (resolve-ability
                                 state side
                                 {:msg (msg "move 1 virus counter to " (:title target))
-                                 :choices {:req #(pos? (get-virus-counters state side %))}
+                                 :choices {:req #(pos? (get-virus-counters state %))}
                                  :effect (req (add-counter state side card :virus -1)
                                               (add-counter state side target :virus 1))}
                                 card nil))}]}

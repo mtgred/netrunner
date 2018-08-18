@@ -534,7 +534,7 @@
       ;; runner's turn
       ;; install cache and medium
       (play-from-hand state :runner "Cache")
-      (let [virus-counters (fn [card] (core/get-virus-counters state :runner (refresh card)))
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
             cache (find-card "Cache" (get-program state))
             cvs (get-content state :hq 0)]
         (is (= 3 (virus-counters cache)))
@@ -558,7 +558,7 @@
       ;; runner's turn
       ;; install cache and medium
       (play-from-hand state :runner "Cache")
-      (let [virus-counters (fn [card] (core/get-virus-counters state :runner (refresh card)))
+      (let [virus-counters (fn [card] (core/get-virus-counters state (refresh card)))
             cache (find-card "Cache" (get-program state))
             cvs (get-content state :remote1 0)]
         (is (= 3 (virus-counters cache)))

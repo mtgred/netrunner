@@ -60,6 +60,8 @@
                                               (system-msg "places 1 [Credit] on Bankroll"))}}
     :abilities [{:label "[Trash]: Take all credits from Bankroll"
                  :async true
+                 ;; Cannot trash unless there are counters (so game state changes)
+                 :req (req (pos? (get-counters card :credit)))
                  :effect (req (let [credits-on-bankroll (get-counters card :credit)]
                                 (wait-for (trash state :runner card {:cause :ability-cost})
                                           (take-credits state :runner credits-on-bankroll)
@@ -114,7 +116,7 @@
     :events {:successful-run {:silent (req true)
                               :req (req (= target :rd))
                               :effect (effect (add-counter card :virus 1))}
-             :pre-advancement-cost {:req (req (>= (get-virus-counters state side card) 3))
+             :pre-advancement-cost {:req (req (>= (get-virus-counters state card) 3))
                                     :effect (effect (advancement-cost-bonus 1))}
              :counter-added
              {:req (req (or (= (:title target) "Hivemind") (= (:cid target) (:cid card))))
@@ -207,16 +209,16 @@
                                                ab (if (get-in card [:special :auto-accept]) auto-ab ab)]
                                            (continue-ability state side ab card targets)))}}
     :effect (effect (toast "Tip: You can toggle automatically adding virus counters by clicking Consume."))
-    :abilities [{:req (req (pos? (get-virus-counters state side card)))
+    :abilities [{:req (req (pos? (get-virus-counters state card)))
                  :cost [:click 1]
                  :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters."
-                 :effect (req (gain-credits state side (* 2 (get-virus-counters state side card)))
+                 :effect (req (gain-credits state side (* 2 (get-virus-counters state card)))
                               (update! state side (assoc-in card [:counter :virus] 0))
                               (when-let [hiveminds (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
                                         (doseq [h hiveminds]
                                                (update! state side (assoc-in h [:counter :virus] 0)))))
                  :msg (msg (let [local-virus (get-counters card :virus)
-                                 global-virus (get-virus-counters state side card)
+                                 global-virus (get-virus-counters state card)
                                  hivemind-virus (- global-virus local-virus)]
                              (str "gain " (* 2 global-virus) " [Credits], removing " (quantify local-virus "virus counter") " from Consume"
                              (when (pos? hivemind-virus)
@@ -270,7 +272,7 @@
                               :effect (effect (add-counter card :virus 1))
                               :req (req (= target :rd))}
              :runner-turn-begins
-                             {:req (req (>= (get-virus-counters state side card) 3)) :msg "look at the top card of R&D"
+                             {:req (req (>= (get-virus-counters state card) 3)) :msg "look at the top card of R&D"
                               :effect (effect (prompt! card (str "The top card of R&D is "
                                                                  (:title (first (:deck corp)))) ["OK"] {}))}}}
 
@@ -454,9 +456,9 @@
                                  card nil)))}]}
 
    "Gorman Drip v1"
-   {:abilities [{:cost [:click 1] :effect (effect (gain-credits (get-virus-counters state side card))
+   {:abilities [{:cost [:click 1] :effect (effect (gain-credits (get-virus-counters state card))
                                                   (trash card {:cause :ability-cost}))
-                 :msg (msg "gain " (get-virus-counters state side card) " [Credits]")}]
+                 :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]
     :events {:corp-click-credit {:effect (effect (add-counter :runner card :virus 1))}
              :corp-click-draw {:effect (effect (add-counter :runner card :virus 1))}}}
 
@@ -651,10 +653,10 @@
      :pre-access {:async true
                   :req (req (= target :rd))
                   :effect (effect (continue-ability
-                                    {:req (req (< 1 (get-virus-counters state side card)))
+                                    {:req (req (< 1 (get-virus-counters state card)))
                                      :prompt "Choose how many additional R&D accesses to make with Medium"
-                                     :choices {:number (req (dec (get-virus-counters state side card)))
-                                               :default (req (dec (get-virus-counters state side card)))}
+                                     :choices {:number (req (dec (get-virus-counters state card)))
+                                               :default (req (dec (get-virus-counters state card)))}
                                      :msg (msg "access " target " additional cards from R&D")
                                      :effect (effect (access-bonus (max 0 target)))}
                                     card nil))}}}
@@ -676,10 +678,10 @@
      :pre-access {:async true
                   :req (req (= target :hq))
                   :effect (effect (continue-ability
-                                    {:req (req (< 1 (get-virus-counters state side card)))
+                                    {:req (req (< 1 (get-virus-counters state card)))
                                      :prompt "Choose how many additional HQ accesses to make with Nerve Agent"
-                                     :choices {:number (req (dec (get-virus-counters state side card)))
-                                               :default (req (dec (get-virus-counters state side card)))}
+                                     :choices {:number (req (dec (get-virus-counters state card)))
+                                               :default (req (dec (get-virus-counters state card)))}
                                      :msg (msg "access " target " additional cards from HQ")
                                      :effect (effect (access-bonus (max 0 target)))}
                                     card nil))}}}
@@ -752,7 +754,7 @@
               :effect (effect (update-ice-strength (:host card)))}
              :pre-ice-strength
              {:req (req (= (:cid target) (:cid (:host card))))
-              :effect (effect (ice-strength-bonus (- (get-virus-counters state side card)) target))}
+              :effect (effect (ice-strength-bonus (- (get-virus-counters state card)) target))}
              :ice-strength-changed
              {:req (req (and (= (:cid target) (:cid (:host card)))
                              (not (card-flag? (:host card) :untrashable-while-rezzed true))
@@ -1080,7 +1082,7 @@
 
    "Trypano"
    (let [trash-if-5 (req (when-let [h (get-card state (:host card))]
-                           (if (and (>= (get-virus-counters state side card) 5)
+                           (if (and (>= (get-virus-counters state card) 5)
                                       (not (and (card-flag? h :untrashable-while-rezzed true)
                                                 (rezzed? h))))
                              (do (system-msg state :runner (str "uses Trypano to trash " (card-str state h)))

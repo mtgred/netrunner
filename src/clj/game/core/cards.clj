@@ -54,15 +54,19 @@
 (defn update!
   "Updates the state so that its copy of the given card matches the argument given."
   [state side {:keys [type zone cid host] :as card}]
-  (if (= type "Identity")
+  (cond
+    (= type "Identity")
     (when (= side (to-keyword (:side card)))
       (swap! state assoc-in [side :identity] card))
-    (if host
-      (update-hosted! state side card)
-      (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
-            [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
-        (when (not-empty tail)
-          (swap! state assoc-in z (vec (concat head [card] (rest tail)))))))))
+
+    host
+    (update-hosted! state side card)
+
+    :else
+    (let [z (cons (to-keyword (or (get-scoring-owner state card) (:side card))) zone)
+              [head tail] (split-with #(not= (:cid %) cid) (get-in @state z))]
+          (when (not-empty tail)
+            (swap! state assoc-in z (vec (concat head [card] (rest tail))))))))
 
 ;; Helpers for move
 (defn- remove-old-card
@@ -255,7 +259,7 @@
 
 (defn get-virus-counters
   "Calculate the number of virus counters on the given card, taking Hivemind into account."
-  [state side card]
+  [state card]
   (let [hiveminds (when (is-virus-program? card)
                     (filter #(= (:title %) "Hivemind") (all-active-installed state :runner)))]
     (reduce + (map #(get-counters % :virus) (cons card hiveminds)))))
@@ -274,7 +278,7 @@
 (defn disable-identity
   "Disables the side's identity"
   [state side]
-  (let [id (assoc (:identity (side @state)) :disabled true)]
+  (let [id (assoc (get-in @state [side :identity]) :disabled true)]
     (update! state side id)
     (unregister-events state side id)
     (when-let [leave-play (:leave-play (card-def id))]
@@ -283,19 +287,20 @@
 (defn disable-card
   "Disables a card"
   [state side card]
+  (deactivate state side card)
   (let [c (assoc card :disabled true)]
-    (deactivate state side card)
-    (update! state side c)))
+    (update! state side c))
+  (when-let [disable-effect (:disable (card-def card))]
+    (resolve-ability state side disable-effect (get-card state card) nil)))
 
 (defn enable-identity
   "Enables the side's identity"
   [state side]
-  (let [id (assoc (:identity (side @state)) :disabled false)
-        cdef (card-def id)
-        events (:events cdef)]
+  (let [id (assoc (get-in @state [side :identity]) :disabled false)
+        {:keys [events effect]} (card-def id)]
     (update! state side id)
-    (when-let [eff (:effect cdef)]
-      (eff state side (make-eid state) id nil))
+    (when effect
+      (effect state side (make-eid state) id nil))
     (when events
       (register-events state side events id))))
 
