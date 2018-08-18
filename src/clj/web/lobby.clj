@@ -199,8 +199,8 @@
   [{:keys [players] :as game}]
   (mapcat #(get-in % [:user :options :blocked-users]) players))
 
-(defn allowed-in-game [{:keys [username]} game]
-  (not (some #(= username (:username %)) (blocked-users game))))
+(defn allowed-in-game [game {:keys [username]}]
+  (not (some #(= username %) (blocked-users game))))
 
 (defn handle-ws-connect [{:keys [client-id] :as msg}]
   (ws/send! client-id [:games/list (mapv game-public-view (vals @all-games))]))
