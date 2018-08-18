@@ -355,7 +355,7 @@
 
 (defn game-list [user {:keys [current-room games gameid password-game editing]}]
    (let [roomgames (r/track (fn [] (filter #(= (:room %) current-room) @games)))
-         filtered-games (r/track #(filter-blocked-games user @roomgames))]
+         filtered-games (r/track #(filter-blocked-games @user @roomgames))]
         [:div.game-list
          (if (empty? @filtered-games)
            [:h4 "No games"]
