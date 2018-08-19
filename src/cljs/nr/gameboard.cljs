@@ -1519,7 +1519,7 @@
                [cond-button "Remove Tag"
                 (and (pos? (:click @me))
                      (>= (:credit @me) (- 2 (or (:tag-remove-bonus @me) 0)))
-                     (pos? (:tag @me)))
+                     (pos? (get-in @me [:tag :base])))
                 #(send-command "remove-tag")]
                [:div.run-button
                 [cond-button "Run" (and (pos? (:click @me))
@@ -1537,8 +1537,7 @@
             (when (= side :corp)
               [cond-button "Trash Resource" (and (pos? (:click @me))
                                                  (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
-                                                 (or (pos? (:tagged @opponent))
-                                                     (pos? (:tag @opponent))))
+                                                 (pos? (get-in @opponent [:tag :base])))
                #(send-command "trash-resource")])
             [cond-button "Draw" (and (pos? (:click @me)) (not-empty (:deck @me))) #(send-command "draw")]
             [cond-button "Gain Credit" (pos? (:click @me)) #(send-command "credit")]]))])})))
