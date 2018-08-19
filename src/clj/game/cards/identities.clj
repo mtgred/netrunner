@@ -89,15 +89,16 @@
       :events {:run {:effect (req (when (and (outermost? run-position run-ices)
                                              (rezzed? current-ice))
                                     (activate state card true)))}
-               :rez {:effect (req (when (outermost? run-position run-ices)
-                                    (activate state card true)))}
+               :rez {:effect (req (when (and (outermost? run-position run-ices)
+                                               (= (:cid current-ice) (:cid target)))
+                                      (activate state card true)))}
                :derez {:effect (req (when (outermost? run-position run-ices)
                                       (activate state card false)))}
                :pass-ice {:effect (req (when (and (outermost? run-position run-ices)
                                                   (get-in card [:special :acme-active]))
                                          (activate state card false)))}
-               :end-run {:effect (req (when (get-in card [:special :acme-active])
-                                        (activate state card false)))}}})
+               :run-ends {:effect (req (when (get-in card [:special :acme-active])
+                                         (activate state card false)))}}})
 
    "Adam: Compulsive Hacker"
    {:events {:pre-start-game
