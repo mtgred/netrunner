@@ -4,6 +4,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
+            [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "programs"))
@@ -271,7 +272,7 @@
     (is (= 1 (-> (get-runner) :discard count)) "Disrupter should be in Heap")
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
-    (is (zero? (core/count-tags state)) "Runner should gain no tag from beating trace")
+    (is (zero? (count-tags state)) "Runner should gain no tag from beating trace")
     (play-from-hand state :corp "SEA Source")
     (is (= 3 (-> (get-corp) :prompt first :base)) "Base trace should be reset to 3")))
 
@@ -495,7 +496,7 @@
       (play-from-hand state :corp "Prisec" "New remote")
       (take-credits state :corp)
       (let [credits (:credit (get-corp))
-            tags (core/count-tags state)
+            tags (count-tags state)
             grip (count (:hand (get-runner)))
             archives (count (:discard (get-corp)))]
         (play-from-hand state :runner "Imp")
@@ -503,7 +504,7 @@
         (click-prompt state :corp "Yes")
         (click-prompt state :runner "[Imp]: Trash card")
         (is (= 2 (- credits (:credit (get-corp)))) "Corp paid 2 for Prisec")
-        (is (= 1 (- (core/count-tags state) tags)) "Runner has 1 tag")
+        (is (= 1 (- (count-tags state) tags)) "Runner has 1 tag")
         (is (= 2 (- grip (count (:hand (get-runner))))) "Runner took 1 meat damage")
         (is (= 1 (- (count (:discard (get-corp))) archives)) "Used Imp to trash Prisec"))))
   (testing "vs The Future Perfect"

@@ -6,7 +6,7 @@
             [clojure.java.io :as io]
             [clojure.core.match :refer [match]]
             [clojure.stacktrace :refer [print-stack-trace]]
-            [jinteki.utils :refer [str->int other-side]]
+            [jinteki.utils :refer [str->int other-side is-tagged?]]
             [jinteki.cards :refer [all-cards]]
             [game.quotes :as quotes]))
 

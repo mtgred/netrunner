@@ -4,6 +4,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
+            [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "events"))
@@ -19,7 +20,7 @@
       ;; play Account Siphon, use ability
       (play-run-event state "Account Siphon" :hq)
       (click-prompt state :runner "Replacement effect")
-      (is (= 2 (core/count-tags state)) "Runner took 2 tags")
+      (is (= 2 (count-tags state)) "Runner took 2 tags")
       (is (= 15 (:credit (get-runner))) "Runner gained 10 credits")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
   (testing "Access"
@@ -31,7 +32,7 @@
       ;; play another Siphon, do not use ability
       (play-run-event state "Account Siphon" :hq)
       (click-prompt state :runner "Access cards")
-      (is (zero? (core/count-tags state)) "Runner did not take any tags")
+      (is (zero? (count-tags state)) "Runner did not take any tags")
       (is (= 5 (:credit (get-runner))) "Runner did not gain any credits")
       (is (= 8 (:credit (get-corp))) "Corp did not lose any credits")))
   (testing "New Angeles City Hall interaction"
@@ -57,7 +58,7 @@
         (card-ability state :runner nach 0)
         (is (zero? (:credit (get-runner))) "Runner has no credits left")
         (click-prompt state :runner "Done"))
-      (is (zero? (core/count-tags state)) "Runner did not take any tags")
+      (is (zero? (count-tags state)) "Runner did not take any tags")
       (is (= 10 (:credit (get-runner))) "Runner gained 10 credits")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
 
@@ -702,7 +703,7 @@
       (let [iw (get-ice state :rd 0)]
         (click-card state :runner iw)
         (is (:icon (refresh iw)) "Ice Wall has an icon")))
-    (is (= 1 (core/count-tags state)) "Runner gained a tag")))
+    (is (= 1 (count-tags state)) "Runner gained a tag")))
 
 (deftest data-breach
   ;; Data Breach
@@ -825,9 +826,9 @@
     (click-prompt state :runner "Steal")
     (is (= 1 (count (:scored (get-runner)))) "TFP stolen")
     (core/gain-tags state :runner 1)
-    (is (= 1 (core/count-tags state)) "Runner has 1 tag")
+    (is (= 1 (count-tags state)) "Runner has 1 tag")
     (click-prompt state :runner "Remove 1 tag")
-    (is (zero? (core/count-tags state)))))
+    (is (zero? (count-tags state)))))
 
 (deftest dirty-laundry
   ;; Dirty Laundry - Gain 5 credits at the end of the run if it was successful
@@ -1133,7 +1134,7 @@
         (click-prompt state :runner "Replacement effect")
         (click-prompt state :runner "2")
         (click-card state :runner (refresh tg))
-        (is (zero? (core/count-tags state)) "No tags, didn't access TGTBT")
+        (is (zero? (count-tags state)) "No tags, didn't access TGTBT")
         (is (zero? (get-counters (refresh tg) :advancement)) "Advancements removed"))))
   (testing "Don't remove more than the existing number of advancement tokens"
     (do-game
@@ -1149,7 +1150,7 @@
         (click-prompt state :runner "Replacement effect")
         (click-prompt state :runner "3")
         (click-card state :runner (refresh tg))
-        (is (zero? (core/count-tags state)) "No tags, didn't access TGTBT")
+        (is (zero? (count-tags state)) "No tags, didn't access TGTBT")
         (is (zero? (get-counters (refresh tg) :advancement)) "Advancements removed")))))
 
 (deftest falsified-credentials
@@ -1419,7 +1420,7 @@
     (take-credits state :corp)
     (play-run-event state (first (:hand (get-runner))) :hq)
     (is (= (+ 5 -2 9) (:credit (get-runner))) "Gained 9 credits on successful run")
-    (is (= 1 (core/count-tags state)) "Took 1 tag on successful run")
+    (is (= 1 (count-tags state)) "Took 1 tag on successful run")
     (is (prompt-map :runner) "Still have access prompt")))
 
 (deftest independent-thinking
@@ -1676,7 +1677,7 @@
     (play-from-hand state :runner "Lawyer Up")
     (is (= 3 (count (:hand (get-runner)))) "Drew 3 cards")
     (is (= 2 (:click (get-runner))) "Spent 2 clicks")
-    (is (= 1 (core/count-tags state)) "Lost 2 tags")))
+    (is (= 1 (count-tags state)) "Lost 2 tags")))
 
 (deftest leave-no-trace
   ;; Leave No Trace should derez ICE that was rezzed during the run
@@ -1780,7 +1781,7 @@
     (take-credits state :runner)
     (take-credits state :corp)
     (core/gain-tags state :runner 4)
-    (is (= 5 (core/count-tags state)) "+1 tag from Jarogniew Mercs")
+    (is (= 5 (count-tags state)) "+1 tag from Jarogniew Mercs")
     (is (= 1 (count (:hand (get-runner)))))
     (is (= 2 (:credit (get-runner))))
     (play-from-hand state :runner "Mars for Martians")
@@ -1913,7 +1914,7 @@
       (click-prompt state :runner "0")
       (card-ability state :runner (-> (get-resource state 0) :hosted first) 0)
       (click-prompt state :runner "Done")
-      (is (zero? (core/count-tags state)) "Runner should avoid tag")
+      (is (zero? (count-tags state)) "Runner should avoid tag")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap")))
   (testing "vs damage"
     (do-game
@@ -1928,7 +1929,7 @@
       (play-and-score state "Show of Force")
       (card-ability state :runner (-> (get-resource state 0) :hosted first) 1)
       (click-prompt state :runner "Done")
-      (is (zero? (core/count-tags state)) "Runner should avoid all meat damage")
+      (is (zero? (count-tags state)) "Runner should avoid all meat damage")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap"))))
 
 (deftest out-of-the-ashes
@@ -2879,7 +2880,7 @@
     (play-run-event state (find-card "Vamp" (:hand (get-runner))) :hq)
     (click-prompt state :runner "Replacement effect")
     (click-prompt state :runner "8")
-    (is (= 1 (core/count-tags state)) "Took 1 tag")
+    (is (= 1 (count-tags state)) "Took 1 tag")
     (is (= 5 (:credit (get-runner))) "Paid 8 credits")
     (is (zero? (:credit (get-corp))) "Corp lost all 8 credits")))
 

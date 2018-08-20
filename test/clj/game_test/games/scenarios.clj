@@ -3,6 +3,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
+            [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
 (use-fixtures :once load-all-cards (partial reset-card-defs nil))
@@ -38,7 +39,7 @@
           (play-from-hand state :corp "SEA Source")
           (click-prompt state :corp "3") ; boost trace to 6
           (click-prompt state :runner "0")
-          (is (= 1 (core/count-tags state)) "Runner took tag from SEA Source")
+          (is (= 1 (count-tags state)) "Runner took tag from SEA Source")
           (is (= 7 (:credit (get-corp))))
           (core/trash-resource state :corp nil)
           (click-card state :corp "Off-Campus Apartment")
