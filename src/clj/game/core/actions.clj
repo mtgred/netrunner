@@ -71,6 +71,16 @@
               (str "sets unused MU to " (available-mu state)
                    " (" (if (pos? delta) (str "+" delta) delta) ")")))
 
+(defn- change-tags
+  "Change a player's base tag count"
+  [state delta]
+  (if (neg? delta)
+    (deduct state :runner [:tag (Math/abs delta)])
+    (gain state :runner :tag delta))
+  (system-msg state :runner
+              (str "sets Tags to " (get-in @state [:runner :tag :base])
+                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
@@ -82,6 +92,10 @@
     ;; Hand size needs special treatment as it expects a map
     (= :hand-size key)
     (change-map state side key delta)
+
+    ;; Tags need special treatment since they are a more complex map
+    (= :tag key)
+    (change-tags state delta)
 
     :else
     (do (if (neg? delta)

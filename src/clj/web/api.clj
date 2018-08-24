@@ -17,6 +17,7 @@
             [ring.middleware.json :refer [wrap-json-body wrap-json-params wrap-json-response]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.stacktrace :refer [wrap-stacktrace]]
+            [ring.util.response :refer [resource-response]]
             [web.db :refer [db]]
             [cheshire.generate :refer [add-encoder encode-str]]
             [compojure.core :refer [defroutes wrap-routes GET POST DELETE PUT]]))
@@ -75,6 +76,12 @@
                (wrap-routes auth/wrap-authorization-required))
            public-routes)
 
+(defn wrap-return-favicon [handler]
+  (fn [req]
+    (if (= [:get "/favicon.ico"] [(:request-method req) (:uri req)])
+      (resource-response "jinteki.ico" {:root "public/img"})
+      (handler req))))
+
 (def app
   (-> routes
       auth/wrap-user
@@ -84,4 +91,5 @@
       wrap-session
       (wrap-json-body {:keywords? true})
       admin/wrap-version
+      wrap-return-favicon
       wrap-stacktrace))

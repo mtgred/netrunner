@@ -3,6 +3,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
+            [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "assets"))
@@ -477,7 +478,7 @@
       (is (some #{"Pay 1 [Credits]" "Take 1 tag"} (-> (get-runner) :prompt first :choices)))
       (click-prompt state :runner "Pay 1 [Credits]")
       (is (= 4 (:credit (get-runner))) "Runner paid 1 credit")
-      (is (zero? (core/count-tags state)) "Runner didn't take a tag")
+      (is (zero? (count-tags state)) "Runner didn't take a tag")
       (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")
       (take-credits state :runner)
       (core/lose state :runner :credit (:credit (get-runner))) ;; Set Runner's credits to 0 so they can't choose to pay
@@ -485,7 +486,7 @@
       (is (some #{"Take 1 tag"} (-> (get-runner) :prompt first :choices)))
       (click-prompt state :runner "Take 1 tag")
       (is (zero? (:credit (get-runner))) "Runner paid no credits")
-      (is (= 1 (core/count-tags state)) "Runner took 1 tag"))
+      (is (= 1 (count-tags state)) "Runner took 1 tag"))
       (is (empty? (:prompt (get-runner))) "City Surveillance only fired once")))
 
 (deftest clone-suffrage-movement
@@ -1265,7 +1266,7 @@
                  (take-credits state :corp)
                  (run-empty-server state "Server 1")
                  (click-prompt state :runner "No action")
-                 (let [tags (core/count-tags state)]
+                 (let [tags (count-tags state)]
                    (is (= expected-tags tags)
                        (str "the runner recieves " tags " tags"))))))]
       (doall (map false-flag-tags-test
@@ -1561,7 +1562,7 @@
         (take-credits state :corp)
         (run-empty-server state "Server 1")
         (click-prompt state :corp "Yes") ; choose to do the optional ability
-        (is (= 2 (core/count-tags state)) "Runner given 2 tags"))))
+        (is (= 2 (count-tags state)) "Runner given 2 tags"))))
   (testing "with Dedicated Response Team"
     (do-game
       (new-game (default-corp ["Ghost Branch" "Dedicated Response Team"])
@@ -1580,7 +1581,7 @@
         (run-successful state)
         (is (prompt-is-type? state :runner :waiting) "Runner has prompt to wait for Ghost Branch")
         (click-prompt state :corp "Yes")
-        (is (= 2 (core/count-tags state)) "Runner has 2 tags")
+        (is (= 2 (count-tags state)) "Runner has 2 tags")
         (click-prompt state :runner "Pay 0 [Credits] to trash")
         (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage")))))
 
@@ -2082,14 +2083,14 @@
       (card-ability state :corp (refresh lily) 0)
       (click-prompt state :corp (find-card "Beanstalk Royalties" (-> (get-corp) :prompt first :choices)))
       (is (= "Beanstalk Royalties" (-> (get-corp) :deck first :title)) "Beanstalk Royalties should be moved to top of R&D")
-      (is (= 1 (core/count-tags state)) "Runner should have 1 tag from Lily Lockwell ability")
+      (is (= 1 (count-tags state)) "Runner should have 1 tag from Lily Lockwell ability")
       (is (= (- clicks 1) (:click (get-corp))) "Lily Lockwell ability should cost 1 click")
       (is (< number-of-shuffles (count (core/turn-events state :corp :corp-shuffle-deck))) "Corp should shuffle deck")
       (core/draw state :corp)
       (card-ability state :corp (refresh lily) 0)
       (click-prompt state :corp "Cancel")
       (is (last-log-contains? state "did not find") "Lily Lockwell's ability didn't find an operation")
-      (is (zero? (core/count-tags state)) "Runner should have 0 tags from Lily Lockwell ability even when no operation found"))))
+      (is (zero? (count-tags state)) "Runner should have 0 tags from Lily Lockwell ability even when no operation found"))))
 
 (deftest long-term-investment
   ;; Long-Term Investment
@@ -2147,7 +2148,7 @@
      (click-card state :corp (get-resource state 1))
      (core/rez state :corp mausolus)
      (card-subroutine state :corp mausolus 2)
-     (is (and (= 1 (core/count-tags state))
+     (is (and (= 1 (count-tags state))
               (zero? (count (:discard (get-runner))))) "Runner has 1 tag, but Rachel Beckman not trashed")
      (take-credits state :runner)
      (is (zero? (count (:hand (get-corp)))) "Malia is not in hand")
@@ -2432,7 +2433,7 @@
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
       (click-prompt state :runner "No action")
       (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
-      (is (zero? (core/count-tags state)) "Avoided 1 Ghost Branch tag")
+      (is (zero? (count-tags state)) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
       (core/gain-tags state :runner 1)
@@ -2509,7 +2510,7 @@
     (take-credits state :corp)
     (run-empty-server state :archives)
     (click-prompt state :runner "Take 2 tags")
-    (is (= 2 (core/count-tags state)) "Runner has 2 tags")
+    (is (= 2 (count-tags state)) "Runner has 2 tags")
     (run-empty-server state :archives)
     (click-prompt state :runner "Add News Team to score area")
     (is (= 1 (count (:scored (get-runner)))) "News Team added to Runner score area")
@@ -3352,7 +3353,7 @@
        (is (= 3 (-> (get-corp) :prompt first :base)) "Base Trace should be 3")
        (click-prompt state :corp "0")
        (click-prompt state :runner "0")
-       (is (= 1 (core/count-tags state)) "Runner has 1 tag")))))
+       (is (= 1 (count-tags state)) "Runner has 1 tag")))))
 
 (deftest snare!
   (testing "Basic test"
@@ -3367,7 +3368,7 @@
           "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
       (is (= 3 (:credit (get-corp))) "Corp had 7 and paid 4 for Snare! 1 left")
-      (is (= 1 (core/count-tags state)) "Runner has 1 tag")
+      (is (= 1 (count-tags state)) "Runner has 1 tag")
       (is (zero? (count (:hand (get-runner)))) "Runner took 3 net damage")))
   (testing "Can't afford"
     (do-game
@@ -3380,7 +3381,7 @@
       (is (= :waiting (-> @state :runner :prompt first :prompt-type))
           "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
-      (is (zero? (core/count-tags state)) "Runner has 0 tags")
+      (is (zero? (count-tags state)) "Runner has 0 tags")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
       (is (empty? (:prompt (get-runner))) "Runner waiting prompt is cleared")
       (is (zero? (count (:discard (get-runner)))) "Runner took no damage")))
@@ -3399,7 +3400,7 @@
         (is (= :waiting (-> @state :runner :prompt first :prompt-type))
             "Runner has prompt to wait for Snare!")
         (click-prompt state :corp "Yes")
-        (is (= 1 (core/count-tags state)) "Runner has 1 tag")
+        (is (= 1 (count-tags state)) "Runner has 1 tag")
         (click-prompt state :runner "Pay 0 [Credits] to trash")
         (is (= 5 (count (:discard (get-runner)))) "Runner took 5 damage")))))
 
@@ -3419,7 +3420,7 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp (get-content state :remote1 0))
       (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "Agenda advanced once from Space Camp")
-      (is (= 2 (core/count-tags state)) "Runner has 2 tags")
+      (is (= 2 (count-tags state)) "Runner has 2 tags")
       (is (not (:run @state)) "Run completed"))))
 
 (deftest student-loans
@@ -4065,4 +4066,4 @@
       (core/rez state :corp judge)
       (is (:rezzed (refresh judge)) "Zealous Judge can be rezzed while the Runner is tagged")
       (card-ability state :corp judge 0)
-      (is (= 2 (core/count-tags state)) "Runner should gain a tag from Zealous Judge's ability"))))
+      (is (= 2 (count-tags state)) "Runner should gain a tag from Zealous Judge's ability"))))

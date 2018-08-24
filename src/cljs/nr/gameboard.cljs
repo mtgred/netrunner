@@ -3,15 +3,14 @@
   (:require [cljs.core.async :refer [chan put! <!] :as async]
             [clojure.string :refer [capitalize includes? join lower-case split]]
             [differ.core :as differ]
-            [jinteki.utils :refer [str->int]]
+            [jinteki.utils :refer [str->int is-tagged?] :as utils]
             [jinteki.cards :refer [all-cards]]
             [nr.appstate :refer [app-state]]
             [nr.auth :refer [avatar] :as auth]
             [nr.cardbrowser :refer [add-symbols] :as cb]
             [nr.utils :refer [influence-dot map-longest toastr-options]]
             [nr.ws :as ws]
-            [reagent.core :as r]
-            [jinteki.utils :as utils]))
+            [reagent.core :as r]))
 
 (defonce game-state (r/atom {}))
 (defonce last-state (atom {}))
@@ -1519,7 +1518,7 @@
                [cond-button "Remove Tag"
                 (and (pos? (:click @me))
                      (>= (:credit @me) (- 2 (or (:tag-remove-bonus @me) 0)))
-                     (pos? (:tag @me)))
+                     (pos? (get-in @me [:tag :base])))
                 #(send-command "remove-tag")]
                [:div.run-button
                 [cond-button "Run" (and (pos? (:click @me))
@@ -1537,8 +1536,7 @@
             (when (= side :corp)
               [cond-button "Trash Resource" (and (pos? (:click @me))
                                                  (>= (:credit @me) (- 2 (or (:trash-cost-bonus @me) 0)))
-                                                 (or (pos? (:tagged @opponent))
-                                                     (pos? (:tag @opponent))))
+                                                 (is-tagged? game-state))
                #(send-command "trash-resource")])
             [cond-button "Draw" (and (pos? (:click @me)) (not-empty (:deck @me))) #(send-command "draw")]
             [cond-button "Gain Credit" (pos? (:click @me)) #(send-command "credit")]]))])})))
