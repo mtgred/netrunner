@@ -40,6 +40,7 @@
            (GET "/data/cycles" [] data/cycles-handler)
            (GET "/data/donors" [] data/donors-handler)
 
+           (GET "/chat/config" [] chat/config-handler)
            (GET "/messages/:channel" [] chat/messages-handler)
 
            (POST "/forgot" [] auth/forgot-password-handler)
