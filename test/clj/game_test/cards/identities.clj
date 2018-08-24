@@ -150,7 +150,7 @@
       (run-on state :archives)
       (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
       (run-continue state)
-      (is (not (core/is-tagged? state)) "Runner is not tagged when encountering second ice")))
+      (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice")))
   (testing "Tag loss when runner jacks out"
     (do-game
       (new-game
@@ -160,9 +160,9 @@
       (core/rez state :corp (get-ice state :archives 0))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
+      (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
       (run-jack-out state)
-      (is (not (core/is-tagged? state)) "Runner no longer tagged after jacking out")))
+      (is (not (is-tagged? state)) "Runner no longer tagged after jacking out")))
   (testing "No tag gained when rezzing something other than ice"
     (do-game
       (new-game
@@ -172,14 +172,14 @@
       (play-from-hand state :corp "NGO Front" "New remote")
       (take-credits state :corp)
       (run-on state :archives)
-      (is (not (core/is-tagged? state)) "Runner is not yet tagged when encountering outermost ice")
+      (is (not (is-tagged? state)) "Runner is not yet tagged when encountering outermost ice")
       (core/rez state :corp (get-ice state :archives 0))
       (is (= 1 (get-in @state [:runner :tag :additional])) "Runner gains 1 additional tag when ice rezzed")
       (core/rez state :corp (get-content state :remote1 0))
       (is (:rezzed (get-content state :remote1 0)) "NGO Front now rezzed")
       (is (= 1 (get-in @state [:runner :tag :additional])) "Runner does not gain a tag when asset rezzed")
       (run-continue state)
-      (is (not (core/is-tagged? state)) "Runner is not tagged when encountering second ice"))))
+      (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice"))))
 
 (deftest adam:-compulsive-hacker
   ;; Adam
