@@ -3,6 +3,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
+            [jinteki.utils :refer [count-tags is-tagged?]]
             [clojure.test :refer :all]))
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "identities"))
@@ -85,11 +86,11 @@
       (play-from-hand state :corp "Vanilla" "Archives")
       (take-credits state :corp)
       (run-on state :archives)
-      (is (not (core/is-tagged? state)) "Runner does not encounter an unrezzed ice")
+      (is (not (is-tagged? state)) "Runner does not encounter an unrezzed ice")
       (core/rez state :corp (get-ice state :archives 0))
-      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
+      (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
       (run-continue state)
-      (is (not (core/is-tagged? state)) "Runner no longer encountering outermost ice")))
+      (is (not (is-tagged? state)) "Runner no longer encountering outermost ice")))
   (testing "Interaction with Data Ward"
     (do-game
       (new-game
@@ -99,9 +100,9 @@
       (play-from-hand state :corp "Data Ward" "Archives")
       (take-credits state :corp)
       (run-on state :archives)
-      (is (not (core/is-tagged? state)) "Runner does not encounter an unrezzed ice")
+      (is (not (is-tagged? state)) "Runner does not encounter an unrezzed ice")
       (core/rez state :corp (get-ice state :archives 0))
-      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
+      (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
       (card-subroutine state :corp (get-ice state :archives 0) 0)
       (is (not (:run @state)) "Run ended by Data Ward")))
   (testing "Tag gain when starting run"
@@ -113,9 +114,9 @@
       (core/rez state :corp (get-ice state :archives 0))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
+      (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
       (run-continue state)
-      (is (not (core/is-tagged? state)) "Runner no longer encountering outermost ice")))
+      (is (not (is-tagged? state)) "Runner no longer encountering outermost ice")))
   (testing "Tag loss when derezzing ice"
     (do-game
       (new-game
@@ -125,9 +126,9 @@
       (core/rez state :corp (get-ice state :archives 0))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
+      (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
       (core/derez state :corp (get-ice state :archives 0))
-      (is (not (core/is-tagged? state)) "Runner no longer encountering the derezzed ice")))
+      (is (not (is-tagged? state)) "Runner no longer encountering the derezzed ice")))
   (testing "No tag on empty server"
     (do-game
       (new-game
@@ -135,7 +136,7 @@
         (default-runner))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (not (core/is-tagged? state)) "No ice to encounter")))
+      (is (not (is-tagged? state)) "No ice to encounter")))
   (testing "No tag when encountering second ice"
     (do-game
       (new-game
@@ -147,9 +148,9 @@
       (core/rez state :corp (get-ice state :archives 1))
       (take-credits state :corp)
       (run-on state :archives)
-      (is (core/is-tagged? state) "Runner is tagged when encountering outermost ice")
+      (is (is-tagged? state) "Runner is tagged when encountering outermost ice")
       (run-continue state)
-      (is (not (core/is-tagged? state)) "Runner is not tagged when encountering second ice"))))
+      (is (not (is-tagged? state)) "Runner is not tagged when encountering second ice"))))
 
 (deftest adam:-compulsive-hacker
   ;; Adam
@@ -960,7 +961,7 @@
       (play-and-score state "Armed Intimidation")
       (click-prompt state :runner "Take 2 tags")
       (is (= 3 (:agenda-point (get-corp))) "Corp has 3 agenda points from HT + Armed Intimidation")
-      (is (= 2 (core/count-tags state)) "Runner took 2 tags from AI")
+      (is (= 2 (count-tags state)) "Runner took 2 tags from AI")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
       (take-credits state :runner)
@@ -971,7 +972,7 @@
         (is (= 2 (get-counters (refresh ice-wall) :advancement)) "Ice Wall has 2 advancement counters from HT forfeit"))
       (click-card state :corp (get-scored state :corp 0)) ; select AI to trigger
       (click-prompt state :runner "Take 2 tags") ; First runner has prompt
-      (is (= 4 (core/count-tags state)) "Runner took 2 more tags from AI -- happens at the end of all the async completion"))))
+      (is (= 4 (count-tags state)) "Runner took 2 more tags from AI -- happens at the end of all the async completion"))))
 
 (deftest jesminder-sareen:-girl-behind-the-curtain
   ;; Jesminder Sareen - avoid tags only during a run
@@ -985,9 +986,9 @@
         (core/rez state :corp dr)
         (core/click-run state :runner {:server "Archives"})
         (card-ability state :corp dr 0)
-        (is (zero? (core/count-tags state)) "Jesminder avoided first tag during the run")
+        (is (zero? (count-tags state)) "Jesminder avoided first tag during the run")
         (card-ability state :corp dr 0)
-        (is (= 1 (core/count-tags state)) "Jesminder did not avoid the second tag during the run")
+        (is (= 1 (count-tags state)) "Jesminder did not avoid the second tag during the run")
         (core/no-action state :corp nil)
         (core/continue state :runner nil)
         (core/no-action state :corp nil)
@@ -997,7 +998,7 @@
         (play-from-hand state :corp "SEA Source")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (is (= 2 (core/count-tags state)) "Jesminder did not avoid the tag outside of a run"))))
+        (is (= 2 (count-tags state)) "Jesminder did not avoid the tag outside of a run"))))
   (testing "don't avoid John Masanori tag"
     (do-game
       (new-game (default-corp)
@@ -1006,7 +1007,7 @@
       (play-from-hand state :runner "John Masanori")
       (run-on state "HQ")
       (core/jack-out state :runner nil)
-      (is (= 1 (core/count-tags state)) "Jesminder did not avoid John Masanori tag"))))
+      (is (= 1 (count-tags state)) "Jesminder did not avoid John Masanori tag"))))
 
 (deftest jinteki-biotech:-life-imagined
   ;; Jinteki Biotech
@@ -1281,7 +1282,7 @@
     (take-credits state :corp)
     (run-empty-server state "R&D")
     (is (= 7 (count (:hand (get-runner)))) "Drew 2 cards from successful run on Archives")
-    (is (= 1 (core/count-tags state)) "Took 1 tag from successful run on Archives")))
+    (is (= 1 (count-tags state)) "Took 1 tag from successful run on Archives")))
 
 (deftest maxx:-maximum-punk-rock
   ;; MaxX
@@ -1445,7 +1446,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (empty? (:prompt (get-runner))) "Forger can't avoid the tag")
-      (is (= 1 (core/count-tags state)) "Runner took 1 unpreventable tag")
+      (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
       (core/gain state :runner :credit 2)
       (run-empty-server state "Server 2")
       (click-prompt state :runner "Pay 2 [Credits] to trash")
@@ -1464,7 +1465,7 @@
       (click-prompt state :corp "Yes")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= 1 (core/count-tags state)) "Runner took 1 unpreventable tag")
+      (is (= 1 (count-tags state)) "Runner took 1 unpreventable tag")
       (is (= 2 (count (:discard (get-runner)))) "Runner took 2 meat damage from DRT"))))
 
 (deftest new-angeles-sol:-your-news

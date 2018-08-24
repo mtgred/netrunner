@@ -3,6 +3,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
+            [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "icebreakers"))
@@ -417,7 +418,7 @@
    (take-credits state :corp)
    (let [gow (get-program state 0)]
      (card-ability state :runner gow 2)
-     (is (= 1 (core/count-tags state)))
+     (is (= 1 (count-tags state)))
      (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
 
 (deftest ika
@@ -693,7 +694,7 @@
     (run-continue state)
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "2")
-    (is (= 1 (core/count-tags state)) "Runner took 1 tag from using Persephone's ability while AR-Enhanced Security is scored")
+    (is (= 1 (count-tags state)) "Runner took 1 tag from using Persephone's ability while AR-Enhanced Security is scored")
     (take-credits state :runner)
     ;; Gotta move the discarded cards back to the deck
     (core/move state :corp (find-card "Zed 2.0" (:discard (get-corp))) :deck)
@@ -703,7 +704,7 @@
     (run-continue state)
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "2")
-    (is (= 2 (core/count-tags state)) "Runner took 1 tag from using Persephone's ability while AR-Enhanced Security is scored")))
+    (is (= 2 (count-tags state)) "Runner took 1 tag from using Persephone's ability while AR-Enhanced Security is scored")))
 
 (deftest shiv
   ;; Shiv - Gain 1 strength for each installed breaker; no MU cost when 2+ link

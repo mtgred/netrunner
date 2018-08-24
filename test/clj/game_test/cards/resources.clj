@@ -3,6 +3,7 @@
             [game-test.core :refer :all]
             [game-test.utils :refer :all]
             [game-test.macros :refer :all]
+            [jinteki.utils :refer [count-tags]]
             [clojure.test :refer :all]))
 
 (use-fixtures :once load-all-cards (partial reset-card-defs "resources"))
@@ -14,14 +15,14 @@
               (default-runner ["Activist Support"]))
     (take-credits state :corp)
     (play-from-hand state :runner "Activist Support")
-    (is (zero? (core/count-tags state)))
+    (is (zero? (count-tags state)))
     (take-credits state :runner)
-    (is (= 1 (core/count-tags state)) "Runner took 1 tag; had none")
+    (is (= 1 (count-tags state)) "Runner took 1 tag; had none")
     (is (zero? (:bad-publicity (get-corp))))
     (take-credits state :corp)
     (is (= 1 (:bad-publicity (get-corp))) "Corp took 1 bad pub; had none")
     (take-credits state :runner)
-    (is (= 1 (core/count-tags state)) "Runner had 1 tag; didn't take another")
+    (is (= 1 (count-tags state)) "Runner had 1 tag; didn't take another")
     (take-credits state :corp)
     (is (= 1 (:bad-publicity (get-corp))) "Corp had 1 bad pub; didn't take another")))
 
@@ -481,7 +482,7 @@
     (is (= 1 (count (:prompt (get-runner)))) "Runner prompted to avoid tag")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
-    (is (zero? (core/count-tags state)) "Tag avoided")))
+    (is (zero? (count-tags state)) "Tag avoided")))
 
 (deftest district-99
   ;; District 99 - Gains power counters on hardware/program trashes, can spend 3 power counters to recur a card matching identity
@@ -1261,10 +1262,10 @@
     (is (= 5 (count (:hand (get-runner)))) "No card drawn from second successful run")
     (run-on state "HQ")
     (run-jack-out state)
-    (is (= 1 (core/count-tags state)) "1 tag taken from first unsuccessful run")
+    (is (= 1 (count-tags state)) "1 tag taken from first unsuccessful run")
     (run-on state "HQ")
     (run-jack-out state)
-    (is (= 1 (core/count-tags state)) "No tag taken from second unsuccessful run")))
+    (is (= 1 (count-tags state)) "No tag taken from second unsuccessful run")))
 
 (deftest joshua-b.
   ;; Joshua B. - Take 1 tag at turn end if you choose to gain the extra click
@@ -1282,7 +1283,7 @@
     (core/end-phase-12 state :runner nil)
     (is (= 5 (:click (get-runner))) "Gained normal clicks as well")
     (take-credits state :runner)
-    (is (= 1 (core/count-tags state)) "Took 1 tag")))
+    (is (= 1 (count-tags state)) "Took 1 tag")))
 
 (deftest kati-jones
   ;; Kati Jones - Click to store and take
@@ -1584,7 +1585,7 @@
         (click-prompt state :runner "0") ; Runner won't match
         (card-ability state :runner nach 0)
         (click-prompt state :runner "Done")
-        (is (zero? (core/count-tags state)) "Avoided SEA Source tag")
+        (is (zero? (count-tags state)) "Avoided SEA Source tag")
         (is (= 4 (:credit (get-runner))) "Paid 2 credits")
         (take-credits state :corp)
         (run-empty-server state "Server 1")
@@ -1604,7 +1605,7 @@
         (card-ability state :runner nach 0)
         (card-ability state :runner nach 0)
         (click-prompt state :runner "Done")
-        (is (zero? (core/count-tags state)) "Tags avoided")
+        (is (zero? (count-tags state)) "Tags avoided")
         (is (= 10 (:credit (get-runner))) "10 credits siphoned")
         (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))))
 
@@ -1639,7 +1640,7 @@
       (click-prompt state :runner "0")
       (click-prompt state :runner "Done")
       (is (= 3 (count (:discard (get-runner)))) "Two NOH trashed, 1 gamble played")
-      (is (zero? (core/count-tags state)) "Tags avoided")
+      (is (zero? (count-tags state)) "Tags avoided")
       (take-credits state :corp)
       (play-from-hand state :runner "No One Home")
       (take-credits state :runner)
@@ -1835,24 +1836,24 @@
               (default-runner ["Power Tap"]))
     (play-and-score state "Restructured Datapool")
     (let [agenda (get-scored state :corp 0)
-          tags (core/count-tags state)
+          tags (count-tags state)
           credits (:credit (get-runner))]
       (card-ability state :corp agenda 0)
       (is (= credits (:credit (get-runner))) "Runner shouldn't gain any credits from trace")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= (+ tags 1) (core/count-tags state)) "Runner should gain 1 tag from losing trace"))
+      (is (= (+ tags 1) (count-tags state)) "Runner should gain 1 tag from losing trace"))
     (take-credits state :corp)
     (play-from-hand state :runner "Power Tap")
     (take-credits state :runner)
     (let [agenda (get-scored state :corp 0)
-          tags (core/count-tags state)
+          tags (count-tags state)
           credits (:credit (get-runner))]
       (card-ability state :corp agenda 0)
       (is (= (+ credits 1) (:credit (get-runner))) "Runner should gain 1 credit from trace initiation")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (is (= (+ tags 1) (core/count-tags state)) "Runner should gain 1 tag from losing trace"))))
+      (is (= (+ tags 1) (count-tags state)) "Runner should gain 1 tag from losing trace"))))
 
 (deftest professional-contacts
   ;; Professional Contacts - Click to gain 1 credit and draw 1 card

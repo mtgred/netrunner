@@ -2,7 +2,7 @@
 
 (declare can-trigger? card-def clear-wait-prompt effect-completed event-title get-card get-nested-host get-remote-names
          get-runnable-zones get-zones installed? make-eid register-effect-completed register-suppress resolve-ability
-         show-wait-prompt trigger-suppress unregister-suppress is-tagged?)
+         show-wait-prompt trigger-suppress unregister-suppress)
 
 ; Functions for registering and dispatching events.
 (defn register-events
