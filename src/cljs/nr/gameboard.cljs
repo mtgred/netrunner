@@ -1352,9 +1352,8 @@
            [:br]
            [:button.win-right {:on-click #(swap! app-state assoc :start-shown true) :type "button"} "✘"]])))))
 
-(defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent sfx] :as cursor}]
-  (let [s (r/atom {})
-        autocomp (r/track (fn [] (get-in @game-state [side :prompt 0 :choices :autocomplete])))
+(defn audio-component [{:keys [sfx] :as cursor}]
+    (let [s (r/atom {})
         audio-sfx (fn [name] (list (keyword name)
                                    (new js/Howl (clj->js {:src [(str "/sound/" name ".ogg")
                                                                 (str "/sound/" name ".mp3")]}))))
@@ -1375,6 +1374,21 @@
                                     (audio-sfx "run-successful")
                                     (audio-sfx "run-unsuccessful")
                                     (audio-sfx "virus-purge")))]
+        (r/create-class
+            {:display-name "audio-component"
+             :component-did-update
+             (fn []
+                 (update-audio {:sfx (:sfx @game-state) :sfx-current-id (:sfx-current-id @game-state)
+                                :gameid (:gameid @game-state)} soundbank))
+             :reagent-render
+             (fn [{:keys [sfx] :as cursor}]
+              (let [_ @sfx]) ;; hack: make this component rebuild when sfx changes. Could probably move audio to its own component.
+             )
+            })))
+
+(defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
+  (let [s (r/atom {})
+        autocomp (r/track (fn [] (get-in @game-state [side :prompt 0 :choices :autocomplete])))]
     (r/create-class
       {:display-name "button-pane"
 
@@ -1390,9 +1404,7 @@
          (when (= "card-title" (get-in @game-state [side :prompt 0 :prompt-type]))
            (-> "#card-title" js/$ .focus))
          (doseq [{:keys [msg type options]} (get-in @game-state [side :toast])]
-           (toast msg type options))
-         (update-audio {:sfx (:sfx @game-state) :sfx-current-id (:sfx-current-id @game-state)
-                        :gameid (:gameid @game-state)} soundbank))
+           (toast msg type options)))
 
     :reagent-render
     (fn [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent sfx] :as cursor}]
@@ -1621,6 +1633,7 @@
                  (= @side :spectator) "opponent"]]
 
                [:div.inner-leftpane
+                [audio-component {:sfx sfx}]
 
                 [:div.left-inner-leftpane
                  [:div
@@ -1647,8 +1660,7 @@
                  (when-not (= @side :spectator)
                    [button-pane {:side me-side :active-player active-player :run run :end-turn end-turn
                                  :runner-phase-12 runner-phase-12 :corp-phase-12 corp-phase-12
-                                 :corp corp :runner runner :me me :opponent opponent
-                                 :sfx sfx}])]]
+                                 :corp corp :runner runner :me me :opponent opponent}])]]
 
                [:div.me
                 [hand-view me-user (if (= :corp me-side) "HQ" "Grip") me-hand me-prompt
