@@ -1382,8 +1382,8 @@
                                 :gameid (:gameid @game-state)} soundbank))
              :reagent-render
              (fn [{:keys [sfx] :as cursor}]
-              (let [_ @sfx]) ;; hack: make this component rebuild when sfx changes. Could probably move audio to its own component.
-             )})))
+              (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
+             
 
 (defn button-pane [{:keys [side active-player run end-turn runner-phase-12 corp-phase-12 corp runner me opponent] :as cursor}]
   (let [s (r/atom {})
