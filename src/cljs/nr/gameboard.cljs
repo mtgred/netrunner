@@ -1378,8 +1378,7 @@
             {:display-name "audio-component"
              :component-did-update
              (fn []
-                 (update-audio {:sfx (:sfx @game-state) :sfx-current-id (:sfx-current-id @game-state)
-                                :gameid (:gameid @game-state)} soundbank))
+                 (update-audio (select-keys @game-state [:sfx :sfx-current-id :gameid]) soundbank))
              :reagent-render
              (fn [{:keys [sfx] :as cursor}]
               (let [_ @sfx]))}))) ;; make this component rebuild when sfx changes.
