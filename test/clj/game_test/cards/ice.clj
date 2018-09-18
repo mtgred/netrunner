@@ -739,6 +739,26 @@
         (run-continue state)
         (is (= 1 (-> (get-runner) :discard count)) "Runner should take 1 net damage from Kakugo")))))
 
+(deftest kakugo-wrestler
+  (testing "After wrassling, Kakugo should still do damage despite temporary card change")
+    (do-game
+      (new-game (default-corp ["Kakugo"])
+                (default-runner ["Engolo" (qty "Sure Gamble" 2)]))
+      (play-from-hand state :corp "Kakugo" "R&D")
+      (take-credits state :corp) ;; This also ends the corps turn.
+      (play-from-hand state :runner "Sure Gamble") ;; Needed to ensure that we can pay for Kakugo + ability
+      (play-from-hand state :runner "Engolo")
+      (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
+      (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card before run")
+      (let [kakugo (get-ice state :rd 0)
+            engolo (get-program state 0)]
+        (run-on state "R&D")
+        (core/rez state :corp kakugo)
+        (card-ability state :runner engolo 2)
+        (is (core/has-subtype? (refresh kakugo) "Code Gate") "Kakugo was made into a code gate")
+        (run-continue state)
+        (is (= 0 (count (:hand (get-runner)))) "Runner took damage passing kakugo"))))
+
 (deftest kakugo
   ;; Kakugo
   (testing "ability continues to work when ice is swapped"

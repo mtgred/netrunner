@@ -1242,7 +1242,7 @@
 
    "Kakugo"
    {:events {:pass-ice {:async true
-                        :req (req (= target card))
+                        :req (req (= (:cid target) (:cid card)))
                         :msg "do 1 net damage"
                         :effect (effect (damage eid :net 1 {:card card}))}}
     :subroutines [end-the-run]}
