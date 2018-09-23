@@ -99,6 +99,54 @@
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (not (:run @state)) "Accessing Ash then ends the run"))))
 
+(deftest awakening-center
+  ;; Awakening Center
+  (testing "Basic Operation"
+    (do-game
+      (new-game (default-corp ["Awakening Center" "Fairchild"])
+                (default-runner))
+      (play-from-hand state :corp "Awakening Center" "New remote")
+      (let [ac (get-content state :remote1 0)]
+        (core/rez state :corp ac)
+        (card-ability state :corp (refresh ac) 0)
+        (click-card state :corp (find-card "Fairchild" (:hand (get-corp))))
+        (let [fc (first (:hosted (refresh ac)))]
+          (is (= "Fairchild" (:title (refresh fc))) "Fairchild hosted on Awakening Center")
+          (is (not (:rezzed (refresh fc))) "Fairchild is not rezzed")
+          (is (empty? (:hand (get-corp))) "Fairchild removed from hand")
+          (take-credits state :corp)
+          (run-empty-server state "Server 1")
+          (card-ability state :corp (refresh ac) 1)
+          (click-prompt state :corp "Fairchild")
+          (is (:rezzed (refresh fc)) "Fairchild is rezzed")
+          (click-prompt state :runner "Done")
+          (is (not (:run @state)) "Run has ended")
+          (is (= 1 (count (:discard (get-corp)))) "Fairchild in discard")
+          (is (empty? (:hosted (refresh ac))) "Fairchild no longer hosted")))))
+  (testing "DDoS Interaction"
+    (do-game
+      (new-game (default-corp ["Awakening Center" "Fairchild"])
+                (default-runner ["DDoS"]))
+      (play-from-hand state :corp "Awakening Center" "New remote")
+      (let [ac (get-content state :remote1 0)]
+        (core/rez state :corp ac)
+        (card-ability state :corp (refresh ac) 0)
+        (click-card state :corp (find-card "Fairchild" (:hand (get-corp))))
+        (let [fc (first (:hosted (refresh ac)))]
+          (is (= "Fairchild" (:title (refresh fc))) "Fairchild hosted on Awakening Center")
+          (take-credits state :corp)
+          (play-from-hand state :runner "DDoS")
+          (card-ability state :runner (get-resource state 0) 0)
+          (is (= 1 (count (:discard (get-runner)))) "DDoS trashed")
+          (run-empty-server state "Server 1")
+          (card-ability state :corp (refresh ac) 1)
+          (click-prompt state :corp "Fairchild")
+          (is (:rezzed (refresh fc)) "Fairchild is rezzed")
+          (click-prompt state :runner "Done")
+          (is (not (:run @state)) "Run has ended")
+          (is (= 1 (count (:discard (get-corp)))) "Fairchild in discard")
+          (is (empty? (:hosted (refresh ac))) "Fairchild no longer hosted"))))))
+
 (deftest ben-musashi
   ;; Ben Musashi
   (testing "Basic test - pay 2 net damage to steal from this server"

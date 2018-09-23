@@ -562,11 +562,13 @@
                            (register-turn-flag!
                              card :can-rez
                              (fn [state side card]
-                               (if (and (ice? card)
-                                        (= (count (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
-                                           (inc (ice-index state card))))
-                                 ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
-                                 true)))
+                               (let [idx (ice-index state card)]
+                                 (if (and (ice? card)
+                                          idx
+                                          (= (count (get-in @state (concat [:corp :servers] (:server (:run @state)) [:ices])))
+                                             (inc idx)))
+                                   ((constantly false) (toast state :corp "Cannot rez any outermost ICE due to DDoS." "warning"))
+                                   true))))
                            (trash card {:cause :ability-cost}))}]}
 
    "Dean Lister"
