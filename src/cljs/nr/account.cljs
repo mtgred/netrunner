@@ -131,7 +131,7 @@
 
 (defn reset-card-art
   ([s] (let [art (:all-art-select @s)]
-        (reset-card-art art)))
+        (reset-card-art s art)))
   ([s art]
    (doseq [card (vals (:alt-arts @app-state))]
      (update-card-art card art s))))
@@ -243,7 +243,8 @@
           (when (and (:special @user) (:alt-arts @app-state))
             [:div {:id "my-alt-art"}
              [:h4 "My alternate card arts"]
-             [:select {:value "" :on-change #(select-card (.. % -target -value) s)}
+             [:select {:value (:alt-card @s)
+                       :on-change #(select-card (.. % -target -value) s)}
               (doall (for [card (sort-by :title (vals (:alt-arts @app-state)))] ^{:key (:code card)}
                 [:option {:value (:code card)} (:title card)]))]
 
