@@ -1029,7 +1029,7 @@
                                  (system-msg state side (str "reveals " (clojure.string/join ", " titles) " from R&D")))
                                (if-let [ice (first r)]
                                  (let [newice (assoc ice :zone (:zone target) :rezzed true)
-                                       ices (get-in @state (cons :corp (:zone target)))
+                                       ices (get-in @state (cons :corp (:zone target)) [])
                                        newices (apply conj (subvec ices 0 i) newice (subvec ices i))]
                                    (swap! state assoc-in (cons :corp (:zone target)) newices)
                                    (swap! state update-in [:corp :deck] (fn [coll] (remove-once #(= (:cid %) (:cid newice)) coll)))
