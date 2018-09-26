@@ -1,4 +1,4 @@
-(ns game-test.cards.agendas
+ (ns game-test.cards.agendas
   (:require [game.core :as core]
             [game.utils :as utils]
             [game-test.core :refer :all]
@@ -853,14 +853,6 @@
         (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Fetal AI")
         (is (zero? (count (:scored (get-runner)))) "Runner could not steal Fetal AI")))))
 
-(deftest fly-on-the-wall
-  ;; Fly on the Wall - give the runner 1 tag
-  (do-game
-    (new-game {:corp {:deck ["Fly on the Wall"]}})
-    (is (zero? (count-tags state)) "Runner starts with no tags")
-    (play-and-score state "Fly on the Wall")
-    (is (= 1 (count-tags state)) "Runner is tagged")))
-
 (deftest firmware-updates
   ;; Firmware Updates
   (do-game
@@ -881,9 +873,9 @@
   ;; Fly on the Wall - give the runner 1 tag
   (do-game
     (new-game {:corp {:deck ["Fly on the Wall"]}})
-    (is (zero? (:tag (get-runner))) "Runner starts with no tags")
+    (is (zero? (count-tags state)) "Runner starts with no tags")
     (play-and-score state "Fly on the Wall")
-    (is (= 1 (:tag (get-runner))) "Runner is tagged")))
+    (is (= 1 (count-tags state)) "Runner is tagged")))
 
 (deftest genetic-resequencing
   ;; Genetic Resequencing
